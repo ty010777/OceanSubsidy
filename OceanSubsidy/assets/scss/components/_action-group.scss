@@ -1,0 +1,55 @@
+.action-group {
+    display: flex;
+    gap: 20px;
+    justify-content: flex-end;
+    margin-bottom: 14px;
+    .btn-tip {        
+        position: relative;
+        // 右上角通知圓點
+        &::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            right: -3px;
+            width: 16px;
+            height: 16px;
+            background-color: $pink;
+            border-radius: 50%;
+            border: 2px solid #EEEEEE;
+            display: none;
+        }
+        &.new {
+            &::after {
+                display: block;
+            }
+        }
+        
+    }
+    
+    // 其他按鈕樣式
+    button {
+        background: none;
+        border: none;
+        outline: none;
+        padding: 0;
+        margin: 0;
+        cursor: pointer;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: 0.3s ease;
+        
+        img {
+            height: 30px;
+        }
+        
+        &:hover {
+            transform: scale(1.05);
+        }
+
+    }
+    
+
+}

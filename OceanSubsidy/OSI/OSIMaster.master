@@ -1,0 +1,196 @@
+﻿<%@ Master Language="C#" MasterPageFile="~/BaseMaster.Master" AutoEventWireup="true" CodeFile="OSIMaster.master.cs" Inherits="OSI_OSIMaster" %>
+
+<asp:Content ID="cTitle" ContentPlaceHolderID="BaseTitleContent" runat="server">
+    <asp:ContentPlaceHolder ID="TitleContent" runat="server" />
+</asp:Content>
+
+<asp:Content ID="HeadExtra" ContentPlaceHolderID="HeadExtra" runat="server">
+    <script>
+        function showGlobalMessage(msg) {
+            var body = document.getElementById('msgModalBody');
+            if (body) body.innerText = msg;
+
+            var modalEl = document.getElementById('messageModal');
+            if (!modalEl) return;
+
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        }
+    </script>
+
+
+    <asp:ContentPlaceHolder ID="HeadContent" runat="server" />
+</asp:Content>
+
+<asp:Content ID="BodyContent" ContentPlaceHolderID="BodyContent" runat="server">
+    <div class="mis-layout">
+        <div class="mis-header">
+
+            <!-- 電腦版收合按鈕 -->
+            <button type="button" class="menu-toggle" onclick="toggleMenu()">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+
+            <!-- 手機板header -->
+            <div class="mobile-header">
+
+                <!-- 系統主題圖 -->
+                <img class="mobile-bg" src="<%= ResolveUrl("~/assets/img/mobile-bg.svg") %>" alt="logo">
+
+                <!-- 手機版收合按鈕 -->
+                <button type="button" class="menu-toggle-mobile collapsed" data-bs-toggle="collapse" data-bs-target="#menubar">
+                    <i class="fas fa-bars"></i>
+                    <i class="fas fa-times"></i>
+                </button>
+
+
+                <div class="logo">
+                    <img src="<%= ResolveUrl("~/assets/img/logo.svg") %>" alt="logo">
+                </div>
+
+                <div class="mobile-logo">
+                    <img src="<%= ResolveUrl("~/assets/img/ocean-logo.svg") %>" alt="logo">
+                </div>
+
+                <h1>海洋科學調查活動填報系統</h1>
+            </div>
+
+            <!-- 連結選單 -->
+            <div class="menu collapse" id="menubar" clientidmode="Static" runat="server">
+                <nav>
+                    <span class="nav-title">填報執行模組</span>
+                    <ul>
+                        <li runat="server" id="liActivityReports" data-page="ActivityReports.aspx">
+                            <a href="<%= ResolveUrl("~/OSI/ActivityReports.aspx") %>">
+                                <div class="circle">
+                                    <img src="<%= ResolveUrl("~/assets/img/menu-icon01.svg") %>" alt="活動資料填報">
+                                </div>
+                                <span>活動資料填報</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                        <li runat="server" id="liImport" data-page="Import.aspx">
+                            <a href="<%= ResolveUrl("~/OSI/Import.aspx") %>">
+                                <div class="circle">
+                                    <img src="<%= ResolveUrl("~/assets/img/menu-icon02.svg") %>" alt="活動批次匯入">
+                                </div>
+                                <span>活動批次匯入</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                        <li runat="server" id="liMap" data-page="ActivityMap.aspx">
+                            <a href="<%= ResolveUrl("~/OSI/ActivityMap.aspx") %>">
+                                <div class="circle">
+                                    <img src="<%= ResolveUrl("~/assets/img/menu-icon03.svg") %>" alt="空間資訊圖台">
+                                </div>
+                                <span>空間資訊圖台</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+
+                <nav>
+                    <span class="nav-title">活動管理模組</span>
+                    <ul>
+                        <li runat="server" id="liActivityManage" data-page="ActivityManage.aspx">
+                            <a href="<%= ResolveUrl("~/OSI/ActivityManage.aspx") %>">
+                                <div class="circle">
+                                    <img src="<%= ResolveUrl("~/assets/img/menu-icon04.svg") %>" alt="活動資料管理">
+                                </div>
+                                <span>活動資料管理</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                        <li runat="server" id="liTenderQuery" data-page="PccAward.aspx">
+                            <a href="<%= ResolveUrl("~/OSI/PccAward.aspx") %>">
+                                <div class="circle">
+                                    <img src="<%= ResolveUrl("~/assets/img/menu-icon05.svg") %>" alt="政府標案查詢">
+                                </div>
+                                <span>政府標案查詢</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                        <li runat="server" id="liDashboard" data-page="Dashboard.aspx">
+                            <a href="<%= ResolveUrl("~/OSI/Dashboard.aspx") %>">
+                                <div class="circle">
+                                    <img src="<%= ResolveUrl("~/assets/img/menu-icon06.svg") %>" alt="活動儀表板">
+                                </div>
+                                <span>活動儀表板</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+
+        </div>
+
+        <!-- 右側內容 -->
+        <div class="mis-content">
+            <form runat="server">
+                <asp:ScriptManager EnablePageMethods="true" ID="ScriptManager1" runat="server" />
+                <div class="mis-container">
+                    <asp:Panel ID="preContentSection" runat="server">
+                        <!-- 系統標題(選單收合) -->
+                        <div class="close-menu-logo">
+                            <div class="column1">
+                                <img class="img-fluid" src="<%= ResolveUrl("~/assets/img/ocean-logo.png") %>" alt="logo" style="width: 180px;">
+                                <h2>海洋科學調查活動填報系統</h2>
+                            </div>
+                            <div class="column2">
+                                <img class="img-fluid" src="<%= ResolveUrl("~/assets/img/logo2.svg") %>" alt="logo" style="width: 200px; margin-left: -18px">
+                            </div>
+                        </div>
+                        <!-- page title -->
+                        <div class="d-flex justify-content-between mb-4">
+                            <div class="page-title">
+                                <asp:ContentPlaceHolder ID="Bread" runat="server" />
+                            </div>
+                            <div class="login-user">
+                                <div class="user-icon">
+                                    <i class="fa-solid fa-user"></i>
+                                </div>
+                                <div class="user-info">
+                                    <asp:Label ID="lblUserName" CssClass="user-name" runat="server" />
+                                    <asp:Label ID="lblUnit" CssClass="user-department" runat="server" />
+                                </div>
+                            </div>
+                        </div>
+                    </asp:Panel>
+                    <!-- 主內容 -->
+                    <asp:ContentPlaceHolder ID="MainContent" runat="server" />
+                </div>
+
+                <!-- 通用訊息 Modal -->
+                <div class="modal fade" id="messageModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="messageModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-md">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                            </div>
+                            <div class="modal-body">
+                                <div class="d-flex flex-column align-items-center gap-3">
+                                    <h4 class="text-blue-green fw-bold">
+                                        <span id="msgModalBody"></span>
+                                    </h4>
+                                    <div class="d-flex gap-4 flex-wrap justify-content-center">
+                                        <button type="button" class="btn btn-blue-green" data-bs-dismiss="modal">
+                                            確定</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <footer id="footerSection" runat="server">
+                <ul>
+                    <li>地址：806高雄市前鎮區成功二路25號4樓</li>
+                    <li>電話：(07)338-1810     Copyright © 海洋委員會 版權所有</li>
+                </ul>
+            </footer>
+        </div>
+
+    </div>
+</asp:Content>
+

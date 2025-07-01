@@ -1,0 +1,86 @@
+﻿<div id="GSMap-panel-layer" class="GSMap-panel">
+    <a href="javascript:void(0)" class="closebtn">&times;</a>
+    <h2>匯出</h2>
+
+    <!--頁籤-->
+    <ul id="export-tabs" class="nav nav-tabs GSMap-element-tab" role="tablist">
+        <li><a id="" class="nav-link active" data-bs-toggle="tab" href="#export-print" export-type="print">列印圖片</a></li>
+        <li><a id="" class="nav-link" data-bs-toggle="tab" href="#export-save"  export-type="save">儲存圖片</a></li>
+    </ul>
+
+    <!--區塊內容-->
+    <div class="GSMap-panel-contbox-wrap">
+        <div class="scroll-box">
+            <!--頁籤內容wrap-->
+            <div class="tab-content">
+                <!--行政區-->
+                <div class="tab-pane active" id="export-print" role="tabpanel">
+                    <div class="ImageCaptureStyle">
+                        <dl>
+                            <dt><i></i>圖名</dt>
+                            <dd>
+                                <input type="text" id="txtPrintTitle" />
+                            </dd>
+                        </dl>
+                        <dl>
+                            <dt><i></i>紙張方向</dt>
+                            <dd>
+                                <input type="radio" name="paperDirection" value="vertical" checked="checked" onclick="showPrintExtent()" />
+                                直向
+                                <input type="radio" name="paperDirection" value="horizontal" onclick="showPrintExtent()" />
+                                橫向
+                            </dd>
+                        </dl>
+                        <div class="btnBoxCenter">
+                            <input type="button" class="btn btn_print" value="列印" />
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pan fade" id="export-save" role="tabpanel">
+                    <div class="ImageCaptureStyle">
+                        <dl>
+                            <dt><i></i>圖名</dt>
+                            <dd>
+                                <input type="text" id="txtImageTitle" />
+                            </dd>
+                        </dl>
+                        <dl>
+                            <dt><i></i>圖片尺寸</dt>
+                            <dd>
+                                <input type="radio" name="capSize" value="640,480" checked="checked" />
+                                640x480
+                                <input type="radio" name="capSize" value="800,600"/>
+                                800x600
+                                <br />
+                                <input type="radio" name="capSize" value="1024,768"/>
+                                1024x768
+                            </dd>
+                        </dl>
+                        <dl>
+                            <dd>
+                                <input type="radio" name="capSize" value="custom" />
+                                自訂尺寸
+                                <input type="text" id="txtCaptureWidth" size="5" class="_custSize" onkeyup="showCaptureExtent();" />
+                                x
+                                <input type="text" id="txtCaptureHeight" size="5" class="_custSize" onkeyup="showCaptureExtent();" />
+                            </dd>
+                        </dl>
+                        <dl>
+                            <dt><i></i>圖片格式</dt>
+                            <dd>
+                                <select id="ddlImageFormat">
+                                    <option value="png">png</option>
+                                    <option value="jpg">jpeg</option>
+                                </select>
+                            </dd>
+                        </dl>
+                        <div class="btnBoxCenter">
+                            <input type="submit" class="btn btn_next" value="下一步" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="cover-bar"></div><!--隱藏捲軸用的-->
+    </div>
+</div>

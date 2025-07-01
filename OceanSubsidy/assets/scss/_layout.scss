@@ -1,0 +1,201 @@
+body {
+    font-family: 'Roboto', sans-serif;
+}
+
+.mis-layout {
+    display: grid;
+    grid-template-columns: auto 3fr;
+    height: 100dvh;
+    background-color: $neutral-200;
+    overflow-y: auto;
+
+    @media (max-width: $md) {
+        grid-template-columns: 1fr;
+    }
+    .close-menu-logo {
+        display: none;
+        padding-bottom: 20px;
+        .column1 {
+            display: flex;
+            flex-direction: column;
+            justify-content: end;
+            align-items: start;
+            gap: 8px;
+        }
+        .column2 {
+            display: flex;
+            align-items: end;
+        }
+        h2 {
+            color: #4864B9;
+            font-size: 1.375rem;
+            font-weight: bold;
+            text-shadow: 0px 4px 20px rgba(0, 0, 0, 0.25);
+        }
+    }
+}
+
+.mis-header {
+    background: linear-gradient(180deg, #D5E4FF 0%, #4069BD 35.1%, #2DC2C1 100%);
+    box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+    padding: 16px;
+    position: relative;
+    width: 300px;
+    transition: all 0.3s ease;
+    transform: translateX(0);
+    position: relative;
+    .logo {
+        img {
+            width: 100%;
+        }
+    }
+    .mobile-logo {
+        display: none;
+    }
+    h1 {
+        text-shadow: 0px 4px 20px rgba(0, 0, 0, 0.25);
+        font-size: 22px;
+        font-weight: 700;
+        line-height: 33px;
+        color: $yellow;
+        margin-top: 12px;
+    }
+    .blue-title {
+        color: $blue-purple;
+        &::before {
+            content: attr(data-storke);
+            position: absolute;
+            color: #fff;
+            -webkit-text-stroke: 2px #fff;
+            text-stroke: 2px #fff;
+            z-index: -1;
+        }
+        @media (max-width: $md) {
+            color: #fff;
+            &:before {
+                display: none;
+            }
+        }
+    }
+
+    .mobile-header {
+        .mobile-bg {
+            display: none;
+        }
+    }
+
+    @media (max-width: $md) {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 100;
+        width: 100%;
+        background: #406DBE;
+        padding:0;
+        border-radius: 0px 0px 16px 16px;
+        .mobile-header {
+            border-radius: 0px 0px 16px 16px;
+            // background: url(../img/mobile-bg.svg) no-repeat right 2vw top;
+            box-shadow: 0px 4px 10px 0px rgba(0, 0, 0, 0.10);
+            padding: 6px 16px;
+            position: relative;
+            overflow: hidden;
+            .mobile-bg {
+                display: block;
+                position: absolute;
+                right: 50px;
+                bottom: 0;
+                z-index: -1;
+            }
+        }
+        .logo {
+            display: none;
+        }
+        .mobile-logo {
+            display: block;
+        }
+        h1 {
+            margin-top: 0;
+            font-size: 1.125rem;
+            line-height: 1.2rem;
+        }
+    }
+    
+}
+
+
+
+
+@media (min-width: 769px) {
+    .mis-layout.isClose {
+        grid-template-columns: 30px auto;
+        .mis-header {
+            transform: translateX(-90%);
+            >*:not(.menu-toggle) {
+                display: none;
+            }
+        }
+        .close-menu-logo {
+            display: flex;
+            max-width: 510px;
+        }
+    }
+}
+
+
+
+.mis-content {
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.mis-container {
+    max-width: $page-width;
+    width: 100%;
+    margin: 0 auto;
+    padding: 100px 16px 32px 16px;
+    @media (min-width: 769px) {
+        padding: clamp(24px, 5vw, 40px);
+    }
+}
+
+.mis-layout.isClose{
+    .mis-container {
+        @media (min-width: 769px) {
+            padding-top: 10px;
+        }
+    }
+}
+
+footer {
+    color: $gray;
+    text-align: center;
+    padding: 16px;
+    margin-top: 60px;
+    line-height: 24px;
+}
+
+
+//資訊系統
+.mis-header {
+    &.information-system {
+        background: linear-gradient(180deg, #00796B 0.01%, #2DC2C1 100%);
+
+        .title {
+            color: #C8E6C9;
+            display: flex;
+            flex-wrap: wrap;
+            border-bottom: 1px solid #D9D9D9;
+            @media (max-width: 769px) {
+                border-bottom: none;
+                img {
+                    display: none;
+                }
+            }
+        }
+
+    }
+}
+

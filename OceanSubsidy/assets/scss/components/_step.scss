@@ -1,0 +1,209 @@
+.step {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+    .step-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        h4 {
+            border: 2px solid $blue-green;
+            border-radius: 50px;
+            background-color: #fff;
+            padding: 16px;
+            text-wrap: nowrap;
+            min-width: 280px;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: $blue-green;
+            font-weight: 700;
+            gap: 8px;
+            .step-number {
+                white-space: nowrap;
+            }
+            .step-title {
+                white-space: wrap;
+            }
+        }
+        &.active {  
+            h4 {
+                background-color: $blue-green;
+                color: #fff;
+            }
+        }
+        .icon {
+            color: $neutral-400;
+            font-size: 32px;
+        }
+
+        &:last-child {
+            .icon {
+                display: none;
+            }
+        }
+    }
+
+    @media (max-width: $md) {
+        flex-wrap: nowrap;
+        gap: 6px;
+        .step-item {
+            display: block;
+            .icon {
+                display: none;
+            }
+            h4 {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 10px 8px;
+                border-radius: 8px;
+                min-width: auto;
+                font-weight: 400;
+                line-height: 1.2;
+                .step-number {
+                    font-size: 0.875rem; 
+                }
+                .step-title {
+                    font-size: Clamp(1rem,3vw,1.125rem) ;
+                }
+            }
+        }
+    }
+}
+
+// ===================================================
+// 申請進度條 Application Step
+// ===================================================
+
+// 變數定義
+$app-step-bg: #F4FCE8;
+$app-step-active-bg: #26A69A;
+$app-step-status-bg: $dark-green2; 
+$app-step-arrow-width: 72px;
+$app-step-arrow-offset: 2px;
+$app-step-content-padding: 16px 24px;
+$app-step-label-size: 1.35rem;
+$app-step-status-size: 14px;
+
+.application-step {
+    background-color: $app-step-bg;
+    border-radius: 16px 16px 0 0;
+    overflow: hidden;
+    display: flex;
+    text-wrap: nowrap;
+    overflow-x: auto;
+    &::-webkit-scrollbar {
+        height: 10px;
+    }
+    &::-webkit-scrollbar-thumb {
+        background-color: $neutral-400;
+        border-radius: 12px;
+    }
+}
+
+// 進度條項目
+.application-step .step-item {
+    display: flex;
+    position: relative;
+    padding-right: $app-step-arrow-width;
+    margin-right: -$app-step-arrow-width;
+    
+    // 隱藏最後一個項目的箭頭
+    &:last-child {
+        &::before,
+        &::after {
+            display: none;
+        }
+    }
+}
+
+// 步驟內容容器
+.application-step .step-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: $app-step-content-padding;
+    padding-top: 24px;
+    
+}
+
+// 非第一個項目需要額外的左邊距
+.application-step .step-item:not(:first-child) {
+    .step-content {
+        padding-left: 64px;
+    }
+}
+
+// 箭頭樣式 (使用雙重偽元素創建帶邊框的箭頭效果)
+.application-step .step-item::before,
+.application-step .step-item::after {
+    content: '';
+    display: block;
+    width: $app-step-arrow-width;
+    height: 104%;
+    clip-path: polygon(67% 50%, 0 0, 0 100%);
+    position: absolute;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+}
+
+// 箭頭內層 (背景色)
+.application-step .step-item::after {
+    background-color: $app-step-bg;
+    z-index: 2;
+    right: $app-step-arrow-offset;
+}
+
+// 箭頭外層 (邊框效果)
+.application-step .step-item::before {
+    background-color: #FFFFFF;
+    z-index: 1;
+    right: -$app-step-arrow-offset;
+}
+
+// 激活狀態
+.application-step .step-item.active {
+    .step-content {
+        background-color: $app-step-active-bg;
+    }
+    
+    .step-label {
+        color: #fff;
+    }
+    
+    // 激活狀態的箭頭顏色
+    &::after {
+        background-color: $app-step-active-bg;
+    }
+    
+    &::before {
+        background-color: $app-step-bg;
+    }
+}
+
+// 步驟標籤
+.application-step .step-label {
+    font-size: $app-step-label-size;
+    font-weight: 700;
+    color: $neutral-600; // 使用現有變數 #858585
+}
+
+// 狀態標籤
+.application-step .step-status {
+    font-size: $app-step-status-size;
+    border-radius: 16px;
+    background-color: $app-step-status-bg;
+    padding: 4px 12px;
+    color: #fff;
+    
+    // 編輯中狀態
+    &.edit {
+        background-color: #fff;
+        color: $app-step-active-bg;
+    }
+}

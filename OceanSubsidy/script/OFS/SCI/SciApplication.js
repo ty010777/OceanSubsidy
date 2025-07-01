@@ -1,0 +1,340 @@
+// 全域變數
+const SciApplication = {
+    //#region 初始化
+    init: function () {
+        this.setupCharacterCount();
+        this.setupFormValidation();
+        this.bindEvents();
+        KeywordManager.init();
+    },
+    //#endregion
+
+    //#region 字數統計功能
+    setupCharacterCount: function () {
+        const textareas = document.querySelectorAll('textarea[data-max-length]');
+        textareas.forEach(textarea => {
+            const maxLength = parseInt(textarea.getAttribute('data-max-length'));
+            const charCountDiv = textarea.parentNode.querySelector('.char-count');
+
+            if (charCountDiv) {
+                const updateCount = () => {
+                    const currentLength = textarea.value.length;
+                    const percentage = (currentLength / maxLength) * 100;
+
+                    charCountDiv.innerHTML = `已輸入 ${currentLength} 個字數 (限${maxLength}字)`;
+
+                    // 更新樣式
+                    charCountDiv.className = 'char-count';
+                    if (percentage >= 100) {
+                        charCountDiv.classList.add('danger');
+                        textarea.classList.add('field-error');
+                    } else if (percentage >= 80) {
+                        charCountDiv.classList.add('warning');
+                        textarea.classList.remove('field-error');
+                    } else {
+                        textarea.classList.remove('field-error');
+                    }
+                };
+
+                textarea.addEventListener('input', updateCount);
+                updateCount(); // 初始化
+            }
+        });
+    },
+    //#endregion
+
+    //#region 表單驗證
+    setupFormValidation: function () {
+        const requiredFields = document.querySelectorAll('input[required], textarea[required], select[required]');
+        requiredFields.forEach(field => {
+            field.addEventListener('blur', () => {
+                this.validateField(field);
+            });
+        });
+    },
+
+    validateField: function (field) {
+        const isValid = field.value.trim() !== '';
+        field.classList.toggle('field-error', !isValid);
+        field.classList.toggle('field-success', isValid);
+        return isValid;
+    },
+    //#endregion
+
+    //#region 事件綁定
+    bindEvents: function () {
+        // 綁定「完成本頁，下一步」按鈕的點擊事件
+        const submitButton = document.querySelector('input[id*="btnSubmit"]');
+        if (submitButton) {
+            submitButton.addEventListener('click', (e) => {
+                if (!this.validateSubmitForm()) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        }
+    },
+
+    validateForm: function () {
+        // 這裡可以添加額外的表單驗證邏輯
+        return true;
+    },
+
+    // 驗證提交表單（完成本頁，下一步）
+    validateSubmitForm: function () {
+        // 檢查聲明書是否已勾選
+        const agreeCheckbox = document.querySelector('input[id*="chkAgreeTerms"]');
+        if (agreeCheckbox && !agreeCheckbox.checked) {
+            alert('請勾選「我已了解並同意」聲明書內容後，才能進行下一步。');
+            return false;
+        }
+        
+        return this.validateForm();
+    },
+    //#endregion
+
+    //#region 載入狀態
+    showLoading: function (element) {
+        element.classList.add('loading');
+        element.disabled = true;
+    },
+
+    hideLoading: function (element) {
+        element.classList.remove('loading');
+        element.disabled = false;
+    }
+    //#endregion
+};
+
+//#region 關鍵字管理器
+const KeywordManager = {
+    keywordCounter: 0,
+    minKeywords: 3,
+    
+    //#region 初始化
+    init: function () {
+        this.initializeDefaultKeywords();
+        this.bindEvents();
+    },
+
+    // 初始化預設的3個關鍵字欄位
+    initializeDefaultKeywords: function() {
+        const container = document.getElementById('keywordsContainer');
+        if (!container) {
+            return;
+        }
+
+        // 清空容器
+        container.innerHTML = '';
+        this.keywordCounter = 0;
+
+        // 建立預設的3個關鍵字欄位
+        for (let i = 0; i < this.minKeywords; i++) {
+            this.addKeywordField('', '');
+        }
+    },
+    //#endregion
+
+    //#region 事件綁定
+    bindEvents: function () {
+        const addButton = document.getElementById('btnAddKeyword');
+        if (addButton) {
+            addButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.addKeywordField();
+            });
+        }
+
+        // 綁定提交按鈕，確保在提交前更新隱藏欄位
+        const submitButtons = document.querySelectorAll('input[id*="btnTempSave"], input[id*="btnSubmit"]');
+        submitButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                this.updateHiddenField();
+            });
+        });
+    },
+    //#endregion
+
+    //#region 欄位管理
+    // 新增關鍵字欄位
+    addKeywordField: function (chineseValue = '', englishValue = '') {
+        const container = document.getElementById('keywordsContainer');
+        if (!container) return;
+
+        this.keywordCounter++;
+        const keywordId = this.keywordCounter;
+
+        const keywordRow = document.createElement('div');
+        keywordRow.className = 'keyword-row row g-2';
+        keywordRow.dataset.keywordId = keywordId;
+
+        const isRequired = this.keywordCounter <= this.minKeywords;
+        const requiredStar = isRequired ? '<span class="text-pink">*</span>' : '';
+
+        keywordRow.innerHTML = `
+            <div class="col-12 col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text" style="width: 70px;">
+                        ${requiredStar}中文
+                    </span>
+                    <input type="text" 
+                           class="form-control keyword-ch" 
+                           placeholder="請輸入" 
+                           value="${chineseValue}"
+                           data-keyword-id="${keywordId}"
+                           ${isRequired ? 'required' : ''}>
+                </div>
+            </div>
+            <div class="col-12 col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text" style="width: 70px;">
+                        ${requiredStar}英文
+                    </span>
+                    <input type="text" 
+                           class="form-control keyword-en" 
+                           placeholder="請輸入" 
+                           value="${englishValue}"
+                           data-keyword-id="${keywordId}"
+                           ${isRequired ? 'required' : ''}>
+                    ${!isRequired ? `
+                    <button type="button" 
+                            class="btn btn-outline-danger btn-sm delete-keyword" 
+                            data-keyword-id="${keywordId}"
+                            title="刪除此關鍵字">
+                        <i class="fas fa-trash"></i>
+                    </button>` : ''}
+                </div>
+            </div>
+        `;
+
+        container.appendChild(keywordRow);
+
+        // 綁定輸入事件
+        const chInput = keywordRow.querySelector('.keyword-ch');
+        const enInput = keywordRow.querySelector('.keyword-en');
+        
+        chInput.addEventListener('input', () => this.updateHiddenField());
+        enInput.addEventListener('input', () => this.updateHiddenField());
+
+        // 綁定刪除按鈕事件
+        const deleteBtn = keywordRow.querySelector('.delete-keyword');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', () => this.removeKeywordField(keywordId));
+        }
+
+        this.updateHiddenField();
+    },
+
+    // 移除關鍵字欄位
+    removeKeywordField: function (keywordId) {
+        const keywordRow = document.querySelector(`[data-keyword-id="${keywordId}"]`);
+        if (keywordRow) {
+            keywordRow.remove();
+            this.updateHiddenField();
+        }
+    },
+    //#endregion
+
+    //#region 資料載入
+    // 載入關鍵字資料
+    loadFromData: function (keywordsArray) {
+
+        if (!keywordsArray || !Array.isArray(keywordsArray)) {
+            this.initializeDefaultKeywords();
+            return;
+        }
+
+        const container = document.getElementById('keywordsContainer');
+        if (!container) return;
+
+        // 清空容器
+        container.innerHTML = '';
+        this.keywordCounter = 0;
+
+        // 確保至少有3個關鍵字欄位
+        const keywordsToLoad = Math.max(keywordsArray.length, this.minKeywords);
+
+        for (let i = 0; i < keywordsToLoad; i++) {
+            const keyword = keywordsArray[i] || { chinese: '', english: '' };
+            const chineseValue = keyword.chinese || keyword.KeyWordTw || '';
+            const englishValue = keyword.english || keyword.KeyWordEn || '';
+            
+            this.addKeywordField(chineseValue, englishValue);
+        }
+
+    },
+    //#endregion
+
+    //#region 資料處理
+    // 收集關鍵字資料
+    getKeywordsData: function() {
+        const keywords = [];
+        const keywordRows = document.querySelectorAll('.keyword-row');
+        
+        keywordRows.forEach((row) => {
+            const chInput = row.querySelector('.keyword-ch');
+            const enInput = row.querySelector('.keyword-en');
+            
+            if (chInput && enInput) {
+                const chValue = chInput.value ? chInput.value.trim() : '';
+                const enValue = enInput.value ? enInput.value.trim() : '';
+                
+                keywords.push({
+                    chinese: chValue,
+                    english: enValue
+                });
+            }
+        });
+        
+        return keywords;
+    },
+
+    // 更新隱藏欄位
+    updateHiddenField: function () {
+        const keywordsData = this.getKeywordsData();
+        
+        // 直接用 ASP.NET 生成的 ClientID 查找隱藏欄位
+        let hiddenField = document.querySelector('input[id*="hiddenKeywordsData"]');
+        
+        if (hiddenField) {
+            const jsonString = JSON.stringify(keywordsData);
+            hiddenField.value = jsonString;
+        }
+        
+        return keywordsData;
+    },
+    //#endregion
+
+    //#region 驗證
+    // 驗證關鍵字資料
+    validateKeywords: function() {
+        const keywords = this.getKeywordsData();
+        const errors = [];
+
+        if (keywords.length < this.minKeywords) {
+            errors.push(`至少需要輸入${this.minKeywords}個關鍵字`);
+        }
+
+        keywords.forEach((keyword, index) => {
+            if (!keyword.chinese || !keyword.english) {
+                errors.push(`第${index + 1}個關鍵字需要同時填寫中文和英文`);
+            }
+        });
+
+        return {
+            isValid: errors.length === 0,
+            errors: errors,
+            keywords: keywords
+        };
+    },
+    //#endregion
+
+};
+window.KeywordManager = KeywordManager;
+//#endregion
+
+
+// 頁面載入完成後初始化
+document.addEventListener('DOMContentLoaded', function () {
+    SciApplication.init();
+});

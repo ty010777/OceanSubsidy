@@ -1,0 +1,107 @@
+.notice {
+    display: flex;
+    align-items: center;
+    background-color: #F4FCE8;
+    border-radius: 8px;
+    padding: 24px 16px;
+    position: relative;
+    overflow: hidden;
+    
+    // 左側綠色邊條
+    &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 10px;
+        background-color: $dark-green;
+    }
+    
+    .notice-content {
+        flex: 1;
+        margin-left: 16px;
+        
+        .notice-title {
+            font-size: 1rem;
+            font-weight: 500;
+            margin: 0;
+        }
+    }
+    
+    .notice-action {
+        .btn-link {
+            color: #037F72;
+            font-size: 0.875rem;
+            text-decoration: underline;
+            padding: 4px 8px;
+            &:hover {
+                color: #000;
+            }
+        }
+    }
+    
+    // 變化樣式
+    &.notice-warning {
+        &::before {
+            background-color: $yellow;
+        }
+        
+        .notice-action .btn-link {
+            color: #D68910;
+            
+            &:hover {
+                background-color: rgba(#D68910, 0.1);
+                color: #B7750F;
+            }
+        }
+    }
+    
+    &.notice-error {
+        &::before {
+            background-color: $pink;
+        }
+        
+        .notice-action .btn-link {
+            color: $pink;
+            
+            &:hover {
+                background-color: rgba($pink, 0.1);
+                color: #E44A7A;
+            }
+        }
+    }
+    
+    &.notice-success {
+        &::before {
+            background-color: $green;
+        }
+        
+        .notice-action .btn-link {
+            color: $green;
+            
+            &:hover {
+                background-color: rgba($green, 0.1);
+                color: #28B5B3;
+            }
+        }
+    }
+    
+    // 響應式設計
+    @media (max-width: $md) {
+        padding: 12px 16px;
+        
+        .notice-content {
+            margin-left: 12px;
+            
+            .notice-date,
+            .notice-title {
+                font-size: 0.875rem;
+            }
+        }
+        
+        .notice-action .btn-link {
+            font-size: 0.8125rem;
+        }
+    }
+} 

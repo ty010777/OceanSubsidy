@@ -1,0 +1,1167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="http://tempuri.org/" xmlns:s="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" targetNamespace="http://tempuri.org/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+
+&lt;style&gt;
+			.ServiceDesc{
+			    color:rgb(12, 146, 39);
+				font-weight:bold;
+                font-size:20px;
+                font-style:normal;
+                text-decoration:none;
+
+			}
+			.important{
+				color:red;
+				font-weight:bold;
+
+			}
+			.Grammar{
+				border:1px solid gray;
+				border-collapse: collapse;
+				width:90%;
+                margin-top:10px;
+                margin-bottom:20px;
+			}
+			.Grammar tr{
+                height:30px
+			}
+			.Grammar td{
+				border:1px solid gray;
+				padding:3px;
+				text-align:left;
+				text-wrap:normal;
+			}
+
+			.Grammar caption{
+
+				border: 1px solid #888;
+				color:#000;
+				background-color:#ccc;
+				font-weight:bold; 
+				padding:5px;
+				font-size:14pt;
+				text-align:left;
+			}		
+			
+			.tbhead{
+				background-color:gray;
+				color:#FFF;
+				text-align:left;
+			}
+
+&lt;/style&gt;&lt;a class='ServiceDesc' style='text-decoration:none;color:rgb(12, 146, 39);' href='#'&gt;門牌位置比對服務：在驗證授權通過後，進行門牌位置比對&lt;/a&gt;</wsdl:documentation>
+  <wsdl:types>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://tempuri.org/">
+      <s:element name="QueryAddr">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="oAPPId" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="oAPIKey" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="oAddress" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="oSRS" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="oFuzzyType" type="s:int" />
+            <s:element minOccurs="0" maxOccurs="1" name="oResultDataType" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="oFuzzyBuffer" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="oIsOnlyFullMatch" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="oIsLockCounty" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="oIsLockTown" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="oIsLockVillage" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="oIsLockRoadSection" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="oIsLockLane" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="oIsLockAlley" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="oIsLockArea" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="oIsSameNumber_SubNumber" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="oCanIgnoreVillage" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="oCanIgnoreNeighborhood" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="oReturnMaxCount" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="QueryAddrResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="QueryAddrResult" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="string" nillable="true" type="s:string" />
+    </s:schema>
+  </wsdl:types>
+  <wsdl:message name="QueryAddrSoapIn">
+    <wsdl:part name="parameters" element="tns:QueryAddr" />
+  </wsdl:message>
+  <wsdl:message name="QueryAddrSoapOut">
+    <wsdl:part name="parameters" element="tns:QueryAddrResponse" />
+  </wsdl:message>
+  <wsdl:message name="QueryAddrHttpGetIn">
+    <wsdl:part name="oAPPId" type="s:string" />
+    <wsdl:part name="oAPIKey" type="s:string" />
+    <wsdl:part name="oAddress" type="s:string" />
+    <wsdl:part name="oSRS" type="s:string" />
+    <wsdl:part name="oFuzzyType" type="s:string" />
+    <wsdl:part name="oResultDataType" type="s:string" />
+    <wsdl:part name="oFuzzyBuffer" type="s:string" />
+    <wsdl:part name="oIsOnlyFullMatch" type="s:string" />
+    <wsdl:part name="oIsLockCounty" type="s:string" />
+    <wsdl:part name="oIsLockTown" type="s:string" />
+    <wsdl:part name="oIsLockVillage" type="s:string" />
+    <wsdl:part name="oIsLockRoadSection" type="s:string" />
+    <wsdl:part name="oIsLockLane" type="s:string" />
+    <wsdl:part name="oIsLockAlley" type="s:string" />
+    <wsdl:part name="oIsLockArea" type="s:string" />
+    <wsdl:part name="oIsSameNumber_SubNumber" type="s:string" />
+    <wsdl:part name="oCanIgnoreVillage" type="s:string" />
+    <wsdl:part name="oCanIgnoreNeighborhood" type="s:string" />
+    <wsdl:part name="oReturnMaxCount" type="s:string" />
+  </wsdl:message>
+  <wsdl:message name="QueryAddrHttpGetOut">
+    <wsdl:part name="Body" element="tns:string" />
+  </wsdl:message>
+  <wsdl:message name="QueryAddrHttpPostIn">
+    <wsdl:part name="oAPPId" type="s:string" />
+    <wsdl:part name="oAPIKey" type="s:string" />
+    <wsdl:part name="oAddress" type="s:string" />
+    <wsdl:part name="oSRS" type="s:string" />
+    <wsdl:part name="oFuzzyType" type="s:string" />
+    <wsdl:part name="oResultDataType" type="s:string" />
+    <wsdl:part name="oFuzzyBuffer" type="s:string" />
+    <wsdl:part name="oIsOnlyFullMatch" type="s:string" />
+    <wsdl:part name="oIsLockCounty" type="s:string" />
+    <wsdl:part name="oIsLockTown" type="s:string" />
+    <wsdl:part name="oIsLockVillage" type="s:string" />
+    <wsdl:part name="oIsLockRoadSection" type="s:string" />
+    <wsdl:part name="oIsLockLane" type="s:string" />
+    <wsdl:part name="oIsLockAlley" type="s:string" />
+    <wsdl:part name="oIsLockArea" type="s:string" />
+    <wsdl:part name="oIsSameNumber_SubNumber" type="s:string" />
+    <wsdl:part name="oCanIgnoreVillage" type="s:string" />
+    <wsdl:part name="oCanIgnoreNeighborhood" type="s:string" />
+    <wsdl:part name="oReturnMaxCount" type="s:string" />
+  </wsdl:message>
+  <wsdl:message name="QueryAddrHttpPostOut">
+    <wsdl:part name="Body" element="tns:string" />
+  </wsdl:message>
+  <wsdl:portType name="WSQueryAddrSoap">
+    <wsdl:operation name="QueryAddr">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+
+&lt;style&gt;
+			.ServiceDesc{
+			    color:rgb(12, 146, 39);
+				font-weight:bold;
+                font-size:20px;
+                font-style:normal;
+                text-decoration:none;
+
+			}
+			.important{
+				color:red;
+				font-weight:bold;
+
+			}
+			.Grammar{
+				border:1px solid gray;
+				border-collapse: collapse;
+				width:90%;
+                margin-top:10px;
+                margin-bottom:20px;
+			}
+			.Grammar tr{
+                height:30px
+			}
+			.Grammar td{
+				border:1px solid gray;
+				padding:3px;
+				text-align:left;
+				text-wrap:normal;
+			}
+
+			.Grammar caption{
+
+				border: 1px solid #888;
+				color:#000;
+				background-color:#ccc;
+				font-weight:bold; 
+				padding:5px;
+				font-size:14pt;
+				text-align:left;
+			}		
+			
+			.tbhead{
+				background-color:gray;
+				color:#FFF;
+				text-align:left;
+			}
+
+&lt;/style&gt;
+&lt;table class='Grammar' &gt;
+    &lt;caption &gt;呼叫門牌位置比對服務，需傳入的參數如下&lt;/caption&gt;
+
+    &lt;tr  &gt;
+        &lt;td class='tbhead'&gt;參數名稱&lt;/td&gt;
+        &lt;td class='tbhead'&gt;參數說明&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oAPPId&lt;/td&gt;
+        &lt;td&gt;應用程式識別碼(APPId)，這個值是由使用API的使用者在申請成功後所取得，必須與應用程式介接驗證碼(APIKey)成對使用，這個值是由使用API的使用者在呼叫API時所需傳入&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oAPIKey&lt;/td&gt;
+        &lt;td&gt;應用程式介接驗證碼(APIKey)，這個值是由使用API的使用者在申請成功後所取得，必須與應用程式識別碼(APPId)成對使用，這個值是由使用API的使用者在呼叫API時所需傳入&lt;/td&gt;
+    &lt;/tr&gt;
+     &lt;tr&gt;
+        &lt;td&gt;oAddress&lt;/td&gt;
+        &lt;td&gt;所要查詢的門牌地址&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oSRS&lt;/td&gt;
+        &lt;td&gt;回傳的座標系統，允許傳入的座標系統代碼為：EPSG:4326、EPSG:3825、EPSG:3826、EPSG:3827、EPSG:3828&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oFuzzyType&lt;/td&gt;
+        &lt;td&gt;&lt;pre style="line-height:1.9;"&gt;目前有下列三種模糊比對的機制:
+    (一) 最近門牌號機制：先找最近且大於輸入的門牌號，找不到則找最近且小於輸入的門牌號；代碼為 0
+    (二) 單雙號機制：先找最近且大於輸入的單號或雙號門牌號，找不到則找最近且小於輸入的單號或雙號門牌號；代碼為 1
+    (三) 單雙號機制 + 最近門牌號機制：當單雙號機制找不到門牌時，就改採用最近門牌號機制；代碼為 2&lt;/pre&gt;
+        &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oResultDataType&lt;/td&gt;
+        &lt;td&gt;回傳的資料格式，允許傳入的代碼為：JSON、XML&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oFuzzyBuffer&lt;/td&gt;
+        &lt;td&gt;模糊比對回傳門牌號的許可誤差範圍，輸入格式為正整數，&lt;span style="color:red;"&gt;如輸入 0 則代表不限制誤差範圍&lt;/span&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oIsOnlyFullMatch&lt;/td&gt;
+        &lt;td&gt;是否只進行完全比對，允許傳入的值為：true、false，&lt;span style="color:red;"&gt;如輸入 true ，模糊比對機制將不被使用&lt;/span&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oIsLockCounty&lt;/td&gt;
+        &lt;td&gt;是否鎖定縣市，允許傳入的值為：true、false，如輸入 true ，則代表查詢結果中的 [縣市] 要與所輸入的門牌地址中的 [縣市] 完全相同&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oIsLockTown&lt;/td&gt;
+        &lt;td&gt;是否鎖定鄉鎮市區，允許傳入的值為：true、false，如輸入 true ，則代表查詢結果中的 [鄉鎮市區] 要與所輸入的門牌地址中的 [鄉鎮市區] 完全相同&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oIsLockVillage&lt;/td&gt;
+        &lt;td&gt;是否鎖定村里，允許傳入的值為：true、false，如輸入 true ，則代表查詢結果中的 [村里] 要與所輸入的門牌地址中的 [村里] 完全相同&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oIsLockRoadSection&lt;/td&gt;
+        &lt;td&gt;是否鎖定路段，允許傳入的值為：true、false，如輸入 true ，則代表查詢結果中的 [路段] 要與所輸入的門牌地址中的 [路段] 完全相同&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oIsLockLane&lt;/td&gt;
+        &lt;td&gt;是否鎖定巷，允許傳入的值為：true、false，如輸入 true ，則代表查詢結果中的 [巷] 要與所輸入的門牌地址中的 [巷] 完全相同&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oIsLockAlley&lt;/td&gt;
+        &lt;td&gt;是否鎖定弄，允許傳入的值為：true、false，如輸入 true ，則代表查詢結果中的 [弄] 要與所輸入的門牌地址中的 [弄] 完全相同&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oIsLockArea&lt;/td&gt;
+        &lt;td&gt;是否鎖定地區，允許傳入的值為：true、fals，如輸入 true ，則代表查詢結果中的 [地區] 要與所輸入的門牌地址中的 [地區] 完全相同&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oIsSameNumber_SubNumber&lt;/td&gt;
+        &lt;td&gt;號之、之號是否視為相同，允許傳入的值為：true、false&lt;/td&gt;
+    &lt;/tr&gt;
+
+    &lt;tr&gt;
+        &lt;td&gt;oCanIgnoreVillage&lt;/td&gt;
+        &lt;td&gt;找不時是否可忽略村里，允許傳入的值為：true、false&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oCanIgnoreNeighborhood&lt;/td&gt;
+        &lt;td&gt;找不時是否可忽略鄰，允許傳入的值為：true、false&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oReturnMaxCount&lt;/td&gt;
+        &lt;td&gt;如為多筆時，限制回傳最大筆數，輸入格式為正整數，&lt;span style="color:red;"&gt;如輸入 0 則代表不限制回傳筆數&lt;/span&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+
+
+&lt;/table&gt;
+&lt;div&gt;
+&lt;font style='color:#07a;font-size:14pt;font-weight:bold;'&gt;回傳資訊格式為SOAP:XML或JSON&lt;/font&gt;
+&lt;br/&gt;&lt;br/&gt;
+&lt;div&gt;
+&lt;div&gt;&lt;font style='color:#07d;font-size:15pt;font-weight:bold;'&gt;JSON格式&lt;/font&gt;&lt;/div&gt;
+&lt;br/&gt;&lt;br/&gt;
+&lt;div&gt;&lt;pre&gt;{
+    Info: [
+            {
+              InAddress: "臺北市中山區行政里1鄰松江路469巷4號",
+              InSRS: "EPSG:3826",
+              InFuzzyType: "最近門牌號機制",
+              InFuzzyBuffer: "0",
+              InIsOnlyFullMatch: "False",
+              InIsLockCounty: "False",
+              InIsLockTown: "False",
+              InIsLockVillage: "False",
+              InIsLockRoadSection: "False",
+              InIsLockLane: "False",
+              InIsLockAlley: "False",
+              InIsLockArea "False",
+              InIsSameNumber_SubNumber: "True",
+              InCanIgnoreVillage: "True",
+              InCanIgnoreNeighborhood: "True",
+              InReturnMaxCount: "0",
+              OutTotal: "1",
+              OutMatchType: "完全比對",
+              OutMatchCode: "111110100001(+0)",
+              OutTraceInfo: "[臺北市]\t完全比對找到符合的門牌地址"
+
+            }
+    ],
+    AddressList: [
+            {
+                FULL_ADDR: "臺北市中山區行政里1鄰松江路469巷4號",
+                COUNTY: "臺北市",
+                TOWN: "中山區",
+                VILLAGE: "行政里",
+                NEIGHBORHOOD: "1鄰",
+                ROAD: "松江路",
+                SECTION: "",
+                LANE: "469巷",
+                ALLEY: "",
+                SUB_ALLEY: "",
+                TONG: "",
+                NUMBER: "4號",
+                X: 303891.5427,
+                Y: 2773226.674
+            }
+    ]
+}&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;br/&gt;&lt;br/&gt;
+&lt;div&gt;
+&lt;div&gt;&lt;font style='color:#07d;font-size:15pt;font-weight:bold;'&gt;JSON格式說明&lt;/font&gt;&lt;/div&gt;
+&lt;br/&gt;&lt;br/&gt;
+&lt;div&gt;&lt;pre&gt;{
+    回傳資訊: [
+            {
+              輸入資料: "臺北市中山區行政里1鄰松江路469巷4號",
+              回傳坐標系統: "EPSG:3826",
+              比對機制: "最近門牌號機制",
+              模糊比對的容許誤差範圍(N號): "0",
+              是否只進行完全比對: "False",
+              是否鎖定縣市: "False",
+              是否鎖定鄉鎮市區: "False",
+              是否鎖定村里: "False",
+              是否鎖定路名: "False",
+              是否鎖定巷: "False",
+              是否鎖定弄: "False",
+              是否鎖定地區 "False",
+              號之、之號是否視為相同: "True",
+              找不時是否可忽略村里: "True",
+              找不時是否可忽略鄰: "True",
+              如為多筆時，限制回傳最大筆數: "0",
+              本次回傳筆數: "1",
+              比對結果類型: "完全比對",
+              比對結果代碼: "111110100001(+0)",
+              比對追蹤訊息: "[臺北市]\t完全比對找到符合的門牌地址"
+            }
+    ],
+    門牌清單: [
+            {
+              "完整地址": "臺北市中山區行政里1鄰松江路469巷4號",
+              "縣市": "臺北市",
+              "鄉鎮市區": "中山區",
+              "村里": "行政里",
+              "鄰": "1鄰",
+              "大道路街": "松江路",
+              "段": "",
+              "巷": "469巷",
+              "弄": "",
+              "衖": "",
+              "衕": "",
+              "門牌號碼": "4號",
+              "X坐標": 303891.5427000000,
+              "Y坐標": 2773226.6740000000
+            }
+    ]
+}&lt;/pre&gt;&lt;/div&gt;
+
+&lt;/div&gt;
+
+&lt;br/&gt;&lt;br/&gt;
+&lt;br/&gt;&lt;br/&gt;
+&lt;div&gt;
+&lt;div&gt;&lt;font style='color:#07d;font-size:15pt;font-weight:bold;'&gt;XML格式&lt;/font&gt;&lt;/div&gt;
+&lt;br/&gt;&lt;br/&gt;
+&lt;div&gt;&lt;pre&gt;&amp;lt;AddressList InAddress="臺北市中山區行政里1鄰松江路469巷4號" InSRS="EPSG:3826" InFuzzyType="最近門牌號機制" InFuzzyBuffer="0" InIsOnlyFullMatch="False" InIsLockCounty="False" InIsLockTown="False" InIsLockVillage="False" InIsLockRoadSection="False" InIsLockLane="False" InIsLockAlley="False" InIsLockArea="False" InIsSameNumber_SubNumber="True" InCanIgnoreVillage="True" InCanIgnoreNeighborhood="True" InReturnMaxCount="0" OutTotal="1" OutMatchType="完全比對" OutMatchCode="111110100001(+0)" OutTraceInfo="[臺北市]	完全比對找到符合的門牌地址" &amp;gt;
+  &amp;lt;Address&amp;gt;
+    &amp;lt;FULL_ADDR&amp;gt;臺北市中山區行政里1鄰松江路469巷4號&amp;lt;/FULL_ADDR&amp;gt;
+    &amp;lt;COUNTY&amp;gt;臺北市&amp;lt;/COUNTY&amp;gt;
+    &amp;lt;TOWN&amp;gt;中山區&amp;lt;/TOWN&amp;gt;
+    &amp;lt;VILLAGE&amp;gt;行政里&amp;lt;/VILLAGE&amp;gt;
+    &amp;lt;NEIGHBORHOOD&amp;gt;1鄰&amp;lt;/NEIGHBORHOOD&amp;gt;
+    &amp;lt;ROAD&amp;gt;松江路&amp;lt;/ROAD&amp;gt;
+    &amp;lt;SECTION /&amp;gt;
+    &amp;lt;LANE&amp;gt;469巷&amp;lt;/LANE&amp;gt;
+    &amp;lt;ALLEY /&amp;gt;
+    &amp;lt;SUB_ALLEY /&amp;gt;
+    &amp;lt;TONG /&amp;gt;
+    &amp;lt;NUMBER&amp;gt;4號&amp;lt;/NUMBER&amp;gt;
+    &amp;lt;X&amp;gt;303891.5427000000&amp;lt;/X&amp;gt;
+    &amp;lt;Y&amp;gt;2773226.6740000000&amp;lt;/Y&amp;gt;
+  &amp;lt;/Address&amp;gt;
+&amp;lt;/AddressList&amp;gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;br/&gt;&lt;br/&gt;
+&lt;div&gt;
+
+&lt;div&gt;&lt;font style='color:#07d;font-size:15pt;font-weight:bold;'&gt;XML格式說明&lt;/font&gt;&lt;/div&gt;
+&lt;br/&gt;&lt;br/&gt;
+&lt;div&gt;
+&lt;pre&gt;&amp;lt;門牌清單 輸入資料="臺北市中山區行政里1鄰松江路469巷4號" 回傳坐標系統="EPSG:3826" 比對機制="最近門牌號機制" 模糊比對的容許誤差範圍(N號)="0" 是否只進行完全比對="False" 是否鎖定縣市="False" 是否鎖定鄉鎮市區="False" 是否鎖定村里="False" 是否鎖定路名="False" 是否鎖定巷="False" 是否鎖定弄="False" 是否鎖定地區="False" 號之、之號是否視為相同="True" 找不時是否可忽略村里="True" 找不時是否可忽略鄰="True" 如為多筆時，限制回傳最大筆數="0" 本次回傳筆數="1" 比對結果類型="完全比對" 比對結果代碼="111110100001(+0)" 比對追蹤訊息="[臺北市]	完全比對找到符合的門牌地址" &amp;gt;
+  &amp;lt;門牌&amp;gt;
+    &amp;lt;完整地址&amp;gt;臺北市中山區行政里1鄰松江路469巷4號&amp;lt;/完整地址&amp;gt;
+    &amp;lt;縣市&amp;gt;臺北市&amp;lt;/縣市&amp;gt;
+    &amp;lt;鄉鎮市區&amp;gt;中山區&amp;lt;/鄉鎮市區&amp;gt;
+    &amp;lt;村里&amp;gt;行政里&amp;lt;/村里&amp;gt;
+    &amp;lt;鄰&amp;gt;1鄰&amp;lt;/鄰&amp;gt;
+    &amp;lt;大道路街&amp;gt;松江路&amp;lt;/大道路街&amp;gt;
+    &amp;lt;段 /&amp;gt;
+    &amp;lt;巷&amp;gt;469巷&amp;lt;/巷&amp;gt;
+    &amp;lt;弄 /&amp;gt;
+    &amp;lt;衖 /&amp;gt;
+    &amp;lt;衕 /&amp;gt;
+    &amp;lt;門牌號碼&amp;gt;4號&amp;lt;/門牌號碼&amp;gt;
+    &amp;lt;X坐標&amp;gt;303891.5427000000&amp;lt;/X坐標&amp;gt;
+    &amp;lt;Y坐標&amp;gt;2773226.6740000000&amp;lt;/Y坐標&amp;gt;
+  &amp;lt;/門牌&amp;gt;
+&amp;lt;/門牌清單&amp;gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+</wsdl:documentation>
+      <wsdl:input message="tns:QueryAddrSoapIn" />
+      <wsdl:output message="tns:QueryAddrSoapOut" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:portType name="WSQueryAddrHttpGet">
+    <wsdl:operation name="QueryAddr">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+
+&lt;style&gt;
+			.ServiceDesc{
+			    color:rgb(12, 146, 39);
+				font-weight:bold;
+                font-size:20px;
+                font-style:normal;
+                text-decoration:none;
+
+			}
+			.important{
+				color:red;
+				font-weight:bold;
+
+			}
+			.Grammar{
+				border:1px solid gray;
+				border-collapse: collapse;
+				width:90%;
+                margin-top:10px;
+                margin-bottom:20px;
+			}
+			.Grammar tr{
+                height:30px
+			}
+			.Grammar td{
+				border:1px solid gray;
+				padding:3px;
+				text-align:left;
+				text-wrap:normal;
+			}
+
+			.Grammar caption{
+
+				border: 1px solid #888;
+				color:#000;
+				background-color:#ccc;
+				font-weight:bold; 
+				padding:5px;
+				font-size:14pt;
+				text-align:left;
+			}		
+			
+			.tbhead{
+				background-color:gray;
+				color:#FFF;
+				text-align:left;
+			}
+
+&lt;/style&gt;
+&lt;table class='Grammar' &gt;
+    &lt;caption &gt;呼叫門牌位置比對服務，需傳入的參數如下&lt;/caption&gt;
+
+    &lt;tr  &gt;
+        &lt;td class='tbhead'&gt;參數名稱&lt;/td&gt;
+        &lt;td class='tbhead'&gt;參數說明&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oAPPId&lt;/td&gt;
+        &lt;td&gt;應用程式識別碼(APPId)，這個值是由使用API的使用者在申請成功後所取得，必須與應用程式介接驗證碼(APIKey)成對使用，這個值是由使用API的使用者在呼叫API時所需傳入&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oAPIKey&lt;/td&gt;
+        &lt;td&gt;應用程式介接驗證碼(APIKey)，這個值是由使用API的使用者在申請成功後所取得，必須與應用程式識別碼(APPId)成對使用，這個值是由使用API的使用者在呼叫API時所需傳入&lt;/td&gt;
+    &lt;/tr&gt;
+     &lt;tr&gt;
+        &lt;td&gt;oAddress&lt;/td&gt;
+        &lt;td&gt;所要查詢的門牌地址&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oSRS&lt;/td&gt;
+        &lt;td&gt;回傳的座標系統，允許傳入的座標系統代碼為：EPSG:4326、EPSG:3825、EPSG:3826、EPSG:3827、EPSG:3828&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oFuzzyType&lt;/td&gt;
+        &lt;td&gt;&lt;pre style="line-height:1.9;"&gt;目前有下列三種模糊比對的機制:
+    (一) 最近門牌號機制：先找最近且大於輸入的門牌號，找不到則找最近且小於輸入的門牌號；代碼為 0
+    (二) 單雙號機制：先找最近且大於輸入的單號或雙號門牌號，找不到則找最近且小於輸入的單號或雙號門牌號；代碼為 1
+    (三) 單雙號機制 + 最近門牌號機制：當單雙號機制找不到門牌時，就改採用最近門牌號機制；代碼為 2&lt;/pre&gt;
+        &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oResultDataType&lt;/td&gt;
+        &lt;td&gt;回傳的資料格式，允許傳入的代碼為：JSON、XML&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oFuzzyBuffer&lt;/td&gt;
+        &lt;td&gt;模糊比對回傳門牌號的許可誤差範圍，輸入格式為正整數，&lt;span style="color:red;"&gt;如輸入 0 則代表不限制誤差範圍&lt;/span&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oIsOnlyFullMatch&lt;/td&gt;
+        &lt;td&gt;是否只進行完全比對，允許傳入的值為：true、false，&lt;span style="color:red;"&gt;如輸入 true ，模糊比對機制將不被使用&lt;/span&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oIsLockCounty&lt;/td&gt;
+        &lt;td&gt;是否鎖定縣市，允許傳入的值為：true、false，如輸入 true ，則代表查詢結果中的 [縣市] 要與所輸入的門牌地址中的 [縣市] 完全相同&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oIsLockTown&lt;/td&gt;
+        &lt;td&gt;是否鎖定鄉鎮市區，允許傳入的值為：true、false，如輸入 true ，則代表查詢結果中的 [鄉鎮市區] 要與所輸入的門牌地址中的 [鄉鎮市區] 完全相同&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oIsLockVillage&lt;/td&gt;
+        &lt;td&gt;是否鎖定村里，允許傳入的值為：true、false，如輸入 true ，則代表查詢結果中的 [村里] 要與所輸入的門牌地址中的 [村里] 完全相同&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oIsLockRoadSection&lt;/td&gt;
+        &lt;td&gt;是否鎖定路段，允許傳入的值為：true、false，如輸入 true ，則代表查詢結果中的 [路段] 要與所輸入的門牌地址中的 [路段] 完全相同&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oIsLockLane&lt;/td&gt;
+        &lt;td&gt;是否鎖定巷，允許傳入的值為：true、false，如輸入 true ，則代表查詢結果中的 [巷] 要與所輸入的門牌地址中的 [巷] 完全相同&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oIsLockAlley&lt;/td&gt;
+        &lt;td&gt;是否鎖定弄，允許傳入的值為：true、false，如輸入 true ，則代表查詢結果中的 [弄] 要與所輸入的門牌地址中的 [弄] 完全相同&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oIsLockArea&lt;/td&gt;
+        &lt;td&gt;是否鎖定地區，允許傳入的值為：true、fals，如輸入 true ，則代表查詢結果中的 [地區] 要與所輸入的門牌地址中的 [地區] 完全相同&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oIsSameNumber_SubNumber&lt;/td&gt;
+        &lt;td&gt;號之、之號是否視為相同，允許傳入的值為：true、false&lt;/td&gt;
+    &lt;/tr&gt;
+
+    &lt;tr&gt;
+        &lt;td&gt;oCanIgnoreVillage&lt;/td&gt;
+        &lt;td&gt;找不時是否可忽略村里，允許傳入的值為：true、false&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oCanIgnoreNeighborhood&lt;/td&gt;
+        &lt;td&gt;找不時是否可忽略鄰，允許傳入的值為：true、false&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oReturnMaxCount&lt;/td&gt;
+        &lt;td&gt;如為多筆時，限制回傳最大筆數，輸入格式為正整數，&lt;span style="color:red;"&gt;如輸入 0 則代表不限制回傳筆數&lt;/span&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+
+
+&lt;/table&gt;
+&lt;div&gt;
+&lt;font style='color:#07a;font-size:14pt;font-weight:bold;'&gt;回傳資訊格式為SOAP:XML或JSON&lt;/font&gt;
+&lt;br/&gt;&lt;br/&gt;
+&lt;div&gt;
+&lt;div&gt;&lt;font style='color:#07d;font-size:15pt;font-weight:bold;'&gt;JSON格式&lt;/font&gt;&lt;/div&gt;
+&lt;br/&gt;&lt;br/&gt;
+&lt;div&gt;&lt;pre&gt;{
+    Info: [
+            {
+              InAddress: "臺北市中山區行政里1鄰松江路469巷4號",
+              InSRS: "EPSG:3826",
+              InFuzzyType: "最近門牌號機制",
+              InFuzzyBuffer: "0",
+              InIsOnlyFullMatch: "False",
+              InIsLockCounty: "False",
+              InIsLockTown: "False",
+              InIsLockVillage: "False",
+              InIsLockRoadSection: "False",
+              InIsLockLane: "False",
+              InIsLockAlley: "False",
+              InIsLockArea "False",
+              InIsSameNumber_SubNumber: "True",
+              InCanIgnoreVillage: "True",
+              InCanIgnoreNeighborhood: "True",
+              InReturnMaxCount: "0",
+              OutTotal: "1",
+              OutMatchType: "完全比對",
+              OutMatchCode: "111110100001(+0)",
+              OutTraceInfo: "[臺北市]\t完全比對找到符合的門牌地址"
+
+            }
+    ],
+    AddressList: [
+            {
+                FULL_ADDR: "臺北市中山區行政里1鄰松江路469巷4號",
+                COUNTY: "臺北市",
+                TOWN: "中山區",
+                VILLAGE: "行政里",
+                NEIGHBORHOOD: "1鄰",
+                ROAD: "松江路",
+                SECTION: "",
+                LANE: "469巷",
+                ALLEY: "",
+                SUB_ALLEY: "",
+                TONG: "",
+                NUMBER: "4號",
+                X: 303891.5427,
+                Y: 2773226.674
+            }
+    ]
+}&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;br/&gt;&lt;br/&gt;
+&lt;div&gt;
+&lt;div&gt;&lt;font style='color:#07d;font-size:15pt;font-weight:bold;'&gt;JSON格式說明&lt;/font&gt;&lt;/div&gt;
+&lt;br/&gt;&lt;br/&gt;
+&lt;div&gt;&lt;pre&gt;{
+    回傳資訊: [
+            {
+              輸入資料: "臺北市中山區行政里1鄰松江路469巷4號",
+              回傳坐標系統: "EPSG:3826",
+              比對機制: "最近門牌號機制",
+              模糊比對的容許誤差範圍(N號): "0",
+              是否只進行完全比對: "False",
+              是否鎖定縣市: "False",
+              是否鎖定鄉鎮市區: "False",
+              是否鎖定村里: "False",
+              是否鎖定路名: "False",
+              是否鎖定巷: "False",
+              是否鎖定弄: "False",
+              是否鎖定地區 "False",
+              號之、之號是否視為相同: "True",
+              找不時是否可忽略村里: "True",
+              找不時是否可忽略鄰: "True",
+              如為多筆時，限制回傳最大筆數: "0",
+              本次回傳筆數: "1",
+              比對結果類型: "完全比對",
+              比對結果代碼: "111110100001(+0)",
+              比對追蹤訊息: "[臺北市]\t完全比對找到符合的門牌地址"
+            }
+    ],
+    門牌清單: [
+            {
+              "完整地址": "臺北市中山區行政里1鄰松江路469巷4號",
+              "縣市": "臺北市",
+              "鄉鎮市區": "中山區",
+              "村里": "行政里",
+              "鄰": "1鄰",
+              "大道路街": "松江路",
+              "段": "",
+              "巷": "469巷",
+              "弄": "",
+              "衖": "",
+              "衕": "",
+              "門牌號碼": "4號",
+              "X坐標": 303891.5427000000,
+              "Y坐標": 2773226.6740000000
+            }
+    ]
+}&lt;/pre&gt;&lt;/div&gt;
+
+&lt;/div&gt;
+
+&lt;br/&gt;&lt;br/&gt;
+&lt;br/&gt;&lt;br/&gt;
+&lt;div&gt;
+&lt;div&gt;&lt;font style='color:#07d;font-size:15pt;font-weight:bold;'&gt;XML格式&lt;/font&gt;&lt;/div&gt;
+&lt;br/&gt;&lt;br/&gt;
+&lt;div&gt;&lt;pre&gt;&amp;lt;AddressList InAddress="臺北市中山區行政里1鄰松江路469巷4號" InSRS="EPSG:3826" InFuzzyType="最近門牌號機制" InFuzzyBuffer="0" InIsOnlyFullMatch="False" InIsLockCounty="False" InIsLockTown="False" InIsLockVillage="False" InIsLockRoadSection="False" InIsLockLane="False" InIsLockAlley="False" InIsLockArea="False" InIsSameNumber_SubNumber="True" InCanIgnoreVillage="True" InCanIgnoreNeighborhood="True" InReturnMaxCount="0" OutTotal="1" OutMatchType="完全比對" OutMatchCode="111110100001(+0)" OutTraceInfo="[臺北市]	完全比對找到符合的門牌地址" &amp;gt;
+  &amp;lt;Address&amp;gt;
+    &amp;lt;FULL_ADDR&amp;gt;臺北市中山區行政里1鄰松江路469巷4號&amp;lt;/FULL_ADDR&amp;gt;
+    &amp;lt;COUNTY&amp;gt;臺北市&amp;lt;/COUNTY&amp;gt;
+    &amp;lt;TOWN&amp;gt;中山區&amp;lt;/TOWN&amp;gt;
+    &amp;lt;VILLAGE&amp;gt;行政里&amp;lt;/VILLAGE&amp;gt;
+    &amp;lt;NEIGHBORHOOD&amp;gt;1鄰&amp;lt;/NEIGHBORHOOD&amp;gt;
+    &amp;lt;ROAD&amp;gt;松江路&amp;lt;/ROAD&amp;gt;
+    &amp;lt;SECTION /&amp;gt;
+    &amp;lt;LANE&amp;gt;469巷&amp;lt;/LANE&amp;gt;
+    &amp;lt;ALLEY /&amp;gt;
+    &amp;lt;SUB_ALLEY /&amp;gt;
+    &amp;lt;TONG /&amp;gt;
+    &amp;lt;NUMBER&amp;gt;4號&amp;lt;/NUMBER&amp;gt;
+    &amp;lt;X&amp;gt;303891.5427000000&amp;lt;/X&amp;gt;
+    &amp;lt;Y&amp;gt;2773226.6740000000&amp;lt;/Y&amp;gt;
+  &amp;lt;/Address&amp;gt;
+&amp;lt;/AddressList&amp;gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;br/&gt;&lt;br/&gt;
+&lt;div&gt;
+
+&lt;div&gt;&lt;font style='color:#07d;font-size:15pt;font-weight:bold;'&gt;XML格式說明&lt;/font&gt;&lt;/div&gt;
+&lt;br/&gt;&lt;br/&gt;
+&lt;div&gt;
+&lt;pre&gt;&amp;lt;門牌清單 輸入資料="臺北市中山區行政里1鄰松江路469巷4號" 回傳坐標系統="EPSG:3826" 比對機制="最近門牌號機制" 模糊比對的容許誤差範圍(N號)="0" 是否只進行完全比對="False" 是否鎖定縣市="False" 是否鎖定鄉鎮市區="False" 是否鎖定村里="False" 是否鎖定路名="False" 是否鎖定巷="False" 是否鎖定弄="False" 是否鎖定地區="False" 號之、之號是否視為相同="True" 找不時是否可忽略村里="True" 找不時是否可忽略鄰="True" 如為多筆時，限制回傳最大筆數="0" 本次回傳筆數="1" 比對結果類型="完全比對" 比對結果代碼="111110100001(+0)" 比對追蹤訊息="[臺北市]	完全比對找到符合的門牌地址" &amp;gt;
+  &amp;lt;門牌&amp;gt;
+    &amp;lt;完整地址&amp;gt;臺北市中山區行政里1鄰松江路469巷4號&amp;lt;/完整地址&amp;gt;
+    &amp;lt;縣市&amp;gt;臺北市&amp;lt;/縣市&amp;gt;
+    &amp;lt;鄉鎮市區&amp;gt;中山區&amp;lt;/鄉鎮市區&amp;gt;
+    &amp;lt;村里&amp;gt;行政里&amp;lt;/村里&amp;gt;
+    &amp;lt;鄰&amp;gt;1鄰&amp;lt;/鄰&amp;gt;
+    &amp;lt;大道路街&amp;gt;松江路&amp;lt;/大道路街&amp;gt;
+    &amp;lt;段 /&amp;gt;
+    &amp;lt;巷&amp;gt;469巷&amp;lt;/巷&amp;gt;
+    &amp;lt;弄 /&amp;gt;
+    &amp;lt;衖 /&amp;gt;
+    &amp;lt;衕 /&amp;gt;
+    &amp;lt;門牌號碼&amp;gt;4號&amp;lt;/門牌號碼&amp;gt;
+    &amp;lt;X坐標&amp;gt;303891.5427000000&amp;lt;/X坐標&amp;gt;
+    &amp;lt;Y坐標&amp;gt;2773226.6740000000&amp;lt;/Y坐標&amp;gt;
+  &amp;lt;/門牌&amp;gt;
+&amp;lt;/門牌清單&amp;gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+</wsdl:documentation>
+      <wsdl:input message="tns:QueryAddrHttpGetIn" />
+      <wsdl:output message="tns:QueryAddrHttpGetOut" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:portType name="WSQueryAddrHttpPost">
+    <wsdl:operation name="QueryAddr">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+
+&lt;style&gt;
+			.ServiceDesc{
+			    color:rgb(12, 146, 39);
+				font-weight:bold;
+                font-size:20px;
+                font-style:normal;
+                text-decoration:none;
+
+			}
+			.important{
+				color:red;
+				font-weight:bold;
+
+			}
+			.Grammar{
+				border:1px solid gray;
+				border-collapse: collapse;
+				width:90%;
+                margin-top:10px;
+                margin-bottom:20px;
+			}
+			.Grammar tr{
+                height:30px
+			}
+			.Grammar td{
+				border:1px solid gray;
+				padding:3px;
+				text-align:left;
+				text-wrap:normal;
+			}
+
+			.Grammar caption{
+
+				border: 1px solid #888;
+				color:#000;
+				background-color:#ccc;
+				font-weight:bold; 
+				padding:5px;
+				font-size:14pt;
+				text-align:left;
+			}		
+			
+			.tbhead{
+				background-color:gray;
+				color:#FFF;
+				text-align:left;
+			}
+
+&lt;/style&gt;
+&lt;table class='Grammar' &gt;
+    &lt;caption &gt;呼叫門牌位置比對服務，需傳入的參數如下&lt;/caption&gt;
+
+    &lt;tr  &gt;
+        &lt;td class='tbhead'&gt;參數名稱&lt;/td&gt;
+        &lt;td class='tbhead'&gt;參數說明&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oAPPId&lt;/td&gt;
+        &lt;td&gt;應用程式識別碼(APPId)，這個值是由使用API的使用者在申請成功後所取得，必須與應用程式介接驗證碼(APIKey)成對使用，這個值是由使用API的使用者在呼叫API時所需傳入&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oAPIKey&lt;/td&gt;
+        &lt;td&gt;應用程式介接驗證碼(APIKey)，這個值是由使用API的使用者在申請成功後所取得，必須與應用程式識別碼(APPId)成對使用，這個值是由使用API的使用者在呼叫API時所需傳入&lt;/td&gt;
+    &lt;/tr&gt;
+     &lt;tr&gt;
+        &lt;td&gt;oAddress&lt;/td&gt;
+        &lt;td&gt;所要查詢的門牌地址&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oSRS&lt;/td&gt;
+        &lt;td&gt;回傳的座標系統，允許傳入的座標系統代碼為：EPSG:4326、EPSG:3825、EPSG:3826、EPSG:3827、EPSG:3828&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oFuzzyType&lt;/td&gt;
+        &lt;td&gt;&lt;pre style="line-height:1.9;"&gt;目前有下列三種模糊比對的機制:
+    (一) 最近門牌號機制：先找最近且大於輸入的門牌號，找不到則找最近且小於輸入的門牌號；代碼為 0
+    (二) 單雙號機制：先找最近且大於輸入的單號或雙號門牌號，找不到則找最近且小於輸入的單號或雙號門牌號；代碼為 1
+    (三) 單雙號機制 + 最近門牌號機制：當單雙號機制找不到門牌時，就改採用最近門牌號機制；代碼為 2&lt;/pre&gt;
+        &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oResultDataType&lt;/td&gt;
+        &lt;td&gt;回傳的資料格式，允許傳入的代碼為：JSON、XML&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oFuzzyBuffer&lt;/td&gt;
+        &lt;td&gt;模糊比對回傳門牌號的許可誤差範圍，輸入格式為正整數，&lt;span style="color:red;"&gt;如輸入 0 則代表不限制誤差範圍&lt;/span&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oIsOnlyFullMatch&lt;/td&gt;
+        &lt;td&gt;是否只進行完全比對，允許傳入的值為：true、false，&lt;span style="color:red;"&gt;如輸入 true ，模糊比對機制將不被使用&lt;/span&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oIsLockCounty&lt;/td&gt;
+        &lt;td&gt;是否鎖定縣市，允許傳入的值為：true、false，如輸入 true ，則代表查詢結果中的 [縣市] 要與所輸入的門牌地址中的 [縣市] 完全相同&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oIsLockTown&lt;/td&gt;
+        &lt;td&gt;是否鎖定鄉鎮市區，允許傳入的值為：true、false，如輸入 true ，則代表查詢結果中的 [鄉鎮市區] 要與所輸入的門牌地址中的 [鄉鎮市區] 完全相同&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oIsLockVillage&lt;/td&gt;
+        &lt;td&gt;是否鎖定村里，允許傳入的值為：true、false，如輸入 true ，則代表查詢結果中的 [村里] 要與所輸入的門牌地址中的 [村里] 完全相同&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oIsLockRoadSection&lt;/td&gt;
+        &lt;td&gt;是否鎖定路段，允許傳入的值為：true、false，如輸入 true ，則代表查詢結果中的 [路段] 要與所輸入的門牌地址中的 [路段] 完全相同&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oIsLockLane&lt;/td&gt;
+        &lt;td&gt;是否鎖定巷，允許傳入的值為：true、false，如輸入 true ，則代表查詢結果中的 [巷] 要與所輸入的門牌地址中的 [巷] 完全相同&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oIsLockAlley&lt;/td&gt;
+        &lt;td&gt;是否鎖定弄，允許傳入的值為：true、false，如輸入 true ，則代表查詢結果中的 [弄] 要與所輸入的門牌地址中的 [弄] 完全相同&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oIsLockArea&lt;/td&gt;
+        &lt;td&gt;是否鎖定地區，允許傳入的值為：true、fals，如輸入 true ，則代表查詢結果中的 [地區] 要與所輸入的門牌地址中的 [地區] 完全相同&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oIsSameNumber_SubNumber&lt;/td&gt;
+        &lt;td&gt;號之、之號是否視為相同，允許傳入的值為：true、false&lt;/td&gt;
+    &lt;/tr&gt;
+
+    &lt;tr&gt;
+        &lt;td&gt;oCanIgnoreVillage&lt;/td&gt;
+        &lt;td&gt;找不時是否可忽略村里，允許傳入的值為：true、false&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oCanIgnoreNeighborhood&lt;/td&gt;
+        &lt;td&gt;找不時是否可忽略鄰，允許傳入的值為：true、false&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+        &lt;td&gt;oReturnMaxCount&lt;/td&gt;
+        &lt;td&gt;如為多筆時，限制回傳最大筆數，輸入格式為正整數，&lt;span style="color:red;"&gt;如輸入 0 則代表不限制回傳筆數&lt;/span&gt;&lt;/td&gt;
+    &lt;/tr&gt;
+
+
+&lt;/table&gt;
+&lt;div&gt;
+&lt;font style='color:#07a;font-size:14pt;font-weight:bold;'&gt;回傳資訊格式為SOAP:XML或JSON&lt;/font&gt;
+&lt;br/&gt;&lt;br/&gt;
+&lt;div&gt;
+&lt;div&gt;&lt;font style='color:#07d;font-size:15pt;font-weight:bold;'&gt;JSON格式&lt;/font&gt;&lt;/div&gt;
+&lt;br/&gt;&lt;br/&gt;
+&lt;div&gt;&lt;pre&gt;{
+    Info: [
+            {
+              InAddress: "臺北市中山區行政里1鄰松江路469巷4號",
+              InSRS: "EPSG:3826",
+              InFuzzyType: "最近門牌號機制",
+              InFuzzyBuffer: "0",
+              InIsOnlyFullMatch: "False",
+              InIsLockCounty: "False",
+              InIsLockTown: "False",
+              InIsLockVillage: "False",
+              InIsLockRoadSection: "False",
+              InIsLockLane: "False",
+              InIsLockAlley: "False",
+              InIsLockArea "False",
+              InIsSameNumber_SubNumber: "True",
+              InCanIgnoreVillage: "True",
+              InCanIgnoreNeighborhood: "True",
+              InReturnMaxCount: "0",
+              OutTotal: "1",
+              OutMatchType: "完全比對",
+              OutMatchCode: "111110100001(+0)",
+              OutTraceInfo: "[臺北市]\t完全比對找到符合的門牌地址"
+
+            }
+    ],
+    AddressList: [
+            {
+                FULL_ADDR: "臺北市中山區行政里1鄰松江路469巷4號",
+                COUNTY: "臺北市",
+                TOWN: "中山區",
+                VILLAGE: "行政里",
+                NEIGHBORHOOD: "1鄰",
+                ROAD: "松江路",
+                SECTION: "",
+                LANE: "469巷",
+                ALLEY: "",
+                SUB_ALLEY: "",
+                TONG: "",
+                NUMBER: "4號",
+                X: 303891.5427,
+                Y: 2773226.674
+            }
+    ]
+}&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;br/&gt;&lt;br/&gt;
+&lt;div&gt;
+&lt;div&gt;&lt;font style='color:#07d;font-size:15pt;font-weight:bold;'&gt;JSON格式說明&lt;/font&gt;&lt;/div&gt;
+&lt;br/&gt;&lt;br/&gt;
+&lt;div&gt;&lt;pre&gt;{
+    回傳資訊: [
+            {
+              輸入資料: "臺北市中山區行政里1鄰松江路469巷4號",
+              回傳坐標系統: "EPSG:3826",
+              比對機制: "最近門牌號機制",
+              模糊比對的容許誤差範圍(N號): "0",
+              是否只進行完全比對: "False",
+              是否鎖定縣市: "False",
+              是否鎖定鄉鎮市區: "False",
+              是否鎖定村里: "False",
+              是否鎖定路名: "False",
+              是否鎖定巷: "False",
+              是否鎖定弄: "False",
+              是否鎖定地區 "False",
+              號之、之號是否視為相同: "True",
+              找不時是否可忽略村里: "True",
+              找不時是否可忽略鄰: "True",
+              如為多筆時，限制回傳最大筆數: "0",
+              本次回傳筆數: "1",
+              比對結果類型: "完全比對",
+              比對結果代碼: "111110100001(+0)",
+              比對追蹤訊息: "[臺北市]\t完全比對找到符合的門牌地址"
+            }
+    ],
+    門牌清單: [
+            {
+              "完整地址": "臺北市中山區行政里1鄰松江路469巷4號",
+              "縣市": "臺北市",
+              "鄉鎮市區": "中山區",
+              "村里": "行政里",
+              "鄰": "1鄰",
+              "大道路街": "松江路",
+              "段": "",
+              "巷": "469巷",
+              "弄": "",
+              "衖": "",
+              "衕": "",
+              "門牌號碼": "4號",
+              "X坐標": 303891.5427000000,
+              "Y坐標": 2773226.6740000000
+            }
+    ]
+}&lt;/pre&gt;&lt;/div&gt;
+
+&lt;/div&gt;
+
+&lt;br/&gt;&lt;br/&gt;
+&lt;br/&gt;&lt;br/&gt;
+&lt;div&gt;
+&lt;div&gt;&lt;font style='color:#07d;font-size:15pt;font-weight:bold;'&gt;XML格式&lt;/font&gt;&lt;/div&gt;
+&lt;br/&gt;&lt;br/&gt;
+&lt;div&gt;&lt;pre&gt;&amp;lt;AddressList InAddress="臺北市中山區行政里1鄰松江路469巷4號" InSRS="EPSG:3826" InFuzzyType="最近門牌號機制" InFuzzyBuffer="0" InIsOnlyFullMatch="False" InIsLockCounty="False" InIsLockTown="False" InIsLockVillage="False" InIsLockRoadSection="False" InIsLockLane="False" InIsLockAlley="False" InIsLockArea="False" InIsSameNumber_SubNumber="True" InCanIgnoreVillage="True" InCanIgnoreNeighborhood="True" InReturnMaxCount="0" OutTotal="1" OutMatchType="完全比對" OutMatchCode="111110100001(+0)" OutTraceInfo="[臺北市]	完全比對找到符合的門牌地址" &amp;gt;
+  &amp;lt;Address&amp;gt;
+    &amp;lt;FULL_ADDR&amp;gt;臺北市中山區行政里1鄰松江路469巷4號&amp;lt;/FULL_ADDR&amp;gt;
+    &amp;lt;COUNTY&amp;gt;臺北市&amp;lt;/COUNTY&amp;gt;
+    &amp;lt;TOWN&amp;gt;中山區&amp;lt;/TOWN&amp;gt;
+    &amp;lt;VILLAGE&amp;gt;行政里&amp;lt;/VILLAGE&amp;gt;
+    &amp;lt;NEIGHBORHOOD&amp;gt;1鄰&amp;lt;/NEIGHBORHOOD&amp;gt;
+    &amp;lt;ROAD&amp;gt;松江路&amp;lt;/ROAD&amp;gt;
+    &amp;lt;SECTION /&amp;gt;
+    &amp;lt;LANE&amp;gt;469巷&amp;lt;/LANE&amp;gt;
+    &amp;lt;ALLEY /&amp;gt;
+    &amp;lt;SUB_ALLEY /&amp;gt;
+    &amp;lt;TONG /&amp;gt;
+    &amp;lt;NUMBER&amp;gt;4號&amp;lt;/NUMBER&amp;gt;
+    &amp;lt;X&amp;gt;303891.5427000000&amp;lt;/X&amp;gt;
+    &amp;lt;Y&amp;gt;2773226.6740000000&amp;lt;/Y&amp;gt;
+  &amp;lt;/Address&amp;gt;
+&amp;lt;/AddressList&amp;gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;br/&gt;&lt;br/&gt;
+&lt;div&gt;
+
+&lt;div&gt;&lt;font style='color:#07d;font-size:15pt;font-weight:bold;'&gt;XML格式說明&lt;/font&gt;&lt;/div&gt;
+&lt;br/&gt;&lt;br/&gt;
+&lt;div&gt;
+&lt;pre&gt;&amp;lt;門牌清單 輸入資料="臺北市中山區行政里1鄰松江路469巷4號" 回傳坐標系統="EPSG:3826" 比對機制="最近門牌號機制" 模糊比對的容許誤差範圍(N號)="0" 是否只進行完全比對="False" 是否鎖定縣市="False" 是否鎖定鄉鎮市區="False" 是否鎖定村里="False" 是否鎖定路名="False" 是否鎖定巷="False" 是否鎖定弄="False" 是否鎖定地區="False" 號之、之號是否視為相同="True" 找不時是否可忽略村里="True" 找不時是否可忽略鄰="True" 如為多筆時，限制回傳最大筆數="0" 本次回傳筆數="1" 比對結果類型="完全比對" 比對結果代碼="111110100001(+0)" 比對追蹤訊息="[臺北市]	完全比對找到符合的門牌地址" &amp;gt;
+  &amp;lt;門牌&amp;gt;
+    &amp;lt;完整地址&amp;gt;臺北市中山區行政里1鄰松江路469巷4號&amp;lt;/完整地址&amp;gt;
+    &amp;lt;縣市&amp;gt;臺北市&amp;lt;/縣市&amp;gt;
+    &amp;lt;鄉鎮市區&amp;gt;中山區&amp;lt;/鄉鎮市區&amp;gt;
+    &amp;lt;村里&amp;gt;行政里&amp;lt;/村里&amp;gt;
+    &amp;lt;鄰&amp;gt;1鄰&amp;lt;/鄰&amp;gt;
+    &amp;lt;大道路街&amp;gt;松江路&amp;lt;/大道路街&amp;gt;
+    &amp;lt;段 /&amp;gt;
+    &amp;lt;巷&amp;gt;469巷&amp;lt;/巷&amp;gt;
+    &amp;lt;弄 /&amp;gt;
+    &amp;lt;衖 /&amp;gt;
+    &amp;lt;衕 /&amp;gt;
+    &amp;lt;門牌號碼&amp;gt;4號&amp;lt;/門牌號碼&amp;gt;
+    &amp;lt;X坐標&amp;gt;303891.5427000000&amp;lt;/X坐標&amp;gt;
+    &amp;lt;Y坐標&amp;gt;2773226.6740000000&amp;lt;/Y坐標&amp;gt;
+  &amp;lt;/門牌&amp;gt;
+&amp;lt;/門牌清單&amp;gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+</wsdl:documentation>
+      <wsdl:input message="tns:QueryAddrHttpPostIn" />
+      <wsdl:output message="tns:QueryAddrHttpPostOut" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="WSQueryAddrSoap" type="tns:WSQueryAddrSoap">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="QueryAddr">
+      <soap:operation soapAction="http://tempuri.org/QueryAddr" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:binding name="WSQueryAddrSoap12" type="tns:WSQueryAddrSoap">
+    <soap12:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="QueryAddr">
+      <soap12:operation soapAction="http://tempuri.org/QueryAddr" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:binding name="WSQueryAddrHttpGet" type="tns:WSQueryAddrHttpGet">
+    <http:binding verb="GET" />
+    <wsdl:operation name="QueryAddr">
+      <http:operation location="/QueryAddr" />
+      <wsdl:input>
+        <http:urlEncoded />
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:binding name="WSQueryAddrHttpPost" type="tns:WSQueryAddrHttpPost">
+    <http:binding verb="POST" />
+    <wsdl:operation name="QueryAddr">
+      <http:operation location="/QueryAddr" />
+      <wsdl:input>
+        <mime:content type="application/x-www-form-urlencoded" />
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="WSQueryAddr">
+    <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+
+&lt;style&gt;
+			.ServiceDesc{
+			    color:rgb(12, 146, 39);
+				font-weight:bold;
+                font-size:20px;
+                font-style:normal;
+                text-decoration:none;
+
+			}
+			.important{
+				color:red;
+				font-weight:bold;
+
+			}
+			.Grammar{
+				border:1px solid gray;
+				border-collapse: collapse;
+				width:90%;
+                margin-top:10px;
+                margin-bottom:20px;
+			}
+			.Grammar tr{
+                height:30px
+			}
+			.Grammar td{
+				border:1px solid gray;
+				padding:3px;
+				text-align:left;
+				text-wrap:normal;
+			}
+
+			.Grammar caption{
+
+				border: 1px solid #888;
+				color:#000;
+				background-color:#ccc;
+				font-weight:bold; 
+				padding:5px;
+				font-size:14pt;
+				text-align:left;
+			}		
+			
+			.tbhead{
+				background-color:gray;
+				color:#FFF;
+				text-align:left;
+			}
+
+&lt;/style&gt;&lt;a class='ServiceDesc' style='text-decoration:none;color:rgb(12, 146, 39);' href='#'&gt;門牌位置比對服務：在驗證授權通過後，進行門牌位置比對&lt;/a&gt;</wsdl:documentation>
+    <wsdl:port name="WSQueryAddrSoap" binding="tns:WSQueryAddrSoap">
+      <soap:address location="http://addr.tgos.nat.gov.tw/addrws/v30/QueryAddr.asmx" />
+    </wsdl:port>
+    <wsdl:port name="WSQueryAddrSoap12" binding="tns:WSQueryAddrSoap12">
+      <soap12:address location="http://addr.tgos.nat.gov.tw/addrws/v30/QueryAddr.asmx" />
+    </wsdl:port>
+    <wsdl:port name="WSQueryAddrHttpGet" binding="tns:WSQueryAddrHttpGet">
+      <http:address location="http://addr.tgos.nat.gov.tw/addrws/v30/QueryAddr.asmx" />
+    </wsdl:port>
+    <wsdl:port name="WSQueryAddrHttpPost" binding="tns:WSQueryAddrHttpPost">
+      <http:address location="http://addr.tgos.nat.gov.tw/addrws/v30/QueryAddr.asmx" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

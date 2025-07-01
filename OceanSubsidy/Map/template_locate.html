@@ -1,0 +1,206 @@
+﻿<div id="GSMap-panel-locate" class="GSMap-panel">
+    <a href="javascript:void(0)" class="closebtn">&times;</a>
+    <a href="javascript:void(0)" class="fixedbtn"></a>
+    <a href="javascript:void(0)" class="revertbtn"></a>
+    <h2>定位</h2>
+
+    <div class="OS-MapPannel-div" style="margin-top: 10px;">
+        <!--頁籤-->
+        <ul class="nav nav-tabs GSMap-element-tab" role="tablist">
+            <li><a id="" class="nav-link" style="display:none" data-bs-toggle="tab" href="#district_box" onclick="">行政區</a></li>
+            <li><a id="" class="nav-link" style="display:none" data-bs-toggle="tab" href="#address_box" onclick="">地址</a></li>
+            <li><a id="" class="nav-link active" data-bs-toggle="tab" href="#coordinate_box" onclick="">坐標</a></li>
+        </ul>
+        <!--頁籤結尾-->
+        <!--區塊內容-->
+        <div class="GSMap-panel-contbox-wrap">
+            <div class="scroll-box">
+
+                <!--頁籤內容wrap-->
+                <div class="tab-content">
+                    <!--行政區-->
+                    <div class="tab-pane fade" id="district_box" role="tabpanel" style="display:none">
+                        <div class="btnBoxRight">
+                            <input type="button" class="btnS btn_clear" value="清除資料" onclick="resetMeasure()">
+                        </div>
+                        <div class="LocateStyle">
+                            <dl>
+                                <dt><i></i>縣市</dt>
+                                <dd>
+                                    <select id="ddlCounty" class="input-full">
+                                    </select>
+                                </dd>
+                            </dl>
+                            <dl>
+                                <dt><i></i>鄉鎮區</dt>
+                                <dd>
+                                    <select id="ddlTown" class="input-full">
+                                        <option value="">全鄉鎮區</option>
+                                    </select>
+                                </dd>
+                            </dl>
+                            <dl>
+                                <dt><i></i>村里</dt>
+                                <dd>
+                                    <select id="ddlVillage" class="input-full">
+                                        <option value="">全村里</option>
+                                    </select>
+                                </dd>
+                            </dl>
+                            <div class="btnBoxCenter">
+                                <input type="button" value="定位" class="btn btn_pin _locate">
+                            </div>
+                        </div>
+                    </div>
+                    <!--行政區結尾-->
+                    <!--地址-->
+                    <div class="tab-pane fade" id="address_box" role="tabpanel" style="display:none">
+                        <div class="btnBoxRight">
+                            <input type="button" class="btnS btn_clear" value="清除資料">
+                        </div>
+                        <div class="LocateStyle">
+                            <dl>
+                                <dt><i></i>地址</dt>
+                                <dd>
+                                    <input type="text" id="txtAddress" class="input-full">
+                                </dd>
+                            </dl>
+                            <div class="btnBoxCenter">
+                                <input type="button" value="定位" class="btn btn_pin _locate">
+                            </div>
+                        </div>
+                    </div>
+                    <!--地址結尾-->
+                    <!--坐標-->
+                    <div class="tab-pane active" id="coordinate_box" role="tabpanel">
+                        <div class="btnBoxRight">
+                            <input type="button" class="btnS btn_clear" value="清除資料">
+                        </div>
+
+                        <div id="accordion">
+                            <div class="card GSMap-element-card ">
+                                <div class="card-header GSMap-element-card-header">
+                                    <a data-bs-toggle="collapse" role="button" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                        WGS84
+                                    </a>
+                                </div>
+                                <div id="collapseOne" class="collapse GSMap-element-card-cont show" data-bs-parent="#accordion">
+                                    <div class="LocateStyle">
+                                        <p>十進位</p>
+                                        <dl>
+                                            <dt><i></i>經度</dt>
+                                            <dd>
+                                                <input type="text" id="txtLngCoord" size="10" placeholder="例如:120.453607" class="input-full">
+                                            </dd>
+                                        </dl>
+                                        <dl>
+                                            <dt><i></i>緯度</dt>
+                                            <dd>
+                                                <input type="text" id="txtLatCoord" size="10" placeholder="例如:23.481530" class="input-full">
+                                            </dd>
+                                        </dl>
+                                        <div class="btnBoxCenter">
+                                            <input type="button" name="button2" class="btn btn_pin _locate" locateType="WGS84Decimal" value="定位">
+                                        </div>
+                                    </div>
+                                    <div class="LocateStyle">
+                                        <p>度分秒</p>
+                                        <dl>
+                                            <dt><i></i>經度</dt>
+                                            <dd>
+                                                <input type="text" id="txtLngDegree" value="121" class="WGS84-input">度
+                                            </dd>
+                                            <dd>
+                                                <input type="text" id="txtLngMinute" class="WGS84-input">分
+                                            </dd>
+                                            <dd>
+                                                <input type="text" id="txtLngSecond" class="WGS84-input">秒
+                                            </dd>
+                                        </dl>
+                                        <dl>
+                                            <dt><i></i>緯度</dt>
+                                            <dd>
+                                                <input type="text" id="txtLatDegree" class="WGS84-input" value="23">度
+                                            </dd>
+                                            <dd>
+                                                <input type="text" id="txtLatMinute" class="WGS84-input">分
+                                            </dd>
+                                            <dd>
+                                                <input type="text" id="txtLatSecond" class="WGS84-input">秒
+                                            </dd>
+                                        </dl>
+                                        <div class="btnBoxCenter">
+                                            <input type="button" name="button2" id="button2" class="btn btn_pin _locate" locateType="WGS84DMS" value="定位">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card GSMap-element-card">
+                                <div class="card-header GSMap-element-card-header">
+                                    <a data-bs-toggle="collapse" role="button" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                        TWD97
+                                    </a>
+                                </div>
+                                <div id="collapseTwo" class="collapse GSMap-element-card-cont" data-bs-parent="#accordion">
+                                    <div class="LocateStyle">
+                                        <dl>
+                                            <dt><i></i>X坐標</dt>
+                                            <dd>
+                                                <input type="text" id="txtTWD97X" placeholder="例如: 194188" class="input-full">
+                                            </dd>
+                                        </dl>
+                                        <dl>
+                                            <dt><i></i>Y坐標</dt>
+                                            <dd>
+                                                <input type="text" id="txtTWD97Y" placeholder="例如: 2597712" class="input-full">
+                                            </dd>
+                                        </dl>
+                                        <div class="btnBoxCenter">
+                                            <input type="button" name="button2" class="btn btn_pin _locate" locateType="TWD97" value="定位">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card GSMap-element-card">
+                                <div class="card-header GSMap-element-card-header">
+                                    <a data-bs-toggle="collapse" role="button" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                        TWD67
+                                    </a>
+                                </div>
+                                <div id="collapseThree" class="collapse card-body GSMap-element-card-cont" data-bs-parent="#accordion">
+                                    <div class="LocateStyle">
+                                        <dl>
+                                            <dt><i></i>X坐標</dt>
+                                            <dd>
+                                                <input type="text" id="txtTWD67X" placeholder="例如: 194188" class="input-full">
+                                            </dd>
+                                        </dl>
+                                        <dl>
+                                            <dt><i></i>Y坐標</dt>
+                                            <dd>
+                                                <input type="text" id="txtTWD67Y" placeholder="例如: 2597712" class="input-full">
+                                            </dd>
+                                        </dl>
+                                        <div class="btnBoxCenter">
+                                            <input type="button" name="button2" class="btn btn_pin _locate" locateType="TWD67" value="定位">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                    <!--坐標結尾-->
+
+                </div>
+                <!--頁籤內容wrap結尾-->
+
+            </div>
+            <div class="cover-bar"></div><!--隱藏捲軸用的-->
+        </div>
+    </div>
+    
+</div>

@@ -1,0 +1,70 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeFile="BaseMaster.master.cs" Inherits="BaseMaster" %>
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head runat="server">
+    <meta charset="utf-8" />
+    <title>
+        <asp:ContentPlaceHolder ID="BaseTitleContent" runat="server" />
+    </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="<%= ResolveUrl("~/assets/vendor/bootstrap-5.3.3/dist/css/bootstrap.min.css") %>">
+    <script src="<%= ResolveUrl("~/assets/vendor/bootstrap-5.3.3/dist/js/bootstrap.bundle.min.js") %>"></script>
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="<%= ResolveUrl("~/assets/vendor/fontawesome-free-6.5.2-web/css/all.min.css") %>">
+    <link rel="stylesheet" href="<%= ResolveUrl("~/assets/vendor/fontawesome-free-6.5.2-web/css/all.css") %>">
+
+    <!-- Google Icons -->
+    <link rel="stylesheet" href="<%= ResolveUrl("~/assets/vendor/googleFont/googleFont-Material-Symbols-Rounded.css") %>">
+    <link rel="stylesheet" href="<%= ResolveUrl("~/assets/vendor/googleFont/googleFont-Material-Icons-Round.css") %>">
+
+    <!-- Google Fonts -->
+    <link href="<%= ResolveUrl("~/assets/vendor/googleFont/googleFont.css") %>" rel="stylesheet">
+
+    <!-- Clandars -->
+    <script src="<%=ResolveUrl("~/lib/JQueryDatePickerTW/Lib/jquery-1.9.1.js")%>"></script>
+    <script src="<%= ResolveUrl("~/lib/JQueryDatePickerTW/Lib/jquery-ui-1.10.3.custom.js") %>"></script>
+    <link href="<%= ResolveUrl("~/lib/JQueryDatePickerTW/Lib/jquery-ui-1.10.3.custom.css") %>" rel="stylesheet"/>
+    <link href="<%= ResolveUrl("~/lib/JQueryDatePickerTW/Lib/jquery-ui.theme.min.css") %>" rel="stylesheet">
+    <script src="<%= ResolveUrl("~/lib/JQueryDatePickerTW/JQueryDatePickerTW.js") %>"></script>
+
+    <!-- 自訂 -->
+    <link rel="stylesheet" href="<%= ResolveUrl("~/assets/css/login.css") %>">
+    <link rel="stylesheet" href="<%= ResolveUrl("~/assets/css/main.css") %>">
+    <script src="<%= ResolveUrl("~/assets/js/customJS.js") %>"></script>
+
+    <!-- 全站共用 -->
+    <script>
+        function showModal(id) {
+            bootstrap.Modal
+                .getOrCreateInstance(document.getElementById(id))
+                .show();
+        }
+        function hideModal(id) {
+            bootstrap.Modal
+                .getOrCreateInstance(document.getElementById(id))
+                .hide();
+        }
+
+        function pageLoad() {
+            $(".rocDate").datepickerTW({
+                dateFormat: 'yy/mm/dd',
+                changeMonth: true,
+                changeYear: true,
+                showButtonPanel: true
+            });
+        }
+
+    </script>
+   
+    <!-- 子 Master/Page 補充 head -->
+    <asp:ContentPlaceHolder ID="HeadExtra" runat="server" />
+</head>
+<body>
+    <!-- 子 Master 的主體內容 -->
+    <asp:ContentPlaceHolder ID="BodyContent" runat="server" />
+</body>
+</html>

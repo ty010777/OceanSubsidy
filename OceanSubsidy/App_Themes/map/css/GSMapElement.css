@@ -1,0 +1,751 @@
+﻿@charset "utf-8";
+/*底圖切換*/
+.BasicMapTable {
+    width: 100%;
+}
+
+    .BasicMapTable td {
+        font-family: "微軟正黑體";
+        font-size: 1em;
+        color: #000;
+        padding-top: 12px;
+        padding-right: 8px;
+        padding-bottom: 12px;
+        padding-left: 40px;
+        border-bottom: 1px solid #f5f5f5;
+        transition: background-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+
+        .BasicMapTable td:hover {
+            font-family: "微軟正黑體";
+            font-size: 1em;
+            color: #fff;
+            background-color: #494949;
+            cursor: pointer;
+        }
+
+        .BasicMapTable td a {
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .BasicMapTable td.active {
+            font-family: "微軟正黑體";
+            font-size: 1em;
+            color: #FFF;
+            cursor: pointer;
+            background-image: url(../images/BasicMap_checked.svg);
+            background-repeat: no-repeat;
+            background-position: 10px center;
+            background-size: 21px auto;
+            background-color: #2ca6e0;
+            border-bottom: 1px solid #F5f5f5;
+        }
+
+.OS-MapPannel-div{
+    background-color: #FFF;
+    border-radius: 8px;
+    padding: 10px;
+}
+/*底圖切換結尾*/
+
+/*量測*/
+.MeasureStyle {
+}
+
+    .MeasureStyle > dl {
+        display: block;
+        overflow: hidden;
+        font-family: "微軟正黑體";
+        font-size: 1em;
+        line-height: 2.5;
+        color: #000;
+    }
+
+        .MeasureStyle > dl > dt {
+            display: inline-block;
+            float: left;
+        }
+
+            .MeasureStyle > dl > dt > i {
+                display: inline-block;
+                width: 6px;
+                height: 6px;
+                background-color: #e4e4e4;
+                margin-right: 6px;
+                vertical-align: middle;
+            }
+
+        .MeasureStyle > dl > dd {
+            display: inline-block;
+            float: left;
+        }
+/*量測結尾*/
+
+/*定位*/
+.LocateStyle {
+}
+
+    .LocateStyle > p {
+        font-family: "微軟正黑體";
+        font-size: 1.2em;
+        line-height: 2.5;
+        color: #1BB5DB;
+        font-weight: 600;
+    }
+
+    .LocateStyle > dl {
+        display: block;
+        overflow: hidden;
+        font-family: "微軟正黑體";
+        font-size: 1em;
+        line-height: 2.5;
+        color: #000;
+        margin-bottom: 10px;
+        padding: 0 6px;
+    }
+
+        .LocateStyle > dl > dt {
+            display: block;
+            line-height: 0.9;
+        }
+
+            .LocateStyle > dl > dt > i {
+                display: inline-block;
+                width: 6px;
+                height: 6px;
+                background-color: #e4e4e4;
+                margin-right: 6px;
+                vertical-align: middle;
+            }
+
+        .LocateStyle > dl > dd {
+            display: block;
+            padding-left: 6px;
+        }
+
+            .LocateStyle > dl > dd > input {
+                line-height: 1;
+            }
+
+.WGS84-input {
+    width: 80%;
+    margin-right: 4px;
+}
+/*定位結尾*/
+
+/*圖層套疊*/
+.Tree-menu {
+    font-size: 1em;
+    line-height: 2;
+    overflow: hidden;
+}
+
+    .Tree-menu input.switch[type=checkbox] {
+        display: none;
+    }
+
+    .Tree-menu ul {
+        margin: 0 0 0 20px;
+        display: none;
+        position: relative;
+    }
+
+        .Tree-menu ul:before {
+            content: "";
+            position: absolute;
+            top: -12px;
+            bottom: 12px;
+            border-left: 1px #EEE solid;
+            left: -30px;
+        }
+
+    .Tree-menu label {
+        cursor: pointer;
+    }
+
+    .Tree-menu input[type=checkbox]:checked.switch ~ ul {
+        display: block;
+    }
+
+    .Tree-menu input[type=checkbox]:checked.switch ~ label {
+        color: #CCC;
+    }
+
+    .Tree-menu li {
+        list-style: none;
+        position: relative;
+    }
+
+        .Tree-menu li:before {
+            content: "";
+            position: absolute;
+            width: 25px;
+            border-bottom: 1px #EEE solid;
+            z-index: -1;
+            left: -30px;
+            top: 12px;
+        }
+
+    .Tree-menu > li {
+        margin-left: 10px;
+        color: #000;
+    }
+
+        .Tree-menu > li a:visited {
+            color: #000;
+        }
+
+        .Tree-menu > li > ul > li {
+            margin-left: 10px;
+        }
+
+    .Tree-menu input.switch[type=checkbox]:checked ~ i {
+        width: 20px;
+        height: 30px;
+        display: inline-block;
+        margin-right: 4px;
+        background-image: url("../images/icon-folder-minus.svg");
+        background-size: 100% auto;
+        background-position: left center;
+        background-repeat: no-repeat;
+        vertical-align: bottom;
+    }
+
+    .Tree-menu input.switch[type=checkbox] ~ i {
+        width: 20px;
+        height: 30px;
+        display: inline-block;
+        margin-right: 4px;
+        background-image: url("../images/icon-folder-plus.svg");
+        background-size: 100% auto;
+        background-position: left center;
+        background-repeat: no-repeat;
+        vertical-align: bottom;
+        cursor: pointer;
+    }
+
+/*有子項的li樣式*/
+.Tree-menu-second {
+    display: contents !important;
+}
+
+    .Tree-menu-second > div {
+        display: flex;
+        flex-wrap: nowrap;
+        border-top: 1px solid #d2d2d2;
+    }
+
+        .Tree-menu-second > div > span:first-child {
+            width: 20px;
+        }
+
+        .Tree-menu-second > div > span:nth-child(2) {
+            width: calc(100% - 84px);
+            padding-left: 4px;
+        }
+
+        .Tree-menu-second > div > span:last-child {
+            width: 62px;
+        }
+
+
+    .Tree-menu-second > ul {
+        display: none;
+    }
+
+        .Tree-menu-second > ul.active {
+            display: block;
+        }
+
+.Tree-menu-ul > li {
+    margin-left: 0px;
+    color: #585858;
+    display: flex;
+    flex-wrap: nowrap;
+    padding: 4px 0 0 0;
+}
+
+    .Tree-menu-ul > li > span:first-child {
+        width: 18px;
+    }
+
+    .Tree-menu-ul > li > span:nth-child(2) {
+        width: calc(100% - 84px);
+        line-height: 1.5;
+        padding-left: 4px;
+    }
+
+    .Tree-menu-ul > li > span:last-child {
+        width: 62px;
+    }
+
+    .Tree-menu-ul > li > span:first-child > img {
+        width: 100%;
+        height: auto;
+        vertical-align: text-top;
+    }
+
+/*有子項的li樣式結尾*/
+
+/*.Tree-menu > li > ul > li .treee-open {
+            width: 10px;
+            height: 30px;
+            display: inline-block;
+            margin-right: 4px;
+            background-image: url("../images/icon-folder-minus-s.svg");
+            background-size: 100% auto;
+            background-position: left center;
+            background-repeat: no-repeat;
+            vertical-align: bottom;
+        }
+
+        .Tree-menu > li > ul > li .treee-close {
+            width: 10px;
+            height: 30px;
+            display: inline-block;
+            margin-right: 4px;
+            background-image: url("../images/icon-folder-plus-s.svg");
+            background-size: 100% auto;
+            background-position: left center;
+            background-repeat: no-repeat;
+            vertical-align: bottom;
+        }*/
+/*圖層套疊結尾*/
+
+/*圖台標示*/
+/*圖台標示結尾*/
+
+/*查詢*/
+/*查詢結尾*/
+
+/*匯出*/
+.ImageCaptureStyle {
+}
+
+    .ImageCaptureStyle > dl {
+        display: block;
+        overflow: hidden;
+        font-family: "微軟正黑體";
+        font-size: 1em;
+        line-height: 2.5;
+        color: #FFF;
+        margin-bottom: 10px;
+    }
+
+        .ImageCaptureStyle > dl > dt {
+            display: block;
+            line-height: 0.9;
+        }
+
+            .ImageCaptureStyle > dl > dt > i {
+                display: inline-block;
+                width: 6px;
+                height: 6px;
+                background-color: #e4e4e4;
+                margin-right: 6px;
+                vertical-align: middle;
+            }
+
+        .ImageCaptureStyle > dl > dd {
+            display: block;
+            padding-left: 6px;
+        }
+
+            .ImageCaptureStyle > dl > dd > input {
+                line-height: 1;
+            }
+
+.setting-size {
+    display: block;
+}
+
+    .setting-size > input {
+        line-height: 1;
+    }
+/*匯出結尾*/
+
+/*tab*/
+.GSMap-element-tab {
+    border-bottom: 1px solid #1BB5DB;
+    overflow: hidden;
+    margin: 16px 6px 6px 6px;
+}
+
+    .GSMap-element-tab > li {
+        float: left;
+        margin-bottom: -1px;
+    }
+
+        .GSMap-element-tab > li > a {
+            margin-right: 2px;
+            border: 0px solid transparent;
+            border-radius: 0 0 0 0;
+            color: #1BB5DB;
+            font-family: "微軟正黑體";
+            font-size: 1em;
+            line-height: 1.5;
+            font-weight: 600;
+            display: block;
+            padding: 6px 6px;
+        }
+
+            .GSMap-element-tab > li > a:hover {
+                background-color: #1BB5DB;
+                color: #FFF;
+                display: block;
+                text-decoration: none;
+            }
+
+            .GSMap-element-tab > li > a:active {
+                color: #FFF;
+                text-decoration: none;
+            }
+
+        .GSMap-element-tab > li.active > a, .GSMap-element-tab > li.active > a:hover, .GSMap-element-tab > li.active > a:focus {
+            color: #FFF;
+            cursor: default;
+            background-color: #1BB5DB;
+            border: 0px solid #1BB5DB;
+            border-bottom-color: transparent;
+        }
+        .GSMap-element-tab > .nav-link,.GSMap-element-tab > li >.active{
+            color: #FFF!important;
+            cursor: default;
+            background-color: #1BB5DB!important;
+            border: 0px solid #1BB5DB;
+            border-bottom-color: transparent;
+        }
+/*tab結尾*/
+
+/*collapse*/
+.GSMap-element-card {
+    background-color: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.125);
+    border-radius: 0;
+}
+
+    .GSMap-element-card:last-child {
+        border-bottom: 0px solid rgba(0, 0, 0, 0.125);
+    }
+
+.GSMap-element-card-header {
+    padding: 0.5em;
+    margin-bottom: 0;
+    background-color: #1BB5DB;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+    .GSMap-element-card-header.gsCollapsed {
+        background-color: #1BB5DB;
+    }
+
+
+    .GSMap-element-card-header > a {
+        font-family: "微軟正黑體";
+        font-size: 1em;
+        line-height: 1.5;
+        font-weight: 600;
+        color: #FFF!important;
+    }
+
+        .GSMap-element-card-header > a:before {
+            content: "";
+            background: url("../images/icon_minus.png");
+            background-position: left top;
+            background-repeat: no-repeat;
+            background-size: 80%;
+            display: inline-block;
+            width: 25px;
+            height: 25px;
+            vertical-align: middle;
+        }
+
+        .GSMap-element-card-header > a.collapsed:before {
+            content: "";
+            background: url("../images/icon_plus.png");
+            background-position: left top;
+            background-repeat: no-repeat;
+            background-size: 80%;
+            display: inline-block;
+            width: 25px;
+            height: 25px;
+            vertical-align: middle;
+        }
+            
+.GSMap-element-card-cont {
+    padding: 10px 6px;
+}
+/*collapse結尾*/
+
+/*泡泡視窗*/
+.GSMap-element-popup-detail-wrap {
+    width: 350px;
+    min-height: 20vh;
+    max-height: 40vh;
+    background-color: #fff;
+    border: 1px solid #eee;
+    padding: 6px;
+    border-radius: 6px;
+}
+
+    .GSMap-element-popup-detail-wrap > dl {
+        display: block;
+        margin: 12px 6px;
+        overflow: hidden;
+    }
+
+        .GSMap-element-popup-detail-wrap > dl > dt {
+            font-size: 0.8em;
+            line-height: 1;
+            font-weight: 400;
+            font-family: "微軟正黑體";
+            color: #2ca6e0;
+            display: inline-block;
+            float: left;
+        }
+
+        .GSMap-element-popup-detail-wrap > dl > dd {
+            font-size: 0.8em;
+            line-height: 1;
+            font-weight: 400;
+            font-family: "微軟正黑體";
+            color: #000;
+            display: inline-block;
+            float: left;
+        }
+
+.gs-content {
+    margin: 12px 6px;
+    overflow: auto;
+    width: 100%;
+    height: 149px;
+}
+
+    .gs-content .gs-content-title {
+        font-size: 0.8em;
+        font-weight: 400;
+        font-family: "微軟正黑體";
+        color: #2ca6e0;
+    }
+
+    .gs-content .gs-content-feature {
+        margin-left: 6px;
+        font-size: 0.8em;
+        font-weight: 400;
+        font-family: "微軟正黑體";
+        color: #000;
+    }
+
+    .gs-content .gs-content-feature table::after {
+        margin-bottom: 6px;
+    }
+
+        .gs-content .gs-content-feature table td {
+            margin-left: 6px;
+        }
+/*泡泡視窗結尾*/
+
+/*GPS定位*/
+.btn_GPS_circle {
+    background-image: url(../images/btn_gps.svg);
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: auto 15px;
+    border-radius: 4px;
+    border: 2px solid #FFF;
+    height: 36px;
+    width: 36px;
+    text-indent: -9999px;
+    background-color: rgba(0,110,255,.7);
+    position: absolute;
+    right: 10px;
+    top: 80px;
+    z-index: 999;
+}
+
+    .btn_GPS_circle:hover {
+        background-color: #27403d;
+        color: #ffffff;
+        border-radius: 999em
+    }
+
+    .btn_GPS_circle:active {
+        position: relative;
+        top: 1px;
+    }
+
+@media (max-width: 768px) {
+    .btn_GPS_circle {
+        position: absolute;
+        right: 10px;
+        top: 10px;
+        z-index: 999;
+    }
+}
+/*GPS定位結尾*/
+
+/*右側已套疊圖層div樣式*/
+.labelLegend {
+    display: block;
+    position: absolute;
+    background-color: rgba(255, 255, 255, 1);
+    right: 44px;
+    top: 10px;
+    border: 2px solid rgba(255,255,255,.4);
+    padding: 4px;
+    border-radius: 6px;
+	width: 160px;
+}
+
+.labelLegend-inner{
+	max-height: 460px;
+	overflow-y: auto;
+}
+	.labelLegend-inner::-webkit-scrollbar {
+		width: 5px;
+		height: 8px;
+		background-color: #b3b3b3; /* or add it to the track */
+		border-radius: 999em;
+	}
+	.labelLegend-inner::-webkit-scrollbar-thumb {
+		background: #3d4446;
+		border-radius: 999em;
+	}
+
+.labelLegend-title{
+	-webkit-border-top-left-radius: 4px;
+	-webkit-border-top-right-radius: 4px;
+	-moz-border-radius-topleft: 4px;
+	-moz-border-radius-topright: 4px;
+	border-top-left-radius: 4px;
+	border-top-right-radius: 4px;
+	background-color: #1e56a0;
+	color: #FFF;
+	font-size: 1em;
+	line-height: 2;
+	padding: 0 4px;
+	position: relative;
+    cursor:pointer;
+}
+.labelLegend-title:hover{
+	background-color: #000;
+}
+.labelLegend-title:after{
+	content: "";
+    display: block;
+    position: absolute;
+    width: 13px;
+    height: 100%;
+    right: 4px;
+    top: 0;
+    background-image: url("../images/btn_arrow_down.svg");
+    background-repeat: no-repeat;
+    background-position: center;
+}
+    .labelLegend-title.close:after {
+        content: "";
+        display: block;
+        position: absolute;
+        width: 13px;
+        height: 100%;
+        right: 4px;
+        top: 0;
+        background-image: url("../images/btn_arrow_up.svg");
+        background-repeat: no-repeat;
+        background-position: center;
+    }
+.labelLegend-item{
+	padding: 2px;
+    cursor: pointer;
+    border-radius: 4px;
+    border: 1px solid #d2d2d2;
+    margin: 2px;
+	cursor: pointer;
+	display: flex;
+}
+	.labelLegend-item:hover{
+		border: 2px solid #3d4446;
+	}
+	.labelLegend-item >span:first-child{
+		width: 15px;
+        margin-top: 7px;
+	}
+	.labelLegend-item >span:nth-child(2){
+		width: 20px;
+	}
+    .labelLegend-item > span:nth-child(2) img.icon {
+        max-width: 20px;
+        max-height: 30px;
+    }
+	.labelLegend-item >span:last-child{
+		width: calc(100% - 35px);
+	}
+.labelLegend-item-txt{
+	font-size: 14px;
+	font-weight: 600;
+	color: #000;
+}
+.labelLegend-item-txt >img{
+	width: 100%;
+	height: auto;
+}
+/*右側已套疊圖層div樣式結尾*/
+
+/*圖層透明度slider bar樣式*/
+.ui-slider-horizontal {
+    height: 0.7em!important;
+}
+.ui-widget.ui-widget-content {
+    border: 2px solid #c5c5c5!important;
+    border-radius: 999em;
+}
+.ui-slider .ui-slider-range {
+    position: absolute;
+    z-index: 1;
+    font-size: .7em;
+    display: block;
+    border: 0;
+    background-position: 0 0;
+    border-radius: 999em;
+}
+.ui-state-hover, .ui-widget-content .ui-state-hover, .ui-widget-header .ui-state-hover, .ui-state-focus, .ui-widget-content .ui-state-focus, .ui-widget-header .ui-state-focus, .ui-button:hover, .ui-button:focus {
+    border: 1px solid #ccc;
+    background: #1e56a0;
+    font-weight: normal;
+    color: #2b2b2b;
+}
+.ui-state-default, .ui-widget-content .ui-state-default, .ui-widget-header .ui-state-default, .ui-button, html .ui-button.ui-state-disabled:hover, html .ui-button.ui-state-disabled:active {
+    border: 2px solid #e5e5e5!important;
+    background: #1e56a0!important;
+    font-weight: normal;
+    color: #454545;
+}
+.ui-slider .ui-slider-handle {
+    position: absolute;
+    z-index: 2;
+    width: 1.1em!important;
+    height: 1.1em!important;
+    cursor: default;
+    -ms-touch-action: none;
+    touch-action: none;
+    border-radius: 999em;
+}
+
+/*圖層透明度slider bar樣式結尾*/
+
+/*海委會補助活動查詢樣式*/
+.activity-query-label{
+    color: #1BB5DB;
+}
+/*海委會補助活動查詢樣式結尾*/
+
+/*海委會補助地圖標註樣式*/
+.group{
+    border-bottom: 1px solid #e5e5e5;
+    padding: 6px 2px;
+}
+.tools-wrap > a{
+    margin: auto 6px;
+}
+/*海委會補助地圖標註樣式結尾*/

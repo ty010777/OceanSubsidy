@@ -1,0 +1,418 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>地圖標註</title>
+    <script src="../script/map/jquery.js" type="text/javascript"></script>
+    <script src="../script/map/bootstrap.js" type="text/javascript"></script>
+    <script src="../script/map/FileSaver.min.js" type="text/javascript"></script>
+    <link href="../App_Themes/Map/css/reset.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/Map/css/bootstrap.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/Map/css/layout.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/Map/css/map.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/Map/css/nanoscroller.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/Map/css/table.css" rel="stylesheet" type="text/css" />
+    <script type="text/javascript">
+        var resizeInterval = null;
+		var LEFT_CLICK_FUNC_MEASURE_LENGTH = "addMark";
+        $(window).on("resize", function () {
+            clearInterval(resizeInterval);
+            resizeInterval = setInterval(resizeLayout, 200);
+        });
+        function resizeLayout() {
+            parent.resizeBox(99999999);
+            if ($(".nano").height() != ($("html").height() - $(".nano").offset().top)) {
+                $(".nano").height($("html").height() - $(".nano").offset().top);
+                parent.$("#contentBox").height(650);
+            }
+            clearInterval(resizeInterval);
+        }
+       
+        $(document).ready(function () {
+            parent.markType = $("#ddlCategory");
+            parent.markPointDiv = $("#point");
+            parent.markLineDiv = $("#line");
+            parent.markPolyDiv = $("#polygon");
+            parent.markTxtDiv = $("#text");
+            //啟動圖徵繪製
+            $('#BtnAddMark').click(function () {
+                var selectedType = document.getElementById("ddlCategory").value;
+                if (selectedType != "None") {
+                      addInteraction();
+                } else {
+                    alert("請選擇圖徵類型");
+                    return false;
+                }
+            });
+
+            //關閉圖徵繪製
+            $('#BtnCancel').click(function () {
+                parent.mapPlugin.endFeatureMaintain();
+            });
+
+            //匯出KML
+            $('#BtnExport').click(function () {
+                if (parent.drawSource.getFeatures().length != 0) {
+                    var Features = parent.drawSource.getFeatures();                   
+                    var KMLString = parent.oltmx.Plugin.prototype.export2KML(Features);
+                    var filename = "ExportKML.kml";
+                    var blob = new Blob([KMLString], {
+                        type: "text/plain;charset=utf-8"
+                    });
+                    saveAs(blob, filename);                  
+                } else {
+                    alert("請先使用地圖標註功能繪製圖徵!");
+                }
+            });
+        }); 
+
+		function resetDrawInteraction() {
+		    parent.mapPlugin.endFeatureMaintain();
+            addInteraction();
+        }		
+
+        function getTypeStyle(ele) {
+            var selectedValue = ele.options[ele.options.selectedIndex].value;
+            parent.mapPlugin.endFeatureMaintain();
+            addInteraction();
+
+            if (selectedValue == "None") {
+                $("#point").hide();
+                $("#line").hide();
+                $("#polygon").hide();                          
+                $("#text").hide();
+            }
+            if (selectedValue == "Point") {
+                $("#point").show();
+                $("#line").hide();
+                $("#polygon").hide();                   
+                $("#text").hide();
+            }
+            else if (selectedValue == "LineString") {
+                $("#point").hide();
+                $("#line").show();
+                $("#polygon").hide();                       
+                $("#text").hide();
+            }
+            else if (selectedValue == "Polygon") {
+                $("#point").hide();
+                $("#line").hide();
+                $("#polygon").show();                        
+                $("#text").hide();
+            }                     
+            else if (selectedValue == "Text") {
+                $("#point").hide();
+                $("#line").hide();
+                $("#polygon").hide();                          
+                $("#text").show();
+            }
+        }
+    </script>
+    <!-- page event -->
+    <script type="text/javascript">
+        function page_active() {
+            parent.mapPlugin.activeLeftClickFunc(LEFT_CLICK_FUNC_MEASURE_LENGTH);
+            parent.$("#mis_left_icon").css("display", "block");
+        }
+        function page_leave() {
+            $("#ddlCategory")[0].selectedIndex = 0;
+            getTypeStyle($("#ddlCategory")[0]);
+            parent.map.removeInteraction(parent.drawInteraction);
+            parent.mapPlugin.deactiveLeftClickFunc(LEFT_CLICK_FUNC_MEASURE_LENGTH);
+             parent.misLeftIconClick(parent.$("#mis_left_icon_li")[0]);
+            parent.$("#mis_left_icon").css("display", "none");
+        }
+    </script>
+</head>
+<body>
+    <script type="text/javascript" src="../script/map/spectrum.js"></script>
+    <link href="../App_Themes/map/css/spectrum.css" rel="stylesheet" type="text/css" />
+    <div class="BtnFunc">
+        <ul>
+            <li class="close"><a href="javascript:void(0);parent.toolSwitch()">關閉</a></li>
+        </ul>
+    </div>
+    <div class="nano">
+        <div class="nano-content">
+            <table width="100%" border="0" cellpadding="0" cellspacing="0" class="ListGrey">
+                <tr>
+                    <th width="30%">圖徵類型</th>
+                    <td width="70%">
+                        <select id="ddlCategory" onchange="getTypeStyle(this)">
+                            <option value="None">請選擇</option>
+                            <option value="Point">點</option>
+                            <option value="LineString">線</option>
+                            <option value="Polygon">面</option>                      
+                            <option value="Text">文字</option>
+                        </select>
+                    </td>
+                </tr>
+            </table>
+            <!--點樣式-->
+            <div id="point" style="display:none">
+                <table width="100%" border="0" cellpadding="0" cellspacing="0" class="ListGrey">
+                    <tr>
+                        <th width="80px">圖示顏色</th>
+                        <td>
+                            <input type="text" id="pointcolor" value="#000000" onchange="resetDrawInteraction();"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th width="80px">圖示大小</th>
+                        <td>
+                            <input id="iconsize" name="iconsize" type="text" style="width:85px" value="1" onchange="resetDrawInteraction();"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th width="80px" >透明設定</th>
+                        <td>
+                            <span id="pointRange">100</span>
+                            <input id="pointOpacity" name="pointOpacity" type="range" min="0" max="100" value="100" style="width:85%" onchange="showOpacityValue('pointRange' ,this.value);resetDrawInteraction();" />
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <!--點樣式 End-->
+            <!--線樣式-->
+            <div id="line" style="display:none">
+                <table width="100%" border="0" cellpadding="0" cellspacing="0" class="ListGrey">
+                    <tr>
+                        <th width="80px">線段顏色</th>
+                        <td>
+                            <input type="text" id="linecolor" value="#000000" onchange="resetDrawInteraction();"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th width="80px">線段寬度</th>
+                        <td>
+                            <input type="text" id="linewidth" value="1" style="width:35px; height:25px" onchange="resetDrawInteraction();"/><label for="textfield">px</label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th width="80px">透明設定</th>
+                        <td>
+                            <span id="lineRange">100</span>
+                            <input id="lineOpacity" name="lineOpacity" type="range" min="0" max="100" value="100" style="width:85%" onchange="showOpacityValue('lineRange', this.value);resetDrawInteraction();" />
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <!--線樣式 End-->
+            <!--多邊形樣式-->
+            <div id="polygon" style="display:none">
+                <table width="100%" border="0" cellpadding="0" cellspacing="0" class="ListGrey">
+                    <tr>
+                        <th width="80px">線段顏色</th>
+                        <td>
+                            <input type="text" id="polycolor" value="#000000" onchange="resetDrawInteraction();"/>
+                        </td>                       
+                    </tr>
+                    <tr>
+                        <th width="80px">填滿顏色</th>
+                        <td>
+                            <input type="text" id="polyfillcolor" value="#000000" onchange="resetDrawInteraction();"/>
+                        </td>
+                    </tr>
+                    <tr>                     
+                        <th>線段寬度</th>
+                        <td>
+                            <input type="text" id="polywidth" value="1" style="width: 50px; height: 25px" onchange="resetDrawInteraction();"/>px
+                        </td>                       
+                    </tr>
+                    <tr>
+                        <th width="80px">透明設定</th>
+                        <td>
+                            <span id="polyRange">100</span>
+                            <input id="polyOpacity" name="polyOpacity" type="range" min="0" max="100" value="100" style="width:85%" onchange="showOpacityValue('polyRange', this.value);resetDrawInteraction();" />
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <!--多邊形樣式 End-->           
+            <!--文字樣式-->
+            <div id="text" style="display:none">
+                <table width="100%" border="0" cellpadding="0" cellspacing="0" class="ListGrey">
+                    <tr>
+                        <th width="50px">文字顏色</th>
+                        <td>
+                            <input type="text" id="textcolor" value="#000000" onchange="resetDrawInteraction();"/>
+                        </td>
+                        <th width="20%">外框寬度</th>
+                        <td>
+                            <input type="text" id="borderWidth" value="3" style="width:50px" onchange="resetDrawInteraction();"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th width="50px">外框顏色</th>
+                        <td>
+                            <input type="text" id="textfillcolor" value="#000000" onchange="resetDrawInteraction();" />
+                        </td>                       
+                        <th width="50px">文字大小</th>
+                        <td>
+                            <input id="textScale" name="textScale" type="text" style="width:50px" value="14" onchange="resetDrawInteraction();"/>pt
+                        </td>
+                    </tr>
+                    <tr>                      
+                        <th width="50px">文字內容</th>
+                        <td>
+                            <input id="textfacility" name="textfacility" type="text" style="width:85px" value="" onchange="resetDrawInteraction();"/>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <!--文字樣式 End-->
+            <div id="BtnEst">
+                <table border="1" cellspacing="0" cellpadding="0">
+                    <tr>
+                        <!--<td colspan="2" class="center"><input id="BtnAddMark" type="button" value="建立" class="BtnWhite" style="margin-bottom:10px;" /></td>
+                        <td colspan="2" class="center"><input id="BtnCancel" type="button" value="取消" class="BtnWhite" style="margin-bottom:10px" /></td>-->
+                        <td colspan="2" class="center"><input id="BtnExport" type="button" value="匯出KML" class="BtnWhite" style="margin-bottom:10px" /></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script src="../script/map/colorpicker.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        //設定文字的調色盤
+        setColorPicker('#textcolor');
+        setColorPicker('#textfillcolor');
+        //設定點的調色盤
+        setColorPicker("#pointcolor");
+        //設定線的調色盤
+        setColorPicker("#linecolor");
+        //設定面的調色盤
+        setColorPicker("#polycolor");
+        setColorPicker("#polyfillcolor");
+
+        //動態顯示圖徵透明度的值
+        function showOpacityValue(ElementId, newValue) {
+            document.getElementById(ElementId).innerHTML = newValue;
+        }
+
+        //啟動繪製圖徵功能
+        function addInteraction() {
+            var selectedType = document.getElementById("ddlCategory").value;
+            var drawType;
+            if (selectedType !== 'None') {              
+                if (selectedType === 'Text') {
+                    drawType = 'Point';
+                    parent.textColor = $('.sp-preview-inner')[4].style.backgroundColor;
+                    parent.textStrokeColor = $('.sp-preview-inner')[5].style.backgroundColor;
+                    parent.textWidth = document.getElementById('borderWidth').value;
+                    parent.textContent = document.getElementById('textfacility').value;
+                    parent.textScale = document.getElementById('textScale').value;
+                } else if (selectedType == 'Point') {
+                    drawType = 'Point';
+                    parent.pointOpacity = parseFloat(document.getElementById('pointOpacity').value) / 100;
+                    parent.pointColorPick = $('.sp-preview-inner')[0].style.backgroundColor;
+                    var pointColorArr = /rgba?\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(,\s*\d+[\.\d+]*)*\)/g.exec($('.sp-preview-inner')[0].style.backgroundColor);
+                    parent.pointColor = "rgba(" + [pointColorArr[1], pointColorArr[2], pointColorArr[3], parent.pointOpacity].join(',') + ")";
+                    parent.pointScale = document.getElementById('iconsize').value;
+                } else if (selectedType == 'LineString') {
+                    drawType = 'LineString';
+                    parent.lineOpacity = parseFloat(document.getElementById('lineOpacity').value) / 100;
+                    parent.lineColorPick = $('.sp-preview-inner')[1].style.backgroundColor;
+                    var lineColorArr = /rgba?\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(,\s*\d+[\.\d+]*)*\)/g.exec($('.sp-preview-inner')[1].style.backgroundColor);
+                    parent.lineColor = "rgba(" + [lineColorArr[1], lineColorArr[2], lineColorArr[3], parent.lineOpacity].join(',') + ")";
+                    parent.lineWidth = document.getElementById('linewidth').value;
+                } else if (selectedType == 'Polygon') {
+                    drawType = 'Polygon';
+                    parent.polyOpacity = parseFloat(document.getElementById('polyOpacity').value) / 100;
+                    parent.polyStrokePick = $('.sp-preview-inner')[2].style.backgroundColor;
+                    parent.polyFillPick = $('.sp-preview-inner')[3].style.backgroundColor;
+                    var polyColorArr = /rgba?\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(,\s*\d+[\.\d+]*)*\)/g.exec($('.sp-preview-inner')[2].style.backgroundColor);
+                    parent.polyColor = "rgba(" + [polyColorArr[1], polyColorArr[2], polyColorArr[3], parent.polyOpacity].join(',') + ")";
+                    var polyFillColorArr = /rgba?\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(,\s*\d+[\.\d+]*)*\)/g.exec($('.sp-preview-inner')[3].style.backgroundColor);
+                    parent.polyFillColor = "rgba(" + [polyFillColorArr[1], polyFillColorArr[2], polyFillColorArr[3], parent.polyOpacity].join(',') + ")";
+                    parent.polyWidth = document.getElementById('polywidth').value;
+                }
+                //給予指定的圖徵型態，啟動繪製圖徵功能
+                parent.mapPlugin.drawFeature(drawType, null, onDrawEnd);
+
+                function onDrawEnd(feature, options) {
+                    geometry = feature.getGeometry();
+                    feature.set('type', 'drawfeature');
+                    if (selectedType == "Point") {
+                        feature.set('num', 'point' + parent.pointNum);
+                        var pointStyle = parent.oltmx.Plugin.prototype.setPointMarkStyle(parent.pointColor, parent.pointScale, "點圖徵" + parent.pointNum, feature);
+                        feature.setStyle(pointStyle);
+                        jQuery.fn.exists = function () { return this.length > 0; }
+                        if (!$(parent.MarkList[0].children[selectedType + parent.pointNum]).exists()) {
+                            parent.MarkList.append(                                
+                                "<div id='" + selectedType + parent.pointNum + "' class='List-Label'>"
+                                + "<img src='../App_Themes/map/images/dot.png' width='15' height='15' />&nbsp;"
+                                + "<label id='LabelPoint" + parent.pointNum + "'>點圖徵" + parent.pointNum + "</label>"
+                                + "<input type='text' id='TextPoint" + parent.pointNum + "' value='' style='display:none;'/>"
+                                + "<input type='button' id='BtnSavePoint" + parent.pointNum + "' class='BtnLabelSave' value='' style='display:none;' onclick='SaveMark(" + parent.pointNum + ', "point"' + ");'/>"
+                                + "<input type='submit' id='BtnDelPoint" + parent.pointNum + "' name='button' class='BtnLabelDel' value='' onclick='parent.deleteMark(" + selectedType + parent.pointNum + ', "point' + parent.pointNum + '"' + ")'/>"
+                                + "<input type='submit' id='BtnEditPoint" + parent.pointNum + "' name='button' class='BtnLabelEdit' value='' onclick='EditMark(" + parent.pointNum + ', "point"' + ")'/>"
+                                + "<br>"
+                                + "</div>"
+                            );
+                            parent.pointNum++;
+                        }
+                    } else if (selectedType == "LineString") {
+                        feature.set('num', 'line' + parent.lineNum);
+                        var lineStyle = parent.oltmx.Plugin.prototype.setLineMarkStyle(parent.lineColor, parent.lineWidth, "線圖徵" + parent.lineNum, feature);
+                        feature.setStyle(lineStyle);
+                        jQuery.fn.exists = function () { return this.length > 0; }
+                        if (!$(parent.MarkList[0].children[selectedType + parent.lineNum]).exists()) {
+                            parent.MarkList.append(
+                                "<div id='" + selectedType + parent.lineNum + "' class='List-Label'>"
+                                + "<img src='../App_Themes/map/images/lineMark.png' width='20' height='20' />&nbsp;"
+                                + "<label id='LabelLine" + parent.lineNum + "'>線圖徵" + parent.lineNum + "</label>"
+                                + "<input type='text' id='TextLine" + parent.lineNum + "' value='' style='display:none;'/>"
+                                + "<input type='button' id='BtnSaveLine" + parent.lineNum + "' class='BtnLabelSave' value='' style='display:none;' onclick='SaveMark(" + parent.lineNum + ', "line"' + ");'/>"
+                                + "<input type='submit' id='BtnDelLine" + parent.lineNum + "' name='button' class='BtnLabelDel' value='' onclick='parent.deleteMark(" + selectedType + parent.lineNum + ', "line' + parent.lineNum + '"' + ")'/>"
+                                + "<input type='submit' id='BtnEditLine" + parent.lineNum + "' name='button' class='BtnLabelEdit' value='' onclick='EditMark(" + parent.lineNum + ', "line"' + ")'/>"
+                                + "<br>"
+                                + "</div>"
+                            );
+                            parent.lineNum++;
+                        }
+                    } else if (selectedType == "Polygon") {                        
+                        feature.set('num', 'poly' + parent.polyNum);
+                        var polyStyle = parent.oltmx.Plugin.prototype.setPolyMarkStyle(parent.polyFillColor, parent.polyColor, parent.polyWidth, "面圖徵" + parent.polyNum, feature);
+                        feature.setStyle(polyStyle);
+                        jQuery.fn.exists = function () { return this.length > 0; }
+                        if (!$(parent.MarkList[0].children[selectedType + parent.polyNum]).exists()) {
+                            parent.MarkList.append(
+                                "<div id='" + selectedType + parent.polyNum + "' class='List-Label'>"
+                                + "<img src='../App_Themes/map/images/rectangle.png' width='20' height='20' />&nbsp;"
+                                + "<label id='LabelPoly" + parent.polyNum + "'>面圖徵" + parent.polyNum + "</label>"
+                                + "<input type='text' id='TextPoly" + parent.polyNum + "' value='' style='display:none;'/>"
+                                + "<input type='button' id='BtnSavePoly" + parent.polyNum + "' class='BtnLabelSave' value='' style='display:none;' onclick='SaveMark(" + parent.polyNum + ', "poly"' + ");'/>"
+                                + "<input type='submit' id='BtnDelPoly" + parent.polyNum + "' name='button' class='BtnLabelDel' value='' onclick='parent.deleteMark(" + selectedType + parent.polyNum + ', "poly' + parent.polyNum + '"' + ")'/>"
+                                + "<input type='submit' id='BtnEditPoly" + parent.polyNum + "' name='button' class='BtnLabelEdit' value='' onclick='EditMark(" + parent.polyNum + ', "poly"' + ")'/>"
+                                + "<br>"
+                                + "</div>"
+                            );
+                            parent.polyNum++;
+                        }
+                    } else if (selectedType == "Text") {
+                        feature.set('num', 'text' + parent.txtNum);
+                        var textStyle = parent.oltmx.Plugin.prototype.setTextMarkStyle(parent.textContent, parent.textColor, parent.textWidth, parent.textStrokeColor, parent.textScale, e.feature);
+                        feature.setStyle(textStyle);
+                        jQuery.fn.exists = function () { return this.length > 0; }
+                        if (!$(parent.MarkList[0].children[selectedType + parent.txtNum]).exists()) {
+                            parent.MarkList.append(
+                                "<div id='" + selectedType + parent.txtNum + "' class='List-Label'>"
+                                + "<img src='../App_Themes/map/images/font.png' width='20' height='20' />&nbsp;"
+                                + "<label id='LabelText" + parent.txtNum + "'>" + parent.textContent + "</label>"
+                                + "<input type='text' id='TxtText" + parent.txtNum + "' value='' style='display:none;'/>"
+                                + "<input type='button' id='BtnSaveText" + parent.txtNum + "' class='BtnLabelSave' value='' style='display:none;' onclick='SaveMark(" + parent.txtNum + ', "text"' + ");'/>"
+                                + "<input type='submit' id='BtnDelText" + parent.txtNum + "' name='button' class='BtnLabelDel' value='' onclick='parent.deleteMark(" + selectedType + parent.txtNum + ', "text' + parent.txtNum + '"' + ")'/>"
+                                + "<input type='submit' id='BtnEditText" + parent.txtNum + "' name='button' class='BtnLabelEdit' value='' onclick='EditMark(" + parent.txtNum + ', "text"' + ")'/>"
+                                + "<br>"
+                                + "</div>"
+                            );
+                            parent.txtNum++;
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+</body>
+</html>

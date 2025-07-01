@@ -1,0 +1,207 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>標註清單</title>
+    <link href="../App_Themes/map/css/reset.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/map/css/layout.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/map/css/mis.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/map/css/map.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/map/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/map/css/jquery-ui.css" rel="stylesheet" type="text/css" />
+    <script type="text/javascript" src="../script/map/jquery.min.js"></script>
+    <script type="text/javascript" src="../script/map/bootstrap.min.js"></script>
+    <script src="../script/map/jquery.js" type="text/javascript"></script>
+</head>
+<body>
+    <div class="scroll--content">
+        <h1>標註清單</h1>        
+        <div id="MarkList" class="MarkList">
+        </div>
+        <br><br>
+        <div style="text-align:center">
+            <input type="button" id="BtnSwitchLabel" class="BtnBlue" value="關閉圖徵名稱" onclick="SwitchLabel();" />
+        </div>
+    </div>
+
+    <script type="text/javascript" src="../script/map/jadeLab.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {          
+            parent.MarkList = $(".MarkList");
+        });
+
+        function SwitchLabel() {
+            if ($("#BtnSwitchLabel").val() == "關閉圖徵名稱") {
+                parent.drawSource.getFeatures().forEach(function (olFeature) {
+                    olFeature.getStyle().getText().getFill().setColor("rgba(0, 0, 0, 0)");
+                    olFeature.getStyle().getText().getStroke().setColor("rgba(255, 255, 255, 0)");
+                    parent.drawSource.refresh();
+                });
+                $("#BtnSwitchLabel").val("顯示圖徵名稱");
+            } else {
+                parent.drawSource.getFeatures().forEach(function (olFeature) {
+                    olFeature.getStyle().getText().getFill().setColor("#000000");
+                    olFeature.getStyle().getText().getStroke().setColor("#FFFFFF");
+                    parent.drawSource.refresh();
+                });
+                $("#BtnSwitchLabel").val("關閉圖徵名稱");
+            }
+        }       
+
+        function EditMark(itemNum, markType) {
+            var BtnDel, BtnEdit, BtnSave, BtnText, MarkLabel;
+
+            if (markType == "point") {
+                BtnDel = document.getElementById("BtnDelPoint" + itemNum);
+                BtnEdit = document.getElementById("BtnEditPoint" + itemNum);
+                BtnSave = document.getElementById("BtnSavePoint" + itemNum);
+                BtnText = document.getElementById("TextPoint" + itemNum);
+                MarkLabel = document.getElementById("LabelPoint" + itemNum);
+
+                parent.markType[0].selectedIndex = 1;
+                parent.markPointDiv.css("display", "block");
+                parent.markLineDiv.css("display", "none");
+                parent.markPolyDiv.css("display", "none");
+                parent.markTxtDiv.css("display", "none");
+            } else if (markType == "line") {
+                BtnDel = document.getElementById("BtnDelLine" + itemNum);
+                BtnEdit = document.getElementById("BtnEditLine" + itemNum);
+                BtnSave = document.getElementById("BtnSaveLine" + itemNum);
+                BtnText = document.getElementById("TextLine" + itemNum);
+                MarkLabel = document.getElementById("LabelLine" + itemNum);
+
+                parent.markType[0].selectedIndex = 2;
+                parent.markPointDiv.css("display", "none");
+                parent.markLineDiv.css("display", "block");
+                parent.markPolyDiv.css("display", "none");
+                parent.markTxtDiv.css("display", "none");
+            } else if (markType == "poly") {
+                BtnDel = document.getElementById("BtnDelPoly" + itemNum);
+                BtnEdit = document.getElementById("BtnEditPoly" + itemNum);
+                BtnSave = document.getElementById("BtnSavePoly" + itemNum);
+                BtnText = document.getElementById("TextPoly" + itemNum);
+                MarkLabel = document.getElementById("LabelPoly" + itemNum);
+
+                parent.markType[0].selectedIndex = 3;
+                parent.markPointDiv.css("display", "none");
+                parent.markLineDiv.css("display", "none");
+                parent.markPolyDiv.css("display", "block");
+                parent.markTxtDiv.css("display", "none");
+            } else if (markType == "text") {
+                BtnDel = document.getElementById("BtnDelText" + itemNum);
+                BtnEdit = document.getElementById("BtnEditText" + itemNum);
+                BtnSave = document.getElementById("BtnSaveText" + itemNum);
+                BtnText = document.getElementById("TxtText" + itemNum);
+                MarkLabel = document.getElementById("LabelText" + itemNum);
+
+                parent.markType[0].selectedIndex = 4;
+                parent.markPointDiv.css("display", "none");
+                parent.markLineDiv.css("display", "none");
+                parent.markPolyDiv.css("display", "none");
+                parent.markTxtDiv.css("display", "block");
+            }
+
+            BtnDel.style.display = "none";
+            BtnEdit.style.display = "none";
+            MarkLabel.style.display = "none";
+            BtnSave.style.display = "";
+            BtnText.style.display = "";
+
+            parent.drawSource.getFeatures().forEach(function (olFeature) {
+                if (olFeature.get('num') == markType + itemNum) {
+                    if (markType == "point") {
+                        var pointStyle = parent.oltmx.Plugin.prototype.setPointMarkStyle("#00FFFF", 1, olFeature.getStyle().getText().getText(), olFeature);
+                        olFeature.setStyle(pointStyle);
+                    } else if (markType == "text") {
+                        olFeature.getStyle().getText().getStroke().setWidth(5);
+                        olFeature.getStyle().getText().getStroke().setColor("#00FFFF");
+                    } else if (markType == "line") {
+                        olFeature.getStyle().getStroke().setWidth(5);
+                        olFeature.getStyle().getStroke().setColor("#00FFFF");
+                    } else {
+                        olFeature.getStyle().getStroke().setWidth(5);
+                        olFeature.getStyle().getStroke().setColor("#00FFFF");
+                        olFeature.getStyle().getFill().setColor("rgba(255, 255, 255, 0.5)");
+                    }                  
+                    parent.oltmx.Plugin.prototype.modifyFeature(olFeature);
+                    parent.drawSource.refresh();
+                }
+            });
+        }
+
+        function SaveMark(itemNum, markType) {
+            var BtnDel, BtnEdit, BtnSave, BtnText, MarkLabel;
+
+            if (markType == "point") {
+                BtnDel = document.getElementById("BtnDelPoint" + itemNum);
+                BtnEdit = document.getElementById("BtnEditPoint" + itemNum);
+                BtnSave = document.getElementById("BtnSavePoint" + itemNum);
+                BtnText = document.getElementById("TextPoint" + itemNum);
+                MarkLabel = document.getElementById("LabelPoint" + itemNum);
+
+                parent.drawSource.getFeatures().forEach(function (olFeature) {
+                    if (olFeature.get('num') == "point" + itemNum) {                    
+                        var pointColorArr = /rgba?\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(,\s*\d+[\.\d+]*)*\)/g.exec(parent.pointColorPick);
+                        parent.pointColor = "rgba(" + [pointColorArr[1], pointColorArr[2], pointColorArr[3], parent.pointOpacity].join(',') + ")";                       
+                        var pointStyle = parent.oltmx.Plugin.prototype.setPointMarkStyle(parent.pointColor, parent.pointScale, BtnText.value, olFeature);
+                        olFeature.setStyle(pointStyle);
+                    }
+                });
+            } else if (markType == "line") {
+                BtnDel = document.getElementById("BtnDelLine" + itemNum);
+                BtnEdit = document.getElementById("BtnEditLine" + itemNum);
+                BtnSave = document.getElementById("BtnSaveLine" + itemNum);
+                BtnText = document.getElementById("TextLine" + itemNum);
+                MarkLabel = document.getElementById("LabelLine" + itemNum);
+
+                parent.drawSource.getFeatures().forEach(function (olFeature) {
+                    if (olFeature.get('num') == "line" + itemNum) {
+                        var lineColorArr = /rgba?\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(,\s*\d+[\.\d+]*)*\)/g.exec(parent.lineColorPick);
+                        parent.lineColor = "rgba(" + [lineColorArr[1], lineColorArr[2], lineColorArr[3], parent.lineOpacity].join(',') + ")";
+                        var lineStyle = parent.oltmx.Plugin.prototype.setLineMarkStyle(parent.lineColor, parent.lineWidth, BtnText.value, olFeature);
+                        olFeature.setStyle(lineStyle);
+                    }
+                });
+            } else if (markType == "poly") {
+                BtnDel = document.getElementById("BtnDelPoly" + itemNum);
+                BtnEdit = document.getElementById("BtnEditPoly" + itemNum);
+                BtnSave = document.getElementById("BtnSavePoly" + itemNum);
+                BtnText = document.getElementById("TextPoly" + itemNum);
+                MarkLabel = document.getElementById("LabelPoly" + itemNum);
+
+                parent.drawSource.getFeatures().forEach(function (olFeature) {
+                    if (olFeature.get('num') == "poly" + itemNum) {                    
+                        var polyColorArr = /rgba?\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(,\s*\d+[\.\d+]*)*\)/g.exec(parent.polyStrokePick);
+                        parent.polyColor = "rgba(" + [polyColorArr[1], polyColorArr[2], polyColorArr[3], parent.polyOpacity].join(',') + ")";
+                        var polyFillColorArr = /rgba?\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(,\s*\d+[\.\d+]*)*\)/g.exec(parent.polyFillPick);
+                        parent.polyFillColor = "rgba(" + [polyFillColorArr[1], polyFillColorArr[2], polyFillColorArr[3], parent.polyOpacity].join(',') + ")";
+                        var polyStyle = parent.oltmx.Plugin.prototype.setPolyMarkStyle(parent.polyFillColor, parent.polyColor, parent.polyWidth, BtnText.value, olFeature);
+                        olFeature.setStyle(polyStyle);
+                    }
+                });
+            } else if (markType == "text") {
+                BtnDel = document.getElementById("BtnDelText" + itemNum);
+                BtnEdit = document.getElementById("BtnEditText" + itemNum);
+                BtnSave = document.getElementById("BtnSaveText" + itemNum);
+                BtnText = document.getElementById("TxtText" + itemNum);
+                MarkLabel = document.getElementById("LabelText" + itemNum);
+
+                parent.drawSource.getFeatures().forEach(function (olFeature) {
+                    if (olFeature.get('num') == "text" + itemNum) {
+                        var textStyle = parent.oltmx.Plugin.prototype.setTextMarkStyle(BtnText.value, parent.textColor, parent.textWidth, parent.textStrokeColor, parent.textScale, olFeature);
+                        olFeature.setStyle(textStyle);
+                    }
+                });
+            }
+
+            MarkLabel.innerText = BtnText.value;
+            BtnDel.style.display = "";
+            BtnEdit.style.display = "";
+            MarkLabel.style.display = "";
+            BtnSave.style.display = "none";
+            BtnText.style.display = "none";
+            parent.map.removeInteraction(parent.modifyInteraction);
+        }
+    </script>
+</body>
+</html>

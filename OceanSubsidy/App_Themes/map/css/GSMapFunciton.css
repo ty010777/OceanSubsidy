@@ -1,0 +1,251 @@
+﻿@charset "utf-8";
+.GSMap-wrapper {
+    position:absolute;
+    left:0px;
+    top:0px;
+    padding-left: 0;
+    -webkit-transition: all 0.5s ease;
+    -moz-transition: all 0.5s ease;
+    -o-transition: all 0.5s ease;
+    transition: all 0.5s ease;
+}
+.GSMap-wrapper.toggled {
+    padding-left: 80px;
+}
+.GSMap-sidebar-wrapper {
+    z-index: 1000;
+    position: fixed;
+    left: 80px;
+    width: 0;
+    height: 100%;
+    margin-left: -80px;
+    overflow-y: auto;
+	overflow-x: hidden;
+    background: #2b2b2b;
+    -webkit-transition: all 0.5s ease;
+    -moz-transition: all 0.5s ease;
+    -o-transition: all 0.5s ease;
+    transition: all 0.5s ease;
+}
+.GSMap-wrapper.toggled .GSMap-sidebar-wrapper {
+    width: 80px;
+}
+#GSMap-content-wrapper {
+    width: 100%;
+    position: absolute;
+    padding: 0px;
+}
+.GSMap-wrapper.toggled #GSMap-content-wrapper {
+    position: absolute;
+    margin-right: -80px;
+}
+@media(min-width: 769px) and (max-width:1365px) {
+	.GSMap-wrapper.toggled {
+    	padding-left: 80px;
+	}
+	.GSMap-sidebar-wrapper {
+		z-index: 1000;
+		position: fixed;
+		left: 80px;
+		width: 0;
+		height: 100%;
+		margin-left: -80px;
+		overflow-y: auto;
+		background: #000;
+		-webkit-transition: all 0.5s ease;
+		-moz-transition: all 0.5s ease;
+		-o-transition: all 0.5s ease;
+		transition: all 0.5s ease;
+	}
+	.GSMap-wrapper.toggled .GSMap-sidebar-wrapper {
+		width: 80px;
+	}
+	.GSMap-wrapper.toggled #GSMap-content-wrapper {
+		position: absolute;
+		margin-right: -80px;
+	}
+}
+@media(min-width:1366px) {
+    .GSMap-wrapper {
+        padding-left: 80px;
+    }
+    .GSMap-wrapper.toggled {
+        padding-left: 0;
+    }
+    .GSMap-sidebar-wrapper {
+        width: 80px;
+    }
+    .GSMap-wrapper.toggled .GSMap-sidebar-wrapper {
+        width: 0;
+    }
+    #GSMap-content-wrapper {
+        padding: 0px;
+        position: relative;
+    }
+    .GSMap-wrapper.toggled #GSMap-content-wrapper {
+        position: relative;
+        margin-right: 0;
+    }
+}
+@media(min-width: 768px) and (max-width:1365px) {
+	.GSMap-wrapper {
+        padding-left: 80px;
+    }
+    .GSMap-wrapper.toggled {
+        padding-left: 0;
+    }
+    .GSMap-sidebar-wrapper {
+        width: 80px;
+    }
+    .GSMap-wrapper.toggled .GSMap-sidebar-wrapper {
+        width: 0;
+    }
+    #GSMap-content-wrapper {
+        padding: 0px;
+        position: relative;
+    }
+    .GSMap-wrapper.toggled #GSMap-content-wrapper {
+        position: relative;
+        margin-right: 0;
+    }
+}
+
+.GSMap-menu-collapse{
+	background-color: #000;
+	-webkit-border-top-right-radius: 6px;
+	-webkit-border-bottom-right-radius: 6px;
+	-moz-border-radius-topright: 6px;
+	-moz-border-radius-bottomright: 6px;
+	border-top-right-radius: 6px;
+	border-bottom-right-radius: 6px;
+	width: 40px;
+	height: 40px;
+	display: inline-block;
+	text-align: center;
+	position: absolute;
+	left: 0;
+	z-index: 99;
+}
+@media (max-width: 768px) {
+	.GSMap-menu-collapse{
+		top:80px;
+	}
+}
+.GSMap-menu-collapse >i{
+	font-size: 1.2em;
+	line-height: 40px;
+	color: #FFF;
+}
+
+@media (max-width: 550px) {
+	.GSMap-wrapper.toggled {
+    	padding-left: 68px;
+	}
+	.GSMap-sidebar-wrapper {
+			left: 68px;
+			margin-left: -68px;
+		}
+	.GSMap-wrapper.toggled .GSMap-sidebar-wrapper {
+		width: 68px;
+	}
+	.GSMap-wrapper.toggled #GSMap-content-wrapper {
+		margin-right: -68px;
+	}
+}
+
+/*地圖主選單樣式*/
+.GSMap-menu {
+    position: absolute;
+    top: 0;
+    width: 80px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+@media(min-width: 769px) and (max-width:1365px) {
+	.GSMap-menu {width: 80px;}
+}
+@media (max-width: 550px) {
+	.GSMap-menu {width: 58px;}
+}
+.GSMap-menu-style {
+    margin: 0px;
+    padding: 0;
+	margin-left: 20px;
+}
+.GSMap-menu-style li {
+	font-family: "微軟正黑體";
+	list-style: none;
+	text-indent: 2px;
+	font-weight:normal;
+	border-bottom: 1px solid #494949;
+	margin-bottom: 4px;
+	width: 40px;
+	height: 70px;
+	display: flex;
+    align-items: center;
+	justify-content:center;
+}
+.GSMap-menu-style li a {
+    color: #fff;
+    display: block;
+    font-weight: 600;
+	font-size: 1em;
+	line-height: 1.2;
+	text-align: center;
+	padding: 6px 0;
+    text-decoration: none;
+}
+.GSMap-menu-style li a:hover,
+.GSMap-menu-style li a.active {
+    text-decoration: none;
+	color: #1BB5DC;
+	font-weight: 600;
+	width: 70px;
+	height: 70px;
+	transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+.GSMap-menu-style li.active {
+    background-image: url("../images/left_menu_hover_bg.png");
+	background-repeat: no-repeat;
+}
+
+.GSMap-menu-style > li > a > i {
+    font-size: 1em;
+	width: 100%;
+	display: block;
+	text-align: center;
+}
+.GSMap-menu-style-icon{
+	float: left!important;
+	padding: 4px 0 0 0!important;
+	font-size: 1em;
+}
+@media (max-width: 768px) {
+	.GSMap-menu-style {
+		margin-top: 80px;
+		margin-left: 4px;
+	}
+}
+@media (max-width: 550px) {
+	.GSMap-menu-style li {
+		width: 58px;
+		height: 58px;
+		overflow: hidden;
+	}
+	.GSMap-menu-style li a {
+		font-size: 0.8em;
+	}
+	.GSMap-menu-style li a:hover,
+	.GSMap-menu-style li a.active {
+		width: 58px;
+		height: 58px;
+	}
+}
+/*地圖主選單樣式結尾*/
+
+
+
+
+/*地圖主選單樣式結尾*/
+

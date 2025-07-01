@@ -1,0 +1,83 @@
+// 斷點
+$grid-breakpoints: (
+  xs: 0,
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px,
+  xxl: 1400px,
+  xxxl: 1920px,
+);
+$sm: map-get($grid-breakpoints, 'sm');
+$md: map-get($grid-breakpoints, 'md');
+$lg: map-get($grid-breakpoints, 'lg');
+$xl: map-get($grid-breakpoints, 'xl');
+$xxl: map-get($grid-breakpoints, 'xxl');
+$xxxl: map-get($grid-breakpoints, 'xxxl');
+
+$page-width: 1440px;
+$page-inner-width: 1040px;
+$page-inner-width-lg: 1280px;
+$page-inner-width-full: 100%;
+
+// Color Theme
+$yellow: #FFC51B;
+$gray: #5C5C5C;
+$gray2: #777777;
+$light-gray: #C2C2C2;
+$blue-green: #1BB5DB;
+$blue-green-hover: #179CBD;
+$blue-green-active: #0F748D;
+$blue: #448AFF;
+$blue2: #0882BF;
+$blue-hover: #2A68D0;
+$blue-active: #003387;
+$blue-outline-hover: #91BAFF;
+$light-blue: #D1E2FF;
+$green: #2DC3C1;
+$green-outline-hover: #92D4D3;
+$pink: #F76195;
+$pink-outline-hover: #EB90AF;
+$light-green: #D8E7EB;
+$blue-purple: #5A7FE5;
+$dark-green: #005E53;
+$green-light: #26C6DA;
+$yellow-hover: #FFF600;
+$dark-green2: #037F72;
+$light-green2: #F4FCE8;
+$blue-green2: #26A69A;
+$blue-green2-hover: #70C7BF;
+$blue-green2-active: #00413A;
+$blue-green2-outline-hover: #F4FCE8;
+$blue-green2-outline-active: #C8E6C9;
+
+
+// Colors
+$neutral-100: #F5F5F5;
+$neutral-200: #EEEEEE;
+$neutral-300: #DDDDDD;
+$neutral-400: #C5C5C5;
+$neutral-500: #BBBBBB;
+$neutral-600: #858585;
+$neutral-700: #5C5C5C;
+
+
+
+
+
+// 
+// 其他
+
+
+// a link
+
+
+// Modal
+
+// Icon
+$font-awesone: "Font Awesome 6 Free";
+$material-symbols: "Material Symbols Rounded";
+
+// 其他
+$shadow: 0px 0px 20px 0px rgba(184, 180, 180, 0.30);
+$header-height: calc(64px + 40px);

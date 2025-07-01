@@ -1,0 +1,314 @@
+/* == Utilities == */
+//標題
+h1 {
+    font-size: 2.986rem;
+}
+h2 {
+    font-size: 2.488rem;
+}
+h3 {
+    font-size: 2.074rem;
+}
+h4 {
+    font-size: 1.728rem;
+}
+h5 {
+    font-size: 1.44rem;
+}
+h6 {
+    font-size: 1.2rem;
+}
+
+
+
+// 文字尺寸
+$font-sizes: (
+    5: 1.25rem,  // 20px / 16
+    12: 0.75rem,  // 12px / 16
+    14: 0.875rem,  // 14px / 16
+    16: 1rem,  // 16px / 16
+    18: 1.125rem,  // 18px / 16
+    20: 1.25rem,  // 20px / 16
+    24: 1.5rem,  // 24px / 16
+    28: 1.75rem,  // 28px / 16
+    30: 1.875rem,  // 30px / 16
+    32: 2rem,  // 32px / 16
+);
+// 文字顏色
+$text-colors: (
+    primary: $primary,
+    blue-green : $blue-green,
+    pink: $pink,
+    gray: $gray,
+    green: $green,
+    blue: $blue,
+    blue2: $blue2,
+    yellow: $yellow,
+    blue-purple: $blue-purple,
+    dark-green: $dark-green,
+    dark-green2: $dark-green2,
+    light-gray: $neutral-400,
+);
+// 背景顏色
+$bg-colors: (
+    light-green : $light-green,
+    light-blue : $light-blue,
+    light-gray : $neutral-100,
+    light-green2 : $light-green2,
+);
+// border顏色
+$border-colors: (
+    primary : $primary,
+);
+// Border
+$border-sizes: (    
+    0: 0px,
+    1: 1px,
+    2: 2px,
+    4: 4px,
+);
+// Width
+$width-sizes: (
+    auto: auto,
+    100: 100%,
+    min-content: min-content
+);
+// Margin
+$margin-sizes: (
+    0: 0px,
+    1: 4px,
+    2: 8px,
+    3: 16px,
+    4: 24px,
+    5: 48px,
+    10: 10px,
+    12: 12px,
+    20: 20px,
+    22: 22px,
+    28: 28px,
+    32: 32px,
+    40: 40px,
+    48: 48px,
+    52: 52px,
+    60: 60px,
+    80: 80px,
+);
+// Padding
+$padding-sizes: (
+    0: 0px,
+    1: 4px,
+    2: 8px,
+    3: 16px,
+    4: 24px,
+    5: 48px,
+    10: 10px,
+    12: 12px,
+    20: 20px,
+    28: 28px,
+    32: 32px,
+    40: 40px,
+    60: 60px,
+    80: 80px,
+    90: 90px,
+);
+// Gap
+$gap-sizes: (
+    12: 12px,
+    20: 20px,
+    28: 28px,
+    32: 32px,
+    40: 40px,
+    48: 48px,
+    54: 54px,
+    60: 60px,
+);
+
+
+$utilities: (    
+    "shadow": (
+        property: box-shadow,
+        class: shadow,
+        responsive: true,
+        values: (
+            null: $shadow,
+            // sm: var(--#{$prefix}box-shadow-sm),
+            // lg: var(--#{$prefix}box-shadow-lg),
+            // none: none,
+        )
+    ),
+    "display": (
+        class: d,
+        property: display,
+        responsive: true,
+        values: (contents)
+    ),
+    "font-size": (
+        class: fs,
+        property: font-size,
+        responsive: true,
+        values: $font-sizes
+    ),
+    "text-color": (
+        class: text,
+        property: color,
+        responsive: true,
+        values: $text-colors
+    ),
+    "bg-color": (
+        class: bg,
+        property: background-color,
+        responsive: true,
+        values: $bg-colors
+    ),
+    "border-color": (
+        class: border,
+        property: border-color,
+        responsive: true,
+        values: $border-colors
+    ),
+    "border-width": (
+        class: border-width,
+        property: border-width,
+        responsive: true,
+        values: $border-sizes
+    ),
+    "font-weight": (
+        property: font-weight,        
+        class: fw,
+        responsive: true,
+        values: (
+            lighter: $font-weight-lighter,
+            light: $font-weight-light,
+            normal: $font-weight-normal,
+            medium: $font-weight-medium,
+            semibold: $font-weight-semibold,
+            bold: $font-weight-bold,
+            bolder: $font-weight-bolder
+        )
+    ),
+    "gap": (
+        class: gap,
+        property: gap,
+        responsive: true,
+        values: $gap-sizes
+    ),
+    "column-gap": (
+        class: column-gap,
+        property: column-gap,
+        responsive: true,
+        values: $gap-sizes
+    ),
+    "row-gap": (
+        class: row-gap,
+        property: row-gap,
+        responsive: true,
+        values: $gap-sizes
+    ),
+    "width": (
+        class: w,
+        property: width,
+        responsive: true,
+        values: $width-sizes
+    ),
+    "position": (
+        class: position,
+        property: position,
+        responsive: true,
+        values: (static, relative, absolute)
+    ),
+    "cursor": (
+        class: cursor,
+        property: cursor,
+        values: (pointer)
+    ),
+    "transform-middle": (
+        class: translate,
+        property: transform,
+        responsive: true,
+        values: (middle: translate(-50%, -50%))
+    ),
+    //Margin
+    "mb": (
+        class: mb,
+        property: margin-bottom,
+        responsive: true,
+        values: $margin-sizes
+    ),
+    "mt": (
+        class: mt,
+        property: margin-top,
+        responsive: true,
+        values: $margin-sizes
+    ),
+    "ms": (
+        class: ms,
+        property: margin-left,
+        responsive: true,
+        values: $margin-sizes
+    ),
+    "me": (
+        class: me,
+        property: margin-right,
+        responsive: true,
+        values: $margin-sizes
+    ),
+    "m-inline": (
+        class: mx,
+        property: margin-inline,
+        responsive: true,
+        values: $margin-sizes
+    ),
+    "m-block": (
+        class: my,
+        property: margin-block,
+        responsive: true,
+        values: $margin-sizes
+    ),
+    // Padding
+    "p": (
+        class: p,
+        property: padding,
+        responsive: true,
+        values: $padding-sizes
+    ),
+    "pt": (
+        class: pt,
+        property: padding-top,
+        responsive: true,
+        values: $padding-sizes
+    ),
+    "pb": (
+        class: pb,
+        property: padding-bottom,
+        responsive: true,
+        values: $padding-sizes
+    ),
+    "ps": (
+        class: ps,
+        property: padding-left,
+        responsive: true,
+        values: $padding-sizes
+    ),
+    "pe": (
+        class: pe,
+        property: padding-right,
+        responsive: true,
+        values: $padding-sizes
+    ),
+    "p-inline": (
+        class: px,
+        property: padding-inline,
+        responsive: true,
+        values: $padding-sizes
+    ),
+    "p-block": (
+        class: py,
+        property: padding-block,
+        responsive: true,
+        values: $padding-sizes
+    ),
+
+);
+
+@import "../vendor/bootstrap-5.3.3/scss/utilities/api";
+

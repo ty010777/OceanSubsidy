@@ -1,0 +1,26 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeFile="MapMaster.master.cs" Inherits="MapMaster" %>
+
+<!DOCTYPE html>
+<html>
+<head id="Head1" runat="server">
+    <title>Map應用程式樣版集</title>
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=9,IE=10,IE=11" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="script/map/jquery.min.js" type="text/javascript"></script>
+    <script src="script/map/bootstrap.bundle.min.js"></script>
+    <asp:ContentPlaceHolder ID="head" runat="server">
+    </asp:ContentPlaceHolder>
+</head>
+<body scroll="no" style="overflow:hidden">
+    <form id="form1" runat="server">
+    <div>
+        <asp:ContentPlaceHolder ID="ContentPlaceInForm" runat="server">
+        </asp:ContentPlaceHolder>
+    </div>
+    </form>
+    <asp:ContentPlaceHolder ID="ContentPlaceBody" runat="server">
+    </asp:ContentPlaceHolder>
+</body>
+</html>

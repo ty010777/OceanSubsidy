@@ -1,0 +1,192 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <script src="../script/map/jquery.min.js" type="text/javascript"></script>
+    <script src="../script/map/jquery-ui.min.js"></script>
+    <script src="../script/map/FileSaver.min.js" type="text/javascript"></script>
+    <script src="../script/map/toBitmapURL.js" type="text/javascript"></script>
+    <script src="../script/map/html2canvas.js" type="text/javascript"></script>
+    <!--<link href="../App_Themes/Map/css/reset.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/Map/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/Map/css/layout.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/Map/css/map.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/Map/css/nanoscroller.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/Map/css/table.css" rel="stylesheet" type="text/css" />-->
+    <style>
+
+        .prompt {
+            font-size: 1.5em;
+            color: #333b48;
+            font-weight: bold;
+            padding-bottom: 5px;
+            margin-bottom: 12px;
+        }
+
+        .btnExport {
+            background-color: #1E56A0;
+            color: #ffffff;
+            background-image: url(../App_Themes/map/images/btn_download.svg);
+            background-repeat: no-repeat;
+            background-position: 4px center;
+            background-size: 15px auto;
+            padding: 10px 6px 10px 25px;
+            border: 1px solid transparent;
+        }
+    </style>
+    <script type="text/javascript">
+        $(function () {
+            if (opener.gsExportInfo.imageTitle != null && opener.gsExportInfo.imageTitle.replace(/ /g, "") != "") {
+                $("#title span").text(opener.gsExportInfo.imageTitle);
+                $("#title").show();
+            } else {
+                $("#title").hide();
+            }
+
+            //$("#LegendImg").css('display', 'none');
+
+        });
+
+        function showLegend() {
+            $("#LegendImg").attr("src", opener.gsExportInfo.LegendImgDataUrl);
+            $("#LegendImg").on('load', () => { $("#Legend").width($("#LegendImg").width()) });
+        }
+
+        $(window).on('load',
+            function () {
+                $("#NorthArrow").draggable();
+                $("#OverviewMap").draggable();
+                $("#ScaleLine").draggable();
+                $("#Legend").draggable();
+                $("#title").draggable();
+
+                $("#MapImg").attr("src", opener.gsExportInfo.MapImgDataUrl);
+                $("#MapImg").on('load', () => { $("#Map").width($("#MapImg").width()) });
+
+                $("#ScaleLineImg").attr("src", opener.gsExportInfo.ScaleLineImgDataUrl);
+                $("#ScaleLineImg").on('load', () => { $("#ScaleLine").width($("#ScaleLineImg").width()) });
+
+                $("#NorthArrowImg").attr("src", opener.gsExportInfo.NorthArrowImgDataUrl);
+                $("#NorthArrowImg").on('load', () => { $("#NorthArrow").width($("#NorthArrowImg").width()) });
+
+                $("#OverviewMapImg").attr("src", opener.gsExportInfo.OverviewImgDataUrl);
+                $("#OverviewMapImg").on('load', () => { $("#OverviewMap").width($("#OverviewMapImg").width()) });
+
+                if (opener.gsExportInfo.LegendImgDataUrl) {
+                    $("#LegendImg").attr("src", opener.gsExportInfo.LegendImgDataUrl);
+                    $("#LegendImg").on('load', () => { $("#Legend").width($("#LegendImg").width()) });
+                } else {
+                    $("#LegendImg").hide();
+                }
+
+                //$("#title").width($("#spanTxt").width() * 2);
+
+
+                $("#Legend")[0].style.position = "absolute";
+                $("#Legend")[0].style.top = "0px";
+                $("#Legend")[0].style.right = "-4px";
+
+                $("#NorthArrow")[0].style.position = "absolute";
+                $("#NorthArrow")[0].style.top = "0px";
+                $("#NorthArrow")[0].style.left = "-4px";
+
+                $("#OverviewMap")[0].style.position = "absolute";
+                $("#OverviewMap")[0].style.bottom = "5px";
+                $("#OverviewMap")[0].style.left = "5px";
+
+                $("#ScaleLine")[0].style.position = "absolute";
+                $("#ScaleLine")[0].style.bottom = "5px";
+                $("#ScaleLine")[0].style.right = document.getElementById('Map').getElementsByTagName('td')[1].clientWidth + 6 + "px";
+
+            }
+        );
+
+        function switchElement(id) {
+            if ($("#" + id).css('display') == "none") {
+                $("#" + id).css('display', "");
+            } else {
+                $("#" + id).css('display', "none");
+            }
+        }
+
+        //將圖台截圖與地圖元素圖片整合產出
+        function saveFinalMap() {
+            var url_string = window.location.href;
+            var url = new URL(url_string);
+            var format = url.searchParams.get("format");
+            var theWidth = $("#MapImg").width();
+            var theHeight = $("#MapImg").height()
+            html2canvas(
+                $("#Map")[0],
+                {
+                    onrendered: function (canvas) {
+                        var FinalImg = document.createElement('img');
+                        var ctx = canvas.getContext('2d');
+                        ctx.mozImageSmoothingEnabled = false;
+                        ctx.webkitImageSmoothingEnabled = false;
+                        ctx.msImageSmoothingEnabled = false;
+                        ctx.imageSmoothingEnabled = false;
+                        FinalImg.src = canvas.toDataURL();
+                        canvas.toBlob(function (result) {
+                            saveAs(result, 'map.' + format);
+                        });
+                    }
+                }
+            );
+        }</script>
+</head>
+<body>
+    <br />
+    <table style="margin-left:20px;">
+        <tr>
+            <td style="padding-right: 40px; vertical-align: top;">
+                <div style="text-align:right; border: 2px solid gray; padding: 4px; margin-top: 80px; width: 76px;">
+                    <label>比例尺</label> <input type="checkbox" checked="checked" onclick="switchElement('ScaleLine');" /><br />
+                    <label>鷹眼圖</label> <input type="checkbox" checked="checked" onclick="switchElement('OverviewMap');" /><br />
+                    <label>指北針</label> <input type="checkbox" checked="checked" onclick="switchElement('NorthArrow');" /><br />
+                    <label>圖名</label> <input type="checkbox" checked="checked" onclick="switchElement('title');" /><br />
+                    <label id="lbLegend">圖例</label> <input id="checkLegend" type="checkbox" checked="checked" onclick="switchElement('Legend');" />
+                </div>
+            </td>
+            <td style="text-align: center">
+                <h3 class="prompt">• 請移動地圖元素至欲儲存的位置，並點擊儲存匯出圖片</h3>
+                <div id="layoutMain" style="position:relative;display:inline-block;border:black; border-style: solid; background-color:#FFFFFF;">
+                    <table id="Map" style="">
+                        <tr>
+                            <td style="position:relative;">
+                                <img id="MapImg" src="../temp/Map.png" />
+                                <div id="Legend" style="cursor: all-scroll;">
+                                    <img id="LegendImg" src="../temp/legend.png" />
+                                </div>
+                                <div id="NorthArrow" style="cursor: all-scroll;">
+                                    <img id="NorthArrowImg" src="../temp/northarrow.png" />
+                                </div>
+                                <div id="OverviewMap" style="cursor: all-scroll;">
+                                    <img id="OverviewMapImg" src="../temp/overviewmap.png" style="width:148px; height:148px;" />
+                                </div>
+                                <div id="ScaleLine" style="cursor: all-scroll;">
+                                    <img id="ScaleLineImg" src="../temp/scaleline.png" style="background-color:black;" />
+                                </div>
+                                <table id="title" style="position: absolute; left: 43%; top: 0px; z-index: 10; background-color: transparent; cursor: all-scroll;">
+                                    <tr>
+                                        <td style="text-align: center; padding: 2mm;">
+                                            <span id="spanTxt" style="background-color: white; font-size: 9mm; padding: 0mm 4mm 0mm 4mm;
+                                            margin: 2mm; border-radius: 5mm; border: 1mm solid black;"></span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" style="text-align:center;padding-top: 20px;">
+                <input type="submit" class="btnExport" value="儲存" onclick="saveFinalMap();" />
+            </td>
+        </tr>
+    </table>
+    <br />
+</body>
+</html>

@@ -1,0 +1,201 @@
+.btn {
+    padding: 8px 14px;
+    min-width: 90px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.125rem;
+    white-space: nowrap;
+    line-height: normal;
+    gap: 4px;
+    i {
+        margin-bottom: -1px;
+    }
+
+    &:disabled {
+        background-color: $neutral-400;
+        color: #fff;
+    }
+
+    &.rounded-pill {
+        padding: 8px 24px;
+    }
+}
+
+.btn-blue-green {
+    background-color: $blue-green;
+    color: #fff;
+    border: 1px solid $blue-green;
+    border-radius: 4px;
+    &:hover {
+        background-color: $blue-green-hover;
+        color: #fff;
+    }
+    &:active {
+        background-color: $blue-green-active !important ;
+        color: #fff !important;
+    }
+}
+.btn-blue-green2 {
+    background-color: $blue-green2;
+    color: #fff;
+    border: 1px solid $blue-green2;
+    border-radius: 4px;
+    &:hover {
+        background-color: $blue-green2-hover;
+        color: #fff;
+    }
+    &:active {
+        background-color: $blue-green2-active !important ;
+        color: #fff !important;
+    }
+}
+
+.btn-blue {
+    background-color: $blue;
+    color: #fff;
+    border: 1px solid $blue;
+    border-radius: 4px;
+    &:hover {
+        background-color: $blue-hover;
+        color: #fff;
+    }
+    &:active {
+        background-color: $blue-active !important ;
+        color: #fff !important;
+    }
+}
+.btn-blue2 {
+    background-color: $blue2;
+    color: #fff;
+    border: 1px solid $blue2;
+    border-radius: 4px;
+    &:hover {
+        background-color: $blue2;
+        color: #fff;
+    }
+    &:active {
+        background-color: $blue2 !important ;
+        color: #fff !important;
+    }
+}
+
+.btn-gray {
+    background-color: $gray2;
+    color: #fff;
+    border: 1px solid $gray2;
+    border-radius: 4px;
+    &:hover {
+        background-color: $gray2;
+        color: #fff;
+    }
+    &:active {
+        background-color: $gray2 !important ;
+        color: #fff !important;
+    }
+}
+
+.btn-blue-purple {
+    background-color: $blue-purple;
+    color: #fff;
+    border: 1px solid $blue-purple;
+    border-radius: 4px;
+    &:hover {
+        background-color: $blue-purple;
+        color: #fff;
+    }
+    &:active {
+        background-color: $blue-purple !important ;
+        color: #fff !important;
+    }
+}
+
+.btn-dark-green2 {
+    background-color: $dark-green2;
+    color: #fff;
+    border: 1px solid $dark-green2;
+    border-radius: 4px;
+    &:hover {
+        background-color: $dark-green2 !important;
+        color: #fff;
+    }
+    &:active {
+        background-color: $dark-green2 !important ;
+        color: #fff !important;
+    }
+    &:focus {
+        background-color: $dark-green2 !important;
+        color: #fff !important;
+    }
+}
+
+.btn-outline-blue {
+    border: 2px solid $blue;
+    color: $blue;
+    background-color: #fff;
+    &:hover {
+        border: 2px solid $blue;
+        background-color: $blue-outline-hover;
+        color: #fff;
+    }
+    &:active {
+        background-color: $blue !important  ;
+        color: #fff !important;
+        border: 2px solid $blue !important;
+    }
+}
+
+.btn-outline-green {
+    border: 2px solid $green;
+    color: $green;
+    background-color: #fff;
+    &:hover {
+        border: 2px solid $green;
+        background-color: $green-outline-hover;
+        color: #fff;
+    }
+    &:active {
+        background-color: $green !important;
+        color: #fff !important;
+        border: 2px solid $green !important;
+    }
+}
+
+.btn-outline-pink {
+    border: 2px solid $pink;
+    color: $pink;
+    background-color: #fff;
+    &:hover {
+        border: 2px solid $pink;
+        background-color: $pink-outline-hover;
+        color: #fff;
+    }
+    &:active {
+        background-color: $pink !important;
+        color: #fff !important;
+        border: 2px solid $pink !important;
+    }   
+}
+.btn-outline-blue-green2 {
+    border: 2px solid $blue-green2;
+    color: $blue-green2;
+    background-color: #fff;
+    &:hover {
+        border: 2px solid $blue-green2;
+        background-color: $blue-green2-outline-hover;
+        color: $blue-green2;
+    }
+    &:active {
+        background-color: $blue-green2-outline-active !important;
+        color: $blue-green2 !important;
+        border: 2px solid $blue-green2 !important;
+    }   
+}
+
+.btn-sm {
+    padding: 8px;
+    min-width: unset;
+    font-size: 1rem;
+    text-align: center;
+    margin-bottom: 6px;
+}

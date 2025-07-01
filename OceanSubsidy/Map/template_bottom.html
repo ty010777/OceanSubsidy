@@ -1,0 +1,40 @@
+﻿    <!--按鈕結尾-->
+<ul id="navBottom" class="gsmap-bottom-nav map_nav nav nav-tabs" role="tablist">
+    <li class="nav-item">
+        <a id="tab-identify" href="#cont-identify" class="nav-link" data-toggle="tab" role="tab" aria-controls="cont-identify" aria-selected="false">
+            圖徵資訊
+        </a>
+    </li>
+    <li class="nav-item">
+        <a id="tab-coord" href="#cont-coord" class="nav-link" data-toggle="tab" role="tab" aria-controls="cont-coord" aria-selected="false">
+            坐標資訊
+        </a>
+    </li>
+</ul>
+<div id="contentBottom" class="gsmap-bottom-content tab-content" style="overflow: auto; background-color: white; position: sticky;">
+    <div id="cont-identify" class="tab-pane fade mapcont__item" role="tabpanel" aria-labelledby="tab-identify">
+        <div id="featureInfo" class="gsmap-bottom-identify MapBubbleStyle">
+            <table class="BubleTable" style="width:100%;border-width:1px;">
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+    <div id="cont-coord" class="tab-pane fade mapcont__item" role="tabpanel" aria-labelledby="tab-coord">
+        <table class="LayerInfoTable" style="width:100%;" border="1">
+            <tr>
+                <td>WGS84</td>
+                <td class="_tdWGS84"></td>
+            </tr>
+            <tr>
+                <td>TWD97</td>
+                <td class="_tdTWD97"></td>
+            </tr>
+            <tr>
+                <td>TWD67</td>
+                <td class="_tdTWD67"></td>
+            </tr>
+        </table>
+        <br />
+        <input type="button" class="_btnGoogle BtnBlue" value="開啟Google街景" />
+    </div>
+</div>

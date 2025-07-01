@@ -1,0 +1,1180 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <script src="../script/map/jquery.js" type="text/javascript"></script>
+    <script src="../script/map/jquery-ui.min.js" type="text/javascript"></script>
+    <script src="../script/map/bootstrap.js" type="text/javascript"></script>
+    <link href="../App_Themes/Map/css/reset.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/Map/css/bootstrap.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/Map/css/layout.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/Map/css/jquery-ui.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/Map/css/map.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/Map/css/nanoscroller.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/Map/css/table.css" rel="stylesheet" type="text/css" />
+    <script src="../script/map/jquery.ui.touch-punch.min.js"></script>
+
+    <style type="text/css">
+        .unselectable {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .ui-slider-horizontal {
+            height: 15px;
+        }
+
+        .ui-slider .ui-slider-handle {
+            height: 20px;
+            width: 20px;
+        }
+    </style>
+    <!--<script src="../script/map_custom/layersGenerator.js" type="text/javascript"></script>-->
+    <script type="text/javascript">
+        var digit = 2;
+        var parentMapLayerObj = parentMapLayerObj;
+        var resizeInterval = null;
+        var mapPlugin = null;
+        var map;
+        $(function () {
+            mapPlugin = parent.mapPlugin;
+            map = mapPlugin.getMap();
+            map.on("moveend", onMoveEnd);
+            parentMapLayerObj = mapPlugin.layersMg.getLayerInfo();
+            var defaultTab = null;
+            for (var id in parentMapLayerObj) {
+                var tabDom = $('<input type="button" name="button" class="BtnTab">')
+                    .attr("value", parentMapLayerObj[id].name)
+                    .attr("onclick", "switchLayerTab('" + parentMapLayerObj[id].name + "')");
+                tabDom.insertBefore($(".TabBox > input._last"));
+                $("<span> </span>").insertBefore($(".TabBox > input._last"));
+                if (!defaultTab) {
+                    defaultTab = parentMapLayerObj[id].name;
+                }
+            }
+            if (defaultTab) {
+                switchLayerTab(defaultTab);
+            }
+
+        });
+
+        $(window).on("resize", function () {
+            clearInterval(resizeInterval);
+            resizeInterval = setInterval(resizeLayout, 200);
+        });
+
+        function onMoveEnd(e) {
+            var data;
+            for (var id in parentMapLayerObj) {
+                if (parentMapLayerObj[id].name == $(".BtnTab.TabActive").val()) {
+                    data = parentMapLayerObj[id].sub;
+                    break;
+                }
+            }
+
+            if (data == undefined) {
+                data = mapPlugin.layersMg.getTurnOnLayers();
+            }
+
+            resetLegendCheckbox(data);
+            return;
+        }
+
+        function resetLegendCheckbox(layerInfos) {
+            if (layerInfos.type === "folder") {
+                layerInfos = layerInfos.sub;
+            } else if (layerInfos.type === "node") {
+                layerInfos = [layerInfos];
+            }
+            for (var key in layerInfos) {
+                var layerInfo = layerInfos[key];
+                if (!layerInfo) {
+                    continue;
+                }
+
+                if (layerInfo.type === "folder") {
+                    resetLegendCheckbox(layerInfo.sub);
+                } else {
+                    let $td = $("#legendTable td[layerID='" + mapPlugin.layersMg.getLayerID(layerInfo) + "']");
+                    if (mapPlugin.layersMg.getLayerShowup(layerInfo)) {
+                        $td.find(":checkbox").css("opacity", 1);
+                        if (mapPlugin.layersMg.isLayerTurnOn(layerInfo)) {
+                            $td.find(".BtnTrans").show();
+                        } else {
+                            $td.find(".BtnTrans").hide();
+                        }
+                    } else {
+                        $td.find(":checkbox").css("opacity", 0.5);
+                        $td.find(".BtnTrans").hide();
+                    }
+                }
+            }
+        }
+
+        function resetFolderChecked() {
+            $(".FolderSwitch").parent().children(":checkbox").each(
+                function () {
+                    if ($(this).parent().find(".TreeNode").find(":checkbox:checked").length) {
+                        $(this).prop("checked", true);
+                    } else {
+                        $(this).prop("checked", false);
+                    }
+                }
+            );
+        }
+
+        function resizeLayout() {
+            parent.resizeBox(99999999);
+            if ($(".nano").height() != ($("html").height() - $(".nano").offset().top)) {
+                $(".nano").height($("html").height() - $(".nano").offset().top);
+            }
+            clearInterval(resizeInterval);
+        }
+
+        function switchLayerTab(layerName) {
+            closeLayerAddingPanel();
+            var targetID = null;
+            for (var id in parentMapLayerObj) {
+                if (parentMapLayerObj[id].name == layerName) {
+                    targetID = id;
+                    break;
+                }
+            }
+            createLegend(targetID);
+            $("input.BtnTab").removeClass("TabActive");
+            $("input.BtnTab[value='" + layerName + "']").addClass("TabActive");
+
+            /*createLegend(layerName);
+            $("input.BtnTab").removeClass("TabActive");
+            $("input.BtnTab[value='" + layerName + "']").addClass("TabActive");*/
+        }
+
+        function setRangeQueryLayer() {
+            var target = ["主題圖", "水利", "災害", "其他"];
+            for (i = 0; i < target.length; i++) {
+                var data = parentMapLayerObj[target[i]].sub;
+                for (var layerID in data) {
+                    var layerInfo = data[layerID];
+                    if (!layerInfo) continue;
+                    if (data[layerID].sub) {
+                        for (var subLayerID in data[layerID].sub) {
+                            var subLayerInfo = data[layerID].sub[subLayerID];
+                            if (subLayerInfo.rangeQuery) {
+                                parent.rangeQueryLayer.push(subLayerInfo.layerID);
+                            }
+                        }
+                    } else {
+                        if (layerInfo.rangeQuery) {
+                            parent.rangeQueryLayer.push(layerInfo.layerID);
+                        }
+                    }
+                }
+            }
+        }
+
+        function showExistLayer() {
+            $("#legendTable")[0].innerText = "";
+            var existLayer = mapPlugin.layersMg.getTurnOnLayers();
+            createFolder($("#legendTable"), existLayer);
+
+            //for (i = 0; i < existLayer.length; i++) {
+            //    if (!existLayer[i]) continue;
+            //    var layerInfo;
+            //    if (existLayer[i].sub != undefined) {
+            //        layerInfo = existLayer[i].sub[existLayer[i - 1]];
+            //    } else {
+            //        layerInfo = existLayer[i];
+            //    }
+            //    var $tr = $("<tr><td style='display:block;vertical-align:text-bottom; position:relative;'/></tr>");
+            //    var $td = $tr.find("td:last");
+            //    $td.append('<input type="checkbox" layerID="' + layerInfo.layerID + '" onchange=\'switchLayerVisible(this, "' + layerInfo.layerID + '")\' />');
+            //    $("#legendTable").append($tr);
+            //    var layer = mapPlugin.layersMg.getLayer(layerInfo);
+            //    if (layer/* && layer.getVisible()*/) $td.find(':checkbox').prop('checked', true);
+            //    // create a layer
+            //    $td.addClass("TreeNode");
+            //    if (layerInfo.legendIcon) {
+            //        $td.append("<img src='" + (layerInfo.legendIcon.indexOf("http://") == 0 ? "" : "../") + layerInfo.legendIcon + "' style='width:18px;'/>");
+            //        $td.append(layerInfo.name);
+            //        $td.append('<input type="button" class="BtnTrans Btn-PositionTop" onclick="showLayerOpacitySilder(\'' + layerInfo.layerID + '\')"/>');
+            //    } else if (layerInfo.legend) {
+            //        var align = "left";
+            //        if (layerInfo.legend.align) align = layerInfo.legend.align;
+            //        if (align == "bottom") {
+            //            $td.append(layerInfo.name);
+            //            $td.append("<br/>");
+            //            $td.append("<img src='" + (layerInfo.legend.url.indexOf("http://") == 0 ? "" : "../") + layerInfo.legend.url + "' style='padding-left:10px;'/>");
+            //            $td.append('<input type="button" class="BtnTrans Btn-PositionTop" onclick="showLayerOpacitySilder(\'' + layerInfo.layerID + '\')"/>');
+            //        } else {
+            //            $td.append("<img src='" + (layerInfo.legend.url.indexOf("http://") == 0 ? "" : "../") + layerInfo.legend.url + "'/>");
+            //            $td.append(layerInfo.name);
+            //            $td.append('<input type="button" class="BtnTrans Btn-PositionTop" onclick="showLayerOpacitySilder(\'' + layerInfo.layerID + '\')"/>');
+            //        }
+            //    }
+            //    if (layerInfo.editable) {
+            //        $td.append("<input type='button' class='BtnGrey' value='編輯' onclick=\"editLayer(this, '" + layerInfo.layerID + "')\" />");
+            //    }
+            //    //}
+            //}
+
+            resetLegendCheckbox(existLayer);
+        }
+
+        function switchTreeFolder(obj) {
+            var panel = $(obj).parent();
+            if ($(obj).parent().hasClass("active")) {
+                panel.children("table:first").fadeOut("slow");
+                var ori = panel.children("table:first").css("height");
+                panel.removeClass("active");
+            } else {
+                panel.find("table:first").fadeIn("slow");
+                panel.addClass("active");
+            }
+        }
+
+        function switchLayerVisible(obj, layerID) {
+            var layerInfo = mapPlugin.layersMg.getLayerInfo(layerID);
+            var legendIcon = layerInfo.legendIcon;
+            var layerName = layerInfo.name;
+            var disabled = !obj.checked;
+            mapPlugin.layersMg.switchTheLayer(layerID, obj.checked);
+            var $checkbox = $(obj).parent().find(":checkbox");
+            if (disabled) $checkbox.prop("disabled", true);
+            $checkbox.prop("checked", $(obj).prop("checked"));
+            if (disabled) $checkbox.prop("disabled", false);
+
+            var layerFolder;
+            if (layerID.split('/').length == 2) {
+                layerFolder = layerID.split('/')[0];
+            } else if (layerID.split('/').length == 3) {
+                layerFolder = layerID.split('/')[0] + "/" + layerID.split('/')[1];
+            }
+
+            jQuery.fn.exists = function () { return this.length > 0; }
+            //產生圖例
+            if (obj.checked) {
+                switchLayerLegend(layerID, true);
+
+                parent.layerArray.push(layerFolder + "/" + layerName);
+                parent.layerArray.push(layerName);
+                parent.layerArray.push(layerInfo);
+            } else {
+                switchLayerLegend(layerID, false);
+
+                parent.layerArray.splice(parent.layerArray.indexOf(layerFolder + "/" + layerName), 1);
+                parent.layerArray.splice(parent.layerArray.indexOf(layerName), 1);
+                parent.layerArray.splice(parent.layerArray.indexOf(layerInfo), 1);
+            }
+
+            resetLegendCheckbox(layerInfo);
+
+            //parent.updateBottom();
+        }
+
+        function switchLayerLegend(layerID, isTurnOn) {
+            var layerInfo = mapPlugin.layersMg.getLayerInfo(layerID);
+            var targetInfos = [layerInfo];
+            targetInfos = mapPlugin.layersMg.getTurnOnLayers();
+            parent.$("#labelLegend").children().remove();
+            for (var idx = 0; idx < targetInfos.length; idx++) {
+                layerInfo = targetInfos[idx];
+                var layerID = mapPlugin.layersMg.getLayerID(layerInfo);
+                parent.$("#labelLegend").append(
+                    "<div id='" + layerID + "_legend' style='padding:2px'>"
+                    + "<img id='" + layerID + "_Img' src=" + layerInfo.legendIcon + " height='30' />&nbsp;"
+                    + "<span style='font:14px 微軟正黑體; font-weight:bold;'>" + layerInfo.name + "</span>"
+                    + "</div>");
+            }
+
+            if (mapPlugin.layersMg.getTurnOnLayers().length > 0
+                && $(parent.window).width() > 979) {
+                parent.$("#labelLegend").css('display', '');
+                parent.$("#btnLegend").css('display', '');
+            } else {
+                parent.$("#labelLegend").css('display', 'none');
+                parent.$("#btnLegend").css('display', 'none');
+            }
+        }
+    </script>
+    <!-- create legend -->
+    <script type="text/javascript">
+        function createLegend(target) {
+            $("#legendTable").children().remove();
+            if (parentMapLayerObj[target] && parentMapLayerObj[target].sub) {
+                createFolder($("#legendTable"), parentMapLayerObj[target].sub, "[\"" + target + "\"].sub");
+                resetLegendCheckbox(parentMapLayerObj[target].sub);
+            }
+        }
+        // create layer folder
+        function createFolder($parentFolderTable, data) {
+            for (var layerID in data) {
+                var layerInfo = data[layerID];
+                if (!layerInfo) continue;
+                var $tr = $("<tr><td layerID='" + mapPlugin.layersMg.getLayerID(layerInfo) + "' style='display:block;vertical-align:text-bottom; position:relative;'/></tr>");
+                var $td = $tr.find("td:last");
+                $td.append('<input type="checkbox" onchange=\'switchLayerVisible(this, "' + mapPlugin.layersMg.getLayerID(layerInfo) + '")\' />');
+                if (layerInfo.type == "folder") {
+                    if (layerInfo.visible) $td.find(':checkbox').prop('checked', true);
+                    $td.addClass("TreeFolder");
+                    $td.append("<a href='javascript:void(0);' onclick='switchTreeFolder(this);'>" + layerInfo.name + "</a>");
+                    var $switcher = $("<div class='FolderSwitch' style=''>&nbsp;</div>");
+                    $switcher.on('click', function () { switchTreeFolder($(this).parent().find("a")[0]); });
+                    $td.prepend($switcher);
+                    $td.append("<table path='" + layerInfo.layerID + "' style='width:100%; display:none;'/>");
+                    if (layerInfo.sub) {
+                        createFolder($td.children().last(), layerInfo.sub);
+                        if ($td.find(".TreeNode").length > 0) {
+                            $parentFolderTable.append($tr);
+                        }
+                    }
+                } else {
+                    $parentFolderTable.append($tr);
+                    var layer = mapPlugin.layersMg.getLayer(layerInfo);
+                    if (layer && mapPlugin.layersMg.isLayerTurnOn(layerInfo)) $td.find(':checkbox').prop('checked', true);
+                    // create a layer
+                    $td.addClass("TreeNode");
+                    if (layerInfo.legendIcon) {
+                        $td.append("<img src='" + (layerInfo.legendIcon.indexOf("http://") == 0 ? "" : "../") + layerInfo.legendIcon + "' style='width:18px;'/>");
+                        $td.append(layerInfo.name);
+                        $td.append('<input type="button" class="BtnTrans" style="display:none" onclick="showLayerOpacitySilder(\'' + layerInfo.layerID + '\')"/>');
+                    } else if (layerInfo.legend) {
+                        var align = "left";
+                        if (layerInfo.legend.align) align = layerInfo.legend.align;
+                        if (align == "bottom") {
+                            $td.append(layerInfo.name);
+                            $td.append("<br/>");
+                            $td.append("<img src='" + (layerInfo.legend.url.indexOf("http://") == 0 ? "" : "../") + layerInfo.legend.url + "' style='padding-left:10px;'/>");
+                            $td.append('<input type="button" class="BtnTrans" style="display:none" onclick="showLayerOpacitySilder(\'' + layerInfo.layerID + '\')"/>');
+                        } else {
+                            $td.append("<img src='" + (layerInfo.legend.url.indexOf("http://") == 0 ? "" : "../") + layerInfo.legend.url + "'/>");
+                            $td.append(layerInfo.name);
+                            $td.append('<input type="button" class="BtnTrans" style="display:none" onclick="showLayerOpacitySilder(\'' + layerInfo.layerID + '\')"/>');
+                        }
+                    }
+                    if (layerInfo.editable) {
+                        $td.append("<input type='button' class='BtnGrey' value='編輯' onclick=\"editLayer(this, '" + layerInfo.layerID + "')\" />");
+                    }
+                }
+            }
+        }
+
+        function hideAllLayer() {
+            for (i = 0; i < $("input.BtnTab").length - 2; i++) {
+                $("input.BtnTab")[i].click();
+                $("#legendTable input[type='checkbox']:checked").click();
+            }
+            parent.$("#labelLegend")[0].innerText = "";
+            parent.$("#labelLegend").css('display', 'none');
+            parent.$("#btnLegend").css('display', 'none');
+
+            if ($("input.BtnTab[value=已套疊圖層]").hasClass("TabActive")) {
+                $("#legendTable")[0].innerText = "";
+            }
+        }
+    </script>
+    <!-- layer edit -->
+    <script type="text/javascript">
+        // 編輯中的圖徵
+        var editingLayerInfo = null;
+        var editingLayer = null;
+        var editingFeature = null;
+        var layerEditor = null;
+        var featureEditor = null;
+
+        // 開始編輯特定圖層
+        function editLayer(btn, layerID) {
+            var layerInfo = mapPlugin.layersMg.getLayerInfo(layerID);
+            if (layerInfo.type != "node") {
+                alert("這不是一個圖層");
+                return;
+            }
+            $("#imgLayerIcon").attr("src", layerInfo.largeLegend ? layerInfo.largeLegend : layerInfo.legendIcon);
+            switch (layerInfo.geometryType) {
+                case "polygon":
+                    $("#divLayerDesc").text("這是編輯\"面\"圖徵的工具");
+                    break;
+                case "polyline":
+                    $("#divLayerDesc").text("這是編輯\"線\"圖徵的工具");
+                    break;
+                case "point":
+                    $("#divLayerDesc").text("這是編輯\"點\"圖徵的工具");
+                    break;
+            }
+
+            $("#totalFeatureNum").text("");
+
+            if (layerInfo.geometryType == "point") {
+                $("#PointGeometryEditor").show();
+            } else {
+                $("#PointGeometryEditor").hide();
+            }
+            $("#content").hide();
+            $("#features").show();
+            editingLayerInfo = layerInfo;
+            if (!$(btn).parent().find("input[type='checkbox']").prop("checked")) {
+                $(btn).parent().find("input[type='checkbox']").click();
+            }
+            layerEditor = mapPlugin.editorTool.startEditing(layerInfo);
+            // 當圖徵被選取
+            mapPlugin.editorTool.onSelectFeature = editFeature;
+            editingLayer = layerInfo.layer;
+            $("#hidLayerID").val(layerInfo.layerID);
+            $("#spanLayerName").text(layerInfo.name);
+
+            mapPlugin.layersMg.getFeatureCount(layerInfo, function (countNum) {
+                $("#totalFeatureNum").text(countNum);
+            });
+            queryFeature();
+        }
+
+        // 停止編輯
+        function stopEditing() {
+            mapPlugin.editorTool.stopEditing();
+        }
+
+        function backToLegend() {
+            stopEditing();
+            $("#features").hide();
+            $("#featureEditor").hide();
+            $('#content').show();
+        }
+
+        // 從地圖上取得點的坐標位置
+        function getCoordFromMap() {
+            mapPlugin.getCoordinate(setCoord, parent.displayPrj);
+        }
+        function setCoord(coord) {
+            $("#txtFeatureX").val(coord[0].toFixed(digit));
+            $("#txtFeatureY").val(coord[1].toFixed(digit));
+            resetFeatureCoord();
+        }
+        function reloadEditingFeatureGeometry() {
+            var coord = mapPlugin.transCoordinateFromMapPrj(editingFeature.getGeometry().getFirstCoordinate(), parent.displayPrj);
+            $("#txtFeatureX").val(coord[0].toFixed(digit));
+            $("#txtFeatureY").val(coord[1].toFixed(digit));
+        }
+        // 依照使用者輸入的XY坐標重設圖徵Icon的位置
+        function resetFeatureCoord(bMoveTo) {
+            var x = parseFloat($("#txtFeatureX").val()).toFixed(digit);
+            var y = parseFloat($("#txtFeatureY").val()).toFixed(digit);
+            if (isNaN(x)) {
+                alert("X坐標必須是數字");
+                return;
+            }
+            if (isNaN(y)) {
+                alert("Y坐標必須是數字");
+                return;
+            }
+            mapCoord = mapPlugin.transCoordinateToMapPrj([x, y], parent.displayPrj);
+
+            // 必須先unselected再改變feature的坐標
+            mapPlugin.editorTool.clearSelected();
+            editingFeature.setGeometry(new parent.ol.geom.Point(mapCoord));
+            mapPlugin.editorTool.selectFeature(editingFeature.getId());
+
+            if (bMoveTo) {
+                mapPlugin.locateTool.locateToFeature(editingFeature);
+            }
+        }
+
+        function getFeatureEditor() {
+            if (!featureEditor) featureEditor = mapPlugin.editorTool.getLayerEditor(editingLayerInfo.layerID).editFeature(editingFeature);
+            return featureEditor;
+        }
+
+
+    </script>
+    <!-- feature list -->
+    <script type="text/javascript">
+        var featureListStartIndex = 0;
+        var pageSize = 10;
+        var listFeatureInfo = [];
+        var filterKeyword = null;
+        function appendFeatureList() {
+            if (filterKeyword) {
+                var filter = '<wfs:GetFeature service="WFS" version="2.0.0" xmlns:wfs="http://www.opengis.net/wfs/2.0" xmlns:fes="http://www.opengis.net/fes/2.0" xmlns:sf="http://www.openplans.org/spearfish" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:chiayiwater="http://www.cyhg.gov.tw/wrb">'
+                    + '<wfs:Query typeNames="' + editingLayerInfo.serviceInfo.params.layer + '">'
+                    + '<fes:Filter xmlns:fes="http://www.opengis.net/fes/2.0" xmlns:gml="http://www.opengis.net/gml/3.2">';
+                if (filterKeyword.length > 1) {
+                    filter += "<fes:And>";
+                }
+                for (var i = 0; i < filterKeyword.length; i++) {
+                    var fields = editingLayerInfo.serviceInfo.fields;
+                    if (fields.length > 1) {
+                        filter += "<fes:Or>";
+                    }
+                    for (var j = 0; j < fields.length; j++) {
+                        filter += "<fes:PropertyIsLike wildCard='*' singleChar='.' escapeChar='!'>"
+                            + "<fes:ValueReference>" + $("<div>").text(fields[j]).html() + "</fes:ValueReference>"
+                            + "<fes:Literal>*" + $("<div>").text(filterKeyword[i].replace(/([.!*])/g, "!$1")).html() + "*</fes:Literal>"
+                            + "</fes:PropertyIsLike>";
+                    }
+                    if (fields.length > 1) {
+                        filter += "</fes:Or>";
+                    }
+                }
+                if (filterKeyword.length > 1) {
+                    filter += "</fes:And>";
+                }
+                filter += '</fes:Filter>'
+                    + '</wfs:Query></wfs:GetFeature>';
+            }
+            var queryOption = {
+                filter: filter
+            };
+            mapPlugin.layersMg.getPagingFeatures(editingLayerInfo, queryOption, pageSize, featureListStartIndex, appendFeaturesInList);
+        }
+
+        function appendFeaturesInList(retObj) {
+            retObj.features.forEach(appendFeature);
+            if (!retObj.hasMore || retObj.features.length < pageSize) {
+                $(".BtnPage").hide();
+            }
+        }
+
+        function appendFeature(feature) {
+            listFeatureInfo[featureListStartIndex] = {
+                featureID: feature.getId(),
+                geom: feature.getGeometry().getType() == "Point" ? feature.getGeometry() : feature.getGeometry().getExtent(),
+                feature: feature
+            };
+            var idx = featureListStartIndex;
+            $("#featureList").append(
+                "<tr>" +
+                "<td>" + (idx + 1) + "</td>" +
+                "<td class='_Label'>" + mapPlugin.layersMg.genLabel(editingLayerInfo, feature) + "</td>" +
+                "<td>" +
+                "<input type='hidden' class='_FeatureID' value='" + feature.getId() + "'>" +
+                '<input type="button" class="BtnListDel"  style="float: right" onClick="deleteFeature(\'' + feature.getId() + '\', this)">' +
+                '<input type="button" class="BtnListEdit"  style="float: right" onClick="editFeatureByIdx(' + idx + ')">' +
+                "</td>" +
+                "</tr>"
+            );
+            featureListStartIndex++;
+        }
+
+        function queryFeature() {
+            $("#featureList").find("tr").filter(function (idx) { return idx > 0; }).remove();
+            $("#spanTitle").text(editingLayerInfo.serviceInfo.label.title);
+            $(".BtnPage").show();
+            featureListStartIndex = 0;
+            listFeatureInfo = [];
+            var keyword = $("#txtKeyword").val();
+            if (keyword.replace(" ", "").length == 0) {
+                filterKeyword = null;
+            } else {
+                filterKeyword = $.trim(keyword).split(/\s+/);
+            }
+            appendFeatureList();
+        }
+
+        function downloadKML() {
+            location = mapPlugin.layersMg.getKMLUrl(editingLayerInfo, true);
+        }
+    </script>
+    <!-- feature edit -->
+    <script type="text/javascript">
+        function editFeatureByIdx(idx) {
+            var featureInfo = listFeatureInfo[idx];
+            mapPlugin.editorTool.selectFeature(featureInfo.featureID, featureInfo.geom);
+        }
+
+        function addingFeature() {
+            mapPlugin.editorTool.addingFeature();
+        }
+
+        function editFeature(feature) {
+            editingFeature = feature;
+            editingFeature.on('change', reloadEditingFeatureGeometry);
+            if (editingLayerInfo.geometryType.toUpperCase() == "POINT") {
+                $("#PointGeometryEditor").show();
+                var coord = mapPlugin.transCoordinateFromMapPrj(feature.getGeometry().getFirstCoordinate(), parent.displayPrj);
+                $("#txtFeatureX").val(coord[0].toFixed(digit));
+                $("#txtFeatureY").val(coord[1].toFixed(digit));
+            } else {
+                $("#PointGeometryEditor").hide();
+            }
+            $("#featureProperties").children().remove();
+            var fieldMapping = mapPlugin.layersMg.getShowingField(editingLayerInfo, feature);
+            for (var key in fieldMapping) {
+                var value = feature.get(key);
+                if (["object", "function"].indexOf(typeof (value)) < 0 || (value == null && feature.getGeometryName() != key)) {
+                    $("#featureProperties").append(
+                        "<tr>" +
+                        "<th>" + fieldMapping[key] + "</th>" +
+                        "<td>" +
+                        '<input type="text" style="width:100%" id="f_' + key + '">' +
+                        "</td>" +
+                        "</tr>"
+                    );
+                    $("#f_" + key).val(value);
+                }
+            }
+            //var keys = feature.getKeys();
+            //keys.forEach(function (key) {
+            //    var value = feature.get(key);
+            //    if (["object", "function"].indexOf(typeof (value)) < 0 || (value == null && feature.getGeometryName() != key)) {
+            //        $("#featureProperties").append(
+            //            "<tr>" +
+            //                    "<th>" + mapPlugin.layersMg.getFieldLabel(editingLayerInfo, key) + "</th>" +
+            //                "<td>" +
+            //                    '<input type="text" style="width:100%" id="f_' + key + '">' +
+            //                "</td>" +
+            //            "</tr>"
+            //        );
+            //        $("#f_" + key).val(value);
+            //    }
+            //});
+
+            mapPlugin.editorTool.isAutoSave = false;
+            $('#features').hide();
+            $('#featureEditor').show();
+
+            mapPlugin.locateTool.locateToFeature(feature);
+        }
+
+        function saveFeature() {
+            if (!editingFeature) {
+                alert("請先設定圖資空間位置");
+                return;
+            }
+            // check data
+            var bCheckError = false;
+            var strErrorMsg = "";
+            editingFeature.getKeys().forEach(function (key) {
+                var value = editingFeature.get(key);
+                if (["object", "function"].indexOf(typeof (value)) < 0 || (value == null && editingFeature.getGeometryName() != key)) {
+                    if ($("#f_" + key).hasClass("_Must") && $.trim($("#f_" + key).val()) == "") {
+                        strErrorMsg += "";
+                        bCheckError = true;
+                        return;
+                    }
+                }
+            });
+            // set data into feature instance
+            editingFeature.getKeys().forEach(function (key) {
+                var value = editingFeature.get(key);
+                if (["object", "function"].indexOf(typeof (value)) < 0 || (value == null && editingFeature.getGeometryName() != key)) {
+                    editingFeature.set(key, $("#f_" + key).val());
+                }
+            });
+            mapPlugin.editorTool.saveFeatures({
+                success: function () {
+                    // 儲存成功後
+                    var $labelContainer = $("._FeatureID[value='" + editingFeature.getId() + "']").parent().parent().find("._Label");
+                    if ($labelContainer.length == 0) {
+                        if ($(".BtnPage").css("display") == "none") {
+                            appendFeature(editingFeature);
+                        }
+                    } else {
+                        $labelContainer.text("");
+                        $labelContainer.append(mapPlugin.layersMg.genLabel(editingLayerInfo, editingFeature));
+                    }
+                    stopEditingFeature();
+                }
+            });
+        }
+
+        function stopEditingFeature() {
+            $("#featureEditor").hide();
+            $('#features').show();
+            mapPlugin.editorTool.clearSelected();
+            mapPlugin.editorTool.isAutoSave = true;
+            clearEditingFeature();
+        }
+
+        function deleteFeature(featureID, obj) {
+            if (confirm("您確定刪除嗎?")) {
+                mapPlugin.editorTool.deleteFeature(featureID);
+                mapPlugin.editorTool.saveFeatures(
+                    {
+                        success: function () {
+                            $(obj).parent().parent().remove();
+                        }
+                    }
+                );
+            }
+
+        }
+
+        function clearEditingFeature() {
+            if (editingFeature) {
+                editingFeature.un('change', reloadEditingFeatureGeometry);
+            }
+            editingFeature = null;
+            featureEditor = null;
+            $("#txtFeatureX").val("");
+            $("#txtFeatureY").val("");
+            $("#txtFeatureName").val("");
+        }
+    </script>
+    <!-- external layer -->
+    <script type="text/javascript">
+        function showLayerAddingPanel() {
+            $("#legend").hide();
+            $("#addExternalLayer").show();
+            $("input.BtnTab").removeClass("TabActive");
+            $("input.BtnTab[value='+新增圖層']").addClass("TabActive");
+            $("input[name='layerType']:checked").click();
+        }
+        function closeLayerAddingPanel() {
+            $("#addExternalLayer").hide();
+            $("#legend").show();
+            mapPlugin.layersMg.deactiveDragAndDrop();
+        }
+        function switchToLayerInfo(target) {
+            $(".LayerInfo").hide();
+            $("#" + target).show();
+            if (target == "kmlLayerInfo") {
+                if (typeof FileReader == "undefined") {
+                    $("#kmlLayerInfo tr:eq(1)").hide();
+                    $("#kmlLayerInfo tr:eq(2)").show();
+                } else {
+                    // 支援HTML5 drag-and-drop才可以使用拖拉套用
+                    $("#kmlLayerInfo tr:eq(1)").show();
+                    $("#kmlLayerInfo tr:eq(2)").hide();
+                    mapPlugin.layersMg.activeDragAndDrop(function (evt) {
+                        try {
+                            var layerKey = new Date().getTime().toString();
+                            var layerInfo = {
+                                name: $("#kmlLayerName").val(),
+                                type: "node",
+                                legendIcon: "App_Themes/map/images/16.png",
+                                serviceInfo: {
+                                    type: "vector",
+                                    bubbleContent: "#AUTO#"
+                                }
+                            };
+                            var layerID = mapPlugin.layersMg.addLayerInfo("其他", layerKey, layerInfo);
+                            var layer = mapPlugin.layersMg.addLayer(layerInfo);
+                            layer.getSource().addFeatures(evt.features);
+                            $("#kmlLayerName").val("");
+                            $("#kmlURL").val("");
+                            switchLayerTab("其他");
+                            $("#legendTable td[layerID='" + layerID + "'] :checkbox").prop('checked', true);
+                            mapPlugin.locateTool.zoomToLayer(layer);
+                            
+                        } catch (e) {
+                            console.error(e);
+                        }
+                    });
+                }
+            } else {
+                mapPlugin.layersMg.deactiveDragAndDrop();
+            }
+        }
+        function addLayer() {
+            var layerType = $("input[name='layerType']:checked").val();
+            if (layerType == "kml") {
+                $("#ifKmlUpload").contents().find("#btnUpload").click();
+                //var layer = addKMLLayerInfo($("#kmlLayerName").val(), $("#kmlURL").val());
+                //$("#kmlLayerName").val("");
+                //$("#kmlURL").val("");
+                //switchLayerTab("其他");
+                //mapPlugin.locateTool.zoomToLayer(layer);
+            } else if (layerType == "gml") {
+                var layerInfo = {
+                    name: $("#gmlLayerName").val(),
+                    type: "node",
+                    legendIcon: "App_Themes/map/images/16.png",
+                    serviceInfo: {
+                        type: "gml",
+                        url: $("#gmlURL").val()
+                    }
+                };
+                mapPlugin.layersMg.addLayerInfo("其他", new Date().getTime().toString(), layerInfo);
+                var layer = mapPlugin.layersMg.addLayer(layerInfo);
+                $("#gmlLayerName").val("");
+                $("#gmlURL").val("");
+                switchLayerTab("其他");
+                mapPlugin.locateTool.zoomToLayer(layer);
+            } else if (layerType == "wms") {
+                mapPlugin.layersMg.addWMSSource("其他", $("#wmsURL").val(),
+                    function () {
+                        switchLayerTab("其他");
+                    }
+                );
+            } else if (layerType == "wfs") {
+                mapPlugin.layersMg.addWFSSource("其他", $("#wfsURL").val(),
+                    function () {
+                        switchLayerTab("其他");
+                    }
+                );
+            } else if (layerType == "shp") {
+                $("#ifShpUpload").contents().find("#hfCRS").val($("#ddlShpCoordSys").val());
+                $("#ifShpUpload").contents().find("#btnUpload").click();
+            } else if (layerType == "wmts") {
+                mapPlugin.layersMg.addWMTSSource("其他", $("#wmtsURL").val(),
+                    function () {
+                        switchLayerTab("其他");
+                    }
+                );
+            }
+            //closeLayerAddingPanel();
+        }
+
+        function addKMLLayerInfo(layerName, kmlURL) {
+            if (!layerName || layerName.replace(/ /g, "") == "") {
+                layerName = $("#kmlLayerName").val();
+            }
+            var layerInfo = {
+                name: layerName,
+                type: "node",
+                legendIcon: "App_Themes/map/images/16.png",
+                serviceInfo: {
+                    type: "kml",
+                    url: kmlURL,
+                    bubbleContent: "#AUTO#"
+                }
+            };
+            mapPlugin.layersMg.addLayerInfo("其他", new Date().getTime().toString(), layerInfo);
+            var layer = mapPlugin.layersMg.addLayer(layerInfo);
+            return layer;
+        }
+
+        function addKML(kmlURL) {
+            var layer = addKMLLayerInfo($("#kmlLayerName").val(), kmlURL);
+            $("#kmlLayerName").val("");
+            switchLayerTab("其他");
+            mapPlugin.locateTool.zoomToLayer(layer);
+        }
+
+        function addShp(kmlURL) {
+            var layer = addKMLLayerInfo($("#shpLayerName").val(), kmlURL);
+            $("#shpLayerName").val("");
+            switchLayerTab("其他");
+            mapPlugin.locateTool.zoomToLayer(layer);
+        }
+
+        function showHeatPramas() {
+            parent.document.getElementById("heatParams").style.display = "none";
+        }
+
+        function hideHeatPramas() {
+            parent.document.getElementById("heatParams").style.display = "none";
+        }
+
+        // 顯示透明度拖拉bar
+        function showLayerOpacitySilder(target) {
+            var opacity = parent.mapPlugin.layersMg.getLayer(target).getOpacity();
+            $("#opacitySlider").slider({
+                value: opacity * 100,
+                orientation: "horizontal",
+                range: "min",
+                animate: true,
+                stop: function () {
+                    parent.mapPlugin.layersMg.getLayer(target).setOpacity($("#opacitySlider").slider("value") / 100);
+                }
+            });
+            $("#layerOpacityPanel").css("left", window.event.clientX - 180).css("top", window.event.clientY).show();
+        }
+    </script>
+    <!-- page event -->
+    <script type="text/javascript">
+        function page_active() {
+            parent.useMisFunctonFrame.CloseFullDownFrame();
+            //showHeatPramas();
+        }
+        function page_leave() {
+            stopEditingFeature();
+            backToLegend();
+            closeLayerAddingPanel();
+            //hideHeatPramas();
+        }
+        function action_clear() {
+            hideAllLayer();
+        }
+    </script>
+</head>
+<body>
+    <div class="BtnFunc">
+        <ul>
+            <li class="close"><a href="javascript:void(0);parent.toolSwitch();">關閉</a></li>
+        </ul>
+    </div>
+    <!--關閉+說明-->
+    <!--頁籤-->
+    <div class="TabBox">
+        <!-- <input type="button" name="button" class="BtnTab TabActive" value="主題圖" onclick="switchLayerTab('主題圖')" /> -->
+        <!-- <input type="button" name="button" class="BtnTab" value="水利" onclick="switchLayerTab('水利')" /> -->
+        <!-- <input type="button" name="button" class="BtnTab" value="災害" onclick="switchLayerTab('災害');" /> -->
+        <!-- <input type="button" name="button" class="BtnTab" value="其他" onclick="switchLayerTab('其他')" /> -->
+        <input type="button" name="button" class="BtnTab _last" value="+新增圖層" onclick="showLayerAddingPanel()" />
+        <input type="button" name="button" class="BtnTab" value="其他" onclick="switchLayerTab('其他')" />
+        <input type="button" name="button" class="BtnTab" value="已套疊圖層" onclick="switchLayerTab('已套疊圖層'); showExistLayer();" />
+    </div>
+    <!--頁籤結尾-->
+    <!--可捲動範圍-->
+    <div class="nano">
+        <div class="nano-content">
+            <!-- 圖層清單 -->
+            <div id="legend">
+                <div id="content">
+                    <input type="button" name="button" class="BtnClear" value="清除套疊" style="float: right"
+                           onclick="hideAllLayer();" />
+                    <table id="legendTable" width="100%" border="0" cellpadding="0" cellspacing="0"></table>
+                </div>
+                <!-- 圖層編輯 list -->
+                <div id="features" style="display: none">
+                    <input type="button" class="BtnBack" value="返回圖層套疊" style="float: right"
+                           onclick="backToLegend();" />
+                    <input type="hidden" id="hidLayerID" />
+                    <span class="IconFont">圖層編輯</span>
+                    <table width="100%" border="0" cellpadding="0" cellspacing="0" class="EditTable">
+                        <tr>
+                            <td rowspan="2" class="IconStyle">
+                                <img id="imgLayerIcon" src="../App_Themes/Map/images/icon26-2.png" />
+                            </td>
+                            <td>
+                                名稱:<span id="spanLayerName"></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                說明:
+                                <div id="divLayerDesc">
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                    <!--結果-->
+                    總筆數：<span style="color:Blue" id="totalFeatureNum"></span><br />
+                    <div class="LegendSearch">
+                        <input type="text" id="txtKeyword" style="width: 240px" />
+                        <input type="button" class="BtnWhite" value="查詢" onclick="queryFeature();" />
+                    </div>
+                    <input type="button" class="BtnBlue" value="新增圖徵" style="float: right" onclick="addingFeature();" />
+                    <input type="button" class="BtnBlue" value="匯出KML" style="float: right" onclick="downloadKML();" />
+                    <table id="featureList" width="100%" border="0" cellspacing="0" cellpadding="0" class="List">
+                        <tr>
+                            <th>
+                                項次
+                            </th>
+                            <th>
+                                <span id="spanTitle"></span>
+                            </th>
+                            <th>
+                                &nbsp;
+
+                            </th>
+                        </tr>
+                    </table>
+                    <input type="button" class="BtnPage" value="更多.." style="float: right; margin-top: 5px;"
+                           onclick="appendFeatureList();" />
+                    <!--結果結尾-->
+                </div>
+                <!-- 圖徵編輯 -->
+                <div id="featureEditor" style="display: none">
+                    <input type="button" class="BtnBack" value="返回" style="float: right" onclick="stopEditingFeature()" />
+                    <span class="IconFont">圖徵編輯</span>
+                    <table id="PointGeometryEditor" width="100%" border="0" cellpadding="0" cellspacing="0"
+                           class="EditTable">
+                        <tr>
+                            <td>
+                                <p>
+                                    請直接於圖面上拖曳點位,或輸入TWD97坐標
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                X
+                                <input type="text" id="txtFeatureX" size="10" onchange="resetFeatureCoord(true);" />
+                                ,Y
+                                <input type="text" id="txtFeatureY" size="10" onchange="resetFeatureCoord(true);" />
+                                <input type="button" onclick="getCoordFromMap();" value="取得坐標" />
+                            </td>
+                        </tr>
+                    </table>
+                    <!--結果-->
+                    <table id="featureProperties" width="100%" border="0" cellspacing="0" cellpadding="0"
+                           class="LayerInfoTable">
+                        <tr>
+                            <th>
+                                名稱
+                            </th>
+                            <td>
+                                <input type="text" id="txtFeatureName" />
+                            </td>
+                        </tr>
+                    </table>
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                        <tr>
+                            <td align="center">
+                                <input type="button" class="BtnGreen" value="儲存" onclick="saveFeature()" />
+                                <input type="button" class="BtnGreen " value="取消" onclick="stopEditingFeature()" />
+                            </td>
+                        </tr>
+                    </table>
+                    <!--結果結尾-->
+                </div>
+            </div>
+            <!-- 新增圖層 -->
+            <div id="addExternalLayer" style="display: none">
+                <table width="100%" border="0" cellspacing="0" cellpadding="0" class="ListGrey">
+                    <tr>
+                        <td>
+                            圖資類型
+                            <input type="radio" value="wms" name="layerType" onclick="switchToLayerInfo('wmsLayerInfo')" />
+                            WMS
+                            <input type="radio" value="wfs" name="layerType" onclick="switchToLayerInfo('wfsLayerInfo')" />
+                            WFS
+                            <input type="radio" value="kml" name="layerType" onclick="switchToLayerInfo('kmlLayerInfo')"
+                                   checked="checked" />
+                            KML
+                            <input type="radio" value="gml" name="layerType" onclick="switchToLayerInfo('gmlLayerInfo')" />
+                            GML
+                            <input type="radio" value="shp" name="layerType" onclick="switchToLayerInfo('shpLayerInfo')" />
+                            SHP
+                            <input type="radio" value="wmts" name="layerType" onclick="switchToLayerInfo('wmtsLayerInfo')" />
+                            WMTS
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <table id="kmlLayerInfo" width="100%" border="0" cellspacing="0" cellpadding="0"
+                                   class="ListGrey LayerInfo">
+                                <tr>
+                                    <td style="white-space: nowrap">
+                                        圖資名稱
+                                    </td>
+                                    <td>
+                                        <input type="text" id="kmlLayerName" style="width: 100%" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        加入連結
+                                    </td>
+                                    <td>
+                                        <input type="text" id="kmlURL" style="width: 100%;display:none;" />
+                                        <span style="color:#0000FF; font-weight:bold;">請直接拖曳檔案至圖台上以開啟KML圖資</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">
+                                        KML檔案上傳
+                                        <iframe id="ifKmlUpload" src="SpatialFileUpload.aspx" style="width: 100%; height: 30px"></iframe>
+                                        <br />
+                                    </td>
+                                </tr>
+                            </table>
+                            <table id="gmlLayerInfo" width="100%" border="0" cellspacing="0" cellpadding="0"
+                                   class="ListGrey LayerInfo" style="display: none">
+                                <tr>
+                                    <td>
+                                        圖資名稱
+                                    </td>
+                                    <td>
+                                        <input type="text" id="gmlLayerName" style="width: 100%" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        加入連結
+                                    </td>
+                                    <td>
+                                        <input type="text" id="gmlURL" style="width: 100%" />
+                                    </td>
+                                </tr>
+                            </table>
+                            <table id="wmsLayerInfo" width="100%" border="0" cellspacing="0" cellpadding="0"
+                                   class="ListGrey LayerInfo" style="display: none">
+                                <tr>
+                                    <td>
+                                        WMS連結
+                                    </td>
+                                    <td>
+                                        <input type="text" id="wmsURL" style="width: 100%" />
+                                    </td>
+                                </tr>
+                            </table>
+                            <table id="wfsLayerInfo" width="100%" border="0" cellspacing="0" cellpadding="0"
+                                   class="ListGrey LayerInfo" style="display: none">
+                                <tr>
+                                    <td>
+                                        WFS連結
+                                    </td>
+                                    <td>
+                                        <input type="text" id="wfsURL" style="width: 100%" />
+                                    </td>
+                                </tr>
+                            </table>
+                            <table id="shpLayerInfo" width="100%" border="0" cellspacing="0" cellpadding="0"
+                                   class="ListGrey LayerInfo" style="display: none">
+                                <tr>
+                                    <td>
+                                        圖資名稱
+                                    </td>
+                                    <td>
+                                        <input type="text" id="shpLayerName" style="width: 100%" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        SHP坐標系統
+                                    </td>
+                                    <td>
+                                        <select id="ddlShpCoordSys">
+                                            <option value="EPSG:3826">TWD97</option>
+                                            <option value="EPSG:3828">TWD67</option>
+                                            <option value="EPSG:4326">WGS84</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">
+                                        SHP檔案上傳
+                                        <iframe id="ifShpUpload" src="SpatialFileUpload.aspx" style="width: 100%; height: 30px"></iframe>
+                                        <br />
+                                        <span style="color:#0000FF; font-weight:bold;">
+                                            請將SHP圖資(包含.dbf、.shp及.shx三個檔案)壓縮為.zip格式之檔案後上傳
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                            <table id="wmtsLayerInfo" width="100%" border="0" cellspacing="0" cellpadding="0"
+                                   class="ListGrey LayerInfo" style="display: none">
+                                <tr>
+                                    <td>
+                                        WMTS連結
+                                    </td>
+                                    <td>
+                                        <input type="text" id="wmtsURL" style="width: 100%" />
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="button" class="BtnWhite" value="加入" onclick="addLayer()" />
+                            <input type="button" class="BtnWhite" value="取消" onclick="closeLayerAddingPanel();" />
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <!--已套疊圖層-->
+            <div id="ExistLayer" style="display: none">
+                <input type="button" name="button" class="BtnClear" value="清除套疊" style="float: right"
+                       onclick="hideAllLayer();" />
+            </div>
+        </div>
+    </div>
+    <!--可捲動範圍結尾-->
+    <div id="layerOpacityPanel" class="transp" style="position:absolute; z-index:99; display:none;">
+        <div class="BtnFunc">
+            <ul>
+                <li id="opacitySlider" style="float:left; width:110px;margin:5px;"></li>
+                <li class="close"><a href="javascript:void(0);" onclick="$('#layerOpacityPanel').hide()">關閉</a></li>
+            </ul>
+        </div>
+        <!--關閉+說明-->
+    </div>
+</body>
+</html>

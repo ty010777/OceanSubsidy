@@ -1,0 +1,12 @@
+.link {
+    color: $blue;
+    &:hover {
+        color: $blue-hover;
+    }
+    &-green {
+        color: $blue-green2;
+        &:hover {
+            color: #000;
+        }
+    }
+}

@@ -1,0 +1,507 @@
+﻿@charset "utf-8";
+
+input {
+    border: 1px solid #aeaeae;
+    background: #fff;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+    font-size: 15px;
+    padding-top: 4px;
+    padding-right: 4px;
+    padding-bottom: 4px;
+    padding-left: 4px;
+}
+
+select {
+    border: 1px solid #aeaeae;
+    background: #fff;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+    font-size: 15px;
+    padding-top: 4px;
+    padding-right: 4px;
+    padding-bottom: 4px;
+    padding-left: 4px;
+}
+
+.input-full {
+    width: 100%;
+}
+
+.input-fontS-right {
+    font-size: 15px;
+    text-align: right;
+}
+
+.input-fontS-center {
+    font-size: 15px;
+    text-align: center;
+}
+
+.btnBoxCenter {
+    display: block;
+    width: 100%;
+    text-align: center;
+}
+
+.btnBoxRight {
+    display: block;
+    width: 100%;
+    text-align: right;
+}
+
+.btnBoxLeft {
+    display: block;
+    width: 100%;
+    text-align: left;
+}
+
+.btnVisibleLegend {
+    font-size: 1em;
+    font-family: "微軟正黑體";
+    font-weight: normal;
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+    border-radius: 6px;
+    text-decoration: none;
+    background-color: #4d4d4d;
+    color: #FFF;
+    display: inline-block;
+    cursor: pointer;
+    border-top-style: none;
+    border-right-style: none;
+    border-bottom-style: none;
+    border-left-style: none;
+    vertical-align: middle;
+    margin: 4px;
+    padding-top: 4px;
+    padding-right: 4px;
+    padding-bottom: 4px;
+    padding-left: 4px;
+    height: 27px;
+    width: 27px;
+    background-image: url(../images/icon-arr-R.svg);
+    background-repeat: no-repeat;
+    background-position: 10px center;
+    background-size: 11px auto;
+    position: absolute;
+    z-index: 999;
+    right: 6px;
+    top: 146px;
+}
+
+.btnVisibleLegend.active {
+    background-image: url(../images/icon-arr-L.svg);
+}
+
+    .btnVisibleLegend:hover, .btnVisibleLegend_Active:hover {
+        background-color: #74bf7c;
+    }
+
+.BtnTrans {
+    font-size: 12px;
+    font-family: Arial;
+    font-weight: normal;
+    border: 0px;
+    padding: 0px;
+    text-decoration: none;
+    color: #777777;
+    display: inline-block;
+    background-image: url(../images/Map_icon_transp.svg);
+    background-repeat: no-repeat;
+    height: 30px;
+    width: 30px;
+    text-indent: -99999;
+    float: right;
+    background-color: transparent;
+    background-position: center center;
+    background-size: 15px auto;
+    margin-right: 4px;
+}
+
+    .BtnTrans:hover {
+        background-image: url(../images/Map_icon_transp_h.svg);
+        background-position: center center;
+        background-size: 15px auto;
+    }
+
+    .BtnTrans:active {
+        background-image: url(../images/Map_icon_transp_h.svg);
+        background-position: center center;
+        background-size: 15px auto;
+    }
+
+.btn {
+    display: inline-block;
+    padding: 10px 12px;
+    margin: 4px;
+    font-size: 1rem;
+    font-weight: 400;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+    color: #333;
+    background-color: #fff;
+    border-color: #ccc;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    font-family: "微軟正黑體";
+    line-height: 1;
+}
+
+    .btn:hover, .btn:active {
+        background-color: #e6e6e6;
+        cursor: pointer;
+        color: #000;
+    }
+
+    .btn:focus, .btn.focus {
+        outline: 0;
+        box-shadow: 0 0 0 0.2rem rgba(131, 131, 131, 0.25);
+        transition: all 0.5s;
+    }
+
+    .btn.disabled, .btn:disabled {
+        opacity: 0.65;
+    }
+
+    .btn.active {
+        background-color: #e6e6e6;
+        cursor: pointer;
+        color: #000;
+    }
+
+.btnS {
+    display: inline-block;
+    padding: 6px 10px;
+    margin: 4px;
+    font-size: 0.8rem;
+    font-weight: 400;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    -webkit-border-radius: 2px;
+    -moz-border-radius: 2px;
+    border-radius: 2px;
+    color: #333;
+    background-color: #fff;
+    border-color: #ccc;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    font-family: "微軟正黑體";
+    line-height: 1;
+}
+
+    .btnS:hover, .btnS:active {
+        background-color: #e6e6e6;
+        cursor: pointer;
+        color: #000;
+    }
+
+    .btnS:focus, .btnS.focus {
+        outline: 0;
+        box-shadow: 0 0 0 0.2rem rgba(131, 131, 131, 0.25);
+        transition: all 0.5s;
+    }
+
+    .btnS.disabled, .btnS:disabled {
+        opacity: 0.65;
+    }
+
+    .btnS.active {
+        background-color: #e6e6e6;
+        cursor: pointer;
+        color: #000;
+    }
+
+.btn_transparent {
+    background-color: transparent;
+    border-color: transparent;
+}
+
+.btn_Blue {
+    background-color: #97caff;
+    color: #FFF;
+    border: 1px solid transparent;
+}
+
+    .btn_Blue:hover, .btn_Blue:active {
+        background-color: #7cbbfd;
+        color: #FFF;
+    }
+
+    .btn_Blue.active {
+        background-color: #7cbbfd;
+        color: #FFF;
+    }
+
+.btn_BlueDark {
+    background-color: #0f97ff;
+    color: #FFF;
+    border: 1px solid transparent;
+}
+
+    .btn_BlueDark:hover, .btn_BlueDark:active {
+        background-color: #0082e4;
+        color: #FFF;
+    }
+
+.btn_Gray {
+    background-color: #dadada;
+    color: #000;
+    border: 1px solid transparent;
+}
+
+    .btn_Gray:hover, .btn_Gray:active {
+        background-color: #bdbdbd;
+        color: #000;
+    }
+
+.btn_Yellow {
+    background-color: #FFCA28;
+    color: #000;
+    border: 1px solid transparent;
+}
+
+    .btn_Yellow:hover, .btn_Yellow:active {
+        background-color: #ffb128;
+        color: #000;
+    }
+
+.btn_Green {
+    background-color: #66bb6a;
+    color: #FFF;
+    border: 1px solid transparent;
+}
+
+    .btn_Green:hover, .btn_Green:active {
+        background-color: #39803c;
+        color: #FFF;
+    }
+
+.btn_Coral {
+    background-color: #f26c6c;
+    color: #FFF;
+    border: 1px solid transparent;
+}
+
+    .btn_Coral:hover, .btn_Coral:active {
+        background-color: #f24848;
+        color: #FFF;
+    }
+
+.btn_GreenLake {
+    background-color: #6bcad2;
+    color: #FFF;
+    border: 1px solid transparent;
+}
+
+    .btn_GreenLake:hover, .btn_GreenLake:active {
+        background-color: #33c6d2;
+        color: #FFF;
+    }
+
+/*--清除--*/
+.btn_clear {
+    background-color: #eee;
+    color: #000;
+    background-image: url(../images/btn_eraser.svg);
+    background-repeat: no-repeat;
+    background-position: 4px center;
+    background-size: 15px auto;
+    padding-left: 20px !important;
+    border: 1px solid transparent;
+}
+
+    .btn_clear:hover {
+        background-color: #c5c5c5;
+        color: #ffffff;
+    }
+
+    .btn_clear:active {
+        position: relative;
+        top: 1px;
+    }
+/*--清除結尾--*/
+/*定位*/
+.btn_pin {
+    background-color: #2ca6e0;
+    color: #ffffff;
+    background-image: url(../images/btn_pin.svg);
+    background-repeat: no-repeat;
+    background-position: 4px center;
+    background-size: 15px auto;
+    padding: 10px 6px 10px 25px;
+    border: 1px solid transparent;
+}
+
+    .btn_pin:hover {
+        background-color: #5cc6f8;
+        color: #ffffff;
+    }
+
+    .btn_pin:active {
+        position: relative;
+        top: 1px;
+    }
+
+.btn_pin_circle {
+    background-color: transparent;
+    background-image: url(../images/Btn_pin_circle.svg);
+    background-repeat: no-repeat;
+    background-position: center center;
+    border: 1px solid transparent;
+    height: 24px;
+    width: 24px;
+    /*margin-left:4px;*/
+    text-indent: -9999px;
+    background-size: 100% auto;
+}
+
+    .btn_pin_circle:hover {
+        background-color: #27403d;
+        color: #ffffff;
+        border-radius: 999em
+    }
+
+    .btn_pin_circle:active {
+        position: relative;
+        top: 1px;
+    }
+/*定位結尾*/
+/*列印*/
+.btn_print {
+    background-color: #2ca6e0;
+    color: #ffffff;
+    background-image: url(../images/btn_print.svg);
+    background-repeat: no-repeat;
+    background-position: 4px center;
+    background-size: 15px auto;
+    padding: 10px 6px 10px 25px;
+    border: 1px solid transparent;
+}
+
+    .btn_print:hover {
+        background-color: #5cc6f8;
+        color: #ffffff;
+    }
+
+    .btn_print:active {
+        position: relative;
+        top: 1px;
+    }
+/*列印結尾*/
+/*上下步*/
+.btn_prev {
+    background-color: #2ca6e0;
+    color: #ffffff;
+    background-image: url(../images/btn_pre.svg);
+    background-repeat: no-repeat;
+    background-position: 4px center;
+    background-size: 15px auto;
+    padding: 10px 6px 10px 25px;
+    border: 1px solid transparent;
+}
+
+    .btn_prev:hover {
+        background-color: #5cc6f8;
+        color: #ffffff;
+    }
+
+    .btn_prev:active {
+        position: relative;
+        top: 1px;
+    }
+
+.btn_next {
+    background-color: #2ca6e0;
+    color: #ffffff;
+    background-image: url(../images/btn_next.svg);
+    background-repeat: no-repeat;
+    background-position: 4px center;
+    background-size: 15px auto;
+    padding: 10px 6px 10px 25px;
+    border: 1px solid transparent;
+}
+
+    .btn_next:hover {
+        background-color: #5cc6f8;
+        color: #ffffff;
+    }
+
+    .btn_next:active {
+        position: relative;
+        top: 1px;
+    }
+/*上下步結尾*/
+/*查詢*/
+.btn_query {
+    background-color: #2ca6e0;
+    color: #ffffff;
+    background-image: url(../images/btn_search.svg);
+    background-repeat: no-repeat;
+    background-position: 4px center;
+    background-size: 15px auto;
+    padding: 10px 6px 10px 25px;
+    border: 1px solid transparent;
+}
+
+    .btn_query:hover {
+        background-color: #5cc6f8;
+        color: #ffffff;
+    }
+
+    .btn_query:active {
+        position: relative;
+        top: 1px;
+    }
+/*查詢結尾*/
+/*新增*/
+.btn_add {
+    background-color: #2ca6e0;
+    color: #ffffff;
+    background-image: url(../images/btn_add.svg);
+    background-repeat: no-repeat;
+    background-position: 4px center;
+    background-size: 15px auto;
+    padding: 10px 6px 10px 25px;
+    border: 1px solid transparent;
+}
+
+    .btn_add:hover {
+        background-color: #5cc6f8;
+        color: #ffffff;
+    }
+
+    .btn_add:active {
+        position: relative;
+        top: 1px;
+    }
+/*新增結尾*/
+/*取消*/
+.btn_cancel {
+    background-color: #d2d2d2;
+    color: #ffffff;
+    background-image: url(../images/btn_cancel.svg);
+    background-repeat: no-repeat;
+    background-position: 4px center;
+    background-size: 15px auto;
+    padding: 10px 6px 10px 25px;
+    border: 1px solid transparent;
+}
+
+    .btn_cancel:hover {
+        background-color: #c8c8c8;
+        color: #ffffff;
+    }
+
+    .btn_cancel:active {
+        position: relative;
+        top: 1px;
+    }
+/*取消結尾*/
+
+

@@ -1,0 +1,210 @@
+﻿<div id="GSMap-panel-layer" class="GSMap-panel">
+    <a href="javascript:void(0)" class="closebtn">&times;</a>
+    <a href="javascript:void(0)" class="fixedbtn"></a>
+    <a href="javascript:void(0)" class="revertbtn"></a>
+    <h2>圖層套疊</h2>
+
+    <div class="OS-MapPannel-div" style="margin-top: 10px;">
+        <ul class="nav nav-tabs GSMap-element-tab TabBox" role="tablist">
+            <li><a id="" data-bs-toggle="tab" href="#legend" class="nav-link active">圖層清單</a></li>
+            <li><a id="" data-bs-toggle="tab" href="#existsLayer_box" class="nav-link">已套疊圖層</a></li>
+            <li style="display: none;"><a id="" data-bs-toggle="tab" href="#addlayer_box" class="nav-link">+新增圖層</a></li>
+        </ul>
+        <!--區塊內容-->
+        <div class="GSMap-panel-contbox-wrap">
+            <div class="scroll-box">
+
+                <!-- 圖層清單 -->
+                <div id="contents" class="tab-content">
+                    <div id="legend" class="tab-pane active" role="tabpanel">
+                        <div class="btnBoxRight">
+                            <input type="button" name="button" class="btnS btn_clear BtnClear" value="清除套疊" />
+                        </div>
+                        <div id="gs_legend_layers">
+
+                        </div>
+                    </div>
+                    <div id="existsLayer_box" class="tab-pane" role="tabpanel">
+                        <div>
+                            <ul id="legendTableExists" class="Tree-menu"></ul>
+                        </div>
+                    </div>
+                    <div id="addlayer_box" class="tab-pane" role="tabpanel" style="display: none;">
+                        <table width="100%" border="0" cellspacing="0" cellpadding="0" class="ListGrey" style="color:white">
+                            <tr>
+                                <td>
+                                    圖資類型
+                                    <!--<input type="radio" value="wms" name="layerType" layerType="wmsLayerInfo" />
+                                    WMS
+                                    <input type="radio" value="wfs" name="layerType" layerType="wfsLayerInfo" />
+                                    WFS-->
+                                    <input type="radio" value="kml" name="layerType" layerType="kmlLayerInfo"
+                                        checked="checked" />
+                                    KML
+                                    <!--<input type="radio" value="gml" name="layerType" layerType="gmlLayerInfo" />
+                                    GML-->
+                                    <input type="radio" value="shp" name="layerType" layerType="shpLayerInfo" />
+                                    SHP
+                                    <!--<input type="radio" value="wmts" name="layerType" layerType="wmtsLayerInfo" />
+                                    WMTS-->
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <table id="kmlLayerInfo" width="100%" border="0" cellspacing="0" cellpadding="0"
+                                        class="ListGrey LayerInfo">
+                                        <tr>
+                                            <th><i class="fas fa-sort-down"></i>圖資名稱</th>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" id="kmlLayerName" style="width: 100%" /></td>
+                                        </tr>
+                                        <tr>
+                                            <th><i class="fas fa-sort-down"></i>加入連結</th>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <input type="text" id="kmlURL" style="width: 100%;display:none;" />
+                                                <span style="color:#4D4C7D; font-weight:bold;">請直接拖曳檔案至圖台上以開啟KML圖資</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th><i class="fas fa-sort-down"></i>KML檔案上傳</th>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <iframe id="ifKmlUpload" src="Map/SpatialFileUpload.aspx" style="width: 100%; height: 30px"></iframe>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    <table id="gmlLayerInfo" width="100%" border="0" cellspacing="0" cellpadding="0"
+                                        class="ListGrey LayerInfo" style="display: none">
+                                        <tr>
+                                            <td>
+                                                圖資名稱
+                                            </td>
+                                            <td>
+                                                <input type="text" id="gmlLayerName" style="width: 100%" />
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                加入連結
+                                            </td>
+                                            <td>
+                                                <input type="text" id="gmlURL" style="width: 100%" />
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    <table id="wmsLayerInfo" width="100%" border="0" cellspacing="0" cellpadding="0"
+                                        class="ListGrey LayerInfo" style="display: none">
+                                        <tr>
+                                            <td>
+                                                WMS連結
+                                            </td>
+                                            <td>
+                                                <input type="text" id="wmsURL" style="width: 100%" />
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    <table id="wfsLayerInfo" width="100%" border="0" cellspacing="0" cellpadding="0"
+                                        class="ListGrey LayerInfo" style="display: none">
+                                        <tr>
+                                            <td>
+                                                WFS連結
+                                            </td>
+                                            <td>
+                                                <input type="text" id="wfsURL" style="width: 100%" />
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    <table id="shpLayerInfo" width="100%" border="0" cellspacing="0" cellpadding="0"
+                                        class="ListGrey LayerInfo Iocean-addlayer-list-second" style="display: none">
+                                        <tr>
+                                            <th><i class="fas fa-sort-down"></i>圖資名稱</th>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" id="shpLayerName" style="width: 100%" /></td>
+                                        </tr>
+                                        <tr>
+                                            <th><i class="fas fa-sort-down"></i>SHP坐標系統</th>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <select id="ddlShpCoordSys">
+                                                    <option value="EPSG:3826">TWD97</option>
+                                                    <option value="EPSG:3828">TWD67</option>
+                                                    <option value="EPSG:4326">WGS84</option>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th><i class="fas fa-sort-down"></i>SHP檔案上傳</th>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <iframe id="ifShpUpload" src="Map/SpatialFileUpload.aspx" style="width: 100%; height: 30px"></iframe>
+                                                <br />
+                                                <span style="color:#4D4C7D; font-weight:bold;">
+                                                    請將SHP圖資(包含.dbf、.shp及.shx三個檔案)壓縮為.zip格式之檔案後上傳
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    <table id="wmtsLayerInfo" width="100%" border="0" cellspacing="0" cellpadding="0"
+                                        class="ListGrey LayerInfo" style="display: none">
+                                        <tr>
+                                            <td>
+                                                WMTS連結
+                                            </td>
+                                            <td>
+                                                <input type="text" id="wmtsURL" style="width: 100%" />
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input type="button" class="BtnWhite _addLayer" value="加入" />
+                                    <input type="button" class="BtnWhite _closeLayerAddingPanel" value="取消" />
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+            <div class="cover-bar"></div><!--隱藏捲軸用的-->
+        </div>
+        <!--區塊內容結尾-->
+    </div>
+    
+
+    
+    <!-- 模板 -->
+    <div id="template_gslegend_mainGroup" style="display:none;" class="card GSMap-element-card ">
+        <div class="card-header GSMap-element-card-header">
+            <a data-bs-toggle="collapse" class="collapsed" data-bs-target="#collapseOne-layer" aria-expanded="true" aria-controls="collapseOne">
+                Title
+            </a>
+        </div>
+        <div class="GSMap-element-card-cont collapse" data-bs-parent="#gs_legend_layers">
+            <ul class="Tree-menu"></ul>
+        </div>
+    </div>
+    <!-- 模板 END -->
+    <div id="layerOpacityPanel" class="transp" style="position:absolute; z-index:99; display:none; width:150px;">
+        <div class="BtnFunc">
+            <ul>
+                <li id="opacitySlider" style="float:left; width:110px;margin:5px;"></li>
+                <li><button class="btn-close" type="button" style="float:right;" onclick="$('#layerOpacityPanel').hide()"></button></li>
+            </ul>
+        </div>
+        <!--關閉+說明-->
+    </div>
+
+    <button id="btnLegend" class="btnVisibleLegend _toMap" onclick="swicthLegend();" style="display: none;"></button>
+    <div id="labelLegend" class="gsmap-labelLegend _toMap" style="position: absolute; background-color: rgba(255, 255, 255, 1); right: 36px; top: 150px; border: 1px solid #4d4d4d; padding: 4px; border-radius: 4px; display: none;">
+    </div>
+</div>

@@ -1,0 +1,194 @@
+﻿<%@ Page Language="C#" MasterPageFile="~/OSI/OSIMaster.master" AutoEventWireup="true" CodeFile="PccAward.aspx.cs" Inherits="OSI_PccAward" %>
+
+<asp:Content ID="cTitle" ContentPlaceHolderID="TitleContent" runat="server">
+    政府標案查詢  | 海洋科學調查活動填報系統
+</asp:Content>
+
+<asp:Content ID="Content1" ContentPlaceHolderID="HeadContent" runat="server">
+    <style>
+        .pagination > span {
+            display: flex;
+            gap: 4px;
+        }
+    </style>
+</asp:Content>
+
+<asp:Content ID="Content2" ContentPlaceHolderID="Bread" runat="server">
+    <img src="<%= ResolveUrl("~/assets/img/title-icon06.svg") %>" alt="logo">
+    <div>
+        <span>目前位置</span>
+        <h2>政府標案查詢</h2>
+    </div>
+</asp:Content>
+
+<asp:Content ID="cMain" ContentPlaceHolderID="MainContent" runat="server">
+    <!-- 搜尋 -->
+    <div class="search">
+        <h3>
+            <i class="fa-solid fa-magnifying-glass"></i>
+            查詢
+        </h3>
+
+        <div class="search-form">
+            <div class="column-2">
+                <!-- 決標公告 -->
+                <div class="search-item">
+                    <div class="fs-16 text-gray mb-2">決標公告</div>
+                    <div class="input-group">
+                        <asp:TextBox ID="txtAwardDateFrom" runat="server" CssClass="form-control rocDate" TextMode="SingleLine" placeholder="開始日期" />
+                        <span class="input-group-text">至</span>
+                        <asp:TextBox ID="txtAwardDateTo" runat="server" CssClass="form-control rocDate" TextMode="SingleLine" placeholder="結束日期" />
+                    </div>
+                </div>
+
+                <!-- 決標金額 -->
+                <div class="search-item">
+                    <div class="fs-16 text-gray mb-2">決標金額</div>
+                    <div class="input-group">
+                        <asp:TextBox ID="txtPriceFrom" runat="server" CssClass="form-control" TextMode="Number" placeholder="最小金額" />
+                        <span class="input-group-text">至</span>
+                        <asp:TextBox ID="txtPriceTo" runat="server" CssClass="form-control" TextMode="Number" placeholder="最大金額" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- 標案名稱 -->
+            <div class="search-item">
+                <div class="fs-16 text-gray mb-2">標案名稱</div>
+                <asp:TextBox ID="txtKeyword" runat="server" CssClass="form-control" placeholder="請輸入關鍵字，如:海洋、海域等" />
+                <div class="d-flex align-items-start gap-1 mt-3 text-blue">
+                    <span class="text-nowrap">建議關鍵字：</span>
+                    <div class="d-flex flex-wrap gap-1">
+                        <a class="link" href="#" onclick="setKeyword('海洋'); return false;">海洋</a>,
+                        <a class="link" href="#" onclick="setKeyword('海域'); return false;">海域</a>
+                    </div>
+                </div>
+            </div>
+
+            <asp:LinkButton ID="btnSearch" runat="server" CssClass="btn btn-blue d-table mx-auto"
+                OnClick="btnSearch_Click">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                查詢
+            </asp:LinkButton>
+        </div>
+    </div>
+
+    <!-- 列表內容 -->
+    <asp:UpdatePanel ID="upList" runat="server" UpdateMode="Conditional">
+        <ContentTemplate>
+            <div class="block rounded-bottom-4">
+                <div class="title">
+                    <h4>
+                        <img src="<%= ResolveUrl("~/assets/img/title-icon02.svg") %>" alt="logo">
+                        列表
+                    </h4>
+                </div>
+
+                <div class="table-responsive">
+                    <asp:ListView ID="lvPccAward" runat="server"
+                        DataKeyNames="Id"
+                        OnItemCommand="lvPccAward_ItemCommand"
+                        OnPagePropertiesChanging="lvPccAward_PagePropertiesChanging">
+                        <LayoutTemplate>
+                            <table class="table blue-green-table">
+                                <thead>
+                                    <tr>
+                                        <th width="80">項次</th>
+                                        <th width="200">機關名稱</th>
+                                        <th width="360">標案名稱</th>
+                                        <th>決標金額</th>
+                                        <th>決標日</th>
+                                        <th width="80">功能</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr id="itemPlaceholder" runat="server"></tr>
+                                </tbody>
+                            </table>
+                        </LayoutTemplate>
+                        <ItemTemplate>
+                            <tr>
+                                <td data-th="排序:"><%# Container.DisplayIndex + 1 + (dpPccAward.StartRowIndex) %></td>
+                                <td data-th="機關名稱:"><%# Eval("OrgName") %></td>
+                                <td data-th="標案名稱:"><%# Eval("AwardName") %></td>
+                                <td data-th="決標金額:"><%# FormatPrice(Eval("AwardPrice")) %></td>
+                                <td data-th="決標日:"><%# FormatRocDate(Eval("AwardDate")) %></td>
+                                <td data-th="功能:">
+                                    <div class="d-flex flex-wrap justify-content-center gap-2">
+                                        <asp:LinkButton ID="btnDetail" runat="server"
+                                            CssClass="btn btn-sm btn-outline-blue"
+                                            CommandName="ViewDetail"
+                                            CommandArgument='<%# Eval("Url") %>'>明細</asp:LinkButton>
+                                    </div>
+                                </td>
+                            </tr>
+                        </ItemTemplate>
+                        <EmptyDataTemplate>
+                            <table class="table blue-green-table">
+                                <thead>
+                                    <tr>
+                                        <th width="80">項次</th>
+                                        <th width="200">機關名稱</th>
+                                        <th width="360">標案名稱</th>
+                                        <th>決標金額</th>
+                                        <th>決標日</th>
+                                        <th width="80">功能</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="6" class="text-center">查無資料</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </EmptyDataTemplate>
+                    </asp:ListView>
+                </div>
+
+                <!-- 分頁 -->
+                <nav class="pagination d-flex gap-1 justify-content-center mt-3" aria-label="Pagination">
+                    <asp:DataPager ID="dpPccAward" runat="server"
+                        PagedControlID="lvPccAward"
+                        PageSize="10"
+                        OnPreRender="dpPccAward_PreRender">
+                        <Fields>
+                            <asp:NextPreviousPagerField
+                                ButtonType="Button"
+                                ButtonCssClass="nav-button"
+                                ShowPreviousPageButton="True"
+                                PreviousPageText="‹"
+                                ShowNextPageButton="False"
+                                ShowFirstPageButton="False"
+                                ShowLastPageButton="False" />
+
+                            <asp:NumericPagerField
+                                ButtonType="Button"
+                                ButtonCount="5"
+                                NumericButtonCssClass="pagination-item"
+                                CurrentPageLabelCssClass="pagination-item active" />
+
+                            <asp:NextPreviousPagerField
+                                ButtonType="Button"
+                                ButtonCssClass="nav-button"
+                                ShowPreviousPageButton="False"
+                                ShowNextPageButton="True"
+                                NextPageText="›"
+                                ShowFirstPageButton="False"
+                                ShowLastPageButton="False" />
+                        </Fields>
+                    </asp:DataPager>
+                </nav>
+            </div>
+        </ContentTemplate>
+        <Triggers>
+            <asp:AsyncPostBackTrigger ControlID="btnSearch" EventName="Click" />
+        </Triggers>
+    </asp:UpdatePanel>
+
+    <script type="text/javascript">
+        function setKeyword(keyword) {
+            document.getElementById('<%= txtKeyword.ClientID %>').value = keyword;
+        }
+    </script>
+</asp:Content>
+

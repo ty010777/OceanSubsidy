@@ -1,0 +1,60 @@
+@charset "utf-8";
+/*文字樣式*/
+.txt{
+	font-family: "微軟正黑體";
+	font-size: 1rem;
+	color: #000;
+	line-height:1 ;
+}
+.txtM{
+	font-family: "微軟正黑體";
+	font-size: 1.5rem;
+	color: #000;
+	line-height:2;
+}
+.txtL{
+	font-family: "微軟正黑體";
+	font-size: 2rem;
+	line-height: 3;
+}
+.txt_marginLR{
+	margin:0 4px;
+}
+.txt_marginTB{
+	margin:6px 0;
+}
+.txt_bold{font-weight:600;}
+.txt_Black{
+	color: #000;
+}
+.txt_Blue{
+	color: #64b5f6;
+}
+.txt_Green{
+	color: #75bf14;
+}
+.txt_GreenDark{
+	color: #328968;
+}
+.txt_Yellow{
+	color: #FFBC42;
+}
+.txt_Coral{
+	color: #F16B6F;
+}
+.txt_Gray{
+	color: #c3c3c3;
+}
+.txt_GreenLake{
+	color: #29b3a6;
+}
+.txt_Brown{
+	color: #6b5046;
+}
+.txt_purple{
+	color: #7389db;
+}
+.txt_Bluedark{
+	color: #053c75;
+}
+/*文字樣式結尾*/

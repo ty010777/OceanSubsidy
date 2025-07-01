@@ -1,0 +1,25 @@
+﻿<%@ Master Language="C#" MasterPageFile="~/BaseMaster.Master" AutoEventWireup="true" CodeFile="LoginMaster.master.cs" Inherits="LoginMaster" %>
+
+<asp:Content ID="cTitle" ContentPlaceHolderID="BaseTitleContent" runat="server">
+    <asp:ContentPlaceHolder ID="TitleContent" runat="server" />
+</asp:Content>
+
+<asp:Content ID="HeadExtra" ContentPlaceHolderID="HeadExtra" runat="server">
+    <asp:ContentPlaceHolder ID="HeadContent" runat="server" />
+</asp:Content>
+
+<asp:Content ID="cBody" ContentPlaceHolderID="BodyContent" runat="server">
+    <form runat="server">
+        <asp:ScriptManager ID="ScriptManager1" runat="server" />
+        <main role="main">
+            <asp:ContentPlaceHolder ID="ScriptsContent" runat="server" />
+            <asp:ContentPlaceHolder ID="MainContent" runat="server" />
+        </main>
+
+        <asp:ContentPlaceHolder ID="ModalContent" runat="server" />
+    </form>
+
+</asp:Content>
+
+
+

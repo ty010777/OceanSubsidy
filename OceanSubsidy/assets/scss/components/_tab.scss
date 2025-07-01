@@ -1,0 +1,41 @@
+.tab {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    white-space: nowrap;
+    .tab-link {
+        padding: 16px 28px;
+        border-radius: 8px 8px 0px 0px;
+        background-color: $neutral-300;
+        color: $neutral-700;
+        font-size: 1.728rem;
+        font-weight: 700;
+        border: 0;
+        &.active {
+            background-color: $light-blue;
+            color: $blue;
+        }
+        &:hover {
+            color: $blue;
+        }
+    }
+    @media (max-width: $md) {
+        .tab-link {
+            padding: 14px 24px;
+            font-size: 1.2rem;
+        }
+    }
+    @media (max-width: $sm) {
+        .tab-link {
+            padding: 12px 12px;
+            font-size: 1rem;
+        }
+    }
+}
+
+.tab-content {
+    .search {
+        border-radius: 0 20px 0px 0px;
+    }
+}
+

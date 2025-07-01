@@ -1,0 +1,256 @@
+﻿<style>
+    /* 讓整張卡片高度為 viewport 高度的 90%，你可以自行調整 */
+    .full-height-card {
+        height: 90vh; /* 或者你想要的百分比 */
+        max-height: 800px; /* 如不想太高可限定 max-height */
+    }
+
+    /* 結果區段 (含標題 + 列表)，需要垂直分佈 */
+    .result-section {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        /* 與搜尋區塊等比例擴展 */
+    }
+
+    /* 下方清單要能滾動、並撐滿剩餘空間 */
+    .result-list {
+        max-height: calc(100vh - 66px - 121px - 63px - 45px - 280px);
+        overflow-y: auto;
+        flex-grow: 1;
+    }
+
+    /* 調整標題列字體大小與間距 */
+    .result-header-row {
+        font-size: 0.9rem;
+        background-color: #1BB5DB;
+        border-top-left-radius: 6px;
+        border-top-right-radius: 6px;
+        padding: 8px;
+        color: #FFF;
+    }
+
+    /* 各欄位寬度設定（可依需求微調） */
+    .col-unit {
+        width: 30%;
+    }
+
+    .col-activity {
+        width: 55%;
+    }
+
+    .col-action {
+        width: 15%;
+        text-align: center;
+    }
+
+    /* 單筆列表裡文字微調 */
+    .list-group-item {
+        padding: 8px;
+    }
+    .list-group-item .unit-name {
+        font-size: 0.88rem;
+        font-weight: 600;
+        line-height: 1.2;
+    }
+
+    .list-group-item .activity-name {
+        font-size: 0.85rem;
+        color: #444;
+        line-height: 1.2;
+    }
+
+    /* 滾動軸外觀（可選） */
+    .result-list::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .result-list::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 3px;
+    }
+
+    /* 排序圖示樣式 */
+    .sort-icon {
+        font-size: 0.75rem;
+        margin-left: 4px;
+        color: #FFF;
+        opacity: 0.6;
+        cursor: pointer;
+    }
+
+    .sort-icon.active {
+        opacity: 1;
+    }
+
+    .sortable-header {
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .sortable-header:hover {
+        background-color: #18a1c3;
+    }
+
+    /* SumoSelect 樣式調整 */
+    .SumoSelect {
+        width: 100% !important;
+    }
+
+    .SumoSelect > .optWrapper {
+        width: 100% !important;
+        max-height: 300px !important;
+        top: 35px !important;
+    }
+
+    .SumoSelect > .optWrapper > .options {
+        padding-top: 0 !important;
+        max-height: 200px !important;
+        overflow-y: auto !important;
+    }
+
+    .SumoSelect > .optWrapper.okCancelInMulti > .MultiControls {
+        background: #fff;
+        border-top: 1px solid #ddd;
+        box-shadow: none;
+    }
+
+    .SumoSelect .select-all {
+        height: 35px !important;
+        padding: 8px 10px !important;
+        border-bottom: 1px solid #ddd;
+        background: #f8f9fa;
+    }
+
+    .SumoSelect .select-all label {
+        margin: 0 !important;
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+        color: #333;
+    }
+
+    /* 調整多選框樣式 */
+    .SumoSelect > .CaptionCont {
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        min-height: calc(1.5em + 0.5rem + 2px);
+        background-color: #fff;
+    }
+
+    .SumoSelect > .CaptionCont > span {
+        font-size: 0.875rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+    /* 確保選項不被切斷 */
+    .SumoSelect .opt {
+        padding: 6px 10px;
+        border: none;
+    }
+
+    .SumoSelect .opt:hover {
+        background-color: #f0f0f0;
+    }
+
+    /* 調整搜尋框 */
+    .SumoSelect > .optWrapper > .Search > input {
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        padding: 0.375rem 0.75rem;
+        margin: 8px;
+        width: calc(100% - 16px);
+    }
+</style>
+
+
+
+<div id="GSMap-panel-locate" class="GSMap-panel">
+    <a href="javascript:void(0)" class="closebtn">&times;</a>
+    <a href="javascript:void(0)" class="fixedbtn"></a>
+    <a href="javascript:void(0)" class="revertbtn"></a>
+    <h2>活動查詢</h2>
+
+    <!--區塊內容-->
+    <div class="GSMap-panel-contbox-wrap OS-MapPannel-div">
+        <div class="card shadow-sm mx-auto mt-1"
+             style="position: relative;">
+
+            <div class="card-body p-3">
+                <!-- 填報週期 -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold activity-query-label">填報週期</label>
+                    <div class="input-group mb-1">
+                        <span class="input-group-text">開始</span>
+                        <select id="yearFrom" class="form-select form-select-sm  _year">
+                            <option value="">全部</option>
+                        </select>
+                        <select id="quarterFrom" class="form-select form-select-sm" >
+                            <option value="第一季">Q1</option>
+                            <option value="第二季">Q2</option>
+                            <option value="第三季">Q3</option>
+                            <option value="第四季">Q4</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-text">結束</span>
+                        <select id="yearTo" class="form-select form-select-sm  _year" >
+                            <option value="">全部</option>
+                        </select>
+                        <select id="quarterTo" class="form-select form-select-sm">
+                            <option value="第一季">Q1</option>
+                            <option value="第二季">Q2</option>
+                            <option value="第三季">Q3</option>
+                            <option value="第四季">Q4</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 填報機關（複選）-->
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold activity-query-label">填報機關</label>
+                    <select id="unit" class="form-select form-select-sm _unit" multiple>
+                     </select>
+                </div>
+
+                <!-- 活動名稱（關鍵字）-->
+                <div class="mb-3">
+                    <label class="form-label fw-bold activity-query-label">活動名稱</label>
+                    <input type="text"
+                           id="actName"
+                           class="form-control form-control-sm"
+                           placeholder="關鍵字搜尋" />
+                </div>
+
+                <!-- 查詢按鈕 -->
+                <div class="btnBoxCenter">
+                    <input type="button" name="" class="btn btn_query" value="查詢">
+                </div>
+
+                <!-- 查詢結果區域 -->
+                <div class="result-section">
+                    <!-- 結果統計字樣 -->
+                    <div id="result" class="mb-2 mt-4">查詢結果：共 <span class="activity-query-label fw-bold">0</span> 筆活動</div>
+
+                    <!-- 標題列（固定，不滾動） -->
+                    <div class="d-flex align-items-center result-header-row">
+                        <div class="col-unit sortable-header" data-sort="unit">
+                            單位 <span id="sort-unit" class="sort-icon">▼</span>
+                        </div>
+                        <div class="col-activity sortable-header" data-sort="activity">
+                            活動名稱 <span id="sort-activity" class="sort-icon">▼</span>
+                        </div>
+                        <div class="col-action">定位</div>
+                    </div>
+
+                    <!-- 列表（可滾動） -->
+                    <ul id="resultList" class="list-group result-list">                        
+                    </ul>
+                </div>
+                <!-- 查詢結果區域結束 -->
+            </div>
+        </div>
+    </div>
+</div>
+

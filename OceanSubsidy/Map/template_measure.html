@@ -1,0 +1,88 @@
+﻿<!--量測內容-->
+<div class="GSMap-panel">
+    <a href="javascript:void(0)" class="closebtn">&times;</a>
+    <h2>量測</h2>
+
+    <div class="OS-MapPannel-div" style="margin-top: 10px;">
+        <!--頁籤-->
+        <ul class="nav nav-tabs GSMap-element-tab" role="tablist">
+            <li class="nav-item"><a id="measureLength" class="nav-link active" data-toggle="tab" href="javascript:void(0)" data-bs-target="#length_box" data-bs-toggle="tab">距離</a></li>
+            <li class="nav-item"><a id="measureArea" class="nav-link" data-toggle="tab" href="javascript:void(0)" data-bs-target="#area_box" data-bs-toggle="tab">面積</a></li>
+        </ul>
+        <!--頁籤結尾-->
+        <!--區塊內容-->
+        <div class="GSMap-panel-contbox-wrap">
+            <div class="scroll-box">
+
+                <!--頁籤內容wrap-->
+                <div class="tab-content" >
+                    <!--距離-->
+                    <div id="length_box" class="tab-pane active" role="tabpanel">
+                        <div class="btnBoxRight">
+                            <input type="button" class="btnS btn_clear _resetMeasure" value="清除資料">
+                        </div>
+                        <div class="MeasureStyle">
+                            <dl>
+                                <dt><i></i>長度</dt>
+                                <dd>
+                                    <span class="txt_Blue txt_marginLR" id="totalLength">0</span>
+                                    <span id="spanLengthUnit">公尺(m)</span>,共
+                                    <span class="txt_Blue txt_marginLR" id="lengthPartNum">0</span>段
+                                </dd>
+                            </dl>
+                            <dl>
+                                <dt><i></i>切換單位</dt>
+                                <dd>
+                                    <select id="lengthUnit">
+                                        <option value="m">公尺</option>
+                                        <option value="km">公里</option>
+                                    </select>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                    <!--距離結尾-->
+                    <!--面積-->
+                    <div id="area_box" class="tab-pane fade" role="tabpanel">
+                        <div class="btnBoxRight">
+                            <input type="button" class="btnS btn_clear _resetMeasure" value="清除資料">
+                        </div>
+                        <div class="MeasureStyle">
+                            <dl>
+                                <dt><i></i>面積</dt>
+                                <dd>
+                                    <span class="txt_Blue txt_marginLR" id="area">0</span>
+                                    <span id="spanAreaUnit">平方公尺(m<sup>2</sup>)</span>
+                                </dd>
+                            </dl>
+                            <dl>
+                                <dt><i></i>邊長</dt>
+                                <dd>
+                                    <span class="txt_Blue txt_marginLR" id="perimeter">0</span>公尺(m)
+                                </dd>
+                            </dl>
+                            <dl>
+                                <dt><i></i>切換單位</dt>
+                                <dd>
+                                    <select id="areaUnit">
+                                        <option value="m2">平方公尺</option>
+                                        <option value="km2">平方公里</option>
+                                        <option value="Ha">公頃</option>
+                                    </select>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                    <!--面積結尾-->
+
+                </div>
+                <!--頁籤內容wrap結尾-->
+
+            </div>
+            <div class="cover-bar"></div><!--隱藏捲軸用的-->
+        </div>
+        <!--區塊內容結尾-->
+    </div>
+
+</div>
+<!--量測內容結尾-->

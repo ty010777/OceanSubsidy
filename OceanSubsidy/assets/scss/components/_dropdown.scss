@@ -1,0 +1,50 @@
+
+// Dropdown 樣式
+.dropdown {
+    position: relative;
+
+    
+    .dropdown-menu {
+        background-color: #fff;
+        border: 1px solid $dark-green;
+        border-radius: 12px;
+        padding: 12px;
+        margin-top: 8px;
+        min-width: 220px;
+
+        > li ~ li {
+            border-top: 1px dashed #D9D9D9;
+        }
+
+        a {
+            &:hover {
+                color: $dark-green;
+            }
+        }
+        
+        
+        .dropdown-menu-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: 0.3s ease;
+            color: #000;
+            
+            
+            // 數字標籤
+            .badge {
+                background-color: $pink;
+                color: #fff;
+                font-size: 0.75rem;
+                font-weight: 600;
+                padding: 4px 8px;
+                border-radius: 12px;
+                min-width: 24px;
+                text-align: center;
+            }
+        }
+    }
+}

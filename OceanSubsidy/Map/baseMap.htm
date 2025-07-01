@@ -1,0 +1,123 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <script src="../script/map/jquery.js" type="text/javascript"></script>
+    <script src="../script/map/jquery-ui.min.js" type="text/javascript"></script>
+    <link href="../App_Themes/Map/css/reset.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/Map/css/map.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/Map/css/main.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/Map/css/layout.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/Map/css/jquery-ui.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/Map/css/nanoscroller.css" rel="stylesheet" type="text/css" />
+    <script src="../script/map/AssessTools.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        var resizeInterval = null;
+        var mapPlugin = null;
+
+        $(function () {
+            mapPlugin = parent.mapPlugin;
+            createBaseMap();
+        });
+
+        function resizeLayout() {
+            parent.resizeBox($(".nano").offset().top + $(".nano-content > div").height() + 20);
+            if ($(".nano").height() != ($("html").height() - $(".nano").offset().top)) {
+                $(".nano").height($("html").height() - $(".nano").offset().top);
+                parent.$("#contentBox").height(500);
+            }
+            clearInterval(resizeInterval);
+        }
+        $(window).on("resize", function () {
+            clearInterval(resizeInterval);
+            resizeInterval = setInterval(resizeLayout, 200);
+        });
+
+        function createBaseMap() {
+            $("#baseTable").children().remove();
+            if (parent.map_base.sub)
+                createFolder($("#baseTable"), parent.map_base.sub);
+        }
+
+        function createFolder($parentFolderTable, data) {
+            for (var mapID in data) {
+                var mapInfo = data[mapID];
+                if (!mapInfo) continue;
+                var $tr = $('<tr><td onclick=\'swicthMapVisible(this, ' + JSON.stringify(mapInfo) + ')\'/></tr>');
+                $parentFolderTable.append($tr);
+                var $td1 = $tr.find("td:last");
+                $td1.append(mapID);
+                $td1[0].setAttribute("id", "td" + mapID);
+                //$td1.append('<input type="checkbox" name="cbBaseMap" onchange=\'swicthMapVisible(this, ' + JSON.stringify(mapInfo) + ')\' />');                
+            }
+
+            var $tr = $("<tr><td onclick='swicthMapVisible(this, null)'/></tr>");
+            $parentFolderTable.append($tr);
+            var $td1 = $tr.find("td:last");
+            $td1.append("無底圖");
+            $td1[0].setAttribute("id", "td無底圖");
+
+            mapPlugin.layersMg.switchTheMap(data["開放街圖(標準)"], true);
+            mapPlugin.layersMg.switchTheOverviewMap(data.通用版電子地圖, true, parent.document.getElementById('OverviewMap'));
+            $("#baseTable td")[0].className = "active";
+        }
+
+        function swicthMapVisible(obj, mapID) {
+            for (i = 0; i < $("#baseTable td").length; i++) {
+                $("#baseTable td")[i].className = "";
+            }
+            obj.className = "active";
+
+            if (mapID == null) {
+                parent.mapPlugin.getBaseLayerGroup().getLayers().forEach(function (BaseLayer) {
+                    parent.mapPlugin.getBaseLayerGroup().getLayers().remove(BaseLayer);
+                });
+            } else {
+                mapPlugin.layersMg.switchTheMap(mapID, true);
+            }          
+
+            /*var disabled = !obj.checked;
+            mapPlugin.layersMg.switchTheMap(mapID, obj.checked);
+            var $checkbox = $(obj).parent().find(":checkbox");
+            if (disabled) $checkbox.prop("disabled", true);
+            $checkbox.prop("checked", $(obj).prop("checked"));
+            if (disabled) $checkbox.prop("disabled", false);*/
+        }
+
+        function switchOverviewMap(obj, mapID) {
+            var cbOverviewMap = document.getElementsByName("cbOverviewMap");
+            Array.prototype.forEach.call(cbOverviewMap, function (el) {
+                el.checked = false;
+            });
+            obj.checked = true;
+            mapPlugin.layersMg.switchTheOverviewMap(mapID, obj.checked, parent.document.getElementById('OverviewMap'));
+        }
+    </script>
+    <!-- page event -->
+    <script type="text/javascript">
+        function page_active() {
+            parent.useMisFunctonFrame.CloseFullDownFrame();
+        }
+        function page_leave() {
+        }
+    </script>
+</head>
+<body>
+    <!--關閉+說明-->
+    <div class="BtnFunc">
+        <ul>
+            <li class="close"><a href="javascript:void(0);parent.toolSwitch()">關閉</a></li>
+        </ul>
+    </div>
+    <!--可捲動範圍-->
+    <div class="nano">
+        <div class="nano-content">
+            <div>
+                <table id="baseTable" width="100%" class="BasicMapTable"></table>
+                <!--<table id="baseTable" class="LayerInfoTable" width="100%" border="0" cellpadding="0" cellspacing="0"></table>-->              
+            </div>
+        </div>
+    </div>
+    <!--可捲動範圍結尾-->
+</body>
+</html>

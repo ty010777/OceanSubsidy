@@ -1,0 +1,491 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>無標題文件</title>
+    <link href="../App_Themes/map/css/reset.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/map/css/layout.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/map/css/mis.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/map/css/map.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/map/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+    <link href="../App_Themes/map/css/jquery-ui.css" rel="stylesheet" type="text/css" />
+
+    <script type="text/javascript" src="../script/map/jquery.min.js"></script>
+    <script type="text/javascript" src="../script/map/bootstrap.min.js"></script>
+    <style>
+        .BtnFunc li a {
+            display: block;
+            width: 26px;
+            height: 10px;
+            text-indent: -9999px;
+            background-repeat: no-repeat;
+        }
+    </style>
+    <script type="text/javascript">
+        var mapPlugin = parent.mapPlugin;
+        var ol = parent.ol;
+        var map = parent.map;
+        var pointMarker = null;
+        var rangeQueryingLayers = null;
+        //var helpHtml;
+        var ajaxControls = [];
+        var hiddenFeatures = {};
+        var queryIntervalID = null;
+        var pageSize = 10;
+        var singleClickCoord;
+        var spatialResultLayerName = "spatialQuery";
+        var pointStyleOpt = {
+            icon: {
+                anchor: [0.5, 32],
+                anchorXUnits: 'fraction',
+                anchorYUnits: 'pixels',
+                src: "App_Themes/map/images/location.png"
+            }
+        };
+        var ajaxIdentify = {};
+        var featureFromIdentify = {};
+        var TableHtml = '';
+
+        $(window).load(function () {
+            // 停用泡泡資訊視窗
+            mapPlugin.layersMg.setEnableBubbleInfo(false);
+            var $detail_tab = $('.detail_tab li a');
+            $detail_tab.on('click', function (e) {
+                var CurrentTab = $(this)[0].innerText;
+                if (CurrentTab == "區域分析") {
+                    queryLayersByPoint($("#txtManualPointRange").val(), "區域分析");
+                } else {
+                    deactivePointQuery();
+                }
+            });
+        });
+
+        function round(num, digit) {
+            return Math.round(num * Math.pow(10, digit)) / Math.pow(10, digit);
+        }
+
+        var jQueryIDInvalidChar = /([!"#$%&'()*+,./:;<=>?@\[\\\]^`{|}~])/g;
+
+        // 當取得identify結果後
+        function onIdentifyFinish(coord, featuresPerLayer) {
+            renderCoordInfo(coord);
+            if (mapPlugin.layersMg.hasIdentifyingLayer()) {
+                renderFeatures(featuresPerLayer);
+            } else {
+                // 如果沒有任何需要identify的圖層被開啟，切換到[坐標資訊]
+                $(".detail_tab a[href='#item-3']").click();
+            }
+        }
+
+        function renderCoordInfo(coord) {
+            singleClickCoord = coord;
+
+            var latlon = ol.proj.transform(singleClickCoord, mapPlugin.getMapProj(), "EPSG:4326");
+            var twd97 = ol.proj.transform(singleClickCoord, mapPlugin.getMapProj(), "EPSG:3826");
+            var twd67 = ol.proj.transform(singleClickCoord, mapPlugin.getMapProj(), "EPSG:3828");
+
+            var tdWGS84 = document.getElementById("tdWGS84");
+            var tdTWD97 = document.getElementById("tdTWD97");
+            var tdTWD67 = document.getElementById("tdTWD67");
+
+            tdWGS84.innerText = round(latlon[1], 4) + ", " + round(latlon[0], 4);
+            tdTWD97.innerText = Math.round(twd97[0]) + ", " + Math.round(twd97[1]);
+            tdTWD67.innerText = Math.round(twd67[0]) + ", " + Math.round(twd67[1]);
+            var googleCoord = "http://maps.google.com/maps?f=q&source=s_q&z=16&layer=c&cbll=" + latlon[1] + "," + latlon[0];
+            $("#btnGoogle").attr(
+                'onclick',
+                'parent.window.open("' + googleCoord + '")'
+            );
+
+            mapPlugin.clearFeatures(spatialResultLayerName);
+            mapPlugin.clearFeatures("default");
+            var thepoint = twd97;
+            mapPlugin.addMarker(thepoint, null, pointStyleOpt);
+
+        }
+
+        function renderFeatures(featuresPerLayer) {
+            var $bubbleContent = $("#LayerTable");
+            $bubbleContent.children().remove();
+            for (var layerID in featuresPerLayer) {
+                var layerInfo = mapPlugin.layersMg.getLayerInfo(layerID);
+                var features = featuresPerLayer[layerID];
+                if (!$.isEmptyObject(features)) {
+                    var layerContent = '<tr><th style="color:yellow">' + layerInfo.name + '</th></tr>'
+                        + '<tr><td id="identity_' + $('<div/>').text(layerID).html() + '" ></td></tr>';
+                    $bubbleContent.append(layerContent);
+                    var $theContent = $bubbleContent.find("#identity_" + layerID.replace(jQueryIDInvalidChar, "\\$1"));
+                    var arFeatures = [];
+                    for (var key in features) {
+                        arFeatures.push(features[key]);
+                        $theContent.append(mapPlugin.layersMg.genFeatureBubbleContent(layerInfo, features[key]));
+                    }
+                }
+            }
+            if ($bubbleContent.children().length == 0) {
+                // 如果identify不到任何資料，改用[區域分析]
+                $(".detail_tab a[href='#item-2']").click();
+            } else {
+                $(".detail_tab a[href='#item-1']").click();
+            }
+        }
+
+        function activePointQuery() {
+            mapPlugin.getCoordinate(clickPoint, 'EPSG:3826');
+        }
+
+        function deactivePointQuery() {
+            mapPlugin.cancelGetCoordinate();
+        }
+
+        // 點選地圖點位
+        function clickPoint(thePoint) {
+            removePointMarker();
+            var simplePoint = [Math.round(thePoint[0]), Math.round(thePoint[1])];
+            $("#selectCoordinate").text("TWD97：" + simplePoint.join(", "));
+            queryLayersByPoint(thePoint, $("#txtManualPointRange").val());
+        }
+
+        function removePointMarker() {
+            if (pointMarker) {
+                mapPlugin.removeMarker(pointMarker);
+                pointMarker = null;
+            }
+        }
+
+        function changeRange() {
+            queryLayersByPoint($("#txtManualPointRange").val());
+        }
+
+        function queryLayersByPoint(range, tabName) {
+            var thePoint = [parseFloat($("#tdTWD97")[0].innerText.split(',')[0]), parseFloat($("#tdTWD97")[0].innerText.split(',')[1])];
+            if (isNaN(thePoint[0]) || isNaN(thePoint[1])) {
+                return;
+            }
+
+            clearQueryResult();
+
+            if (!rangeQueryingLayers) {
+                rangeQueryingLayers =
+                    mapPlugin.layersMg.searchLayerInfo(
+                        function (layerInfo) {
+                            return layerInfo.rangeQuery;
+                        }
+                    );
+            }
+
+            pointMarker = mapPlugin.addMarker(thePoint, thePoint.join(", "), pointStyleOpt);
+            mapPlugin.addMarker(new ol.Feature(new ol.geom.Circle(thePoint, parseFloat(range))), "", null, "EPSG:3826", spatialResultLayerName);
+
+            queryLayer(
+                thePoint,
+                parseFloat(range),
+                tabName
+            );
+        }
+
+        function clearQueryResult() {
+            var $res = $("#queryResult");
+            $res.children().remove();
+            $res.append('\<div class="tab-content result_cont">\
+                          <div id="queryResultList" class="_coordPanel tab-pane fade in active">\
+                              <div style="padding:4px;"><input id="allResultSwitch" type="button" style="display:none;" class="BtnhideAll" value="全部關閉" onclick="switchAllFeature();" /></div>\
+                          </div>\
+                        \</div>\
+                                                            ');
+            //$("#allResultSwitch").hide();
+            mapPlugin.clearFeatures(spatialResultLayerName);
+            hiddenFeatures = {};
+        }
+
+        function queryLayer(thePoint, range, tabName) {
+            abort();
+
+            $("#LayerTable")[0].innerText = "";
+            for (var i = 0; i < rangeQueryingLayers.length; i++) {
+                var layerInfo = mapPlugin.layersMg.getLayerInfo(rangeQueryingLayers[i]);
+                var targetProj = layerInfo.serviceInfo.srcPrj || layerInfo.serviceInfo.targetPrj;
+                var targetPoint = ol.proj.transform(thePoint, "EPSG:3826", targetProj);
+                var targetRange = (ol.proj.transform([thePoint[0] + 1, thePoint[1]], "EPSG:3826", targetProj)[0] - targetPoint[0]) * range;
+                var strPoint;
+                if (targetProj == "EPSG:4326") {
+                    strPoint = "POINT(" + targetPoint[1] + " " + targetPoint[0] + ")";
+                } else {
+                    strPoint = "POINT(" + targetPoint[0] + " " + targetPoint[1] + ")";
+                }
+                var cql_filter;
+                if (range == "0") {
+                    cql_filter = "INTERSECTS(geometry, " + strPoint + "))";
+                } else {
+                    cql_filter = "INTERSECTS(geometry, BUFFER(" + strPoint + ", " + targetRange + "))";
+                }
+
+                getFeatures(i, cql_filter, tabName);
+            }
+
+            $.when.apply(null, ajaxControls).done(
+                function () {
+                    try {
+                        mapPlugin.locateTool.zoomToExtent(parent.getQueryResultExtent());
+                    } catch (e) {
+                        mapPlugin.locateTool.locateToCoord(thePoint, "EPSG:3826", false);
+                        mapPlugin.getMap().getView().setZoom(13);
+                    }
+                    checkNoneData();
+                }
+            );
+        }
+
+        function abort() {
+            for (var i = 0; i < ajaxControls.length; i++) {
+                if (ajaxControls[i] && ajaxControls[i].abort && ajaxControls[i].readStatus != "complete") {
+                    ajaxControls[i].abort();
+                    ajaxControls[i] = null;
+                }
+            }
+            if (queryIntervalID) {
+                clearInterval(queryIntervalID);
+                queryIntervalID = null;
+            }
+            ajaxControls = [];
+            //rangeQueryingLayers = [];
+            hiddenFeatures = {};
+
+        }
+
+        function getFeatures(idx, cql_filter, tabName) {
+            if (tabName == "區域分析") {
+                ajaxControls[idx] =
+                    mapPlugin.layersMg.getFeatureByCqlFilter(
+                        rangeQueryingLayers[idx],
+                        cql_filter,
+                        function (retObj) {
+                            if (retObj) {
+                                fillFeatures(idx, rangeQueryingLayers[idx], retObj, false, true);
+                            }
+                        },
+                        true
+                    );
+            } else {
+                mapPlugin.layersMg.getFeatureByCqlFilter(
+                    rangeQueryingLayers[idx],
+                    cql_filter,
+                    function (retObj) {
+                        if (retObj) {
+                            listFeatures(idx, rangeQueryingLayers[idx], retObj, false, true);
+                        }
+                    },
+                    true
+                );
+            }
+        }
+
+        function showSelectedLayer(feature, layerInfo) {
+            $("#LayerTable").append("<tr><th>" + layerInfo.layerID + "</th></tr><tr><td>" + layerInfo.name + "</td></tr>");
+            var htmlContent = parent.oltmx.util.Tools.genContentFromFeature(feature, layerInfo.serviceInfo.bubbleContent);
+            $("#LayerTable").append(htmlContent);
+        }
+
+        function listFeatures(idx, layerID, features) {
+            //var layerInfo = mapPlugin.layersMg.getLayerInfo(layerID);
+            //$("#LayerTable").append("<tr><th>" + layerInfo.layerID + "</th></tr><tr><td>" + layerInfo.name + "</td></tr>");
+            for (var i = 0; i < features.length; i++) {
+                var layerInfo = mapPlugin.layersMg.getLayerInfo(layerID);
+                $("#LayerTable").append("<tr><th>" + layerInfo.layerID + "</th></tr><tr><td>" + layerInfo.name + "</td></tr>");
+                var feature = features[i];
+                if (layerInfo.serviceInfo.featureDescrib) {
+                    var htmlContent = parent.oltmx.util.Tools.genContentFromFeature(feature, layerInfo.serviceInfo.featureDescrib);
+                    $("#LayerTable").append(htmlContent);
+                } else {
+                    var htmlContent = parent.oltmx.util.Tools.genContentFromFeature(feature, layerInfo.serviceInfo.bubbleContent);
+                    $("#LayerTable").append(htmlContent);
+                }
+            }
+        }
+
+        function fillFeatures(idx, layerID, features) {
+            //$("#allResultSwitch").show();
+            var layerInfo = mapPlugin.layersMg.getLayerInfo(layerID);
+
+            var $res = $("#queryResultList");
+            var $layerTable = $res.find("#layer" + idx);
+
+            if ($layerTable.length == 0) {
+                $layerTable = $('<table width="100%" border="0" cellspacing="0" cellpadding="0" class="ListResult" style="margin-bottom:2px;">'
+                    + '<tbody>'
+                    + '<tr>'
+                    + '<th colspan="4" style="cursor:pointer;" onclick="switchContainer(' + idx + ')">'
+                    + layerInfo.name
+                    + '<span id="itemCount' + idx + '" class="ListNum">0</span>'
+                    + '</th>'
+                    + '</tr>'
+                    + '</tbody>'
+                    + '<tbody id="layer' + idx + '"></tbody>'
+                    + '</table>');
+                $res.append($layerTable);
+            }
+
+            var $layerContainer = $("#layer" + idx);
+            $count = $("#itemCount" + idx);
+
+            for (var i = 0; i < features.length; i++) {
+                var feature = features[i];
+                var tmpFeature = mapPlugin.addMarker(feature, "", layerInfo.serviceInfo.style, "EPSG:3857", spatialResultLayerName);
+                var style = tmpFeature.getStyle();
+                var styLegend, svgLegend;
+                if (style.getFill() != null && style.getStroke() != null) {
+                    styLegend = 'fill:' + style.getFill().getColor() + ';stroke:' + style.getStroke().getColor() + ';stroke-width:' + (style.getStroke().getWidth() * 2);
+                    svgLegend = "<svg width='26' height='26'>"
+                        + '<rect x="0" y="0" width="26" height="26" style="' + styLegend + '" />'
+                        + "</svg>";
+                } else if (style.getStroke() != null) {
+                    styLegend = 'stroke:' + style.getStroke().getColor() + ';stroke-width:' + (style.getStroke().getWidth() * 2);
+                    svgLegend = "<svg width='26' height='26'>"
+                        + '<line x1="0" y1="15" x2="25" y2="15" width="26" height="26" style="' + styLegend + '" />'
+                        + "</svg>";
+                } else {
+                    svgLegend = "<img src='" + style.getImage().getImage().src + "'/>";
+                }
+
+                $layerContainer.append(
+                    "<tr>"
+                    + "<td style='width:55px'><input type='button' class='_resultFeature Btnhide' value='' onclick='switchFeature(\"" + tmpFeature.getId() + "\", this)' /></td>"
+                    + "<td style='width:27px'>" + svgLegend + "</td>"
+                    + "<td>" + mapPlugin.layersMg.genLabel(layerInfo, feature) + "</td>"
+                    + "<td>" + '<input type="button" name="button" class="BtnListPin" style="float: right" onclick="mapPlugin.locateToFeature(\'' + tmpFeature.getId() + '\', \'' + spatialResultLayerName+'\')" value="">' + "</td>"
+                    + "</tr>");
+            }
+
+            $count.text(features.length);
+
+            if ($layerContainer.find("tr").length == 0) {
+                $layerContainer.append("<tr><td colspan='2'>無資料</td></tr>");
+            }
+        }
+
+        function hideFeature(fid) {
+            var feature = mapPlugin.getMarkerById(fid, spatialResultLayerName);
+            hiddenFeatures[feature.getId()] = feature;
+            mapPlugin.hideMarker(fid, spatialResultLayerName);
+            //mapPlugin.removeMarker(feature, spatialResultLayerName);
+        }
+
+        function showFeature(fid) {
+            var mapPlugin = parent.mapPlugin;
+            if (hiddenFeatures[fid]) {
+                mapPlugin.showMarker(fid, spatialResultLayerName);
+                //mapPlugin.addMarker(hiddenFeatures[fid], undefined, undefined, undefined, spatialResultLayerName);
+                delete hiddenFeatures[fid];
+            }
+        }
+
+        function switchFeature(fid, theDom) {
+            if (hiddenFeatures[fid]) {
+                theDom.value = "";
+                $(theDom).removeClass("Btnshow");
+                $(theDom).addClass("Btnhide");
+                showFeature(fid);
+            } else {
+                theDom.value = "";
+                $(theDom).removeClass("Btnhide");
+                $(theDom).addClass("Btnshow");
+                hideFeature(fid);
+            }
+        }
+
+        function switchContainer(idx) {
+            if ($("#layer" + idx).css("display") == "none") {
+                $("#layer" + idx).show();
+            } else {
+                $("#layer" + idx).hide();
+            }
+        }
+
+        function checkNoneData() {
+            if ($("#queryResult ._resultFeature").length == 0) {
+                var $res = $("#queryResult");
+                $res.children().remove();
+                $("#queryResult").append("<span style='color:#355cb5'>查無交集圖層</span>");
+            }
+        }
+
+        /*map.on('singleclick', function (evt) {
+            singleClickCoord = evt.coordinate;
+            if (mapPlugin.currentLeftClickFunc() == "layers_manager_identify") {
+                openMisFunction('Bottom');
+            }
+        });*/
+    </script>
+</head>
+<body>
+    <div class="misDown">
+        <!--內容區塊-->
+        <div class="misDown_info">
+            <!--可捲動的區塊-->
+            <ul class="detail_tab">
+                <li><a class="active" href="#item-1">圖層資訊</a></li>
+                <li><a href="#item-2" id="Intersect">區域分析</a></li>
+                <li><a href="#item-3">坐標資訊</a></li>
+            </ul>
+            <div class="menu__wrapper">
+                <div id="item-1" class="menu__item item-active">
+                    <div id="layerInfo">
+                        <table id="LayerTable" class="LayerInfoTable BubleTable" style="width:100%;" border="1" cellpadding="0" cellspacing="0"></table>
+                    </div>
+                </div>
+                <div id="item-2" class="menu__item">
+                    <div>
+                        <label><img src="../images/List-Label-dot.png">搜尋半徑</label>&nbsp;&nbsp;
+                        <input id="txtManualPointRange" type="text" value="500" style="width: 70px; text-align:right;" onchange="changeRange();" />公尺&nbsp;&nbsp;
+                        <input type="button" class="BtnBlue" value="查詢" onclick="queryLayersByPoint($('#txtManualPointRange').val(), '區域分析');" />
+                        <br /><br />
+                        <div id="selectCoordinate"></div>
+                        <br />
+                        <div id="queryResult">
+                        </div>
+                    </div>
+                </div>
+                <div id="item-3" class="menu__item">
+                    <table id="CoordTable" class="LayerInfoTable" style="width:100%;" border="1" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td>WGS84</td>
+                            <td id="tdWGS84"></td>
+                        </tr>
+                        <tr>
+                            <td>TWD97</td>
+                            <td id="tdTWD97"></td>
+                        </tr>
+                        <tr>
+                            <td>TWD67</td>
+                            <td id="tdTWD67"></td>
+                        </tr>
+                    </table>
+                    <br />
+                    <input id="btnGoogle" type="button" class="BtnBlue" value="開啟Google街景" />
+                </div>
+            </div>
+
+            <!--可捲動的範圍-->
+        </div>
+        <!--內容區塊結尾-->
+    </div>
+
+    <script>
+        //頁籤
+        $(function () {
+
+            // Menu Tabular
+            var $menu_tabs = $('.detail_tab li a');
+            $menu_tabs.on('click', function (e) {
+                e.preventDefault();
+                $menu_tabs.removeClass('active');
+                $(this).addClass('active');
+
+                $('.menu__item').fadeOut(300);
+                $(this.hash).delay(300).fadeIn();
+            });
+
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+﻿<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8" />
+    <title>電子郵件信箱確認</title>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", Arial, sans-serif;
+            background-color: #f5f8fa;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border: 1px solid #e1e8ed;
+        }
+
+        .header {
+            background-color: #005b9f;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .title {
+            border-bottom: 2px solid #005b9f;
+            padding: 10px 0;
+            font-size: 18px;
+            color: #005b9f;
+            margin-bottom: 20px;
+        }
+
+        .content {
+            background-color: #f0f4f8;
+            padding: 15px;
+            border: 1px solid #d1e3f0;
+            color: #333;
+            line-height: 1.6;
+        }
+
+            .content a {
+                color: #005b9f;
+                text-decoration: none;
+                font-weight: bold;
+            }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 14px;
+            color: #777;
+            background-color: #e6eef7;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 頁首 -->
+        <div class="header">
+            【海洋領域補助案網站】 電子郵件信箱確認
+        </div>
+
+        <!-- 主標題 -->
+        <div class="title">
+            電子郵件信箱確認
+        </div>
+
+        <!-- 內文 -->
+        <div class="content">
+            <p>使用者您好：</p>
+            <p>
+                系統管理者於 <strong>{{ResetTime}}</strong> 於海洋領域補助案網站進行帳號申請，<br />
+                需進行電子郵件信箱確認，請回填驗證碼，以利帳號申請作業。 <br />
+                驗證碼：{{Code}}
+            </p>
+        </div>
+
+        <!-- 頁尾 -->
+        <div class="footer">
+            <p>海洋委員會 海洋科學調查活動填報網站</p>
+        </div>
+    </div>
+</body>
+</html>

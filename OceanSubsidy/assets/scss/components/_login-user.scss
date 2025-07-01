@@ -1,0 +1,48 @@
+.login-user {
+    display: flex;
+    gap: 10px;
+    background-color: #fff;
+    padding: 10px 16px;
+    padding-right: 24px;
+    border-radius: 50px;
+    .user-icon {
+        $size: 38px;
+        width: $size;
+        height: $size;
+        aspect-ratio: 1/1;
+        border-radius: 50%;
+        background-color: #C4C4C4;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        line-height: 1.2;
+        font-size: 1.25rem;
+    }
+    .user-name {
+        font-size: 1rem;
+    }
+    .user-department {
+        font-size: 0.875rem;
+        color: $neutral-600;
+    }
+    .user-info {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        .btn-refresh {
+            &:hover{
+                color: $green;
+            }
+        }
+    }
+    @media (max-width: $md) {
+        padding: 6px 12px;
+        .user-icon {
+            $size: 30px;
+            width: $size;
+            height: $size;
+            font-size: 1.1rem;
+        }
+    }
+}

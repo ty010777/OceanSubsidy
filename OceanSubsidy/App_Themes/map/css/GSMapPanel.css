@@ -1,0 +1,213 @@
+﻿@charset "utf-8";
+
+.GSMap-panel {
+    height: calc(var(--vh, vh) * 100 - 0px);
+    width: 300px;
+    position: fixed;
+    z-index: 999;
+    top: 0px;
+    left: 80px;
+    background-color: #111;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    transition: 0.5s;
+    padding-top: 50px;
+    margin: 0px 0;
+    border-radius: 0px;
+}
+
+@media (max-width: 550px) {
+    .GSMap-panel {
+        top: 70px;
+        right: 0px;
+        left: auto;
+    }
+}
+
+.GSMap-panel > h2 {
+    font-size: 1.4em;
+    line-height: 3.3;
+    font-weight: 600;
+    font-family: "微軟正黑體";
+    color: #1BB5DB;
+    padding-left: 10px;
+    position: absolute;
+    top: 0;
+    width: 100%;
+}
+
+    .GSMap-panel > h2 > i {
+        margin-right: 6px;
+    }
+
+.GSMap-panel .closebtn {
+    position: absolute;
+    top: 0;
+    right: 15px;
+    font-size: 36px;
+    margin-left: 50px;
+    z-index: 2;
+    color: #1BB5DB;
+}
+
+.GSMap-panel a.closebtn {
+    text-decoration: none;
+}
+
+.GSMap-panel a.closebtn:hover {
+    text-decoration: underline;
+}
+
+.GSMap-panel-contbox-wrap {
+    width: calc(100% - 1em);
+    position: relative;
+    margin: 1.5em auto;
+    padding: 0;
+    box-sizing: border-box;
+    /*border-radius: 4px;
+	background-color: #FFF;*/
+}
+@media (max-width: 550px) {
+    .GSMap-panel-contbox-wrap{margin: 0em auto;}
+}
+
+.scroll-box {
+    width: calc(300px - 1em);
+    height: calc(var(--vh, vh) * 100 - 100px);
+    overflow-y: scroll;
+}
+
+    .scroll-box.with-tab {
+        height: calc(var(--vh, vh) * 100 - 170px);
+    }
+
+    .scroll-box::-webkit-scrollbar {
+        width: 0.4em;
+    }
+
+    .scroll-box::-webkit-scrollbar,
+    .scroll-box::-webkit-scrollbar-thumb {
+        overflow: visible;
+        border-radius: 4px;
+    }
+
+    .scroll-box::-webkit-scrollbar-thumb {
+        background: rgba(0,0,0,.2);
+    }
+
+.cover-bar {
+    position: absolute;
+    background: #2a2a2a;
+    height: 100%;
+    top: 0;
+    right: 0;
+    width: 0.4em;
+    -webkit-transition: all 0.5s;
+    opacity: 0;
+}
+
+.GSMap-panel-contbox-wrap:hover .cover-bar {
+    opacity: 1;
+    -webkit-transition: all 0.5s;
+}
+
+.transp {
+    border-radius: 4px;
+    -webkit-box-shadow: 2px 2px 5px #adadad;
+    -moz-box-shadow: 2px 2px 5px #adadad;
+    box-shadow: 2px 2px 5px #adadad;
+    background-color: #FFF;
+    border: 1px solid #d7d7d7;
+    height: 40px;
+    width: 180px;
+    z-index: 1200;
+    overflow: hidden;
+}
+
+
+/* 修正 - 統計資料手機版體驗 */
+@media (max-width: 550px) {
+    .GSMap-panel.fixedpanel {
+        width: 100%;
+        height: 55vh;
+        margin: 0;
+        padding-top: 0;
+        left: 0;
+        bottom: 0;
+        top: unset;
+        transition: all 0.5s;
+    }
+
+        .GSMap-panel.fixedpanel.mapnavOpen {
+            left: 80px;
+            width: calc(100vw - 80px);
+        }
+
+        .GSMap-panel.fixedpanel > h2 {
+            display: none;
+        }
+
+        .GSMap-panel.fixedpanel .GSMap-panel-layer {
+            width: 100%;
+        }
+
+        .GSMap-panel.fixedpanel .GSMap-panel-contbox-wrap .scroll-box {
+            width: 100%;
+            height: 50vh;
+        }
+
+    .fixedbtn {
+        position: absolute;
+        top: 12px;
+        right: 45px;
+        z-index: 2;
+        display: none;
+        width: 30px;
+        height: 30px;
+        background-image: url("../images/btn_compress.svg");
+        background-size: 18px auto;
+        background-position: center;
+        background-repeat: no-repeat;
+    }
+
+    .revertbtn {
+        position: absolute;
+        top: 12px;
+        right: 45px;
+        z-index: 2;
+        display: none;
+        width: 30px;
+        height: 30px;
+        background-image: url("../images/btn_expand.svg");
+        background-size: 18px auto;
+        background-position: center;
+        background-repeat: no-repeat;
+    }
+}
+
+
+.GSMap-color-legend {
+    left: 400px;
+    position: fixed;
+    bottom: 10px;
+    z-index: 999;
+    background-color: gray;
+    text-align: center;
+}
+
+    .GSMap-color-legend span {
+        font-size: 14pt;
+        font-weight: bold;
+    }
+
+    .GSMap-color-legend table {
+        min-width: 200px;
+    }
+
+        .GSMap-color-legend table th {
+            white-space: nowrap;
+        }
+
+        .GSMap-color-legend table td {
+            text-align: center;
+        }

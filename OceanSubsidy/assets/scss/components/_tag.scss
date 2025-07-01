@@ -1,0 +1,57 @@
+.tag-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 12px;
+}
+.tag {
+    padding: 6px 10px;
+    border-radius: 50px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.78125rem;
+    white-space: nowrap;
+    line-height: 0;
+
+    &.tag-gray {
+        background-color: $neutral-700;
+        color: #FFFFFF;
+    }
+
+    .tag-btn{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: $neutral-700;
+        background: unset ;
+        border:0 ;
+        padding: 0;
+    }
+
+    .tag-link {
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+        color: #fff;
+        gap: 6px;
+        button {
+            padding: 0;
+            border: 0;
+            background: unset;
+        }
+
+    }
+}
+
+.tag-gray:has(.tag-link):hover {
+    background-color: #393939;
+}
+
+
+.color-tag {
+    width: 30px;
+    height: 30px;
+    display: inline-block;
+    border-radius: 4px;
+}

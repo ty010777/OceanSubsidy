@@ -1,0 +1,16 @@
+@import "reset";
+
+// BS setting
+@import "../vendor/bootstrap-5.3.3/scss/functions";
+@import "../vendor/bootstrap-5.3.3/scss/variables";
+@import "../vendor/bootstrap-5.3.3/scss/variables-dark";
+@import "../vendor/bootstrap-5.3.3/scss/maps";
+@import "../vendor/bootstrap-5.3.3/scss/mixins";
+
+
+
+@import "variables";
+@import "mixins";
+@import "utilities";
+@import "components";
+@import "layout";

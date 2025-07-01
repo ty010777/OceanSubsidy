@@ -1,0 +1,896 @@
+﻿<div id="GSMap-panel-locate" class="GSMap-panel search-panel">
+    <a href="javascript:void(0)" class="fixedbtn"></a>
+    <a href="javascript:void(0)" class="revertbtn"></a>
+    <a href="javascript:void(0)" class="closebtn">&times;</a>
+
+    <h2>地圖標註</h2>
+    <div class="OS-MapPannel-div" style="margin-top: 10px;">
+        <!--區塊內容-->
+        <div class="GSMap-panel-contbox-wrap">
+            <div class="scroll-box" style="width: auto;">
+                <!--關鍵字查詢-->
+                <div class="p-1">
+                    <div style="max-height: calc(100vh - 160px);">
+                        <!-- 標註物件功能按鈕 -->
+                        <!--<div class="mkBtnWrap mb-3">
+                            <a href="javascript: void(0);" id="aTypeArrow" class="mkMove" title="移動" onclick="getTypeStyle('Arrows');">
+                                <i class="fas fa-regular fa-arrows-up-down-left-right"></i>
+                            </a>
+                            <a href="javascript: void(0);" id="aTypePt" class="mkPosition active" title="點位" onclick="getTypeStyle('Point');">
+                                <i class="fas fa-solid fa-location-smile"></i>
+                            </a>
+                            <a href="javascript: void(0);" id="aTypeTxt" class="mkSetText" title="文字" onclick="getTypeStyle('Text');">
+                                <i class="fas fa-solid fa-text"></i>
+                            </a>
+                            <a href="javascript: void(0);" id="aTypeLine" class="mkBtnLine" title="線段" onclick="getTypeStyle('LineString');">
+                                <i class="fas fa-solid fa-slash-back"></i>
+                            </a>
+                            <a href="javascript: void(0);" id="aTypeCir" class="mkCircle" title="圓形" onclick="getTypeStyle('Circle');">
+                                <i class="fas fa-solid fa-draw-circle"></i>
+                            </a>
+                            <a href="javascript: void(0);" id="aTypeBox" class="mkRect" title="矩形" onclick="getTypeStyle('Box');">
+                                <i class="fas fa-solid fa-draw-square"></i>
+                            </a>
+                            <a href="javascript: void(0);" id="aTypePoly" class="mkPolygon" title="多邊形" onclick="getTypeStyle('Polygon');">
+                                <i class="fas fa-solid fa-draw-polygon"></i>
+                            </a>
+                        </div>-->
+                        <label>標註類型</label>
+                        <select id="ddlCategory" onchange="getTypeStyle(this.value);" class="mb-3">
+                            <option value="None">請選擇</option>
+                            <option value="Point">點</option>
+                            <option value="LineString">線</option>
+                            <option value="Box">矩形</option>
+                            <option value="Polygon">多邊形</option>
+                            <option value="Circle">圓形</option>
+                            <!--<option value="Text">文字</option>-->
+                        </select>
+                        <!--各標註屬性-->
+                        <!-- 點位設定區塊 ------------------------------>
+                        <div class=" mkSet mkSetPoint row g-2" id="point" style="display:none">
+                            <!-- 輸入名稱 -->
+                            <!--<div>
+                                <input type="text" id="txtPtName" autocomplete="off" onchange="setEleTxt(this.value, 'point'); resetDrawInteraction();" onkeyup="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();" class="form-control" placeholder="請輸入名稱" />
+                            </div>-->
+                            <!--<div class="col-12">
+                                <label for="" class="form-label text-muted fw-normal mb-0">圖示</label>
+                                <div id="divIcon" class="myPicker">
+                                    <img src="images/icon-dot.svg" onclick="resetDrawInteraction();" />
+                                    <img src="images/icon-plane.svg" onclick="resetDrawInteraction();" />
+                                    <img src="images/icon-ship.svg" onclick="resetDrawInteraction();" />
+                                    <img src="images/icon-missile.svg" onclick="resetDrawInteraction();" />
+                                    <img src="images/icon-tank.svg" onclick="resetDrawInteraction();" />
+                                    <img src="images/icon-warship.svg" onclick="resetDrawInteraction();" />
+                                </div>
+                            </div>-->
+                            <!--<div class="col-auto">
+                                <label for="" class="form-label text-muted fw-normal mb-0">圖示大小</label>
+                                <div class="input-group">
+                                    <select id="iconsize" class="form-select" onchange="resetDrawInteraction();">
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                    </select>
+                                    <span class="input-group-text">x</span>
+                                </div>
+                            </div>-->
+                            <!--<div class="col-3">
+                                <label for="" class="form-label text-muted fw-normal mb-0">圖示顏色</label>
+                                <input type="text" id="pointcolor" class="form-control" value="#000000" onchange="resetDrawInteraction();" />
+                            </div>-->
+                            <!--<div class="col-6">
+                                <label for="" class="form-label text-muted fw-normal mb-0">經緯度顯示</label>
+                                <div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="ptCoord" id="rdoPtCoordYes" onchange="resetDrawInteraction();" />
+                                        <label class="form-check-label" for="rdoPtCoordYes">是</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="ptCoord" id="rdoPtCoordNo" onchange="resetDrawInteraction();" />
+                                        <label class="form-check-label" for="rdoPtCoordNo">否</label>
+                                    </div>
+                                </div>
+                            </div>-->
+
+                            <div class="col-12">
+                                <label for="" class="form-label text-muted fw-normal">經緯度定位(WGS84)</label>
+                                <select id="ddlPtCoordType" class="form-select" onchange="switchCoordType(this, this.value, 'divPt');">
+                                    <option value="DD" selected="selected">十進位</option>
+                                    <option value="DMS">度 分 秒</option>
+                                </select>
+                                <div id="divPtDMS" class="mb-2 divCoordType _divMarkCoord" style="display: none;">
+                                    <div class="input-group mb-1">
+                                        <span class="input-group-text">緯度</span>
+                                        <select id="ddlPtLat" class="form-select">
+                                            <option value="N">N</option>
+                                            <option value="S">S</option>
+                                        </select>
+                                        <input type="text" id="txtPtLat" class="form-control" />
+                                    </div>
+                                    <div class="input-group">
+                                        <span class="input-group-text">經度</span>
+                                        <select id="ddlPtLon" class="form-select">
+                                            <option value="E">E</option>
+                                            <option value="W">W</option>
+                                        </select>
+                                        <input type="text" id="txtPtLon" class="form-control" />
+                                    </div>
+                                </div>
+                                <div id="divPtDD" class="mb-2 divCoordType _divMarkCoord">
+                                    <div class="input-group mb-1">
+                                        <span class="input-group-text">緯度</span>
+                                        <input type="text" id="txtPtLatDD" class="form-control" />
+                                    </div>
+                                    <div class="input-group">
+                                        <span class="input-group-text">經度</span>
+                                        <input type="text" id="txtPtLonDD" class="form-control" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="btnBoxCenter">
+                                <input type="button" value="建立" class="btn btn_add" id="btnCreatePt" onclick="createPoint();">
+                            </div>
+
+                        </div>
+                        <!-- 點位設定區塊 end------------------------------>
+                        <!-- 線段設定區塊------------------------------>
+                        <div class="row g-2 mkSet mkSetLine" id="line" style="display:none">
+                            <!--<div>
+                                <label for="" class="form-label text-muted fw-normal mb-0">名稱</label>
+                                <input type="text" id="txtLineName" autocomplete="off" onchange="setEleTxt(this.value, 'line');" onkeyup="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();" class="form-control" placeholder="請輸入名稱" />
+                            </div>
+                            <div class="col-auto">
+                                <label for="" class="form-label text-muted fw-normal mb-0">線段顏色</label>
+                                <input type="text" id="linecolor" class="form-control" value="#000000" onchange="resetDrawInteraction();" />
+                            </div>
+                            <div class="col">
+                                <label for="" class="form-label text-muted fw-normal mb-0">線段寬度</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="linewidth" value="1" autocomplete="off" oninput="resetDrawInteraction();" />
+                                    <span class="input-group-text">px</span>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <label for="" class="form-label text-muted fw-normal mb-0">線段樣式</label>
+                                <select id="ddlLineDash" class="form-select">
+                                    <option value="0" selected=selected>實線</option>
+                                    <option value="12">虛線</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label for="" class="form-label text-muted fw-normal mb-0">計算單位</label>
+                                <select id="ddlLineUnit" class="form-select" onchange="resetDrawInteraction();">
+                                    <option value="m">公尺</option>
+                                    <option value="km">公里</option>
+                                    <option value="nm">海里</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label for="" class="form-label text-muted fw-normal mb-0">線段起點樣式</label>
+                                <select id="ddlLineTypeS" class="form-select" onchange="setLineType(this.value, 'lineTypeS');resetDrawInteraction();">
+                                    <option value="non" selected=selected>無</option>
+                                    <option value="dot">圓點</option>
+                                    <option value="arrow">箭頭</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label for="" class="form-label text-muted fw-normal mb-0">線段終點樣式</label>
+                                <select id="ddlLineTypeE" class="form-select" onchange="setLineType(this.value, 'lineTypeE');resetDrawInteraction();">
+                                    <option value="non" selected=selected>無</option>
+                                    <option value="dot">圓點</option>
+                                    <option value="arrow">箭頭</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label for="" class="form-label text-muted fw-normal mb-0">線段長度顯示</label>
+                                <div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="length" id="rdoLenYes" onchange="resetDrawInteraction();" />
+                                        <label class="form-check-label" for="rdoLenYes">是</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="length" id="rdoLenNo" checked=checked onchange="resetDrawInteraction();" />
+                                        <label class="form-check-label" for="rdoLenNo">否</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <label for="" class="form-label text-muted fw-normal mb-0">總長度顯示</label>
+                                <div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="TotalLen" id="rdoTotalYes" onchange="resetDrawInteraction();" />
+                                        <label class="form-check-label" for="rdoTotalYes">是</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="TotalLen" id="rdoTotalNo" checked=checked onchange="resetDrawInteraction();" />
+                                        <label class="form-check-label" for="rdoTotalNo">否</label>
+                                    </div>
+                                </div>
+                            </div>-->
+                            <div id="tbLinePt" class="col-12">
+                                <label for="" class="form-label text-muted fw-normal">經緯度定位(WGS84)</label>
+                                <select id="ddlLineCoordType" class="form-select" onchange="switchCoordType(this, this.value, 'divLine');">
+                                    <option value="DD" selected="selected">十進位</option>
+                                    <option value="DMS">度 分 秒</option>
+                                </select>
+                                <div id="divLineDMS" class="divCoordType _divMarkCoord" style="display: none;">
+                                    <div class="mb-2">
+                                        <div class="input-group mb-1">
+                                            <span class="input-group-text">緯度</span>
+                                            <select id="ddlLineLat1" class="form-select">
+                                                <option value="N">N</option>
+                                                <option value="S">S</option>
+                                            </select>
+                                            <input type="text" id="txtLineLat1" class="form-control" />
+                                        </div>
+                                        <div class="input-group">
+                                            <span class="input-group-text">經度</span>
+                                            <select id="ddlLineLon1" class="form-select">
+                                                <option value="E">E</option>
+                                                <option value="W">W</option>
+                                            </select>
+                                            <input type="text" id="txtLineLon1" class="form-control" />
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <div class="input-group mb-1">
+                                            <span class="input-group-text">緯度</span>
+                                            <select id="ddlLineLat2" class="form-select">
+                                                <option value="N">N</option>
+                                                <option value="S">S</option>
+                                            </select>
+                                            <input type="text" id="txtLineLat2" class="form-control" />
+                                        </div>
+                                        <div class="input-group">
+                                            <span class="input-group-text">經度</span>
+                                            <select id="ddlLineLon2" class="form-select">
+                                                <option value="E">E</option>
+                                                <option value="W">W</option>
+                                            </select>
+                                            <input type="text" id="txtLineLon2" class="form-control" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="divLineDD" class="divCoordType _divMarkCoord">
+                                    <div class="mb-2">
+                                        <div class="input-group mb-1">
+                                            <span class="input-group-text">緯度</span>
+                                            <input type="text" id="txtLineLatDD1" class="form-control" />
+                                        </div>
+                                        <div class="input-group">
+                                            <span class="input-group-text">經度</span>
+                                            <input type="text" id="txtLineLonDD1" class="form-control" />
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <div class="input-group mb-1">
+                                            <span class="input-group-text">緯度</span>
+                                            <input type="text" id="txtLineLatDD2" class="form-control" />
+                                        </div>
+                                        <div class="input-group">
+                                            <span class="input-group-text">經度</span>
+                                            <input type="text" id="txtLineLonDD2" class="form-control" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="btnBoxCenter">
+                                <input type="button" value="新增經緯度" class="btn btn_add" id="btnAddLinePt" onclick="addLinePt();">
+                                <input type="button" value="建立" class="btn btn_add" id="btnCreateLine" onclick="addLineMark();">
+                            </div>
+                        </div>
+                        <!-- 線段設定區塊 end------------------------------>
+                        <!-- 多邊形設定區塊------------------------------>
+                        <div class="row g-2 mkSet mkSetPolygon" id="polygon" style="display:none">
+                            <!--<div>
+                                <label for="" class="form-label text-muted fw-normal mb-0">名稱</label>
+                                <input type="text" id="txtPolyName" autocomplete="off" onchange="setEleTxt(this.value, 'poly');" onkeyup="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();" class="form-control" placeholder="請輸入名稱" />
+                            </div>
+                            <div class="col-auto">
+                                <label for="" class="form-label text-muted fw-normal mb-0">線段顏色</label>
+                                <input type="text" id="polycolor" class="form-control" value="#000000" onchange="resetDrawInteraction();" />
+                            </div>
+                            <div class="col-auto">
+                                <label for="" class="form-label text-muted fw-normal mb-0">填滿顏色</label>
+                                <input type="text" id="polyfillcolor" class="form-control" value="#000000" onchange="resetDrawInteraction();" />
+                            </div>
+                            <div class="col">
+                                <label for="" class="form-label text-muted fw-normal mb-0">線段寬度</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="polywidth" value="1" autocomplete="off" oninput="resetDrawInteraction();" />
+                                    <span class="input-group-text">px</span>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <label for="" class="form-label text-muted fw-normal mb-0">線段樣式</label>
+                                <select id="ddlPolyDash" class="form-select" onchange="resetDrawInteraction();">
+                                    <option value="0" selected=selected>實線</option>
+                                    <option value="12">虛線</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label for="" class="form-label text-muted fw-normal mb-0">計算單位</label>
+                                <select id="ddlPolyUnit" class="form-select" onchange="resetDrawInteraction();">
+                                    <option value="m">公尺</option>
+                                    <option value="km">公里</option>
+                                    <option value="nm">海里</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label for="" class="form-label text-muted fw-normal mb-0">面積顯示</label>
+                                <div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="customRadioInline" id="rdoPolyAreaYes" onchange="resetDrawInteraction();" />
+                                        <label class="form-check-label" for="rdoPolyAreaYes">是</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="customRadioInline" id="rdoPolyAreaNo" checked=checked onchange="resetDrawInteraction();" />
+                                        <label class="form-check-label" for="rdoPolyAreaNo">否</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <label for="" class="form-label text-muted fw-normal mb-0">邊長長度顯示</label>
+                                <div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="PolySLen" id="rdoPolySLenYes" onchange="resetDrawInteraction();" />
+                                        <label class="form-check-label" for="rdoPolySLenYes">是</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="PolySLen" id="rdoPolySLenNo" checked=checked onchange="resetDrawInteraction();" />
+                                        <label class="form-check-label" for="rdoPolySLenNo">否</label>
+                                    </div>
+                                </div>
+                            </div>-->
+                            <!--<div class="col-6">
+                <label for="" class="form-label text-muted fw-normal mb-0">周長度顯示</label>
+                <div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="PolyTLen" id="rdoPolyTLenYes" onchange="resetDrawInteraction();" />
+                        <label class="form-check-label" for="rdoPolyTLenYes">是</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="PolyTLen" id="rdoPolyTLenNo" checked=checked onchange="resetDrawInteraction();" />
+                        <label class="form-check-label" for="rdoPolyTLenNo">否</label>
+                    </div>
+                </div>
+            </div>-->
+                            <div id="tbPolyPt" class="col-12">
+                                <label for="" class="form-label text-muted fw-normal">經緯度定位(WGS84)</label>
+                                <select id="ddlPolyCoordType" class="form-select" onchange="switchCoordType(this, this.value, 'divPoly');">
+                                    <option value="DD" selected="selected">十進位</option>
+                                    <option value="DMS">度 分 秒</option>
+                                </select>
+                                <div id="divPolyDMS" class="divCoordType _divMarkCoord" style="display: none;">
+                                    <div class="mb-2 addPoly">
+                                        <div class="input-group mb-1">
+                                            <span class="input-group-text">緯度</span>
+                                            <select id="ddlPolyLat1" class="form-select">
+                                                <option value="N">N</option>
+                                                <option value="S">S</option>
+                                            </select>
+                                            <input type="text" id="txtPolyLat1" class="form-control" />
+                                        </div>
+                                        <div class="input-group">
+                                            <span class="input-group-text">經度</span>
+                                            <select id="ddlPolyLon1" class="form-select">
+                                                <option value="E">E</option>
+                                                <option value="W">W</option>
+                                            </select>
+                                            <input type="text" id="txtPolyLon1" class="form-control" />
+                                        </div>
+                                    </div>
+                                    <div class="mb-2 addPoly">
+                                        <div class="input-group mb-1">
+                                            <span class="input-group-text">緯度</span>
+                                            <select id="ddlPolyLat2" class="form-select">
+                                                <option value="N">N</option>
+                                                <option value="S">S</option>
+                                            </select>
+                                            <input type="text" id="txtPolyLat2" class="form-control" />
+                                        </div>
+                                        <div class="input-group">
+                                            <span class="input-group-text">經度</span>
+                                            <select id="ddlPolyLon2" class="form-select">
+                                                <option value="E">E</option>
+                                                <option value="W">W</option>
+                                            </select>
+                                            <input type="text" id="txtPolyLon2" class="form-control" />
+                                        </div>
+                                    </div>
+                                    <div class="mb-2 addPoly">
+                                        <div class="input-group mb-1">
+                                            <span class="input-group-text">緯度</span>
+                                            <select id="ddlPolyLat3" class="form-select">
+                                                <option value="N">N</option>
+                                                <option value="S">S</option>
+                                            </select>
+                                            <input type="text" id="txtPolyLat3" class="form-control" />
+                                        </div>
+                                        <div class="input-group">
+                                            <span class="input-group-text">經度</span>
+                                            <select id="ddlPolyLon3" class="form-select">
+                                                <option value="E">E</option>
+                                                <option value="W">W</option>
+                                            </select>
+                                            <input type="text" id="txtPolyLon3" class="form-control" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="divPolyDD" class="divCoordType _divMarkCoord">
+                                    <div class="mb-2 addPoly">
+                                        <div class="input-group mb-1">
+                                            <span class="input-group-text">緯度</span>
+                                            <input type="text" id="txtPolyLatDD1" class="form-control" />
+                                        </div>
+                                        <div class="input-group">
+                                            <span class="input-group-text">經度</span>
+                                            <input type="text" id="txtPolyLonDD1" class="form-control" />
+                                        </div>
+                                    </div>
+                                    <div class="mb-2 addPoly">
+                                        <div class="input-group mb-1">
+                                            <span class="input-group-text">緯度</span>
+                                            <input type="text" id="txtPolyLatDD2" class="form-control" />
+                                        </div>
+                                        <div class="input-group">
+                                            <span class="input-group-text">經度</span>
+                                            <input type="text" id="txtPolyLonDD2" class="form-control" />
+                                        </div>
+                                    </div>
+                                    <div class="mb-2 addPoly">
+                                        <div class="input-group mb-1">
+                                            <span class="input-group-text">緯度</span>
+                                            <input type="text" id="txtPolyLatDD3" class="form-control" />
+                                        </div>
+                                        <div class="input-group">
+                                            <span class="input-group-text">經度</span>
+                                            <input type="text" id="txtPolyLonDD3" class="form-control" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="btnBoxCenter">
+                                <input type="button" value="新增經緯度" class="btn btn_add"  id="btnAddPt" onclick="addPolyPt();">
+                                <input type="button" value="建立" class="btn btn_add" id="btnCreatePoly" onclick="addPolyMark();">
+                            </div>
+                        </div>
+                        <!-- 多邊形設定區塊 end------------------------------>
+                        <!-- 文字設定區塊------------------------------>
+                        <div class="row g-2 mkSet mkSetText" id="text" style="display:none">
+                            <div>
+                                <label for="" class="form-label text-muted fw-normal mb-0">名稱</label>
+                                <input type="text" id="textfacility" name="textfacility" class="form-control" placeholder="請輸入文字" value="" onchange="setEleTxt(this.value, 'text');" onkeyup="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();" />
+                            </div>
+                            <div class="col-auto">
+                                <label for="" class="form-label text-muted fw-normal mb-0">文字顏色</label>
+                                <input type="text" id="textcolor" class="form-control" value="#000000" onchange="resetDrawInteraction();" />
+                            </div>
+                            <div class="col-auto">
+                                <label for="" class="form-label text-muted fw-normal mb-0">外框顏色</label>
+                                <input type="text" id="textfillcolor" class="form-control" value="#000000" onchange="resetDrawInteraction();" />
+                            </div>
+                            <div class="col">
+                                <label for="" class="form-label text-muted fw-normal mb-0">文字大小</label>
+                                <div class="input-group">
+                                    <input type="text" id="textScale" name="textScale" class="form-control" value="14" oninput="resetDrawInteraction();" />
+                                    <span class="input-group-text">px</span>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <label for="" class="form-label text-muted fw-normal mb-0">外框寬度</label>
+                                <div class="input-group">
+                                    <input type="text" id="borderWidth" value="3" autocomplete="off" oninput="resetDrawInteraction();" class="form-control" />
+                                    <span class="input-group-text">px</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <label for="" class="form-label text-muted fw-normal mb-0">經緯度顯示</label>
+                                <div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="txtCoord" id="rdoTxtCoordYes" onchange="resetDrawInteraction();" />
+                                        <label class="form-check-label" for="rdoTxtCoordYes">是</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="txtCoord" id="rdoTxtCoordNo" checked=checked onchange="resetDrawInteraction();" />
+                                        <label class="form-check-label" for="rdoTxtCoordNo">否</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label for="" class="form-label text-muted fw-normal">經緯度定位(WGS84)</label>
+                                <select id="ddlTxtCoordType" class="form-select" onchange="switchCoordType(this, this.value, 'divTxt');">
+                                    <option value="DD" selected="selected">十進位</option>
+                                    <option value="DMS">度 分 秒</option>
+                                </select>
+                                <div id="divTxtDMS" class="mb-2 divCoordType _divMarkCoord" style="display: none;">
+                                    <div class="input-group mb-1">
+                                        <span class="input-group-text">緯度</span>
+                                        <select id="ddlTxtLat" class="form-select">
+                                            <option value="N">N</option>
+                                            <option value="S">S</option>
+                                        </select>
+                                        <input type="text" id="txtTxtLat" class="form-control" />
+                                    </div>
+                                    <div class="input-group">
+                                        <span class="input-group-text">經度</span>
+                                        <select id="ddlTxtLon" class="form-select">
+                                            <option value="E">E</option>
+                                            <option value="W">W</option>
+                                        </select>
+                                        <input type="text" id="txtTxtLon" class="form-control" />
+                                    </div>
+                                </div>
+                                <div id="divTxtDD" class="mb-2 divCoordType _divMarkCoord">
+                                    <div class="input-group mb-1">
+                                        <span class="input-group-text">緯度</span>
+                                        <input type="text" id="txtTxtLatDD" class="form-control" />
+                                    </div>
+                                    <div class="input-group">
+                                        <span class="input-group-text">經度</span>
+                                        <input type="text" id="txtTxtLonDD" class="form-control" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="btnBoxCenter">
+                                <input type="button" value="建立" class="btn btn_add" id="" onclick="addTxtMark();">
+                            </div>
+                        </div>
+                        <!-- 文字設定區塊 end------------------------------>
+                        <!-- 矩形設定區塊------------------------------>
+                        <div class="row g-2 mkSet mkSetSquare" id="box" style="display:none">
+                            <!--<div>
+                                <label for="" class="form-label text-muted fw-normal mb-0">名稱</label>
+                                <input type="text" id="txtBoxName" autocomplete="off" onchange="setEleTxt(this.value, 'box');" onkeyup="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();" class="form-control" placeholder="請輸入名稱" />
+                            </div>
+                            <div class="col-auto">
+                                <label for="" class="form-label text-muted fw-normal mb-0">線段顏色</label>
+                                <input type="text" id="boxcolor" class="form-control" value="#000000" onchange="resetDrawInteraction();" />
+                            </div>
+                            <div class="col-auto">
+                                <label for="" class="form-label text-muted fw-normal mb-0">填滿顏色</label>
+                                <input type="text" id="boxfillcolor" class="form-control" value="#000000" onchange="resetDrawInteraction();" />
+                            </div>
+                            <div class="col">
+                                <label for="" class="form-label text-muted fw-normal mb-0">線段寬度</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="boxwidth" value="1" autocomplete="off" oninput="resetDrawInteraction();" />
+                                    <span class="input-group-text">px</span>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <label for="" class="form-label text-muted fw-normal mb-0">線段樣式</label>
+                                <select id="ddlBoxDash" class="form-select" onchange="resetDrawInteraction();">
+                                    <option value="0" selected=selected>實線</option>
+                                    <option value="12">虛線</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label for="" class="form-label text-muted fw-normal mb-0">計算單位</label>
+                                <select id="ddlBoxUnit" class="form-select" onchange="resetDrawInteraction();">
+                                    <option value="m">公尺</option>
+                                    <option value="km">公里</option>
+                                    <option value="nm">海里</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label for="" class="form-label text-muted fw-normal mb-0">面積顯示</label>
+                                <div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="boxArea" id="rdoBoxAreaYes" onchange="resetDrawInteraction();" />
+                                        <label class="form-check-label" for="rdoBoxAreaYes">是</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="boxArea" id="rdoBoxAreaNo" checked=checked onchange="resetDrawInteraction();" />
+                                        <label class="form-check-label" for="rdoBoxAreaNo">否</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <label for="" class="form-label text-muted fw-normal mb-0">邊長長度顯示</label>
+                                <div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="BoxSLen" id="rdoBoxSLenYes" onchange="resetDrawInteraction();" />
+                                        <label class="form-check-label" for="rdoBoxSLenYes">是</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="BoxSLen" id="rdoBoxSLenNo" checked=checked onchange="resetDrawInteraction();" />
+                                        <label class="form-check-label" for="rdoBoxSLenNo">否</label>
+                                    </div>
+                                </div>
+                            </div>-->
+                            <!--<div class="col-6">
+                <label for="" class="form-label text-muted fw-normal mb-0">周長度顯示</label>
+                <div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="BoxTLen" id="rdoBoxTLenYes" onchange="resetDrawInteraction();" />
+                        <label class="form-check-label" for="rdoBoxTLenYes">是</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="BoxTLen" id="rdoBoxTLenNo" checked=checked onchange="resetDrawInteraction();" />
+                        <label class="form-check-label" for="rdoBoxTLenNo">否</label>
+                    </div>
+                </div>
+            </div>-->
+                            <div id="tbBoxPt" class="col-12">
+                                <label for="" class="form-label text-muted fw-normal">經緯度定位(WGS84)</label>
+                                <select id="ddlBoxCoordType" class="form-select" onchange="switchCoordType(this, this.value, 'divBox');">
+                                    <option value="DD" selected="selected">十進位</option>
+                                    <option value="DMS">度 分 秒</option>
+                                </select>
+                                <div id="divBoxDMS" class="divCoordType _divMarkCoord" style="display: none;">
+                                    <div class="mb-2">
+                                        <div class="input-group mb-1">
+                                            <span class="input-group-text">緯度</span>
+                                            <select id="ddlBoxLat1" class="form-select">
+                                                <option value="N">N</option>
+                                                <option value="S">S</option>
+                                            </select>
+                                            <input type="text" id="txtBoxLat1" class="form-control" />
+                                        </div>
+                                        <div class="input-group">
+                                            <span class="input-group-text">經度</span>
+                                            <select id="ddlBoxLon1" class="form-select">
+                                                <option value="E">E</option>
+                                                <option value="W">W</option>
+                                            </select>
+                                            <input type="text" id="txtBoxLon1" class="form-control" />
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <div class="input-group mb-1">
+                                            <span class="input-group-text">緯度</span>
+                                            <select id="ddlBoxLat2" class="form-select">
+                                                <option value="N">N</option>
+                                                <option value="S">S</option>
+                                            </select>
+                                            <input type="text" id="txtBoxLat2" class="form-control" />
+                                        </div>
+                                        <div class="input-group">
+                                            <span class="input-group-text">經度</span>
+                                            <select id="ddlBoxLon2" class="form-select">
+                                                <option value="E">E</option>
+                                                <option value="W">W</option>
+                                            </select>
+                                            <input type="text" id="txtBoxLon2" class="form-control" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="divBoxDD" class="divCoordType _divMarkCoord">
+                                    <div class="mb-2">
+                                        <div class="input-group mb-1">
+                                            <span class="input-group-text">緯度</span>
+                                            <input type="text" id="txtBoxLatDD1" class="form-control" />
+                                        </div>
+                                        <div class="input-group">
+                                            <span class="input-group-text">經度</span>
+                                            <input type="text" id="txtBoxLonDD1" class="form-control" />
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <div class="input-group mb-1">
+                                            <span class="input-group-text">緯度</span>
+                                            <input type="text" id="txtBoxLatDD2" class="form-control" />
+                                        </div>
+                                        <div class="input-group">
+                                            <span class="input-group-text">經度</span>
+                                            <input type="text" id="txtBoxLonDD2" class="form-control" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="btnBoxCenter">
+                                <input type="button" value="建立" class="btn btn_add" id="btnCreateBox" onclick="addBoxMark();">
+                            </div>
+                        </div>
+                        <!-- 矩形設定區塊 end------------------------------>
+                        <!-- 圓形設定區塊------------------------------>
+                        <div class="row g-2 mkSet mkSetRound " id="circle" style="display:none">
+                            <!--<div>
+                                <label for="" class="form-label text-muted fw-normal mb-0">依大地坐標繪製</label>
+                                <div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="cirAcross" id="rdoCirAcrossYes" onchange="resetDrawInteraction();" />
+                                        <label class="form-check-label" for="rdoCirAcrossYes">是</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="cirAcross" id="rdoCirAcrossNo" checked=checked onchange="resetDrawInteraction();" />
+                                        <label class="form-check-label" for="rdoCirAcrossNo">否</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="" class="form-label text-muted fw-normal mb-0">名稱</label>
+                                <input type="text" id="txtCirName" autocomplete="off" onchange="setEleTxt(this.value, 'cir');" onkeyup="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();" class="form-control" placeholder="請輸入名稱" />
+                            </div>
+                            <div class="col-auto">
+                                <label for="" class="form-label text-muted fw-normal mb-0">線段顏色</label>
+                                <input type="text" id="circolor" class="form-control" value="#000000" onchange="resetDrawInteraction();" />
+                            </div>
+                            <div class="col-auto">
+                                <label for="" class="form-label text-muted fw-normal mb-0">填滿顏色</label>
+                                <input type="text" id="cirfillcolor" class="form-control" value="#000000" onchange="resetDrawInteraction();" />
+                            </div>
+                            <div class="col">
+                                <label for="" class="form-label text-muted fw-normal mb-0">線段寬度</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="cirwidth" value="1" autocomplete="off" oninput="resetDrawInteraction();" />
+                                    <span class="input-group-text">px</span>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <label for="" class="form-label text-muted fw-normal mb-0">線段樣式</label>
+                                <select id="ddlCirDash" class="form-select" onchange="resetDrawInteraction();">
+                                    <option value="0" selected=selected>實線</option>
+                                    <option value="12">虛線</option>
+                                </select>
+                            </div>-->
+                            <div class="col-6">
+                                <label for="" class="form-label text-muted fw-normal mb-0">半徑範圍(m)</label>
+                                <div class="input-group">
+                                    <input type="text" id="txtCirRadius" autocomplete="off" class="form-control" />
+                                    <!--<span class="input-group-text">m</span>-->
+                                </div>
+                            </div>
+                            <!--<div class="col-6">
+                                <label for="" class="form-label text-muted fw-normal mb-0">計算單位</label>
+                                <select id="ddlCirUnit" class="form-select" onchange="resetDrawInteraction();">
+                                    <option value="m">公尺</option>
+                                    <option value="km">公里</option>
+                                    <option value="nm">海里</option>
+                                </select>
+                            </div>-->
+                            <!--<div class="col-6">
+                                <label for="" class="form-label text-muted fw-normal mb-0">半徑顯示</label>
+                                <div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="CirRadius" id="rdoRadiusYes" onchange="resetDrawInteraction();" />
+                                        <label class="form-check-label" for="rdoRadiusYes">是</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="CirRadius" id="rdoRadiusNo" checked=checked onchange="resetDrawInteraction();" />
+                                        <label class="form-check-label" for="rdoRadiusNo">否</label>
+                                    </div>
+                                </div>
+                            </div>-->
+                            <!--<div class="col-6">
+                                <label for="" class="form-label text-muted fw-normal mb-0">圓心經緯度顯示</label>
+                                <div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="cirCoord" id="rdoCirCoordYes" onchange="resetDrawInteraction();" />
+                                        <label class="form-check-label" for="rdoCirCoordYes">是</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="cirCoord" id="rdoCirCoordNo" checked=checked onchange="resetDrawInteraction();" />
+                                        <label class="form-check-label" for="rdoCirCoordNo">否</label>
+                                    </div>
+                                </div>
+                            </div>-->
+                            <div class="col-12">
+                                <label for="" class="form-label text-muted fw-normal">經緯度定位(WGS84)</label>
+                                <select id="ddlCirCoordType" class="form-select" onchange="switchCoordType(this, this.value, 'divCir');">
+                                    <option value="DD" selected="selected">十進位</option>
+                                    <option value="DMS">度 分 秒</option>
+                                </select>
+                                <div id="divCirDMS" class="divCoordType _divMarkCoord" style="display: none;">
+                                    <div class="mb-2 addCir">
+                                        <div class="input-group mb-1">
+                                            <span class="input-group-text">緯度</span>
+                                            <select id="ddlCirLat" class="form-select">
+                                                <option value="N">N</option>
+                                                <option value="S">S</option>
+                                            </select>
+                                            <input type="text" id="txtCirLat" class="form-control" />
+                                        </div>
+                                        <div class="input-group">
+                                            <span class="input-group-text">經度</span>
+                                            <select id="ddlCirLon" class="form-select">
+                                                <option value="E">E</option>
+                                                <option value="W">W</option>
+                                            </select>
+                                            <input type="text" id="txtCirLon" class="form-control" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="divCirDD" class="divCoordType _divMarkCoord">
+                                    <div class="mb-2 addCir">
+                                        <div class="input-group mb-1">
+                                            <span class="input-group-text">緯度</span>
+                                            <input type="text" id="txtCirLatDD" class="form-control" />
+                                        </div>
+                                        <div class="input-group">
+                                            <span class="input-group-text">經度</span>
+                                            <input type="text" id="txtCirLonDD" class="form-control" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="btnBoxCenter">
+                                <input type="button" value="建立" class="btn btn_add" id="" onclick="addCirMark();">
+                            </div>
+                        </div>
+                        <!-- 圓形設定區塊 end------------------------------>
+                        <!--各標註屬性 END-->
+                        <div id="divUpdateBtn" class="row justify-content-center my-1" style="display:none;">
+                            <div class="col-auto">
+                                <button class="btn btn-primary text-nowrap GS-btn-blue" onclick="CancelUpdateMark();"> 取消修改</button>
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-primary text-nowrap GS-btn-blue" onclick="UpdateMark();"> 修改</button>
+                            </div>
+                        </div>
+                    </div>
+                    <!--<div class="">
+            <div class="input-group mb-3">
+                <input class="form-control" list="engNameList" id="engKW" placeholder="請輸入你想搜尋的工程關鍵字">
+                <datalist id="engNameList">
+                </datalist>
+                <button class="btn btn-outline-secondary" type="button" id="" onclick="Eng_Query('');"><i class="fas fa-search"></i></button>
+            </div>
+            <div class="input-group mb-3">
+                <label for="" class="form-label hot-keyword-title"><i class="fas fa-fire me-1"></i>熱門搜尋</label>
+                <div class="">
+                    <a href="" class="hot-keyword" onclick="Eng_Query('綠美圖'); return false;">綠美圖</a>
+                    <a href="" class="hot-keyword" onclick="Eng_Query('水湳'); return false;">水湳</a>
+                    <a href="" class="hot-keyword" onclick="Eng_Query('會展中心'); return false;">會展中心</a>
+                </div>
+            </div>
+            <div class="mb-3">
+                <a class="txt_Purple fw-bold search-adv-btn" data-bs-toggle="collapse" onclick="$('#engCollapse').css('display') == 'none' ? $('#engCollapse').css('display', 'block') : $('#engCollapse').css('display', 'none')" role="button" aria-expanded="false" aria-controls="engCollapse"><i class="fas fa-search me-1"></i>進階搜尋</a>
+                <div class="collapse" id="engCollapse">
+                    <div class="card card-body">
+                        <div class="mb-3">
+                            <label for="" class="form-label txt_Purple fw-bold"><i class="search-adv-i bg_purple_light"></i>關鍵字</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="engAdvKW" placeholder="請輸入關鍵字">
+                                <button class="btn btn-outline-secondary EngKW" type="button" id=""><i class="fas fa-plus"></i></button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="" class="form-label txt_Purple fw-bold"><i class="search-adv-i bg_purple_light"></i>類別</label>
+                            <div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input EngType" type="checkbox" id="" value="新闢道路橋樑" onclick="EngAddType($(this).val());">
+                                    <label class="form-check-label" for="">新闢道路橋樑</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input EngType" type="checkbox" id="" value="新闢公園綠地" onclick="EngAddType($(this).val());">
+                                    <label class="form-check-label" for="">新闢公園綠地</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input EngType" type="checkbox" id="" value="新闢建築" onclick="EngAddType($(this).val());">
+                                    <label class="form-check-label" for="">新闢建築</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input EngType" type="checkbox" id="" value="公園綠地維護" onclick="EngAddType($(this).val());">
+                                    <label class="form-check-label" for="">公園綠地維護</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input EngType" type="checkbox" id="" value="道路及附屬設施、橋梁養護" onclick="EngAddType($(this).val());">
+                                    <label class="form-check-label" for="">道路及附屬設施、橋梁養護</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input EngType" type="checkbox" id="" value="路燈維護" onclick="EngAddType($(this).val());">
+                                    <label class="form-check-label" for="">路燈維護</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input EngType" type="checkbox" id="" value="其他" onclick="EngAddType($(this).val());">
+                                    <label class="form-check-label" for="">其他</label>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>-->
+                </div>
+                <!--關鍵字查詢結尾-->
+            </div>
+        </div>
+        <!--區塊內容結尾-->
+    </div>
+    
+</div>
