@@ -31,6 +31,10 @@ public partial class OFS_SciApplication : System.Web.UI.Page
             {
                 InitializePage();
             }
+            else
+            {
+                RestoreKeywordsAfterPostBack();
+            }
         }
         catch (Exception ex)
         {
@@ -166,6 +170,10 @@ public partial class OFS_SciApplication : System.Web.UI.Page
          txtTarget.Text = data.Target;
          txtSummary.Text = data.Summary;
          txtInnovation.Text = data.Innovation;
+         
+         // 聲明書
+         bool declarationValue = data.Declaration ?? false;
+         ChkAgreeTerms.Checked = declarationValue;
      }
     #endregion
      /// <summary>
@@ -306,6 +314,60 @@ public partial class OFS_SciApplication : System.Web.UI.Page
          ClientScript.RegisterStartupScript(this.GetType(), "LoadKeywords", script, true);
      }
 
+
+     /// <summary>
+     /// PostBack 後恢復關鍵字資料到前端
+     /// </summary>
+     private void RestoreKeywordsAfterPostBack()
+     {
+         try
+         {
+             // 如果隱藏欄位中有關鍵字資料，重新載入到前端
+             if (!string.IsNullOrEmpty(hiddenKeywordsData.Value))
+             {
+                 var serializer = new JavaScriptSerializer();
+                 var frontendKeywords = serializer.DeserializeObject(hiddenKeywordsData.Value) as object[];
+                 
+                 if (frontendKeywords != null && frontendKeywords.Length > 0)
+                 {
+                     // 轉換為前端期望的格式
+                     var keywordsData = new List<object>();
+                     
+                     foreach (var item in frontendKeywords)
+                     {
+                         var keyword = item as Dictionary<string, object>;
+                         if (keyword != null)
+                         {
+                             keywordsData.Add(new {
+                                 chinese = keyword.ContainsKey("chinese") ? keyword["chinese"]?.ToString() ?? "" : "",
+                                 english = keyword.ContainsKey("english") ? keyword["english"]?.ToString() ?? "" : ""
+                             });
+                         }
+                     }
+                     
+                     string keywordsJson = serializer.Serialize(keywordsData);
+                     
+                     string script = $@"
+                         window.addEventListener('load', function() {{
+                             setTimeout(function() {{
+                                 console.log('Restoring keywords after PostBack:', {keywordsJson});
+                                 if (window.KeywordManager && typeof window.KeywordManager.loadFromData === 'function') {{
+                                     window.KeywordManager.loadFromData({keywordsJson});
+                                 }}
+                             }}, 200);
+                         }});
+                     ";
+                     
+                     ClientScript.RegisterStartupScript(this.GetType(), "RestoreKeywords", script, true);
+                 }
+             }
+         }
+         catch (Exception ex)
+         {
+             // 恢復關鍵字失敗時不影響主要功能，只記錄錯誤
+             System.Diagnostics.Debug.WriteLine($"Error restoring keywords after PostBack: {ex.Message}");
+         }
+     }
 
      #endregion
 
@@ -493,7 +555,7 @@ public partial class OFS_SciApplication : System.Web.UI.Page
      /// </summary>
      private void ValidateAgreement(List<string> errors)
      {
-         if (!chkAgreeTerms.Checked)
+         if (!ChkAgreeTerms.Checked)
          {
              errors.Add("• 請勾選「我已了解並同意」聲明書內容");
          }
@@ -598,7 +660,7 @@ public partial class OFS_SciApplication : System.Web.UI.Page
              Target = txtTarget.Text,
              Summary = txtSummary.Text,
              Innovation = txtInnovation.Text,
-             Declaration = true
+             Declaration = ChkAgreeTerms.Checked
          };
      }
 
@@ -622,7 +684,7 @@ public partial class OFS_SciApplication : System.Web.UI.Page
          data.Target = txtTarget.Text;
          data.Summary = txtSummary.Text;
          data.Innovation = txtInnovation.Text;
-         data.Declaration = true;
+         data.Declaration = ChkAgreeTerms.Checked;
      }
 
      /// <summary>
@@ -637,7 +699,7 @@ public partial class OFS_SciApplication : System.Web.UI.Page
              VersionNum = 1,
              Statuses = "尚未提送",
              StatusesName = "編輯中",
-             Form1Status = actionType == FormActionType.TempSave ? "暫存" : "送出",
+             Form1Status = actionType == FormActionType.TempSave ? "暫存" : "完成",
              CurrentStep = actionType == FormActionType.TempSave ? "1" : "2",
              SupervisoryUnit = "",
              UserAccount = "",
@@ -651,7 +713,7 @@ public partial class OFS_SciApplication : System.Web.UI.Page
      /// </summary>
      private void UpdateVersionData(OFS_SCI_Version versionData, FormActionType actionType)
      {
-         versionData.Form1Status = actionType == FormActionType.TempSave ? "暫存" : "送出";
+         versionData.Form1Status = actionType == FormActionType.TempSave ? "暫存" : "完成";
          
          if (actionType == FormActionType.Submit && Convert.ToInt32(versionData.CurrentStep) <= 2)
          {
@@ -794,7 +856,7 @@ public partial class OFS_SciApplication : System.Web.UI.Page
              }});
          ";
 
-         ScriptManager.RegisterStartupScript(this, this.GetType(), Guid.NewGuid().ToString(), script, true);
+         ClientScript.RegisterStartupScript(this.GetType(), Guid.NewGuid().ToString(), script, true);
      }
 
      /// <summary>

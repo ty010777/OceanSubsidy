@@ -1,0 +1,73 @@
+﻿<%@ Master Language="C#" 
+    MasterPageFile="~/OFSMaster.master" 
+    AutoEventWireup="true" 
+    CodeFile="OFSApplicationMaster.master.cs" 
+    Inherits="OFSApplicationMaster" %>
+
+<asp:Content ID="TitleContent" ContentPlaceHolderID="TitleContent" runat="server">
+    <asp:ContentPlaceHolder ID="ApplicationTitle" runat="server">
+        計畫申請 - 海洋領域補助計畫管理資訊系統
+    </asp:ContentPlaceHolder>
+</asp:Content>
+
+<asp:Content ID="HeadContent" ContentPlaceHolderID="HeadExtra" runat="server">
+    <!-- 子頁面補充 head 內容 -->
+    <asp:ContentPlaceHolder ID="HeadExtra" runat="server" />
+</asp:Content>
+
+<asp:Content ID="MainContent" ContentPlaceHolderID="MainContent" runat="server">
+    <!-- 頁面標題 -->
+    <div class="d-flex justify-content-between mb-4">
+        <div class="page-title">
+            <img src="<%= ResolveUrl("~/assets/img/information-system-title-icon03.svg") %>" alt="logo">
+            <div>
+                <span>目前位置</span>
+                <div class="d-flex align-items-end gap-3">
+                    <h2 class="text-dark-green2">計畫申請</h2>
+                    <a class="text-dark-green2 text-decoration-none" href="#" >
+                        <i class="fas fa-angle-left"></i>
+                        返回列表
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 申請流程進度條 -->
+    <div class="application-step">
+        <div class="step-item active">
+            <div class="step-content">
+                <div class="step-label">申請表/聲明書</div>
+                <div class="step-status edit">編輯中</div>
+            </div>
+        </div>
+        <div class="step-item">
+            <div class="step-content">
+                <div class="step-label">期程／工作項目／查核</div>
+            </div>
+        </div>
+        <div class="step-item">
+            <div class="step-content">
+                <div class="step-label">經費／人事</div>
+            </div>
+        </div>
+        <div class="step-item">
+            <div class="step-content">
+                <div class="step-label">成果與績效</div>
+            </div>
+        </div>
+        <div class="step-item">
+            <div class="step-content">
+                <div class="step-label">其他</div>
+            </div>
+        </div>
+        <div class="step-item">
+            <div class="step-content">
+                <div class="step-label">上傳附件/提送申請</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 子頁面內容 -->
+    <asp:ContentPlaceHolder ID="ApplicationContent" runat="server" />
+</asp:Content>

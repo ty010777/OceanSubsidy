@@ -11,11 +11,11 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
 {
     
     /// <summary>
-    /// 科專申請表主表 ()
+    /// 科專申請表-申請表主表 ()
     /// </summary>
     [DataContract]
     [Serializable()]
-    [GisTableAttribute("OFS_SCI_Application_Main", "科專申請表主表", false)]
+    [GisTableAttribute("OFS_SCI_Application_Main", "科專申請表-申請表主表", false)]
     public class IOFS_SCI_Application_Main : IMeta
     {
         
@@ -789,6 +789,76 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
         
+        protected DateTime? _StartTime = null;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("StartTime", "StartTime", DataSource.TABLE, "", false)]
+        public virtual DateTime? StartTime
+        {
+            get
+            {
+                return _StartTime;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_StartTime == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_StartTime.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("StartTime") == -1)
+                    {
+                        UPDATE_COLUMN.Add("StartTime");
+                    }
+                    _StartTime = value;
+                }
+            }
+        }
+        
+        protected DateTime? _EndTime = null;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("EndTime", "EndTime", DataSource.TABLE, "", false)]
+        public virtual DateTime? EndTime
+        {
+            get
+            {
+                return _EndTime;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_EndTime == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_EndTime.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("EndTime") == -1)
+                    {
+                        UPDATE_COLUMN.Add("EndTime");
+                    }
+                    _EndTime = value;
+                }
+            }
+        }
+        
         protected DateTime? _created_at = DateTime.Now;
         ///<summary>
         ///  ()
@@ -906,7 +976,7 @@ namespace GS.OCA_OceanSubsidy.Entity
     using GS.OCA_OceanSubsidy.Entity.Base;
     
     /// <summary>
-    /// 科專申請表主表 ()
+    /// 科專申請表-申請表主表 ()
     /// </summary>
     [DataContract]
     [Serializable()]

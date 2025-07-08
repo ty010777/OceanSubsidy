@@ -93,7 +93,7 @@ public partial class OFS_SciOutcomes : System.Web.UI.Page
             var lastVersion = OFS_SciApplicationHelper.getVersionLatestProjectID(ProjectID);
             // 轉換並儲存資料
             var entity = ConvertVueDataToEntity(lastVersion.Version_ID, formData);
-            OFS_SciOutcomeForm.SaveOutcomeData(entity);
+            OFS_SciOutcomeHelper.SaveOutcomeData(entity);
             
             WriteApiResponse(new { success = true, message = "資料儲存成功" });
         }
@@ -174,7 +174,7 @@ public partial class OFS_SciOutcomes : System.Web.UI.Page
             var entityData = MapOutcomeRequestToEntity(formData, latestVersion.Version_ID);
             
             // 呼叫實際儲存邏輯
-            OFS_SciOutcomeForm.SaveOutcomeData(entityData);
+            OFS_SciOutcomeHelper.SaveOutcomeData(entityData);
 
             return new
             {

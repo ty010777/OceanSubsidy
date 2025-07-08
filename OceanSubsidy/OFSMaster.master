@@ -1,0 +1,397 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeFile="OFSMaster.master.cs" Inherits="OFSMaster" MasterPageFile="~/BaseMaster.master" %>
+
+<asp:Content ID="TitleContent" ContentPlaceHolderID="BaseTitleContent" runat="server">
+    <asp:ContentPlaceHolder ID="TitleContent" runat="server">海洋領域補助計畫管理資訊系統</asp:ContentPlaceHolder>
+</asp:Content>
+
+<asp:Content ID="HeadContent" ContentPlaceHolderID="HeadExtra" runat="server">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script>
+        function toggleMenu() {
+            const layout = document.querySelector('.mis-layout');
+            layout.classList.toggle('isClose');
+        }
+
+        // Session 倒數計時器
+        let sessionCountdownInterval;
+        let sessionStartTime;
+
+        function startSessionCountdown() {
+            // 如果變數未定義，使用預設值
+            if (typeof sessionTimeoutMinutes === 'undefined') {
+                sessionTimeoutMinutes = 20; // 預設 20 分鐘
+            }
+            if (typeof lastActivityTime === 'undefined') {
+                lastActivityTime = new Date().getTime(); // 預設為現在
+            }
+            
+            // 記錄 Session 開始時間（頁面載入時 Session 被重設）
+            sessionStartTime = lastActivityTime;
+            
+            // 啟動倒數計時器
+            sessionCountdownInterval = setInterval(updateCountdown, 1000);
+            
+            // 監聽用戶活動
+            document.addEventListener('click', updateLastActivity);
+            document.addEventListener('keypress', updateLastActivity);
+            document.addEventListener('scroll', updateLastActivity);
+        }
+
+        function updateLastActivity() {
+            // 重設 Session 開始時間
+            sessionStartTime = new Date().getTime();
+        }
+
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const timeSinceSessionStart = now - sessionStartTime;
+            const sessionTimeoutMs = sessionTimeoutMinutes * 60 * 1000;
+            const remainingMs = sessionTimeoutMs - timeSinceSessionStart;
+
+            if (remainingMs <= 0) {
+                // Session 應該已到期，驗證一下
+                clearInterval(sessionCountdownInterval);
+                checkSessionStatus();
+                return;
+            }
+
+            // 計算剩餘時間
+            const remainingMinutes = Math.floor(remainingMs / (1000 * 60));
+            const remainingSeconds = Math.floor((remainingMs % (1000 * 60)) / 1000);
+            
+            // 更新顯示
+            const countdownElement = document.querySelector('.session-countdown');
+            if (countdownElement) {
+                countdownElement.textContent = 
+                    String(remainingMinutes).padStart(2, '0') + ':' + 
+                    String(remainingSeconds).padStart(2, '0');
+            }
+
+            // 當剩餘時間少於 5 分鐘時，顯示警告
+            if (remainingMs <= 5 * 60 * 1000 && remainingMs > 4 * 60 * 1000) {
+                if (confirm('您的登入將在 5 分鐘後過期，是否要延長 Session？')) {
+                    refreshSession();
+                }
+            }
+        }
+
+        function checkSessionStatus() {
+            // 透過 AJAX 檢查 Session 是否真的過期
+            fetch('<%= ResolveUrl("~/Service/Session.ashx?key=UserInfo") %>')
+            .then(response => response.text())
+            .then(data => {
+                if (!data || data.trim() === '') {
+                    // Session 已過期
+                    alert('您的登入已過期，將重新導向至登入頁面');
+                    window.location.href = '<%= ResolveUrl("~/Login.aspx") %>';
+                } else {
+                    // Session 還有效，可能是網路延遲等問題，重新開始倒數
+                    sessionStartTime = new Date().getTime();
+                    sessionCountdownInterval = setInterval(updateCountdown, 1000);
+                }
+            })
+            .catch(error => {
+                console.error('檢查 Session 狀態失敗:', error);
+                // 發生錯誤時保守處理，導向登入頁面
+                window.location.href = '<%= ResolveUrl("~/Login.aspx") %>';
+            });
+        }
+
+        function refreshSession() {
+            // 發送 AJAX 請求來延長 Session
+            fetch('<%= ResolveUrl("~/Service/Session.ashx") %>', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ action: 'refresh' })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 重設 Session 開始時間（相當於重新開始倒數）
+                    sessionStartTime = new Date().getTime();
+                    console.log('Session 已延長');
+                } else {
+                    // Session 延長失敗，可能已過期
+                    alert('Session 延長失敗，將重新導向至登入頁面');
+                    window.location.href = '<%= ResolveUrl("~/Login.aspx") %>';
+                }
+            })
+            .catch(error => {
+                console.error('延長 Session 失敗:', error);
+                alert('網路錯誤，將重新導向至登入頁面');
+                window.location.href = '<%= ResolveUrl("~/Login.aspx") %>';
+            });
+        }
+
+        // 頁面載入完成後啟動倒數計時器
+        document.addEventListener('DOMContentLoaded', function() {
+            startSessionCountdown();
+        });
+    </script>
+    
+    <!-- 子頁面補充 head 內容 -->
+    <asp:ContentPlaceHolder ID="HeadExtra" runat="server" />
+</asp:Content>
+
+<asp:Content ID="BodyContent" ContentPlaceHolderID="BodyContent" runat="server">
+  <form id="form1" runat="server">
+  <main>
+  
+      <div class="mis-layout">
+          <div class="mis-header information-system">
+          
+              <!-- 電腦版收合按鈕 -->
+              <button type="button" class="menu-toggle" onclick="toggleMenu()">
+                  <i class="fas fa-chevron-left"></i>
+              </button>
+          
+              <!-- 手機板header -->
+              <div class="mobile-header">
+          
+                  <!-- 系統主題圖 -->
+                  <img class="mobile-bg" src="<%= ResolveUrl("~/assets/img/information-system-logo.svg") %>" alt="logo" style="width: 150px; opacity: 0.5;">
+          
+                  <!-- 手機版收合按鈕 -->
+                  <button type="button" class="menu-toggle-mobile collapsed" data-bs-toggle="collapse" data-bs-target="#menubar">
+                      <i class="fas fa-bars"></i>
+                      <i class="fas fa-times"></i>
+                  </button>
+          
+          
+                  <div class="logo">
+                      <img src="<%= ResolveUrl("~/assets/img/ocean-logo.svg") %>" alt="logo" style="width: 110px;">
+                  </div>
+          
+                  <div class="mobile-logo">
+                      <img src="<%= ResolveUrl("~/assets/img/ocean-logo.svg") %>" alt="logo">
+                  </div>
+          
+                  <h1 class="title">海洋領域補助計畫管理<span>資訊系統</span>
+                      <img class="ms-auto mt-2" src="<%= ResolveUrl("~/assets/img/information-system-logo.svg") %>" alt="資訊系統" style="width: 150px;">
+                  </h1>
+              </div>
+          
+              <!-- 連結選單 -->
+              <div class="menu collapse" id="menubar">
+                  <nav>
+                      <ul>
+                          <li class="">
+                              <a href="information-system.html">
+                                  <div class="circle">
+                                      <img src="<%= ResolveUrl("~/assets/img/information-icon-01.svg") %>" alt="首頁">
+                                  </div>
+                                  <span>首頁</span>
+                                  <i class="fas fa-chevron-right"></i>
+                              </a>
+                          </li>
+                          <li class="">
+                              <a href="information-news.html">
+                                  <div class="circle">
+                                      <img src="<%= ResolveUrl("~/assets/img/information-icon-02.svg") %>" alt="資訊公告欄">
+                                  </div>
+                                  <span>資訊公告欄</span>
+                                  <i class="fas fa-chevron-right"></i>
+                              </a>
+                          </li>
+                          <li class="active">
+                              <a href="information-plan-apply-1.html">
+                                  <div class="circle">
+                                      <img src="<%= ResolveUrl("~/assets/img/information-icon-03.svg") %>" alt="計畫申請">
+                                  </div>
+                                  <span>計畫申請</span>
+                                  <i class="fas fa-chevron-right"></i>
+                              </a>
+                          </li>
+                          <li class="">
+                              <a href="information-plan-review.html">
+                                  <div class="circle">
+                                      <img src="<%= ResolveUrl("~/assets/img/information-icon-04.svg") %>" alt="計畫審查">
+                                  </div>
+                                  <span>計畫審查</span>
+                                  <i class="fas fa-chevron-right"></i>
+                              </a>
+                          </li>
+                          <li class="">
+                              <a href="information-plan-execute.html">
+                                  <div class="circle">
+                                      <img src="<%= ResolveUrl("~/assets/img/information-icon-05.svg") %>" alt="計畫執行">
+                                  </div>
+                                  <span>計畫執行</span>
+                                  <i class="fas fa-chevron-right"></i>
+                              </a>
+                          </li>
+                          <li>
+                              <a  data-bs-toggle="collapse" href="#submenu-01" role="button" aria-expanded="false" aria-controls="submenu-01">
+                                  <div class="circle">
+                                      <img src="<%= ResolveUrl("~/assets/img/information-icon-06.svg") %>" alt="報表查詢">
+                                  </div>
+                                  <span>報表查詢</span>
+                                  <i class="fas fa-chevron-right"></i>
+                              </a>
+                              <div class="collapse" id="submenu-01">
+                                  <ul class="sub-menu">
+                                      <li >
+                                          <a href="members-list.html">迴避審查委員名單</a>
+                                      </li>
+                                      <li>
+                                          <a href="#">申請計畫報表</a>
+                                      </li>
+                                      <li>
+                                          <a href="#">核定計畫報表</a>
+                                      </li>
+                                      <li>
+                                          <a href="#">計畫執行情形報表</a>
+                                      </li>
+                                  </ul>
+                              </div>
+                          </li>
+                          <li>
+                              <a  data-bs-toggle="collapse" href="#submenu-02" role="button" aria-expanded="false" aria-controls="submenu-02">
+                                  <div class="circle">
+                                      <img src="<%= ResolveUrl("~/assets/img/information-icon-07.svg") %>" alt="系統管理">
+                                  </div>
+                                  <span>系統管理</span>
+                                  <i class="fas fa-chevron-right"></i>
+                              </a>
+                              <div class="collapse" id="submenu-02">
+                                  <ul class="sub-menu">
+                                      <li>
+                                          <a href="#">公告管理</a>
+                                      </li>
+                                      <li>
+                                          <a href="#">補助計畫管理</a>
+                                      </li>
+                                  </ul>
+                              </div>
+                          </li>
+                      </ul>
+                  </nav>
+          
+                  <!-- 回入口網 -->
+                  <a href="portal.html" class="btn btn-sm btn-outline-green me-auto d-table ms-3 mb-3 ms-md-1">回入口網</a>
+              </div>                
+          
+          </div>        
+  
+          <div class="mis-content">
+              <div class="mis-container">  
+                  
+                  <!-- 系統標題(選單收合) -->
+                  
+                  
+                  <div class="close-menu-logo">
+                      <div class="d-flex align-items-center flex-wrap">
+                          <img class="img-fluid" src="<%= ResolveUrl("~/assets/img/ocean-logo.png") %>" alt="logo" style="width: 180px;"> 
+                          <h2 class="text-dark-green">海洋領域補助計畫管理資訊系統</h2>
+                      </div>
+                  </div>
+                  
+                  
+                  <!-- 功能按鈕 -->
+                  <div class="action-group">
+                      <!-- 公告提醒 --> 
+                      <div class="dropdown">
+                          <button class="btn-tip new" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                              <img src="<%= ResolveUrl("~/assets/img/icon-bell.svg") %>" alt="公告提醒">
+                          </button>
+                          <ul class="dropdown-menu">
+                              <li>
+                                  <a class="dropdown-menu-item" href="#" tabindex="0" aria-label="查看計畫申請待處理項目">
+                                      <span>計畫申請待處理</span>
+                                      <span class="badge">4</span>
+                                  </a>
+                              </li>
+                              <li>
+                                  <a class="dropdown-menu-item" href="#" tabindex="0" aria-label="查看計畫申請待處理項目">
+                                      <span>計畫申請待處理</span>
+                                      <span class="badge">4</span>
+                                  </a>
+                              </li>
+                          </ul>
+                      </div>
+                  
+                  
+                      <!-- 聯絡資訊 -->
+                      <div class="dropdown">
+                          <button class="" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                              <img src="<%= ResolveUrl("~/assets/img/icon-info.svg") %>" alt="聯絡資訊">
+                          </button>
+                          <div class="dropdown-menu">
+                              <div>系統聯絡人</div>
+                              <ul class="d-grid gap-1 mt-2">
+                                  <li>王OO</li>
+                                  <li>04-24516669</li>
+                                  <li>jillwang@gis.tw</li>
+                              </ul>
+                          </div>
+                      </div>
+                  
+                  </div>
+                  <!-- 登入資訊 -->
+                  <div class="d-flex justify-content-end mb-4">
+                      <div class="login-user">
+                          <div class="user-icon">
+                              <i class="fa-solid fa-user"></i>
+                          </div>
+                          <div class="user-info">
+                              <div class="d-flex align-items-center gap-4">
+                                  <!-- 登入者功能選單 -->
+                                  <div class="dropdown">
+                                      <button class="bg-transparent border-0 p-0" data-bs-toggle="dropdown" aria-expanded="false">
+                                          <div class="user-name">林小名<i class="fas fa-caret-down ms-1"></i></div>
+                                      </button>
+                                      <ul class="dropdown-menu">
+                                          <li>
+                                              <a class="dropdown-menu-item" href="#" tabindex="0">
+                                                  <span>編輯個人資料</span>
+                                              </a>
+                                          </li>
+                                          <li>
+                                              <a class="dropdown-menu-item" href="#" tabindex="0">
+                                                  <span>變更密碼</span>
+                                              </a>
+                                          </li>
+                                          <li>
+                                              <a class="dropdown-menu-item" href="#" tabindex="0">
+                                                  <span>登出</span>
+                                              </a>
+                                          </li>
+                                      </ul>
+                                  </div>
+                                  
+                                  <!-- 登出倒數 -->
+                                  <div class="d-flex align-items-center fs-14">
+                                      <span>登出倒數:</span>
+                                      <span class="me-1 session-countdown">20:00</span>
+                                      <button type="button" class="bg-transparent border-0 p-0 btn-refresh" onclick="refreshSession()" title="延長 Session">
+                                          <i class="fa-solid fa-rotate"></i>
+                                      </button>
+                                  </div>
+                              </div>
+                              
+                              <div class="user-department">綜合規劃處</div>
+                          </div>
+                      </div>
+                  </div>
+                  
+                  <!-- 內容區塊 -->
+                  <asp:ContentPlaceHolder ID="MainContent" runat="server"></asp:ContentPlaceHolder>            </div>
+              <footer>
+                  <ul>
+                      <li>地址：806高雄市前鎮區成功二路25號4樓</li>
+                      <li>電話：(07)338-1810     Copyright © 海洋委員會 版權所有</li>
+                  </ul>
+              </footer>
+        </div>
+    </div>
+  
+  
+  </main>
+  </form>
+</asp:Content>
+
+

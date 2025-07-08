@@ -1,108 +1,10 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeFile="SciApplication.aspx.cs" Inherits="OFS_SciApplication" Culture="zh-TW" UICulture="zh-TW" %>
-<!doctype html>
-<html class="no-js" lang="zh-Hant">
-<head runat="server">
-  <meta charset="utf-8" />
-  <meta http-equiv="x-ua-compatible" content="ie=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title> 計畫申請  | 海洋科學調查活動填報系統</title>
-  <!-- Bootstrap -->
-  <link rel="stylesheet" href="<%= ResolveUrl("~/assets/vendor/bootstrap-5.3.3/dist/css/bootstrap.min.css") %>">
-  <script src="<%= ResolveUrl("~/assets/vendor/bootstrap-5.3.3/dist/js/bootstrap.bundle.min.js") %>"></script>
-  
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="<%= ResolveUrl("~/assets/vendor/fontawesome-free-6.5.2-web/css/all.min.css") %>">
-    <link rel="stylesheet" href="<%= ResolveUrl("~/assets/vendor/fontawesome-free-6.5.2-web/css/all.css") %>">
-  
-    <!-- Google Icons -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Icons+Round">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
-  
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-  
-  <!-- 自訂 -->
-  <link rel="stylesheet" href="<%= ResolveUrl("~/assets/css/login.css") %>">
-  <link rel="stylesheet" href="<%= ResolveUrl("~/assets/css/main.css") %>">
-  <script src="<%= ResolveUrl("~/assets/js/customJS.js") %>"></script>
-  <script src="<%= ResolveUrl("~/script/OFS/SCI/SciApplication.js") %>"></script>
+﻿<%@ Page Language="C#" AutoEventWireup="true" CodeFile="SciApplication.aspx.cs" Inherits="OFS_SciApplication" Culture="zh-TW" UICulture="zh-TW" MasterPageFile="~/OFS/SCI/OFSApplicationMaster.master" %>
 
-</head>
+<asp:Content ID="HeadContent" ContentPlaceHolderID="HeadExtra" runat="server">
+    <script src="<%= ResolveUrl("~/script/OFS/SCI/SciApplication.js") %>"></script>
+</asp:Content>
 
-<body>
-  <form id="form1" runat="server">
-  <main>
-  
-      <div class="mis-layout">
-            
-          <div class="mis-content">
-              <div class="mis-container">  
-                  
-                  <!-- 系統標題(選單收合) -->
-                  <div class="close-menu-logo">
-                      <div class="d-flex align-items-center flex-wrap">
-                          <img class="img-fluid" src="<%= ResolveUrl("~/assets/img/ocean-logo.png") %>" alt="logo" style="width: 180px;"> 
-                          <h2 class="text-dark-green">海洋領域補助計畫管理資訊系統</h2>
-                      </div>
-                  </div>
-                  
-                  <!-- 頁面標題 + 登入資訊 -->
-                  <!-- page title -->
-                  <div class="d-flex justify-content-between mb-4">
-                      <div class="page-title">
-                          <img src="<%= ResolveUrl("~/assets/img/information-system-title-icon03.svg") %>" alt="logo">
-                          <div>
-                              <span>目前位置</span>
-                              <div class="d-flex align-items-end gap-3">
-                                  <h2 class="text-dark-green2">計畫申請</h2>
-                                      <a class="text-dark-green2 text-decoration-none" href="information-system.html" >
-                                          <i class="fas fa-angle-left"></i>
-                                          返回列表
-                                  </a>
-                              </div>
-                              
-                          </div>
-                      </div>
-                      
-                  </div>
-                  <!-- 申請流程進度條 -->
-                  
-                  <div class="application-step">
-                      <div class="step-item active">
-                          <div class="step-content">
-                              <div class="step-label">申請表/聲明書</div>
-                                  <div class="step-status edit">編輯中</div>
-                          </div>
-                      </div>
-                      <div class="step-item  ">
-                          <div class="step-content">
-                              <div class="step-label">期程／工作項目／查核</div>
-                          </div>
-                      </div>
-                      <div class="step-item">
-                          <div class="step-content ">
-                              <div class="step-label">經費／人事</div>
-                          </div>
-                      </div>
-                      <div class="step-item">
-                          <div class="step-content ">
-                              <div class="step-label">成果與績效</div>
-                          </div>
-                      </div>
-                      <div class="step-item">
-                          <div class="step-content ">
-                              <div class="step-label">其他</div>
-                          </div>
-                      </div>
-                      <div class="step-item">
-                          <div class="step-content ">
-                              <div class="step-label">上傳附件/提送申請</div>
-                          </div>
-                      </div>
-                  </div>
-                  
-                  <!-- 內容區塊 -->
+<asp:Content ID="ApplicationContent" ContentPlaceHolderID="ApplicationContent" runat="server">
                   <div class="block">
                   
                       <h5 class="square-title">申請基本資料</h5>
@@ -443,12 +345,6 @@
                                           計畫目標
                                       </th>
                                       <td>
-                                          <%-- <span ID="txtTarget" class="form-control textarea"  --%>
-                                          <%--     role="textbox"  --%>
-                                          <%--     contenteditable  --%>
-                                          <%--     data-placeholder="請輸入計畫目標"  --%>
-                                          <%--     aria-label="文本輸入區域" > --%>
-                                          <%-- </span> --%>
                                           <asp:TextBox  ID="txtTarget" runat="server"  CssClass="form-control textarea" 
                                               TextMode="MultiLine"  
                                               Rows="6"  
@@ -589,9 +485,9 @@
                           <div class="agreement-consent p-3">
                               <div class="hstack justify-content-center">
                                   <div class="form-check d-flex align-items-center gap-1">
-                                      <asp:CheckBox ID="chkAgreeTerms" runat="server" CssClass="form-check-input blue-green-check" />
+                                      <input id="ChkAgreeTerms" runat="server" class="form-check-input blue-green-check" type="checkbox" name="type2" />
                                         <label for="agreeTerms">我已了解並同意</label>
-                                      </div>  
+                                  </div>  
                               </div>
                           </div>
                       </div>
@@ -610,16 +506,8 @@
                                  Text="完成本頁，下一步"  
                                  CssClass="btn btn-blue-green2"  
                                  OnClick="btnSave_Click" /> 
-                  </div>            
-              </div>
-          </div>
-      </div>
-  </main>
-  </form>
-
-</body>
-
-</html>
+                  </div>
+</asp:Content>
 
 
 

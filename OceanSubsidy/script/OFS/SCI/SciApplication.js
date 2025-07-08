@@ -74,23 +74,7 @@ const SciApplication = {
             });
         }
     },
-
-    validateForm: function () {
-        // 這裡可以添加額外的表單驗證邏輯
-        return true;
-    },
-
-    // 驗證提交表單（完成本頁，下一步）
-    validateSubmitForm: function () {
-        // 檢查聲明書是否已勾選
-        const agreeCheckbox = document.querySelector('input[id*="chkAgreeTerms"]');
-        if (agreeCheckbox && !agreeCheckbox.checked) {
-            alert('請勾選「我已了解並同意」聲明書內容後，才能進行下一步。');
-            return false;
-        }
-        
-        return this.validateForm();
-    },
+    
     //#endregion
 
     //#region 載入狀態
