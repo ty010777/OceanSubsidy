@@ -1,12 +1,16 @@
 .link {
+    text-underline-offset: 3px;
     color: $blue;
     &:hover {
         color: $blue-hover;
     }
-    &-green {
-        color: $blue-green2;
+    &-teal {
+        color: $teal;
         &:hover {
             color: #000;
         }
+    }
+    &-black {
+        color: #000;
     }
 }

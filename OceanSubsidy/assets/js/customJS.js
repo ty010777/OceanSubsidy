@@ -77,6 +77,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 初始化聲明書閱讀滾動事件
     initializeAgreementScroll();
+    
+    // 初始化錨點選單
+    initializeAnchorMenu();
+    
+    // 初始化滾動監聽
+    initializeScrollSpy();
+
 });
 
 
@@ -329,3 +336,100 @@ function checkInitialScrollState(scrollContainer, checkbox) {
         }
              }, 100);
  }
+
+
+// 錨點選單平滑滑動
+function initializeAnchorMenu() {
+    document.querySelectorAll('.anchor-wrapper .anchor-menu-item').forEach(item => {
+        item.addEventListener('click', handleAnchorClick);
+    });
+}
+//處理錨點點擊事件
+function handleAnchorClick(e) {
+    e.preventDefault();
+    
+    const targetId = e.currentTarget.getAttribute('href').substring(1);
+    const targetElement = document.getElementById(targetId);
+    if (!targetElement) return;
+    
+    // 獲取滾動容器
+    const scrollContainer = document.querySelector('.mis-content') || 
+                           document.querySelector('.mis-layout') || 
+                           document.documentElement;
+    
+    // 計算頂部偏移量
+    const offset = calculateTopOffset();
+    
+    // 計算滾動位置
+    const containerRect = scrollContainer.getBoundingClientRect();
+    const targetRect = targetElement.getBoundingClientRect();
+    const relativeTop = targetRect.top - containerRect.top;
+    const scrollPosition = scrollContainer.scrollTop + relativeTop - offset;
+    
+    // 執行平滑滾動
+    try {
+        scrollContainer.scrollTo({
+            top: scrollPosition,
+            behavior: 'smooth'
+        });
+    } catch (error) {
+        scrollContainer.scrollTop = scrollPosition;
+    }
+}
+//計算頂部偏移量
+function calculateTopOffset() {
+    const selectors = ['.application-step', '.anchor-wrapper'];
+    const baseSpacing = 20;
+    
+    return selectors.reduce((total, selector) => {
+        const element = document.querySelector(selector);
+        return total + (element ? element.offsetHeight : 0);
+    }, baseSpacing);
+}
+
+// 初始化滾動監聽
+function initializeScrollSpy() {
+    const scrollContainer = document.querySelector('.mis-content') || 
+                           document.querySelector('.mis-layout') || 
+                           document.documentElement;
+    
+    let ticking = false;
+    
+    const updateActive = () => {
+        const anchorItems = document.querySelectorAll('.anchor-menu-item');
+        const offset = calculateTopOffset();
+        let activeItem = null;
+        
+        // 找到最接近頂部的可見區塊
+        anchorItems.forEach(item => {
+            const targetId = item.getAttribute('href').substring(1);
+            const targetElement = document.getElementById(targetId);
+            
+            if (targetElement) {
+                const rect = targetElement.getBoundingClientRect();
+                const containerRect = scrollContainer.getBoundingClientRect();
+                const relativeTop = rect.top - containerRect.top;
+                
+                if (relativeTop <= offset + 50 && relativeTop > -rect.height) {
+                    activeItem = item;
+                }
+            }
+        });
+        
+        // 更新 active 狀態
+        anchorItems.forEach(item => item.classList.remove('active'));
+        if (activeItem) activeItem.classList.add('active');
+    };
+    
+    scrollContainer.addEventListener('scroll', () => {
+        if (!ticking) {
+            requestAnimationFrame(() => {
+                updateActive();
+                ticking = false;
+            });
+            ticking = true;
+        }
+    });
+    
+    updateActive(); // 初始檢查
+}

@@ -10,6 +10,15 @@
 }
 
 .gray-table {
+    line-height: 1.2;
+    caption {
+        caption-side: top;    /* 預設在表格上方 */
+        background-color: $neutral-100;
+        color: $gray;
+        font-size: 1.125rem;
+        padding: 10px 20px;
+        border: 1px solid $neutral-300;
+    }
     font-size: 1.125rem;
     td {
         border: 1px solid $neutral-300;
@@ -28,17 +37,40 @@
         border: 1px solid $neutral-300;
         >tr>th:first-child {
             width: 183px;
-            border-right: 8px solid $neutral-300;
+            border-right: 0px solid $neutral-300;
             border-bottom: 1px solid $neutral-300;
             text-align: end;
             padding-right: 24px;
             @include gray-table-th;
         }
     }
+    > tfoot {
+        border-top: 8px solid $neutral-300;
+        tr {
+            td {
+                background-color: $light-teal;
+                color: $gray;
+            }
+        }
+    }
+
+    &.align-middle {
+        td {
+            vertical-align: middle;
+        }
+    }
 }
 
 .side-table {
     > tbody {
+        >tr>th:first-child {
+            width: 183px;
+            border-right: 8px solid $neutral-300;
+            border-bottom: 1px solid $neutral-300;
+            text-align: end;
+            padding-right: 24px;
+            @include gray-table-th;
+        }
         @media (max-width: $lg) {
             border: none;
             > tr {
@@ -69,18 +101,16 @@
                     margin: 0;
                 }
             }
-
-
         }
     }
 }
 
-.blue-green-table {
+.cyan-table {
     thead {
         tr {
-            border-bottom: 2px solid $blue-green;
+            border-bottom: 2px solid $cyan;
             th {
-                color: $blue-green;
+                color: $cyan;
                 padding-block: 16px;
                 text-align: center;
                 white-space: nowrap;
@@ -155,7 +185,7 @@
             border-top: 8px solid $neutral-300;
             tr {
                 td {
-                    background-color: $light-green2;
+                    background-color: $light-teal;
                     text-align: end;
                 }
             }

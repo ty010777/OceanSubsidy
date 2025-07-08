@@ -1,0 +1,33 @@
+.block-form {
+    border: 1px solid $teal;
+    border-radius: 8px;
+    padding: 24px;
+    position: relative;
+    font-size: 1.125rem;
+    .btn.del {
+        position: absolute;
+        top: 0;
+        right: 0;
+        border-radius: 0 8px 0 8px;
+        padding: 6px 12px;
+        min-width: unset;
+    }
+
+}
+
+
+.item-list {
+    padding: 0 16px;
+    >li {
+        padding: 20px 0; 
+        align-items: center;
+        &.step-item {
+            display: grid;
+            grid-template-columns: 0.5fr 6fr 4fr 1fr;
+            gap: 16px;
+        }
+    }
+    li ~ li {
+        border-top: 1px solid #DDD;
+    }
+}

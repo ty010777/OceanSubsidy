@@ -13,10 +13,16 @@
     font-size: 0.78125rem;
     white-space: nowrap;
     line-height: 0;
-
+    transition: background-color 0.3s ease;
     &.tag-gray {
         background-color: $neutral-700;
         color: #FFFFFF;
+    }
+    &.tag-green-light {
+        background-color: $green-light;
+        a,.tag-btn {
+            color: #fff;
+        }
     }
 
     .tag-btn{
@@ -27,6 +33,7 @@
         background: unset ;
         border:0 ;
         padding: 0;
+        font-size: 1rem;
     }
 
     .tag-link {
@@ -35,6 +42,7 @@
         text-decoration: none;
         color: #fff;
         gap: 6px;
+
         button {
             padding: 0;
             border: 0;
@@ -46,6 +54,9 @@
 
 .tag-gray:has(.tag-link):hover {
     background-color: #393939;
+}
+.tag-green-light:has(.tag-link):hover {
+    background-color: darken($green-light, 5%);
 }
 
 

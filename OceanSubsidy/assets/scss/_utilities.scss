@@ -37,28 +37,32 @@ $font-sizes: (
 // 文字顏色
 $text-colors: (
     primary: $primary,
-    blue-green : $blue-green,
+    cyan : $cyan,
     pink: $pink,
     gray: $gray,
     green: $green,
     blue: $blue,
-    blue2: $blue2,
+    ocean-blue: $ocean-blue,
+    royal-blue: $royal-blue,
     yellow: $yellow,
     blue-purple: $blue-purple,
     dark-green: $dark-green,
-    dark-green2: $dark-green2,
+    teal: $teal,
+    teal-dark: $teal-dark,
     light-gray: $neutral-400,
+    green-light: $green-light,
 );
 // 背景顏色
 $bg-colors: (
     light-green : $light-green,
     light-blue : $light-blue,
     light-gray : $neutral-100,
-    light-green2 : $light-green2,
+    light-teal : $light-teal,
+    gray : $neutral-350,
 );
 // border顏色
 $border-colors: (
-    primary : $primary,
+    teal : $teal,
 );
 // Border
 $border-sizes: (    

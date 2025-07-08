@@ -23,6 +23,7 @@
                 display: block;
             }
         }
+
         
     }
     
@@ -44,9 +45,18 @@
         img {
             height: 30px;
         }
+        svg {
+            height: 30px;
+        }
         
         &:hover {
             transform: scale(1.05);
+            color: $teal;
+            svg {
+                path {
+                    fill: $teal !important;
+                }
+            }
         }
 
     }

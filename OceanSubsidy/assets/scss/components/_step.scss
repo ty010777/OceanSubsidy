@@ -8,7 +8,7 @@
         align-items: center;
         gap: 8px;
         h4 {
-            border: 2px solid $blue-green;
+            border: 2px solid $cyan;
             border-radius: 50px;
             background-color: #fff;
             padding: 16px;
@@ -18,7 +18,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            color: $blue-green;
+            color: $cyan;
             font-weight: 700;
             gap: 8px;
             .step-number {
@@ -30,7 +30,7 @@
         }
         &.active {  
             h4 {
-                background-color: $blue-green;
+                background-color: $cyan;
                 color: #fff;
             }
         }
@@ -80,7 +80,7 @@
 // 變數定義
 $app-step-bg: #F4FCE8;
 $app-step-active-bg: #26A69A;
-$app-step-status-bg: $dark-green2; 
+$app-step-status-bg: $teal-dark; 
 $app-step-arrow-width: 72px;
 $app-step-arrow-offset: 2px;
 $app-step-content-padding: 16px 24px;
@@ -94,12 +94,18 @@ $app-step-status-size: 14px;
     display: flex;
     text-wrap: nowrap;
     overflow-x: auto;
+    position: sticky;
+    top: 0;
+    z-index: 6;
     &::-webkit-scrollbar {
         height: 10px;
     }
     &::-webkit-scrollbar-thumb {
         background-color: $neutral-400;
         border-radius: 12px;
+    }
+    @media (max-width: $md) {
+        position: static;
     }
 }
 
@@ -109,9 +115,12 @@ $app-step-status-size: 14px;
     position: relative;
     padding-right: $app-step-arrow-width;
     margin-right: -$app-step-arrow-width;
+    flex-grow: 1;
     
     // 隱藏最後一個項目的箭頭
     &:last-child {
+        padding-right: 0;
+        margin-right: 0;
         &::before,
         &::after {
             display: none;
@@ -128,7 +137,7 @@ $app-step-status-size: 14px;
     gap: 8px;
     padding: $app-step-content-padding;
     padding-top: 24px;
-    
+    width: 100%;
 }
 
 // 非第一個項目需要額外的左邊距

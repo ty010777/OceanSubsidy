@@ -18,6 +18,8 @@
     .input-group-text {
         background-color: #D9D9D9;
         font-size: 1.125rem;
+        border: 1px solid #C5C5C5;
+        text-align: center;
     }
     .btn {
         padding: 0px;
@@ -48,52 +50,54 @@
 
 .form-check-input {
     margin: 0;
-    border-color: $blue-green;
+    border-color: $cyan;
     border-width: 2px;
     margin-bottom: 3px;
     width: 1.2rem;
     height: 1.2rem;
 
     //資訊系統主題色
-    &.blue-green-check {
-        border-color: $blue-green2;
+    &.check-teal {
+        border-color: $teal;
     }
+    
+
 }
 
 .form-check-input:checked[type=radio] {
     background-color: #fff;
-    border-color: $blue-green;
+    border-color: $cyan;
     --bs-form-check-bg-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='2' fill='%232DC3C1'/%3e%3c/svg%3e");
     box-shadow: unset;
 
-    &.blue-green-check {
-        border-color: $blue-green2;
+    &.check-teal {
+        border-color: $teal;
         --bs-form-check-bg-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='2' fill='%2326A69A'/%3e%3c/svg%3e");
     }
 }
 .form-check-input:checked[type=checkbox] {
-    background-color: $blue-green;
-    border-color: $blue-green;
+    background-color: $cyan;
+    border-color: $cyan;
     &:focus {
-        border-color: $blue-green;
+        border-color: $cyan;
         box-shadow: 0 0 0 .25rem rgba(203, 240, 255, 0.5);
     }
     
     //資訊系統主題色
-    &.blue-green-check {
+    &.check-teal {
         &:checked {
-            background-color: $blue-green2;
-            border-color: $blue-green2;
+            background-color: $teal;
+            border-color: $teal;
         }
         
         &:focus {
-            border-color: $blue-green2;
+            border-color: $teal;
             box-shadow: 0 0 0 .25rem rgba(38, 166, 154, 0.25);
         }
         
         &:checked:focus {
-            background-color: $blue-green2;
-            border-color: $blue-green2;
+            background-color: $teal;
+            border-color: $teal;
             box-shadow: 0 0 0 .25rem rgba(38, 166, 154, 0.25);
         }
         
@@ -148,7 +152,7 @@
     transition: height 0.2s ease-in-out;
     
     &:focus {
-        outline: 2px solid $blue-green;
+        outline: 2px solid $cyan;
         outline-offset: 2px;
     }
 }

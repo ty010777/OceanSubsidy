@@ -2,20 +2,20 @@
     background-color: #fff;
     padding-inline: 24px;
     padding-block: 40px;
-    h4 {
-        color: $blue-green;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-weight: 700;
-        
-    }
+
     >.title {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border-bottom: 1px solid $blue-green;
+        border-bottom: 1px solid $cyan;
         padding-bottom: 10px;
+        h4 {
+            color: $cyan;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+        }
     }
     @media (max-width: $md) {
         padding-inline: 16px;
@@ -35,7 +35,7 @@
     text-align: center;
 }
 
-.block:has(.blue-green-table) {
+.block:has(.cyan-table) {
     @media (max-width: $md) {
         padding-inline: 0;
         >.title {
@@ -79,7 +79,7 @@
 
 //資訊系統 title
 .square-title {
-    color: $blue-green2;
+    color: $teal;
     font-size: 21.6px;
     font-weight: 800;
     display: flex;
@@ -90,7 +90,8 @@
         display: block;
         width: 13px;
         height: 13px;
-        background-color: $blue-green2;
+        background-color: $teal;
         margin-right: 8px;
     }
 }
+
