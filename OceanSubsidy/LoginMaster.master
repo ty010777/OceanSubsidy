@@ -5,6 +5,18 @@
 </asp:Content>
 
 <asp:Content ID="HeadExtra" ContentPlaceHolderID="HeadExtra" runat="server">
+    <script>
+        function showGlobalMessage(msg) {
+            var body = document.getElementById('msgModalBody');
+            if (body) body.innerText = msg;
+
+            var modalEl = document.getElementById('messageModal');
+            if (!modalEl) return;
+
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        }
+    </script>
+
     <asp:ContentPlaceHolder ID="HeadContent" runat="server" />
 </asp:Content>
 
@@ -17,6 +29,27 @@
         </main>
 
         <asp:ContentPlaceHolder ID="ModalContent" runat="server" />
+
+        <!-- 通用訊息 Modal -->
+        <div class="modal fade" id="messageModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="messageModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-md">
+                <div class="modal-content">
+                    <div class="modal-header">
+                    </div>
+                    <div class="modal-body">
+                        <div class="d-flex flex-column align-items-center gap-3">
+                            <h4 class="text-blue-green fw-bold text-center">
+                                <span id="msgModalBody"></span>
+                            </h4>
+                            <div class="d-flex gap-4 flex-wrap justify-content-center">
+                                <button type="button" class="btn btn-cyan" data-bs-dismiss="modal">
+                                    確定</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </form>
 
 </asp:Content>

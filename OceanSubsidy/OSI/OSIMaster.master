@@ -121,6 +121,9 @@
                         </li>
                     </ul>
                 </nav>
+
+                <!-- 回入口網 -->
+                <a href="<%= ResolveUrl("~/Default.aspx") %>" class="btn btn-sm btn-outline-green me-auto d-table ms-3 mb-3 ms-md-1">回入口網</a>
             </div>
 
         </div>
@@ -151,9 +154,35 @@
                                     <i class="fa-solid fa-user"></i>
                                 </div>
                                 <div class="user-info">
-                                    <asp:Label ID="lblUserName" CssClass="user-name" runat="server" />
+                                    <div class="d-flex align-items-center gap-4">
+                                        <!-- 登入者功能選單 -->
+                                        <div class="dropdown">
+                                            <button class="bg-transparent border-0 p-0" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <asp:Label ID="lblUserName" CssClass="user-name" runat="server" />
+                                                <i class="fas fa-caret-down ms-1"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <%--<li>
+                                                    <a class="dropdown-menu-item" href="#" tabindex="0">
+                                                        <span>編輯個人資料</span>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-menu-item" href="#" tabindex="0">
+                                                        <span>變更密碼</span>
+                                                    </a>
+                                                </li>--%>
+                                                <li>
+                                                    <a class="dropdown-menu-item" href="<%= ResolveUrl("~/Logout.aspx") %>" tabindex="0">
+                                                        <span>登出</span>
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
                                     <asp:Label ID="lblUnit" CssClass="user-department" runat="server" />
                                 </div>
+
                             </div>
                         </div>
                     </asp:Panel>
@@ -169,11 +198,11 @@
                             </div>
                             <div class="modal-body">
                                 <div class="d-flex flex-column align-items-center gap-3">
-                                    <h4 class="text-blue-green fw-bold">
+                                    <h4 class="text-blue-green fw-bold text-center">
                                         <span id="msgModalBody"></span>
                                     </h4>
                                     <div class="d-flex gap-4 flex-wrap justify-content-center">
-                                        <button type="button" class="btn btn-blue-green" data-bs-dismiss="modal">
+                                        <button type="button" class="btn btn-cyan" data-bs-dismiss="modal">
                                             確定</button>
                                     </div>
                                 </div>

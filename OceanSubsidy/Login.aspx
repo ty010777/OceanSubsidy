@@ -123,7 +123,7 @@
 
                     <!-- 登入按鈕 -->
                     <asp:Button ID="btnLogin" runat="server" Text="登入" ValidationGroup="Login"
-                        CssClass="btn btn-blue-green" OnClick="btnLogin_Click" />
+                        CssClass="btn btn-cyan" OnClick="btnLogin_Click" />
 
                 </div>
 
@@ -236,7 +236,8 @@
                                                         <button
                                                             id="btnSendCode"
                                                             runat="server"
-                                                            class="btn btn-blue-green"
+                                                            type="button"
+                                                            class="btn btn-cyan"
                                                             onserverclick="btnSendCode_Click">
                                                             發送驗證碼
                                                         </button>
@@ -318,7 +319,7 @@
                                     </table>
                                 </div>
                                 <asp:LinkButton ID="btnRegister" runat="server"
-                                    CssClass="btn btn-blue-green d-table mx-auto mt-3"
+                                    CssClass="btn btn-cyan d-table mx-auto mt-3"
                                     ValidationGroup="Register"
                                     OnClick="btnRegister_Click">
                                 <i class="fa-solid fa-check"></i>
@@ -385,7 +386,7 @@
                                 </div>
 
                                 <asp:LinkButton ID="btnForgot" runat="server"
-                                    CssClass="btn btn-blue-green d-table mx-auto mt-3"
+                                    CssClass="btn btn-cyan d-table mx-auto mt-3"
                                     ValidationGroup="Forgot"
                                     OnClick="btnForgot_Click">
                                     <i class="fa-solid fa-check"></i>
@@ -463,7 +464,7 @@
                                 </div>
 
                                 <asp:LinkButton ID="btnReset" runat="server"
-                                    CssClass="btn btn-blue-green d-table mx-auto mt-3"
+                                    CssClass="btn btn-cyan d-table mx-auto mt-3"
                                     ValidationGroup="Reset"
                                     OnClick="btnReset_Click">
                                     <i class="fa-solid fa-check"></i>

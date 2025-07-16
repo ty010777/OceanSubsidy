@@ -12,5 +12,8 @@
     }
     &-black {
         color: #000;
+        &:hover {
+            color: $teal-dark;
+        }
     }
 }

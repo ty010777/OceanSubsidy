@@ -7,6 +7,7 @@ using System.Text;
 using GS.Data;
 using GS.Data.Sql;
 using GS.OCA_OceanSubsidy.Entity;
+using GS.App;
 
 /// <summary>
 /// OSIActivityReportsHelper 的摘要描述
@@ -35,14 +36,10 @@ SELECT [ReportID]
     ,[ActivityName]
     ,[NatureID]
     ,[NatureText]
-    ,[CarrierTypeID]
-    ,[CarrierDetail]
-    ,[CarrierNo]
     ,[ResearchItemID]
     ,[ResearchItemNote]
     ,[Instruments]
     ,[ActivityOverview]
-    ,[SurveyScope]
     ,[GeoData]
     ,[LastUpdated]
     ,[LastUpdatedBy]
@@ -70,14 +67,10 @@ SELECT [ReportID]
     ,[ActivityName]
     ,[NatureID]
     ,[NatureText]
-    ,[CarrierTypeID]
-    ,[CarrierDetail]
-    ,[CarrierNo]
     ,[ResearchItemID]
     ,[ResearchItemNote]
     ,[Instruments]
     ,[ActivityOverview]
-    ,[SurveyScope]
     ,[GeoData]
     ,[LastUpdated]
     ,[LastUpdatedBy]
@@ -107,14 +100,10 @@ SELECT [ReportID]
     ,[ActivityName]
     ,[NatureID]
     ,[NatureText]
-    ,[CarrierTypeID]
-    ,[CarrierDetail]
-    ,[CarrierNo]
     ,[ResearchItemID]
     ,[ResearchItemNote]
     ,[Instruments]
     ,[ActivityOverview]
-    ,[SurveyScope]
     ,[GeoData]
     ,[LastUpdated]
     ,[LastUpdatedBy]
@@ -144,14 +133,10 @@ SELECT [ReportID]
     ,[ActivityName]
     ,[NatureID]
     ,[NatureText]
-    ,[CarrierTypeID]
-    ,[CarrierDetail]
-    ,[CarrierNo]
     ,[ResearchItemID]
     ,[ResearchItemNote]
     ,[Instruments]
     ,[ActivityOverview]
-    ,[SurveyScope]
     ,[GeoData]
     ,[LastUpdated]
     ,[LastUpdatedBy]
@@ -172,11 +157,11 @@ AND ReportingUnitID = @ReportingUnitID
     /// 查詢簡易報表列表（摘要），依 PeriodID 與 ReportingUnitID 過濾
     /// </summary>
     public static GisTable QueryActReport(
-        string periodID, 
-        string unitID = "-99", 
-        string natureID = "-99", 
-        string carrierTypeID = "-99", 
-        string itemID = "-99", 
+        string periodID,
+        string unitID = "-99",
+        string natureID = "-99",
+        string carrierTypeID = "-99",
+        string itemID = "-99",
         string key = "")
     {
         var db = new DbHelper();
@@ -189,6 +174,7 @@ WITH ExecCTE AS (
         SELECT '、' + ae2.ExecutorName
         FROM OSI_ActivityExecutors ae2
         WHERE ae2.ReportID = ae.ReportID
+        AND ae2.IsValid = 1
         FOR XML PATH(''), TYPE
       ).value('.', 'NVARCHAR(MAX)')
     , 1, 1, '')
@@ -200,7 +186,7 @@ SELECT
   r.ReportID,
   u.UnitName      AS ReportingUnit,
   r.ActivityName,
-  r.NatureText,
+  a.NatureName,
   e.Executors,
   d.StartDate,
   d.EndDate,
@@ -211,6 +197,8 @@ LEFT JOIN Sys_Unit u
   ON r.ReportingUnitID = u.UnitID
 LEFT JOIN ExecCTE e
   ON e.ReportID = r.ReportID
+LEFT JOIN OSI_ActivityNatures a
+  ON a.NatureID = r.NatureID
 
 CROSS APPLY (
   SELECT 
@@ -233,7 +221,12 @@ WHERE r.PeriodID  = @PeriodID
   )
   AND (
     @CarrierTypeID = '-99'
-    OR r.CarrierTypeID = @CarrierTypeID
+    OR EXISTS (
+      SELECT 1 FROM OSI_Carrier c 
+      WHERE c.ReportID = r.ReportID 
+        AND c.CarrierTypeID = @CarrierTypeID 
+        AND c.IsValid = 1
+    )
   )
   AND (
     @ResearchItemID = '-99'
@@ -244,7 +237,12 @@ WHERE r.PeriodID  = @PeriodID
     OR r.ActivityName LIKE '%' + @Key + '%'
     OR r.NatureText   LIKE '%' + @Key + '%'
     OR e.Executors    LIKE '%' + @Key + '%'
-    OR r.CarrierNo    LIKE '%' + @Key + '%'
+    OR EXISTS (
+      SELECT 1 FROM OSI_Carrier c 
+      WHERE c.ReportID = r.ReportID 
+        AND c.IsValid = 1
+        AND (c.CarrierNo LIKE '%' + @Key + '%' OR c.CarrierDetail LIKE '%' + @Key + '%')
+    )
     OR r.ResearchItemNote LIKE '%' + @Key + '%'
     OR r.Instruments      LIKE '%' + @Key + '%'
     OR r.ActivityOverview LIKE '%' + @Key + '%'
@@ -260,12 +258,34 @@ ORDER BY u.UnitName, r.ActivityName DESC;
         db.Parameters.Add("@Key", key ?? "");
 
         var tbl = db.GetTable();
-        // Executors過長的話，截斷顯示
+        tbl.Columns.Add("StartDateDisplay", typeof(string));
+        tbl.Columns.Add("EndDateDisplay", typeof(string));
+        tbl.Columns.Add("LastUpdatedDisplay", typeof(string));
         foreach (DataRow row in tbl.Rows)
         {
+            // Executors過長的話，截斷顯示
             var exec = row["Executors"]?.ToString() ?? "";
             if (exec.Length > 20)
                 row["Executors"] = exec.Substring(0, 20) + "…";
+
+            // 將日期欄位轉換為民國年格式
+            if (row["StartDate"] != DBNull.Value)
+            {
+                DateTime startDate = Convert.ToDateTime(row["StartDate"]);
+                row["StartDateDisplay"] = DateTimeHelper.ToMinguoDate(startDate);
+            }
+
+            if (row["EndDate"] != DBNull.Value)
+            {
+                DateTime endDate = Convert.ToDateTime(row["EndDate"]);
+                row["EndDateDisplay"] = DateTimeHelper.ToMinguoDate(endDate);
+            }
+
+            if (row["LastUpdated"] != DBNull.Value)
+            {
+                DateTime lastUpdated = Convert.ToDateTime(row["LastUpdated"]);
+                row["LastUpdatedDisplay"] = DateTimeHelper.ToMinguoDateTime(lastUpdated);
+            }
         }
 
         return tbl;
@@ -318,6 +338,44 @@ PeriodCTE AS (
   FROM dbo.OSI_ResearchPeriods rp
   WHERE rp.IsValid = 1
   GROUP BY rp.ReportID
+),
+ScopeCTE AS (
+  SELECT
+    ss.ReportID,
+    SurveyScopes = STUFF(
+      (
+        SELECT '、' + ss2.SurveyScope
+        FROM OSI_SurveyScopes ss2
+        WHERE ss2.ReportID = ss.ReportID
+          AND ss2.IsValid = 1
+        FOR XML PATH(''), TYPE
+      ).value('.', 'NVARCHAR(MAX)')
+    ,1,1,'')
+  FROM OSI_SurveyScopes ss
+  WHERE ss.IsValid = 1
+  GROUP BY ss.ReportID
+),
+CarrierCTE AS (
+  SELECT
+    c.ReportID,
+    Carriers = STUFF((
+      SELECT 
+        N'、' + ISNULL(ct.CarrierTypeName, '') + ':' + ISNULL(c2.CarrierDetail, '') + 
+        CASE 
+          WHEN ISNULL(c2.CarrierNo, '') <> '' 
+            THEN '(' + c2.CarrierNo + ')' 
+          ELSE '' 
+        END
+      FROM OSI_Carrier c2
+      LEFT JOIN OSI_CarrierTypes ct ON c2.CarrierTypeID = ct.CarrierTypeID
+      WHERE c2.ReportID = c.ReportID
+        AND c2.IsValid = 1
+      FOR XML PATH(''), TYPE
+    ).value('.', 'NVARCHAR(MAX)'),
+    1, 1, N'')
+  FROM OSI_Carrier c
+  WHERE c.IsValid = 1
+  GROUP BY c.ReportID
 )
 SELECT
   Period    = dp.PeriodYear
@@ -334,14 +392,12 @@ SELECT
   NatureText         = ISNULL(r.NatureText, ''),
   Executors          = ISNULL(e.Executors, ''),
   ResearchDates      = ISNULL(p.ResearchDates, ''),
-  CarrierTypeName    = ISNULL(ct.CarrierTypeName, ''),
-  CarrierDetail      = ISNULL(r.CarrierDetail, ''),
-  CarrierNo          = ISNULL(r.CarrierNo, ''),
+  Carriers           = ISNULL(car.Carriers, ''),
   ItemName           = ISNULL(ri.ItemName, ''),
   ResearchItemNote   = ISNULL(r.ResearchItemNote, ''),
   Instruments        = ISNULL(r.Instruments, ''),
   ActivityOverview   = ISNULL(r.ActivityOverview, ''),
-  SurveyScope        = ISNULL(r.SurveyScope, ''),
+  SurveyScopes       = ISNULL(sc.SurveyScopes, ''),
   ContactName        = ISNULL(su.Name, ''),
   ContactTel         = ISNULL(su.Tel, ''),
   ContactEmail       = ISNULL(su.Account, '')
@@ -354,14 +410,16 @@ JOIN OSI_ActivityNatures an
   ON r.NatureID = an.NatureID
 LEFT JOIN OSI_ResearchItems ri
   ON r.ResearchItemID = ri.ItemID
-LEFT JOIN OSI_CarrierTypes ct
-  ON r.CarrierTypeID = ct.CarrierTypeID
 LEFT JOIN Sys_User su
   ON r.LastUpdatedBy = su.UserID
 LEFT JOIN ExecCTE e
   ON e.ReportID = r.ReportID
 LEFT JOIN PeriodCTE p
   ON p.ReportID = r.ReportID
+LEFT JOIN ScopeCTE sc
+  ON sc.ReportID = r.ReportID
+LEFT JOIN CarrierCTE car
+  ON car.ReportID = r.ReportID
 WHERE r.IsValid = 1
 ");
         if (reportIDs != null && reportIDs.Length > 0)
@@ -379,12 +437,64 @@ WHERE r.IsValid = 1
                 db.Parameters.Add(names[i], reportIDs[i]);
             }
         }
-
-        sb.Append("ORDER BY dp.PeriodYear, dp.QuarterStartDate;");
+        sb.Append("ORDER BY u.UnitName, r.ActivityName DESC;");
 
         // 最後把拼好的 SQL 下到 db
         db.CommandText = sb.ToString();
-        return db.GetTable();
+        var tbl = db.GetTable();
+
+        // 將研究調查日期欄位轉換為民國年格式
+        foreach (DataRow row in tbl.Rows)
+        {
+            var researchDates = row["ResearchDates"]?.ToString();
+            if (!string.IsNullOrEmpty(researchDates))
+            {
+                // 處理多個日期範圍，以「、」分隔
+                var dateRanges = researchDates.Split('、');
+                var convertedRanges = new List<string>();
+
+                foreach (var range in dateRanges)
+                {
+                    // 處理每個日期範圍 (YYYY.MM.DD - YYYY.MM.DD [標籤])
+                    var parts = range.Split(new[] { " - " }, StringSplitOptions.None);
+                    if (parts.Length >= 2)
+                    {
+                        try
+                        {
+                            // 解析開始日期
+                            var startDateStr = parts[0].Trim();
+                            var startDate = DateTime.ParseExact(startDateStr, "yyyy.MM.dd", null);
+                            var minguoStart = DateTimeHelper.ToMinguoDate(startDate);
+
+                            // 解析結束日期和標籤
+                            var endPart = parts[1].Trim();
+                            var labelIndex = endPart.IndexOf(' ');
+                            var endDateStr = labelIndex > 0 ? endPart.Substring(0, labelIndex) : endPart;
+                            var label = labelIndex > 0 ? endPart.Substring(labelIndex) : "";
+
+                            var endDate = DateTime.ParseExact(endDateStr, "yyyy.MM.dd", null);
+                            var minguoEnd = DateTimeHelper.ToMinguoDate(endDate);
+
+                            // 重組日期範圍
+                            convertedRanges.Add($"{minguoStart} - {minguoEnd}{label}");
+                        }
+                        catch
+                        {
+                            // 如果轉換失敗，保留原始格式
+                            convertedRanges.Add(range);
+                        }
+                    }
+                    else
+                    {
+                        convertedRanges.Add(range);
+                    }
+                }
+
+                row["ResearchDates"] = string.Join("、", convertedRanges);
+            }
+        }
+
+        return tbl;
     }
 
 
@@ -518,8 +628,10 @@ SELECT
 	c.CarrierTypeName AS Name, 
 	COUNT(*) AS Num
 FROM OSI_CarrierTypes c
-JOIN OSI_ActivityReports r ON r.CarrierTypeID = c.CarrierTypeID
+JOIN OSI_Carrier carr ON c.CarrierTypeID = carr.CarrierTypeID
+JOIN OSI_ActivityReports r ON carr.ReportID = r.ReportID
 WHERE r.IsValid = 1
+AND carr.IsValid = 1
 AND r.PeriodID = @PeriodID
 GROUP BY c.CarrierTypeName
 ";
@@ -553,7 +665,7 @@ WHERE ReportID = @ReportID
             {
                 rtVal = row["GeoData"].ToString();
             }
-        }        
+        }
 
         return rtVal;
     }
@@ -566,9 +678,13 @@ WHERE ReportID = @ReportID
         List<OSI_ActivityExecutors> executors,
         List<OSI_ResearchPeriods> resPeriods,
         List<OSI_ActivityFiles> files,
+        List<OSI_SurveyScopes> surveyScopes,
+        List<OSI_Carrier> carriers,
         List<int> delExecutors,
         List<int> delResPeriods,
         List<int> delFiles,
+        List<int> delSurveyScopes,
+        List<int> delCarriers,
         string baseDir)
     {
         int reportID = 0;
@@ -577,14 +693,29 @@ WHERE ReportID = @ReportID
         db.BeginTrans();
         try
         {
-            db.CommandText = @"
-INSERT INTO [dbo].[OSI_ActivityReports]([PeriodID],[ReportingUnitID],[ActivityName],[NatureID],[NatureText],[CarrierTypeID],[CarrierDetail],[CarrierNo],[ResearchItemID],[ResearchItemNote],[Instruments],[ActivityOverview],[SurveyScope],[GeoData],[LastUpdated],[LastUpdatedBy],[IsValid])
-VALUES(@PeriodID,@ReportingUnitID,@ActivityName,@NatureID,@NatureText,@CarrierTypeID,@CarrierDetail,@CarrierNo,@ResearchItemID,@ResearchItemNote,@Instruments,@ActivityOverview,@SurveyScope,
+            // 根據 GeoData 是否為 null 或空字串，動態構建 SQL
+            if (string.IsNullOrEmpty(report.GeoData))
+            {
+                db.CommandText = @"
+INSERT INTO [dbo].[OSI_ActivityReports]([PeriodID],[ReportingUnitID],[ActivityName],[NatureID],[NatureText],[ResearchItemID],[ResearchItemNote],[Instruments],[ActivityOverview],[GeoData],[LastUpdated],[LastUpdatedBy],[IsValid])
+VALUES(@PeriodID,@ReportingUnitID,@ActivityName,@NatureID,@NatureText,@ResearchItemID,@ResearchItemNote,@Instruments,@ActivityOverview,
+NULL,
+@LastUpdated,@LastUpdatedBy,@IsValid)
+
+ SELECT SCOPE_IDENTITY();
+";
+            }
+            else
+            {
+                db.CommandText = @"
+INSERT INTO [dbo].[OSI_ActivityReports]([PeriodID],[ReportingUnitID],[ActivityName],[NatureID],[NatureText],[ResearchItemID],[ResearchItemNote],[Instruments],[ActivityOverview],[GeoData],[LastUpdated],[LastUpdatedBy],[IsValid])
+VALUES(@PeriodID,@ReportingUnitID,@ActivityName,@NatureID,@NatureText,@ResearchItemID,@ResearchItemNote,@Instruments,@ActivityOverview,
 geometry::STGeomFromText(@GeoData, 3826),
 @LastUpdated,@LastUpdatedBy,@IsValid)
 
  SELECT SCOPE_IDENTITY();
 ";
+            }
 
             db.Parameters.Clear();
             db.Parameters.Add("@PeriodID", report.PeriodID);
@@ -592,15 +723,15 @@ geometry::STGeomFromText(@GeoData, 3826),
             db.Parameters.Add("@ActivityName", report.ActivityName);
             db.Parameters.Add("@NatureID", report.NatureID);
             db.Parameters.Add("@NatureText", report.NatureText);
-            db.Parameters.Add("@CarrierTypeID", report.CarrierTypeID);
-            db.Parameters.Add("@CarrierDetail", report.CarrierDetail);
-            db.Parameters.Add("@CarrierNo", report.CarrierNo);
             db.Parameters.Add("@ResearchItemID", report.ResearchItemID);
             db.Parameters.Add("@ResearchItemNote", report.ResearchItemNote);
             db.Parameters.Add("@Instruments", report.Instruments);
             db.Parameters.Add("@ActivityOverview", report.ActivityOverview);
-            db.Parameters.Add("@SurveyScope", report.SurveyScope);
-            db.Parameters.Add("@GeoData", report.GeoData);
+            // 只有在 GeoData 不為 null 或空字串時才添加參數
+            if (!string.IsNullOrEmpty(report.GeoData))
+            {
+                db.Parameters.Add("@GeoData", report.GeoData);
+            }
             db.Parameters.Add("@LastUpdated", report.LastUpdated);
             db.Parameters.Add("@LastUpdatedBy", report.LastUpdatedBy);
             db.Parameters.Add("@IsValid", report.IsValid);
@@ -703,6 +834,66 @@ WHERE AttachmentID IN (" + string.Join(",", delFiles) + @")
                 db.ExecuteNonQuery();
             }
 
+            // 新增研究調查範圍
+            foreach (var scope in surveyScopes)
+            {
+                db.CommandText = @"
+INSERT INTO [dbo].[OSI_SurveyScopes]([ReportID],[SurveyScope],[IsValid],[CreatedAt])
+VALUES(@ReportID,@SurveyScope,@IsValid,GETDATE())
+";
+                db.Parameters.Clear();
+                db.Parameters.Add("@ReportID", reportID);
+                db.Parameters.Add("@SurveyScope", scope.SurveyScope);
+                db.Parameters.Add("@IsValid", 1);
+                db.ExecuteNonQuery();
+            }
+
+            // 刪除研究調查範圍
+            if (delSurveyScopes.Count > 0)
+            {
+                db.CommandText = @"
+UPDATE [dbo].[OSI_SurveyScopes]
+SET IsValid = 0
+, DeletedAt = GETDATE()
+, DeletedBy = @DeletedBy
+WHERE ScopeID IN (" + string.Join(",", delSurveyScopes) + @")
+";
+                db.Parameters.Clear();
+                db.Parameters.Add("@DeletedBy", report.LastUpdatedBy);
+                db.ExecuteNonQuery();
+            }
+
+            // 新增載具
+            foreach (var carrier in carriers)
+            {
+                db.CommandText = @"
+INSERT INTO [dbo].[OSI_Carrier]([ReportID],[CarrierTypeID],[CarrierDetail],[CarrierNo],[IsValid],[CreatedAt])
+VALUES(@ReportID,@CarrierTypeID,@CarrierDetail,@CarrierNo,@IsValid,GETDATE())
+";
+                db.Parameters.Clear();
+                db.Parameters.Add("@ReportID", reportID);
+                db.Parameters.Add("@CarrierTypeID", carrier.CarrierTypeID);
+                db.Parameters.Add("@CarrierDetail", carrier.CarrierDetail);
+                db.Parameters.Add("@CarrierNo", carrier.CarrierNo);
+                db.Parameters.Add("@IsValid", 1);
+                db.ExecuteNonQuery();
+            }
+
+            // 刪除載具
+            if (delCarriers.Count > 0)
+            {
+                db.CommandText = @"
+UPDATE [dbo].[OSI_Carrier]
+SET IsValid = 0
+, DeletedAt = GETDATE()
+, DeletedBy = @DeletedBy
+WHERE CarrierID IN (" + string.Join(",", delCarriers) + @")
+";
+                db.Parameters.Clear();
+                db.Parameters.Add("@DeletedBy", report.LastUpdatedBy);
+                db.ExecuteNonQuery();
+            }
+
             db.Commit();
         }
         catch (Exception ex)
@@ -723,16 +914,23 @@ WHERE AttachmentID IN (" + string.Join(",", delFiles) + @")
         List<OSI_ActivityExecutors> executors,
         List<OSI_ResearchPeriods> resPeriods,
         List<OSI_ActivityFiles> files,
+        List<OSI_SurveyScopes> surveyScopes,
+        List<OSI_Carrier> carriers,
         List<int> delExecutors,
         List<int> delResPeriods,
-        List<int> delFiles)
+        List<int> delFiles,
+        List<int> delSurveyScopes,
+        List<int> delCarriers)
     {
         DbHelper db = new DbHelper();
 
         db.BeginTrans();
         try
         {
-            db.CommandText = @"
+            // 根據 GeoData 是否為 null 或空字串，動態構建 SQL
+            if (string.IsNullOrEmpty(report.GeoData))
+            {
+                db.CommandText = @"
 UPDATE [dbo].[OSI_ActivityReports]
 SET 
      [PeriodID] = @PeriodID
@@ -740,20 +938,38 @@ SET
     ,[ActivityName] = @ActivityName
     ,[NatureID] = @NatureID
     ,[NatureText] = @NatureText
-    ,[CarrierTypeID] = @CarrierTypeID
-    ,[CarrierDetail] = @CarrierDetail
-    ,[CarrierNo] = @CarrierNo
     ,[ResearchItemID] = @ResearchItemID
     ,[ResearchItemNote] = @ResearchItemNote
     ,[Instruments] = @Instruments
     ,[ActivityOverview] = @ActivityOverview
-    ,[SurveyScope] = @SurveyScope
+    ,[GeoData] = NULL
+    ,[LastUpdated] = @LastUpdated
+    ,[LastUpdatedBy] = @LastUpdatedBy
+    ,[IsValid] = @IsValid
+ WHERE ReportID = @ReportID
+";
+            }
+            else
+            {
+                db.CommandText = @"
+UPDATE [dbo].[OSI_ActivityReports]
+SET 
+     [PeriodID] = @PeriodID
+    ,[ReportingUnitID] = @ReportingUnitID
+    ,[ActivityName] = @ActivityName
+    ,[NatureID] = @NatureID
+    ,[NatureText] = @NatureText
+    ,[ResearchItemID] = @ResearchItemID
+    ,[ResearchItemNote] = @ResearchItemNote
+    ,[Instruments] = @Instruments
+    ,[ActivityOverview] = @ActivityOverview
     ,[GeoData] = geometry::STGeomFromText(@GeoData, 3826)
     ,[LastUpdated] = @LastUpdated
     ,[LastUpdatedBy] = @LastUpdatedBy
     ,[IsValid] = @IsValid
  WHERE ReportID = @ReportID
 ";
+            }
 
             db.Parameters.Clear();
             db.Parameters.Add("@ReportID", reportID);
@@ -762,15 +978,15 @@ SET
             db.Parameters.Add("@ActivityName", report.ActivityName);
             db.Parameters.Add("@NatureID", report.NatureID);
             db.Parameters.Add("@NatureText", report.NatureText);
-            db.Parameters.Add("@CarrierTypeID", report.CarrierTypeID);
-            db.Parameters.Add("@CarrierDetail", report.CarrierDetail);
-            db.Parameters.Add("@CarrierNo", report.CarrierNo);
             db.Parameters.Add("@ResearchItemID", report.ResearchItemID);
             db.Parameters.Add("@ResearchItemNote", report.ResearchItemNote);
             db.Parameters.Add("@Instruments", report.Instruments);
             db.Parameters.Add("@ActivityOverview", report.ActivityOverview);
-            db.Parameters.Add("@SurveyScope", report.SurveyScope);
-            db.Parameters.Add("@GeoData", report.GeoData);
+            // 只有在 GeoData 不為 null 或空字串時才添加參數
+            if (!string.IsNullOrEmpty(report.GeoData))
+            {
+                db.Parameters.Add("@GeoData", report.GeoData);
+            }
             db.Parameters.Add("@LastUpdated", report.LastUpdated);
             db.Parameters.Add("@LastUpdatedBy", report.LastUpdatedBy);
             db.Parameters.Add("@IsValid", report.IsValid);
@@ -866,6 +1082,66 @@ WHERE AttachmentID IN (" + string.Join(",", delFiles) + @")
                 db.ExecuteNonQuery();
             }
 
+            // 新增研究調查範圍
+            foreach (var scope in surveyScopes)
+            {
+                db.CommandText = @"
+INSERT INTO [dbo].[OSI_SurveyScopes]([ReportID],[SurveyScope],[IsValid],[CreatedAt])
+VALUES(@ReportID,@SurveyScope,@IsValid,GETDATE())
+";
+                db.Parameters.Clear();
+                db.Parameters.Add("@ReportID", reportID);
+                db.Parameters.Add("@SurveyScope", scope.SurveyScope);
+                db.Parameters.Add("@IsValid", 1);
+                db.ExecuteNonQuery();
+            }
+
+            // 刪除研究調查範圍
+            if (delSurveyScopes.Count > 0)
+            {
+                db.CommandText = @"
+UPDATE [dbo].[OSI_SurveyScopes]
+SET IsValid = 0
+, DeletedAt = GETDATE()
+, DeletedBy = @DeletedBy
+WHERE ScopeID IN (" + string.Join(",", delSurveyScopes) + @")
+";
+                db.Parameters.Clear();
+                db.Parameters.Add("@DeletedBy", report.LastUpdatedBy);
+                db.ExecuteNonQuery();
+            }
+
+            // 新增載具
+            foreach (var carrier in carriers)
+            {
+                db.CommandText = @"
+INSERT INTO [dbo].[OSI_Carrier]([ReportID],[CarrierTypeID],[CarrierDetail],[CarrierNo],[IsValid],[CreatedAt])
+VALUES(@ReportID,@CarrierTypeID,@CarrierDetail,@CarrierNo,@IsValid,GETDATE())
+";
+                db.Parameters.Clear();
+                db.Parameters.Add("@ReportID", reportID);
+                db.Parameters.Add("@CarrierTypeID", carrier.CarrierTypeID);
+                db.Parameters.Add("@CarrierDetail", carrier.CarrierDetail);
+                db.Parameters.Add("@CarrierNo", carrier.CarrierNo);
+                db.Parameters.Add("@IsValid", 1);
+                db.ExecuteNonQuery();
+            }
+
+            // 刪除載具
+            if (delCarriers.Count > 0)
+            {
+                db.CommandText = @"
+UPDATE [dbo].[OSI_Carrier]
+SET IsValid = 0
+, DeletedAt = GETDATE()
+, DeletedBy = @DeletedBy
+WHERE CarrierID IN (" + string.Join(",", delCarriers) + @")
+";
+                db.Parameters.Clear();
+                db.Parameters.Add("@DeletedBy", report.LastUpdatedBy);
+                db.ExecuteNonQuery();
+            }
+
             db.Commit();
             return true;
         }
@@ -891,8 +1167,8 @@ WHERE AttachmentID IN (" + string.Join(",", delFiles) + @")
         {
             OSI_ActivityReports copyActRptData = QueryByIDWithClass(reportID.ToString());
             db.CommandText = @"
-INSERT INTO [dbo].[OSI_ActivityReports]([PeriodID],[ReportingUnitID],[ActivityName],[NatureID],[NatureText],[CarrierTypeID],[CarrierDetail],[CarrierNo],[ResearchItemID],[ResearchItemNote],[Instruments],[ActivityOverview],[SurveyScope],[GeoData],[LastUpdated],[LastUpdatedBy],[IsValid],[CopyReportID])
-VALUES(@PeriodID,@ReportingUnitID,@ActivityName,@NatureID,@NatureText,@CarrierTypeID,@CarrierDetail,@CarrierNo,@ResearchItemID,@ResearchItemNote,@Instruments,@ActivityOverview,@SurveyScope,
+INSERT INTO [dbo].[OSI_ActivityReports]([PeriodID],[ReportingUnitID],[ActivityName],[NatureID],[NatureText],[ResearchItemID],[ResearchItemNote],[Instruments],[ActivityOverview],[GeoData],[LastUpdated],[LastUpdatedBy],[IsValid],[CopyReportID])
+VALUES(@PeriodID,@ReportingUnitID,@ActivityName,@NatureID,@NatureText,@ResearchItemID,@ResearchItemNote,@Instruments,@ActivityOverview,
 geometry::STGeomFromText(@GeoData, 3826),
 @LastUpdated,@LastUpdatedBy,@IsValid,@CopyReportID)
 
@@ -905,14 +1181,10 @@ geometry::STGeomFromText(@GeoData, 3826),
             db.Parameters.Add("@ActivityName", copyActRptData.ActivityName);
             db.Parameters.Add("@NatureID", copyActRptData.NatureID);
             db.Parameters.Add("@NatureText", copyActRptData.NatureText);
-            db.Parameters.Add("@CarrierTypeID", copyActRptData.CarrierTypeID);
-            db.Parameters.Add("@CarrierDetail", copyActRptData.CarrierDetail);
-            db.Parameters.Add("@CarrierNo", copyActRptData.CarrierNo);
             db.Parameters.Add("@ResearchItemID", copyActRptData.ResearchItemID);
             db.Parameters.Add("@ResearchItemNote", copyActRptData.ResearchItemNote);
             db.Parameters.Add("@Instruments", copyActRptData.Instruments);
             db.Parameters.Add("@ActivityOverview", copyActRptData.ActivityOverview);
-            db.Parameters.Add("@SurveyScope", copyActRptData.SurveyScope);
             db.Parameters.Add("@GeoData", copyActRptData.GeoData);
             db.Parameters.Add("@LastUpdated", copyActRptData.LastUpdated);
             db.Parameters.Add("@LastUpdatedBy", copyActRptData.LastUpdatedBy);
@@ -971,6 +1243,38 @@ VALUES(@ReportID,@FileName,@FilePath,@IsValid)
                 db.Parameters.Add("@ReportID", newReportID);
                 db.Parameters.Add("@FileName", file.FileName);
                 db.Parameters.Add("@FilePath", file.FilePath);
+                db.Parameters.Add("@IsValid", 1);
+                db.ExecuteNonQuery();
+            }
+
+            // 新增研究調查範圍
+            List<OSI_SurveyScopes> copySurveyScopes = OSISurveyScopesHelper.QueryByReportIDWithClass(reportID.ToString());
+            foreach (var scope in copySurveyScopes)
+            {
+                db.CommandText = @"
+INSERT INTO [dbo].[OSI_SurveyScopes]([ReportID],[SurveyScope],[IsValid],[CreatedAt])
+VALUES(@ReportID,@SurveyScope,@IsValid,GETDATE())
+";
+                db.Parameters.Clear();
+                db.Parameters.Add("@ReportID", newReportID);
+                db.Parameters.Add("@SurveyScope", scope.SurveyScope);
+                db.Parameters.Add("@IsValid", 1);
+                db.ExecuteNonQuery();
+            }
+
+            // 新增載具
+            List<OSI_Carrier> copyCarriers = OSICarrierHelper.QueryByReportIDWithClass(reportID.ToString());
+            foreach (var carrier in copyCarriers)
+            {
+                db.CommandText = @"
+INSERT INTO [dbo].[OSI_Carrier]([ReportID],[CarrierTypeID],[CarrierDetail],[CarrierNo],[IsValid],[CreatedAt])
+VALUES(@ReportID,@CarrierTypeID,@CarrierDetail,@CarrierNo,@IsValid,GETDATE())
+";
+                db.Parameters.Clear();
+                db.Parameters.Add("@ReportID", newReportID);
+                db.Parameters.Add("@CarrierTypeID", carrier.CarrierTypeID);
+                db.Parameters.Add("@CarrierDetail", carrier.CarrierDetail);
+                db.Parameters.Add("@CarrierNo", carrier.CarrierNo);
                 db.Parameters.Add("@IsValid", 1);
                 db.ExecuteNonQuery();
             }
@@ -1079,7 +1383,7 @@ ORDER BY c_name, UnitName
 ";
         db.Parameters.Clear();
         db.Parameters.Add("@PeriodID", periodID);
-        
+
         return db.GetTable();
     }
 
@@ -1120,7 +1424,7 @@ ORDER BY UnitName, CountyName
 ";
         db.Parameters.Clear();
         db.Parameters.Add("@PeriodID", periodID);
-        
+
         return db.GetTable();
     }
 

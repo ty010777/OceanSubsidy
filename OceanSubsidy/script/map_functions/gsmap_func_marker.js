@@ -68,8 +68,8 @@ gsmap.func.Marker = function (_plugin, targetDom) {
         if ($mainDom) {
             $mainDom.width("");
         }
-         $("#divMark").show();
-         $("#divMark .panel").show();
+        $("#divMark").show();
+        $("#divMark .panel").show();
     };
 
     this.hide = function () {
@@ -77,8 +77,8 @@ gsmap.func.Marker = function (_plugin, targetDom) {
         bShow = false;
         if ($mainDom)
             $mainDom.width(0);
-         $("#divMark").hide();
-         $("#divMark .panel").hide();
+        $("#divMark").hide();
+        $("#divMark .panel").hide();
         if (typeof map !== 'undefined' && typeof drawInteraction !== 'undefined') {
             map.removeInteraction(drawInteraction);
         }
@@ -795,15 +795,13 @@ function createPoint() {
     var lat = 0;
 
     if (CoordType == "DMS") {
-        var lonObj = $("#txtPtLon").val() != "" ? $("#txtPtLon").val().split(" ") : "";
-        var lonD = lonObj[0];
-        var lonM = lonObj[1];
-        var lonS = lonObj[2];
+        var lonD = $("#txtPtLonD").val();
+        var lonM = $("#txtPtLonM").val();
+        var lonS = $("#txtPtLonS").val();
 
-        var latObj = $("#txtPtLat").val() != "" ? $("#txtPtLat").val().split(" ") : "";
-        var latD = latObj[0];
-        var latM = latObj[1];
-        var latS = latObj[2];
+        var latD = $("#txtPtLatD").val();
+        var latM = $("#txtPtLatM").val();
+        var latS = $("#txtPtLatS").val();
 
         lon = (lonD != "" ? parseFloat(lonD) : 0)
             + (isNaN(parseFloat(lonM)) ? 0 : parseFloat(lonM)) / 60
@@ -957,18 +955,18 @@ function addLineMark() {
         var CoordType = $("#ddlLineCoordType").val();
 
         if (CoordType == "DMS") {
-            var EachPt = $("#divLineDMS input");
-            var EachType = $("#divLineDMS select");
-            for (i = 0; i < EachPt.length; i += 2) {
-                var latObj = EachPt[i].value != "" ? EachPt[i].value.split(" ") : "";
-                var latD = latObj[0];
-                var latM = latObj[1];
-                var latS = latObj[2];
+            // 取得所有線段座標點的數量（透過查找緯度下拉選單）
+            var latSelects = $("#divLineDMS select[id^='ddlLineLat']");
+            var lonSelects = $("#divLineDMS select[id^='ddlLineLon']");
 
-                var lonObj = EachPt[i + 1].value != "" ? EachPt[i + 1].value.split(" ") : "";
-                var lonD = lonObj[0];
-                var lonM = lonObj[1];
-                var lonS = lonObj[2];
+            for (i = 1; i <= latSelects.length; i++) {
+                var latD = $("#txtLineLat" + i + "D").val();
+                var latM = $("#txtLineLat" + i + "M").val();
+                var latS = $("#txtLineLat" + i + "S").val();
+
+                var lonD = $("#txtLineLon" + i + "D").val();
+                var lonM = $("#txtLineLon" + i + "M").val();
+                var lonS = $("#txtLineLon" + i + "S").val();
 
                 lon = (lonD != "" ? parseFloat(lonD) : 0)
                     + (isNaN(parseFloat(lonM)) ? 0 : parseFloat(lonM)) / 60
@@ -978,11 +976,11 @@ function addLineMark() {
                     + (isNaN(parseFloat(latM)) ? 0 : parseFloat(latM)) / 60
                     + (isNaN(parseFloat(latS)) ? 0 : parseFloat(latS)) / 3600;
 
-                if (EachType[i].value == "W") {
+                if ($("#ddlLineLon" + i).val() == "W") {
                     lon = -Math.abs(lon);
                 }
 
-                if (EachType[i + 1].value == "S") {
+                if ($("#ddlLineLat" + i).val() == "S") {
                     lat = -Math.abs(lat);
                 }
                 var Coord3857 = ol.proj.transform([lon, lat], "EPSG:4326", "EPSG:3857");
@@ -1112,18 +1110,17 @@ function addPolyMark() {
 
             var CoordType = $("#ddlPolyCoordType").val();
             if (CoordType == "DMS") {
-                var EachPt = $("#divPolyDMS input");
-                var EachType = $("#divPolyDMS select");
-                for (i = 0; i < EachPt.length; i += 2) {
-                    var latObj = EachPt[i].value != "" ? EachPt[i].value.split(" ") : "";
-                    var latD = latObj[0];
-                    var latM = latObj[1];
-                    var latS = latObj[2];
+                // 取得所有多邊形座標點的數量（透過查找緯度下拉選單）
+                var latSelects = $("#divPolyDMS select[id^='ddlPolyLat']");
 
-                    var lonObj = EachPt[i + 1].value != "" ? EachPt[i + 1].value.split(" ") : "";
-                    var lonD = lonObj[0];
-                    var lonM = lonObj[1];
-                    var lonS = lonObj[2];
+                for (i = 1; i <= latSelects.length; i++) {
+                    var latD = $("#txtPolyLat" + i + "D").val();
+                    var latM = $("#txtPolyLat" + i + "M").val();
+                    var latS = $("#txtPolyLat" + i + "S").val();
+
+                    var lonD = $("#txtPolyLon" + i + "D").val();
+                    var lonM = $("#txtPolyLon" + i + "M").val();
+                    var lonS = $("#txtPolyLon" + i + "S").val();
 
                     lon = (lonD != "" ? parseFloat(lonD) : 0)
                         + (isNaN(parseFloat(lonM)) ? 0 : parseFloat(lonM)) / 60
@@ -1133,11 +1130,11 @@ function addPolyMark() {
                         + (isNaN(parseFloat(latM)) ? 0 : parseFloat(latM)) / 60
                         + (isNaN(parseFloat(latS)) ? 0 : parseFloat(latS)) / 3600;
 
-                    if (EachType[i].value == "W") {
+                    if ($("#ddlPolyLon" + i).val() == "W") {
                         lon = -Math.abs(lon);
                     }
 
-                    if (EachType[i + 1].value == "S") {
+                    if ($("#ddlPolyLat" + i).val() == "S") {
                         lat = -Math.abs(lat);
                     }
 
@@ -1150,7 +1147,7 @@ function addPolyMark() {
 
                     var Coord3857 = ol.proj.transform([lon, lat], "EPSG:4326", "EPSG:3857");
                     polyCoords.push(Coord3857);
-                    if (i == 0) {
+                    if (i == 1) {
                         FirstPt = Coord3857;
                     }
                 }
@@ -1245,26 +1242,48 @@ function addBoxMark() {
 
         var CoordType = $("#ddlBoxCoordType").val();
         if (CoordType == "DMS") {
-            var objLU_X = $("#txtBoxLon1").val().split(" ");
-            var objLU_Y = $("#txtBoxLat1").val().split(" ");
-            var objRD_X = $("#txtBoxLon2").val().split(" ");
-            var objRD_Y = $("#txtBoxLat2").val().split(" ");
+            var lat1D = $("#txtBoxLat1D").val();
+            var lat1M = $("#txtBoxLat1M").val();
+            var lat1S = $("#txtBoxLat1S").val();
+            var lon1D = $("#txtBoxLon1D").val();
+            var lon1M = $("#txtBoxLon1M").val();
+            var lon1S = $("#txtBoxLon1S").val();
 
-            leftUpX = (objLU_X[0] != "" ? parseFloat(objLU_X[0]) : 0)
-                + (isNaN(parseFloat(objLU_X[1])) ? 0 : parseFloat(objLU_X[1])) / 60
-                + (isNaN(parseFloat(objLU_X[2])) ? 0 : parseFloat(objLU_X[2])) / 3600;
+            var lat2D = $("#txtBoxLat2D").val();
+            var lat2M = $("#txtBoxLat2M").val();
+            var lat2S = $("#txtBoxLat2S").val();
+            var lon2D = $("#txtBoxLon2D").val();
+            var lon2M = $("#txtBoxLon2M").val();
+            var lon2S = $("#txtBoxLon2S").val();
 
-            leftUpY = (objLU_Y[0] != "" ? parseFloat(objLU_Y[0]) : 0)
-                + (isNaN(parseFloat(objLU_Y[1])) ? 0 : parseFloat(objLU_Y[1])) / 60
-                + (isNaN(parseFloat(objLU_Y[2])) ? 0 : parseFloat(objLU_Y[2])) / 3600;
+            leftUpX = (lon1D != "" ? parseFloat(lon1D) : 0)
+                + (isNaN(parseFloat(lon1M)) ? 0 : parseFloat(lon1M)) / 60
+                + (isNaN(parseFloat(lon1S)) ? 0 : parseFloat(lon1S)) / 3600;
 
-            rightDownX = (objRD_X[0] != "" ? parseFloat(objRD_X[0]) : 0)
-                + (isNaN(parseFloat(objRD_X[1])) ? 0 : parseFloat(objRD_X[1])) / 60
-                + (isNaN(parseFloat(objRD_X[2])) ? 0 : parseFloat(objRD_X[2])) / 3600;
+            leftUpY = (lat1D != "" ? parseFloat(lat1D) : 0)
+                + (isNaN(parseFloat(lat1M)) ? 0 : parseFloat(lat1M)) / 60
+                + (isNaN(parseFloat(lat1S)) ? 0 : parseFloat(lat1S)) / 3600;
 
-            rightDownY = (objRD_Y[0] != "" ? parseFloat(objRD_Y[0]) : 0)
-                + (isNaN(parseFloat(objRD_Y[1])) ? 0 : parseFloat(objRD_Y[1])) / 60
-                + (isNaN(parseFloat(objRD_Y[2])) ? 0 : parseFloat(objRD_Y[2])) / 3600;
+            rightDownX = (lon2D != "" ? parseFloat(lon2D) : 0)
+                + (isNaN(parseFloat(lon2M)) ? 0 : parseFloat(lon2M)) / 60
+                + (isNaN(parseFloat(lon2S)) ? 0 : parseFloat(lon2S)) / 3600;
+
+            rightDownY = (lat2D != "" ? parseFloat(lat2D) : 0)
+                + (isNaN(parseFloat(lat2M)) ? 0 : parseFloat(lat2M)) / 60
+                + (isNaN(parseFloat(lat2S)) ? 0 : parseFloat(lat2S)) / 3600;
+
+            if ($("#ddlBoxLon1").val() == "W") {
+                leftUpX = -Math.abs(leftUpX);
+            }
+            if ($("#ddlBoxLat1").val() == "S") {
+                leftUpY = -Math.abs(leftUpY);
+            }
+            if ($("#ddlBoxLon2").val() == "W") {
+                rightDownX = -Math.abs(rightDownX);
+            }
+            if ($("#ddlBoxLat2").val() == "S") {
+                rightDownY = -Math.abs(rightDownY);
+            }
         } else {
             leftUpX = (isNaN(parseFloat($("#txtBoxLonDD1").val())) ? 0 : parseFloat($("#txtBoxLonDD1").val()));
             leftUpY = (isNaN(parseFloat($("#txtBoxLatDD1").val())) ? 0 : parseFloat($("#txtBoxLatDD1").val()));
@@ -1361,15 +1380,13 @@ function addCirMark() {
     var lat = 0;
 
     if (CoordType == "DMS") {
-        var lonObj = $("#txtCirLon").val() != "" ? $("#txtCirLon").val().split(" ") : "";
-        var lonD = lonObj[0];
-        var lonM = lonObj[1];
-        var lonS = lonObj[2];
+        var lonD = $("#txtCirLonD").val();
+        var lonM = $("#txtCirLonM").val();
+        var lonS = $("#txtCirLonS").val();
 
-        var latObj = $("#txtCirLat").val() != "" ? $("#txtCirLat").val().split(" ") : "";
-        var latD = latObj[0];
-        var latM = latObj[1];
-        var latS = latObj[2];
+        var latD = $("#txtCirLatD").val();
+        var latM = $("#txtCirLatM").val();
+        var latS = $("#txtCirLatS").val();
 
         lon = (lonD != "" ? parseFloat(lonD) : 0)
             + (isNaN(parseFloat(lonM)) ? 0 : parseFloat(lonM)) / 60
@@ -1486,20 +1503,54 @@ function addLinePt() {
     var CoordType = $("#ddlLineCoordType").val();
 
     if (CoordType == "DMS") {
-        Str += '<div class="mb-2 addLine"><div id="divLinePt' + lineTdNum + '" class="d-flex" style="gap: 4px;"><div><div class="input-group mb-1">';
+        lineTdNum = $("#divLineDMS .addLine").length + 3;
+        Str += '<div class="mb-2 addLine"><div id="divLinePt' + lineTdNum + '" class="d-flex" style="gap: 4px;"><div>';
+        Str += '<dl class="my-2">';
+        Str += '#' + lineTdNum;
+        Str += '<dd class="d-flex">';
         Str += '<span class="input-group-text">緯度</span>';
         Str += '<select id="ddlLineLat' + lineTdNum + '" class="form-select"><option value="N">N</option><option value="S">S</option></select>';
-        Str += '<input type="text" id="txtLineLat' + lineTdNum + '" class="form-control" autocomplete="off" />';
-        Str += '</div>';
+        Str += '</dd>';
+        Str += '<dd class="d-flex">';
+        Str += '<span class="input-group-text">度</span>';
+        Str += '<input type="text" id="txtLineLat' + lineTdNum + 'D" placeholder="例:24" class="WGS84-input" autocomplete="off" />';
+        Str += '</dd>';
+        Str += '<dd class="d-flex">';
+        Str += '<span class="input-group-text">分</span>';
+        Str += '<input type="text" id="txtLineLat' + lineTdNum + 'M" placeholder="例:12" class="WGS84-input" autocomplete="off" />';
+        Str += '</dd>';
+        Str += '<dd class="d-flex">';
+        Str += '<span class="input-group-text">秒</span>';
+        Str += '<input type="text" id="txtLineLat' + lineTdNum + 'S" placeholder="例:39.56932" class="WGS84-input" autocomplete="off" />';
+        Str += '</dd>';
+        Str += '</dl>';
 
-        Str += '<div class="input-group"><span class="input-group-text">經度</span>';
+        Str += '<dl class="my-2">';
+        Str += '<dd class="d-flex">';
+        Str += '<span class="input-group-text">經度</span>';
         Str += '<select id="ddlLineLon' + lineTdNum + '" class="form-select"><option value="E">E</option><option value="W">W</option></select>';
-        Str += '<input type="text" id="txtLineLon' + lineTdNum + '" class="form-control" autocomplete="off" />';
-        Str += '</div></div>';
+        Str += '</dd>';
+        Str += '<dd class="d-flex">';
+        Str += '<span class="input-group-text">度</span>';
+        Str += '<input type="text" id="txtLineLon' + lineTdNum + 'D" placeholder="例:121" class="WGS84-input" autocomplete="off" />';
+        Str += '</dd>';
+        Str += '<dd class="d-flex">';
+        Str += '<span class="input-group-text">分</span>';
+        Str += '<input type="text" id="txtLineLon' + lineTdNum + 'M" placeholder="例:20" class="WGS84-input" autocomplete="off" />';
+        Str += '</dd>';
+        Str += '<dd class="d-flex">';
+        Str += '<span class="input-group-text">秒</span>';
+        Str += '<input type="text" id="txtLineLon' + lineTdNum + 'S" placeholder="例:12.92475" class="WGS84-input" autocomplete="off" />';
+        Str += '</dd>';
+        Str += '</dl>';
+        Str += '</div>';
         Str += '<button class="btn icon btn-sm btn-danger" type="button" onclick="deletePtByID(' + "'divLinePt" + lineTdNum + "'" + ');"><i class="fa-solid fa-trash-can"></i></button></div>';
         $("#divLineDMS").append(Str);
     } else {
-        Str += '<div class="mb-2 addLine"><div id="divLinePtDD' + lineTdNum + '" class="d-flex" style="gap: 4px;"><div><div class="input-group mb-1">';
+        lineTdNum = $("#divLineDD .addLine").length + 3;
+        Str += '<div class="mb-2 addLine">';
+        Str += '#' + lineTdNum;
+        Str += '<div id = "divLinePtDD' + lineTdNum + '" class="d-flex" style = "gap: 4px;" > <div><div class="input-group mb-1">';
         Str += '<span class="input-group-text">緯度</span>';
         Str += '<input type="text" id="txtLineLatDD' + lineTdNum + '" class="form-control" autocomplete="off" />';
         Str += '</div>';
@@ -1518,25 +1569,58 @@ var polyTdNum = 4;
 function addPolyPt() {
     var Str = "";
     var CoordType = $("#ddlPolyCoordType").val();
-    //var polyTdNum = ($("#tbPolyPt .addPoly").length / 2) + 1;
     if (CoordType == "DMS") {
         //DMS
-        Str += '<div class="mb-2 addPoly _CreatePolyCoord"><div id="divPolyPt' + polyTdNum + '" class="d-flex" style="gap: 4px;"><div><div class="input-group mb-1">';
+        polyTdNum = $("#divPolyDMS .addPoly").length + 1;
+        Str += '<div class="mb-2 addPoly _CreatePolyCoord"><div id="divPolyPt' + polyTdNum + '" class="d-flex" style="gap: 4px;"><div>';
+        Str += '<dl class="my-2">';
+        Str += '#' + polyTdNum;
+        Str += '<dd class="d-flex">';
         Str += '<span class="input-group-text">緯度</span>';
         Str += '<select id="ddlPolyLat' + polyTdNum + '" class="form-select"><option value="N">N</option><option value="S">S</option></select>';
-        Str += '<input type="text" id="txtPolyLat' + polyTdNum + '" class="form-control" autocomplete="off" />';
-        Str += '</div>';
+        Str += '</dd>';
+        Str += '<dd class="d-flex">';
+        Str += '<span class="input-group-text">度</span>';
+        Str += '<input type="text" id="txtPolyLat' + polyTdNum + 'D" placeholder="例:24" class="WGS84-input" autocomplete="off" />';
+        Str += '</dd>';
+        Str += '<dd class="d-flex">';
+        Str += '<span class="input-group-text">分</span>';
+        Str += '<input type="text" id="txtPolyLat' + polyTdNum + 'M" placeholder="例:12" class="WGS84-input" autocomplete="off" />';
+        Str += '</dd>';
+        Str += '<dd class="d-flex">';
+        Str += '<span class="input-group-text">秒</span>';
+        Str += '<input type="text" id="txtPolyLat' + polyTdNum + 'S" placeholder="例:39.56932" class="WGS84-input" autocomplete="off" />';
+        Str += '</dd>';
+        Str += '</dl>';
 
-        Str += '<div class="input-group"><span class="input-group-text">經度</span>';
+        Str += '<dl class="my-2">';
+        Str += '<dd class="d-flex">';
+        Str += '<span class="input-group-text">經度</span>';
         Str += '<select id="ddlPolyLon' + polyTdNum + '" class="form-select"><option value="E">E</option><option value="W">W</option></select>';
-        Str += '<input type="text" id="txtPolyLon' + polyTdNum + '" class="form-control" autocomplete="off" />';
-        Str += '</div></div>';
+        Str += '</dd>';
+        Str += '<dd class="d-flex">';
+        Str += '<span class="input-group-text">度</span>';
+        Str += '<input type="text" id="txtPolyLon' + polyTdNum + 'D" placeholder="例:121" class="WGS84-input" autocomplete="off" />';
+        Str += '</dd>';
+        Str += '<dd class="d-flex">';
+        Str += '<span class="input-group-text">分</span>';
+        Str += '<input type="text" id="txtPolyLon' + polyTdNum + 'M" placeholder="例:20" class="WGS84-input" autocomplete="off" />';
+        Str += '</dd>';
+        Str += '<dd class="d-flex">';
+        Str += '<span class="input-group-text">秒</span>';
+        Str += '<input type="text" id="txtPolyLon' + polyTdNum + 'S" placeholder="例:12.92475" class="WGS84-input" autocomplete="off" />';
+        Str += '</dd>';
+        Str += '</dl>';
+        Str += '</div>';
         Str += '<button class="btn icon btn-sm btn-danger" type="button" onclick="deletePtByID(' + "'divPolyPt" + polyTdNum + "'" + ');"><i class="fa-solid fa-trash-can"></i></button></div>';
         $("#divPolyDMS").append(Str);
     } else {
         //DD
+        polyTdNum = $("#divPolyDD .addPoly").length + 1;
         Str = "";
-        Str += '<div class="mb-2 addPoly _CreatePolyCoord"><div id="divPolyPtDD' + polyTdNum + '" class="d-flex" style="gap: 4px;"><div><div class="input-group mb-1">';
+        Str += '<div class="mb-2 addPoly _CreatePolyCoord">';
+        Str += '#' + polyTdNum;
+        Str += '<div id="divPolyPtDD' + polyTdNum + '" class="d-flex" style="gap: 4px;"><div><div class="input-group mb-1">';
         Str += '<span class="input-group-text">緯度</span>';
         Str += '<input type="text" id="txtPolyLatDD' + polyTdNum + '" class="form-control" autocomplete="off" />';
         Str += '</div>';
@@ -1739,10 +1823,14 @@ function setMkCtrlStyle(olFeature, markType, Text) {
             var EachHDMS = CoordHDMS.split(' ');
             $("#ddlPtLon").val(EachHDMS[7]);
             $("#ddlPtLat").val(EachHDMS[3]);
-            $("#txtPtLon").val(EachHDMS[4].replace("°", " ") + EachHDMS[5].replace("′", " ") + EachHDMS[6].replace("″", ""));
-            $("#txtPtLat").val(EachHDMS[0].replace("°", " ") + EachHDMS[1].replace("′", " ") + EachHDMS[2].replace("″", ""));
-            $("#txtPtLonDD").val(Coord4326[0]);
-            $("#txtPtLatDD").val(Coord4326[1]);
+            $("#txtPtLonD").val(EachHDMS[4].replace("°", ""));
+            $("#txtPtLonM").val(EachHDMS[5].replace("′", ""));
+            $("#txtPtLonS").val(EachHDMS[6].replace("″", ""));
+            $("#txtPtLatD").val(EachHDMS[0].replace("°", ""));
+            $("#txtPtLatM").val(EachHDMS[1].replace("′", ""));
+            $("#txtPtLatS").val(EachHDMS[2].replace("″", ""));
+            $("#txtPtLonDD").val(Coord4326[0].toFixed(6));
+            $("#txtPtLatDD").val(Coord4326[1].toFixed(6));
             //var ImgSrc = olFeature.getStyle().getImage().getSrc != undefined ? olFeature.getStyle().getImage().getSrc() : "dot";
             //if (ImgSrc.indexOf("plane") > -1) {
             //    $('.balaIconPicker-common-icon')[1].click();
@@ -1838,20 +1926,52 @@ function setLineCoord(Coord3857) {
             var Str = "";
             var StrDD = "";
             //DMS
-            Str += '<div class="mb-2 addLine"><div id="divLinePt' + lineTdNum + '" class="d-flex" style="gap: 4px;"><div><div class="input-group mb-1">';
+            Str += '<div class="mb-2 addLine"><div id="divLinePt' + lineTdNum + '" class="d-flex" style="gap: 4px;"><div>';
+            Str += '<dl class="my-2">';
+            Str += '#' + lineTdNum;
+            Str += '<dd class="d-flex">';
             Str += '<span class="input-group-text">緯度</span>';
             Str += '<select id="ddlLineLat' + lineTdNum + '" class="form-select"><option value="N">N</option><option value="S">S</option></select>';
-            Str += '<input type="text" id="txtLineLat' + lineTdNum + '" class="form-control" autocomplete="off" />';
-            Str += '</div>';
+            Str += '</dd>';
+            Str += '<dd class="d-flex">';
+            Str += '<span class="input-group-text">度</span>';
+            Str += '<input type="text" id="txtLineLat' + lineTdNum + 'D" placeholder="例:24" class="WGS84-input" autocomplete="off" />';
+            Str += '</dd>';
+            Str += '<dd class="d-flex">';
+            Str += '<span class="input-group-text">分</span>';
+            Str += '<input type="text" id="txtLineLat' + lineTdNum + 'M" placeholder="例:12" class="WGS84-input" autocomplete="off" />';
+            Str += '</dd>';
+            Str += '<dd class="d-flex">';
+            Str += '<span class="input-group-text">秒</span>';
+            Str += '<input type="text" id="txtLineLat' + lineTdNum + 'S" placeholder="例:39.56932" class="WGS84-input" autocomplete="off" />';
+            Str += '</dd>';
+            Str += '</dl>';
 
-            Str += '<div class="input-group"><span class="input-group-text">經度</span>';
+            Str += '<dl class="my-2">';
+            Str += '<dd class="d-flex">';
+            Str += '<span class="input-group-text">經度</span>';
             Str += '<select id="ddlLineLon' + lineTdNum + '" class="form-select"><option value="E">E</option><option value="W">W</option></select>';
-            Str += '<input type="text" id="txtLineLon' + lineTdNum + '" class="form-control" autocomplete="off" />';
-            Str += '</div></div>';
+            Str += '</dd>';
+            Str += '<dd class="d-flex">';
+            Str += '<span class="input-group-text">度</span>';
+            Str += '<input type="text" id="txtLineLon' + lineTdNum + 'D" placeholder="例:121" class="WGS84-input" autocomplete="off" />';
+            Str += '</dd>';
+            Str += '<dd class="d-flex">';
+            Str += '<span class="input-group-text">分</span>';
+            Str += '<input type="text" id="txtLineLon' + lineTdNum + 'M" placeholder="例:20" class="WGS84-input" autocomplete="off" />';
+            Str += '</dd>';
+            Str += '<dd class="d-flex">';
+            Str += '<span class="input-group-text">秒</span>';
+            Str += '<input type="text" id="txtLineLon' + lineTdNum + 'S" placeholder="例:12.92475" class="WGS84-input" autocomplete="off" />';
+            Str += '</dd>';
+            Str += '</dl>';
+            Str += '</div>';
             Str += '<button class="btn icon btn-sm btn-danger" type="button" onclick="deletePtByID(' + "'divLinePt" + lineTdNum + "'" + ');"><i class="fa-solid fa-trash-can"></i></button></div>';
             $("#divLineDMS").append(Str);
             //DD
-            StrDD += '<div class="mb-2 addLine"><div id="divLinePtDD' + lineTdNum + '" class="d-flex" style="gap: 4px;"><div><div class="input-group mb-1">';
+            StrDD += '<div class="mb-2 addLine">';
+            StrDD += '#' + lineTdNum;
+            StrDD += '<div id = "divLinePtDD' + lineTdNum + '" class="d-flex" style = "gap: 4px;" > <div><div class="input-group mb-1">';
             StrDD += '<span class="input-group-text">緯度</span>';
             StrDD += '<input type="text" id="txtLineLatDD' + lineTdNum + '" class="form-control" autocomplete="off" />';
             StrDD += '</div>';
@@ -1872,10 +1992,14 @@ function setLineCoord(Coord3857) {
         var idx = i + 1;
         $("#ddlLineLon" + idx).val(EachHDMS[7]);
         $("#ddlLineLat" + idx).val(EachHDMS[3]);
-        $("#txtLineLon" + idx).val(EachHDMS[4].replace("°", " ") + EachHDMS[5].replace("′", " ") + EachHDMS[6].replace("″", ""));
-        $("#txtLineLat" + idx).val(EachHDMS[0].replace("°", " ") + EachHDMS[1].replace("′", " ") + EachHDMS[2].replace("″", ""));
-        $("#txtLineLonDD" + idx).val(Coord4326[0]);
-        $("#txtLineLatDD" + idx).val(Coord4326[1]);
+        $("#txtLineLon" + idx + "D").val(EachHDMS[4].replace("°", ""));
+        $("#txtLineLon" + idx + "M").val(EachHDMS[5].replace("′", ""));
+        $("#txtLineLon" + idx + "S").val(EachHDMS[6].replace("″", ""));
+        $("#txtLineLat" + idx + "D").val(EachHDMS[0].replace("°", ""));
+        $("#txtLineLat" + idx + "M").val(EachHDMS[1].replace("′", ""));
+        $("#txtLineLat" + idx + "S").val(EachHDMS[2].replace("″", ""));
+        $("#txtLineLonDD" + idx).val(Coord4326[0].toFixed(6));
+        $("#txtLineLatDD" + idx).val(Coord4326[1].toFixed(6));
     }
 }
 
@@ -1890,20 +2014,52 @@ function setPolyCoord(Coord3857) {
             var StrDD = "";
             var polyTdNum = ($("#tbPolyPt .addPoly").length / 2) + 1;
             //DMS
-            Str += '<div class="mb-2 addPoly _CreatePolyCoord"><div id="divPolyPt' + polyTdNum + '" class="d-flex" style="gap: 4px;"><div><div class="input-group mb-1">';
+            Str += '<div class="mb-2 addPoly _CreatePolyCoord"><div id="divPolyPt' + polyTdNum + '" class="d-flex" style="gap: 4px;"><div>';
+            Str += '<dl class="my-2">';
+            Str += '#' + polyTdNum;
+            Str += '<dd class="d-flex">';
             Str += '<span class="input-group-text">緯度</span>';
             Str += '<select id="ddlPolyLat' + polyTdNum + '" class="form-select"><option value="N">N</option><option value="S">S</option></select>';
-            Str += '<input type="text" id="txtPolyLat' + polyTdNum + '" class="form-control" autocomplete="off" />';
-            Str += '</div>';
+            Str += '</dd>';
+            Str += '<dd class="d-flex">';
+            Str += '<span class="input-group-text">度</span>';
+            Str += '<input type="text" id="txtPolyLat' + polyTdNum + 'D" placeholder="例:24" class="WGS84-input" autocomplete="off" />';
+            Str += '</dd>';
+            Str += '<dd class="d-flex">';
+            Str += '<span class="input-group-text">分</span>';
+            Str += '<input type="text" id="txtPolyLat' + polyTdNum + 'M" placeholder="例:12" class="WGS84-input" autocomplete="off" />';
+            Str += '</dd>';
+            Str += '<dd class="d-flex">';
+            Str += '<span class="input-group-text">秒</span>';
+            Str += '<input type="text" id="txtPolyLat' + polyTdNum + 'S" placeholder="例:39.56932" class="WGS84-input" autocomplete="off" />';
+            Str += '</dd>';
+            Str += '</dl>';
 
-            Str += '<div class="input-group"><span class="input-group-text">經度</span>';
+            Str += '<dl class="my-2">';
+            Str += '<dd class="d-flex">';
+            Str += '<span class="input-group-text">經度</span>';
             Str += '<select id="ddlPolyLon' + polyTdNum + '" class="form-select"><option value="E">E</option><option value="W">W</option></select>';
-            Str += '<input type="text" id="txtPolyLon' + polyTdNum + '" class="form-control" autocomplete="off" />';
-            Str += '</div></div>';
+            Str += '</dd>';
+            Str += '<dd class="d-flex">';
+            Str += '<span class="input-group-text">度</span>';
+            Str += '<input type="text" id="txtPolyLon' + polyTdNum + 'D" placeholder="例:121" class="WGS84-input" autocomplete="off" />';
+            Str += '</dd>';
+            Str += '<dd class="d-flex">';
+            Str += '<span class="input-group-text">分</span>';
+            Str += '<input type="text" id="txtPolyLon' + polyTdNum + 'M" placeholder="例:20" class="WGS84-input" autocomplete="off" />';
+            Str += '</dd>';
+            Str += '<dd class="d-flex">';
+            Str += '<span class="input-group-text">秒</span>';
+            Str += '<input type="text" id="txtPolyLon' + polyTdNum + 'S" placeholder="例:12.92475" class="WGS84-input" autocomplete="off" />';
+            Str += '</dd>';
+            Str += '</dl>';
+            Str += '</div>';
             Str += '<button class="btn icon btn-sm btn-danger" type="button" onclick="deletePtByID(' + "'divPolyPt" + polyTdNum + "'" + ');"><i class="fa-solid fa-trash-can"></i></button></div>';
             $("#divPolyDMS").append(Str);
             //DD
-            StrDD += '<div class="mb-2 addPoly _CreatePolyCoord"><div id="divPolyPtDD' + polyTdNum + '" class="d-flex" style="gap: 4px;"><div><div class="input-group mb-1">';
+            StrDD += '<div class="mb-2 addPoly _CreatePolyCoord">'
+            StrDD += '#' + polyTdNum;
+            StrDD += '<div id="divPolyPtDD' + polyTdNum + '" class="d-flex" style="gap: 4px;"><div><div class="input-group mb-1">';
             StrDD += '<span class="input-group-text">緯度</span>';
             StrDD += '<input type="text" id="txtPolyLatDD' + polyTdNum + '" class="form-control" autocomplete="off" />';
             StrDD += '</div>';
@@ -1922,10 +2078,14 @@ function setPolyCoord(Coord3857) {
             var idx = i + 1;
             $("#ddlPolyLon" + idx).val(EachHDMS[7]);
             $("#ddlPolyLat" + idx).val(EachHDMS[3]);
-            $("#txtPolyLon" + idx).val(EachHDMS[4].replace("°", " ") + EachHDMS[5].replace("′", " ") + EachHDMS[6].replace("″", ""));
-            $("#txtPolyLat" + idx).val(EachHDMS[0].replace("°", " ") + EachHDMS[1].replace("′", " ") + EachHDMS[2].replace("″", ""));
-            $("#txtPolyLonDD" + idx).val(Coord4326[0]);
-            $("#txtPolyLatDD" + idx).val(Coord4326[1]);
+            $("#txtPolyLon" + idx + "D").val(EachHDMS[4].replace("°", ""));
+            $("#txtPolyLon" + idx + "M").val(EachHDMS[5].replace("′", ""));
+            $("#txtPolyLon" + idx + "S").val(EachHDMS[6].replace("″", ""));
+            $("#txtPolyLat" + idx + "D").val(EachHDMS[0].replace("°", ""));
+            $("#txtPolyLat" + idx + "M").val(EachHDMS[1].replace("′", ""));
+            $("#txtPolyLat" + idx + "S").val(EachHDMS[2].replace("″", ""));
+            $("#txtPolyLonDD" + idx).val(Coord4326[0].toFixed(6));
+            $("#txtPolyLatDD" + idx).val(Coord4326[1].toFixed(6));
         }
     } else {
         alert('多邊形至少需要三個點!');
@@ -1940,10 +2100,14 @@ function setBoxCoord(Coord3857) {
     var EachHDMS_1 = CoordHDMS_1.split(' ');
     $("#ddlBoxLon1").val(EachHDMS_1[7]);
     $("#ddlBoxLat1").val(EachHDMS_1[3]);
-    $("#txtBoxLon1").val(EachHDMS_1[4].replace("°", "") + " " + EachHDMS_1[5].replace("′", "") + " " + EachHDMS_1[6].replace("″", ""));
-    $("#txtBoxLat1").val(EachHDMS_1[0].replace("°", "") + " " + EachHDMS_1[1].replace("′", "") + " " + EachHDMS_1[2].replace("″", ""));
-    $("#txtBoxLonDD1").val(Coord4326_1[0]);
-    $("#txtBoxLatDD1").val(Coord4326_1[1]);
+    $("#txtBoxLon1D").val(EachHDMS_1[4].replace("°", ""));
+    $("#txtBoxLon1M").val(EachHDMS_1[5].replace("′", ""));
+    $("#txtBoxLon1S").val(EachHDMS_1[6].replace("″", ""));
+    $("#txtBoxLat1D").val(EachHDMS_1[0].replace("°", ""));
+    $("#txtBoxLat1M").val(EachHDMS_1[1].replace("′", ""));
+    $("#txtBoxLat1S").val(EachHDMS_1[2].replace("″", ""));
+    $("#txtBoxLonDD1").val(Coord4326_1[0].toFixed(6));
+    $("#txtBoxLatDD1").val(Coord4326_1[1].toFixed(6));
 
     //最後一個點
     var Coord4326_2 = ol.proj.transform(Coord3857[0][2], "EPSG:3857", "EPSG:4326");
@@ -1951,10 +2115,14 @@ function setBoxCoord(Coord3857) {
     var EachHDMS_2 = CoordHDMS_2.split(' ');
     $("#ddlBoxLon2").val(EachHDMS_2[7]);
     $("#ddlBoxLat2").val(EachHDMS_2[3]);
-    $("#txtBoxLon2").val(EachHDMS_2[4].replace("°", "") + " " + EachHDMS_2[5].replace("′", "") + " " + EachHDMS_2[6].replace("″", ""));
-    $("#txtBoxLat2").val(EachHDMS_2[0].replace("°", "") + " " + EachHDMS_2[1].replace("′", "") + " " + EachHDMS_2[2].replace("″", ""));
-    $("#txtBoxLonDD2").val(Coord4326_2[0]);
-    $("#txtBoxLatDD2").val(Coord4326_2[1]);
+    $("#txtBoxLon2D").val(EachHDMS_2[4].replace("°", ""));
+    $("#txtBoxLon2M").val(EachHDMS_2[5].replace("′", ""));
+    $("#txtBoxLon2S").val(EachHDMS_2[6].replace("″", ""));
+    $("#txtBoxLat2D").val(EachHDMS_2[0].replace("°", ""));
+    $("#txtBoxLat2M").val(EachHDMS_2[1].replace("′", ""));
+    $("#txtBoxLat2S").val(EachHDMS_2[2].replace("″", ""));
+    $("#txtBoxLonDD2").val(Coord4326_2[0].toFixed(6));
+    $("#txtBoxLatDD2").val(Coord4326_2[1].toFixed(6));
 }
 
 //帶入圓形坐標
@@ -1976,10 +2144,14 @@ function setCircleCoord(Extent, olFeature) {
 
     $("#ddlCirLon").val(EachHDMS[7]);
     $("#ddlCirLat").val(EachHDMS[3]);
-    $("#txtCirLon").val(EachHDMS[4].replace("°", "") + " " + EachHDMS[5].replace("′", "") + " " + EachHDMS[6].replace("″", ""));
-    $("#txtCirLat").val(EachHDMS[0].replace("°", "") + " " + EachHDMS[1].replace("′", "") + " " + EachHDMS[2].replace("″", ""));
-    $("#txtCirLonDD").val(c1[0]);
-    $("#txtCirLatDD").val(c1[1]);
+    $("#txtCirLonD").val(EachHDMS[4].replace("°", ""));
+    $("#txtCirLonM").val(EachHDMS[5].replace("′", ""));
+    $("#txtCirLonS").val(EachHDMS[6].replace("″", ""));
+    $("#txtCirLatD").val(EachHDMS[0].replace("°", ""));
+    $("#txtCirLatM").val(EachHDMS[1].replace("′", ""));
+    $("#txtCirLatS").val(EachHDMS[2].replace("″", ""));
+    $("#txtCirLonDD").val(c1[0].toFixed(6));
+    $("#txtCirLatDD").val(c1[1].toFixed(6));
     var Radius = olFeature.get('Radius'); //均為公尺
     var CirUnit = olFeature.get('CirUnit');
     $("#ddlCirUnit").val(CirUnit);
@@ -1988,7 +2160,7 @@ function setCircleCoord(Extent, olFeature) {
     } else if (CirUnit == "nm") {
         Radius = Radius / 1852;
     }
-    $("#txtCirRadius").val(Radius);
+    $("#txtCirRadius").val(Radius.toFixed(6));
 }
 
 //開啟自訂線段坐標

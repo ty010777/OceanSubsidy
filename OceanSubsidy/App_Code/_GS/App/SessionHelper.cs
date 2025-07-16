@@ -54,5 +54,6 @@ public class SessionHelper
         public string UnitType { get; set; }
         public string UnitName { get; set; }
         public string OSI_RoleName { get; set; }
+        public string[] OFS_RoleName { get; set; }
     }
 }

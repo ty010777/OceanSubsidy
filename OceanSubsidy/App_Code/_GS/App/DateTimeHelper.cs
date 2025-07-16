@@ -30,8 +30,20 @@ namespace GS.App
         /// </summary>
         public static string ToMinguoDate(this DateTime dt)
         {
-            int rocYear = dt.Year - MinguoOffset;
-            return $"{rocYear:D3}/{dt:MM/dd}";
+            var ci = new CultureInfo("zh-TW");
+            ci.DateTimeFormat.Calendar = new TaiwanCalendar();
+            return dt.ToString("yyy/MM/dd", ci);
+        }
+
+        /// <summary>
+        /// 將 DateTime? 格式化為中華民國年日期 (YYY/MM/dd)
+        /// </summary>
+        public static string ToMinguoDate(this DateTime? dt)
+        {
+            if (!dt.HasValue)
+                return string.Empty;
+            
+            return ToMinguoDate(dt.Value);
         }
 
         /// <summary>

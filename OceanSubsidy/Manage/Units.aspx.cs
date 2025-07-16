@@ -11,27 +11,122 @@ using GS.OCA_OceanSubsidy.Entity;
 
 public partial class Manage_Units : System.Web.UI.Page
 {
+    private Dictionary<int, string> unitDisplayNumbers = new Dictionary<int, string>();
+
     protected void Page_Load(object sender, EventArgs e)
     {
         if (!IsPostBack)
         {
+            BindGovUnitType();
             BindList();
         }
 
     }
 
+    void BindGovUnitType()
+    {
+        var dt = SysGovUnitTypeHelper.QueryAll();
+        rblGovUnitType.DataSource = dt;
+        rblGovUnitType.DataTextField = "TypeName";
+        rblGovUnitType.DataValueField = "TypeID";
+        rblGovUnitType.DataBind();
+        
+        // 預設選中第一筆
+        if (rblGovUnitType.Items.Count > 0)
+        {
+            rblGovUnitType.SelectedIndex = 0;
+        }
+    }
+
+    protected void rblGovUnitType_SelectedIndexChanged(object s, EventArgs e)
+    {
+        // 根據選中的政府機關類別載入單位
+        if (!string.IsNullOrEmpty(rblGovUnitType.SelectedValue))
+        {
+            LoadModalParents(Convert.ToInt32(rblGovUnitType.SelectedValue));
+        }
+        else
+        {
+            LoadModalParents();
+        }
+    }
+    
+
     void BindList()
     {
-        var dt = SysUnitHelper.QueryAll();
+        var dt = SysUnitHelper.QueryAllOrderByUnitID();
+        
+        // 計算排序號碼
+        CalculateDisplayNumbers(dt);
+        
         lvUnits.DataSource = dt;
         lvUnits.DataBind();
+    }
+
+    private void CalculateDisplayNumbers(DataTable dt)
+    {
+        unitDisplayNumbers.Clear();
+        Dictionary<int, int> parentCounts = new Dictionary<int, int>();
+        Dictionary<int, int> childCounts = new Dictionary<int, int>();
+        int parentOrder = 0;
+
+        foreach (DataRow row in dt.Rows)
+        {
+            int unitId = Convert.ToInt32(row["UnitID"]);
+            object parentUnitIdObj = row["ParentUnitID"];
+            
+            if (parentUnitIdObj == DBNull.Value || parentUnitIdObj == null)
+            {
+                // 父單位
+                parentOrder++;
+                parentCounts[unitId] = parentOrder;
+                unitDisplayNumbers[unitId] = parentOrder.ToString();
+            }
+            else
+            {
+                // 子單位
+                int parentUnitId = Convert.ToInt32(parentUnitIdObj);
+                if (!childCounts.ContainsKey(parentUnitId))
+                {
+                    childCounts[parentUnitId] = 0;
+                }
+                childCounts[parentUnitId]++;
+                
+                if (parentCounts.ContainsKey(parentUnitId))
+                {
+                    unitDisplayNumbers[unitId] = $"{parentCounts[parentUnitId]}-{childCounts[parentUnitId]}";
+                }
+                else
+                {
+                    unitDisplayNumbers[unitId] = $"?-{childCounts[parentUnitId]}";
+                }
+            }
+        }
+    }
+
+    public string GetDisplayNumber(object unitId)
+    {
+        if (unitId == null || unitId == DBNull.Value) return "";
+        
+        int id = Convert.ToInt32(unitId);
+        return unitDisplayNumbers.ContainsKey(id) ? unitDisplayNumbers[id] : "";
     }
 
     protected void btnAdd_Click(object s, EventArgs e)
     {
         // 準備新增
         hfUnitID.Value = "";
-        LoadModalParents();
+        
+        // 根據選中的政府機關類別載入單位
+        if (!string.IsNullOrEmpty(rblGovUnitType.SelectedValue))
+        {
+            LoadModalParents(Convert.ToInt32(rblGovUnitType.SelectedValue));
+        }
+        else
+        {
+            LoadModalParents();
+        }
+        
         txtModalName.Text = "";
 
         // 顯示 Modal
@@ -50,7 +145,18 @@ public partial class Manage_Units : System.Web.UI.Page
             var dr = dt.Rows[0];
 
             hfUnitID.Value = dr["UnitID"].ToString();
-            LoadModalParents();
+            
+            // 設定政府機關類別
+            string govUnitTypeID = dr["GovUnitTypeID"]?.ToString() ?? "";
+            if (!string.IsNullOrEmpty(govUnitTypeID) && rblGovUnitType.Items.FindByValue(govUnitTypeID) != null)
+            {
+                rblGovUnitType.SelectedValue = govUnitTypeID;
+                LoadModalParents(Convert.ToInt32(govUnitTypeID));
+            }
+            else
+            {
+                LoadModalParents();
+            }
 
             string p = dr["ParentUnitID"]?.ToString() ?? "";
             if (ddlModalParent.Items.FindByValue(p) != null)
@@ -85,9 +191,17 @@ public partial class Manage_Units : System.Web.UI.Page
 
         var drv = (DataRowView)e.Item.DataItem;
         string id = drv["UnitID"].ToString();
+        int unitId = Convert.ToInt32(id);
 
         var lb = (LinkButton)e.Item.FindControl("lkDeleteUnit");
         lb.Visible = IsValidDelete(id);
+
+        // 設定排序號碼
+        var displayNumberLabel = e.Item.FindControl("lblDisplayNumber") as Label;
+        if (displayNumberLabel != null && unitDisplayNumbers.ContainsKey(unitId))
+        {
+            displayNumberLabel.Text = unitDisplayNumbers[unitId];
+        }
     }
 
     private bool IsValidDelete(string id)
@@ -126,19 +240,31 @@ public partial class Manage_Units : System.Web.UI.Page
     }
 
     // 共用：載入下拉
-    private void LoadModalParents()
+    private void LoadModalParents(int? govUnitTypeID = null)
     {
-        var dt = SysUnitHelper.QueryAll();
+        GisTable dt;
+        if (govUnitTypeID.HasValue)
+        {
+            dt = SysUnitHelper.QueryByGovUnitTypeID(govUnitTypeID.Value);
+        }
+        else
+        {
+            dt = SysUnitHelper.QueryAllOrderByUnitID();
+        }
 
         ddlModalParent.Items.Clear();
         ddlModalParent.Items.Add(new ListItem("請選擇", ""));  // 預設選項，Value 空字串
 
+        // 篩選出 ParentUnitID 為 null 的記錄（非子單位的單位）
         foreach (DataRow row in dt.Rows)
         {
-            ddlModalParent.Items.Add(new ListItem(
-                row["UnitName"].ToString(),
-                row["UnitID"].ToString()
-            ));
+            if (row["ParentUnitID"] == DBNull.Value || row["ParentUnitID"] == null)
+            {
+                ddlModalParent.Items.Add(new ListItem(
+                    row["UnitName"].ToString(),
+                    row["UnitID"].ToString()
+                ));
+            }
         }
     }
 
@@ -147,7 +273,7 @@ public partial class Manage_Units : System.Web.UI.Page
         string newName = args.Value.Trim();
         args.IsValid = true;
 
-        GisTable sysUnit = SysUnitHelper.QueryAll();
+        GisTable sysUnit = SysUnitHelper.QueryAllOrderByUnitID();
         for (int i = 0; i <= sysUnit.Rows.Count - 1; i++)
         {
             if (newName == sysUnit.Rows[i]["UnitName"].ToString())
@@ -177,6 +303,7 @@ public partial class Manage_Units : System.Web.UI.Page
         Sys_Unit unit = new Sys_Unit
         {
             ParentUnitID = pid,
+            GovUnitTypeID = Convert.ToInt32(rblGovUnitType.SelectedValue),
             UnitName = name
         };
 

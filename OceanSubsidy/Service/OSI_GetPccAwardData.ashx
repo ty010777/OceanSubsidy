@@ -45,11 +45,11 @@ public class OSI_GetPccAwardData : IHttpHandler
     {
         var today = DateTime.Today;
 
-        //var url = new Uri("https://web.pcc.gov.tw/prkms/tender/common/agent/readTenderAgent");
-        var url = new Uri("");
+        var url = new Uri("https://web.pcc.gov.tw/prkms/tender/common/agent/readTenderAgent");
+        //var url = new Uri("");
 
         List<KeyValuePair<string, string>> WebParams = new List<KeyValuePair<string, string>>();
-        WebParams.Add(new KeyValuePair<string, string>("pageSize", "3000"));
+        WebParams.Add(new KeyValuePair<string, string>("pageSize", "10000"));
         WebParams.Add(new KeyValuePair<string, string>("firstSearch", "true"));
         WebParams.Add(new KeyValuePair<string, string>("isQuery", ""));
         WebParams.Add(new KeyValuePair<string, string>("isBinding", "N"));
@@ -60,7 +60,7 @@ public class OSI_GetPccAwardData : IHttpHandler
         WebParams.Add(new KeyValuePair<string, string>("tenderId", ""));
         WebParams.Add(new KeyValuePair<string, string>("tenderStatus", "TENDER_STATUS_1"));
         WebParams.Add(new KeyValuePair<string, string>("tenderWay", "TENDER_WAY_ALL_DECLARATION"));
-        WebParams.Add(new KeyValuePair<string, string>("awardAnnounceStartDate", DateTime.Today.ToString("yyyy/MM/dd")));
+        WebParams.Add(new KeyValuePair<string, string>("awardAnnounceStartDate", DateTime.Today.AddDays(-7).ToString("yyyy/MM/dd")));
         WebParams.Add(new KeyValuePair<string, string>("awardAnnounceEndDate", DateTime.Today.ToString("yyyy/MM/dd")));
         WebParams.Add(new KeyValuePair<string, string>("radProctrgCate", ""));
         WebParams.Add(new KeyValuePair<string, string>("tenderRange", "TENDER_RANGE_ALL"));

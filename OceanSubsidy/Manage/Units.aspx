@@ -28,7 +28,7 @@
                 <img src="<%= ResolveUrl("~/assets/img/title-icon02.svg") %>" alt="logo" />
                 列表
             </h4>
-            <asp:LinkButton ID="btnAdd" runat="server" CssClass="btn btn-blue-green" OnClick="btnAdd_Click" CausesValidation="false">
+            <asp:LinkButton ID="btnAdd" runat="server" CssClass="btn btn-cyan" OnClick="btnAdd_Click" CausesValidation="false">
                 <i class="fa-solid fa-plus"></i>
                 新增
             </asp:LinkButton>
@@ -45,9 +45,10 @@
                         OnPagePropertiesChanging="lvUnits_PagePropertiesChanging">
 
                         <LayoutTemplate>
-                            <table class="table blue-green-table">
+                            <table class="table cyan-table">
                                 <thead>
                                     <tr>
+                                        <th width="120">政府機關類別</th>
                                         <th width="50">排序</th>
                                         <th class="text-start">單位名稱</th>
                                         <th width="120">功能</th>
@@ -61,7 +62,8 @@
 
                         <ItemTemplate>
                             <tr id="itemRow" runat="server">
-                                <td data-th="排序:"><%# Container.DisplayIndex + 1 %></td>
+                                <td data-th="政府機關類別:"><%# Eval("GovUnitTypeName") %></td>
+                                <td data-th="排序:"><%# GetDisplayNumber(Eval("UnitID")) %></td>
                                 <td data-th="單位名稱:" class="text-start"><%# Eval("UnitName") %></td>
                                 <td data-th="功能:" width="120">
                                     <div class="d-flex gap-2">
@@ -93,7 +95,7 @@
                         ID="dpUnits"
                         runat="server"
                         PagedControlID="lvUnits"
-                        PageSize="10"
+                        PageSize="30"
                         OnPreRender="dpUnits_PreRender">
                         <Fields>
                             <asp:NextPreviousPagerField
@@ -144,6 +146,19 @@
                                     <table class="table align-middle gray-table side-table">
                                         <tbody>
                                             <tr>
+                                                <th>政府機關類別</th>
+                                                <td>
+                                                    <asp:RadioButtonList 
+                                                        ID="rblGovUnitType" runat="server"
+                                                        RepeatDirection="Horizontal"
+                                                        RepeatLayout="Flow"
+                                                        AutoPostBack="true"
+                                                        CssClass="form-check-input-group"
+                                                        OnSelectedIndexChanged="rblGovUnitType_SelectedIndexChanged" />
+                                                </td>
+                                            </tr>
+
+                                            <tr>
                                                 <th>上層單位</th>
                                                 <td>
                                                     <asp:DropDownList
@@ -186,7 +201,7 @@
                                 <asp:LinkButton
                                     ID="btnSave"
                                     runat="server"
-                                    CssClass="btn btn-blue-green d-table mx-auto mt-3"
+                                    CssClass="btn btn-cyan d-table mx-auto mt-3"
                                     ValidationGroup="UnitModal"
                                     OnClick="btnSave_Click">
                                 <i class="fa-solid fa-check"></i>
@@ -222,7 +237,7 @@
                                 <button type="button" class="btn btn-gray" data-bs-dismiss="modal">
                                     取消</button>
                                 <asp:Button ID="btnConfirmDelete" runat="server"
-                                    CssClass="btn btn-blue-green"
+                                    CssClass="btn btn-cyan"
                                     Text="確定" OnClick="btnConfirmDelete_Click" />
                             </div>
 
@@ -234,4 +249,21 @@
     </div>
 
 </asp:Content>
+<asp:Content ID="Scripts" ContentPlaceHolderID="ScriptsContent" runat="server">
+    <script type="text/javascript">
+        // 樣式調整
+        $(function () {
+            function applyClasses() {
+                $('#<%= rblGovUnitType.ClientID %> input[type=radio]')
+                    .addClass('form-check-input');
+            }
+
+            $('#unitModal').on('shown.bs.modal', applyClasses);
+
+            var prm = Sys.WebForms.PageRequestManager.getInstance();
+            prm.add_endRequest(applyClasses);
+        });
+    </script>
+</asp:Content>
+
 

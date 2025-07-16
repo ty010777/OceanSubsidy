@@ -76,7 +76,7 @@
                         <img src="<%= ResolveUrl("~/assets/img/title-icon02.svg") %>" alt="logo" />
                         列表
                     </h4>
-                    <asp:LinkButton ID="btnAddUser" runat="server" CssClass="btn btn-blue-green" OnClick="btnAddUser_Click" CausesValidation="false">
+                    <asp:LinkButton ID="btnAddUser" runat="server" CssClass="btn btn-cyan" OnClick="btnAddUser_Click" CausesValidation="false">
                             <i class="fa-solid fa-plus"></i>新增
                     </asp:LinkButton>
                 </div>
@@ -93,7 +93,7 @@
                                 OnPagePropertiesChanging="dpUsers_PagePropertiesChanging">
 
                                 <LayoutTemplate>
-                                    <table class="table blue-green-table">
+                                    <table class="table cyan-table">
                                         <thead>
                                             <tr>
                                                 <th width="50">排序</th>
@@ -169,7 +169,7 @@
                                 ID="dpUsers"
                                 runat="server"
                                 PagedControlID="lvUsers"
-                                PageSize="10"
+                                PageSize="30"
                                 OnPreRender="dpUsers_PreRender">
                                 <Fields>
                                     <asp:NextPreviousPagerField
@@ -235,7 +235,7 @@
                                 OnPagePropertiesChanging="lvPendingUsers_PagePropertiesChanging">
 
                                 <LayoutTemplate>
-                                    <table class="table blue-green-table">
+                                    <table class="table cyan-table">
                                         <thead>
                                             <tr>
                                                 <th width="50">排序</th>
@@ -286,7 +286,7 @@
                                 ID="dpPendingUsers"
                                 runat="server"
                                 PagedControlID="lvPendingUsers"
-                                PageSize="10"
+                                PageSize="30"
                                 OnPreRender="dpPendingUsers_PreRender">
                                 <Fields>
                                     <asp:NextPreviousPagerField
@@ -490,7 +490,7 @@
                                 </table>
                             </div>
                             <asp:Button ID="btnSaveUser" runat="server"
-                                CssClass="btn btn-blue-green d-table mx-auto mt-3"
+                                CssClass="btn btn-cyan d-table mx-auto mt-3"
                                 Text="儲存" ValidationGroup="UserModal"
                                 OnClick="btnSaveUser_Click" />
 
@@ -522,7 +522,7 @@
                                 <button type="button" class="btn btn-gray" data-bs-dismiss="modal">
                                     取消</button>
                                 <asp:Button ID="btnConfirmDeleteUser" runat="server"
-                                    CssClass="btn btn-blue-green"
+                                    CssClass="btn btn-cyan"
                                     Text="確定" OnClick="btnConfirmDeleteUser_Click" />
                             </div>
 
@@ -717,7 +717,7 @@
                             <asp:LinkButton
                                 ID="btnApprove"
                                 runat="server"
-                                CssClass="btn btn-blue-green"
+                                CssClass="btn btn-cyan"
                                 ValidationGroup="ApproveGroup"
                                 OnClick="btnApprove_Click">
                                     <i class="fa-solid fa-check"></i>審核通過
@@ -754,7 +754,7 @@
                                 <button type="button" class="btn btn-gray" data-bs-dismiss="modal">
                                     取消</button>
                                 <asp:Button ID="btnConfirmToggleActive" runat="server"
-                                    CssClass="btn btn-blue-green"
+                                    CssClass="btn btn-cyan"
                                     Text="確認" OnClick="btnConfirmToggleActive_Click" />
                             </div>
                         </div>

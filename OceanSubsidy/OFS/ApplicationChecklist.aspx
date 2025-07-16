@@ -1,0 +1,555 @@
+﻿<%@ Page Language="C#" AutoEventWireup="true" CodeFile="ApplicationChecklist.aspx.cs" Inherits="OFS_ApplicationChecklist" Culture="zh-TW" UICulture="zh-TW" MasterPageFile="~/OFSMaster.master" %>
+
+<asp:Content ID="TitleContent" ContentPlaceHolderID="TitleContent" runat="server">
+    計畫審查 - 申請案件清單
+</asp:Content>
+
+<asp:Content ID="HeadContent" ContentPlaceHolderID="HeadExtra" runat="server">
+    <script src="<%= ResolveUrl("~/script/OFS/ApplicationChecklist.js") %>"></script>
+</asp:Content>
+
+<asp:Content ID="MainContent" ContentPlaceHolderID="MainContent" runat="server">
+    <asp:HiddenField ID="hidSelectedStage" runat="server" />
+    <asp:Button ID="btnStageFilter" runat="server" OnClick="btnStageFilter_Click" style="display: none;" />
+    
+    <!-- 頁面標題 -->
+    <div class="page-title">
+        <img src="<%= ResolveUrl("~/assets/img/information-system-title-icon04.svg") %>" alt="logo">
+        <div>
+            <span>目前位置</span>
+            <div class="d-flex align-items-end gap-3">
+                <h2 class="text-teal-dark">計畫審查</h2>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 公告提醒 -->
+    <div class="notice">
+        <div class="notice-content">
+            <h3 class="notice-title">114/12/31 條款正式上線</h3>
+        </div>
+        <div class="notice-action">
+            <a href="#" class="btn-link">全部公告</a>
+        </div>
+    </div>
+    
+    <!-- 搜尋表單 -->
+    <div class="search bg-gray mt-4">
+        <h3 class="text-teal">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            查詢
+        </h3>
+        
+        <div class="search-form">
+            <div class="column-2">
+                <!-- 計畫編號或名稱關鍵字 -->
+                <div class="search-item">
+                    <div class="fs-16 text-gray mb-2">計畫編號或名稱關鍵字</div>
+                    <asp:TextBox ID="txtSearch" runat="server" CssClass="form-control" placeholder="請輸入計畫編號、計畫名稱相關文字"></asp:TextBox>
+                </div>
+                
+                <!-- 計畫內容關鍵字 -->
+                <div class="search-item">
+                    <div class="fs-16 text-gray mb-2">計畫內容關鍵字</div>
+                    <input type="text" class="form-control" placeholder="計畫內容關鍵字">
+                </div>
+            </div>
+            
+            <div class="column-2">
+                <div class="row g-3">
+                    <div class="col-12 col-lg-3">
+                        <div class="fs-16 text-gray mb-2">年度</div>
+                        <asp:DropDownList ID="ddlYear" runat="server" CssClass="form-select">
+                            <asp:ListItem Text="全部" Value=""></asp:ListItem>
+                            <asp:ListItem Text="114年" Value="114"></asp:ListItem>
+                            <asp:ListItem Text="113年" Value="113"></asp:ListItem>
+                            <asp:ListItem Text="112年" Value="112"></asp:ListItem>
+                        </asp:DropDownList>
+                    </div>
+                    <div class="col-12 col-lg-4">
+                        <div class="fs-16 text-gray mb-2">類別</div>
+                        <asp:DropDownList ID="ddlCategory" runat="server" CssClass="form-select">
+                            <asp:ListItem Text="全部" Value=""></asp:ListItem>
+                            <asp:ListItem Text="科專" Value="SCI"></asp:ListItem>
+                            <asp:ListItem Text="文化" Value="CUL"></asp:ListItem>
+                            <asp:ListItem Text="學校民間" Value="EDC"></asp:ListItem>
+                            <asp:ListItem Text="學校社團" Value="CLB"></asp:ListItem>
+                            <asp:ListItem Text="多元" Value="MUL"></asp:ListItem>
+                            <asp:ListItem Text="素養" Value="LIT"></asp:ListItem>
+                            <asp:ListItem Text="無障礙" Value="ACC"></asp:ListItem>
+                        </asp:DropDownList>
+                    </div>
+                    <div class="col-12 col-lg-5">
+                        <div class="fs-16 text-gray mb-2">階段</div>
+                        <select class="form-select">
+                            <option value="">全部</option>
+                            <option value="">尚未提送</option>
+                            <option value="">資格審查</option>
+                            <option value="">領域審查/初審</option>
+                            <option value="">技術審查/複審</option>
+                            <option value="">決審</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-12 col-lg-3">
+                        <div class="fs-16 text-gray mb-2">狀態</div>
+                        <asp:DropDownList ID="ddlStatus" runat="server" CssClass="form-select">
+                            <asp:ListItem Text="全部" Value=""></asp:ListItem>
+                            <asp:ListItem Text="審查中" Value="審查中"></asp:ListItem>
+                            <asp:ListItem Text="補正補件" Value="補正補件"></asp:ListItem>
+                            <asp:ListItem Text="逾期未補" Value="逾期未補"></asp:ListItem>
+                            <asp:ListItem Text="未通過" Value="未通過"></asp:ListItem>
+                            <asp:ListItem Text="通過" Value="通過"></asp:ListItem>
+                        </asp:DropDownList>
+                    </div>
+                    <div class="col-12 col-lg-4">
+                        <div class="fs-16 text-gray mb-2">申請單位</div>
+                        <asp:TextBox ID="txtDepartment" runat="server" CssClass="form-control" placeholder="請輸入申請單位"></asp:TextBox>
+                    </div>
+                    <div class="col-12 col-lg-5">
+                        <div class="fs-16 text-gray mb-2">主管單位</div>
+                        <asp:DropDownList ID="ddlReviewer" runat="server" CssClass="form-select">
+                            <asp:ListItem Text="全部" Value=""></asp:ListItem>
+                            <asp:ListItem Text="海洋科技科" Value="海洋科技科"></asp:ListItem>
+                            <asp:ListItem Text="海洋文化科" Value="海洋文化科"></asp:ListItem>
+                            <asp:ListItem Text="海洋教育科" Value="海洋教育科"></asp:ListItem>
+                        </asp:DropDownList>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-check-input-group d-flex justify-content-center">
+                <input id="waitingReply" class="form-check-input check-teal" type="checkbox" name="waitingReply">
+                <label for="waitingReply">待回覆</label>
+            </div>
+            
+            <asp:Button ID="btnSearch" runat="server" Text="查詢" CssClass="btn btn-teal-dark d-table mx-auto" OnClick="btnSearch_Click" />
+        </div>
+    </div>
+    
+    <!-- 總計列表 -->
+    <ul class="total-list">
+        <li class="total-item active">
+            <a href="#">
+                <div class="total-item-title">總申請</div>
+                <div class="total-item-content">
+                    <span class="count">0</span>
+                    <span class="unit">件</span>
+                </div>
+            </a>
+        </li>
+        <li class="total-item">
+            <a href="#">
+                <div class="total-item-title">科專</div>
+                <div class="total-item-content">
+                    <span class="count">0</span>
+                    <span class="unit">件</span>
+                </div>
+            </a>
+        </li>
+        <li class="total-item">
+            <a href="#">
+                <div class="total-item-title">文化</div>
+                <div class="total-item-content">
+                    <span class="count">0</span>
+                    <span class="unit">件</span>
+                </div>
+            </a>
+        </li>
+        <li class="total-item">
+            <a href="#">
+                <div class="total-item-title">學校民間</div>
+                <div class="total-item-content">
+                    <span class="count">0</span>
+                    <span class="unit">件</span>
+                </div>
+            </a>
+        </li>
+        <li class="total-item">
+            <a href="#">
+                <div class="total-item-title">學校社團</div>
+                <div class="total-item-content">
+                    <span class="count">0</span>
+                    <span class="unit">件</span>
+                </div>
+            </a>
+        </li>
+        <li class="total-item">
+            <a href="#">
+                <div class="total-item-title">多元</div>
+                <div class="total-item-content">
+                    <span class="count">0</span>
+                    <span class="unit">件</span>
+                </div>
+            </a>
+        </li>
+        <li class="total-item">
+            <a href="#">
+                <div class="total-item-title">素養</div>
+                <div class="total-item-content">
+                    <span class="count">0</span>
+                    <span class="unit">件</span>
+                </div>
+            </a>
+        </li>
+        <li class="total-item">
+            <a href="#">
+                <div class="total-item-title">無障礙</div>
+                <div class="total-item-content">
+                    <span class="count">0</span>
+                    <span class="unit">件</span>
+                </div>
+            </a>
+        </li>
+    </ul>
+    
+    <!-- 列表內容 -->
+    <div class="block rounded-bottom-4">
+        <div class="title border-teal">
+            <div class="d-flex align-items-center gap-2">
+                <h4 class="text-teal">
+                    <img src="<%= ResolveUrl("~/assets/img/title-icon02-teal.svg") %>" alt="logo">
+                    <span>列表</span>
+                </h4>
+                <span>共 <asp:Literal ID="litRecordInfo" runat="server" Text="<span class='text-teal'>0</span> 筆資料"></asp:Literal></span>
+            </div>
+            
+            <button type="button" class="btn btn-teal-dark" data-bs-toggle="modal" data-bs-target="#planApplyModal">
+                <i class="fa-solid fa-plus"></i>
+                申請計畫
+            </button>
+        </div>
+        
+        <div class="table-responsive" style="min-height: 400px;">
+            <table class="table teal-table">
+                <thead>
+                    <tr>
+                        <th width="80">年度</th>
+                        <th width="150">
+                            <div class="hstack align-items-center">
+                                <span>計畫編號</span>
+                                <button class="sort down">
+                                    <i class="fa-solid fa-sort-up"></i>
+                                    <i class="fa-solid fa-sort-down"></i>
+                                </button>
+                            </div>
+                        </th>
+                        <th width="240">
+                            <div class="hstack align-items-center">
+                                <span>計畫名稱</span>
+                                <button class="sort up">
+                                    <i class="fa-solid fa-sort-up"></i>
+                                    <i class="fa-solid fa-sort-down"></i>
+                                </button>
+                            </div>
+                        </th>
+                        <th width="200">
+                            <div class="hstack align-items-center">
+                                <span>申請單位</span>
+                                <button class="sort">
+                                    <i class="fa-solid fa-sort-up"></i>
+                                    <i class="fa-solid fa-sort-down"></i>
+                                </button>
+                            </div>
+                        </th>
+                        <th>
+                            <div class="hstack align-items-center justify-content-center">
+                                <span>類別</span>
+                                <button class="sort">
+                                    <i class="fa-solid fa-sort-up"></i>
+                                    <i class="fa-solid fa-sort-down"></i>
+                                </button>
+                            </div>
+                        </th>
+                        <th>
+                            <div class="hstack align-items-center justify-content-center">
+                                <span>申請補助金額</span>
+                                <button class="sort">
+                                    <i class="fa-solid fa-sort-up"></i>
+                                    <i class="fa-solid fa-sort-down"></i>
+                                </button>
+                            </div>
+                        </th>
+                        <th>
+                            <div class="hstack align-items-center justify-content-center">
+                                <span>階段</span>
+                                <button class="sort">
+                                    <i class="fa-solid fa-sort-up"></i>
+                                    <i class="fa-solid fa-sort-down"></i>
+                                </button>
+                            </div>
+                        </th>
+                        <th>
+                            <div class="hstack align-items-center justify-content-center">
+                                <span>狀態</span>
+                                <button class="sort">
+                                    <i class="fa-solid fa-sort-up"></i>
+                                    <i class="fa-solid fa-sort-down"></i>
+                                </button>
+                            </div>
+                        </th>
+                        <th>功能</th>
+                    </tr>
+                </thead>
+                <tbody id="dataTableBody">
+                    <!-- 動態資料將在這裡插入 -->
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 20px;">載入中...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 分頁控制 -->
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <nav class="pagination justify-content-start" aria-label="Pagination" id="paginationNav">
+                <asp:Button ID="btnPrevPage" runat="server" Text="" CssClass="nav-button" aria-label="Previous page" />
+                <!-- 動態分頁按鈕將在這裡插入 -->
+                <asp:Button ID="btnNextPage" runat="server" Text="" CssClass="nav-button" aria-label="Next page" />
+            </nav>
+            
+            <div class="page-number-control">
+                <div class="page-number-control-item">
+                    <span>跳到</span>
+                    <asp:DropDownList ID="ddlPageNumber" runat="server" CssClass="form-select" AutoPostBack="true">
+                        <asp:ListItem Text="1" Value="1"></asp:ListItem>
+                    </asp:DropDownList>
+                    <span>頁</span>
+                    <span>,</span>
+                </div>
+                <div class="page-number-control-item">
+                    <span>每頁顯示</span>
+                    <asp:DropDownList ID="ddlPageSize" runat="server" CssClass="form-select" AutoPostBack="true">
+                        <asp:ListItem Text="10" Value="10"></asp:ListItem>
+                        <asp:ListItem Text="20" Value="20" Selected="true"></asp:ListItem>
+                        <asp:ListItem Text="30" Value="30"></asp:ListItem>
+                    </asp:DropDownList>
+                    <span>筆</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal 申請計畫 -->
+    <div class="modal fade" id="planApplyModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="planApplyModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="fs-24 fw-bold text-green-light">申請計畫</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="">
+                        <div class="fs-16 text-gray mb-2">申請補助計畫類別</div>
+                        <asp:DropDownList ID="ddlModalYear" runat="server" CssClass="form-select">
+                        </asp:DropDownList>
+                    </div>
+
+                    <div class="d-flex gap-4 flex-wrap justify-content-center mt-5">
+                        <button type="button" class="btn btn-gray" data-bs-dismiss="modal">
+                            取消
+                        </button>
+                        <asp:Button ID="btnCreateApplication" runat="server" Text="新增" CssClass="btn btn-teal" OnClick="btnCreateApplication_Click" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal 案件歷程 -->
+    <div class="modal fade" id="planHistoryModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="planHistoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="fs-24 fw-bold text-green-light">案件歷程</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table align-middle gray-table">
+                            <thead>
+                                <tr>
+                                    <th>時間</th>
+                                    <th>人員</th>
+                                    <th>階段狀態</th>
+                                    <th>說明</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>114/03/16 17:45:45</td>
+                                    <td>張申請</td>
+                                    <td>領域審查 審核中-->領域審查 已撤案</td>
+                                    <td>因OOO原因撤案</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal 撤案 -->
+    <div class="modal fade" id="planWithdrawModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="planWithdrawModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="fs-24 fw-bold text-green-light">確定撤案?</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="">
+                        <div class="fs-16 text-gray mb-2">撤案原因</div>
+                        <asp:TextBox ID="txtWithdrawReason" runat="server" TextMode="MultiLine" 
+                                    Rows="3" CssClass="form-control" placeholder="請輸入撤案原因"></asp:TextBox>
+                        <asp:HiddenField ID="hdnWithdrawProjectId" runat="server" />
+                    </div>
+
+                    <div class="d-flex gap-4 flex-wrap justify-content-center mt-5">
+                        <button type="button" class="btn btn-gray" data-bs-dismiss="modal">
+                            取消
+                        </button>
+                        <asp:Button ID="btnConfirmWithdraw" runat="server" Text="確認撤案" 
+                                   CssClass="btn btn-teal" OnClick="btnConfirmWithdraw_Click" 
+                                   OnClientClick="return validateWithdrawReason();" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal 恢復案件 -->
+    <div class="modal fade" id="planRestoreModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="planRestoreModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="fs-24 fw-bold text-green-light">確定恢復案件?</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center">
+                        <p class="fs-16 text-gray mb-4">確定要恢復此案件嗎？</p>
+                        <asp:HiddenField ID="hdnRestoreProjectId" runat="server" />
+                    </div>
+
+                    <div class="d-flex gap-4 flex-wrap justify-content-center mt-5">
+                        <button type="button" class="btn btn-gray" data-bs-dismiss="modal">
+                            取消
+                        </button>
+                        <asp:Button ID="btnConfirmRestore" runat="server" Text="確認恢復" 
+                                   CssClass="btn btn-teal" OnClick="btnConfirmRestore_Click" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="text/javascript">
+        // 處理撤案操作
+        function handleWithdraw(projectId) {
+            // 設定要撤案的 ProjectID
+            setWithdrawProjectId(projectId);
+            // 顯示撤案模態框
+            const modal = new bootstrap.Modal(document.getElementById('planWithdrawModal'));
+            modal.show();
+            // 清空原因輸入框
+            document.getElementById('<%= txtWithdrawReason.ClientID %>').value = '';
+        }
+
+        // 客戶端驗證撤案原因
+        function validateWithdrawReason() {
+            const reason = document.getElementById('<%= txtWithdrawReason.ClientID %>').value.trim();
+            if (!reason) {
+                alert('請輸入撤案原因');
+                return false;
+            }
+            return true;
+        }
+
+        // 設定撤案的 ProjectID（當開啟撤案 Modal 時呼叫）
+        function setWithdrawProjectId(projectId) {
+            document.getElementById('<%= hdnWithdrawProjectId.ClientID %>').value = projectId;
+        }
+        
+        // 處理恢復案件操作
+        function handleRestore(projectId) {
+            // 設定要恢復的 ProjectID
+            setRestoreProjectId(projectId);
+            // 顯示恢復案件模態框
+            const modal = new bootstrap.Modal(document.getElementById('planRestoreModal'));
+            modal.show();
+        }
+        
+        // 設定恢復案件的 ProjectID（當開啟恢復 Modal 時呼叫）
+        function setRestoreProjectId(projectId) {
+            document.getElementById('<%= hdnRestoreProjectId.ClientID %>').value = projectId;
+        }
+        
+        // 處理刪除操作
+        function handleDelete(projectId) {
+            // 設定要刪除的 ProjectID
+            setDeleteProjectId(projectId);
+            // 顯示刪除模態框
+            const modal = new bootstrap.Modal(document.getElementById('planDeleteModal'));
+            modal.show();
+            // 清空原因輸入框
+            document.getElementById('<%= txtDeleteReason.ClientID %>').value = '';
+        }
+        
+        // 客戶端驗證刪除原因
+        function validateDeleteReason() {
+            const reason = document.getElementById('<%= txtDeleteReason.ClientID %>').value.trim();
+            if (!reason) {
+                alert('請輸入刪除原因');
+                return false;
+            }
+            return true;
+        }
+        
+        // 設定刪除的 ProjectID（當開啟刪除 Modal 時呼叫）
+        function setDeleteProjectId(projectId) {
+            document.getElementById('<%= hdnDeleteProjectId.ClientID %>').value = projectId;
+        }
+    </script>
+    
+    <!-- Modal 刪除計畫 -->
+    <div class="modal fade" id="planDeleteModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="planDeleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="fs-24 fw-bold text-green-light">確定刪除申請案件?</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="">
+                        <div class="fs-16 text-gray mb-2">刪除說明</div>
+                        <asp:TextBox ID="txtDeleteReason" runat="server" TextMode="MultiLine" 
+                                    Rows="3" CssClass="form-control" placeholder="請輸入刪除原因"></asp:TextBox>
+                        <asp:HiddenField ID="hdnDeleteProjectId" runat="server" />
+                    </div>
+
+                    <div class="d-flex gap-4 flex-wrap justify-content-center mt-5">
+                        <button type="button" class="btn btn-gray" data-bs-dismiss="modal">
+                            取消
+                        </button>
+                        <asp:Button ID="btnConfirmDelete" runat="server" Text="確認刪除" 
+                                   CssClass="btn btn-teal" OnClick="btnConfirmDelete_Click" 
+                                   OnClientClick="return validateDeleteReason();" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</asp:Content>

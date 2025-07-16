@@ -1,157 +1,15 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeFile="SciWorkSch.aspx.cs" Inherits="OFS_SciWorkSch" Culture="zh-TW" UICulture="zh-TW" %>
-<!doctype html>
-<html class="no-js" lang="zh-Hant">
-<head runat="server">
-  <meta charset="utf-8" />
-  <meta http-equiv="x-ua-compatible" content="ie=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title> 計畫申請  | 海洋科學調查活動填報系統</title>
-  <!-- Bootstrap -->
-  <link rel="stylesheet" href="<%= ResolveUrl("~/assets/vendor/bootstrap-5.3.3/dist/css/bootstrap.min.css") %>">
-  <script src="<%= ResolveUrl("~/assets/vendor/bootstrap-5.3.3/dist/js/bootstrap.bundle.min.js") %>"></script>
-  
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="<%= ResolveUrl("~/assets/vendor/fontawesome-free-6.5.2-web/css/all.min.css") %>">
-    <link rel="stylesheet" href="<%= ResolveUrl("~/assets/vendor/fontawesome-free-6.5.2-web/css/all.css") %>">
-  
-    <!-- Google Icons -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Icons+Round">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
-  
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-  
-  <!-- SweetAlert2 -->
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  
-  <!-- 自訂 -->
-  <link rel="stylesheet" href="<%= ResolveUrl("~/assets/css/login.css") %>">
-  <link rel="stylesheet" href="<%= ResolveUrl("~/assets/css/main.css") %>">
-  <script src="<%= ResolveUrl("~/assets/js/customJS.js") %>"></script>
-  <script src="<%= ResolveUrl("~/script/OFS/SCI/SciWorkSch.js") %>"></script>
+﻿<%@ Page Language="C#" AutoEventWireup="true" CodeFile="SciWorkSch.aspx.cs" Inherits="OFS_SciWorkSch" Culture="zh-TW" UICulture="zh-TW" MasterPageFile="~/OFS/SCI/OFSApplicationMaster.master" %>
 
-</head>
-</html>
+<asp:Content ID="HeadContent" ContentPlaceHolderID="HeadExtra" runat="server">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="<%= ResolveUrl("~/script/OFS/SCI/SciWorkSch.js") %>"></script>
+</asp:Content>
 
-
-
-<body>
-  <form id="form1" runat="server" enctype="multipart/form-data">
+<asp:Content ID="ApplicationContent" ContentPlaceHolderID="ApplicationContent" runat="server">
     <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePartialRendering="true" />
-  <main>
-  
-      <div class="mis-layout">
-          <div class="mis-content">
-              <div class="mis-container">  
-                  
-                  <!-- 系統標題(選單收合) -->
-                  
-                  
-                  <div class="close-menu-logo">
-                      <div class="d-flex align-items-center flex-wrap">
-                          <img class="img-fluid" src="<%= ResolveUrl("~/assets/img/ocean-logo.png") %>" alt="logo" style="width: 180px;"> 
-                          <h2 class="text-dark-green">海洋領域補助計畫管理資訊系統</h2>
-                      </div>
-                  </div>
-                  
-                  <!-- 頁面標題 + 登入資訊 -->
-                  <!-- page title -->
-                  <div class="d-flex justify-content-between mb-4">
-                      <div class="page-title">
-                          <img src="<%= ResolveUrl("~/assets/img/information-system-title-icon03.svg") %>" alt="logo">
-                          <div>
-                              <span>目前位置</span>
-                              <div class="d-flex align-items-end gap-3">
-                                  <h2 class="text-dark-green2">計畫申請</h2>
-                                      <a class="text-dark-green2 text-decoration-none" href="information-system.html" >
-                                          <i class="fas fa-angle-left"></i>
-                                          返回列表
-                                  </a>
-                              </div>
-                              
-                          </div>
-                      </div>
-                      <div class="login-user">
-                          <div class="user-icon">
-                              <i class="fa-solid fa-user"></i>
-                          </div>
-                          <div class="user-info">
-                              <div class="d-flex align-items-center gap-4">
-                                  <!-- 登入者功能選單 -->
-                                  <div class="dropdown">
-                                      <button class="bg-transparent border-0 p-0" data-bs-toggle="dropdown" aria-expanded="false">
-                                          <div class="user-name">林小名<i class="fas fa-caret-down ms-1"></i></div>
-                                      </button>
-                                      <ul class="dropdown-menu">
-                                          <li>
-                                              <a class="dropdown-menu-item" href="#" tabindex="0">
-                                                  <span>編輯個人資料</span>
-                                              </a>
-                                          </li>
-                                          <li>
-                                              <a class="dropdown-menu-item" href="#" tabindex="0">
-                                                  <span>變更密碼</span>
-                                              </a>
-                                          </li>
-                                          <li>
-                                              <a class="dropdown-menu-item" href="#" tabindex="0">
-                                                  <span>登出</span>
-                                              </a>
-                                          </li>
-                                      </ul>
-                                  </div>
-                                  
-                                  <!-- 登出倒數 -->
-                                  <div class="d-flex align-items-center fs-14">
-                                      <span>登出倒數:</span>
-                                      <span class="me-1">10:00</span>
-                                      <button type="button" class="bg-transparent border-0 p-0 btn-refresh"><i class="fa-solid fa-rotate"></i></button>
-                                  </div>
-                              </div>
-                              
-                              <div class="user-department">綜合規劃處</div>
-                          </div>
-                      </div>
-                  </div>
-                  <!-- 申請流程進度條 -->
-                  
-                  <div class="application-step">
-                      <div class="step-item active">
-                          <div class="step-content">
-                              <div class="step-label">申請表/聲明書</div>
-                                  <div class="step-status">已完成</div>
-                          </div>
-                      </div>
-                      <div class="step-item active ">
-                          <div class="step-content">
-                              <div class="step-label">期程／工作項目／查核</div>
-                                  <div class="step-status edit">編輯中</div>
-                          </div>
-                      </div>
-                      <div class="step-item">
-                          <div class="step-content ">
-                              <div class="step-label">經費／人事</div>
-                          </div>
-                      </div>
-                      <div class="step-item">
-                          <div class="step-content ">
-                              <div class="step-label">成果與績效</div>
-                          </div>
-                      </div>
-                      <div class="step-item">
-                          <div class="step-content ">
-                              <div class="step-label">其他</div>
-                          </div>
-                      </div>
-                      <div class="step-item">
-                          <div class="step-content ">
-                              <div class="step-label">上傳附件/提送申請</div>
-                          </div>
-                      </div>
-                  </div>
-                  
-                  <!-- 內容區塊 -->
+    
+    <!-- 內容區塊 -->
                   <div class="block">
                   
                       <h5 class="square-title">期程及工作項目</h5>
@@ -525,7 +383,6 @@
                       <h5 class="square-title mt-4 gap-2 flex-wrap">計畫架構
                           <span class="text-pink fw-normal fs-16">＊務必說明</span><br>
                       </h5>
-                      <div class="text-pink fw-normal fs-16 mt-2">本頁若有資料變更，請務必詳細說明「變更欄位」及「變更前／變更後」之資料內容。若有多項欄位請條列式(1,2,3,...)說明。</div>
                       
                       
                       
@@ -538,10 +395,9 @@
                                           計畫架構
                                       </th>
                                       <td>
-                                          <a href="#" class="link-green" target="_blank">範例圖下載<i class="fas fa-file-download ms-1"></i></a>
-                                          
+                                          <a href="<%= ResolveUrl("~/assets/img/project-structure-example.png") %>" class="link-teal" target="_blank">範例圖下載<i class="fas fa-file-download ms-1"></i></a>
                                           <div class="input-group mt-3">
-                                              <input type="file" id="fileUploadDiagram" 
+                                              <input type="file" id="fileUploadDiagram"  name="fileUploadDiagram"
                                                      class="form-control" 
                                                      accept="image/*" />
                                               <button type="button" id="btnUploadDiagram" 
@@ -573,28 +429,15 @@
                       </div>
                   </div>
                   
-                  <!-- 底部區塊 -->
-                  <div class="block-bottom bg-light-green2">
-                      <asp:Button ID="btnTempSave" runat="server" 
-                          Text="暫存" 
-                          CssClass="btn btn-outline-blue-green2" 
-                          OnClick="btnTempSave_Click" />
-                      <asp:Button ID="btnSaveAndNext" runat="server" 
-                          Text="完成本頁，下一步" 
-                          CssClass="btn btn-blue-green2" 
-                          OnClick="btnSaveAndNext_Click" />
-                  </div>            </div>
-              <footer>
-                  <ul>
-                      <li>地址：806高雄市前鎮區成功二路25號4樓</li>
-                      <li>電話：(07)338-1810     Copyright © 海洋委員會 版權所有</li>
-                  </ul>
-              </footer>        </div>
-      </div>
-  
-  
-  </main>
-  </form>
-</body>
-
-   
+    <!-- 底部區塊 -->
+    <div class="block-bottom bg-light-teal">
+        <asp:Button ID="btnTempSave" runat="server" 
+            Text="暫存" 
+            CssClass="btn btn-outline-teal" 
+            OnClick="btnTempSave_Click" />
+        <asp:Button ID="btnSaveAndNext" runat="server" 
+            Text="完成本頁，下一步" 
+            CssClass="btn btn-teal" 
+            OnClick="btnSaveAndNext_Click" />
+    </div>
+</asp:Content>

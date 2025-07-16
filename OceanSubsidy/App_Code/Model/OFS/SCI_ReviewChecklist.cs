@@ -3,8 +3,6 @@
 public class ReviewChecklistItem
 {
     public string ProjectID { get; set; }
-    public string Version_ID { get; set; }
-    public int VersionNum { get; set; }
     public string Statuses { get; set; }
     public string StatusesName { get; set; }
     public DateTime? ExpirationDate { get; set; }
@@ -31,6 +29,8 @@ public class ReviewChecklistItem
     public string Year { get; set; }
     public string SubsidyPlanType { get; set; }
     public string ApplicationAmount { get; set; }
+    public bool? isWithdrawal { get; set; }
+    public bool? isExists { get; set; }
     
     // Helper methods for display
     public string GetFormattedExpirationDate()
@@ -82,15 +82,15 @@ public class ReviewChecklistItem
     // 取得計畫類別
     public string GetProjectCategory()
     {
-        if (string.IsNullOrEmpty(Version_ID)) return "未知";
+        if (string.IsNullOrEmpty(ProjectID)) return "未知";
         
-        if (Version_ID.Contains("SCI"))
+        if (ProjectID.Contains("SCI"))
             return "科專";
-        else if (Version_ID.Contains("CUL"))
+        else if (ProjectID.Contains("CUL"))
             return "文化";
-        else if (Version_ID.Contains("EDC"))
+        else if (ProjectID.Contains("EDC"))
             return "學校民間";
-        else if (Version_ID.Contains("CLB"))
+        else if (ProjectID.Contains("CLB"))
             return "學校社團";
         else
             return "其他";

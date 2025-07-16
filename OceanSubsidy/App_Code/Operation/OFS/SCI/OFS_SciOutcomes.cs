@@ -18,15 +18,15 @@ public class OFS_SciOutcomeHelper : System.Web.UI.Page
         // TODO: 在這裡新增建構函式邏輯
         //
     }
-public static OFS_SCI_Outcomes GetOutcomeData(string Version_ID)
+public static OFS_SCI_Outcomes GetOutcomeData(string ProjectID)
 {
     using (DbHelper db = new DbHelper())
     {
         try
         {
-            db.CommandText = "SELECT * FROM OFS_SCI_Outcomes WHERE Version_ID = @Version_ID";
+            db.CommandText = "SELECT * FROM OFS_SCI_Outcomes WHERE ProjectID = @ProjectID";
             db.Parameters.Clear();
-            db.Parameters.Add("@Version_ID", Version_ID);
+            db.Parameters.Add("@ProjectID", ProjectID);
             
             DataTable dt = db.GetTable();
             
@@ -52,7 +52,7 @@ private static OFS_SCI_Outcomes BuildVueDataModel(DataRow row)
 {
     return new OFS_SCI_Outcomes
     {
-        Version_ID = row["Version_ID"].ToString(),
+        ProjectID = row["ProjectID"].ToString(),
 
         TechTransfer_Plan_Count = GetNullableInt(row["TechTransfer_Plan_Count"]),
         TechTransfer_Plan_Price = GetNullableDecimal(row["TechTransfer_Plan_Price"]),
@@ -136,15 +136,15 @@ public static void SaveOutcomeData(OFS_SCI_Outcomes entityData)
         try
         {
             // 1. 刪除舊資料
-            db.CommandText = "DELETE FROM OFS_SCI_Outcomes WHERE Version_ID = @Version_ID";
+            db.CommandText = "DELETE FROM OFS_SCI_Outcomes WHERE ProjectID = @ProjectID";
             db.Parameters.Clear();
-            db.Parameters.Add("@Version_ID", entityData.Version_ID);
+            db.Parameters.Add("@ProjectID", entityData.ProjectID);
             db.ExecuteNonQuery();
 
             // 2. 插入新資料
             db.CommandText = @"
                 INSERT INTO OFS_SCI_Outcomes (
-                    Version_ID,
+                    ProjectID,
                     TechTransfer_Plan_Count, TechTransfer_Plan_Price, TechTransfer_Track_Count, TechTransfer_Track_Price, TechTransfer_Description,
                     Patent_Plan_Apply, Patent_Plan_Grant, Patent_Track_Apply, Patent_Track_Grant, Patent_Description,
                     Talent_Plan_PhD, Talent_Plan_Master, Talent_Plan_Others, Talent_Track_PhD, Talent_Track_Master, Talent_Track_Others, Talent_Description,
@@ -158,7 +158,7 @@ public static void SaveOutcomeData(OFS_SCI_Outcomes entityData)
                     Other_Plan_Description, Other_Track_Description
                 )
                 VALUES (
-                    @Version_ID,
+                    @ProjectID,
                     @TechTransfer_Plan_Count, @TechTransfer_Plan_Price, @TechTransfer_Track_Count, @TechTransfer_Track_Price, @TechTransfer_Description,
                     @Patent_Plan_Apply, @Patent_Plan_Grant, @Patent_Track_Apply, @Patent_Track_Grant, @Patent_Description,
                     @Talent_Plan_PhD, @Talent_Plan_Master, @Talent_Plan_Others, @Talent_Track_PhD, @Talent_Track_Master, @Talent_Track_Others, @Talent_Description,
@@ -174,7 +174,7 @@ public static void SaveOutcomeData(OFS_SCI_Outcomes entityData)
             ";
 
             db.Parameters.Clear();
-            db.Parameters.Add("@Version_ID", entityData.Version_ID);
+            db.Parameters.Add("@ProjectID", entityData.ProjectID);
 
             // 以下請根據你的表單填入對應的資料
             db.Parameters.Add("@TechTransfer_Plan_Count", entityData.TechTransfer_Plan_Count);
@@ -248,4 +248,64 @@ private static string GetValue(Dictionary<string, string> values, string key)
 {
     return values.ContainsKey(key) ? values[key] : null;
 }
+
+    /// <summary>
+    /// 更新 Form4Status
+    /// </summary>
+    /// <param name="projectId">ProjectID</param>
+    /// <param name="status">狀態 (暫存 或 完成)</param>
+    public static void UpdateForm4Status(string projectId, string status)
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            try
+            {
+                db.CommandText = @"
+                UPDATE OFS_SCI_Project_Main 
+                SET Form4Status = @Status
+                WHERE ProjectID = @ProjectId";
+                
+                db.Parameters.Clear();
+                db.Parameters.Add("@Status", status);
+                db.Parameters.Add("@ProjectId", projectId);
+                
+                db.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"更新 Form4Status 時發生錯誤: {ex.Message}", ex);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 更新 Form4Status 和 CurrentStep
+    /// </summary>
+    /// <param name="projectId">ProjectID</param>
+    /// <param name="status">狀態 (暫存 或 完成)</param>
+    /// <param name="currentStep">當前步驟</param>
+    public static void UpdateForm4StatusAndCurrentStep(string projectId, string status, string currentStep)
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            try
+            {
+                db.CommandText = @"
+                UPDATE OFS_SCI_Project_Main 
+                SET Form4Status = @Status, CurrentStep = @CurrentStep
+                WHERE ProjectID = @ProjectId";
+                
+                db.Parameters.Clear();
+                db.Parameters.Add("@Status", status);
+                db.Parameters.Add("@CurrentStep", currentStep);
+                db.Parameters.Add("@ProjectId", projectId);
+                
+                db.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"更新 Form4Status 和 CurrentStep 時發生錯誤: {ex.Message}", ex);
+            }
+        }
+    }
 }

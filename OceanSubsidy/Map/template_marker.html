@@ -96,36 +96,68 @@
 
                             <div class="col-12">
                                 <label for="" class="form-label text-muted fw-normal">經緯度定位(WGS84)</label>
+                                <div class="text-dark fw-bold small mt-1">可直接在圖台點擊標註點位</div>
+                                <div class="text-dark fw-bold small">亦可於下方輸入框輸入數字</div>
                                 <select id="ddlPtCoordType" class="form-select" onchange="switchCoordType(this, this.value, 'divPt');">
                                     <option value="DD" selected="selected">十進位</option>
                                     <option value="DMS">度 分 秒</option>
                                 </select>
                                 <div id="divPtDMS" class="mb-2 divCoordType _divMarkCoord" style="display: none;">
-                                    <div class="input-group mb-1">
-                                        <span class="input-group-text">緯度</span>
-                                        <select id="ddlPtLat" class="form-select">
-                                            <option value="N">N</option>
-                                            <option value="S">S</option>
-                                        </select>
-                                        <input type="text" id="txtPtLat" class="form-control" />
-                                    </div>
-                                    <div class="input-group">
-                                        <span class="input-group-text">經度</span>
-                                        <select id="ddlPtLon" class="form-select">
-                                            <option value="E">E</option>
-                                            <option value="W">W</option>
-                                        </select>
-                                        <input type="text" id="txtPtLon" class="form-control" />
-                                    </div>
+                                    <dl class="my-2">
+                                        #1
+                                        <dd class="d-flex">
+                                            <span class="input-group-text">緯度</span>
+                                            <select id="ddlPtLat" class="form-select">
+                                                <option value="N">N</option>
+                                                <option value="S">S</option>
+                                            </select>
+                                        </dd>
+                                        <dd class="d-flex">
+                                            <span class="input-group-text">度</span>
+                                            <input type="text" id="txtPtLatD" placeholder="例:24" class="WGS84-input">
+                                        </dd>
+                                        <dd class="d-flex">
+                                            <span class="input-group-text">分</span>
+                                            <input type="text" id="txtPtLatM" placeholder="例:12" class="WGS84-input">
+                                        </dd>
+                                        <dd class="d-flex">
+                                            <span class="input-group-text">秒</span>
+                                            <input type="text" id="txtPtLatS" placeholder="例:39.56932" class="WGS84-input">
+                                        </dd>
+                                    </dl>
+
+                                    <dl class="my-2">
+                                        <dd class="d-flex">
+                                            <span class="input-group-text">經度</span>
+                                            <select id="ddlPtLat" class="form-select">
+                                                <option value="E">E</option>
+                                                <option value="W">W</option>
+                                            </select>
+                                        </dd>
+                                        <dd class="d-flex">
+                                            <span class="input-group-text">度</span>
+                                            <input type="text" id="txtPtLonD" placeholder="例:121" class="WGS84-input">
+                                        </dd>
+                                        <dd class="d-flex">
+                                            <span class="input-group-text">分</span>
+                                            <input type="text" id="txtPtLonM" placeholder="例:20" class="WGS84-input">
+                                        </dd>
+                                        <dd class="d-flex">
+                                            <span class="input-group-text">秒</span>
+                                            <input type="text" id="txtPtLonS" placeholder="例:12.92475" class="WGS84-input">
+                                        </dd>
+                                    </dl>
+
                                 </div>
                                 <div id="divPtDD" class="mb-2 divCoordType _divMarkCoord">
+                                    #1
                                     <div class="input-group mb-1">
                                         <span class="input-group-text">緯度</span>
-                                        <input type="text" id="txtPtLatDD" class="form-control" />
+                                        <input type="text" id="txtPtLatDD" placeholder="例:24.17834" class="form-control" />
                                     </div>
                                     <div class="input-group">
                                         <span class="input-group-text">經度</span>
-                                        <input type="text" id="txtPtLonDD" class="form-control" />
+                                        <input type="text" id="txtPtLonDD" placeholder="例:120.649812" class="form-control" />
                                     </div>
                                 </div>
                             </div>
@@ -211,67 +243,127 @@
                             </div>-->
                             <div id="tbLinePt" class="col-12">
                                 <label for="" class="form-label text-muted fw-normal">經緯度定位(WGS84)</label>
+                                <div class="text-dark fw-bold small mt-1">可直接在圖台點擊標註點位</div>
+                                <div class="text-dark fw-bold small">亦可於下方輸入框輸入數字</div>
                                 <select id="ddlLineCoordType" class="form-select" onchange="switchCoordType(this, this.value, 'divLine');">
                                     <option value="DD" selected="selected">十進位</option>
                                     <option value="DMS">度 分 秒</option>
                                 </select>
                                 <div id="divLineDMS" class="divCoordType _divMarkCoord" style="display: none;">
                                     <div class="mb-2">
-                                        <div class="input-group mb-1">
-                                            <span class="input-group-text">緯度</span>
-                                            <select id="ddlLineLat1" class="form-select">
-                                                <option value="N">N</option>
-                                                <option value="S">S</option>
-                                            </select>
-                                            <input type="text" id="txtLineLat1" class="form-control" />
-                                        </div>
-                                        <div class="input-group">
-                                            <span class="input-group-text">經度</span>
-                                            <select id="ddlLineLon1" class="form-select">
-                                                <option value="E">E</option>
-                                                <option value="W">W</option>
-                                            </select>
-                                            <input type="text" id="txtLineLon1" class="form-control" />
-                                        </div>
+                                        <div id="divLinePt1" class="d-flex" style="gap: 4px;"></div>
+                                        <dl class="my-2">
+                                            #1
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">緯度</span>
+                                                <select id="ddlLineLat1" class="form-select">
+                                                    <option value="N">N</option>
+                                                    <option value="S">S</option>
+                                                </select>
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">度</span>
+                                                <input type="text" id="txtLineLat1D" placeholder="例:24" class="WGS84-input">
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">分</span>
+                                                <input type="text" id="txtLineLat1M" placeholder="例:12" class="WGS84-input">
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">秒</span>
+                                                <input type="text" id="txtLineLat1S" placeholder="例:39.56932" class="WGS84-input">
+                                            </dd>
+                                        </dl>
+                                        <dl class="my-2">
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">經度</span>
+                                                <select id="ddlLineLon1" class="form-select">
+                                                    <option value="E">E</option>
+                                                    <option value="W">W</option>
+                                                </select>
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">度</span>
+                                                <input type="text" id="txtLineLon1D" placeholder="例:121" class="WGS84-input">
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">分</span>
+                                                <input type="text" id="txtLineLon1M" placeholder="例:20" class="WGS84-input">
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">秒</span>
+                                                <input type="text" id="txtLineLon1S" placeholder="例:12.92475" class="WGS84-input">
+                                            </dd>
+                                        </dl>
                                     </div>
                                     <div class="mb-2">
-                                        <div class="input-group mb-1">
-                                            <span class="input-group-text">緯度</span>
-                                            <select id="ddlLineLat2" class="form-select">
-                                                <option value="N">N</option>
-                                                <option value="S">S</option>
-                                            </select>
-                                            <input type="text" id="txtLineLat2" class="form-control" />
-                                        </div>
-                                        <div class="input-group">
-                                            <span class="input-group-text">經度</span>
-                                            <select id="ddlLineLon2" class="form-select">
-                                                <option value="E">E</option>
-                                                <option value="W">W</option>
-                                            </select>
-                                            <input type="text" id="txtLineLon2" class="form-control" />
-                                        </div>
+                                        <div id="divLinePt2" class="d-flex" style="gap: 4px;"></div>
+                                        <dl class="my-2">
+                                            #2
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">緯度</span>
+                                                <select id="ddlLineLat2" class="form-select">
+                                                    <option value="N">N</option>
+                                                    <option value="S">S</option>
+                                                </select>
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">度</span>
+                                                <input type="text" id="txtLineLat2D" placeholder="例:24" class="WGS84-input">
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">分</span>
+                                                <input type="text" id="txtLineLat2M" placeholder="例:12" class="WGS84-input">
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">秒</span>
+                                                <input type="text" id="txtLineLat2S" placeholder="例:39.56932" class="WGS84-input">
+                                            </dd>
+                                        </dl>
+                                        <dl class="my-2">
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">經度</span>
+                                                <select id="ddlLineLon2" class="form-select">
+                                                    <option value="E">E</option>
+                                                    <option value="W">W</option>
+                                                </select>
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">度</span>
+                                                <input type="text" id="txtLineLon2D" placeholder="例:121" class="WGS84-input">
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">分</span>
+                                                <input type="text" id="txtLineLon2M" placeholder="例:20" class="WGS84-input">
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">秒</span>
+                                                <input type="text" id="txtLineLon2S" placeholder="例:12.92475" class="WGS84-input">
+                                            </dd>
+                                        </dl>
                                     </div>
                                 </div>
                                 <div id="divLineDD" class="divCoordType _divMarkCoord">
                                     <div class="mb-2">
+                                        #1
                                         <div class="input-group mb-1">
                                             <span class="input-group-text">緯度</span>
-                                            <input type="text" id="txtLineLatDD1" class="form-control" />
+                                            <input type="text" id="txtLineLatDD1" placeholder="例:24.17834" class="form-control" />
                                         </div>
                                         <div class="input-group">
                                             <span class="input-group-text">經度</span>
-                                            <input type="text" id="txtLineLonDD1" class="form-control" />
+                                            <input type="text" id="txtLineLonDD1" placeholder="例:120.649812" class="form-control" />
                                         </div>
                                     </div>
                                     <div class="mb-2">
+                                        #2
                                         <div class="input-group mb-1">
                                             <span class="input-group-text">緯度</span>
-                                            <input type="text" id="txtLineLatDD2" class="form-control" />
+                                            <input type="text" id="txtLineLatDD2" placeholder="例:24.17834" class="form-control" />
                                         </div>
                                         <div class="input-group">
                                             <span class="input-group-text">經度</span>
-                                            <input type="text" id="txtLineLonDD2" class="form-control" />
+                                            <input type="text" id="txtLineLonDD2" placeholder="例:120.649812" class="form-control" />
                                         </div>
                                     </div>
                                 </div>
@@ -345,115 +437,204 @@
                                 </div>
                             </div>-->
                             <!--<div class="col-6">
-                <label for="" class="form-label text-muted fw-normal mb-0">周長度顯示</label>
-                <div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="PolyTLen" id="rdoPolyTLenYes" onchange="resetDrawInteraction();" />
-                        <label class="form-check-label" for="rdoPolyTLenYes">是</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="PolyTLen" id="rdoPolyTLenNo" checked=checked onchange="resetDrawInteraction();" />
-                        <label class="form-check-label" for="rdoPolyTLenNo">否</label>
-                    </div>
-                </div>
-            </div>-->
+                                <label for="" class="form-label text-muted fw-normal mb-0">周長度顯示</label>
+                                <div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="PolyTLen" id="rdoPolyTLenYes" onchange="resetDrawInteraction();" />
+                                        <label class="form-check-label" for="rdoPolyTLenYes">是</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="PolyTLen" id="rdoPolyTLenNo" checked=checked onchange="resetDrawInteraction();" />
+                                        <label class="form-check-label" for="rdoPolyTLenNo">否</label>
+                                    </div>
+                                </div>
+                            </div>-->
                             <div id="tbPolyPt" class="col-12">
                                 <label for="" class="form-label text-muted fw-normal">經緯度定位(WGS84)</label>
+                                <div class="text-dark fw-bold small mt-1">可直接在圖台點擊標註點位</div>
+                                <div class="text-dark fw-bold small">亦可於下方輸入框輸入數字</div>
                                 <select id="ddlPolyCoordType" class="form-select" onchange="switchCoordType(this, this.value, 'divPoly');">
                                     <option value="DD" selected="selected">十進位</option>
                                     <option value="DMS">度 分 秒</option>
                                 </select>
                                 <div id="divPolyDMS" class="divCoordType _divMarkCoord" style="display: none;">
                                     <div class="mb-2 addPoly">
-                                        <div class="input-group mb-1">
-                                            <span class="input-group-text">緯度</span>
-                                            <select id="ddlPolyLat1" class="form-select">
-                                                <option value="N">N</option>
-                                                <option value="S">S</option>
-                                            </select>
-                                            <input type="text" id="txtPolyLat1" class="form-control" />
-                                        </div>
-                                        <div class="input-group">
-                                            <span class="input-group-text">經度</span>
-                                            <select id="ddlPolyLon1" class="form-select">
-                                                <option value="E">E</option>
-                                                <option value="W">W</option>
-                                            </select>
-                                            <input type="text" id="txtPolyLon1" class="form-control" />
-                                        </div>
+                                        <dl class="my-2">
+                                            #1
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">緯度</span>
+                                                <select id="ddlPolyLat1" class="form-select">
+                                                    <option value="N">N</option>
+                                                    <option value="S">S</option>
+                                                </select>
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">度</span>
+                                                <input type="text" id="txtPolyLat1D" placeholder="例:24" class="WGS84-input">
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">分</span>
+                                                <input type="text" id="txtPolyLat1M" placeholder="例:12" class="WGS84-input">
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">秒</span>
+                                                <input type="text" id="txtPolyLat1S" placeholder="例:39.56932" class="WGS84-input">
+                                            </dd>
+                                        </dl>
+
+                                        <dl class="my-2">
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">經度</span>
+                                                <select id="ddlPolyLon1" class="form-select">
+                                                    <option value="E">E</option>
+                                                    <option value="W">W</option>
+                                                </select>
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">度</span>
+                                                <input type="text" id="txtPolyLon1D" placeholder="例:121" class="WGS84-input">
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">分</span>
+                                                <input type="text" id="txtPolyLon1M" placeholder="例:20" class="WGS84-input">
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">秒</span>
+                                                <input type="text" id="txtPolyLon1S" placeholder="例:12.92475" class="WGS84-input">
+                                            </dd>
+                                        </dl>
                                     </div>
                                     <div class="mb-2 addPoly">
-                                        <div class="input-group mb-1">
-                                            <span class="input-group-text">緯度</span>
-                                            <select id="ddlPolyLat2" class="form-select">
-                                                <option value="N">N</option>
-                                                <option value="S">S</option>
-                                            </select>
-                                            <input type="text" id="txtPolyLat2" class="form-control" />
-                                        </div>
-                                        <div class="input-group">
-                                            <span class="input-group-text">經度</span>
-                                            <select id="ddlPolyLon2" class="form-select">
-                                                <option value="E">E</option>
-                                                <option value="W">W</option>
-                                            </select>
-                                            <input type="text" id="txtPolyLon2" class="form-control" />
-                                        </div>
+                                        <dl class="my-2">
+                                            #2
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">緯度</span>
+                                                <select id="ddlPolyLat2" class="form-select">
+                                                    <option value="N">N</option>
+                                                    <option value="S">S</option>
+                                                </select>
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">度</span>
+                                                <input type="text" id="txtPolyLat2D" placeholder="例:24" class="WGS84-input">
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">分</span>
+                                                <input type="text" id="txtPolyLat2M" placeholder="例:12" class="WGS84-input">
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">秒</span>
+                                                <input type="text" id="txtPolyLat2S" placeholder="例:39.56932" class="WGS84-input">
+                                            </dd>
+                                        </dl>
+
+                                        <dl class="my-2">
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">經度</span>
+                                                <select id="ddlPolyLon2" class="form-select">
+                                                    <option value="E">E</option>
+                                                    <option value="W">W</option>
+                                                </select>
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">度</span>
+                                                <input type="text" id="txtPolyLon2D" placeholder="例:121" class="WGS84-input">
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">分</span>
+                                                <input type="text" id="txtPolyLon2M" placeholder="例:20" class="WGS84-input">
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">秒</span>
+                                                <input type="text" id="txtPolyLon2S" placeholder="例:12.92475" class="WGS84-input">
+                                            </dd>
+                                        </dl>
                                     </div>
                                     <div class="mb-2 addPoly">
-                                        <div class="input-group mb-1">
-                                            <span class="input-group-text">緯度</span>
-                                            <select id="ddlPolyLat3" class="form-select">
-                                                <option value="N">N</option>
-                                                <option value="S">S</option>
-                                            </select>
-                                            <input type="text" id="txtPolyLat3" class="form-control" />
-                                        </div>
-                                        <div class="input-group">
-                                            <span class="input-group-text">經度</span>
-                                            <select id="ddlPolyLon3" class="form-select">
-                                                <option value="E">E</option>
-                                                <option value="W">W</option>
-                                            </select>
-                                            <input type="text" id="txtPolyLon3" class="form-control" />
-                                        </div>
+                                        <dl class="my-2">
+                                            #3
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">緯度</span>
+                                                <select id="ddlPolyLat3" class="form-select">
+                                                    <option value="N">N</option>
+                                                    <option value="S">S</option>
+                                                </select>
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">度</span>
+                                                <input type="text" id="txtPolyLat3D" placeholder="例:24" class="WGS84-input">
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">分</span>
+                                                <input type="text" id="txtPolyLat3M" placeholder="例:12" class="WGS84-input">
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">秒</span>
+                                                <input type="text" id="txtPolyLat3S" placeholder="例:39.56932" class="WGS84-input">
+                                            </dd>
+                                        </dl>
+
+                                        <dl class="my-2">
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">經度</span>
+                                                <select id="ddlPolyLon3" class="form-select">
+                                                    <option value="E">E</option>
+                                                    <option value="W">W</option>
+                                                </select>
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">度</span>
+                                                <input type="text" id="txtPolyLon3D" placeholder="例:121" class="WGS84-input">
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">分</span>
+                                                <input type="text" id="txtPolyLon3M" placeholder="例:20" class="WGS84-input">
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">秒</span>
+                                                <input type="text" id="txtPolyLon3S" placeholder="例:12.92475" class="WGS84-input">
+                                            </dd>
+                                        </dl>
                                     </div>
                                 </div>
                                 <div id="divPolyDD" class="divCoordType _divMarkCoord">
                                     <div class="mb-2 addPoly">
+                                        #1
                                         <div class="input-group mb-1">
                                             <span class="input-group-text">緯度</span>
-                                            <input type="text" id="txtPolyLatDD1" class="form-control" />
+                                            <input type="text" id="txtPolyLatDD1" placeholder="例:24.17834" class="form-control" />
                                         </div>
                                         <div class="input-group">
                                             <span class="input-group-text">經度</span>
-                                            <input type="text" id="txtPolyLonDD1" class="form-control" />
+                                            <input type="text" id="txtPolyLonDD1" placeholder="例:120.649812" class="form-control" />
                                         </div>
                                     </div>
                                     <div class="mb-2 addPoly">
+                                        #2
                                         <div class="input-group mb-1">
                                             <span class="input-group-text">緯度</span>
-                                            <input type="text" id="txtPolyLatDD2" class="form-control" />
+                                            <input type="text" id="txtPolyLatDD2" placeholder="例:24.17834" class="form-control" />
                                         </div>
                                         <div class="input-group">
                                             <span class="input-group-text">經度</span>
-                                            <input type="text" id="txtPolyLonDD2" class="form-control" />
+                                            <input type="text" id="txtPolyLonDD2" placeholder="例:120.649812" class="form-control" />
                                         </div>
                                     </div>
                                     <div class="mb-2 addPoly">
+                                        #3
                                         <div class="input-group mb-1">
                                             <span class="input-group-text">緯度</span>
-                                            <input type="text" id="txtPolyLatDD3" class="form-control" />
+                                            <input type="text" id="txtPolyLatDD3" placeholder="例:24.17834" class="form-control" />
                                         </div>
                                         <div class="input-group">
                                             <span class="input-group-text">經度</span>
-                                            <input type="text" id="txtPolyLonDD3" class="form-control" />
+                                            <input type="text" id="txtPolyLonDD3" placeholder="例:120.649812" class="form-control" />
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="btnBoxCenter">
-                                <input type="button" value="新增經緯度" class="btn btn_add"  id="btnAddPt" onclick="addPolyPt();">
+                                <input type="button" value="新增經緯度" class="btn btn_add" id="btnAddPt" onclick="addPolyPt();">
                                 <input type="button" value="建立" class="btn btn_add" id="btnCreatePoly" onclick="addPolyMark();">
                             </div>
                         </div>
@@ -501,6 +682,8 @@
                             </div>
                             <div class="col-12">
                                 <label for="" class="form-label text-muted fw-normal">經緯度定位(WGS84)</label>
+                                <div class="text-dark fw-bold small mt-1">可直接在圖台點擊標註點位</div>
+                                <div class="text-dark fw-bold small">亦可於下方輸入框輸入數字</div>
                                 <select id="ddlTxtCoordType" class="form-select" onchange="switchCoordType(this, this.value, 'divTxt');">
                                     <option value="DD" selected="selected">十進位</option>
                                     <option value="DMS">度 分 秒</option>
@@ -602,81 +785,138 @@
                                 </div>
                             </div>-->
                             <!--<div class="col-6">
-                <label for="" class="form-label text-muted fw-normal mb-0">周長度顯示</label>
-                <div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="BoxTLen" id="rdoBoxTLenYes" onchange="resetDrawInteraction();" />
-                        <label class="form-check-label" for="rdoBoxTLenYes">是</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="BoxTLen" id="rdoBoxTLenNo" checked=checked onchange="resetDrawInteraction();" />
-                        <label class="form-check-label" for="rdoBoxTLenNo">否</label>
-                    </div>
-                </div>
-            </div>-->
+                                <label for="" class="form-label text-muted fw-normal mb-0">周長度顯示</label>
+                                <div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="BoxTLen" id="rdoBoxTLenYes" onchange="resetDrawInteraction();" />
+                                        <label class="form-check-label" for="rdoBoxTLenYes">是</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="BoxTLen" id="rdoBoxTLenNo" checked=checked onchange="resetDrawInteraction();" />
+                                        <label class="form-check-label" for="rdoBoxTLenNo">否</label>
+                                    </div>
+                                </div>
+                            </div>-->
                             <div id="tbBoxPt" class="col-12">
                                 <label for="" class="form-label text-muted fw-normal">經緯度定位(WGS84)</label>
+                                <div class="text-dark fw-bold small mt-1">可直接在圖台點擊標註點位</div>
+                                <div class="text-dark fw-bold small">亦可於下方輸入框輸入數字</div>
                                 <select id="ddlBoxCoordType" class="form-select" onchange="switchCoordType(this, this.value, 'divBox');">
                                     <option value="DD" selected="selected">十進位</option>
                                     <option value="DMS">度 分 秒</option>
                                 </select>
                                 <div id="divBoxDMS" class="divCoordType _divMarkCoord" style="display: none;">
-                                    <div class="mb-2">
-                                        <div class="input-group mb-1">
+                                    <dl class="my-2">
+                                        #1 (左上角)
+                                        <dd class="d-flex">
                                             <span class="input-group-text">緯度</span>
                                             <select id="ddlBoxLat1" class="form-select">
                                                 <option value="N">N</option>
                                                 <option value="S">S</option>
                                             </select>
-                                            <input type="text" id="txtBoxLat1" class="form-control" />
-                                        </div>
-                                        <div class="input-group">
+                                        </dd>
+                                        <dd class="d-flex">
+                                            <span class="input-group-text">度</span>
+                                            <input type="text" id="txtBoxLat1D" placeholder="例:24" class="WGS84-input">
+                                        </dd>
+                                        <dd class="d-flex">
+                                            <span class="input-group-text">分</span>
+                                            <input type="text" id="txtBoxLat1M" placeholder="例:12" class="WGS84-input">
+                                        </dd>
+                                        <dd class="d-flex">
+                                            <span class="input-group-text">秒</span>
+                                            <input type="text" id="txtBoxLat1S" placeholder="例:39.56932" class="WGS84-input">
+                                        </dd>
+                                    </dl>
+
+                                    <dl class="my-2">
+                                        <dd class="d-flex">
                                             <span class="input-group-text">經度</span>
                                             <select id="ddlBoxLon1" class="form-select">
                                                 <option value="E">E</option>
                                                 <option value="W">W</option>
                                             </select>
-                                            <input type="text" id="txtBoxLon1" class="form-control" />
-                                        </div>
-                                    </div>
-                                    <div class="mb-2">
-                                        <div class="input-group mb-1">
+                                        </dd>
+                                        <dd class="d-flex">
+                                            <span class="input-group-text">度</span>
+                                            <input type="text" id="txtBoxLon1D" placeholder="例:121" class="WGS84-input">
+                                        </dd>
+                                        <dd class="d-flex">
+                                            <span class="input-group-text">分</span>
+                                            <input type="text" id="txtBoxLon1M" placeholder="例:20" class="WGS84-input">
+                                        </dd>
+                                        <dd class="d-flex">
+                                            <span class="input-group-text">秒</span>
+                                            <input type="text" id="txtBoxLon1S" placeholder="例:12.92475" class="WGS84-input">
+                                        </dd>
+                                    </dl>
+
+                                    <dl class="my-2">
+                                        #2 (右下角)
+                                        <dd class="d-flex">
                                             <span class="input-group-text">緯度</span>
                                             <select id="ddlBoxLat2" class="form-select">
                                                 <option value="N">N</option>
                                                 <option value="S">S</option>
                                             </select>
-                                            <input type="text" id="txtBoxLat2" class="form-control" />
-                                        </div>
-                                        <div class="input-group">
+                                        </dd>
+                                        <dd class="d-flex">
+                                            <span class="input-group-text">度</span>
+                                            <input type="text" id="txtBoxLat2D" placeholder="例:24" class="WGS84-input">
+                                        </dd>
+                                        <dd class="d-flex">
+                                            <span class="input-group-text">分</span>
+                                            <input type="text" id="txtBoxLat2M" placeholder="例:12" class="WGS84-input">
+                                        </dd>
+                                        <dd class="d-flex">
+                                            <span class="input-group-text">秒</span>
+                                            <input type="text" id="txtBoxLat2S" placeholder="例:39.56932" class="WGS84-input">
+                                        </dd>
+                                    </dl>
+
+                                    <dl class="my-2">
+                                        <dd class="d-flex">
                                             <span class="input-group-text">經度</span>
                                             <select id="ddlBoxLon2" class="form-select">
                                                 <option value="E">E</option>
                                                 <option value="W">W</option>
                                             </select>
-                                            <input type="text" id="txtBoxLon2" class="form-control" />
-                                        </div>
-                                    </div>
+                                        </dd>
+                                        <dd class="d-flex">
+                                            <span class="input-group-text">度</span>
+                                            <input type="text" id="txtBoxLon2D" placeholder="例:121" class="WGS84-input">
+                                        </dd>
+                                        <dd class="d-flex">
+                                            <span class="input-group-text">分</span>
+                                            <input type="text" id="txtBoxLon2M" placeholder="例:20" class="WGS84-input">
+                                        </dd>
+                                        <dd class="d-flex">
+                                            <span class="input-group-text">秒</span>
+                                            <input type="text" id="txtBoxLon2S" placeholder="例:12.92475" class="WGS84-input">
+                                        </dd>
+                                    </dl>
                                 </div>
                                 <div id="divBoxDD" class="divCoordType _divMarkCoord">
                                     <div class="mb-2">
+                                        #1 (左上角)
                                         <div class="input-group mb-1">
                                             <span class="input-group-text">緯度</span>
-                                            <input type="text" id="txtBoxLatDD1" class="form-control" />
+                                            <input type="text" id="txtBoxLatDD1" placeholder="例:24.17834" class="form-control" />
                                         </div>
                                         <div class="input-group">
                                             <span class="input-group-text">經度</span>
-                                            <input type="text" id="txtBoxLonDD1" class="form-control" />
+                                            <input type="text" id="txtBoxLonDD1" placeholder="例:120.649812" class="form-control" />
                                         </div>
                                     </div>
                                     <div class="mb-2">
+                                        #2 (右下角)
                                         <div class="input-group mb-1">
                                             <span class="input-group-text">緯度</span>
-                                            <input type="text" id="txtBoxLatDD2" class="form-control" />
+                                            <input type="text" id="txtBoxLatDD2" placeholder="例:24.17834" class="form-control" />
                                         </div>
                                         <div class="input-group">
                                             <span class="input-group-text">經度</span>
-                                            <input type="text" id="txtBoxLonDD2" class="form-control" />
+                                            <input type="text" id="txtBoxLonDD2" placeholder="例:120.649812" class="form-control" />
                                         </div>
                                     </div>
                                 </div>
@@ -770,39 +1010,68 @@
                             </div>-->
                             <div class="col-12">
                                 <label for="" class="form-label text-muted fw-normal">經緯度定位(WGS84)</label>
+                                <div class="text-dark fw-bold small mt-1">可直接在圖台點擊標註點位</div>
+                                <div class="text-dark fw-bold small">亦可於下方輸入框輸入數字</div>
                                 <select id="ddlCirCoordType" class="form-select" onchange="switchCoordType(this, this.value, 'divCir');">
                                     <option value="DD" selected="selected">十進位</option>
                                     <option value="DMS">度 分 秒</option>
                                 </select>
                                 <div id="divCirDMS" class="divCoordType _divMarkCoord" style="display: none;">
                                     <div class="mb-2 addCir">
-                                        <div class="input-group mb-1">
-                                            <span class="input-group-text">緯度</span>
-                                            <select id="ddlCirLat" class="form-select">
-                                                <option value="N">N</option>
-                                                <option value="S">S</option>
-                                            </select>
-                                            <input type="text" id="txtCirLat" class="form-control" />
-                                        </div>
-                                        <div class="input-group">
-                                            <span class="input-group-text">經度</span>
-                                            <select id="ddlCirLon" class="form-select">
-                                                <option value="E">E</option>
-                                                <option value="W">W</option>
-                                            </select>
-                                            <input type="text" id="txtCirLon" class="form-control" />
-                                        </div>
+                                        <dl class="my-2">
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">緯度</span>
+                                                <select id="ddlCirLat" class="form-select">
+                                                    <option value="N">N</option>
+                                                    <option value="S">S</option>
+                                                </select>
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">度</span>
+                                                <input type="text" id="txtCirLatD" placeholder="例:24" class="WGS84-input">
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">分</span>
+                                                <input type="text" id="txtCirLatM" placeholder="例:12" class="WGS84-input">
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">秒</span>
+                                                <input type="text" id="txtCirLatS" placeholder="例:39.56932" class="WGS84-input">
+                                            </dd>
+                                        </dl>
+
+                                        <dl class="my-2">
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">經度</span>
+                                                <select id="ddlCirLon" class="form-select">
+                                                    <option value="E">E</option>
+                                                    <option value="W">W</option>
+                                                </select>
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">度</span>
+                                                <input type="text" id="txtCirLonD" placeholder="例:121" class="WGS84-input">
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">分</span>
+                                                <input type="text" id="txtCirLonM" placeholder="例:20" class="WGS84-input">
+                                            </dd>
+                                            <dd class="d-flex">
+                                                <span class="input-group-text">秒</span>
+                                                <input type="text" id="txtCirLonS" placeholder="例:12.92475" class="WGS84-input">
+                                            </dd>
+                                        </dl>
                                     </div>
                                 </div>
                                 <div id="divCirDD" class="divCoordType _divMarkCoord">
                                     <div class="mb-2 addCir">
                                         <div class="input-group mb-1">
                                             <span class="input-group-text">緯度</span>
-                                            <input type="text" id="txtCirLatDD" class="form-control" />
+                                            <input type="text" id="txtCirLatDD" placeholder="例:24.17834" class="form-control" />
                                         </div>
                                         <div class="input-group">
                                             <span class="input-group-text">經度</span>
-                                            <input type="text" id="txtCirLonDD" class="form-control" />
+                                            <input type="text" id="txtCirLonDD" placeholder="例:120.649812" class="form-control" />
                                         </div>
                                     </div>
                                 </div>
@@ -823,74 +1092,74 @@
                         </div>
                     </div>
                     <!--<div class="">
-            <div class="input-group mb-3">
-                <input class="form-control" list="engNameList" id="engKW" placeholder="請輸入你想搜尋的工程關鍵字">
-                <datalist id="engNameList">
-                </datalist>
-                <button class="btn btn-outline-secondary" type="button" id="" onclick="Eng_Query('');"><i class="fas fa-search"></i></button>
-            </div>
-            <div class="input-group mb-3">
-                <label for="" class="form-label hot-keyword-title"><i class="fas fa-fire me-1"></i>熱門搜尋</label>
-                <div class="">
-                    <a href="" class="hot-keyword" onclick="Eng_Query('綠美圖'); return false;">綠美圖</a>
-                    <a href="" class="hot-keyword" onclick="Eng_Query('水湳'); return false;">水湳</a>
-                    <a href="" class="hot-keyword" onclick="Eng_Query('會展中心'); return false;">會展中心</a>
-                </div>
-            </div>
-            <div class="mb-3">
-                <a class="txt_Purple fw-bold search-adv-btn" data-bs-toggle="collapse" onclick="$('#engCollapse').css('display') == 'none' ? $('#engCollapse').css('display', 'block') : $('#engCollapse').css('display', 'none')" role="button" aria-expanded="false" aria-controls="engCollapse"><i class="fas fa-search me-1"></i>進階搜尋</a>
-                <div class="collapse" id="engCollapse">
-                    <div class="card card-body">
-                        <div class="mb-3">
-                            <label for="" class="form-label txt_Purple fw-bold"><i class="search-adv-i bg_purple_light"></i>關鍵字</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="engAdvKW" placeholder="請輸入關鍵字">
-                                <button class="btn btn-outline-secondary EngKW" type="button" id=""><i class="fas fa-plus"></i></button>
+                        <div class="input-group mb-3">
+                            <input class="form-control" list="engNameList" id="engKW" placeholder="請輸入你想搜尋的工程關鍵字">
+                            <datalist id="engNameList">
+                            </datalist>
+                            <button class="btn btn-outline-secondary" type="button" id="" onclick="Eng_Query('');"><i class="fas fa-search"></i></button>
+                        </div>
+                        <div class="input-group mb-3">
+                            <label for="" class="form-label hot-keyword-title"><i class="fas fa-fire me-1"></i>熱門搜尋</label>
+                            <div class="">
+                                <a href="" class="hot-keyword" onclick="Eng_Query('綠美圖'); return false;">綠美圖</a>
+                                <a href="" class="hot-keyword" onclick="Eng_Query('水湳'); return false;">水湳</a>
+                                <a href="" class="hot-keyword" onclick="Eng_Query('會展中心'); return false;">會展中心</a>
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label for="" class="form-label txt_Purple fw-bold"><i class="search-adv-i bg_purple_light"></i>類別</label>
-                            <div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input EngType" type="checkbox" id="" value="新闢道路橋樑" onclick="EngAddType($(this).val());">
-                                    <label class="form-check-label" for="">新闢道路橋樑</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input EngType" type="checkbox" id="" value="新闢公園綠地" onclick="EngAddType($(this).val());">
-                                    <label class="form-check-label" for="">新闢公園綠地</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input EngType" type="checkbox" id="" value="新闢建築" onclick="EngAddType($(this).val());">
-                                    <label class="form-check-label" for="">新闢建築</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input EngType" type="checkbox" id="" value="公園綠地維護" onclick="EngAddType($(this).val());">
-                                    <label class="form-check-label" for="">公園綠地維護</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input EngType" type="checkbox" id="" value="道路及附屬設施、橋梁養護" onclick="EngAddType($(this).val());">
-                                    <label class="form-check-label" for="">道路及附屬設施、橋梁養護</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input EngType" type="checkbox" id="" value="路燈維護" onclick="EngAddType($(this).val());">
-                                    <label class="form-check-label" for="">路燈維護</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input EngType" type="checkbox" id="" value="其他" onclick="EngAddType($(this).val());">
-                                    <label class="form-check-label" for="">其他</label>
-                                </div>
-                            </div>
-                        </div>
+                            <a class="txt_Purple fw-bold search-adv-btn" data-bs-toggle="collapse" onclick="$('#engCollapse').css('display') == 'none' ? $('#engCollapse').css('display', 'block') : $('#engCollapse').css('display', 'none')" role="button" aria-expanded="false" aria-controls="engCollapse"><i class="fas fa-search me-1"></i>進階搜尋</a>
+                            <div class="collapse" id="engCollapse">
+                                <div class="card card-body">
+                                    <div class="mb-3">
+                                        <label for="" class="form-label txt_Purple fw-bold"><i class="search-adv-i bg_purple_light"></i>關鍵字</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="engAdvKW" placeholder="請輸入關鍵字">
+                                            <button class="btn btn-outline-secondary EngKW" type="button" id=""><i class="fas fa-plus"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="" class="form-label txt_Purple fw-bold"><i class="search-adv-i bg_purple_light"></i>類別</label>
+                                        <div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input EngType" type="checkbox" id="" value="新闢道路橋樑" onclick="EngAddType($(this).val());">
+                                                <label class="form-check-label" for="">新闢道路橋樑</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input EngType" type="checkbox" id="" value="新闢公園綠地" onclick="EngAddType($(this).val());">
+                                                <label class="form-check-label" for="">新闢公園綠地</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input EngType" type="checkbox" id="" value="新闢建築" onclick="EngAddType($(this).val());">
+                                                <label class="form-check-label" for="">新闢建築</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input EngType" type="checkbox" id="" value="公園綠地維護" onclick="EngAddType($(this).val());">
+                                                <label class="form-check-label" for="">公園綠地維護</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input EngType" type="checkbox" id="" value="道路及附屬設施、橋梁養護" onclick="EngAddType($(this).val());">
+                                                <label class="form-check-label" for="">道路及附屬設施、橋梁養護</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input EngType" type="checkbox" id="" value="路燈維護" onclick="EngAddType($(this).val());">
+                                                <label class="form-check-label" for="">路燈維護</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input EngType" type="checkbox" id="" value="其他" onclick="EngAddType($(this).val());">
+                                                <label class="form-check-label" for="">其他</label>
+                                            </div>
+                                        </div>
+                                    </div>
 
-                    </div>
-                </div>
-            </div>
-        </div>-->
+                                </div>
+                            </div>
+                        </div>
+                    </div>-->
                 </div>
                 <!--關鍵字查詢結尾-->
             </div>
         </div>
         <!--區塊內容結尾-->
     </div>
-    
+
 </div>

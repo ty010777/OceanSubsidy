@@ -125,7 +125,7 @@
                                 OnItemCommand="lvPeriods_ItemCommand"
                                 OnPagePropertiesChanging="dpPeriods_PagePropertiesChanging">
                                 <LayoutTemplate>
-                                    <table class="table blue-green-table">
+                                    <table class="table cyan-table">
                                         <thead>
                                             <tr>
                                                 <th width="80">排序</th>

@@ -65,6 +65,6 @@ public class OtherRent
 public class TotalFeeRow
 {
     public string accountingItem { get; set; }
-    public decimal subsidyAmount { get; set; }
-    public decimal coopAmount { get; set; }
+    public decimal? subsidyAmount { get; set; }
+    public decimal? coopAmount { get; set; }
 }

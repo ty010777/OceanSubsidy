@@ -90,7 +90,7 @@
                         OnItemCommand="lvPccAward_ItemCommand"
                         OnPagePropertiesChanging="lvPccAward_PagePropertiesChanging">
                         <LayoutTemplate>
-                            <table class="table blue-green-table">
+                            <table class="table cyan-table">
                                 <thead>
                                     <tr>
                                         <th width="80">項次</th>
@@ -124,7 +124,7 @@
                             </tr>
                         </ItemTemplate>
                         <EmptyDataTemplate>
-                            <table class="table blue-green-table">
+                            <table class="table cyan-table">
                                 <thead>
                                     <tr>
                                         <th width="80">項次</th>

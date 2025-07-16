@@ -13,7 +13,7 @@
     <div>
         <span>目前位置</span>
         <h2>活動儀表板</h2>
-    </div>
+    </div>1
 </asp:Content>
 
 <asp:Content ID="cMain" ContentPlaceHolderID="MainContent" runat="server">
@@ -85,7 +85,7 @@
                         AutoPostBack="false">
                     </asp:DropDownList>
                 </div>
-                <canvas id="chartPie"></canvas>
+                <canvas id="chartPie" style="max-height: 360px;"></canvas>
             </div>
         </div>
         <div class="col-12 col-xl-6">
@@ -170,7 +170,7 @@
                             data: pieData.map(x => x.Value)
                         }]
                     },
-                    options: { responsive: true, plugins: { legend: { position: 'top' } } }
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
                 });
             } else {
                 ctxP.clearRect(0, 0, canvasP.width, canvasP.height);
@@ -313,7 +313,7 @@
                                     labels: data.map(x => x.Name),
                                     datasets: [{ data: data.map(x => x.Value) }]
                                 },
-                                options: { responsive: true }
+                                options: { responsive: true, maintainAspectRatio: false }
                             });
                         } else {
                             ctxP.clearRect(0, 0, canvasP.width, canvasP.height);

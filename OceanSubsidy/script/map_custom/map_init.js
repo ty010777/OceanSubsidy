@@ -252,7 +252,7 @@ function mapInit(_functions) {
     // control for coordinates presentation
     var mousePositionControl = new ol.control.MousePosition({
         coordinateFormat: function (coordinate) {
-            var ret = ol.coordinate.format(coordinate, coordinateTemplate, 0);
+            var ret = ol.coordinate.format(coordinate, coordinateTemplate, 6);
             return ret;
         },
         projection: displayPrj,

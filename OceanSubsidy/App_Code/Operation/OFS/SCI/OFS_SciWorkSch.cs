@@ -18,11 +18,11 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
         /// <summary>
         /// 更新計畫期程到 OFS_SCI_Application_Main
         /// </summary>
-        /// <param name="versionId">版本ID</param>
+        /// <param name="projectId">ProjectID</param>
         /// <param name="startTime">計畫開始時間</param>
         /// <param name="endTime">計畫結束時間</param>
         /// <returns>是否成功</returns>
-        public static void UpdateProjectSchedule(string versionId, DateTime? startTime, DateTime? endTime)
+        public static void UpdateProjectSchedule(string projectId, DateTime? startTime, DateTime? endTime)
         {
 
             using (DbHelper db = new DbHelper())
@@ -35,14 +35,14 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                     SET StartTime = @StartTime, 
                         EndTime = @EndTime,
                         updated_at = @UpdatedAt
-                    WHERE Version_ID = @VersionId";
+                    WHERE ProjectID = @ProjectId";
 
                     
                     db.Parameters.Clear();
                     db.Parameters.Add("@StartTime", startTime);
                     db.Parameters.Add("@EndTime", endTime);
                     db.Parameters.Add("@UpdatedAt", DateTime.Now);
-                    db.Parameters.Add("@VersionId", versionId);
+                    db.Parameters.Add("@ProjectId", projectId);
                     db.ExecuteNonQuery();
                 }
                 catch (Exception ex)
@@ -60,21 +60,21 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
         /// <summary>
         /// 儲存所有工作項目(主項+子項)
         /// </summary>
-        /// <param name="versionId">版本ID</param>
+        /// <param name="projectId">ProjectID</param>
         /// <param name="workItems">工作項目資料列表</param>
         /// <returns>成功儲存的筆數</returns>
-        public static int SaveAllWorkItems(string versionId, List<OFS_SCI_WorkSch_Main> workItems)
+        public static int SaveAllWorkItems(string ProjectID, List<OFS_SCI_WorkSch_Main> workItems)
         {
             using (DbHelper db = new DbHelper())
             {
 
                 try
                 {
-                    // 先刪除該Version_ID的所有舊資料
-                    string deleteSql = "DELETE FROM OFS_SCI_WorkSch_Main WHERE Version_ID = @Version_ID";
+                    // 先刪除該ProjectID的所有舊資料
+                    string deleteSql = "DELETE FROM OFS_SCI_WorkSch_Main WHERE ProjectID = @ProjectID";
                     db.CommandText = deleteSql;
                     db.Parameters.Clear();
-                    db.Parameters.Add("@Version_ID", versionId);
+                    db.Parameters.Add("@ProjectID", ProjectID);
                     db.ExecuteNonQuery();
 
                     int savedCount = 0;
@@ -84,13 +84,13 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                         // 插入新的工作項目
                         string insertSql = @"
                             INSERT INTO OFS_SCI_WorkSch_Main 
-                            (Version_ID, WorkItem_id, WorkName, StartMonth, EndMonth, Weighting, InvestMonth, IsOutsourced)
+                            (ProjectID, WorkItem_id, WorkName, StartMonth, EndMonth, Weighting, InvestMonth, IsOutsourced)
                             VALUES 
-                            (@VersionId, @WorkItemId, @WorkName, @StartMonth, @EndMonth, @Weighting, @InvestMonth, @IsOutsourced)";
+                            (@ProjectId, @WorkItemId, @WorkName, @StartMonth, @EndMonth, @Weighting, @InvestMonth, @IsOutsourced)";
                         
                         db.CommandText = insertSql;
                         db.Parameters.Clear();
-                        db.Parameters.Add("@VersionId", versionId);
+                        db.Parameters.Add("@ProjectId", ProjectID);
                         db.Parameters.Add("@WorkItemId", item.WorkItem_id);
                         db.Parameters.Add("@WorkName", item.WorkName ?? "");
                         db.Parameters.Add("@StartMonth", (object)item.StartMonth ?? DBNull.Value);
@@ -115,18 +115,18 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
         /// <summary>
         /// 產生WorkItem_id
         /// </summary>
-        /// <param name="versionId">版本ID</param>
+        /// <param name="projectId">ProjectID</param>
         /// <param name="itemCode">項目代碼 (A, A1, B, B1等)</param>
         /// <returns>完整的WorkItem_id</returns>
-        public static string GenerateWorkItemId(string versionId, string itemCode)
+        public static string GenerateWorkItemId(string projectId, string itemCode)
         {
-            return $"{versionId}_{itemCode}";
+            return $"{projectId}_{itemCode}";
         }
         
         /// <summary>
         /// 從WorkItem_id中提取項目代碼
         /// </summary>
-        /// <param name="workItemId">WorkItem_id (格式: {Version_ID}_A)</param>
+        /// <param name="workItemId">WorkItem_id (格式: {ProjectID}_A)</param>
         /// <returns>項目代碼 (A, A1, B等)</returns>
         public static string ExtractItemCodeFromWorkItemId(string workItemId)
         {
@@ -143,11 +143,11 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
         }
         
         /// <summary>
-        /// 從WorkItem_id中提取Version_ID
+        /// 從WorkItem_id中提取ProjectID
         /// </summary>
-        /// <param name="workItemId">WorkItem_id (格式: {Version_ID}_A)</param>
-        /// <returns>Version_ID</returns>
-        public static string ExtractVersionIdFromWorkItemId(string workItemId)
+        /// <param name="workItemId">WorkItem_id (格式: {ProjectID}_A)</param>
+        /// <returns>ProjectID</returns>
+        public static string ExtractProjectIDFromWorkItemId(string workItemId)
         {
             if (string.IsNullOrEmpty(workItemId))
                 return null;
@@ -181,14 +181,14 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
             {
                 try
                 {
-                    // 取得第一筆資料的 Version_ID 來刪除舊資料
-                    string versionId = checkStandards.First().Version_ID;
+                    // 取得第一筆資料的 ProjectID 來刪除舊資料
+                    string projectId = checkStandards.First().ProjectID;
                     
-                    // 先刪除該Version_ID的所有舊資料
-                    string deleteSql = "DELETE FROM OFS_SCI_WorkSch_CheckStandard WHERE Version_ID = @Version_ID";
+                    // 先刪除該ProjectID的所有舊資料
+                    string deleteSql = "DELETE FROM OFS_SCI_WorkSch_CheckStandard WHERE ProjectID = @ProjectID";
                     db.CommandText = deleteSql;
                     db.Parameters.Clear();
-                    db.Parameters.Add("@Version_ID", versionId);
+                    db.Parameters.Add("@ProjectID", projectId);
                     db.ExecuteNonQuery();
 
                     int savedCount = 0;
@@ -198,13 +198,13 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                         // 插入新的查核標準資料
                         string insertSql = @"
                             INSERT INTO OFS_SCI_WorkSch_CheckStandard 
-                            (Version_ID, WorkItem, SerialNumber, PlannedFinishDate, CheckDescription, CreatedAt, UpdatedAt)
+                            (ProjectID, WorkItem, SerialNumber, PlannedFinishDate, CheckDescription, CreatedAt, UpdatedAt)
                             VALUES 
-                            (@VersionId, @WorkItem, @SerialNumber, @PlannedFinishDate, @CheckDescription, @CreatedAt, @UpdatedAt)";
+                            (@ProjectId, @WorkItem, @SerialNumber, @PlannedFinishDate, @CheckDescription, @CreatedAt, @UpdatedAt)";
                         
                         db.CommandText = insertSql;
                         db.Parameters.Clear();
-                        db.Parameters.Add("@VersionId", checkStandard.Version_ID);
+                        db.Parameters.Add("@ProjectId", checkStandard.ProjectID);
                         db.Parameters.Add("@WorkItem", checkStandard.WorkItem ?? "");
                         db.Parameters.Add("@SerialNumber", checkStandard.SerialNumber ?? "");
                         db.Parameters.Add("@PlannedFinishDate", (object)checkStandard.PlannedFinishDate ?? DBNull.Value);
@@ -232,11 +232,11 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
         /// <summary>
         /// 更新版本狀態
         /// </summary>
-        /// <param name="versionId">版本ID</param>
+        /// <param name="projectId">ProjectID</param>
         /// <param name="form2Status">Form2狀態（暫存或完成）</param>
         /// <param name="shouldUpdateCurrentStep">是否需要更新CurrentStep</param>
         /// <param name="newCurrentStep">新的CurrentStep值（如果shouldUpdateCurrentStep為true）</param>
-        public static void UpdateVersionStatus(string versionId, string form2Status, bool shouldUpdateCurrentStep = false, string newCurrentStep = null)
+        public static void UpdateVersionStatus(string projectId, string form2Status, bool shouldUpdateCurrentStep = false, string newCurrentStep = null)
         {
             using (DbHelper db = new DbHelper())
             {
@@ -248,40 +248,40 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                     {
                         // 同時更新 Form2Status 和 CurrentStep
                         sql = @"
-                            UPDATE OFS_SCI_Version 
+                            UPDATE OFS_SCI_Project_Main 
                             SET Form2Status = @Form2Status, 
                                 CurrentStep = @CurrentStep,
                                 updated_at = @UpdatedAt
-                            WHERE Version_ID = @VersionId";
+                            WHERE ProjectID = @ProjectId";
                         
                         db.CommandText = sql;
                         db.Parameters.Clear();
                         db.Parameters.Add("@Form2Status", form2Status);
                         db.Parameters.Add("@CurrentStep", newCurrentStep);
                         db.Parameters.Add("@UpdatedAt", DateTime.Now);
-                        db.Parameters.Add("@VersionId", versionId);
+                        db.Parameters.Add("@ProjectId", projectId);
                     }
                     else
                     {
                         // 只更新 Form2Status
                         sql = @"
-                            UPDATE OFS_SCI_Version 
+                            UPDATE OFS_SCI_Project_Main 
                             SET Form2Status = @Form2Status,
                                 updated_at = @UpdatedAt
-                            WHERE Version_ID = @VersionId";
+                            WHERE ProjectID = @ProjectId";
                         
                         db.CommandText = sql;
                         db.Parameters.Clear();
                         db.Parameters.Add("@Form2Status", form2Status);
                         db.Parameters.Add("@UpdatedAt", DateTime.Now);
-                        db.Parameters.Add("@VersionId", versionId);
+                        db.Parameters.Add("@ProjectId", projectId);
                     }
                     
                     db.ExecuteNonQuery();
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"UpdateVersionStatus發生錯誤: {ex.Message}");
+                    Console.WriteLine($"UpdateStatus發生錯誤: {ex.Message}");
                     throw;
                 }
             }
@@ -290,25 +290,24 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
         /// <summary>
         /// 取得當前版本的CurrentStep
         /// </summary>
-        /// <param name="versionId">版本ID</param>
+        /// <param name="projectId">ProjectID</param>
         /// <returns>當前的CurrentStep值</returns>
-        public static string GetCurrentStepByVersionId(string versionId)
+        public static string GetCurrentStepByProjectID(string projectId)
         {
             using (DbHelper db = new DbHelper())
             {
                 try
                 {
-                    string sql = "SELECT CurrentStep FROM OFS_SCI_Version WHERE Version_ID = @VersionId";
+                    string sql = "SELECT CurrentStep FROM OFS_SCI_Project_Main WHERE ProjectID = @ProjectId";
                     db.CommandText = sql;
                     db.Parameters.Clear();
-                    db.Parameters.Add("@VersionId", versionId);
+                    db.Parameters.Add("@ProjectId", projectId);
                     
                     var result = db.GetTable();
                     return result != null ? Convert.ToInt32(result).ToString() : "1";
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"GetCurrentStepByVersionId發生錯誤: {ex.Message}");
                     return "1"; // 預設值
                 }
             }
@@ -319,11 +318,11 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
         #region 資料讀取操作
         
         /// <summary>
-        /// 根據 Version_ID 讀取計畫期程
+        /// 根據 ProjectID 讀取計畫期程
         /// </summary>
-        /// <param name="versionId">版本ID</param>
+        /// <param name="projectId">ProjectID</param>
         /// <returns>計畫期程資料</returns>
-        public static (DateTime? startTime, DateTime? endTime) GetProjectScheduleByVersionId(string versionId)
+        public static (DateTime? startTime, DateTime? endTime) GetProjectScheduleByProjectID(string projectId)
         {
             using (DbHelper db = new DbHelper())
             {
@@ -332,11 +331,11 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                     string sql = @"
                         SELECT StartTime, EndTime 
                         FROM OFS_SCI_Application_Main 
-                        WHERE Version_ID = @VersionId";
+                        WHERE ProjectID = @ProjectId";
                     
                     db.CommandText = sql;
                     db.Parameters.Clear();
-                    db.Parameters.Add("@VersionId", versionId);
+                    db.Parameters.Add("@ProjectId", projectId);
                     
                     DataTable dt = db.GetTable();
                     if (dt.Rows.Count > 0)
@@ -351,33 +350,32 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"GetProjectScheduleByVersionId發生錯誤: {ex.Message}");
                     return (null, null);
                 }
             }
         }
         
         /// <summary>
-        /// 根據 Version_ID 讀取所有工作項目
+        /// 根據 ProjectID 讀取所有工作項目
         /// </summary>
-        /// <param name="versionId">版本ID</param>
+        /// <param name="projectId">ProjectID</param>
         /// <returns>工作項目列表</returns>
-        public static List<OFS_SCI_WorkSch_Main> GetWorkItemsByVersionId(string versionId)
+        public static List<OFS_SCI_WorkSch_Main> GetWorkItemsByProjectID(string projectId)
         {
             using (DbHelper db = new DbHelper())
             {
                 try
                 {
                     string sql = @"
-                        SELECT Version_ID, WorkItem_id, WorkName, StartMonth, EndMonth, 
+                        SELECT ProjectID, WorkItem_id, WorkName, StartMonth, EndMonth, 
                                Weighting, InvestMonth, IsOutsourced
                         FROM OFS_SCI_WorkSch_Main 
-                        WHERE Version_ID = @VersionId
+                        WHERE ProjectID = @ProjectId
                         ORDER BY WorkItem_id";
                     
                     db.CommandText = sql;
                     db.Parameters.Clear();
-                    db.Parameters.Add("@VersionId", versionId);
+                    db.Parameters.Add("@ProjectId", projectId);
                     
                     DataTable dt = db.GetTable();
                     var result = new List<OFS_SCI_WorkSch_Main>();
@@ -386,7 +384,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                     {
                         var workItem = new OFS_SCI_WorkSch_Main
                         {
-                            Version_ID = row["Version_ID"].ToString(),
+                            ProjectID = row["ProjectID"].ToString(),
                             WorkItem_id = row["WorkItem_id"].ToString(),
                             WorkName = row["WorkName"].ToString(),
                             StartMonth = row["StartMonth"] != DBNull.Value ? Convert.ToInt32(row["StartMonth"]) : (int?)null,
@@ -402,33 +400,32 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"GetWorkItemsByVersionId發生錯誤: {ex.Message}");
                     return new List<OFS_SCI_WorkSch_Main>();
                 }
             }
         }
         
         /// <summary>
-        /// 根據 Version_ID 讀取所有查核標準
+        /// 根據 ProjectID 讀取所有查核標準
         /// </summary>
-        /// <param name="versionId">版本ID</param>
+        /// <param name="projectId">ProjectID</param>
         /// <returns>查核標準列表</returns>
-        public static List<OFS_SCI_WorkSch_CheckStandard> GetCheckStandardsByVersionId(string versionId)
+        public static List<OFS_SCI_WorkSch_CheckStandard> GetCheckStandardsByProjectID(string projectId)
         {
             using (DbHelper db = new DbHelper())
             {
                 try
                 {
                     string sql = @"
-                        SELECT Id, Version_ID, WorkItem, SerialNumber, PlannedFinishDate, 
+                        SELECT Id, ProjectID, WorkItem, SerialNumber, PlannedFinishDate, 
                                CheckDescription, CreatedAt, UpdatedAt
                         FROM OFS_SCI_WorkSch_CheckStandard 
-                        WHERE Version_ID = @VersionId
+                        WHERE ProjectID = @ProjectId
                         ORDER BY SerialNumber";
                     
                     db.CommandText = sql;
                     db.Parameters.Clear();
-                    db.Parameters.Add("@VersionId", versionId);
+                    db.Parameters.Add("@ProjectId", projectId);
                     
                     DataTable dt = db.GetTable();
                     var result = new List<OFS_SCI_WorkSch_CheckStandard>();
@@ -438,7 +435,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                         var checkStandard = new OFS_SCI_WorkSch_CheckStandard
                         {
                             Id = Convert.ToInt32(row["Id"]),
-                            Version_ID = row["Version_ID"].ToString(),
+                            ProjectID = row["ProjectID"].ToString(),
                             WorkItem = row["WorkItem"].ToString(),
                             SerialNumber = row["SerialNumber"].ToString(),
                             PlannedFinishDate = row["PlannedFinishDate"] != DBNull.Value ? Convert.ToDateTime(row["PlannedFinishDate"]) : (DateTime?)null,
@@ -453,7 +450,6 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"GetCheckStandardsByVersionId發生錯誤: {ex.Message}");
                     return new List<OFS_SCI_WorkSch_CheckStandard>();
                 }
             }
@@ -464,27 +460,27 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
         #region 檔案上傳操作
         
         /// <summary>
-        /// 根據 Version_ID 和 FileCode 查詢上傳檔案記錄
+        /// 根據 ProjectID 和 FileCode 查詢上傳檔案記錄
         /// </summary>
-        /// <param name="versionId">版本ID</param>
+        /// <param name="projectId">ProjectID</param>
         /// <param name="fileCode">檔案代碼</param>
         /// <returns>檔案記錄列表</returns>
-        public static List<OFS_SCI_UploadFile> GetUploadFilesByVersionIdAndFileCode(string versionId, string fileCode)
+        public static List<OFS_SCI_UploadFile> GetUploadFilesByProjectIDAndFileCode(string projectId, string fileCode)
         {
             using (DbHelper db = new DbHelper())
             {
                 try
                 {
                     string sql = @"
-                        SELECT ID, Version_ID, FileCode, FileName, TemplatePath, Statuses
+                        SELECT ID, ProjectID, FileCode, FileName, TemplatePath, Statuses
                         FROM OFS_SCI_UploadFile 
-                        WHERE Version_ID = @VersionId 
+                        WHERE ProjectID = @ProjectId 
                         AND FileCode = @FileCode 
                         AND Statuses = 'Active'";
                     
                     db.CommandText = sql;
                     db.Parameters.Clear();
-                    db.Parameters.Add("@VersionId", versionId);
+                    db.Parameters.Add("@ProjectId", projectId);
                     db.Parameters.Add("@FileCode", fileCode);
                     
                     DataTable dt = db.GetTable();
@@ -495,7 +491,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                         var uploadFile = new OFS_SCI_UploadFile
                         {
                             ID = Convert.ToInt32(row["ID"]),
-                            Version_ID = row["Version_ID"].ToString(),
+                            ProjectID = row["ProjectID"].ToString(),
                             FileCode = row["FileCode"].ToString(),
                             FileName = row["FileName"].ToString(),
                             TemplatePath = row["TemplatePath"].ToString(),
@@ -508,7 +504,6 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"GetUploadFilesByVersionIdAndFileCode發生錯誤: {ex.Message}");
                     throw;
                 }
             }
@@ -527,13 +522,13 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                 {
                     string sql = @"
                         INSERT INTO OFS_SCI_UploadFile 
-                        (Version_ID, FileCode, FileName, TemplatePath, Statuses)
+                        (ProjectID, FileCode, FileName, TemplatePath, Statuses)
                         VALUES 
-                        (@VersionId, @FileCode, @FileName, @TemplatePath, @Statuses)";
+                        (@ProjectId, @FileCode, @FileName, @TemplatePath, @Statuses)";
                     
                     db.CommandText = sql;
                     db.Parameters.Clear();
-                    db.Parameters.Add("@VersionId", uploadFile.Version_ID);
+                    db.Parameters.Add("@ProjectId", uploadFile.ProjectID);
                     db.Parameters.Add("@FileCode", uploadFile.FileCode);
                     db.Parameters.Add("@FileName", uploadFile.FileName);
                     db.Parameters.Add("@TemplatePath", uploadFile.TemplatePath);
@@ -551,10 +546,10 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
         /// <summary>
         /// 刪除檔案上傳記錄
         /// </summary>
-        /// <param name="versionId">版本ID</param>
+        /// <param name="projectId">ProjectID</param>
         /// <param name="fileCode">檔案代碼</param>
         /// <returns>刪除的記錄數量</returns>
-        public static void DeleteUploadFile(string versionId, string fileCode)
+        public static void DeleteUploadFile(string projectId, string fileCode)
         {
             using (DbHelper db = new DbHelper())
             {
@@ -563,12 +558,12 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                     string sql = @"
                         UPDATE OFS_SCI_UploadFile 
                         SET Statuses = 'Deleted'
-                        WHERE Version_ID = @VersionId 
+                        WHERE ProjectID = @ProjectId 
                         AND FileCode = @FileCode";
                     
                     db.CommandText = sql;
                     db.Parameters.Clear();
-                    db.Parameters.Add("@VersionId", versionId);
+                    db.Parameters.Add("@ProjectId", projectId);
                     db.Parameters.Add("@FileCode", fileCode);
                     
                     db.ExecuteNonQuery();
@@ -577,6 +572,41 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                 {
                     Console.WriteLine($"DeleteUploadFile發生錯誤: {ex.Message}");
                     throw;
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 取得指定版本的表單狀態
+        /// </summary>
+        /// <param name="projectId">ProjectID</param>
+        /// <param name="statusColumn">狀態欄位名稱 (Form1Status, Form2Status, etc.)</param>
+        /// <returns>狀態值</returns>
+        public static string GetFormStatusByProjectID(string projectId, string statusColumn)
+        {
+            using (DbHelper db = new DbHelper())
+            {
+                try
+                {
+                    string sql = $@"
+                        SELECT {statusColumn}
+                        FROM OFS_SCI_Project_Main 
+                        WHERE ProjectID = @ProjectId";
+                    
+                    db.CommandText = sql;
+                    db.Parameters.Clear();
+                    db.Parameters.Add("@ProjectId", projectId);
+
+                    DataTable dt = db.GetTable();
+                    if (dt.Rows.Count > 0)
+                    {
+                        return dt.Rows[0][statusColumn]?.ToString() ?? "";
+                    }
+                    return "";
+                }
+                catch (Exception ex)
+                {
+                    return "";
                 }
             }
         }

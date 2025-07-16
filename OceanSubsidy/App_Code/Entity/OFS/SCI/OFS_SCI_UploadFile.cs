@@ -54,37 +54,37 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
         
-        protected string _Version_ID = "";
+        protected string _ProjectID = "";
         ///<summary>
-        ///  ()
+        /// 計畫ID
         ///</summary>
         [DataMember]
-        [GisFieldAttribute("Version_ID", "Version_ID", DataSource.TABLE, "", false)]
-        public virtual string Version_ID
+        [GisFieldAttribute("ProjectID", "ProjectID", DataSource.TABLE, "", false)]
+        public virtual string ProjectID
         {
             get
             {
-                return _Version_ID;
+                return _ProjectID;
             }
             set
             {
                 bool isModify = false;
-                if (_Version_ID == null) {
+                if (_ProjectID == null) {
                     if(value != null) {
                         isModify = true;
                     }
                 }
-                else if (!_Version_ID.Equals(value))
+                else if (!_ProjectID.Equals(value))
                 {
                     isModify = true;
                 }
                 if(isModify) {
                     MetaDataState = DataState.UPDATE;
-                    if (UPDATE_COLUMN.IndexOf("Version_ID") == -1)
+                    if (UPDATE_COLUMN.IndexOf("ProjectID") == -1)
                     {
-                        UPDATE_COLUMN.Add("Version_ID");
+                        UPDATE_COLUMN.Add("ProjectID");
                     }
-                    _Version_ID = value;
+                    _ProjectID = value;
                 }
             }
         }

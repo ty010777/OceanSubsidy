@@ -95,7 +95,7 @@
             <img src="<%= ResolveUrl("~/assets/img/title-icon02.svg") %>" alt="logo" />
             列表
         </h4>
-        <asp:LinkButton ID="btnAdd" runat="server" CssClass="btn btn-blue-green" OnClick="btnAdd_Click">
+        <asp:LinkButton ID="btnAdd" runat="server" CssClass="btn btn-cyan" OnClick="btnAdd_Click">
             <i class="fa-solid fa-plus"></i>
             新增單筆
         </asp:LinkButton>
@@ -110,7 +110,7 @@
                     OnItemDataBound="lvReports_ItemDataBound"
                     OnPagePropertiesChanging="lvReports_PagePropertiesChanging">
                     <LayoutTemplate>
-                        <table class="table blue-green-table">
+                        <table class="table cyan-table">
                             <thead>
                                 <tr>
                                     <th width="50">排序</th>
@@ -133,10 +133,10 @@
                             <td data-th="填報機關:">
                                 <asp:Literal ID="litReportingUnit" runat="server" Text='<%# Eval("ReportingUnit") %>' /></td>
                             <td data-th="活動名稱:" style="text-align: left;"><%# Eval("ActivityName") %></td>
-                            <td data-th="活動性質:" style="text-align: left;"><%# Eval("NatureText") %></td>
+                            <td data-th="活動性質:" style="text-align: left;"><%# Eval("NatureName") %></td>
                             <td data-th="活動執行者:" style="text-align: left;"><%# Eval("Executors") %></td>
-                            <td data-th="研究調查日期:"><%# Eval("StartDate","{0:yyyy/MM/dd}") %> 至 <%# Eval("EndDate","{0:yyyy/MM/dd}") %></td>
-                            <td data-th="資料更新日期:"><%# Eval("LastUpdated","{0:yyyy/MM/dd}<br>{0:HH:mm}") %></td>
+                            <td data-th="研究調查日期:"><%# Eval("StartDateDisplay","{0:yyy/MM/dd}") %> 至 <%# Eval("EndDateDisplay","{0:yyy/MM/dd}") %></td>
+                            <td data-th="資料更新日期:"><%# Eval("LastUpdatedDisplay","{0:yyy/MM/dd}<br>{0:HH:mm}") %></td>
                             <td data-th="活動空間範圍:">
                                 <asp:PlaceHolder ID="phGeo" runat="server" />
                             </td>
@@ -192,7 +192,7 @@
 
 <!-- 底部匯出區 -->
 <div class="block-bottom">
-    <asp:Button ID="Button1" runat="server" CssClass="btn btn-blue-green d-table mx-auto" Text="匯出列表資料" OnClick="btnExport_Click" />
+    <asp:Button ID="btnExport" runat="server" CssClass="btn btn-cyan d-table mx-auto" Text="匯出列表資料" OnClick="btnExport_Click" />
 </div>
 
 <!-- 刪除確認 Modal -->
@@ -214,7 +214,7 @@
                     <button type="button" class="btn btn-gray" data-bs-dismiss="modal">
                         取消</button>
                     <asp:Button ID="btnConfirmDeleteUser" runat="server"
-                        CssClass="btn btn-blue-green"
+                        CssClass="btn btn-cyan"
                         Text="確定" OnClick="btnConfirmDelete_Click" />
                 </div>
             </div>

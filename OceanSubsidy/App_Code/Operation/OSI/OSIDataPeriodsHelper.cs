@@ -137,6 +137,60 @@ ORDER BY PeriodQuarter
     }
 
     /// <summary>
+    /// 查詢所有年分（含篩選條件：指定日期 >= StartDate）
+    /// </summary>
+    /// <param name="targetDate">目標日期，預設為今天</param>
+    /// <returns></returns>
+    public static GisTable QueryAllYearsWithFilter(DateTime? targetDate = null)
+    {
+        // 若未指定日期，使用今天
+        DateTime dateToCheck = targetDate ?? DateTime.Now;
+        
+        DbHelper db = new DbHelper();
+        db.CommandText =
+            @"
+SELECT DISTINCT [PeriodYear]
+FROM [OCA_OceanSubsidy].[dbo].[OSI_DataPeriods]
+WHERE @TargetDate >= StartDate
+ORDER BY PeriodYear
+";
+        db.Parameters.Clear();
+        db.Parameters.Add("@TargetDate", dateToCheck);
+
+        return db.GetTable();
+    }
+
+    /// <summary>
+    /// 查詢季度 BY 年（含篩選條件：今天 >= StartDate）
+    /// </summary>
+    /// <returns></returns>
+    public static GisTable QueryQuartersByYearWithFilter(string year, DateTime? targetDate = null)
+    {
+        // 若未指定日期，使用今天
+        DateTime dateToCheck = targetDate ?? DateTime.Now;
+
+        DbHelper db = new DbHelper();
+        db.CommandText =
+            @"
+SELECT [PeriodID]
+    ,[PeriodYear]
+    ,[PeriodQuarter]
+    ,[StartDate]
+    ,[EndDate]
+    ,[Color]
+FROM [OCA_OceanSubsidy].[dbo].[OSI_DataPeriods]
+WHERE PeriodYear = @PeriodYear
+AND @TargetDate >= StartDate
+ORDER BY PeriodQuarter
+";
+        db.Parameters.Clear();
+        db.Parameters.Add("@PeriodYear", year);
+        db.Parameters.Add("@TargetDate", dateToCheck);
+
+        return db.GetTable();
+    }
+
+    /// <summary>
     /// 查詢ID BY 年跟季度
     /// </summary>
     /// <returns></returns>
@@ -277,7 +331,7 @@ WHERE CONVERT(date, QuarterStartDate) = CONVERT(date, @QuarterStartDate);
     }
 
     /// <summary>
-    /// 查詢
+    /// 查詢有填報的父單位數量（包含子單位有填報的情況）
     /// </summary>
     /// <returns></returns>
     public static int QueryUnitCountByID(string periodID)
@@ -285,13 +339,39 @@ WHERE CONVERT(date, QuarterStartDate) = CONVERT(date, @QuarterStartDate);
         DbHelper db = new DbHelper();
         db.CommandText =
             @"
-SELECT DISTINCT ReportingUnitID FROM OSI_ActivityReports WHERE PeriodID = @PeriodID
+SELECT COUNT(DISTINCT p.UnitID) as ParentUnitCount
+FROM Sys_Unit p
+WHERE p.IsValid = 1
+AND p.ParentUnitID IS NULL
+AND p.UnitName <> N'其他'
+AND (
+    EXISTS (
+        SELECT 1 FROM OSI_ActivityReports r 
+        WHERE r.PeriodID = @PeriodID 
+        AND r.ReportingUnitID = p.UnitID
+        AND r.IsValid = 1
+    )
+    OR
+    EXISTS (
+        SELECT 1 FROM OSI_ActivityReports r 
+        INNER JOIN Sys_Unit c ON r.ReportingUnitID = c.UnitID
+        WHERE r.PeriodID = @PeriodID 
+        AND c.ParentUnitID = p.UnitID
+        AND c.IsValid = 1
+        AND r.IsValid = 1
+    )
+)
 ";
         db.Parameters.Clear();
         db.Parameters.Add("@PeriodID", periodID);
         var tbl = db.GetTable();
 
-        return tbl.Rows.Count;
+        if (tbl != null && tbl.Rows.Count > 0)
+        {
+            return Convert.ToInt32(tbl.Rows[0]["ParentUnitCount"]);
+        }
+
+        return 0;
     }
 
     /// <summary>
@@ -424,6 +504,34 @@ WHERE PeriodID = @PeriodID
         db.ExecuteNonQuery();
 
         return;
+    }
+
+    /// <summary>
+    /// 查詢最近已結束的期間
+    /// </summary>
+    /// <returns>最近已結束的期間資料</returns>
+    public static OSI_DataPeriods QueryLatestEndedPeriod()
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText = @"
+SELECT TOP 1 
+    [PeriodID]
+    ,[PeriodYear]
+    ,[PeriodQuarter]
+    ,[StartDate]
+    ,[EndDate]
+    ,[Color]
+    ,[QuarterStartDate]
+    ,[QuarterEndDate]
+    ,[IsCopy]
+FROM OSI_DataPeriods 
+WHERE GETDATE() > EndDate
+ORDER BY StartDate DESC";
+        
+        db.Parameters.Clear();
+        var list = db.GetList<OSI_DataPeriods>();
+        
+        return list != null && list.Count > 0 ? list[0] : null;
     }
 
 

@@ -1,5 +1,7 @@
 .modal-header {
     border: 0;
+    padding-block: 24px;
+    padding-inline: 32px;
     .btn-close {
         background: unset;
         font-size: 1.5rem;
@@ -9,5 +11,6 @@
 
 .modal-body {
     padding-bottom: 40px;
+    padding-inline: 32px;
 }
 

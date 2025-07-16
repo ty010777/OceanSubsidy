@@ -1,1488 +1,481 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeFile="SciFunding.aspx.cs" Inherits="OFS_SciFunding" Culture="zh-TW" UICulture="zh-TW" %>
+﻿<%@ Page Language="C#" AutoEventWireup="true" CodeFile="~/OFS/SCI/SciFunding.aspx.cs" Inherits="OFS_SciFunding" Culture="zh-TW" UICulture="zh-TW" MasterPageFile="~/OFS/SCI/OFSApplicationMaster.master" %>
 
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head runat="server">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>海洋科技研發人員人事費明細表</title>
-    <style>
-        body {
-            font-family: "Microsoft JhengHei", Arial, sans-serif;
-            margin: 20px;
-            background-color: #f5f5f5;
-        }
-        
-        .container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        .header {
-            background-color: #4a90e2;
-            color: white;
-            padding: 12px 20px;
-            margin: -20px -20px 20px -20px;
-            border-radius: 8px 8px 0 0;
-            font-size: 16px;
-            font-weight: bold;
-        }
-        
-        .header-icon {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            background-color: #2c5aa0;
-            margin-right: 10px;
-            border-radius: 3px;
-        }
-        
-        .main-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-        
-        .main-table th {
-            background-color: #e8f4fd;
-            border: 1px solid #ccc;
-            padding: 8px;
-            text-align: center;
-            font-weight: bold;
-        }
-        
-        .main-table td {
-            border: 1px solid #ccc;
-            padding: 8px;
-            text-align: center;
-        }
-        
-        .main-table .name-cell {
-            text-align: left;
-            padding-left: 12px;
-        }
-        
-        .main-table .total-row {
-            background-color: #e8f4fd;
-            font-weight: bold;
-        }
-        
-        .main-table .total-amount {
-            color: #d9534f;
-            font-weight: bold;
-        }
-        
-        .checkbox-cell {
-            width: 40px;
-        }
-        
-        .name-cell {
-            width: 80px;
-        }
-        
-        .position-cell {
-            width: 150px;
-        }
-        
-        .salary-cell {
-            width: 100px;
-            text-align: right;
-        }
-        
-        .months-cell {
-            width: 80px;
-        }
-        
-        .total-cell {
-            width: 100px;
-            text-align: right;
-        }
-        
-        .action-cell {
-            width: 60px;
-        }
-        
-        .dropdown-list {
-            width: 100%;
-            padding: 4px;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-        }
-        
-        .textbox {
-            width: 90%;
-            padding: 4px;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-            text-align: right;
-        }
-        
-        .textbox[rows] {
-            text-align: left;
-        }
-        
-        .multiline-textbox {
-            text-align: left;
-            resize: vertical;
-        }
-        
-        .btn-delete {
-            background-color: #5bc0de;
-            color: white;
-            border: none;
-            padding: 4px 8px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        
-        .btn-delete:hover {
-            background-color: #31b0d5;
-        }
-        
-        .btn-add {
-            background-color: #5bc0de;
-            color: white;
-            border: none;
-            padding: 4px 8px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-left: 5px;
-        }
-        
-        .btn-add:hover {
-            background-color: #31b0d5;
-        }
-        
-        .notes {
-            margin-top: 20px;
-            font-size: 13px;
-            line-height: 1.6;
-        }
-        
-        .notes ul {
-            padding-left: 20px;
-        }
-        
-        .notes li {
-            margin-bottom: 8px;
-        }
-    </style>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-   
-    <!-- 加上 script：初始化 flatpickr -->
-    <script type="text/javascript">
-        window.addEventListener('DOMContentLoaded', function () {
-            flatpickr(".flatpickr-date", {
-                dateFormat: "Y-m-d", // 實際值：西元
-                locale: "zh",
-                onChange: function (selectedDates, dateStr, instance) {
-                    const date = selectedDates[0];
-                    if (date) {
-                        const rocYear = date.getFullYear() - 1911;
-                        const formatted = `民國${rocYear}年${date.getMonth() + 1}月${date.getDate()}日`;
-                        instance._input.value = formatted;
-                    }
-                },
-                onOpen: function (selectedDates, dateStr, instance) {
-                    instance._input.value = ""; // 避免再次開啟時顯示舊格式
-                }
-            });
-        });
-    </script>
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script  type="text/javascript">
+<asp:Content ID="ApplicationTitle" ContentPlaceHolderID="ApplicationTitle" runat="server">
+    計畫申請 - 經費/人事 - 海洋領域補助計畫管理資訊系統
+</asp:Content>
 
-//region 1.海洋科技研發人員人事費明細表 的JS
-window.onload = function () {
+<asp:Content ID="HeadContent" ContentPlaceHolderID="HeadExtra" runat="server">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- 自訂JavaScript -->
+    <script src="<%= ResolveUrl("~/script/OFS/SCI/SciFunding.js") %>"></script>
+</asp:Content>
+
+<asp:Content ID="ApplicationContent" ContentPlaceHolderID="ApplicationContent" runat="server">
+    <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePageMethods="true" />
     
-    const P_ddl = document.getElementById('ddlPerson1');
-    ddlPersonOptions.forEach(option => {
-        const opt = document.createElement('option');
-        opt.value = option.value;
-        opt.textContent = option.text;
-        P_ddl.appendChild(opt);
-    });
-     // 新增 onchange 事件：切換選項時，將 salary 欄位清為 0
-        P_ddl.addEventListener("change", function () {
-            const salaryInput = document.getElementById(`personSalary1`);
-            if (salaryInput) {
-                salaryInput.value = 0;
-                calculateAndUpdateTotal(); // 如有需要可即時重新計算
-            }
-        });
-    const M_ddl = document.getElementById('MaterialUnit1');
-    ddlMaterialOptions.forEach(option => {
-        const opt = document.createElement('option');
-        opt.value = option.value;
-        opt.textContent = option.text;
-        M_ddl.appendChild(opt);
-    });
-    M_ddl.addEventListener("change", function () {
-        const salaryInput = document.getElementById(`MaterialUnitPrice1`);
-        if (salaryInput) {
-            salaryInput.value = 0;
-            calculateMaterial(); // 如有需要可即時重新計算
-        }
-    });
-     const O_ddl = document.getElementById('otherJobTitle1');
-        ddlOtherOptions.forEach(option => {
-            const opt = document.createElement('option');
-            opt.value = option.value;
-            opt.textContent = option.text;
-            O_ddl.appendChild(opt);
-        });
-        
-        // 為第一個職稱下拉選單加入 onchange 事件
-        O_ddl.addEventListener("change", function () {
-            calculateOther();
-        });
+    <!-- Hidden Fields for dynamic data -->
+    <asp:HiddenField ID="hdnPersonnelData" runat="server" ClientIDMode="Static" />
+    <asp:HiddenField ID="hdnMaterialData" runat="server" ClientIDMode="Static" />
+    <asp:HiddenField ID="hdnTravelData" runat="server" ClientIDMode="Static" />
+    <asp:HiddenField ID="hdnOtherData" runat="server" ClientIDMode="Static" />
+    <asp:HiddenField ID="hdnOtherRentData" runat="server" ClientIDMode="Static" />
+    <asp:HiddenField ID="hdnTotalFeesData" runat="server" ClientIDMode="Static" />
     
-};
-function P_deleteRow(button) {
-    const confirmed = confirm('確定要刪除此行資料嗎？');
-    if (confirmed) {
-        // 找到該按鈕所在的 <tr>
-        const row = button.closest('tr');
-        if (row) {
-            row.remove();
-            calculateAndUpdateTotal(); // 如有總計等更新
-            // renumberRows(); // 重新編號其餘行
-        } else {
-            alert('找不到要刪除的行');
-        }
-    }
-}
- 
-  function checkSalaryLimit(rowIndex) {
-      const salaryInput = document.getElementById(`personSalary${rowIndex}`);
-      const ddl = document.getElementById(`ddlPerson${rowIndex}`);
-      const selectedCode = ddl.value;
-      const salary = parseInt(salaryInput.value, 10);
-  
-      const selectedItem = ddlPersonOptions.find(x => x.value === selectedCode);
-      if (selectedItem && salary > selectedItem.maxLimit) {
-          alert(`輸入金額 ${salary} 超過上限：${selectedItem.maxLimit}`);
-          salaryInput.value = selectedItem.maxLimit; // 自動修正為上限
-      }
-  }
-  function calculateAndUpdateTotal() {
-      let total = 0;
-      const table = document.querySelector('.person tbody');
-      const dataRows = table.querySelectorAll('tr:not(.total-row)');
-      
-      dataRows.forEach((row, index) => {
-          // 動態尋找每行的薪資和月份輸入框
-            const salaryInput = row.cells[3].querySelector('input'); // 第4欄是 Salary
-            const monthsInput = row.cells[4].querySelector('input'); // 第5欄是 Months
-            const totalCell = row.cells[5]; // 第6欄是小計
-          
-          if (salaryInput && monthsInput) {
-              const salary = parseFloat(salaryInput.value.replace(/,/g, '')) || 0;
-              const months = parseFloat(monthsInput.value) || 0;
-              const rowTotal = salary * months;
-              
-              // 更新該行的小計顯示
-              if (totalCell) {
-                  totalCell.textContent = rowTotal.toLocaleString();
-              }
-              
-              total += rowTotal;
-          }
-      });
-      
-      // 更新總計顯示
-      updatePersonTotal(total);
-  }
-  
+    <div class="anchor-wrapper">
+        <!-- 錨點選單 -->
+        <div class="anchor-menu">
+            <a href="#point1" class="anchor-menu-item">1.海洋科技研發人員人事費明細表</a>
+            <a href="#point2" class="anchor-menu-item">2.消耗性器材及原材料費</a>
+            <a href="#point3" class="anchor-menu-item">3.技術移轉、委託研究或驗證費</a>
+            <a href="#point4" class="anchor-menu-item">4.國內差旅費</a>
+            <a href="#point5" class="anchor-menu-item">5.其他業務費</a>
+            <a href="#point6" class="anchor-menu-item">【經費總表】</a>
+        </div>
+    </div>
 
-  function updatePersonTotal(total) {
-      // 更新總計顯示
-      const totalCell = document.getElementById('PersonTotal');
-      if (totalCell) {
-          totalCell.textContent = total.toLocaleString();
-      }
-      // 更新經費總表
-      updateBudgetSummary();
-  }
-        // 新增行功能（動態新增）
-        function P_addNewRow() {
-            const table = document.querySelector('.person tbody');
-            const totalRow = table.querySelector('.total-row');
-            
-            // 建立新行
-            const newRow = document.createElement('tr');
-            const rowCount = table.children.length; // 包含總計行
-            const ddlSelect = document.createElement('select');
-                ddlSelect.className = "dropdown-list";
-                ddlSelect.id = `ddlPerson${rowCount}`;
-            
-                // 加入選項
-                ddlPersonOptions.forEach(option => {
-                    const opt = document.createElement('option');
-                    opt.value = option.value;
-                    opt.textContent = option.text;
-                    ddlSelect.appendChild(opt);
-                });
-                 // 新增 onchange 事件：切換選項時，將 salary 欄位清為 0
-                    ddlSelect.addEventListener("change", function () {
-                        const salaryInput = document.getElementById(`personSalary${rowCount}`);
-                        if (salaryInput) {
-                            salaryInput.value = 0;
-                            calculateAndUpdateTotal(); // 如有需要可即時重新計算
-                        }
-                    });
+    <!-- 內容區塊 -->
+    <div class="block">
 
-            newRow.innerHTML = `
-                <td class="name-cell"><input type="text" id="personName${rowCount}" class="textbox"></td>
-                <td><input type="checkbox" id="stay${rowCount}" /></td>
-                 <td></td> <!-- select 會動態插入這格 -->
-                <td><input type="text" class="textbox" id="personSalary${rowCount}" value="0" onblur="checkSalaryLimit(${rowCount}); calculateAndUpdateTotal()"></td>
-                <td><input type="text" class="textbox" id="personMonths${rowCount}" value="0" onblur="calculateAndUpdateTotal()"></td>
-                <td class="salary-cell">0</td>
-                <td>
-                    <button type="button" class="btn-delete" onclick="P_deleteRow(this)">🗑</button>
-                    <button type="button" class="add-btn" onclick="P_addNewRow()">+</button>
-                </td>
-            `;
-            // 在總計行之前插入新行
-            table.insertBefore(newRow, totalRow);
-            // 將 select 插入第 3 個 <td>
-             newRow.children[2].appendChild(ddlSelect);
-
-        }
-
-//endregion
-//region 2.消耗性器材及原材料費 的JS
-
-  function M_deleteRow(button) {
-        const confirmed = confirm('確定要刪除此行資料嗎？');
-        if (confirmed) {
-            // 找到該按鈕所在的 <tr>
-            const row = button.closest('tr');
-            if (row) {
-                row.remove();
-              calculateMaterial();
-                // renumberRows(); // 重新編號其餘行
-            } else {
-                alert('找不到要刪除的行');
-            }
-        }
-    }
-  function calculateMaterial() {
-      let total = 0;
-      const table = document.querySelector('.Material tbody');
-      const dataRows = table.querySelectorAll('tr:not(.total-row)');
-      
-      dataRows.forEach((row, index) => {
-          // 動態尋找每行的薪資和月份輸入框
-            const NumInput = row.cells[3].querySelector('input'); // 第4欄是 Num
-            const unitPriceInput = row.cells[4].querySelector('input'); // 第5欄是 unitPrice
-            const totalCell = row.cells[5]; // 第6欄是小計
-          
-          if (NumInput && unitPriceInput) {
-              const Num = parseFloat(NumInput.value.replace(/,/g, '')) || 0;
-              const unitPrice = parseFloat(unitPriceInput.value) || 0;
-              const rowTotal = Num * unitPrice;
-              
-              // 更新該行的小計顯示
-              if (totalCell) {
-                  totalCell.textContent = rowTotal.toLocaleString();
-              }
-              
-              total += rowTotal;
-          }
-      });
-      
-      // 更新總計顯示
-      updateTotalMaterialTotal(total);
-  }
-  
-  function updateTotalMaterialTotal(total) {
-      // 更新總計顯示
-      const totalCell = document.getElementById('MaterialTotal') ;
-      if (totalCell) {
-          totalCell.textContent = total.toLocaleString();
-      }
-      // 更新經費總表
-      updateBudgetSummary();
-  }
-
-function checkMaterialLimit(rowIndex) {
-        const MaterialUnitPriceInput = document.getElementById(`MaterialUnitPrice${rowIndex}`);
-        const ddl = document.getElementById(`MaterialUnit${rowIndex}`);
-        const selectedCode = ddl.value;
-        const MaterialUnitPrice = parseInt(MaterialUnitPriceInput.value, 10);
-    
-        const selectedItem = ddlMaterialOptions.find(x => x.value === selectedCode);
-        if (selectedItem && MaterialUnitPrice > selectedItem.maxLimit && selectedItem.maxLimit != 0) {
-            alert(`輸入金額 ${MaterialUnitPrice} 超過上限：${selectedItem.maxLimit}`);
-            MaterialUnitPriceInput.value = selectedItem.maxLimit; // 自動修正為上限
-        }
-    }
-
-
-// 新增行功能（材料費）
-function M_addNewRow() {
-    const table = document.querySelector('.Material tbody');
-    const totalRow = table.querySelector('.total-row');
-    
-    // 建立新行
-    const newRow = document.createElement('tr');
-    const rowCount = table.children.length; // 包含總計行
-    const ddlSelect = document.createElement('select');
-                    ddlSelect.className = "dropdown-list";
-                    ddlSelect.id = `MaterialUnit${rowCount}`;
-                
-                    // 加入選項
-                    ddlMaterialOptions.forEach(option => {
-                        const opt = document.createElement('option');
-                        opt.value = option.value;
-                        opt.textContent = option.text;
-                        ddlSelect.appendChild(opt);
-                    });
-                     // 新增 onchange 事件：切換選項時，將 salary 欄位清為 0
-                    ddlSelect.addEventListener("change", function () {
-                        const MaterialUnitPriceInput = document.getElementById(`MaterialUnitPrice${rowCount}`);
-                        if (MaterialUnitPriceInput) {
-                            MaterialUnitPriceInput.value = 0;
-                            calculateMaterial(); // 如有需要可即時重新計算
-                        }
-                    });
-    newRow.innerHTML = `
-            <td class="name-cell"><input type="text" id="MaterialName${rowCount}" class="textbox" /></td>
-            <td class="name-cell"><input type="text" id="MaterialDescription${rowCount}" class="textbox" /></td>
-            <td>
-            </td>
-            <td><input type="text" id="MaterialNum${rowCount}" class="textbox" onblur="calculateMaterial()" /></td>
-            <td><input type="text" id="MaterialUnitPrice${rowCount}" class="textbox" onblur="checkMaterialLimit(${rowCount});calculateMaterial()" /></td>
-            <td class="salary-cell"></td>
-            <td>
-                <button type="button" class="btn-delete" onclick="M_deleteRow(this)">🗑</button>
-                <button type="button" class="add-btn" onclick="M_addNewRow()">+</button></td>
-        
-    `;
-    // 在總計行之前插入新行
-    table.insertBefore(newRow, totalRow);
-    newRow.children[2].appendChild(ddlSelect);
-}
-
-//endregion
-//region 3. 技術移轉、委託研究或驗證費
-    
-  // 金額格式化 + 合計計算
-    function calculateResearch() {
-        let total = 0;
-        document.querySelectorAll('.money').forEach(input => {
-            let raw = input.value.replace(/,/g, '');
-            let val = parseInt(raw) || 0;
-            input.value = val.toLocaleString(); // 金額千分位
-            total += val;
-        });
-
-        document.getElementById("ResearchFeesTotal").innerText = total.toLocaleString();
-        // 更新經費總表
-        updateBudgetSummary();
-    }
-
-
-function R_DeleteRow(rowNumber) {
-  const confirmed = confirm('確定要刪除此行資料嗎？');
-       if (confirmed) {
-           // 找到要刪除的行
-           const table = document.querySelector('.ResearchFees tbody');
-           const rows = table.querySelectorAll('tr:not(.total-row)');
-           
-           // 根據行號找到對應的行（rowNumber從1開始，陣列索引從0開始）
-           const targetRow = rows[rowNumber - 1];
-           
-           if (targetRow) {
-               // 移除整個行
-               targetRow.remove();
-               calculateResearch();
-               R_renumberRows();
-           } else {
-               alert('找不到要刪除的行');
-           }
-       }
-}
-function R_renumberRows (){
-    const table = document.querySelector('.ResearchFees tbody');
-    const rows = table.querySelectorAll('tr:not(.total-row)');
-    
-    rows.forEach((row, index) => {
-        const newRowNumber = index + 1;
-         // 更新品名的ID
-        const ResearchFeesNameInput = row.querySelector('[id*="ResearchFeesName"]');
-        if (ResearchFeesNameInput) {
-            ResearchFeesNameInput.id = `ResearchFeesName${newRowNumber}`;
-        }
-      
-        const ResearchFeesReason = row.querySelector('[id*="ResearchFeesReason"]');
-        if (ResearchFeesReason) {
-            ResearchFeesReason.id = `ResearchFeesReason${newRowNumber}`;
-        } 
-        
-        const ResearchFeesArea = row.querySelector('[id*="ResearchFeesArea"]');
-        if (ResearchFeesArea) {
-            ResearchFeesArea.id = `ResearchFeesArea${newRowNumber}`;
-        }
-        const ResearchFeesDays = row.querySelector('[id*="ResearchFeesDays"]');
-        if (ResearchFeesDays) {
-            ResearchFeesDays.id = `ResearchFeesDays${newRowNumber}`;
-        }  
-        const ResearchFeesPeople = row.querySelector('[id*="ResearchFeesPeople"]');
-        if (ResearchFeesPeople) {
-            ResearchFeesPeople.id = `ResearchFeesPeople${newRowNumber}`;
-        }
-        const ResearchFeesPrice = row.querySelector('[id*="ResearchFeesPrice"]');
-        if (ResearchFeesPrice) {
-            ResearchFeesPrice.id = `ResearchFeesPrice${newRowNumber}`;
-        }
-        // 更新刪除按鈕的onclick事件
-        const deleteButton = row.querySelector('.btn-delete');
-        if (deleteButton) {
-            deleteButton.onclick = () => R_deleteRow(newRowNumber);
-        }
-    });
-}
-    window.addEventListener('DOMContentLoaded', calculateResearch);
-
-//endregion
-//region  4. 國內差旅費
-function calculateTravel() {
-        let total = 0;
-        const prices = document.querySelectorAll('.travel .price');
-
-        prices.forEach(priceInput => {
-            const raw = priceInput.value.replace(/,/g, '');
-            const value = parseInt(raw) || 0;
-            total += value;
-
-            // 如果不是空白就加上千分位
-            priceInput.value = value > 0 ? value.toLocaleString() : '';
-        });
-
-        document.getElementById('travelTotal').innerText = total.toLocaleString();
-        // 更新經費總表
-        updateBudgetSummary();
-    }
-
-    function T_DeleteRow(button) {
-            const confirmed = confirm('確定要刪除此行資料嗎？');
-        if (confirmed) {
-            // 找到該按鈕所在的 <tr>
-            const row = button.closest('tr');
-            if (row) {
-                row.remove();
-                calculateAndUpdateTotal(); // 如有總計等更新
-            } else {
-                alert('找不到要刪除的行');
-            }
-        }
-    }
-    function T_addRow() {
-       const table = document.querySelector('.travel tbody');
-       const totalRow = table.querySelector('.total-row');
-      
-      // 建立新行
-        const newRow = document.createElement('tr');
-        const rowCount = table.children.length; // 包含總計行
-        
-        newRow.innerHTML = `
-            <td><input type="text" ID="travelReason${rowCount}" class="textbox" /></td>
-            <td><input type="text" ID="travelArea${rowCount}" class="textbox" /></td>
-            <td><input type="text" ID="travelDays${rowCount}" class="textbox days"/></td>
-            <td><input type="text" ID="travelPeople${rowCount}" class="textbox people" </td>
-            <td><input type="text" ID="travelPrice${rowCount}" class="textbox price" onblur="calculateTravel()" /></td>
-            <td><button type="button" class="btn-delete" onclick="T_DeleteRow(this)">🗑</button></td>
-        `;
-        table.insertBefore(newRow, totalRow);
-    }
-
-    
-    // function T_renumberRows (){
-    //     const table = document.querySelector('.travel tbody');
-    //     const rows = table.querySelectorAll('tr:not(.total-row)');
-    //    
-    //     rows.forEach((row, index) => {
-    //         const newRowNumber = index + 1;
-    //          // 更新品名的ID
-    //         const travelReason = row.querySelector('[id*="travelReason"]');
-    //         if (travelReason) {
-    //             travelReason.id = `travelReason${newRowNumber}`;
-    //         }
-    //
-    //         const travelArea = row.querySelector('[id*="travelArea"]');
-    //         if (travelArea) {
-    //             travelArea.id = `travelArea${newRowNumber}`;
-    //         }
-    //                  
-    //         const travelDays = row.querySelector('[id*="travelDays"]');
-    //         if (travelDays) {
-    //             travelDays.id = `travelDays${newRowNumber}`;
-    //         } 
-    //        
-    //         const travelPeople = row.querySelector('[id*="travelPeople"]');
-    //         if (travelPeople) {
-    //             travelPeople.id = `travelPeople${newRowNumber}`;
-    //         }  
-    //         const travelPrice = row.querySelector('[id*="travelPrice"]');
-    //         if (travelPrice) {
-    //             travelPrice.id = `travelPrice${newRowNumber}`;
-    //         }
-    //
-    //         // 更新刪除按鈕的onclick事件
-    //         const deleteButton = row.querySelector('.btn-delete');
-    //         if (deleteButton) {
-    //             deleteButton.onclick = () => T_DeleteRow(newRowNumber);
-    //         }
-    //     });
-    // }
-//endregion
-//region5. 其他業務費
-function calculateOther() {
-      let total = 0;
-      const table = document.querySelector('.other tbody');
-      const dataRows = table.querySelectorAll('tr:not(.total-row)');
-      
-      dataRows.forEach((row, index) => {
-          // 動態尋找每行的薪資和月份輸入框
-            const avgSalaryInput = row.cells[1].querySelector('input'); // 第2欄是 平均月薪
-            const monthInput = row.cells[2].querySelector('input'); // 第3欄是 參與人月
-            const peopleInput = row.cells[3].querySelector('input'); // 第4欄是 人數
-            const totalCell = row.cells[4]; // 第5欄是人事費小計	
-          
-          if (avgSalaryInput && monthInput && peopleInput) {
-              const avgSalary= parseFloat(avgSalaryInput.value) || 0;
-              const month = parseFloat(monthInput.value) || 0;
-              const people = parseFloat(peopleInput.value) || 0;
-              const rowTotal = (avgSalary * month * people);
-              
-              // 更新該行的小計顯示
-              if (totalCell) {
-                  totalCell.textContent = rowTotal.toLocaleString();
-              }
-              
-              total += rowTotal;
-          }
-      });
-      
-      // 更新總計顯示
-      updateTotalOtherTotal(total);
-  }
-  
-
-  function updateTotalOtherTotal(total) {
-      // 更新總計顯示
-      const totalCell = document.getElementById('otherTotal') ;
-      if (totalCell) {
-          totalCell.textContent = total.toLocaleString();
-      }
-      
-      // 將其他業務費合計帶入勞務委託費金額欄位
-      const serviceCashSpan = document.getElementById('serviceCash');
-      if (serviceCashSpan) {
-          serviceCashSpan.textContent = total.toLocaleString();
-      }
-      
-      // 自動生成勞務委託費的計算方式及說明
-      generateServiceDescription(total);
-      
-      // 更新租金+勞務委託費合計
-      calculateOtherRentTotal();
-      
-      // 更新經費總表
-      updateBudgetSummary();
-  }
-  
-  function generateServiceDescription(total) {
-      const table = document.querySelector('.other tbody');
-      const dataRows = table.querySelectorAll('tr:not(.total-row)');
-      let descriptionLines = [];
-      
-      dataRows.forEach((row, index) => {
-          const jobTitleSelect = row.cells[0].querySelector('select');
-          const avgSalaryInput = row.cells[1].querySelector('input');
-          const monthInput = row.cells[2].querySelector('input');
-          const peopleInput = row.cells[3].querySelector('input');
-          
-          if (jobTitleSelect && avgSalaryInput && monthInput && peopleInput) {
-              const jobTitle = jobTitleSelect.options[jobTitleSelect.selectedIndex]?.text || '';
-              const avgSalary = parseFloat(avgSalaryInput.value) || 0;
-              const month = parseFloat(monthInput.value) || 0;
-              const people = parseFloat(peopleInput.value) || 0;
-              
-              // 只有當有實際數值時才加入說明
-              if (jobTitle && avgSalary > 0 && month > 0 && people > 0) {
-                  const salaryInThousands = (avgSalary / 1000).toFixed(1);
-                  const line = `${jobTitle} 人員${salaryInThousands}千元*${month}月*${people}人`;
-                  descriptionLines.push(line);
-              }
-          }
-      });
-      
-      // 加入總計行
-      if (total > 0) {
-          const totalInThousands = (total / 1000).toFixed(0);
-          descriptionLines.push(`總計: ${totalInThousands}千元`);
-      }
-      
-      // 更新說明欄位
-      const serviceDescriptionSpan = document.getElementById('serviceDescription');
-      if (serviceDescriptionSpan) {
-          serviceDescriptionSpan.textContent = descriptionLines.join('\n');
-      }
-  }
-  
-  function calculateOtherRentTotal() {
-      // 取得租金金額
-      const rentCashInput = document.getElementById('rentCash');
-      const rentAmount = parseFloat(rentCashInput?.value?.replace(/,/g, '') || '0');
-      
-      // 取得勞務委託費金額
-      const serviceCashSpan = document.getElementById('serviceCash');
-      const serviceAmount = parseFloat(serviceCashSpan?.textContent?.replace(/,/g, '') || '0');
-      
-      // 計算合計
-      const total = rentAmount + serviceAmount;
-      
-      // 更新合計顯示
-      const totalCell = document.getElementById('otherRentTotal');
-      if (totalCell) {
-          totalCell.textContent = total.toLocaleString();
-      }
-      
-      // 更新經費總表中的其他業務費補助款 (第5項)
-      updateAmountA('5', total);
-      
-      // 重新計算經費總表
-      updateItemTotals();
-      updateGrandTotals();
-      updatePercentages();
-  }
-  
-    function O_DeleteRow(button) {
-                const confirmed = confirm('確定要刪除此行資料嗎？');
-            if (confirmed) {
-                // 找到該按鈕所在的 <tr>
-                const row = button.closest('tr');
-                if (row) {
-                    row.remove();
-                    calculateOther(); // 如有總計等更新
-                } else {
-                    alert('找不到要刪除的行');
-                }
-            }
-        }
-     function O_addRow() {
-        const table = document.querySelector('.other tbody');
-        const totalRow = table.querySelector('.total-row');
-       
-       // 建立新行
-         const newRow = document.createElement('tr');
-         const rowCount = table.children.length; // 包含總計行
-         const ddlSelect = document.createElement('select');
-         ddlSelect.className = "dropdown-list";
-         ddlSelect.id = `otherJobTitle${rowCount}`;
-         
-         // 加入選項
-         ddlOtherOptions.forEach(option => {
-             const opt = document.createElement('option');
-             opt.value = option.value;
-             opt.textContent = option.text;
-             ddlSelect.appendChild(opt);
-         });
-         
-         // 為新增的職稱下拉選單加入 onchange 事件
-         ddlSelect.addEventListener("change", function () {
-             calculateOther();
-         });
-
-         newRow.innerHTML = `
-             <td></td>
-             <td><input type="text" ID="otherAvgSalary${rowCount}" class="textbox" onblur="calculateOther()"/></td>
-             <td><input type="text" ID="otherMonth${rowCount}" class="textbox days" onblur="calculateOther()" /> </td>
-             <td><input type="text" ID="otherPeople${rowCount}" class="textbox people" onblur="calculateOther()" /></td>
-             <td></td>
-             <td><button type="button" class="btn-delete" onclick="O_DeleteRow(this)">🗑</button></td>
-         `;
-         table.insertBefore(newRow, totalRow);
-         // 將 select 插入第一個 <td>
-         newRow.children[0].appendChild(ddlSelect);
-     }
- 
-//endregion
-//region 6. 經費總表自動更新功能
-
-function updateBudgetSummary() {
-    // 取得各個 table 的總計
-    const personTotal = parseFloat(document.getElementById('PersonTotal')?.textContent?.replace(/,/g, '') || '0');
-    const materialTotal = parseFloat(document.getElementById('MaterialTotal')?.textContent?.replace(/,/g, '') || '0');
-    const researchTotal = parseFloat(document.getElementById('ResearchFeesTotal')?.textContent?.replace(/,/g, '') || '0');
-    const travelTotal = parseFloat(document.getElementById('travelTotal')?.textContent?.replace(/,/g, '') || '0');
-    const otherRentTotal = parseFloat(document.getElementById('otherRentTotal')?.textContent?.replace(/,/g, '') || '0');
-    
-    // 更新經費總表中的補助款 (A) - 除了行政管理費外
-    updateAmountA('1', personTotal);        // 人事費
-    updateAmountA('2', materialTotal);      // 消耗性器材及原材料費
-    updateAmountA('3', researchTotal);      // 技術移轉、委託研究或驗證費
-    updateAmountA('4', travelTotal);        // 國內差旅費
-    updateAmountA('5', otherRentTotal);     // 其他業務費（租金+勞務委託費合計）
-    // 行政管理費保持原狀，不自動更新
-    
-    // 更新每個項目的合計 (C) = (A) + (B)
-    updateItemTotals();
-    
-    // 更新經費總計
-    updateGrandTotals();
-    
-    // 更新百分比
-    updatePercentages();
-}
-
-function updateAmountA(rowIndex, amount) {
-    const rows = document.querySelectorAll('.main-table tbody tr');
-    let targetRow = null;
-    
-    // 根據科目名稱找到對應的行
-    rows.forEach(row => {
-        const firstCell = row.cells[0]?.textContent;
-        if (firstCell?.includes(`${rowIndex}.`)) {
-            targetRow = row;
-        }
-    });
-    
-    if (targetRow) {
-        const amountACell = targetRow.querySelector('.amount-a');
-        if (amountACell) {
-            amountACell.textContent = amount.toLocaleString();
-        }
-    }
-}
-
-function updateItemTotals() {
-    const rows = document.querySelectorAll('.main-table tbody tr:not(.total-row):not(.percentage-row)');
-    
-    rows.forEach(row => {
-        const amountACell = row.querySelector('.amount-a');
-        const amountBCell = row.querySelector('.amount-b');
-        const totalCell = row.querySelector('.amount-total');
-        
-        if (amountACell && amountBCell && totalCell) {
-            // 處理補助款 (A) - 可能是 textContent 或 input value
-            let amountA = 0;
-            const amountAInput = amountACell.querySelector('input');
-            if (amountAInput) {
-                // 如果是輸入框 (如行政管理費)
-                amountA = parseFloat(amountAInput.value?.replace(/,/g, '') || '0');
-            } else {
-                // 如果是文字內容 (如其他自動計算的項目)
-                amountA = parseFloat(amountACell.textContent?.replace(/,/g, '') || '0');
-            }
-            
-            const amountBInput = amountBCell.querySelector('input');
-            const amountB = parseFloat(amountBInput?.value?.replace(/,/g, '') || '0');
-            
-            const total = amountA + amountB;
-            totalCell.textContent = total.toLocaleString();
-        }
-    });
-}
-
-function updateGrandTotals() {
-    const rows = document.querySelectorAll('.main-table tbody tr:not(.total-row):not(.percentage-row)');
-    let totalA = 0;
-    let totalB = 0;
-    let totalC = 0;
-    
-    rows.forEach(row => {
-        const amountACell = row.querySelector('.amount-a');
-        const amountBCell = row.querySelector('.amount-b');
-        const totalCell = row.querySelector('.amount-total');
-        
-        if (amountACell && amountBCell && totalCell) {
-            // 處理補助款 (A) - 可能是 textContent 或 input value
-            let amountA = 0;
-            const amountAInput = amountACell.querySelector('input');
-            if (amountAInput) {
-                // 如果是輸入框 (如行政管理費)
-                amountA = parseFloat(amountAInput.value?.replace(/,/g, '') || '0');
-            } else {
-                // 如果是文字內容 (如其他自動計算的項目)
-                amountA = parseFloat(amountACell.textContent?.replace(/,/g, '') || '0');
-            }
-            
-            const amountBInput = amountBCell.querySelector('input');
-            const amountB = parseFloat(amountBInput?.value?.replace(/,/g, '') || '0');
-            const amountC = parseFloat(totalCell.textContent?.replace(/,/g, '') || '0');
-            
-            totalA += amountA;
-            totalB += amountB;
-            totalC += amountC;
-        }
-    });
-    
-    // 更新經費總計行 - 尋找包含"經費總計"的行
-    const allRows = document.querySelectorAll('.main-table tbody tr');
-    let totalRow = null;
-    
-    allRows.forEach(row => {
-        if (row.textContent.includes('經費總計')) {
-            totalRow = row;
-        }
-    });
-    
-    if (totalRow) {
-        const cells = totalRow.querySelectorAll('.number-cell');
-        if (cells.length >= 3) {
-            cells[0].innerHTML = `${totalA.toLocaleString()}<br>(I)`;
-            cells[1].textContent = totalB.toLocaleString();
-            cells[2].innerHTML = `${totalC.toLocaleString()}<br>(II)`;
-        }
-    }
-}
-
-function updatePercentages() {
-    // 先取得經費總計 (I) 和 (II) 的值
-    const allRows = document.querySelectorAll('.main-table tbody tr');
-    let totalRow = null;
-    let percentageRow = null;
-    
-    allRows.forEach(row => {
-        if (row.textContent.includes('經費總計')) {
-            totalRow = row;
-        }
-        if (row.textContent.includes('百分比')) {
-            percentageRow = row;
-        }
-    });
-    
-    if (!totalRow) {
-        console.log('找不到經費總計行');
-        return;
-    }
-    
-    const totalCells = totalRow.querySelectorAll('.number-cell');
-    if (totalCells.length < 3) return;
-    
-    // 取得經費總計數值
-    const totalI = parseFloat(totalCells[0].textContent?.replace(/,/g, '').replace(/\(I\)/g, '').replace(/<br>/g, '') || '0');
-    const totalB = parseFloat(totalCells[1].textContent?.replace(/,/g, '') || '0');
-    const totalII = parseFloat(totalCells[2].textContent?.replace(/,/g, '').replace(/\(II\)/g, '').replace(/<br>/g, '') || '0');
-    
-    console.log('經費總計數值:', { totalI, totalB, totalII });
-    
-    // 更新各科目的百分比
-    const itemRows = document.querySelectorAll('.main-table tbody tr:not(.total-row):not(.percentage-row)');
-    
-    itemRows.forEach(row => {
-        const amountACell = row.querySelector('.amount-a');
-        const totalCell = row.querySelector('.amount-total');
-        const allCells = row.querySelectorAll('td');
-        
-        if (amountACell && totalCell && allCells.length >= 6) {
-            // 取得該項目的 A 和 C 值
-            let amountA = 0;
-            const amountAInput = amountACell.querySelector('input');
-            if (amountAInput) {
-                amountA = parseFloat(amountAInput.value?.replace(/,/g, '') || '0');
-            } else {
-                amountA = parseFloat(amountACell.textContent?.replace(/,/g, '') || '0');
-            }
-            
-            const amountC = parseFloat(totalCell.textContent?.replace(/,/g, '') || '0');
-            
-            // 計算百分比
-            const percentageC_II = totalII > 0 ? ((amountC / totalII) * 100).toFixed(2) + '%' : '0%';
-            const percentageA_I = totalI > 0 ? ((amountA / totalI) * 100).toFixed(2) + '%' : '0%';
-            
-            // 更新百分比欄位 (第5和第6個td)
-            if (allCells[4]) {
-                allCells[4].textContent = percentageC_II;  // 佔總經費比率 (C)/(II)
-                console.log('更新佔總經費比率:', percentageC_II);
-            }
-            if (allCells[5]) {
-                allCells[5].textContent = percentageA_I;   // 各科目補助比率 (A)/(I)
-                console.log('更新各科目補助比率:', percentageA_I);
-            }
-        }
-    });
-    
-    // 更新百分比行 (經費總計的百分比)
-    if (percentageRow && totalII > 0) {
-        const percentageCells = percentageRow.querySelectorAll('.number-cell');
-        if (percentageCells.length >= 3) {
-            const percentageA = ((totalI / totalII) * 100).toFixed(2) + '%';
-            const percentageB = ((totalB / totalII) * 100).toFixed(2) + '%';
-            
-            percentageCells[0].textContent = percentageA;  // 補助款百分比
-            percentageCells[1].textContent = percentageB;  // 配合款百分比
-            percentageCells[2].textContent = '100%';       // 總計百分比
-        }
-    }
-}
-
-//endregion
-//region 7. 儲存功能
-function collectFormData(){
-    const data = {
-        personnel: [],
-        materials: [],
-        researchFees: [],
-        travel: [],
-        otherFees: [],
-        otherRent: [],
-    };
-
-    // --- 人事費 ---
-    document.querySelectorAll(".person tbody tr:not(.total-row)").forEach(tr => {
-        data.personnel.push({
-            name: tr.querySelector("input[id^='personName']")?.value || "",
-            stay: tr.querySelector("input[type='checkbox']")?.checked || false,
-            title: tr.querySelector("select[id^='ddlPerson']")?.value || "",
-            salary: parseFloat(tr.querySelector("input[id^='personSalary']")?.value || "0"),
-            months: parseFloat(tr.querySelector("input[id^='personMonths']")?.value || "0")
-        });
-    });
-
-    // --- 消耗性器材及原材料費 ---
-    document.querySelectorAll(".Material tbody tr:not(.total-row)").forEach(tr => {
-        data.materials.push({
-            name: tr.querySelector("input[id^='MaterialName']")?.value || "",
-            description: tr.querySelector("input[id^='MaterialDescription']")?.value || "",
-            unit: tr.querySelector("select[id^='MaterialUnit']")?.value || "",
-            quantity: parseFloat(tr.querySelector("input[id^='MaterialNum']")?.value || "0"),
-            unitPrice: parseFloat(tr.querySelector("input[id^='MaterialUnitPrice']")?.value || "0")
-        });
-    });
-
-    // --- 技術移轉/委託研究 ---
-    document.querySelectorAll(".ResearchFees tbody tr:not(.total-row)").forEach(tr => {
-        data.researchFees.push({
-            category: tr.querySelector("span[id^='FeeCategory']")?.innerText.trim() || "",
-            dateStart: tr.querySelector("input[id^='txtDate'][id*='Start']")?.value || "",
-            dateEnd: tr.querySelector("input[id^='txtDate'][id*='End']")?.value || "",
-            projectName: tr.querySelector("input[id^='ResearchFeesName']")?.value || "",
-            targetPerson: tr.querySelector("input[id^='ResearchFeesPersonName']")?.value || "",
-            price: parseFloat(tr.querySelector("input[id^='ResearchFeesPrice']")?.value || "0")
-        });
-    });
-
-    // --- 差旅費 ---
-    document.querySelectorAll("#travelTable tbody tr:not(.total-row)").forEach(tr => {
-        data.travel.push({
-            reason: tr.querySelector("input[id^='travelReason']")?.value || "",
-            area: tr.querySelector("input[id^='travelArea']")?.value || "",
-            days: parseInt(tr.querySelector("input[id^='travelDays']")?.value || "0"),
-            people: parseInt(tr.querySelector("input[id^='travelPeople']")?.value || "0"),
-            price: parseFloat(tr.querySelector("input[id^='travelPrice']")?.value || "0")
-        });
-    });
-
-    // --- 其他業務費 ---
-    document.querySelectorAll("#otherTable tbody tr:not(.total-row)").forEach(tr => {
-        data.otherFees.push({
-            title: tr.querySelector("select[id^='otherJobTitle']")?.value || "",
-            avgSalary: parseFloat(tr.querySelector("input[id^='otherAvgSalary']")?.value || "0"),
-            months: parseFloat(tr.querySelector("input[id^='otherMonth']")?.value || "0"),
-            people: parseInt(tr.querySelector("input[id^='otherPeople']")?.value || "0")
-        });
-    });
-
-    // --- 最後一塊：租金與勞務委託費 ---
-    // 租金
-    const rentCashInput = document.getElementById('rentCash');
-    const rentDescInput = document.getElementById('rentDescription');
-    data.otherRent.push({
-        item: "租金",
-        amount: parseFloat(rentCashInput?.value?.replace(/,/g, '') || "0"),
-        note: rentDescInput?.value || ""
-    });
-    
-    // 勞務委託費
-    const serviceCashSpan = document.getElementById('serviceCash');
-    const serviceDescSpan = document.getElementById('serviceDescription');
-    data.otherRent.push({
-        item: "勞務委託費",
-        amount: parseFloat(serviceCashSpan?.textContent?.replace(/,/g, '') || "0"),
-        note: serviceDescSpan?.textContent || ""
-    });
-
-    // --- 經費總表 ---
-    data.totalFees = [];
-    const budgetRows = document.querySelectorAll("table.main-table:last-of-type tbody tr:not(.total-row):not(.percentage-row)");
-    budgetRows.forEach(tr => {
-        const cells = tr.querySelectorAll("td");
-        if (cells.length >= 4) {
-            const accountingItem = cells[0]?.textContent?.trim() || "";
-            
-            // 獲取補助款 (A) - 可能是文字內容或輸入框值
-            let subsidyAmount = 0;
-            const subsidyCell = cells[1];
-            const subsidyInput = subsidyCell?.querySelector("input");
-            if (subsidyInput) {
-                subsidyAmount = parseFloat(subsidyInput.value?.replace(/,/g, '') || "0");
-            } else {
-                subsidyAmount = parseFloat(subsidyCell?.textContent?.replace(/,/g, '') || "0");
-            }
-            
-            // 獲取配合款 (B) - 通常是輸入框
-            let coopAmount = 0;
-            const coopCell = cells[2];
-            const coopInput = coopCell?.querySelector("input");
-            if (coopInput) {
-                coopAmount = parseFloat(coopInput.value?.replace(/,/g, '') || "0");
-            }
-            
-            // 只有當會計科目不為空時才加入
-            if (accountingItem) {
-                data.totalFees.push({
-                    accountingItem: accountingItem,
-                    subsidyAmount: subsidyAmount,
-                    coopAmount: coopAmount
-                });
-            }
-        }
-    });
-
-    return data
-}
-function btnSave_Click() {
-    const jsonData = collectFormData();
-    const projectId = new URLSearchParams(window.location.search).get("ProjectID");
-    console.log(jsonData);
-    $.ajax({
-        type: "POST",
-        url: "SciFunding.aspx/SaveForm",
-        contentType: "application/json; charset=utf-8",
-        data: JSON.stringify({
-            formData: {  // 包裝在 formData 參數中
-                ProjectID: projectId,
-                Personnel: jsonData.personnel,
-                Materials: jsonData.materials,
-                ResearchFees: jsonData.researchFees,
-                Travel: jsonData.travel,
-                OtherFees: jsonData.otherFees,
-                OtherRent: jsonData.otherRent,
-                TotalFees: jsonData.totalFees
-            }
-        }),
-        dataType: "json",
-        success: function (response) {
-            alert("儲存成功！");
-        },
-        error: function (err) {
-            console.error("儲存失敗", err);
-        }
-    });
-    
-}
-//endregion
-
-</script>
-</head>
-<div class="links">
-  <a href="http://localhost:50929/OFS/SciFunding.aspx?ProjectID=114SCI0006" target="_blank">📄 計畫經費填報</a>
-  <a href="http://localhost:50929/OFS/SciApplication.aspx?ProjectID=114SCI0006" target="_blank">📝 科專申請資料</a>
-  <a href="http://localhost:50929/OFS/SciOutcomes.aspx?ProjectID=114SCI0006" target="_blank">📊 成果與績效</a>
-  <a href="http://localhost:50929/OFS/SciRecusedList.aspx?ProjectID=114SCI0006" target="_blank">📊 其他</a>
-
-</div>
-
-<body>
-    <form id="formContainer" runat="server">
-        <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePageMethods="true" />
-        <div class="container">
-            <div class="header">
-                <span class="header-icon"></span>
-                1.海洋科技研發人員人事費明細表
-            </div>
-           <table class="main-table person">
-                <thead>
+        <div id="point1">
+            <h5 class="square-title">1.海洋科技研發人員人事費明細表</h5>
+            <div class="table-responsive mt-3 mb-0">
+                <table class="table align-middle gray-table person">
+                    <thead>
                     <tr>
-                        <th class="name-cell">姓名</th>
-                        <th class="checkbox-cell">待聘</th>
-                        <th class="position-cell">職稱</th>
-                        <th class="salary-cell">平均月薪</th>
-                        <th class="months-cell">參與人月</th>
-                        <th class="total-cell">人事費小計</th>
-                        <th class="action-cell">操作</th>
+                        <th width="150"><span class="text-pink">*</span>姓名</th>
+                        <th class="text-center">待聘</th>
+                        <th width="350">
+                            <span class="text-pink">*</span>職稱
+                            <button type="button" class="btn-tooltip" data-bs-toggle="modal" data-bs-target="#jobDetailModal">
+                                <i class="fas fa-info-circle"></i>
+                            </button>
+                        </th>
+                        <th class="text-end"><span class="text-pink">*</span>平均月薪</th>
+                        <th class="text-end"><span class="text-pink">*</span>參與人月</th>
+                        <th class="text-end"><span class="text-pink">*</span>人事費小計</th>
+                        <th width="130">功能</th>
                     </tr>
-                </thead>
-                <tbody>
-                    
+                    </thead>
+                    <tbody>
                     <tr>
-                        <td class="name-cell"><asp:TextBox ID="personName1" runat="server" CssClass="textbox"/></td>
-                        <td><asp:CheckBox ID="stay1" runat="server" /></td>
-
                         <td>
-                          <select id="ddlPerson1" class="dropdown-list"></select>
-
+                            <asp:TextBox ID="personName1" runat="server" CssClass="form-control" placeholder="請輸入姓名" />
                         </td>
-                        <td><asp:TextBox ID="personSalary1" runat="server" CssClass="textbox" Text="0" onblur="checkSalaryLimit(1); calculateAndUpdateTotal()"/></td>
-                        <td><asp:TextBox ID="personMonths1" runat="server" CssClass="textbox" Text="0" onblur="calculateAndUpdateTotal()" /></td>
-                        <td class="salary-cell">0</td>
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input check-teal" runat="server" id="stay1"/>
+                        </td>
                         <td>
-                            <button type="button" class="add-btn" onclick="P_addNewRow()">+</button>
+                            <select id="ddlPerson1" class="form-select"></select>
                         </td>
-                    </tr>
-                    <tr class="total-row">
-                        <td colspan="2">合計</td>
-                        <td>--</td>
-                        <td>--</td>
-                        <td>--</td>
-                          <td class="total-amount" id="PersonTotal"></td>
-                        <td><button type="button" class="add-btn" onclick="calculateAndUpdateTotal()">計算費用</button></td>
-                    </tr>
-                </tbody>
-            </table>
-            <div class="header">
-                <span class="header-icon"></span>
-                2.消耗性器材及原材料費
-            </div>
-            <table class="main-table Material">
-                <thead>
-                    <tr>
-                        
-                        <th class="name-cell">品名</th>
-                        <th class="checkbox-cell">說明</th>
-                        <th class="position-cell">單位</th>
-                        <th class="salary-cell">預估需求數量</th>
-                        <th class="months-cell">單價</th>
-                        <th class="total-cell">總價</th>
-                        <th class="action-cell">操作</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    
-                    <tr>
-                        <td class="name-cell"><asp:TextBox ID="MaterialName1" runat="server" CssClass="textbox"/></td>
-                        <td class="name-cell"><asp:TextBox ID="MaterialDescription1" runat="server" CssClass="textbox"/></td>
                         <td>
-                      
-                            <select id="MaterialUnit1" class="dropdown-list"></select>
-
+                            <asp:TextBox ID="personSalary1" runat="server" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onblur="checkSalaryLimit(1); calculateAndUpdateTotal()" />
                         </td>
-                        <td><asp:TextBox ID="MaterialNum1" runat="server" CssClass="textbox" Text="" onblur="calculateMaterial()"/></td>
-                        <td><asp:TextBox ID="MaterialUnitPrice1" runat="server" CssClass="textbox" Text="" onblur="checkMaterialLimit(1);calculateMaterial()" /></td>
-                        <td class="salary-cell"></td>
                         <td>
-                            <button type="button" class="add-btn" onclick="M_addNewRow()" >+</button>
+                            <asp:TextBox ID="personMonths1" runat="server" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onblur="calculateAndUpdateTotal()" />
                         </td>
-                    </tr>
-                    <tr class="total-row">
-                        <td colspan="2">合計</td>
-                        <td>--</td>
-                        <td>--</td> 
-                        <td>--</td>
-                        <td class="total-amount" id="MaterialTotal"></td>
-                        <td></td>
-                    </tr>
-                </tbody>
-            </table>
-            <div class="header">
-                <span class="header-icon"></span>
-                3. 技術移轉、委託研究或驗證費
-            </div>
-            <table class="main-table ResearchFees">
-                <thead>
-                    <tr>
-                        <th>　</th>
-                        <th colspan="2">期間</th>
-                        <th>委託項目名稱</th>
-                        <th>委託對象</th>
-                        <th>金額</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><span ID="FeeCategory1" runat="server">技術移轉</span></td>
-                        <td><asp:TextBox ID="txtDate1Start" runat="server" CssClass="flatpickr-date textbox" /></td>
-                        <td><asp:TextBox ID="txtDate1End" runat="server" CssClass="flatpickr-date textbox" /></td>
-                        <td><asp:TextBox ID="ResearchFeesName1" runat="server" CssClass="textbox" /></td>
-                        <td><asp:TextBox ID="ResearchFeesPersonName1" runat="server" CssClass="textbox" /></td>
-                        <td><asp:TextBox ID="ResearchFeesPrice1" runat="server" CssClass="textbox money" onblur="calculateResearch()" /></td>
-                    </tr>
-                    <tr>
-                        <td><span ID="FeeCategory2" runat="server">轉委託研究</span></td>
-                        <td><asp:TextBox ID="txtDate2Start" runat="server" CssClass="flatpickr-date textbox" /></td>
-                        <td><asp:TextBox ID="txtDate2End" runat="server" CssClass="flatpickr-date textbox" /></td>
-                        <td><asp:TextBox ID="ResearchFeesName2" runat="server" CssClass="textbox" /></td>
-                        <td><asp:TextBox ID="ResearchFeesPersonName2" runat="server" CssClass="textbox" /></td>
-                        <td><asp:TextBox ID="ResearchFeesPrice2" runat="server" CssClass="textbox money" onblur="calculateResearch()" /></td>
+                        <td class="text-end">0</td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-teal" onclick="P_addNewRow()">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </td>
                     </tr>
                     <tr class="total-row">
                         <td colspan="5">合計</td>
-                        <td id="ResearchFeesTotal">0</td>
-                    </tr>
-                </tbody>
-            </table>
-             <div class="header">
-                <span class="header-icon"></span>
-                4. 國內差旅費
-             </div>
-            <table class="main-table travel" id="travelTable">
-                <thead>
-                    <tr>
-                        <th>出差事由</th>
-                        <th>地區</th>
-                        <th>天數</th>
-                        <th>人次</th>
-                        <th>金額</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><asp:TextBox ID="travelReason1" runat="server" CssClass="textbox" Text="" /></td>
-                        <td><asp:TextBox ID="travelArea1" runat="server" CssClass="textbox" Text="" /></td>
-                        <td><asp:TextBox ID="travelDays1" runat="server" CssClass="textbox days" Text="0"  /></td>
-                        <td><asp:TextBox ID="travelPeople1" runat="server" CssClass="textbox people" Text="0"  /></td>
-                        <td><asp:TextBox ID="travelPrice1" runat="server" CssClass="textbox price" Text="0" onblur="calculateTravel()" /></td>
+                        <td class="text-end" id="PersonTotal">0</td>
                         <td>
-                            <button type="button" class="icon-btn" onclick="T_addRow()">+</button>
+                            <button type="button" class="btn btn-sm btn-teal" onclick="calculateAndUpdateTotal()">計算</button>
                         </td>
                     </tr>
-                    <tr class="total-row">
-                        <td colspan="4">合計</td>
-                        <td id="travelTotal">0</td>
-                        <td></td>
-                    </tr>
-                </tbody>
-            </table>
-            <div class="header">
-                <span class="header-icon"></span>
-                5. 其他業務費
-             </div>
-            <table class="main-table other" id="otherTable">
-                <thead>
-                    <tr>
-                        <th>職稱</th>
-                        <th>平均月薪</th>
-                        <th>參與人月</th>
-                        <th>人數</th>
-                        <th>人事費小計</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><select id="otherJobTitle1" class="dropdown-list"></select></td>
-                        <td><asp:TextBox ID="otherAvgSalary1" runat="server" CssClass="textbox" onblur="calculateOther()" Text="" /></td>
-                        <td><asp:TextBox ID="otherMonth1" runat="server" CssClass="textbox Month" onblur="calculateOther()" Text="0"  /></td>
-                        <td><asp:TextBox ID="otherPeople1" runat="server" CssClass="textbox people" onblur="calculateOther()" Text="0"  /></td>
-                        <td></td>
-                        <td>
-                            <button type="button" class="icon-btn" onclick="O_addRow()">+</button>
-                        </td>
-                    </tr>
-                    <tr class="total-row">
-                        <td colspan="4">合計</td>
-                        <td id="otherTotal">0</td>
-                        <td></td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            <table class="main-table otherRent">
-            <thead>
-                <tr>
-                    <th>項目</th>
-                    <th>金額</th>
-                    <th>計算方式及說明</th>
-                   
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>租金</td>
-                    <td><asp:TextBox runat="server" CssClass="textbox" ID="rentCash" Text="" onblur="calculateOtherRentTotal()" /></td>
-                    <td><asp:TextBox runat="server" CssClass="textbox " ID="rentDescription" Text=""  /></td>
-                </tr> 
-                <tr>
-                    <td>勞務委託費</td>
-                    <td><span id="serviceCash">0</span></td>
-                    <td><span id="serviceDescription" style="white-space: pre-line; text-align: left; padding: 8px; display: block; min-height: 60px;"></span></td>
-                </tr>
-            
-                <tr class="total-row">
-                    <td >合計</td>
-                    <td id="otherRentTotal">0</td>
-                    <td></td>
-                </tr>
-            </tbody>
-        </table>
-            <div class="header">
-                <span class="header-icon"></span>
-                經費總表
+                    </tbody>
+                </table>
             </div>
-            <table class="main-table ">
-                <thead>
-                    <tr class="header-row">
-                        <th>會計科目</th>
-                        <th>補助款 (A)</th>
-                        <th>配合款 (B)</th>
-                        <th>合計 (C)</th>
-                        <th>佔總經費比率 (C)/(II)</th>
-                        <th>各科目補助比率 (A)/(I)</th>
-                    </tr>
-                </thead>
-                <tbody>
+
+            <ul class="list-unstyled lh-base">
+                <li>1.計畫所列海洋科技研發人員應具執行計畫所需能力、研究發展之能力與專案執行及研發成果管理能力。</li>
+                <li>2.人事費不得超過計畫總經費50%。行政、會計、出納、美編及非實際參與研發工作人員等，均不得列為本計畫研發人員項目。</li>
+                <li>3.應規劃提升海洋科技研發人員薪資機制或建置友善職場環境(如加薪規則、升遷管道、激勵措施及工作環境硬體設施等)。</li>
+                <li>4.計畫所列海洋科技研發人員之實領薪資應高於或等於平均月薪。</li>
+                <li>5.若有共同執行單位(企業)經費投入請編列至配合款，並於本表備註為共同執行單位之人員。</li>
+                <li>6.所列人員須為申請人正式員工（具其勞保身份者），員工數不足5人(不含)以下，未具參加勞工保險投保資格者(已符合年資或退休)，須檢附證明文件(如職業災害保險)。</li>
+            </ul>
+        </div>
+
+        <div id="point2">
+            <h5 class="square-title mt-5">2.消耗性器材及原材料費</h5>
+            <div class="table-responsive mt-3 mb-0">
+                <table class="table align-middle gray-table Material">
+                    <thead>
                     <tr>
-                        <td class="subcategory">1.人事費</td>
+                        <th>品名</th>
+                        <th class="text-center">說明</th>
+                        <th width="120">單位</th>
+                        <th class="text-end">預估需求數量</th>
+                        <th class="text-end">單價</th>
+                        <th class="text-end">總價</th>
+                        <th width="130">功能</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>
+                            <asp:TextBox ID="MaterialName1" runat="server" CssClass="form-control" placeholder="請輸入" />
+                        </td>
+                        <td class="text-center">
+                            <asp:TextBox ID="MaterialDescription1" runat="server" CssClass="form-control" placeholder="請輸入" />
+                        </td>
+                        <td>
+                            <select id="MaterialUnit1" class="form-select"></select>
+                        </td>
+                        <td>
+                            <asp:TextBox ID="MaterialNum1" runat="server" ClientIDMode="Static" CssClass="form-control text-end" placeholder="請輸入" onblur="calculateMaterial()" />
+                        </td>
+                        <td>
+                            <asp:TextBox ID="MaterialUnitPrice1" runat="server" ClientIDMode="Static" CssClass="form-control text-end" placeholder="請輸入" onblur="checkMaterialLimit(1);calculateMaterial()" />
+                        </td>
+                        <td class="text-end">0</td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-teal" onclick="M_addNewRow()">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr class="total-row">
+                        <td colspan="5">合計</td>
+                        <td class="text-end" id="MaterialTotal">0</td>
+                        <td></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <ul class="list-unstyled lh-base">
+                <li>1.材料費之編列範圍包括研發用途之消耗性器材及原材料費，但不含辦公所需事務性耗材。</li>
+                <li>2.專為執行開發計畫所發生之消耗性器材及原材料費，但不含模具、冶具、夾具等屬固定資產之設備。</li>
+                <li>3.本項經費支出之憑證、發票等，其品名之填寫應完整，並與計畫書上所列一致，勿填列代號或簡稱。</li>
+                <li>4.消耗性器材及原材料費不得超過計畫總經費之25%。</li>
+                <li>5.可認列之消耗性器材及原材料費其單據日期應在計畫執行期間內。</li>
+                <li>6.所有購買物品應列明品名、數量及單價。</li>
+                <li>7.應依<a href="#" class="link-teal">附件十海洋科技專案計畫會計科目編列與執行原則</a>之規定辦理。</li>
+                <li>8.若有共同執行單位(企業)經費投入請編列至配合款，並於本表備註為共同執行單位之費用。</li>
+                <li>9.本會計科目之編列不含營業稅。</li>
+            </ul>
+        </div>
+
+        <div id="point3">
+            <h5 class="square-title mt-5">3.技術移轉、委託研究或驗證費</h5>
+            <div class="table-responsive mt-3 mb-0">
+                <table class="table align-middle gray-table ResearchFees">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>期間</th>
+                        <th class="text-end">委託項目名稱</th>
+                        <th class="text-end">委託對象</th>
+                        <th class="text-end">金額</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td class="text-end" width="200">
+                            <span id="FeeCategory1" runat="server">技術移轉</span>
+                        </td>
+                        <td class="text-center">
+                            <div class="input-group" style="width: 400px;">
+                                <asp:TextBox ID="txtDate1Start" runat="server" ClientIDMode="Static" CssClass="form-control" TextMode="Date" />
+                                <span class="input-group-text">至</span>
+                                <asp:TextBox ID="txtDate1End" runat="server" ClientIDMode="Static" CssClass="form-control" TextMode="Date" />
+                            </div>
+                        </td>
+                        <td>
+                            <asp:TextBox ID="ResearchFeesName1" runat="server" ClientIDMode="Static" CssClass="form-control" placeholder="請輸入" />
+                        </td>
+                        <td>
+                            <asp:TextBox ID="ResearchFeesPersonName1" runat="server" ClientIDMode="Static" CssClass="form-control" placeholder="請輸入" />
+                        </td>
+                        <td>
+                            <asp:TextBox ID="ResearchFeesPrice1" runat="server" ClientIDMode="Static" CssClass="form-control text-end money" placeholder="請輸入" onblur="calculateResearch()" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-end" width="200">
+                            <span id="FeeCategory2" runat="server">委託研究</span>
+                        </td>
+                        <td class="text-center">
+                            <div class="input-group" style="width: 400px;">
+                                <asp:TextBox ID="txtDate2Start" runat="server" ClientIDMode="Static" CssClass="form-control" TextMode="Date" />
+                                <span class="input-group-text">至</span>
+                                <asp:TextBox ID="txtDate2End" runat="server" ClientIDMode="Static" CssClass="form-control" TextMode="Date" />
+                            </div>
+                        </td>
+                        <td>
+                            <asp:TextBox ID="ResearchFeesName2" runat="server" ClientIDMode="Static" CssClass="form-control" placeholder="請輸入" />
+                        </td>
+                        <td>
+                            <asp:TextBox ID="ResearchFeesPersonName2" runat="server" ClientIDMode="Static" CssClass="form-control" placeholder="請輸入" />
+                        </td>
+                        <td>
+                            <asp:TextBox ID="ResearchFeesPrice2" runat="server" ClientIDMode="Static" CssClass="form-control text-end money" placeholder="請輸入" onblur="calculateResearch()" />
+                        </td>
+                    </tr>
+                    <tr class="total-row">
+                        <td colspan="4">合計</td>
+                        <td class="text-end" id="ResearchFeesTotal">0</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <ul class="list-unstyled lh-base">
+                <li>1.所稱技術移轉為經由技術合作、技術授權(商標、執照、權利金、軟體及資料庫)、技術指導(設計、相關技術援助、技術訓練、技術諮詢、技術研究)、智財授權等方式，以取得並移轉技術(智財)者。</li>
+                <li>2.委託研究<br>- 委託研究費﹕委託外界機構、單位專案研究或研發所需之費用。與技術研發或研發服務直接相關零組件、次系統理論分析模擬設計研發、製造、測試(含認證)；專利檢索；軟體電腦程式原始碼授權等；藥理、毒性、動物及臨床試驗等。<br>- 驗證費﹕檢測分析及認證費用。</li>
+                <li>3.本會計科目之編列包含技術或關鍵智財之移轉及委託研究費，若契約約定執行期間超出計畫核准執行期間，應核減非計畫期間所應分攤之費用；由技術提供者採授權方式移轉者，其授權期間超出計畫核准執行期間，應核算計畫執行期間所平均攤提之授權費用。</li>
+                <li>4.須附上技術移轉及委託研究契約或報價單，並以委任之政府所屬機關（構）首長或學校、法人及民間單位之該項委託工作項目負責人簽署用印為佐證。</li>
+                <li>5.為確保計畫研發自主性，技術移轉及委託研究兩項經費合計不得超過計畫總經費40%，超過該比率者，不予受理。</li>
+                <li>6.委託者須為單位不得為個人，若技術移轉提供者為個人除外(需提供佐證資料)。</li>
+                <li>7.應依<a href="#" class="link-teal">附件十海洋科技專案計畫會計科目編列與執行原則</a>之規定辦理。</li>
+                <li>8.若有共同執行單位(企業)經費投入請編列至配合款，並於本表備註為共同執行單位之費用。</li>
+                <li>9.本會計科目之編列不含營業稅。</li>
+            </ul>
+        </div>
+
+        <div id="point4">
+            <h5 class="square-title mt-5">4.國內差旅費</h5>
+            <div class="table-responsive mt-3 mb-0">
+                <table class="table align-middle gray-table travel" id="travelTable">
+                    <thead>
+                    <tr>
+                        <th width="350">出差事由</th>
+                        <th>地區</th>
+                        <th width="120">天數</th>
+                        <th class="text-center">人次</th>
+                        <th class="text-end">金額</th>
+                        <th width="150">功能</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>
+                            <asp:TextBox ID="travelReason1" runat="server" CssClass="form-control" />
+                        </td>
+                        <td class="text-center">
+                            <asp:TextBox ID="travelArea1" runat="server" CssClass="form-control" />
+                        </td>
+                        <td>
+                            <asp:TextBox ID="travelDays1" runat="server" CssClass="form-control days" Text="0" />
+                        </td>
+                        <td>
+                            <asp:TextBox ID="travelPeople1" runat="server" CssClass="form-control people" Text="0" />
+                        </td>
+                        <td width="220">
+                            <asp:TextBox ID="travelPrice1" runat="server" ClientIDMode="Static" CssClass="form-control text-end price" Text="0" onblur="calculateTravel()" />
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-teal" onclick="T_addRow()">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr class="total-row">
+                        <td colspan="4">合計</td>
+                        <td class="text-end" id="travelTotal">0</td>
+                        <td></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <ul class="list-unstyled lh-base">
+                <li>1.限為海洋科技執行計畫需要，於計畫執行期間內，派遣本計畫研發人員之出差地點應為國內技術轉移對象、委外測試或驗證機構、委託研究對象之所在地。出差事由應與國內技術移轉、委外測試或驗證、委託研究及參與計畫補助單位認可之特定公務相關。</li>
+                <li>2.應依<a href="#" class="link-teal">附件十海洋科技專案計畫會計科目編列與執行原則</a>之規定辦理。</li>
+                <li>3.差旅費不得超過計畫總經費之1.5%。</li>
+                <li>4.若有共同執行單位(企業)經費投入請編列至配合款，並於本表備註為共同執行單位之費用。</li>
+                <li>5.本會計科目之編列不含營業稅。</li>
+            </ul>
+        </div>
+
+        <div id="point5">
+            <h5 class="square-title mt-5">5.其他業務費</h5>
+            <div class="table-responsive mt-3 mb-0">
+                <table class="table align-middle gray-table other" id="otherTable">
+                    <caption>勞務委託費</caption>
+                    <thead>
+                    <tr>
+                        <th width="350">
+                            <span class="text-pink">*</span>職稱
+                            <button type="button" class="btn-tooltip" data-bs-toggle="modal" data-bs-target="#jobDetailModal">
+                                <i class="fas fa-info-circle"></i>
+                            </button>
+                        </th>
+                        <th class="text-end"><span class="text-pink">*</span>平均月薪</th>
+                        <th class="text-end"><span class="text-pink">*</span>參與人月</th>
+                        <th class="text-end"><span class="text-pink">*</span>人數</th>
+                        <th class="text-end"><span class="text-pink">*</span>人事費小計</th>
+                        <th width="150">功能</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>
+                            <select id="otherJobTitle1" class="form-select"></select>
+                        </td>
+                        <td>
+                            <asp:TextBox ID="otherAvgSalary1" runat="server" ClientIDMode="Static" CssClass="form-control text-end" onblur="calculateOther()" />
+                        </td>
+                        <td>
+                            <asp:TextBox ID="otherMonth1" runat="server" ClientIDMode="Static" CssClass="form-control text-end Month" Text="0" onblur="calculateOther()" />
+                        </td>
+                        <td>
+                            <asp:TextBox ID="otherPeople1" runat="server" ClientIDMode="Static" CssClass="form-control text-end people" Text="0" onblur="calculateOther()" />
+                        </td>
+                        <td class="text-end">0</td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-teal" onclick="O_addRow()">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr class="total-row">
+                        <td colspan="4">合計</td>
+                        <td class="text-end" id="otherTotal">0</td>
+                        <td></td>
+                    </tr>
+                    </tbody>
+                </table>
+                
+                <table class="table align-middle gray-table mt-4 otherRent">
+                    <thead>
+                    <tr>
+                        <th width="220" class="text-center">項目</th>
+                        <th width="220" class="text-end">金額</th>
+                        <th>計算方式及說明</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td class="text-end align-middle">租金</td>
+                        <td class="align-middle">
+                            <asp:TextBox ID="rentCash" runat="server" ClientIDMode="Static" CssClass="form-control text-end" placeholder="請輸入" onblur="calculateOtherRentTotal()" />
+                        </td>
+                        <td class="align-middle">
+                            <asp:TextBox ID="rentDescription" runat="server" ClientIDMode="Static" CssClass="form-control" TextMode="MultiLine" Rows="3" placeholder="請輸入" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-end align-middle">勞務委託費</td>
+                        <td class="align-middle">
+                            <span id="serviceCash">0</span>
+                        </td>
+                        <td class="align-middle">
+                            <span id="serviceDescription" style="white-space: pre-line; text-align: left; padding: 8px; display: block; min-height: 60px;"></span>
+                        </td>
+                    </tr>
+                    <tr class="total-row">
+                        <td>合計</td>
+                        <td class="text-end" id="otherRentTotal">0</td>
+                        <td></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <ul class="list-unstyled lh-base">
+                <li>1.租金：限為海洋科技執行計畫需要，於計畫執行期間內，向外界機構、單位以「營業租賃」方式租用各項機械、儀器設備、場地、載運機械設備車輛、船舶等之租金。</li>
+                <li>2.勞務委託費：限為海洋科技執行計畫需要，於計畫執行期間內，聘僱臨時人員工資、兼任研究助理(碩士班研究生)、派遣人力等費用。</li>
+                <li>3.應依<a href="#" class="link-teal">附件十海洋科技專案計畫會計科目編列與執行原則</a>之規定辦理。</li>
+                <li>4.若有共同執行單位(企業)經費投入請編列至配合款，並於本表備註為共同執行單位之費用。</li>
+                <li>5.本會計科目之編列不含營業稅。</li>
+            </ul>
+        </div>
+
+        <div id="point6">
+            <h5 class="square-title mt-5">6.經費總表</h5>
+            <div class="table-responsive mt-3 mb-0">
+                <table class="table align-middle gray-table text-end main-table">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th width="130" class="text-end">
+                            <span class="text-pink">*</span>補助款(A)
+                        </th>
+                        <th width="130" class="text-end">
+                            <span class="text-pink">*</span>配合款(B)
+                        </th>
+                        <th width="130" class="text-end">合計(C)</th>
+                        <th width="130" class="text-end">佔總經費比率<br>
+                            (C)/(II)
+                        </th>
+                        <th width="130" class="text-end">各科目補助比率<br>
+                            (A)/(I)
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <th class="text-nowrap">1.人事費</th>
                         <td class="number-cell amount-a">0</td>
-                        <td class="number-cell amount-b"><asp:TextBox  runat="server" CssClass="textbox" Text="0" onblur="updateBudgetSummary()" /></td>
+                        <td class="number-cell amount-b">
+                            <asp:TextBox runat="server" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onblur="updateBudgetSummary()" />
+                        </td>
                         <td class="number-cell amount-total">0</td>
                         <td class="number-cell">0%</td>
                         <td class="number-cell">0%</td>
                     </tr>
                     <tr>
-                        <td class="subcategory">2.消耗性器材及原材料費</td>
+                        <th class="text-nowrap">2.消耗性器材及原材料費</th>
                         <td class="number-cell amount-a">0</td>
-                        <td class="number-cell amount-b"><asp:TextBox  runat="server" CssClass="textbox" Text="0" onblur="updateBudgetSummary()" /></td>
+                        <td class="number-cell amount-b">
+                            <asp:TextBox runat="server" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onblur="updateBudgetSummary()" />
+                        </td>
                         <td class="number-cell amount-total">0</td>
                         <td class="number-cell">0%</td>
                         <td class="number-cell">0%</td>
                     </tr>
                     <tr>
-                        <td class="subcategory">3. 技術移轉、委託研究或驗證費</td>
+                        <th class="text-nowrap">3.技術移轉、委託研究或驗證費</th>
                         <td class="number-cell amount-a">0</td>
-                        <td class="number-cell amount-b"><asp:TextBox  runat="server" CssClass="textbox" Text="0" onblur="updateBudgetSummary()" /></td>
+                        <td class="number-cell amount-b">
+                            <asp:TextBox runat="server" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onblur="updateBudgetSummary()" />
+                        </td>
                         <td class="number-cell amount-total">0</td>
                         <td class="number-cell">0%</td>
                         <td class="number-cell">0%</td>
                     </tr>
                     <tr>
-                        <td class="subcategory">4. 國內差旅費</td>
+                        <th class="text-nowrap">4.國內差旅費</th>
                         <td class="number-cell amount-a">0</td>
-                        <td class="number-cell amount-b"><asp:TextBox  runat="server" CssClass="textbox" Text="0" onblur="updateBudgetSummary()" /></td>
+                        <td class="number-cell amount-b">
+                            <asp:TextBox runat="server" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onblur="updateBudgetSummary()" />
+                        </td>
                         <td class="number-cell amount-total">0</td>
                         <td class="number-cell">0%</td>
                         <td class="number-cell">0%</td>
                     </tr>
                     <tr>
-                        <td class="subcategory">5. 其他業務費</td>
+                        <th class="text-nowrap">5.其他業務費</th>
                         <td class="number-cell amount-a">0</td>
-                        <td class="number-cell amount-b"><asp:TextBox  runat="server" CssClass="textbox" Text="0" onblur="updateBudgetSummary()" /></td>
+                        <td class="number-cell amount-b">
+                            <asp:TextBox runat="server" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onblur="updateBudgetSummary()" />
+                        </td>
                         <td class="number-cell amount-total">0</td>
                         <td class="number-cell">0%</td>
                         <td class="number-cell">0%</td>
                     </tr>
                     <tr>
-                        <td class="subcategory">6. 行政管理費</td>
-                        <td class="number-cell amount-a"><asp:TextBox  runat="server" CssClass="textbox" Text="0" onblur="updateBudgetSummary()" /></td>
-                        <td class="number-cell amount-b"><asp:TextBox  runat="server" CssClass="textbox" Text="0" onblur="updateBudgetSummary()" /></td>
+                        <th class="text-nowrap">6.行政管理費</th>
+                        <td class="number-cell amount-a">
+                            <asp:TextBox runat="server" ID="AdminFeeSubsidy" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onblur="updateBudgetSummary()" />
+                        </td>
+                        <td class="number-cell amount-b">
+                            <asp:TextBox runat="server" ID="AdminFeeCoop" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onblur="updateBudgetSummary()" />
+                        </td>
                         <td class="number-cell amount-total">0</td>
                         <td class="number-cell">0%</td>
                         <td class="number-cell">0%</td>
                     </tr>
                     <tr class="total-row">
-                        <td class="category-header">經費總計</td>
+                        <td class="text-nowrap">經費總計</td>
                         <td class="number-cell">0<br>(I)</td>
                         <td class="number-cell">0</td>
                         <td class="number-cell">0<br>(II)</td>
@@ -1490,21 +483,101 @@ function btnSave_Click() {
                         <td class="number-cell">--</td>
                     </tr>
                     <tr class="percentage-row">
-                        <td class="category-header">百分比</td>
+                        <td class="text-nowrap">百分比</td>
                         <td class="number-cell">0%</td>
                         <td class="number-cell">0%</td>
                         <td class="number-cell">0%</td>
                         <td class="number-cell">--</td>
                         <td class="number-cell">--</td>
                     </tr>
-                </tbody>
-            </table>
-       </div>
-        
-         <div style="text-align: center;">
-            <asp:Button ID="btnTempSave" runat="server" Text="暫時儲存表單" CssClass="save-btn" OnClientClick="btnSave_Click(); return false;" />
-            <asp:Button ID="btnSubmit" runat="server" Text="提交申請" CssClass="save-btn" style="margin-left: 10px; background-color: #007bff;" OnClientClick="btnSave_Click(); return false;" />
+                    </tbody>
+                </table>
+            </div>
+            <ul class="list-unstyled lh-base">
+                <li>1.請依海洋科技專案計畫會計科目編列與執行原則編列。</li>
+                <li>2.經費撥付方式見契約第5條。</li>
+                <li>3.總補助款以不超過<span class="text-pink">500萬元</span>為原則。</li>
+                <li>4.共同執行單位(企業)經費請編列至配合款。</li>
+                <li>5.行政管理費不得超過計畫總經費10%。</li>
+                <li>6.計畫執行期間若辦理計畫變更與經費調整，致各會計科目占總經費百分比超過經費編列規定時，經主管機關核可，則該科目得維持原經費額度，惟各科目補助比率不得超過該科目經費50%。</li>
+                <li>7.申請人配合款以小於申請人實收資本額為原則。</li>
+            </ul>
         </div>
-</form>
-</body>
-</html>
+
+    </div>
+
+    <!-- 底部區塊 -->
+    <div class="block-bottom bg-light-teal">
+        <asp:Button ID="btnTempSave" runat="server" 
+            Text="暫存" 
+            CssClass="btn btn-outline-teal" 
+            OnClientClick="collectAllFormData(); return true;"
+            OnClick="btnTempSave_Click" />
+        <asp:Button ID="btnSaveAndNext" runat="server" 
+            Text="完成本頁，下一步" 
+            CssClass="btn btn-teal" 
+            OnClientClick="collectAllFormData(); return true;"
+            OnClick="btnSaveAndNext_Click" />
+    </div>
+
+    <!-- Modal 職稱說明 -->
+    <div class="modal fade" id="jobDetailModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="jobDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <h4 class="fs-18 text-green-light">各級研究員定義</h4>
+                    <ul class="mt-3 d-flex flex-column gap-3">
+                        <li>
+                            <p>1.研究員級：指具有國內(外)大專教授、專業研究機構研究員及政府機關簡任技正或經政府認定之工程師等身份，或具備下列資格之一者：</p>
+                            <ul class="text-gray mt-1">
+                                <li>(1) 曾任國內、外大專副教授或相當職務3年以上者。</li>
+                                <li>(2) 國內、外大學或研究院(所)得有博士學位，曾從事學術研究工作或專業工作3年以上者。</li>
+                                <li>(3) 國內、外大學或研究院(所)得有碩士學位，曾從事學術研究工作或專業工作6年以上者。</li>
+                                <li>(4) 國內、外大學或獨立學院畢業者，曾從事學術研究工作或專業工作9年以上者。</li>
+                                <li>(5) 國內、外專科畢業，曾從事學術研究工作或專業工作12年以上者。</li>
+                                <li>(6) 國內、外高中(職)畢業，且從事協助研究工作或專業工作達15年以上者。</li>
+                                <li>(7) 國內、外高中(職)以下畢業，且從事協助研究工作達18年以上者。</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <p>2.副研究員級：指具有國內(外)大專副教授、專業研究機構副研究員及政府機關薦任技正或政府認定之副工程師等以上身份，或具備下列資格之一者：</p>
+                            <ul class="text-gray mt-1">
+                                <li>(1) 曾任國內、外大專講師或研究機構相當職務3年以上者。</li>
+                                <li>(2) 國內、外大學或研究院(所)得有博士學位者。</li>
+                                <li>(3) 國內、外大學或研究院(所)得有碩士學位，曾從事學術研究工作或專業工作3年以上者。</li>
+                                <li>(4) 國內、外大學或獨立學院畢業者，曾從事學術研究工作或專業工作6年以上者。</li>
+                                <li>(5) 國內、外專科畢業，曾從事學術研究工作或專業工作9年以上者。</li>
+                                <li>(6) 國內、外高中(職)畢業，且從事協助研究工作或專業工作達12年以上者。</li>
+                                <li>(7) 國內、外高中(職)以下畢業，且從事協助研究工作達5年以上者。</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <p>3.助理研究員級：指具有國內(外)大專講師、專業研究機構助理研究員政府機關委任技士或政府認定之助理工程師等以上身份，或具備下列資格之一者：</p>
+                            <ul class="text-gray mt-1">
+                                <li>(1) 國內、外大學或研究院(所)有碩士學位者。</li>
+                                <li>(2) 國內、外大學或獨立學院畢業者，曾從事學術研究工作或專業工作3年以上者。</li>
+                                <li>(3) 國內、外專科畢業，曾從事學術研究工作或專業工作6年以上者。</li>
+                                <li>(4) 國內、外高中(職)畢業，且從事協助研究工作或專業工作達9年以上者。</li>
+                                <li>(5) 國內、外高中(職)以下畢業，且從事協助研究工作達12年以上者。</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <p>4.研究助理員級：指具有國內(外)大專助教、專業研究機構研究助理等身份，或具備下列資格之一者：</p>
+                            <ul class="text-gray mt-1">
+                                <li>(1) 國內、外大學或獨立學院畢業，得有學士學位。</li>
+                                <li>(2) 國內、外專科畢業，且從事協助研究工作或專業工作達3年以上者。</li>
+                                <li>(3) 國內、外高中(職)畢業，且從事協助研究工作達6年以上者。</li>
+                                <li>(4) 國內、外高中(職)以下畢業，且從事協助研究工作達9年以上者。</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</asp:Content>

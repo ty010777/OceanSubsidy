@@ -168,6 +168,45 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
 
+
+        protected int? _GovUnitTypeID = null;
+        ///<summary>
+        /// 政府機關類別 (政府機關類別)
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("GovUnitTypeID", "GovUnitTypeID", DataSource.TABLE, "", false)]
+        public virtual int? GovUnitTypeID
+        {
+            get
+            {
+                return _GovUnitTypeID;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_GovUnitTypeID == null)
+                {
+                    if (value != null)
+                    {
+                        isModify = true;
+                    }
+                }
+                else if (!_GovUnitTypeID.Equals(value))
+                {
+                    isModify = true;
+                }
+                if (isModify)
+                {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("GovUnitTypeID") == -1)
+                    {
+                        UPDATE_COLUMN.Add("GovUnitTypeID");
+                    }
+                    _GovUnitTypeID = value;
+                }
+            }
+        }
+
     }
 
 }

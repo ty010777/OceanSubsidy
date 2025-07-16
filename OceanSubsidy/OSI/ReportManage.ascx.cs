@@ -7,6 +7,7 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using GS.Data;
 using GS.Extension;
+using GS.OCA_OceanSubsidy.Entity;
 using OfficeOpenXml;
 
 public partial class OSI_ReportManage : System.Web.UI.UserControl
@@ -25,10 +26,12 @@ public partial class OSI_ReportManage : System.Web.UI.UserControl
         {
             ToggleAddButtonAvailability();
             BindYears();
+            SetDefaultPeriod();
             BindUnits();
             BindActivityNatures();
             BindCarrierTypes();
             BindResearchItems();
+            BindReports();
         }
     }
 
@@ -49,7 +52,7 @@ public partial class OSI_ReportManage : System.Web.UI.UserControl
     // 載入年度
     void BindYears()
     {
-        var dt = OSIDataPeriodsHelper.QueryAllYears();
+        var dt = OSIDataPeriodsHelper.QueryAllYearsWithFilter();
 
         ddlYear.Items.Clear();
         foreach (DataRow row in dt.Rows)
@@ -69,7 +72,7 @@ public partial class OSI_ReportManage : System.Web.UI.UserControl
     {
         if (ddlYear.SelectedValue != null)
         {
-            var dt = OSIDataPeriodsHelper.QueryQuartersByYear(ddlYear.SelectedValue);
+            var dt = OSIDataPeriodsHelper.QueryQuartersByYearWithFilter(ddlYear.SelectedValue);
 
             ddlQuarter.Items.Clear();
             foreach (DataRow row in dt.Rows)
@@ -92,15 +95,19 @@ public partial class OSI_ReportManage : System.Web.UI.UserControl
     {
         ddlUnit.Items.Clear();
 
-        DataTable dt;
+        GisTable dt;
         if (UserInfo.OSI_RoleName == "系統管理者")
         {
-            dt = SysUnitHelper.QueryAll();
-            ddlUnit.DataTextField = "UnitName";
-            ddlUnit.DataValueField = "UnitID";
-            ddlUnit.DataSource = dt;
-            ddlUnit.DataBind();
-            ddlUnit.Items.Insert(0, new ListItem("全部", "-99"));
+            dt = SysUnitHelper.QueryAllOrderByUnitID();
+
+            ddlUnit.Items.Add(new ListItem("全部", "-99"));
+            foreach (DataRow r in dt.Rows)
+            {
+                ddlUnit.Items.Add(new ListItem(
+                        r["UnitName"].ToString(),
+                        r["UnitID"].ToString()));
+            }
+
             return;
         }
 
@@ -110,10 +117,19 @@ public partial class OSI_ReportManage : System.Web.UI.UserControl
             if (dt != null && dt.Rows.Count > 0)
             {
                 // 一般政府機關
-                ddlUnit.DataTextField = "UnitName";
-                ddlUnit.DataValueField = "UnitID";
-                ddlUnit.DataSource = dt;
-                ddlUnit.DataBind();
+                foreach (DataRow row in dt.Rows)
+                {
+                    string unitName = row["UnitName"].ToString();
+                    string unitID = row["UnitID"].ToString();
+                    
+                    // 根據 ParentUnitID 判斷是否為根單位
+                    if (!row.IsNull("ParentUnitID"))
+                    {
+                        unitName = "　" + unitName;
+                    }
+                    
+                    ddlUnit.Items.Add(new ListItem(unitName, unitID));
+                }
                 return;
             }
         }
@@ -232,7 +248,12 @@ public partial class OSI_ReportManage : System.Web.UI.UserControl
         switch (e.CommandName)
         {
             case "EditReport":
-                Response.Redirect($"~/OSI/ActivityReportDetail.aspx?id={id}");
+                // 判斷當前頁面
+                string currentPage = Request.Path.ToLower();
+                string returnUrl = currentPage.Contains("activitymanage.aspx") 
+                    ? "~/OSI/ActivityManage.aspx" 
+                    : "~/OSI/ActivityReports.aspx";
+                Response.Redirect($"~/OSI/ActivityReportDetail.aspx?id={id}&returnUrl={returnUrl}");
                 break;
             case "AskDelete":
                 hfDeleteID.Value = id;
@@ -322,7 +343,12 @@ public partial class OSI_ReportManage : System.Web.UI.UserControl
     // 新增
     protected void btnAdd_Click(object sender, EventArgs e)
     {
-        Response.Redirect("~/OSI/ActivityReportDetail.aspx");
+        // 判斷當前頁面
+        string currentPage = Request.Path.ToLower();
+        string returnUrl = currentPage.Contains("activitymanage.aspx") 
+            ? "~/OSI/ActivityManage.aspx" 
+            : "~/OSI/ActivityReports.aspx";
+        Response.Redirect($"~/OSI/ActivityReportDetail.aspx?returnUrl={returnUrl}");
     }
 
     // 匯出列表功能
@@ -358,9 +384,7 @@ public partial class OSI_ReportManage : System.Web.UI.UserControl
                 "活動性質(描述)",
                 "活動執行者",
                 "研究調查日期",
-                "使用載具名稱(類別)",
-                "使用載具名稱(描述)",
-                "使用載具名稱(核/准文號)",
+                "使用載具名稱",
                 "研究調查項目(類別)",
                 "研究調查項目(描述)",
                 "研究調查儀器",
@@ -393,6 +417,61 @@ public partial class OSI_ReportManage : System.Web.UI.UserControl
             Response.AddHeader("Content-Disposition", "attachment; filename=匯出列表資料.xlsx");
             Response.BinaryWrite(package.GetAsByteArray());
             Response.End();
+        }
+    }
+
+    // 設定預設填報週期
+    private void SetDefaultPeriod()
+    {
+        try
+        {
+            OSI_DataPeriods periodToSet = null;
+            
+            // 1. 先嘗試取得今天對應的填報期間
+            var currentPeriods = OSIDataPeriodsHelper.QueryByDateTimeWithClass(DateTime.Now);
+            
+            if (currentPeriods != null && currentPeriods.Count > 0)
+            {
+                // 若有資料，取第一筆
+                periodToSet = currentPeriods[0];
+            }
+            else
+            {
+                // 2. 若無資料，查詢最近已結束的期間
+                periodToSet = OSIDataPeriodsHelper.QueryLatestEndedPeriod();
+            }
+            
+            // 設定年度和季度
+            if (periodToSet != null)
+            {
+                SetPeriodValues(periodToSet.PeriodYear, periodToSet.PeriodID.ToString());
+            }
+        }
+        catch (Exception ex)
+        {
+            // 發生錯誤時不影響頁面載入，使用原本的預設值即可
+            System.Diagnostics.Debug.WriteLine($"SetDefaultPeriod Error: {ex.Message}");
+        }
+    }
+    
+    // 設定年度和季度的值
+    private void SetPeriodValues(string periodYear, string periodID)
+    {
+        // 設定年度
+        var yearItem = ddlYear.Items.FindByValue(periodYear);
+        if (yearItem != null)
+        {
+            ddlYear.SelectedValue = periodYear;
+            
+            // 觸發年度改變事件以載入季度
+            ddlYear_SelectedIndexChanged(ddlYear, EventArgs.Empty);
+            
+            // 設定季度
+            var quarterItem = ddlQuarter.Items.FindByValue(periodID);
+            if (quarterItem != null)
+            {
+                ddlQuarter.SelectedValue = periodID;
+            }
         }
     }
 

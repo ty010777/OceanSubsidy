@@ -146,7 +146,7 @@ public partial class OSI_ActivityManage : System.Web.UI.Page
         if (!dt.Columns.Contains("TotalUnit"))
             dt.Columns.Add("TotalUnit", typeof(int));
 
-        int totalUnit = SysUnitHelper.QueryAll().Rows.Count - 1;    // 不包含"其他"
+        int totalUnit = SysUnitHelper.QueryParentUnits().Rows.Count;    // 父單位總數，已排除"其他"
 
         // 逐筆用另一個 helper 拿統計
         foreach (DataRow row in dt.Rows)

@@ -13,6 +13,30 @@
 <asp:Content ID="HeadContent" ContentPlaceHolderID="HeadExtra" runat="server">
     <!-- 子頁面補充 head 內容 -->
     <asp:ContentPlaceHolder ID="HeadExtra" runat="server" />
+    
+    <!-- JavaScript for navigation with ProjectID -->
+    <script type="text/javascript">
+        function navigateToStep(pageUrl) {
+            var projectId = document.getElementById('<%= hdnProjectID.ClientID %>').value;
+            if (projectId) {
+                window.location.href = pageUrl + '?ProjectID=' + projectId;
+            } else {
+                window.location.href = pageUrl;
+            }
+        }
+    </script>
+    
+    <!-- 檢視模式樣式 -->
+    <style>
+        /* 只針對被禁用的按鈕設定樣式 */
+        .app-mode-view button:disabled,
+        .app-mode-view input[type="button"]:disabled,
+        .app-mode-view input[type="submit"]:disabled,
+        .app-mode-view input[type="reset"]:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
 </asp:Content>
 
 <asp:Content ID="MainContent" ContentPlaceHolderID="MainContent" runat="server">
@@ -34,39 +58,42 @@
     </div>
     
     <!-- 申請流程進度條 -->
-    <div class="application-step">
-        <div class="step-item active">
-            <div class="step-content">
-                <div class="step-label">申請表/聲明書</div>
-                <div class="step-status edit">編輯中</div>
-            </div>
-        </div>
-        <div class="step-item">
-            <div class="step-content">
-                <div class="step-label">期程／工作項目／查核</div>
-            </div>
-        </div>
-        <div class="step-item">
-            <div class="step-content">
-                <div class="step-label">經費／人事</div>
-            </div>
-        </div>
-        <div class="step-item">
-            <div class="step-content">
-                <div class="step-label">成果與績效</div>
-            </div>
-        </div>
-        <div class="step-item">
-            <div class="step-content">
-                <div class="step-label">其他</div>
-            </div>
-        </div>
-        <div class="step-item">
-            <div class="step-content">
-                <div class="step-label">上傳附件/提送申請</div>
-            </div>
-        </div>
-    </div>
+     <div class="application-step">
+           <div class="step-item active" role="button" onclick="navigateToStep('SciApplication.aspx')">
+               <div class="step-content">
+                   <div class="step-label">申請表/聲明書</div>
+                       <div class="step-status edit">編輯中</div>
+               </div>
+           </div>
+           <div class="step-item " role="button" onclick="navigateToStep('SciWorkSch.aspx')">
+               <div class="step-content">
+                   <div class="step-label">期程／工作項目／查核</div>
+               </div>
+           </div>
+           <div class="step-item " role="button" onclick="navigateToStep('SciFunding.aspx')">
+               <div class="step-content">
+                   <div class="step-label">經費／人事</div>
+               </div>
+           </div>
+           <div class="step-item " role="button" onclick="navigateToStep('SciOutcomes.aspx')">
+               <div class="step-content">
+                   <div class="step-label">成果與績效</div>
+               </div>
+           </div>
+           <div class="step-item " role="button" onclick="navigateToStep('SciRecusedList.aspx')">
+               <div class="step-content">
+                   <div class="step-label">其他</div>
+               </div>
+           </div>
+           <div class="step-item ">
+               <div class="step-content">
+                   <div class="step-label">上傳附件/提送申請</div>
+               </div>
+           </div>
+         </div>
+    
+    <!-- Hidden field to store ProjectID -->
+    <asp:HiddenField ID="hdnProjectID" runat="server" />
     
     <!-- 子頁面內容 -->
     <asp:ContentPlaceHolder ID="ApplicationContent" runat="server" />

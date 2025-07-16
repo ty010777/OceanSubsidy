@@ -26,7 +26,7 @@ public class OFS_SciApplicationHelper
         db.CommandText =
             @"INSERT INTO [OCA_OceanSubsidy].[dbo].[OFS_SCI_Application_Main]
 (
-    [Version_ID],
+    [ProjectID],
     [PersonID],
     [KeywordID],
     [Year],
@@ -51,7 +51,7 @@ public class OFS_SciApplicationHelper
 )
 VALUES
 (
-    @Version_ID,              -- 計畫編號 (年度 + 流水號4碼)
+    @ProjectID,              -- 計畫編號 (年度 + 流水號4碼)
     @PersonID,               -- 人員申請表外鍵
     @KeywordID,              -- 關鍵字外鍵
     @Year,                   -- 年度
@@ -77,7 +77,7 @@ VALUES
 )";
 
         db.Parameters.Clear();
-        db.Parameters.Add("@Version_ID", applicationData.Version_ID);
+        db.Parameters.Add("@ProjectID", applicationData.ProjectID);
         db.Parameters.Add("@PersonID", applicationData.PersonID);
         db.Parameters.Add("@KeywordID", applicationData.KeywordID);
         db.Parameters.Add("@Year", applicationData.Year);
@@ -159,14 +159,14 @@ VALUES
                 throw new Exception("沒有提供任何欄位可供更新。");
             }
 
-            // 加上 WHERE Version_ID
-            db.Parameters.Add("@Version_ID", applicationData.Version_ID);
+            // 加上 WHERE ProjectID
+            db.Parameters.Add("@ProjectID", applicationData.ProjectID);
 
             // 組 SQL
             db.CommandText = $@"
             UPDATE [OCA_OceanSubsidy].[dbo].[OFS_SCI_Application_Main]
             SET {string.Join(",\n    ", setClauses)}
-            WHERE [Version_ID] = @Version_ID";
+            WHERE [ProjectID] = @ProjectID";
 
             try
             {
@@ -179,17 +179,17 @@ VALUES
         }
     }
 
-    // 根據 Version_ID 查詢單筆資料
+    // 根據 ProjectID 查詢單筆資料
 
-    public static OFS_SCI_Application_Main getApplicationMainByVersion_ID(string Version_ID)
+    public static OFS_SCI_Application_Main getApplicationMainByProjectID(string ProjectID)
     {
         DbHelper db = new DbHelper();
         db.CommandText = @"SELECT *
     FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Application_Main] 
-    WHERE [Version_ID] = @Version_ID";
+    WHERE [ProjectID] = @ProjectID";
 
         db.Parameters.Clear();
-        db.Parameters.Add("@Version_ID", Version_ID);
+        db.Parameters.Add("@ProjectID", ProjectID);
 
         try
         {
@@ -200,7 +200,7 @@ VALUES
                 DataRow row = dt.Rows[0];
                 return new OFS_SCI_Application_Main
                 {
-                    Version_ID = row["Version_ID"]?.ToString(),
+                    ProjectID = row["ProjectID"]?.ToString(),
                     PersonID = row["PersonID"]?.ToString(),
                     KeywordID = row["KeywordID"]?.ToString(),
                     Year = row["Year"] != DBNull.Value ? Convert.ToInt32(row["Year"]) : 0,
@@ -248,15 +248,15 @@ VALUES
         }
     }
 
-    public static Tuple<string, string, string> GetProjectPersonKeyword(string Version_ID)
+    public static Tuple<string, string, string> GetProjectPersonKeyword(string ProjectID)
     {
         DbHelper db = new DbHelper();
-        db.CommandText = @"SELECT [Version_ID], [PersonID], [KeywordID]
+        db.CommandText = @"SELECT [ProjectID], [PersonID], [KeywordID]
                        FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Application_Main] 
-                       WHERE [Version_ID] = @Version_ID";
+                       WHERE [ProjectID] = @ProjectID";
 
         db.Parameters.Clear();
-        db.Parameters.Add("@Version_ID", Version_ID);
+        db.Parameters.Add("@ProjectID", ProjectID);
 
         try
         {
@@ -266,7 +266,7 @@ VALUES
             {
                 DataRow row = dt.Rows[0];
                 return Tuple.Create(
-                    row["Version_ID"]?.ToString(),
+                    row["ProjectID"]?.ToString(),
                     row["PersonID"]?.ToString(),
                     row["KeywordID"]?.ToString()
                 );
@@ -305,7 +305,7 @@ VALUES
                 DataRow row = dt.Rows[0];
                 return new OFS_SCI_Application_Main
                 {
-                    Version_ID = row["Version_ID"]?.ToString(),
+                    ProjectID = row["ProjectID"]?.ToString(),
                     PersonID = row["PersonID"]?.ToString(),
                     KeywordID = row["KeywordID"]?.ToString(),
                     Year = row["Year"] != DBNull.Value ? Convert.ToInt32(row["Year"]) : 0,
@@ -583,14 +583,14 @@ VALUES
     }
 
     
-    public static OFS_SCI_Version getVersionLatestProjectID(string ProjectID)
+    public static OFS_SCI_Project_Main getVersionByProjectID(string ProjectID)
     {
         DbHelper db = new DbHelper();
         db.CommandText = @"
         SELECT TOP(1) *
-        FROM [OFS_SCI_Version]
+        FROM [OFS_SCI_Project_Main]
         WHERE [ProjectID] = @ProjectID
-        order by Created_at DESC
+        order by created_at DESC
         ";
 
         db.Parameters.Clear();
@@ -603,11 +603,9 @@ VALUES
             if (dt.Rows.Count > 0)
             {
                 DataRow row = dt.Rows[0];
-                return new OFS_SCI_Version
+                return new OFS_SCI_Project_Main
                 {
                     ProjectID = row["ProjectID"]?.ToString(),
-                    Version_ID = row["Version_ID"]?.ToString(),
-                    VersionNum = row["VersionNum"] != DBNull.Value ? Convert.ToInt32(row["VersionNum"]) : 0,
                     Statuses = row["Statuses"]?.ToString(),
                     StatusesName = row["StatusesName"]?.ToString(),
                     ExpirationDate = row["ExpirationDate"] != DBNull.Value ? (DateTime?)row["ExpirationDate"] : null,
@@ -634,7 +632,7 @@ VALUES
         }
         catch (Exception ex)
         {
-            throw new Exception($"查詢 OFS_SCI_Version 資料時發生錯誤: {ex.Message}", ex);
+            throw new Exception($"查詢 OFS_SCI_Project_Main 資料時發生錯誤: {ex.Message}", ex);
         }
         finally
         {
@@ -642,15 +640,13 @@ VALUES
         }
     }
 
-    public static void InsertOFS_SCIVersion(OFS_SCI_Version version)
+    public static void InsertOFS_SCIVersion(OFS_SCI_Project_Main version)
     {
         using (DbHelper db = new DbHelper())
         {
             db.CommandText = @"
-            INSERT INTO [OFS_SCI_Version] (
+            INSERT INTO [OFS_SCI_Project_Main] (
                 ProjectID,
-                Version_ID,
-                VersionNum,
                 Statuses,
                 StatusesName,
                 ExpirationDate,
@@ -673,8 +669,6 @@ VALUES
             )
             VALUES (
                 @ProjectID,
-                @Version_ID,
-                @VersionNum,
                 @Statuses,
                 @StatusesName,
                 @ExpirationDate,
@@ -698,8 +692,6 @@ VALUES
 
             db.Parameters.Clear();
             db.Parameters.Add("@ProjectID", version.ProjectID);
-            db.Parameters.Add("@Version_ID", version.Version_ID);
-            db.Parameters.Add("@VersionNum", version.VersionNum);
             db.Parameters.Add("@Statuses", version.Statuses);
             db.Parameters.Add("@StatusesName", version.StatusesName);
             db.Parameters.Add("@ExpirationDate", version.ExpirationDate ?? (object)DBNull.Value);
@@ -726,12 +718,12 @@ VALUES
             }
             catch (Exception ex)
             {
-                throw new Exception($"新增 OFS_SCI_Version 資料時發生錯誤: {ex.Message}", ex);
+                throw new Exception($"新增 OFS_SCI_Project_Main 資料時發生錯誤: {ex.Message}", ex);
             }
         }
     }
 
-    public static void UpdateOFS_SCIVersion(OFS_SCI_Version version)
+    public static void UpdateOFS_SCIVersion(OFS_SCI_Project_Main version)
     {
         using (DbHelper db = new DbHelper())
         {
@@ -748,7 +740,6 @@ VALUES
             }
 
             // 根據有值欄位動態組裝更新欄位
-            AddIfNotNull("VersionNum", version.VersionNum);
             AddIfNotNull("Statuses", version.Statuses);
             AddIfNotNull("StatusesName", version.StatusesName);
             AddIfNotNull("ExpirationDate", version.ExpirationDate);
@@ -774,13 +765,13 @@ VALUES
                 throw new Exception("沒有任何欄位需要更新。");
             }
 
-            // 更新條件：Version_ID 為唯一鍵
-            db.Parameters.Add("@Version_ID", version.Version_ID);
+            // 更新條件：ProjectID 為唯一鍵
+            db.Parameters.Add("@ProjectID", version.ProjectID);
 
             db.CommandText = $@"
-            UPDATE [OFS_SCI_Version]
+            UPDATE [OFS_SCI_Project_Main]
             SET {string.Join(",\n    ", setClauses)}
-            WHERE [Version_ID] = @Version_ID";
+            WHERE [ProjectID] = @ProjectID";
 
             try
             {
@@ -788,7 +779,7 @@ VALUES
             }
             catch (Exception ex)
             {
-                throw new Exception($"更新 OFS_SCI_Version 時發生錯誤: {ex.Message}", ex);
+                throw new Exception($"更新 OFS_SCI_Project_Main 時發生錯誤: {ex.Message}", ex);
             }
         }
     }

@@ -1,11 +1,19 @@
 ﻿<%@ Application Language="C#" %>
 <%@ Import Namespace="GS.Data.Sql" %>
+<%@ Import Namespace="System.Data" %>
+<%@ Import Namespace="System.Linq" %>
 
 <script RunAt="server">
 
     void Application_Start(object sender, EventArgs e)
     {
         // 應用程式啟動時執行的程式碼        
+
+        // 設定 log4net 的全域變數
+        log4net.GlobalContext.Properties["LogPath"] = System.Configuration.ConfigurationManager.AppSettings["LogPath"];
+
+        // 初始化 log4net
+        log4net.Config.XmlConfigurator.Configure();
 
         // 註冊DBConnectionString預設連線資訊
         Generic.DBConnectionString = Env.S_DefaultConnection;
@@ -28,8 +36,8 @@
         // 在新的工作階段啟動時執行的程式碼
 
         // UserInfo Session過期自訂建立(開發若有需要可自行開啟)
-        if (SessionHelper.Get<SessionHelper.UserInfoClass>(SessionHelper.UserInfo) is null
-            && true)
+        if (HttpContext.Current.IsDebuggingEnabled &&
+            SessionHelper.Get<SessionHelper.UserInfoClass>(SessionHelper.UserInfo) is null)
         {
             List<string> perms = SysUserHelper.GetOSIPermsByAccount("gregchen@geosense.tw");
             SessionHelper.Set(SessionHelper.UserPermissions, perms);
@@ -43,9 +51,22 @@
                 userInfoTemp.Account = data["Account"].ToString();
                 userInfoTemp.UserName = data["Name"].ToString();
                 userInfoTemp.UnitID = data["UnitID"].ToString();
+                userInfoTemp.UnitName = data["UnitName"].ToString();
                 userInfoTemp.UnitType = data["UnitType"].ToString();
                 userInfoTemp.UnitName = SysUserHelper.QueryUnitNameByUserID(userInfoTemp.UserID);
                 userInfoTemp.OSI_RoleName = data["OSI_RoleName"].ToString();
+                // 查詢使用者的 OFS 角色名稱
+                var ofsRoleTable = OFSRoleHelper.QueryByUserID(userInfoTemp.UserID);
+                if (ofsRoleTable != null && ofsRoleTable.Rows.Count > 0)
+                {
+                    userInfoTemp.OFS_RoleName = ofsRoleTable.Rows.Cast<DataRow>()
+                        .Select(row => row["RoleName"].ToString())
+                        .ToArray();
+                }
+                else
+                {
+                    userInfoTemp.OFS_RoleName = new string[0];
+                }
 
             }
             SessionHelper.Set(SessionHelper.UserInfo, userInfoTemp);
@@ -73,8 +94,9 @@
         var path = VirtualPathUtility.ToAppRelative(ctx.Request.Path);  // e.g. "~/Manage/Users.aspx"
         if (!path.EndsWith(".aspx", StringComparison.OrdinalIgnoreCase)) return;
 
-        // 排除不需檢查的頁面(登入頁)
-        if (path.EndsWith("/Login.aspx", StringComparison.OrdinalIgnoreCase))
+        // 排除不需檢查的頁面(登入頁、錯誤頁)
+        if (path.EndsWith("/Login.aspx", StringComparison.OrdinalIgnoreCase) ||
+            path.EndsWith("/Error.aspx", StringComparison.OrdinalIgnoreCase))
             return;
 
         // 讀取 Session
@@ -90,15 +112,7 @@
         string pageCode = SysPermissionHelper.QueryPermissionCodeByUrl(path);
         if (pageCode != null && !perms.Contains(pageCode))
         {
-            if (path.StartsWith("/Manage"))
-            {
-                // 管理相關頁面，回到預設頁面
-                ctx.Response.Redirect("~/Default.aspx");
-            }
-            else
-            {
-                ctx.Response.Redirect("~/Default.aspx");
-            }
+            ctx.Response.Redirect("~/Default.aspx");
             return;
         }
     }

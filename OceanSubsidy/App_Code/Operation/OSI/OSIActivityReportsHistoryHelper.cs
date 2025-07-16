@@ -36,14 +36,10 @@ INSERT INTO [dbo].[OSI_ActivityReports_History]
     ,[ActivityName]
     ,[NatureID]
     ,[NatureText]
-    ,[CarrierTypeID]
-    ,[CarrierDetail]
-    ,[CarrierNo]
     ,[ResearchItemID]
     ,[ResearchItemNote]
     ,[Instruments]
     ,[ActivityOverview]
-    ,[SurveyScope]
     ,[GeoData]
     ,[LastUpdated]
     ,[LastUpdatedBy]
@@ -58,14 +54,10 @@ VALUES
     ,@ActivityName
     ,@NatureID
     ,@NatureText
-    ,@CarrierTypeID
-    ,@CarrierDetail
-    ,@CarrierNo
     ,@ResearchItemID
     ,@ResearchItemNote
     ,@Instruments
     ,@ActivityOverview
-    ,@SurveyScope
     ,@GeoData
     ,@LastUpdated
     ,@LastUpdatedBy
@@ -82,14 +74,10 @@ VALUES
             db.Parameters.Add("@ActivityName", report.ActivityName);
             db.Parameters.Add("@NatureID", report.NatureID);
             db.Parameters.Add("@NatureText", report.NatureText);
-            db.Parameters.Add("@CarrierTypeID", report.CarrierTypeID);
-            db.Parameters.Add("@CarrierDetail", report.CarrierDetail);
-            db.Parameters.Add("@CarrierNo", report.CarrierNo);
             db.Parameters.Add("@ResearchItemID", report.ResearchItemID);
             db.Parameters.Add("@ResearchItemNote", report.ResearchItemNote);
             db.Parameters.Add("@Instruments", report.Instruments);
             db.Parameters.Add("@ActivityOverview", report.ActivityOverview);
-            db.Parameters.Add("@SurveyScope", report.SurveyScope);
             db.Parameters.Add("@GeoData", report.GeoData);
             db.Parameters.Add("@LastUpdated", report.LastUpdated);
             db.Parameters.Add("@LastUpdatedBy", report.LastUpdatedBy);

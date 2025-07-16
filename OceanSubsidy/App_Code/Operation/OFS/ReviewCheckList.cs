@@ -23,19 +23,16 @@ public class ReviewCheckListHelper
     {
         DbHelper db = new DbHelper();
         db.CommandText = @"
-        WITH RankedVersions AS (
-            SELECT *,
-                   ROW_NUMBER() OVER (PARTITION BY ProjectID ORDER BY VersionNum DESC) AS rn
-            FROM OFS_SCI_Version
-        )
         SELECT v.*, 
-               m.ProjectNameTw, 
-               m.OrgName, 
-               m.Year, 
-               m.SubsidyPlanType
-        FROM RankedVersions v
-        LEFT JOIN OFS_SCI_Application_Main m ON v.Version_ID = m.Version_ID
-        WHERE v.rn = 1 AND (v.isExist = 1 OR v.isExist IS NULL);";
+       m.ProjectNameTw, 
+       m.OrgName, 
+       m.Year, 
+       m.SubsidyPlanType
+FROM OFS_SCI_Project_Main v
+LEFT JOIN OFS_SCI_Application_Main m 
+    ON v.ProjectID = m.ProjectID
+WHERE v.isExist = 1 OR v.isExist IS NULL;
+";
 
         try
         {
@@ -47,8 +44,6 @@ public class ReviewCheckListHelper
                 var item = new ReviewChecklistItem
                 {
                     ProjectID = row["ProjectID"]?.ToString(),
-                    Version_ID = row["Version_ID"]?.ToString(),
-                    VersionNum = row["VersionNum"] != DBNull.Value ? Convert.ToInt32(row["VersionNum"]) : 0,
                     Statuses = row["Statuses"]?.ToString(),
                     StatusesName = row["StatusesName"]?.ToString(),
                     ExpirationDate = row["ExpirationDate"] != DBNull.Value ? (DateTime?)row["ExpirationDate"] : null,
@@ -93,9 +88,9 @@ public class ReviewCheckListHelper
     }
     
     /// <summary>
-    /// 根據 Version_ID 列表取得案件資料
+    /// 根據 ProjectID 列表取得案件資料
     /// </summary>
-    /// <param name="Version_ID">Version_ID 列表</param>
+    /// <param name="projectIds">ProjectID 列表</param>
     /// <returns>案件列表</returns>
     public static List<ReviewChecklistItem> GetCasesByProjectIds(List<string> projectIds)
     {
@@ -115,9 +110,9 @@ public class ReviewCheckListHelper
                m.OrgName, 
                m.Year, 
                m.SubsidyPlanType
-        FROM OFS_SCI_Version v
-        LEFT JOIN OFS_SCI_Application_Main m ON v.Version_ID = m.Version_ID
-        WHERE v.Version_ID IN ({inClause}) AND (v.isExist = 1 OR v.isExist IS NULL)";
+        FROM OFS_SCI_Project_Main v
+        LEFT JOIN OFS_SCI_Application_Main m ON v.ProjectID = m.ProjectID
+        WHERE v.ProjectID IN ({inClause}) AND (v.isExist = 1 OR v.isExist IS NULL)";
         
         // 添加參數
         db.Parameters.Clear();
@@ -136,8 +131,6 @@ public class ReviewCheckListHelper
                 var item = new ReviewChecklistItem
                 {
                     ProjectID = row["ProjectID"]?.ToString(),
-                    Version_ID = row["Version_ID"]?.ToString(),
-                    VersionNum = row["VersionNum"] != DBNull.Value ? Convert.ToInt32(row["VersionNum"]) : 0,
                     Statuses = row["Statuses"]?.ToString(),
                     StatusesName = row["StatusesName"]?.ToString(),
                     ExpirationDate = row["ExpirationDate"] != DBNull.Value ? (DateTime?)row["ExpirationDate"] : null,
@@ -229,18 +222,18 @@ public class ReviewCheckListHelper
     /// <summary>
     /// 驗證指定的案件是否可以進行批次通過
     /// </summary>
-    /// <param name="versionIds">Version_ID 列表</param>
+    /// <param name="projectIds">ProjectID 列表</param>
     /// <returns>是否全部都可以批次通過</returns>
-    public static bool ValidateBatchPassEligibility(List<string> versionIds)
+    public static bool ValidateBatchPassEligibility(List<string> projectIds)
     {
-        if (versionIds == null || versionIds.Count == 0)
+        if (projectIds == null || projectIds.Count == 0)
         {
             return false;
         }
         
         try
         {
-            var cases = GetCasesByProjectIds(versionIds);
+            var cases = GetCasesByProjectIds(projectIds);
             
             foreach (var c in cases)
             {
@@ -269,10 +262,10 @@ public class ReviewCheckListHelper
     /// <summary>
     /// 將指定的案件更新到下一階段（根據當前狀態自動判斷下一階段）
     /// </summary>
-    /// <param name="Version_ID">要更新的 Version_ID 列表</param>
-    public static void UpdateCasesToNextStage(List<string> Version_ID)
+    /// <param name="projectIds">要更新的 ProjectID 列表</param>
+    public static void UpdateCasesToNextStage(List<string> projectIds)
     {
-        if (Version_ID == null || Version_ID.Count == 0)
+        if (projectIds == null || projectIds.Count == 0)
         {
             return;
         }
@@ -282,13 +275,13 @@ public class ReviewCheckListHelper
             try
             {
                 // 建立 IN 子句參數
-                var paramNames = Version_ID.Select((id, index) => $"@Version_ID{index}").ToList();
+                var paramNames = projectIds.Select((id, index) => $"@ProjectID{index}").ToList();
                 string inClause = string.Join(",", paramNames);
 
                 // 使用 CASE WHEN 根據當前狀態決定下一階段
                 // 所有案件的 StatusesName 都從「通過」變成「審查中」
                 db.CommandText = $@"
-                UPDATE OFS_SCI_Version 
+                UPDATE OFS_SCI_Project_Main 
                 SET Statuses = CASE Statuses
                                  WHEN '資格審查' THEN '領域審查/初審'
                                  WHEN '領域審查/初審' THEN '技術審查/複審'  
@@ -297,15 +290,15 @@ public class ReviewCheckListHelper
                                END,
                     StatusesName = '審查中',
                     updated_at = GETDATE()
-                WHERE Version_ID IN ({inClause})
+                WHERE ProjectID IN ({inClause})
                   AND StatusesName = '通過'
                   AND Statuses IN ('資格審查', '領域審查/初審', '技術審查/複審')
             ";
 
                 db.Parameters.Clear();
-                for (int i = 0; i < Version_ID.Count; i++)
+                for (int i = 0; i < projectIds.Count; i++)
                 {
-                    db.Parameters.Add($"@Version_ID{i}", Version_ID[i]);
+                    db.Parameters.Add($"@ProjectID{i}", projectIds[i]);
                 }
                 
                 db.ExecuteNonQuery();
@@ -320,18 +313,18 @@ public class ReviewCheckListHelper
     /// <summary>
     /// 驗證指定的案件是否可以進行批次不通過
     /// </summary>
-    /// <param name="versionIds">Version_ID 列表</param>
+    /// <param name="projectIds">ProjectID 列表</param>
     /// <returns>是否全部都可以批次不通過</returns>
-    public static bool ValidateBatchRejectEligibility(List<string> versionIds)
+    public static bool ValidateBatchRejectEligibility(List<string> projectIds)
     {
-        if (versionIds == null || versionIds.Count == 0)
+        if (projectIds == null || projectIds.Count == 0)
         {
             return false;
         }
         
         try
         {
-            var cases = GetCasesByProjectIds(versionIds);
+            var cases = GetCasesByProjectIds(projectIds);
             
             foreach (var c in cases)
             {
@@ -353,10 +346,10 @@ public class ReviewCheckListHelper
     /// <summary>
     /// 將指定的案件批次不通過並結案
     /// </summary>
-    /// <param name="Version_ID">要更新的 Version_ID 列表</param>
-    public static void BatchRejectCases(List<string> Version_ID)
+    /// <param name="projectIds">要更新的 ProjectID 列表</param>
+    public static void BatchRejectCases(List<string> projectIds)
     {
-        if (Version_ID == null || Version_ID.Count == 0)
+        if (projectIds == null || projectIds.Count == 0)
         {
             return;
         }
@@ -366,24 +359,24 @@ public class ReviewCheckListHelper
             try
             {
                 // 建立 IN 子句參數
-                var paramNames = Version_ID.Select((id, index) => $"@Version_ID{index}").ToList();
+                var paramNames = projectIds.Select((id, index) => $"@ProjectID{index}").ToList();
                 string inClause = string.Join(",", paramNames);
 
                 // 將案件設為結案(未通過)狀態，並設定 isExist = 0
                 db.CommandText = $@"
-                UPDATE OFS_SCI_Version 
+                UPDATE OFS_SCI_Project_Main 
                 SET Statuses = '結案(未通過)',
                     StatusesName = '結案(未通過)',
                     isExist = 0,
                     updated_at = GETDATE()
-                WHERE Version_ID IN ({inClause})
+                WHERE ProjectID IN ({inClause})
                   AND StatusesName IN ('不通過', '逾期未補')
             ";
 
                 db.Parameters.Clear();
-                for (int i = 0; i < Version_ID.Count; i++)
+                for (int i = 0; i < projectIds.Count; i++)
                 {
-                    db.Parameters.Add($"@Version_ID{i}", Version_ID[i]);
+                    db.Parameters.Add($"@ProjectID{i}", projectIds[i]);
                 }
                 
                 db.ExecuteNonQuery();

@@ -495,16 +495,16 @@
                   </div>
                   
                   <!-- 底部區塊 -->
-                  <div class="block-bottom bg-light-green2">
+                  <div class="block-bottom bg-light-teal">
                       
                        <asp:Button ID="btnTempSave" runat="server"  
                                  Text="暫存"  
-                                 CssClass="btn btn-outline-blue-green2"  
+                                 CssClass="btn btn-outline-teal"  
                                  OnClick="btnSave_Click" /> 
                       
                        <asp:Button ID="btnSubmit" runat="server" 
                                  Text="完成本頁，下一步"  
-                                 CssClass="btn btn-blue-green2"  
+                                 CssClass="btn btn-teal"  
                                  OnClick="btnSave_Click" /> 
                   </div>
 </asp:Content>

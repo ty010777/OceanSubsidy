@@ -19,37 +19,37 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
     public class IOFS_SCI_Application_Main : IMeta
     {
         
-        protected string _Version_ID = null;
+        protected string _ProjectID = null;
         ///<summary>
         /// 補助計畫主鍵 (補助計畫主鍵)
         ///</summary>
         [DataMember]
-        [GisFieldAttribute("Version_ID", "Version_ID", DataSource.TABLE, "補助計畫主鍵", true)]
-        public virtual string Version_ID
+        [GisFieldAttribute("ProjectID", "ProjectID", DataSource.TABLE, "補助計畫主鍵", true)]
+        public virtual string ProjectID
         {
             get
             {
-                return _Version_ID;
+                return _ProjectID;
             }
             set
             {
                 bool isModify = false;
-                if (_Version_ID == null) {
+                if (_ProjectID == null) {
                     if(value != null) {
                         isModify = true;
                     }
                 }
-                else if (!_Version_ID.Equals(value))
+                else if (!_ProjectID.Equals(value))
                 {
                     isModify = true;
                 }
                 if(isModify) {
                     MetaDataState = DataState.UPDATE;
-                    if (UPDATE_COLUMN.IndexOf("Version_ID") == -1)
+                    if (UPDATE_COLUMN.IndexOf("ProjectID") == -1)
                     {
-                        UPDATE_COLUMN.Add("Version_ID");
+                        UPDATE_COLUMN.Add("ProjectID");
                     }
-                    _Version_ID = value;
+                    _ProjectID = value;
                 }
             }
         }

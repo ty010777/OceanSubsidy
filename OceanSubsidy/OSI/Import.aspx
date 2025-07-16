@@ -55,7 +55,7 @@
 
                             <asp:Button ID="btnUpload" runat="server"
                                 Text="上傳"
-                                CssClass="btn btn-blue-green"
+                                CssClass="btn btn-cyan"
                                 OnClick="btnUpload_Click" />
                         </div>
                     </li>
@@ -113,7 +113,7 @@
 
                 <asp:Button ID="btnStep2Next" runat="server"
                     Text="下一步"
-                    CssClass="btn btn-blue-green"
+                    CssClass="btn btn-cyan"
                     OnClick="btnToStep3_Click"
                     Enabled="false" />
 
@@ -146,7 +146,7 @@
 
                 <asp:Button ID="btnFinish" runat="server"
                     Text="完成"
-                    CssClass="btn btn-blue-green"
+                    CssClass="btn btn-cyan"
                     OnClick="btnFinish_Click" />
             </div>
         </asp:View>

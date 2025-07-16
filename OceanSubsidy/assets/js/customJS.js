@@ -26,7 +26,7 @@ window.onload = function() {
 // 小於1024自動關閉右側選單
 function navResizeState(){
     const windowWidth = window.innerWidth;
-    if(windowWidth >= 769 && windowWidth <= 1200){
+    if(windowWidth >= 768 && windowWidth <= 1200){
         document.querySelector('.mis-layout').classList.add("isClose");
     }else{
         document.querySelector('.mis-layout').classList.remove("isClose");
@@ -68,9 +68,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => 
         new bootstrap.Tooltip(tooltipTriggerEl, {
             placement: 'top', // 固定朝上顯示
-            trigger: 'hover focus' // 滑鼠懸停和焦點觸發
+            trigger: 'hover' // 滑鼠懸停和焦點觸發
         })
     );
+    
     
     // 初始化自動調整高度的文本區域
     initializeAutoResizeTextareas();

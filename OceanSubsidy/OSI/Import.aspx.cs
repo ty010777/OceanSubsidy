@@ -236,7 +236,6 @@ public partial class OSI_Import : System.Web.UI.Page
                 if (string.IsNullOrWhiteSpace(valD)) errors.Add("活動性質為必填");
                 if (string.IsNullOrWhiteSpace(valE)) errors.Add("活動性質(描述)為必填");
                 if (string.IsNullOrWhiteSpace(valF)) errors.Add("活動執行者(類別)為必填");
-                if (string.IsNullOrWhiteSpace(valG)) errors.Add("活動執行者(描述)為必填");
                 if (string.IsNullOrWhiteSpace(valH)) errors.Add("研究調查日期(起始)為必填");
                 if (string.IsNullOrWhiteSpace(valI)) errors.Add("研究調查日期(結束)為必填");
 
@@ -261,7 +260,9 @@ public partial class OSI_Import : System.Web.UI.Page
                     errors.Add($"活動性質「{valD}」不存在");
                 if (!string.IsNullOrWhiteSpace(valF) && !OSIExecutorCategoriesHelper.IsExistByCategoryName(valF))
                     errors.Add($"活動執行者(類別)「{valF}」不存在");
-                if (!string.IsNullOrWhiteSpace(valK) && !OSICarrierTypesHelper.IsExistByCarrierTypeName(valK))
+                if (valK != "無" 
+                    && !string.IsNullOrWhiteSpace(valK) 
+                    && !OSICarrierTypesHelper.IsExistByCarrierTypeName(valK))
                     errors.Add($"使用載具名稱(類別)「{valK}」不存在");
                 if (!string.IsNullOrWhiteSpace(valN) && !OSIResearchItemsHelper.IsExistByItemName(valN))
                     errors.Add($"研究調查項目(類別)「{valN}」不存在");
@@ -323,14 +324,10 @@ public partial class OSI_Import : System.Web.UI.Page
                 ActivityName = dr["活動名稱"].ToString(),
                 NatureID = OSIActivityNaturesHelper.QueryIDByName(dr["活動性質"].ToString()),
                 NatureText = dr["活動性質(描述)"].ToString(),
-                CarrierTypeID = OSICarrierTypesHelper.QueryIDByName(dr["使用載具名稱(類別)"].ToString()),
-                CarrierDetail = dr["使用載具名稱(描述)"].ToString(),
-                CarrierNo = dr["使用載具名稱(核准文號)"].ToString(),
                 ResearchItemID = OSIResearchItemsHelper.QueryIDByName(dr["研究調查項目(類別)"].ToString()),
                 ResearchItemNote = dr["研究調查項目(描述)"].ToString(),
                 Instruments = dr["研究調查儀器"].ToString(),
                 ActivityOverview = dr["研究調查活動內容概述"].ToString(),
-                SurveyScope = dr["研究調查範圍"].ToString(),
                 GeoData = null,
                 LastUpdated = DateTime.Now,
                 LastUpdatedBy = userId,
@@ -362,20 +359,59 @@ public partial class OSI_Import : System.Web.UI.Page
                 }
             };
 
-            // 8. 呼叫你原本的 InsertReport（files、delLists 都空清單）
+            // 8. 只匯入一筆 survey scope
+            var surveyScopes = new List<OSI_SurveyScopes>();
+            if (!string.IsNullOrWhiteSpace(dr["研究調查範圍"].ToString()))
+            {
+                surveyScopes.Add(new OSI_SurveyScopes
+                {
+                    SurveyScope = dr["研究調查範圍"].ToString()
+                });
+            }
+
+            // 9. 只匯入一筆 carrier (條件式新增)
+            var carriers = new List<OSI_Carrier>();
+            string carrierTypeStr = dr["使用載具名稱(類別)"].ToString();
+            string carrierDetail = dr["使用載具名稱(描述)"].ToString();
+            string carrierNo = dr["使用載具名稱(核准文號)"].ToString();
+            int? carrierTypeID = null;
+
+            // 檢查載具類型是否有效
+            if (!string.IsNullOrWhiteSpace(carrierTypeStr))
+            {
+                carrierTypeID = OSICarrierTypesHelper.QueryIDByName(carrierTypeStr);
+                if (carrierTypeID <= 0) carrierTypeID = null; // 無效載具類型
+            }
+
+            // 只有當載具類型有效且載具名稱不為空時才新增
+            if (carrierTypeID.HasValue || !string.IsNullOrWhiteSpace(carrierDetail) || !string.IsNullOrWhiteSpace(carrierNo))
+            {
+                carriers.Add(new OSI_Carrier
+                {
+                    CarrierTypeID = carrierTypeID,
+                    CarrierDetail = carrierDetail,
+                    CarrierNo = carrierNo
+                });
+            }
+
+            // 10. 呼叫你原本的 InsertReport（files、delLists 都空清單）
             OSIActivityReportsHelper.InsertReport(
                 report,
                 executors,
                 resPeriods,
                 files: new List<OSI_ActivityFiles>(),
+                surveyScopes,
+                carriers,
                 delExecutors: new List<int>(),
                 delResPeriods: new List<int>(),
                 delFiles: new List<int>(),
+                delSurveyScopes: new List<int>(),
+                delCarriers: new List<int>(),
                 baseDir
             );
         }
 
-        // 9. 匯入完成後，可以清掉 Session
+        // 11. 匯入完成後，可以清掉 Session
         Session.Remove("ImportResults");
     }
 

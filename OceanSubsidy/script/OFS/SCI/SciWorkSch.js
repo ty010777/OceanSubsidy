@@ -989,7 +989,30 @@ class DiagramManager {
         }
 
         this.showFilePreview(file);
-        console.log('圖片預覽已載入:', file.name);
+        this.prepareFileForUpload();
+    }
+
+    prepareFileForUpload() {
+        const fileInput = document.getElementById('fileUploadDiagram');
+        if (fileInput && fileInput.files.length > 0) {
+            // 確保檔案 input 有正確的 name 屬性
+            fileInput.name = 'fileUploadDiagram';
+            
+            const form = document.getElementById('form1');
+            
+            // 檢查檔案 input 是否在正確的 form 中
+            const currentForm = fileInput.closest('form');
+            
+            // 只有當檔案 input 不在目標 form 中時才移動
+            if (form && currentForm !== form) {
+                form.appendChild(fileInput);
+            }
+            
+            // 設定 form 為 multipart/form-data
+            if (form) {
+                form.enctype = 'multipart/form-data';
+            }
+        }
     }
 
     showFilePreview(file) {
@@ -1007,7 +1030,6 @@ class DiagramManager {
         }
 
         this.hideDiagramPreview();
-        console.log('圖片預覽已清除');
     }
 
     displayDiagramPreview(imageSrc, fileName) {
@@ -1018,7 +1040,6 @@ class DiagramManager {
             previewImg.src = imageSrc;
             previewImg.alt = `計畫架構圖 - ${fileName}`;
             previewContainer.style.display = 'block';
-            console.log('圖片預覽顯示成功:', fileName);
         }
     }
 
@@ -1110,6 +1131,10 @@ class DataManager {
 
     collectAndSubmitData() {
         try {
+            // 在收集資料前先準備檔案上傳
+            console.log('=== collectAndSubmitData 開始 ===');
+            this.parent.diagram.prepareFileForUpload();
+            
             const scheduleData = this.collectScheduleData();
             const workItemsData = this.collectWorkItemsData();
             const checkStandardsData = this.collectCheckStandardsData();
@@ -1124,7 +1149,9 @@ class DataManager {
 
             const fileInput = document.getElementById('fileUploadDiagram');
             if (fileInput && fileInput.files.length > 0 && diagramData.hasImage) {
-                fileInput.name = 'diagramFile';
+                // 使用正確的檔案名稱，與後端一致
+                fileInput.name = 'fileUploadDiagram';
+                console.log('設定檔案 input name 為:', fileInput.name);
 
                 const form = document.getElementById('form1');
                 if (form && !form.contains(fileInput)) {

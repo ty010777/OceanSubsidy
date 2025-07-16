@@ -7,3 +7,24 @@
     color: #5C5C5C;
     font-size: 24px;
 }
+
+
+/* 取消 tooltip 元素的 active 效果 */
+[data-bs-toggle="tooltip"]:active {
+    .tooltip {
+        display: none !important;
+    }
+}
+
+/* 或者使用更溫和的方式，讓 tooltip 在點擊時自動隱藏 */
+[data-bs-toggle="tooltip"]:focus {
+    outline: none;
+}
+
+/* 確保 tooltip 在失去焦點時消失 */
+[data-bs-toggle="tooltip"]:not(:hover):not(:focus-visible) {
+    .tooltip {
+        opacity: 0;
+        visibility: hidden;
+    }
+}

@@ -45,10 +45,10 @@ locatingStyle = {
     }
 };
 
-displayPrj = "EPSG:3826";
+displayPrj = "EPSG:4326";
 getCoordinateHelpMsg = "請選取要取得坐標的位置";
 htmlCaptureService = "service/GenImageFromHtml.ashx";
-initPosition = [250188, 2597712];
+initPosition = [121.0018405, 23.4824873];
 initZoom = 8;
 locatingPointZoom = 20;
 maxZoomLevel = 28;

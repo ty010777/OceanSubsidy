@@ -373,7 +373,7 @@ public partial class Manage_Users : Page
     }
     private void LoadUnits()
     {
-        var dt = SysUnitHelper.QueryAll();
+        var dt = SysUnitHelper.QueryAllOrderByUnitID();
         ddlUserUnit.Items.Clear();
         foreach (DataRow r in dt.Rows)
         {

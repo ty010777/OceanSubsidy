@@ -69,12 +69,6 @@
                     String(remainingSeconds).padStart(2, '0');
             }
 
-            // 當剩餘時間少於 5 分鐘時，顯示警告
-            if (remainingMs <= 5 * 60 * 1000 && remainingMs > 4 * 60 * 1000) {
-                if (confirm('您的登入將在 5 分鐘後過期，是否要延長 Session？')) {
-                    refreshSession();
-                }
-            }
         }
 
         function checkSessionStatus() {
@@ -198,7 +192,7 @@
                               </a>
                           </li>
                           <li class="active">
-                              <a href="information-plan-apply-1.html">
+                              <a href="<%= ResolveUrl("~/OFS/ApplicationChecklist.aspx") %>">
                                   <div class="circle">
                                       <img src="<%= ResolveUrl("~/assets/img/information-icon-03.svg") %>" alt="計畫申請">
                                   </div>

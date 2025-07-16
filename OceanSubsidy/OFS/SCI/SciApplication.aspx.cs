@@ -7,6 +7,8 @@ using System.Web.UI;
 using System.Web.UI.HtmlControls;
 using System.Web.UI.WebControls;
 using GS.OCA_OceanSubsidy.Entity;
+using GS.OCA_OceanSubsidy.Operation.OFS;
+using GS.App;
 
 /// <summary>
 /// 科專計畫申請表頁面
@@ -27,6 +29,10 @@ public partial class OFS_SciApplication : System.Web.UI.Page
     {
         try
         {
+            // 設定顯示模式 - 目前設為檢視模式測試
+            SetDisplayMode();
+            
+            // 原有的邏輯
             if (!IsPostBack)
             {
                 InitializePage();
@@ -53,6 +59,9 @@ public partial class OFS_SciApplication : System.Web.UI.Page
      {
          LoadDropDownLists();
          LoadFormData();
+         
+         // 檢查表單狀態並控制暫存按鈕顯示
+         CheckFormStatusAndHideTempSaveButton();
      }
 
      /// <summary>
@@ -105,10 +114,8 @@ public partial class OFS_SciApplication : System.Web.UI.Page
 
          try
          {
-             var lastVersion = OFS_SciApplicationHelper.getVersionLatestProjectID(ProjectID);
-
              // 載入現有專案資料
-             var applicationData = OFS_SciApplicationHelper.getApplicationMainByVersion_ID(lastVersion.Version_ID);
+             var applicationData = OFS_SciApplicationHelper.getApplicationMainByProjectID(ProjectID);
              if (applicationData != null)
              {
                  PopulateMainData(applicationData);
@@ -143,7 +150,7 @@ public partial class OFS_SciApplication : System.Web.UI.Page
          if (data == null) return;
 
          // 基本資料
-         txtProjectID.Text = data.Version_ID;
+         txtProjectID.Text = data.ProjectID;
          txtPersonID.Text = data.PersonID;
          txtKeywordID.Text = data.KeywordID;
          txtYear.Text = data.Year.ToString();
@@ -390,12 +397,21 @@ public partial class OFS_SciApplication : System.Web.UI.Page
 
              SaveFormData(actionType);
              
-             var message = actionType == FormActionType.TempSave ? "表單已暫時儲存" : "表單已成功提交";
-             ShowMessage(message, MessageType.Success);
-             
-             // 重新導向到同一頁面以更新資料
-             Response.Redirect($"SciApplication.aspx?ProjectID={txtProjectID.Text}", false);
-             Context.ApplicationInstance.CompleteRequest();
+             if (actionType == FormActionType.TempSave)
+             {
+                 var message = "表單已暫時儲存";
+                 ShowMessage(message, MessageType.Success);
+                 
+                 // 重新導向到同一頁面以更新資料
+                 Response.Redirect($"SciApplication.aspx?ProjectID={txtProjectID.Text}", false);
+                 Context.ApplicationInstance.CompleteRequest();
+             }
+             else
+             {
+                 // 提交成功後跳轉到下一頁
+                 Response.Redirect($"SciWorkSch.aspx?ProjectID={txtProjectID.Text}", false);
+                 Context.ApplicationInstance.CompleteRequest();
+             }
          }
          catch (Exception ex)
          {
@@ -570,15 +586,15 @@ public partial class OFS_SciApplication : System.Web.UI.Page
      /// </summary>
      private void SaveFormData(FormActionType actionType)
      {
-         var versionData = OFS_SciApplicationHelper.getVersionLatestProjectID(txtProjectID.Text);
+         var ApplicationData = OFS_SciApplicationHelper.getVersionByProjectID(ProjectID);
          
-         if (versionData == null || string.IsNullOrEmpty(versionData.Version_ID))
+         if (ApplicationData == null || string.IsNullOrEmpty(ApplicationData.ProjectID))
          {
              CreateNewProject(actionType);
          }
          else
          {
-             UpdateExistingProject(versionData, actionType);
+             UpdateExistingProject(ApplicationData, actionType);
          }
      }
 
@@ -591,33 +607,33 @@ public partial class OFS_SciApplication : System.Web.UI.Page
          string newSerial = GenerateNewSerial(latestData);
          
          var applicationData = CreateApplicationMainData(newSerial);
-         var versionData = CreateVersionData(applicationData, actionType);
+         var MainData = CreateVersionData(applicationData, actionType);
 
          // 儲存資料
          OFS_SciApplicationHelper.insertApplicationMain(applicationData);
-         OFS_SciApplicationHelper.InsertOFS_SCIVersion(versionData);
+         OFS_SciApplicationHelper.InsertOFS_SCIVersion(MainData);
          
-         txtProjectID.Text = applicationData.Version_ID;
+         txtProjectID.Text = applicationData.ProjectID;
          
          // 儲存子表單資料
-         SaveSubFormData(applicationData.Version_ID, applicationData.PersonID, applicationData.KeywordID);
+         SaveSubFormData(applicationData.ProjectID, applicationData.PersonID, applicationData.KeywordID);
      }
 
      /// <summary>
      /// 更新現有專案
      /// </summary>
-     private void UpdateExistingProject(OFS_SCI_Version versionData, FormActionType actionType)
+     private void UpdateExistingProject(OFS_SCI_Project_Main ApplicationData, FormActionType actionType)
      {
-         var currentData = OFS_SciApplicationHelper.getApplicationMainByVersion_ID(versionData.Version_ID);
+         var currentData = OFS_SciApplicationHelper.getApplicationMainByProjectID(ApplicationData.ProjectID);
          UpdateApplicationMainData(currentData);
-         UpdateVersionData(versionData, actionType);
+         UpdateVersionData(ApplicationData, actionType);
 
          // 儲存資料
          OFS_SciApplicationHelper.updateApplicationMain(currentData);
-         OFS_SciApplicationHelper.UpdateOFS_SCIVersion(versionData);
+         OFS_SciApplicationHelper.UpdateOFS_SCIVersion(ApplicationData);
          
          // 儲存子表單資料
-         SaveSubFormData(currentData.Version_ID, currentData.PersonID, currentData.KeywordID);
+         SaveSubFormData(currentData.ProjectID, currentData.PersonID, currentData.KeywordID);
      }
 
      /// <summary>
@@ -638,9 +654,10 @@ public partial class OFS_SciApplication : System.Web.UI.Page
      private OFS_SCI_Application_Main CreateApplicationMainData(string serial)
      {
          var yearStr = txtYear.Text;
+         var projectId = $"{yearStr}SCI{serial}";
          return new OFS_SCI_Application_Main
          {
-             Version_ID = $"{yearStr}SCI{serial}",
+             ProjectID = projectId,
              PersonID = $"P{yearStr}SCI{serial}",
              KeywordID = $"K{yearStr}SCI{serial}",
              Serial = serial,
@@ -690,30 +707,35 @@ public partial class OFS_SciApplication : System.Web.UI.Page
      /// <summary>
      /// 建立版本資料
      /// </summary>
-     private OFS_SCI_Version CreateVersionData(OFS_SCI_Application_Main applicationData, FormActionType actionType)
+     private OFS_SCI_Project_Main CreateVersionData(OFS_SCI_Application_Main applicationData, FormActionType actionType)
      {
-         return new OFS_SCI_Version
+         var userInfo = GetCurrentUserInfo();
+         
+         return new OFS_SCI_Project_Main
          {
-             Version_ID = applicationData.Version_ID,
-             ProjectID = applicationData.Version_ID,
-             VersionNum = 1,
+             ProjectID = applicationData.ProjectID,
              Statuses = "尚未提送",
              StatusesName = "編輯中",
              Form1Status = actionType == FormActionType.TempSave ? "暫存" : "完成",
              CurrentStep = actionType == FormActionType.TempSave ? "1" : "2",
              SupervisoryUnit = "",
-             UserAccount = "",
-             UserOrg = "",
-             UserName = ""
+             UserAccount = userInfo.Account ?? "",
+             UserOrg = userInfo.UnitName ?? "",
+             UserName = userInfo.UserName ?? ""
          };
      }
 
      /// <summary>
      /// 更新版本資料
      /// </summary>
-     private void UpdateVersionData(OFS_SCI_Version versionData, FormActionType actionType)
+     private void UpdateVersionData(OFS_SCI_Project_Main versionData, FormActionType actionType)
      {
+         var userInfo = GetCurrentUserInfo();
+         
          versionData.Form1Status = actionType == FormActionType.TempSave ? "暫存" : "完成";
+         versionData.UserAccount = userInfo.Account ?? "";
+         versionData.UserOrg = userInfo.UnitName ?? "";
+         versionData.UserName = userInfo.UserName ?? "";
          
          if (actionType == FormActionType.Submit && Convert.ToInt32(versionData.CurrentStep) <= 2)
          {
@@ -728,7 +750,7 @@ public partial class OFS_SciApplication : System.Web.UI.Page
      /// <summary>
      /// 儲存子表單資料
      /// </summary>
-     private void SaveSubFormData(string projectID, string personID, string keywordID)
+     private void SaveSubFormData(string projectId, string personID, string keywordID)
      {
          SavePersonnelData(personID);
          SaveKeywordsData(keywordID);
@@ -833,6 +855,37 @@ public partial class OFS_SciApplication : System.Web.UI.Page
 
      #endregion
 
+     #region 使用者資料處理
+
+     /// <summary>
+     /// 取得目前登入使用者資訊
+     /// </summary>
+     private SessionHelper.UserInfoClass GetCurrentUserInfo()
+     {
+         try
+         {
+             var userInfo = SessionHelper.Get<SessionHelper.UserInfoClass>(SessionHelper.UserInfo);
+             return userInfo ?? new SessionHelper.UserInfoClass
+             {
+                 Account = "",
+                 UserName = "",
+                 UnitName = ""
+             };
+         }
+         catch (Exception ex)
+         {
+             System.Diagnostics.Debug.WriteLine($"取得使用者資訊時發生錯誤: {ex.Message}");
+             return new SessionHelper.UserInfoClass
+             {
+                 Account = "",
+                 UserName = "",
+                 UnitName = ""
+             };
+         }
+     }
+
+     #endregion
+
      #region 訊息處理
 
      /// <summary>
@@ -909,6 +962,102 @@ public partial class OFS_SciApplication : System.Web.UI.Page
          Error,      // 錯誤
          Warning,    // 警告
          Info        // 資訊
+     }
+
+     #endregion
+
+     #region 表單狀態檢查
+
+     /// <summary>
+     /// 檢查表單狀態並控制暫存按鈕顯示
+     /// </summary>
+     private void CheckFormStatusAndHideTempSaveButton()
+     {
+         try
+         {
+             if (!string.IsNullOrEmpty(ProjectID))
+             {
+                 
+                 var formStatus = OFS_SciWorkSchHelper.GetFormStatusByProjectID(ProjectID, "Form1Status");
+                 
+                 if (formStatus == "完成")
+                 {
+                     // 隱藏暫存按鈕
+                     btnTempSave.Style["display"] = "none";
+                 }
+                 
+             }
+         }
+         catch (Exception ex)
+         {
+             // 發生錯誤時不隱藏按鈕，讓用戶正常使用
+             System.Diagnostics.Debug.WriteLine($"檢查表單狀態失敗: {ex.Message}");
+         }
+     }
+
+     #endregion
+
+     #region 顯示模式控制
+
+     /// <summary>
+     /// 設定顯示模式
+     /// </summary>
+     private void SetDisplayMode()
+     {
+         var master = (OFSApplicationMaster)this.Master;
+         
+         try
+         {
+             // 根據申請狀態決定模式
+             if (ShouldShowInEditMode())
+             {
+                 master.SetModeTo("編輯");
+             }
+             else
+             {
+                 master.SetModeTo("檢視");
+             }
+         }
+         catch (Exception ex)
+         {
+             // 發生錯誤時預設為檢視模式（安全考量）
+             master.SetModeTo("檢視");
+             System.Diagnostics.Debug.WriteLine($"設定顯示模式時發生錯誤：{ex.Message}");
+         }
+     }
+     
+     /// <summary>
+     /// 判斷是否應該顯示為編輯模式
+     /// </summary>
+     /// <returns>true: 編輯模式, false: 檢視模式</returns>
+     private bool ShouldShowInEditMode()
+     {
+         // 如果沒有 ProjectID，是新申請案件，可以編輯
+         if (string.IsNullOrEmpty(ProjectID))
+         {
+             return true;
+         }
+         
+         try
+         {
+             // 取得最新版本的狀態
+             var ApplicationData = OFS_SciApplicationHelper.getVersionByProjectID(ProjectID);
+             if (ApplicationData == null)
+             {
+                 return true; // 沒有資料時允許編輯
+             }
+             
+             // 只有這兩種狀態可以編輯
+             string statuses = ApplicationData.Statuses ?? "";
+             string statusesName = ApplicationData.StatusesName ?? "";
+             
+             return statuses == "尚未提送" || statusesName == "補正補件";
+         }
+         catch (Exception ex)
+         {
+             System.Diagnostics.Debug.WriteLine($"取得申請狀態時發生錯誤：{ex.Message}");
+             return false; // 發生錯誤時預設為檢視模式
+         }
      }
 
      #endregion

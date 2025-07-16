@@ -105,6 +105,42 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
         }
         set => ViewState["ActivityFile"] = value;
     }
+    // 研究調查範圍清單
+    private List<SurveyScopeItem> SurveyScopeList
+    {
+        get
+        {
+            var list = ViewState["SurveyScopeList"] as List<SurveyScopeItem>;
+            if (list == null)
+            {
+                list = new List<SurveyScopeItem>();
+                ViewState["SurveyScopeList"] = list;
+            }
+            return list;
+        }
+        set
+        {
+            ViewState["SurveyScopeList"] = value;
+        }
+    }
+    // 載具清單
+    private List<CarrierItem> CarrierList
+    {
+        get
+        {
+            var list = ViewState["CarrierList"] as List<CarrierItem>;
+            if (list == null)
+            {
+                list = new List<CarrierItem>();
+                ViewState["CarrierList"] = list;
+            }
+            return list;
+        }
+        set
+        {
+            ViewState["CarrierList"] = value;
+        }
+    }
     public int ReportID
     {
         get => int.TryParse(hfReportID.Value, out var v) ? v : 0;
@@ -144,6 +180,63 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
 
     #endregion
 
+    /// <summary>
+    /// 取得單位顯示名稱（根據是否為中央機關決定顯示規則）
+    /// </summary>
+    /// <param name="unitID">單位ID</param>
+    /// <returns>單位顯示名稱</returns>
+    private string GetUnitDisplayName(int unitID)
+    {
+        // 查詢單位資訊
+        GisTable unitTbl = SysUnitHelper.QueryByID(unitID.ToString());
+        if (unitTbl == null || unitTbl.Rows.Count == 0)
+            return "";
+
+        DataRow unitRow = unitTbl.Rows[0];
+        string unitName = unitRow["UnitName"]?.ToString() ?? "";
+        int? govUnitTypeID = unitRow["GovUnitTypeID"] as int?;
+        int? parentUnitID = unitRow["ParentUnitID"] as int?;
+
+        // 查詢父單位名稱（如果有的話）
+        string parentUnitName = "";
+        if (parentUnitID.HasValue)
+        {
+            GisTable parentTbl = SysUnitHelper.QueryByID(parentUnitID.Value.ToString());
+            if (parentTbl != null && parentTbl.Rows.Count > 0)
+            {
+                parentUnitName = parentTbl.Rows[0]["UnitName"]?.ToString() ?? "";
+            }
+        }
+
+        // 查詢政府機關類型，判斷是否為中央機關
+        bool isCentralGov = false;
+        if (govUnitTypeID.HasValue)
+        {
+            GisTable govTypeTbl = SysGovUnitTypeHelper.QueryAll();
+            foreach (DataRow row in govTypeTbl.Rows)
+            {
+                if (row["TypeID"].ToString().toInt() == govUnitTypeID.Value &&
+                    row["TypeName"]?.ToString() == "中央機關")
+                {
+                    isCentralGov = true;
+                    break;
+                }
+            }
+        }
+
+        // 根據是否為中央機關決定顯示規則
+        if (isCentralGov)
+        {
+            // 中央機關：顯示 ParentUnitName + UnitName 或 UnitName（無 Parent 時）
+            return string.IsNullOrEmpty(parentUnitName) ? unitName : parentUnitName + unitName;
+        }
+        else
+        {
+            // 非中央機關：顯示 ParentUnitName 或 UnitName（無 Parent 時）
+            return string.IsNullOrEmpty(parentUnitName) ? unitName : parentUnitName;
+        }
+    }
+
     protected void Page_Load(object sender, EventArgs e)
     {
         if (!IsPostBack)
@@ -152,82 +245,8 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
             LoadData();
             lastUpdate.Visible = !IsNew;
             // 中華民國月曆需要在頁面載入後才設定readonly
-            txtResFrom.Attributes.Add("readonly", "readonly");
-            txtResTo.Attributes.Add("readonly", "readonly");
-        }
-
-        if (IsPostBack)
-        {
-            HandleResDeletion();
-            HandleExecDeletion();
-            HandleFileDeletion();
-        }
-    }
-    // 刪除活動執行者
-    private void HandleExecDeletion()
-    {
-        var target = Request["__EVENTTARGET"];
-        var arg = Request["__EVENTARGUMENT"];
-
-        if (target == rptExecList.UniqueID && arg?.StartsWith("DelExec$") == true)
-        {
-            var parts = arg.Split('$');
-            if (parts.Length == 2 && int.TryParse(parts[1], out int rptIdx))
-            {
-                var visible = ExecList
-                    .Where(x => !x.IsDel)
-                    .ToList();
-
-                if (rptIdx >= 0 && rptIdx < visible.Count)
-                    visible[rptIdx].IsDel = true;
-            }
-            BindExecRepeater();
-        }
-    }
-    // 刪除研究調查日期
-    private void HandleResDeletion()
-    {
-        var target = Request["__EVENTTARGET"];
-        var arg = Request["__EVENTARGUMENT"];
-
-        if (target == rptResList.UniqueID && arg?.StartsWith("DelDate$") == true)
-        {
-            var parts = arg.Split('$');
-            if (parts.Length == 2 && int.TryParse(parts[1], out int rptIdx))
-            {
-                var visible = ResearchPeriodList.Where(d => !d.IsDel).ToList();
-                if (rptIdx >= 0 && rptIdx < visible.Count)
-                {
-                    visible[rptIdx].IsDel = true;
-                }
-            }
-            BindResRepeater();
-        }
-    }
-    // 刪除檔案
-    private void HandleFileDeletion()
-    {
-        var target = Request["__EVENTTARGET"];
-        var arg = Request["__EVENTARGUMENT"];
-        if (target == rptActivityFile.UniqueID && arg?.StartsWith("DelAttach$") == true)
-        {
-            var parts = arg.Split('$');
-            if (parts.Length == 2 && int.TryParse(parts[1], out int rptIdx))
-            {
-                var visible = FileList.Where(a => !a.IsDel).ToList();
-                if (rptIdx >= 0 && rptIdx < visible.Count)
-                {
-                    visible[rptIdx].IsDel = true;
-                    if (visible[rptIdx].IsNew)
-                    {
-                        // 新檔案：刪實體檔，從列表移除
-                        var phys = visible[rptIdx].FilePath;
-                        if (File.Exists(phys))
-                            File.Delete(phys);
-                    }
-                }
-            }
-            BindActivityFileRepeater();
+            //txtResFrom.Attributes.Add("readonly", "readonly");
+            //txtResTo.Attributes.Add("readonly", "readonly");
         }
     }
 
@@ -250,13 +269,31 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
         }
         else
         {
-            GisTable unitTbl =
-                (UserInfo.OSI_RoleName == "系統管理者") ?
-                SysUnitHelper.QueryAll() :
-                SysUnitHelper.QueryAllChildByID(UserInfo.UnitID.toInt());
-
-            foreach (DataRow r in unitTbl.Rows)
-                ddlUnit.Items.Add(new ListItem(r["UnitName"].ToString(), r["UnitID"].ToString()));
+            if (UserInfo.OSI_RoleName == "系統管理者")
+            {
+                // 系統管理者
+                GisTable unitTbl = SysUnitHelper.QueryAllOrderByUnitID();
+                foreach (DataRow r in unitTbl.Rows)
+                {
+                    ddlUnit.Items.Add(new ListItem(
+                            r["UnitName"].ToString(),
+                            r["UnitID"].ToString()));
+                }
+            }
+            else
+            {
+                // 非系統管理者
+                GisTable dt = SysUnitHelper.QueryAllChildByID(UserInfo.UnitID.toInt());
+                foreach (DataRow r in dt.Rows)
+                {
+                    string displayName = GetUnitDisplayName(r["UnitID"].ToString().toInt());
+                    ddlUnit.Items.Add(new ListItem(displayName, r["UnitID"].ToString()));
+                }
+                // 設定預設選取為UserInfo.UnitID
+                if (ddlUnit.Items.FindByValue(UserInfo.UnitID) != null)
+                    ddlUnit.SelectedValue = UserInfo.UnitID;
+                ddlUnit.Enabled = false;
+            }
         }
         // 活動名稱
         txtActivityName.Text = string.Empty;
@@ -287,12 +324,14 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
         txtResItemNote.Text = string.Empty;
         txtResInstruments.Text = string.Empty;
         txtActivityOverview.Text = string.Empty;
-        txtResearchScope.Text = string.Empty;
+        txtSurveyScope.Text = string.Empty;
         lblLastUpdated.Text = string.Empty;
         // List初始化
         ExecList = new List<ExecutorItem>();
         ResearchPeriodList = new List<PeriodItem>();
         FileList = new List<ActivityFile>();
+        SurveyScopeList = new List<SurveyScopeItem>();
+        CarrierList = new List<CarrierItem>();
 
 
     }
@@ -354,19 +393,41 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
             });
         }
         BindResRepeater();
-        // 載具種類
-        if (ddlCarrierType.Items.FindByValue(report.CarrierTypeID.ToString()) != null)
-            ddlCarrierType.SelectedValue = report.CarrierTypeID.ToString();
-        // 使用載具名稱、批准文號
-        txtCarrierName.Text = report.CarrierDetail;
-        txtCarrierApproval.Text = report.CarrierNo;
+        // 載入載具資料
+        var carrierTbl = OSICarrierHelper.QueryNameByReportID(ReportID.ToString());
+        foreach (DataRow row in carrierTbl.Rows)
+        {
+            CarrierList.Add(new CarrierItem
+            {
+                CarrierID = row["CarrierID"].ToString(),
+                CarrierTypeID = row["CarrierTypeID"].ToString(),
+                CarrierTypeName = row["CarrierTypeName"]?.ToString() ?? "",
+                CarrierDetail = row["CarrierDetail"].ToString(),
+                CarrierNo = row["CarrierNo"].ToString(),
+                IsNew = false,
+                IsDel = false
+            });
+        }
+        BindCarrierRepeater();
         // 研究調查項目
         if (ddlResearchCategory.Items.FindByValue(report.ResearchItemID.ToString()) != null)
-            ddlResearchCategory.SelectedValue = report.CarrierTypeID.ToString();
+            ddlResearchCategory.SelectedValue = report.ResearchItemID.ToString();
         txtResItemNote.Text = report.ResearchItemNote;
         txtResInstruments.Text = report.Instruments;
         txtActivityOverview.Text = report.ActivityOverview;
-        txtResearchScope.Text = report.SurveyScope;
+        // 載入研究調查範圍
+        var surveyScopes = OSISurveyScopesHelper.QueryByReportIDWithClass(ReportID.ToString());
+        foreach (var scope in surveyScopes)
+        {
+            SurveyScopeList.Add(new SurveyScopeItem
+            {
+                ScopeID = scope.ScopeID.ToString(),
+                SurveyScope = scope.SurveyScope,
+                IsNew = false,
+                IsDel = false
+            });
+        }
+        BindScopeRepeater();
         // 相關附件
         var fileTbl = OSIActivityFilesHelper.QueryByReportID(ReportID.ToString());
         foreach (DataRow row in fileTbl.Rows)
@@ -390,7 +451,7 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
         lblLastUpdated.Text = report.LastUpdated.ToString("yyyy/MM/dd HH:mm") + " " + unitName + " " + userName;
         // 圖台按鈕新增ReportID
         btnOpenMap.Attributes["data-reportid"] = ReportID.ToString();
-        
+
         // 載入 GeoData (WKT 格式，SRID=3826)
         if (!string.IsNullOrEmpty(report.GeoData))
         {
@@ -415,6 +476,19 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
     {
         rptActivityFile.DataSource = FileList.Where(d => !d.IsDel);
         rptActivityFile.DataBind();
+        upFileList.Update();
+    }
+    private void BindScopeRepeater()
+    {
+        rptScopeList.DataSource = SurveyScopeList.Where(d => !d.IsDel);
+        rptScopeList.DataBind();
+        upScopeList.Update();
+    }
+    private void BindCarrierRepeater()
+    {
+        rptCarrierList.DataSource = CarrierList.Where(d => !d.IsDel);
+        rptCarrierList.DataBind();
+        upCarrierList.Update();
     }
     // 新增活動執行者
     protected void btnAddExec_Click(object sender, EventArgs e)
@@ -457,11 +531,119 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
             txtResFrom.Text = "";
             txtResTo.Text = "";
             txtResRemark.Text = "";
-            
+
             // 重新設定readonly屬性（因為UpdatePanel更新後會遺失）
-            ScriptManager.RegisterStartupScript(this, this.GetType(), "setReadonly", 
+            ScriptManager.RegisterStartupScript(this, this.GetType(), "setReadonly",
                 "$('#" + txtResFrom.ClientID + "').attr('readonly', 'readonly');" +
                 "$('#" + txtResTo.ClientID + "').attr('readonly', 'readonly');", true);
+        }
+    }
+
+    protected void btnAddScope_Click(object sender, EventArgs e)
+    {
+        var scope = txtSurveyScope.Text.Trim();
+        if (!string.IsNullOrEmpty(scope))
+        {
+            SurveyScopeList.Add(new SurveyScopeItem
+            {
+                SurveyScope = scope,
+                IsNew = true,
+                IsDel = false,
+            });
+            BindScopeRepeater();
+            txtSurveyScope.Text = "";
+        }
+    }
+
+    // 新增載具
+    protected void btnAddCarrier_Click(object sender, EventArgs e)
+    {
+        var typeId = ddlCarrierType.SelectedValue;
+        var typeName = ddlCarrierType.SelectedItem.Text;
+        var detail = txtCarrierName.Text.Trim();
+        var no = txtCarrierApproval.Text.Trim();
+
+        if (typeId != "-1" || !string.IsNullOrEmpty(detail) || !string.IsNullOrEmpty(no))
+        {
+            CarrierList.Add(new CarrierItem
+            {
+                CarrierTypeID = typeId,
+                CarrierTypeName = typeId != "-1" ? typeName : "",
+                CarrierDetail = detail,
+                CarrierNo = no,
+                IsNew = true,
+                IsDel = false
+            });
+            BindCarrierRepeater();
+            // 清空輸入欄位
+            ddlCarrierType.SelectedValue = "-1";
+            txtCarrierName.Text = "";
+            txtCarrierApproval.Text = "";
+        }
+    }
+
+    // 新的刪除事件處理函數
+    protected void btnDelExec_Click(object sender, EventArgs e)
+    {
+        if (int.TryParse(hfDelExecIndex.Value, out int rptIdx))
+        {
+            var visible = ExecList.Where(x => !x.IsDel).ToList();
+            if (rptIdx >= 0 && rptIdx < visible.Count)
+                visible[rptIdx].IsDel = true;
+            BindExecRepeater();
+        }
+    }
+
+    protected void btnDelRes_Click(object sender, EventArgs e)
+    {
+        if (int.TryParse(hfDelResIndex.Value, out int rptIdx))
+        {
+            var visible = ResearchPeriodList.Where(d => !d.IsDel).ToList();
+            if (rptIdx >= 0 && rptIdx < visible.Count)
+                visible[rptIdx].IsDel = true;
+            BindResRepeater();
+        }
+    }
+
+    protected void btnDelFile_Click(object sender, EventArgs e)
+    {
+        if (int.TryParse(hfDelFileIndex.Value, out int rptIdx))
+        {
+            var visible = FileList.Where(a => !a.IsDel).ToList();
+            if (rptIdx >= 0 && rptIdx < visible.Count)
+            {
+                visible[rptIdx].IsDel = true;
+                if (visible[rptIdx].IsNew)
+                {
+                    // 新檔案：刪實體檔，從列表移除
+                    var phys = visible[rptIdx].FilePath;
+                    if (File.Exists(phys))
+                        File.Delete(phys);
+                }
+            }
+            BindActivityFileRepeater();
+        }
+    }
+
+    protected void btnDelScope_Click(object sender, EventArgs e)
+    {
+        if (int.TryParse(hfDelScopeIndex.Value, out int rptIdx))
+        {
+            var visible = SurveyScopeList.Where(x => !x.IsDel).ToList();
+            if (rptIdx >= 0 && rptIdx < visible.Count)
+                visible[rptIdx].IsDel = true;
+            BindScopeRepeater();
+        }
+    }
+
+    protected void btnDelCarrier_Click(object sender, EventArgs e)
+    {
+        if (int.TryParse(hfDelCarrierIndex.Value, out int rptIdx))
+        {
+            var visible = CarrierList.Where(x => !x.IsDel).ToList();
+            if (rptIdx >= 0 && rptIdx < visible.Count)
+                visible[rptIdx].IsDel = true;
+            BindCarrierRepeater();
         }
     }
 
@@ -558,9 +740,114 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
                 this,
                 this.GetType(),
                 "saveOk",
-                "alert('儲存成功');window.location.href='ActivityReports.aspx';",
+                "showGlobalMessage('儲存成功');",
                 true
             );
+        }
+        else
+        {
+            ScriptManager.RegisterStartupScript(
+                this,
+                this.GetType(),
+                "saveNotOk",
+                "showGlobalMessage('儲存失敗，請重新嘗試');",
+                true
+            );
+        }
+    }
+
+    protected void btnBack_Click(object sender, EventArgs e)
+    {
+        string targetUrl = DetermineReturnUrl();
+        SafeRedirect(targetUrl);
+    }
+
+    /// <summary>
+    /// 決定返回的 URL
+    /// </summary>
+    private string DetermineReturnUrl()
+    {
+        // 1. 優先使用 QueryString
+        string returnUrl = Request.QueryString["returnUrl"];
+        if (IsValidAndSafeUrl(returnUrl))
+            return returnUrl;
+
+        // 2. 其次使用 Referrer
+        string referrer = Request.UrlReferrer?.AbsolutePath;
+        if (!string.IsNullOrEmpty(referrer))
+        {
+            if (referrer.Contains("ActivityManage.aspx"))
+                return "~/OSI/ActivityManage.aspx";
+        }
+
+        // 3. 預設值
+        return "~/OSI/ActivityReports.aspx";
+    }
+
+    /// <summary>
+    /// 驗證 URL 是否安全且有效
+    /// </summary>
+    private bool IsValidAndSafeUrl(string url)
+    {
+        if (string.IsNullOrEmpty(url))
+            return false;
+
+        try
+        {
+            // 必須是相對路徑
+            if (!url.StartsWith("~/"))
+                return false;
+
+            // 不能包含危險字符
+            if (url.Contains("..") || url.Contains("//") || url.Contains(@"\\"))
+                return false;
+
+            // 必須是 .aspx 檔案
+            if (!url.EndsWith(".aspx", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            // 必須在 OSI 資料夾下
+            if (!url.StartsWith("~/OSI/", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            // 檢查實體檔案是否存在
+            string physicalPath = Server.MapPath(url);
+            return File.Exists(physicalPath);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 安全的重定向
+    /// </summary>
+    private void SafeRedirect(string url)
+    {
+        try
+        {
+            Response.Redirect(url, false);
+            Context.ApplicationInstance.CompleteRequest();
+        }
+        catch (Exception ex)
+        {
+            // 記錄錯誤（如果有日誌系統）
+            // LogError(ex);
+
+            // 重定向到預設頁面
+            try
+            {
+                Response.Redirect("~/OSI/ActivityReports.aspx", false);
+                Context.ApplicationInstance.CompleteRequest();
+            }
+            catch
+            {
+                // 最後的防護：顯示錯誤訊息
+                Response.Clear();
+                Response.Write("無法導向頁面，請手動返回。");
+                Response.End();
+            }
         }
     }
 
@@ -577,23 +864,28 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
         reportSave.ActivityName = txtActivityName.Text;
         reportSave.NatureID = ddlNature.SelectedValue.toInt();
         reportSave.NatureText = txtNatureDetail.Text;
-        reportSave.CarrierTypeID = ddlCarrierType.SelectedValue.toInt();
-        if (reportSave.CarrierTypeID == -1) reportSave.CarrierTypeID = null;
-        reportSave.CarrierDetail = txtCarrierName.Text;
-        reportSave.CarrierNo = txtCarrierApproval.Text;
         reportSave.ResearchItemID = ddlResearchCategory.SelectedValue.toInt();
         if (reportSave.ResearchItemID == -1) reportSave.ResearchItemID = null;
         reportSave.ResearchItemNote = txtResItemNote.Text;
         reportSave.Instruments = txtResInstruments.Text;
         reportSave.ActivityOverview = txtActivityOverview.Text;
-        reportSave.SurveyScope = txtResearchScope.Text;
+        // SurveyScope 現在改為多筆，不再直接儲存在主表
         reportSave.LastUpdated = DateTime.Now;
         reportSave.LastUpdatedBy = UserInfo.UserID.toInt();
         reportSave.IsValid = true;
 
         // 獲取地圖標記資料 (EPSG:3826 TWD97 / TM2 zone 121)
         string wkt3826 = hdnGeo3826WKT.Value?.Trim();
-        reportSave.GeoData = string.IsNullOrEmpty(wkt3826) ? null : wkt3826;
+        // 檢查是否為空字串、"Null" 或 "null"
+        if (string.IsNullOrEmpty(wkt3826) ||
+            string.Equals(wkt3826, "Null", StringComparison.OrdinalIgnoreCase))
+        {
+            reportSave.GeoData = null;
+        }
+        else
+        {
+            reportSave.GeoData = wkt3826;
+        }
 
         // 活動執行者
         List<OSI_ActivityExecutors> executors = new List<OSI_ActivityExecutors>();
@@ -648,6 +940,42 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
             if (!e.IsNew && e.IsDel && !string.IsNullOrWhiteSpace(e.AttachmentID))
                 delFiles.Add(e.AttachmentID.toInt());
         });
+        // 研究調查範圍
+        List<OSI_SurveyScopes> surveyScopes = new List<OSI_SurveyScopes>();
+        List<int> delSurveyScopes = new List<int>();
+        SurveyScopeList.ForEach(e =>
+        {
+            if (e.IsNew && !e.IsDel)
+            {
+                surveyScopes.Add(new OSI_SurveyScopes
+                {
+                    SurveyScope = e.SurveyScope,
+                    IsValid = true,
+                });
+            }
+            if (!e.IsNew && e.IsDel && !string.IsNullOrWhiteSpace(e.ScopeID))
+                delSurveyScopes.Add(e.ScopeID.toInt());
+        });
+        // 載具
+        List<OSI_Carrier> carriers = new List<OSI_Carrier>();
+        List<int> delCarriers = new List<int>();
+        CarrierList.ForEach(e =>
+        {
+            if (e.IsNew && !e.IsDel)
+            {
+                int? carrierTypeId = e.CarrierTypeID.toInt();
+                if (carrierTypeId == -1) carrierTypeId = null; // 如果是-1則設定為null
+                carriers.Add(new OSI_Carrier
+                {
+                    CarrierTypeID = carrierTypeId,
+                    CarrierDetail = e.CarrierDetail,
+                    CarrierNo = e.CarrierNo,
+                    IsValid = true,
+                });
+            }
+            if (!e.IsNew && e.IsDel && !string.IsNullOrWhiteSpace(e.CarrierID))
+                delCarriers.Add(e.CarrierID.toInt());
+        });
 
         // 新增
         if (IsNew)
@@ -655,7 +983,7 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
             try
             {
                 var newReportID = OSIActivityReportsHelper.InsertReport(
-                    reportSave, executors, resPeriods, files, delExecutors, delResPeriods, delFiles, BaseDir);
+                    reportSave, executors, resPeriods, files, surveyScopes, carriers, delExecutors, delResPeriods, delFiles, delSurveyScopes, delCarriers, BaseDir);
                 rtVal = newReportID != 0;
                 // 成功，檔案移動
                 if (TempKey != null && rtVal)
@@ -693,7 +1021,7 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
             try
             {
                 rtVal = OSIActivityReportsHelper.UpdateReport(
-                    ReportID, reportSave, executors, resPeriods, files, delExecutors, delResPeriods, delFiles);
+                    ReportID, reportSave, executors, resPeriods, files, surveyScopes, carriers, delExecutors, delResPeriods, delFiles, delSurveyScopes, delCarriers);
             }
             catch
             {
@@ -735,6 +1063,27 @@ public class ActivityFile
     public string AttachmentID { get; set; }
     public string FileName { get; set; }
     public string FilePath { get; set; }
+    public bool IsNew { get; set; }
+    public bool IsDel { get; set; }
+}
+
+[Serializable]
+public class SurveyScopeItem
+{
+    public string ScopeID { get; set; }
+    public string SurveyScope { get; set; }
+    public bool IsNew { get; set; }
+    public bool IsDel { get; set; }
+}
+
+[Serializable]
+public class CarrierItem
+{
+    public string CarrierID { get; set; }
+    public string CarrierTypeID { get; set; }
+    public string CarrierTypeName { get; set; }
+    public string CarrierDetail { get; set; }
+    public string CarrierNo { get; set; }
     public bool IsNew { get; set; }
     public bool IsDel { get; set; }
 }

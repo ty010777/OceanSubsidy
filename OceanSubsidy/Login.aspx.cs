@@ -24,6 +24,17 @@ public partial class Login : System.Web.UI.Page
             LoadRegisterUnitType();
             LoadRegUnits(rblRegUnitType.SelectedValue);
 
+            // 檢查是否為登出後導向
+            var msg = Request.QueryString["msg"];
+            if (msg == "logout")
+            {
+                ScriptManager.RegisterStartupScript(
+                    this, GetType(),
+                    "logoutSuccess",
+                    "showGlobalMessage('您已成功登出');",
+                    true);
+            }
+
             // 若 QueryString 帶了 token，就先撈資料並開 Reset Modal
             var token = Request.QueryString["token"];
             if (!string.IsNullOrEmpty(token))
@@ -48,7 +59,7 @@ public partial class Login : System.Web.UI.Page
                     ScriptManager.RegisterStartupScript(
                     this, GetType(),
                     "pwdTokenExpiredAlert",
-                    "alert('該連結已失效，請重新申請忘記密碼。');",
+                    "showGlobalMessage('該連結已失效，請重新申請忘記密碼。');",
                     true);
                 }
             }
@@ -63,12 +74,19 @@ public partial class Login : System.Web.UI.Page
         bool ok = ValidateUser(txtEmail.Text.Trim(), password.Text, out int userId);
         if (ok)
         {
-            // 登入成功
-            SysUserHelper.UpdateLastLoginTime(userId);
-            SetSession(txtEmail.Text.Trim(), userId);
-            Response.Redirect("~/Default.aspx");
+            // 呼叫共用登入方法
+            PerformLogin(txtEmail.Text.Trim(), userId);
             return;
-        }        
+        }
+        else
+        {
+            // 登入失敗，顯示錯誤訊息
+            ScriptManager.RegisterStartupScript(
+                this, GetType(),
+                "loginError",
+                "showGlobalMessage('帳號密碼有誤');",
+                true);
+        }
     }
 
     // 設定Session
@@ -86,11 +104,34 @@ public partial class Login : System.Web.UI.Page
             userInfo.Account = data["Account"].ToString();
             userInfo.UserName = data["Name"].ToString();
             userInfo.UnitID = data["UnitID"].ToString();
+            userInfo.UnitName= data["UnitName"].ToString();
             userInfo.UnitType = data["UnitType"].ToString();
             userInfo.UnitName = SysUserHelper.QueryUnitNameByUserID(userInfo.UserID);
             userInfo.OSI_RoleName = data["OSI_RoleName"].ToString();
+            
+            // 查詢使用者的 OFS 角色名稱
+            var ofsRoleTable = OFSRoleHelper.QueryByUserID(userInfo.UserID);
+            if (ofsRoleTable != null && ofsRoleTable.Rows.Count > 0)
+            {
+                userInfo.OFS_RoleName = ofsRoleTable.Rows.Cast<DataRow>()
+                    .Select(row => row["RoleName"].ToString())
+                    .ToArray();
+            }
+            else
+            {
+                userInfo.OFS_RoleName = new string[0];
+            }
         }
         SessionHelper.Set(SessionHelper.UserInfo, userInfo);
+    }
+
+    // 執行登入動作（共用方法）
+    private void PerformLogin(string account, int userId)
+    {
+        // 登入成功
+        SysUserHelper.UpdateLastLoginTime(userId);
+        SetSession(account, userId);
+        Response.Redirect("~/Default.aspx");
     }
 
     protected void cvCaptcha_ServerValidate(object source, ServerValidateEventArgs args)
@@ -181,7 +222,7 @@ public partial class Login : System.Web.UI.Page
         trOtherUnit.Visible = (type != govID);
         rfvOtherUnit.Enabled = (type != govID);
 
-        GisTable sysUnit = SysUnitHelper.QueryAll();
+        GisTable sysUnit = SysUnitHelper.QueryAllOrderByUnitID();
         ddlRegUnits.Items.Clear();
         for (int i = 0; i <= sysUnit.Rows.Count - 1; i++)
         {
@@ -237,6 +278,14 @@ public partial class Login : System.Web.UI.Page
         // 寄信
         string mailBody = MailContent.OCA.UserVerification.getMail(code);
         GS.App.Utility.Mail.SendMail(email, "", MailContent.OCA.UserVerification.Subject, mailBody, out string ErrorMsg);
+
+        // 寄信通知
+        ScriptManager.RegisterStartupScript(
+            this,
+            this.GetType(),
+            "sendMail",
+            "showGlobalMessage('驗證碼已寄出。');",
+            true);
     }
     // 驗證使用者輸入的驗證碼
     protected void cvRegCode_ServerValidate(
@@ -328,7 +377,7 @@ public partial class Login : System.Web.UI.Page
             ScriptManager.RegisterStartupScript(
                 this, GetType(),
                 "hideReg",
-                "hideModal('registerModal'); alert('申請已送出，請等候審核');",
+                "hideModal('registerModal'); showGlobalMessage('申請已送出，請等候審核');",
                 true);
         }
         else
@@ -338,7 +387,7 @@ public partial class Login : System.Web.UI.Page
                 this,
                 this.GetType(),
                 "alertFail",
-                "alert('申請失敗，請稍後再試或聯絡系統管理員。');",
+                "showGlobalMessage('申請失敗，請稍後再試或聯絡系統管理員。');",
                 true);
         }
     }
@@ -366,18 +415,18 @@ public partial class Login : System.Web.UI.Page
             ScriptManager.RegisterStartupScript(
                 this, GetType(),
                 "hideForgot",
-                "hideModal('forgotModal'); alert('重置信已寄出');",
+                "hideModal('forgotModal'); showGlobalMessage('重置信已寄出');",
                 true);
         }
         else
         {
             ScriptManager.RegisterStartupScript(
                 this, GetType(), "fail",
-                "alert('寄信失敗，請稍後再試或聯絡系統管理員');", true);
+                "showGlobalMessage('寄信失敗，請稍後再試或聯絡系統管理員');", true);
         }
     }
 
-    // ========== 重設密碼 ==========
+    // ========== 設定/重設密碼 ==========
     protected void btnReset_Click(object sender, EventArgs e)
     {
         Page.Validate("Reset");
@@ -389,11 +438,11 @@ public partial class Login : System.Web.UI.Page
 
         bool ok = SysUserHelper.UpdatePwd(token, lblResetAccount.Text, salt, pwd);
         if (ok)
-        {
+        {            
             ScriptManager.RegisterStartupScript(
                 this, GetType(),
-                "doneReset",
-                "alert('密碼已重置，請重新登入'); window.location='Login.aspx';",
+                "resetSuccess",
+                "showGlobalMessage('您已成功重置密碼，將跳轉至登入頁。'); setTimeout(function() { window.location='Login.aspx'; }, 3000);",
                 true);
         }
         else
@@ -401,7 +450,7 @@ public partial class Login : System.Web.UI.Page
             ScriptManager.RegisterStartupScript(
                 this, GetType(),
                 "errReset",
-                "alert('重置失敗，請聯絡管理員');",
+                "showGlobalMessage('重置失敗，請聯絡管理員');",
                 true);
         }
     }

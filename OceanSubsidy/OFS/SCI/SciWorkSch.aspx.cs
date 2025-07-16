@@ -24,10 +24,13 @@ public partial class OFS_SciWorkSch : System.Web.UI.Page
     {
         try
         {
-            
+            // 設定顯示模式
+            SetDisplayMode();
+
             if (!IsPostBack)
             {
                 InitializePage();
+                
             }
         }
         catch (Exception ex)
@@ -45,6 +48,9 @@ public partial class OFS_SciWorkSch : System.Web.UI.Page
         {
             // 載入現有資料
             LoadExistingData();
+            
+            // 檢查表單狀態並控制暫存按鈕顯示
+            CheckFormStatusAndHideTempSaveButton();
         }
         catch (Exception ex)
         {
@@ -59,25 +65,25 @@ public partial class OFS_SciWorkSch : System.Web.UI.Page
     {
         try
         {
-            // 取得 Version_ID
-            var versionId = GetCurrentVersionId();
-            if (string.IsNullOrEmpty(versionId))
+            // 取得 ProjectID
+            var ProjectID = Request.QueryString["ProjectID"];
+            if (string.IsNullOrEmpty(ProjectID))
             {
-                Console.WriteLine("無法取得 Version_ID，跳過資料載入");
+                Console.WriteLine("無法取得 ProjectID，跳過資料載入");
                 return;
             }
             
             // 載入計畫期程
-            LoadProjectSchedule(versionId);
+            LoadProjectSchedule(ProjectID);
             
             // 載入工作項目
-            LoadWorkItems(versionId);
+            LoadWorkItems(ProjectID);
             
             // 載入查核標準
-            LoadCheckStandards(versionId);
+            LoadCheckStandards(ProjectID);
             
             // 載入計畫架構圖
-            LoadDiagramFile(versionId);
+            LoadDiagramFile(ProjectID);
             
         }
         catch (Exception ex)
@@ -90,9 +96,9 @@ public partial class OFS_SciWorkSch : System.Web.UI.Page
     /// <summary>
     /// 載入計畫期程到前端
     /// </summary>
-    private void LoadProjectSchedule(string versionId)
+    private void LoadProjectSchedule(string ProjectID)
     {
-        var (startTime, endTime) = OFS_SciWorkSchHelper.GetProjectScheduleByVersionId(versionId);
+        var (startTime, endTime) = OFS_SciWorkSchHelper.GetProjectScheduleByProjectID(ProjectID);
         
         var script = "";
         if (startTime.HasValue)
@@ -113,15 +119,15 @@ public partial class OFS_SciWorkSch : System.Web.UI.Page
     /// <summary>
     /// 載入工作項目到前端
     /// </summary>
-    private void LoadWorkItems(string versionId)
+    private void LoadWorkItems(string ProjectID)
     {
-        var workItems = OFS_SciWorkSchHelper.GetWorkItemsByVersionId(versionId);
+        var workItems = OFS_SciWorkSchHelper.GetWorkItemsByProjectID(ProjectID);
         
         if (workItems.Any())
         {
             var workItemsJson = JsonConvert.SerializeObject(workItems.Select(w => new
             {
-                versionId = w.Version_ID,
+                projectId = w.ProjectID,
                 workItemId = w.WorkItem_id,
                 itemCode = OFS_SciWorkSchHelper.ExtractItemCodeFromWorkItemId(w.WorkItem_id),
                 itemName = w.WorkName,
@@ -161,16 +167,16 @@ public partial class OFS_SciWorkSch : System.Web.UI.Page
     /// <summary>
     /// 載入查核標準到前端
     /// </summary>
-    private void LoadCheckStandards(string versionId)
+    private void LoadCheckStandards(string ProjectID)
     {
-        var checkStandards = OFS_SciWorkSchHelper.GetCheckStandardsByVersionId(versionId);
+        var checkStandards = OFS_SciWorkSchHelper.GetCheckStandardsByProjectID(ProjectID);
         
         if (checkStandards.Any())
         {
             var checkStandardsJson = JsonConvert.SerializeObject(checkStandards.Select(c => new
             {
                 id = c.Id,
-                versionId = c.Version_ID,
+                projectId = c.ProjectID,
                 workItem = c.WorkItem,
                 serialNumber = c.SerialNumber,
                 plannedFinishDate = c.PlannedFinishDate?.ToString("yyyy-MM-dd"),
@@ -199,9 +205,9 @@ public partial class OFS_SciWorkSch : System.Web.UI.Page
     /// <summary>
     /// 載入計畫架構圖到前端
     /// </summary>
-    private void LoadDiagramFile(string versionId)
+    private void LoadDiagramFile(string ProjectID)
     {
-        var uploadFiles = OFS_SciWorkSchHelper.GetUploadFilesByVersionIdAndFileCode(versionId, "WorkSchStructure");
+        var uploadFiles = OFS_SciWorkSchHelper.GetUploadFilesByProjectIDAndFileCode(ProjectID, "WorkSchStructure");
         
         if (uploadFiles.Any())
         {
@@ -262,11 +268,18 @@ public partial class OFS_SciWorkSch : System.Web.UI.Page
             {
                 // 處理檔案上傳（如果有的話）
                 ProcessDiagramUpload();
-                
                 SaveWorkScheduleData(true);
-                ShowMessage("資料儲存成功！即將跳轉到下一頁...", "success");
-                // 可以在這裡重導向到下一頁
-                // Response.Redirect("NextPage.aspx");
+                
+                // 跳轉到下一頁
+                var projectId = Request.QueryString["ProjectID"];
+                if (!string.IsNullOrEmpty(projectId))
+                {
+                    Response.Redirect($"SciFunding.aspx?ProjectID={projectId}");
+                }
+                else
+                {
+                    Response.Redirect("SciFunding.aspx");
+                }
             }
         }
         catch (Exception ex)
@@ -283,26 +296,8 @@ public partial class OFS_SciWorkSch : System.Web.UI.Page
     {
         try
         {
-            // 除錯：檢查所有收到的檔案
-            var allFileKeys = new List<string>();
-            var fileInfos = new List<object>();
-            
-            for (int i = 0; i < Request.Files.Count; i++)
-            {
-                var key = Request.Files.AllKeys[i];
-                var file = Request.Files[i];
-                allFileKeys.Add(key);
-                fileInfos.Add(new { 
-                    Key = key, 
-                    FileName = file?.FileName ?? "null", 
-                    ContentLength = file?.ContentLength ?? 0,
-                    ContentType = file?.ContentType ?? "null"
-                });
-            }
-            
-            // 檢查是否有檔案上傳 - 先嘗試不同的 key
-            var uploadedFile = Request.Files["diagramFile"];
-            
+            // 檢查是否有檔案上傳 - 使用正確的檔案 input name
+            var uploadedFile = Request.Files["fileUploadDiagram"];
             if (uploadedFile != null && uploadedFile.ContentLength > 0)
             {
                 // 驗證檔案類型
@@ -318,19 +313,14 @@ public partial class OFS_SciWorkSch : System.Web.UI.Page
                     throw new Exception("檔案大小不能超過10MB");
                 }
 
-                // 取得 Version_ID
-                var versionId = GetCurrentVersionId();
-                if (string.IsNullOrEmpty(versionId))
-                {
-                    throw new Exception("無法取得計畫版本資訊");
-                }
-
+          
+                var ProjectID = Request.QueryString["ProjectID"];
                 // 建立檔案名稱
                 var fileExtension = Path.GetExtension(uploadedFile.FileName).ToLower();
-                var fileName = $"{versionId}_WorkSchStructure{fileExtension}";
+                var fileName = $"WorkSchStructure{fileExtension}";
                 
-                // 建立完整檔案路徑
-                var uploadDir = Server.MapPath("~/UploadFiles/OFS/SCI/");
+                // 建立完整檔案路徑（加上 ProjectID 資料夾）
+                var uploadDir = Server.MapPath($"~/UploadFiles/OFS/SCI/{ProjectID}/");
                 if (!Directory.Exists(uploadDir))
                 {
                     Directory.CreateDirectory(uploadDir);
@@ -348,10 +338,10 @@ public partial class OFS_SciWorkSch : System.Web.UI.Page
                 uploadedFile.SaveAs(fullFilePath);
                 
                 // 相對路徑（用於資料庫儲存和顯示）
-                var relativePath = $"UploadFiles/OFS/SCI/{fileName}";
+                var relativePath = $"UploadFiles/OFS/SCI/{ProjectID}/{fileName}";
                 
                 // 儲存到資料庫
-                SaveUploadFileRecord(versionId, fileName, relativePath);
+                SaveUploadFileRecord(ProjectID, fileName, relativePath);
                 
             }
             else
@@ -387,35 +377,33 @@ public partial class OFS_SciWorkSch : System.Web.UI.Page
     /// <param name="isComplete">是否為完成狀態</param>
     private void SaveWorkScheduleData(bool isComplete)
     {
-        // 取得Version_ID
-        var versionId = GetCurrentVersionId();
-        
+        var ProjectID = Request.QueryString["ProjectID"];
         // 1. 處理計畫期程 - 儲存到 OFS_SCI_Application_Main
         var projectSchedule = ReadProjectScheduleData();
-        OFS_SciWorkSchHelper.UpdateProjectSchedule(versionId, projectSchedule.startDate, projectSchedule.endDate);
+        OFS_SciWorkSchHelper.UpdateProjectSchedule(ProjectID, projectSchedule.startDate, projectSchedule.endDate);
         
         // 2. 讀取工作項目資料 (包含主項和子項)
-        var allWorkItems = ReadAllWorkItemsData(versionId);
+        var allWorkItems = ReadAllWorkItemsData(ProjectID);
         
         // 3. 儲存所有工作項目到單表
-        int savedCount = OFS_SciWorkSchHelper.SaveAllWorkItems(versionId, allWorkItems);
+        int savedCount = OFS_SciWorkSchHelper.SaveAllWorkItems(ProjectID, allWorkItems);
         
         // 4. 讀取查核標準資料
-        var checkStandards = ReadCheckStandardsData(versionId);
+        var checkStandards = ReadCheckStandardsData(ProjectID);
         
         // 5. 儲存查核標準
         int savedCheckStandardsCount = OFS_SciWorkSchHelper.SaveCheckStandards(checkStandards);
         
         // 6. 更新版本狀態
-        UpdateVersionStatusBasedOnAction(versionId, isComplete);
+        UpdateVersionStatusBasedOnAction(ProjectID, isComplete);
     }
 
     /// <summary>
     /// 根據動作類型更新版本狀態
     /// </summary>
-    /// <param name="versionId">版本ID</param>
+    /// <param name="ProjectID">ProjectID</param>
     /// <param name="isComplete">是否為完成動作（下一步）</param>
-    private void UpdateVersionStatusBasedOnAction(string versionId, bool isComplete)
+    private void UpdateVersionStatusBasedOnAction(string ProjectID, bool isComplete)
     {
         try
         {
@@ -425,29 +413,26 @@ public partial class OFS_SciWorkSch : System.Web.UI.Page
                 // 1. Form2Status 設為 "完成" 
                 // 2. 檢查 CurrentStep，如果 < 3則改成 3
                 
-                string currentStep = OFS_SciWorkSchHelper.GetCurrentStepByVersionId(versionId);
+                string currentStep = OFS_SciWorkSchHelper.GetCurrentStepByProjectID(ProjectID);
                 int currentStepNum = 1;
                 int.TryParse(currentStep, out currentStepNum);
                 
                 bool shouldUpdateCurrentStep = currentStepNum < 3;
                 string newCurrentStep = shouldUpdateCurrentStep ? "3" : currentStep;
                 
-                OFS_SciWorkSchHelper.UpdateVersionStatus(versionId, "完成", shouldUpdateCurrentStep, newCurrentStep);
+                OFS_SciWorkSchHelper.UpdateVersionStatus(ProjectID, "完成", shouldUpdateCurrentStep, newCurrentStep);
             }
             else
             {
                 // 點擊「暫存」按鈕
                 // 只更新 Form2Status 為 "暫存"，CurrentStep 不變
                 
-                OFS_SciWorkSchHelper.UpdateVersionStatus(versionId, "暫存");
+                OFS_SciWorkSchHelper.UpdateVersionStatus(ProjectID, "暫存");
                 
             }
         }
         catch (Exception ex)
         {
-            var errorScript = $"console.error('版本狀態更新失敗：', '{ex.Message.Replace("'", "\\'")}');";
-            ClientScript.RegisterStartupScript(this.GetType(), "LogVersionUpdateError", errorScript, true);
-            
             // 記錄錯誤但不中斷流程
             Console.WriteLine($"更新版本狀態失敗: {ex.Message}");
         }
@@ -480,8 +465,8 @@ public partial class OFS_SciWorkSch : System.Web.UI.Page
     /// <summary>
     /// 讀取所有工作項目資料 (主項+子項)
     /// </summary>
-    /// <param name="versionId">版本ID</param>
-    private List<OFS_SCI_WorkSch_Main> ReadAllWorkItemsData(string versionId)
+    /// <param name="ProjectID">ProjectID</param>
+    private List<OFS_SCI_WorkSch_Main> ReadAllWorkItemsData(string ProjectID)
     {
         var workItems = new List<OFS_SCI_WorkSch_Main>();
         
@@ -500,9 +485,9 @@ public partial class OFS_SciWorkSch : System.Web.UI.Page
                     var workItem = new OFS_SCI_WorkSch_Main();
                     
                     // 基本資訊
-                    workItem.Version_ID = versionId;
+                    workItem.ProjectID = ProjectID;
                     var itemCode = item.code?.ToString() ?? "";
-                    workItem.WorkItem_id = OFS_SciWorkSchHelper.GenerateWorkItemId(versionId, itemCode);
+                    workItem.WorkItem_id = OFS_SciWorkSchHelper.GenerateWorkItemId(ProjectID, itemCode);
                     workItem.WorkName = item.itemName?.ToString() ?? "";
                     
                     // 起訖月份 (新架構使用 int 類型)
@@ -546,8 +531,8 @@ public partial class OFS_SciWorkSch : System.Web.UI.Page
     /// <summary>
     /// 讀取查核標準資料
     /// </summary>
-    /// <param name="versionId">版本ID</param>
-    private List<OFS_SCI_WorkSch_CheckStandard> ReadCheckStandardsData(string versionId)
+    /// <param name="ProjectID">ProjectID</param>
+    private List<OFS_SCI_WorkSch_CheckStandard> ReadCheckStandardsData(string ProjectID)
     {
         var checkStandards = new List<OFS_SCI_WorkSch_CheckStandard>();
         
@@ -565,7 +550,7 @@ public partial class OFS_SciWorkSch : System.Web.UI.Page
                 {
                     var checkStandard = new OFS_SCI_WorkSch_CheckStandard();
                     
-                    checkStandard.Version_ID = versionId;
+                    checkStandard.ProjectID = ProjectID;
                     checkStandard.WorkItem = item.workItem?.ToString() ?? "";
                     checkStandard.SerialNumber = item.serialNumber?.ToString() ?? "";
                     checkStandard.CheckDescription = item.description?.ToString() ?? "";
@@ -660,7 +645,7 @@ public partial class OFS_SciWorkSch : System.Web.UI.Page
             },
             WorkItems = workItems.Select(w => new
             {
-                w.Version_ID,
+                w.ProjectID,
                 w.WorkItem_id,
                 w.WorkName,
                 w.StartMonth,
@@ -672,7 +657,7 @@ public partial class OFS_SciWorkSch : System.Web.UI.Page
             }),
             CheckStandards = checkStandards.Select(c => new
             {
-                c.Version_ID,
+                c.ProjectID,
                 c.WorkItem,
                 c.SerialNumber,
                 c.PlannedFinishDate,
@@ -691,7 +676,7 @@ public partial class OFS_SciWorkSch : System.Web.UI.Page
         
         var script = $@"
             console.log('=== 工作排程資料儲存結果 (新架構) ===');
-            console.log('WorkItem_id 格式：{{Version_ID}}_{{項目代碼}} (例如：v001_SCI_2024_A1)');
+            console.log('WorkItem_id 格式：{{ProjectID}}_{{項目代碼}} (例如：v001_SCI_2024_A1)');
             console.log('儲存結果：工作項目 {savedCount}/{workItems.Count} 筆，查核標準 {savedCheckStandardsCount}/{checkStandards.Count} 筆');
             console.log('詳細資料：', {JsonConvert.SerializeObject(logData)});
         ";
@@ -711,32 +696,33 @@ public partial class OFS_SciWorkSch : System.Web.UI.Page
 
     #region 工具方法
     /// <summary>
-    /// 取得目前的 Version_ID
+    /// 取得目前的 ProjectID
     /// </summary>
-    private string GetCurrentVersionId()
+   
+    
+    /// <summary>
+    /// 檢查表單狀態並控制暫存按鈕顯示
+    /// </summary>
+    private void CheckFormStatusAndHideTempSaveButton()
     {
         try
         {
-            // 從 URL 參數取得 ProjectID
-            var projectId = Request.QueryString["ProjectID"];
-            if (string.IsNullOrEmpty(projectId))
+            var ProjectID = Request.QueryString["ProjectID"];
+            var formStatus = OFS_SciWorkSchHelper.GetFormStatusByProjectID(ProjectID, "Form2Status");
+            
+            if (formStatus == "完成")
             {
-                projectId = Request.QueryString["projectId"]; // 嘗試小寫
+                // 隱藏暫存按鈕
+                btnTempSave.Style["display"] = "none";
+                
+                // 也可以用 Visible 屬性
+                // btnTempSave.Visible = false;
             }
-            
-            if (string.IsNullOrEmpty(projectId))
-            {
-                throw new Exception("無法取得ProjectID參數");
-            }
-            
-            // 呼叫 Helper 方法取得最新的 version_id
-            var lastVersion = OFS_SciApplicationHelper.getVersionLatestProjectID(projectId);
-            
-            return lastVersion.Version_ID;
         }
         catch (Exception ex)
         {
-            throw new Exception($"取得Version_ID失敗：{ex.Message}");
+            // 發生錯誤時不隱藏按鈕，讓用戶正常使用
+            System.Diagnostics.Debug.WriteLine($"檢查表單狀態失敗: {ex.Message}");
         }
     }
     #endregion
@@ -746,12 +732,12 @@ public partial class OFS_SciWorkSch : System.Web.UI.Page
     /// <summary>
     /// 儲存上傳檔案記錄到資料庫
     /// </summary>
-    private void SaveUploadFileRecord(string versionId, string fileName, string relativePath)
+    private void SaveUploadFileRecord(string ProjectID, string fileName, string relativePath)
     {
         try
         {
             // 先檢查是否已有該版本的工作排程架構圖記錄
-            var existingFiles = OFS_SciWorkSchHelper.GetUploadFilesByVersionIdAndFileCode(versionId, "WorkSchStructure");
+            var existingFiles = OFS_SciWorkSchHelper.GetUploadFilesByProjectIDAndFileCode(ProjectID, "WorkSchStructure");
             
             // 如果有舊記錄，先刪除
             if (existingFiles != null && existingFiles.Any())
@@ -759,14 +745,14 @@ public partial class OFS_SciWorkSch : System.Web.UI.Page
                 foreach (var existingFile in existingFiles)
                 {
                     // 從資料庫刪除記錄
-                    OFS_SciWorkSchHelper.DeleteUploadFile(existingFile.Version_ID, existingFile.FileCode);
+                    OFS_SciWorkSchHelper.DeleteUploadFile(existingFile.ProjectID, existingFile.FileCode);
                 }
             }
             
             // 建立新的上傳檔案記錄
             var uploadFile = new OFS_SCI_UploadFile
             {
-                Version_ID = versionId,
+                ProjectID = ProjectID,
                 FileCode = "WorkSchStructure",
                 FileName = fileName,
                 TemplatePath = relativePath,
@@ -785,5 +771,70 @@ public partial class OFS_SciWorkSch : System.Web.UI.Page
             Console.WriteLine($"儲存檔案記錄失敗：{ex.Message}");
         }
     }
+    #endregion
+
+    #region 顯示模式控制
+
+    /// <summary>
+    /// 設定顯示模式
+    /// </summary>
+    private void SetDisplayMode()
+    {
+        var master = (OFSApplicationMaster)this.Master;
+        
+        try
+        {
+            // 根據申請狀態決定模式
+            if (ShouldShowInEditMode())
+            {
+                master.SetModeTo("編輯");
+            }
+            else
+            {
+                master.SetModeTo("檢視");
+            }
+        }
+        catch (Exception ex)
+        {
+            // 發生錯誤時預設為檢視模式（安全考量）
+            master.SetModeTo("檢視");
+            System.Diagnostics.Debug.WriteLine($"設定顯示模式時發生錯誤：{ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// 判斷是否應該顯示為編輯模式
+    /// </summary>
+    /// <returns>true: 編輯模式, false: 檢視模式</returns>
+    private bool ShouldShowInEditMode()
+    {
+        // 如果沒有 ProjectID，是新申請案件，可以編輯
+        if (string.IsNullOrEmpty(ProjectID))
+        {
+            return true;
+        }
+        
+        try
+        {
+            // 取得最新版本的狀態
+            var ApplicationData = OFS_SciApplicationHelper.getVersionByProjectID(ProjectID);
+            if (ApplicationData == null)
+            {
+                return true; // 沒有資料時允許編輯
+            }
+            
+            // 只有這兩種狀態可以編輯
+            string statuses = ApplicationData.Statuses ?? "";
+            string statusesName = ApplicationData.StatusesName ?? "";
+            
+            return statuses == "尚未提送" || statusesName == "補正補件";
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得申請狀態時發生錯誤：{ex.Message}");
+            return false; // 發生錯誤時預設為檢視模式
+        }
+    }
+
     #endregion
 }

@@ -14,7 +14,7 @@ public class ValidateNumber : IHttpHandler, IRequiresSessionState
 
     public void ProcessRequest(HttpContext context)
     {
-        int NumCount = 5;   //預設產生4位亂數
+        int NumCount = 5;   //預設產生5位亂數
 
         //取得亂數
         string str_ValidateCode = this.GetRandomNumberString(NumCount);

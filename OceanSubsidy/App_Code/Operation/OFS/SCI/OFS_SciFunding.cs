@@ -66,16 +66,16 @@ public class OFS_SciFundingHelper
             db.Dispose();
         }
     }
-    public static void ReplacePersonFormList(List<PersonRow> personList, string Version_ID)
+    public static void ReplacePersonFormList(List<PersonRow> personList, string ProjectID)
     {
         using (DbHelper db = new DbHelper())
         {
             try
             {
-                // 先刪除該 Version_ID 所有資料
-                    db.CommandText = @"DELETE FROM OFS_SCI_PersonnelCost_PersonForm WHERE Version_ID = @Version_ID";
+                // 先刪除該 ProjectID 所有資料
+                    db.CommandText = @"DELETE FROM OFS_SCI_PersonnelCost_PersonForm WHERE ProjectID = @ProjectID";
                     db.Parameters.Clear();
-                    db.Parameters.Add("@Version_ID", Version_ID);
+                    db.Parameters.Add("@ProjectID", ProjectID);
                     db.ExecuteNonQuery();
                 // 一筆一筆插入 personList 的每筆資料
                 foreach (var formRow in personList)
@@ -104,12 +104,12 @@ public class OFS_SciFundingHelper
 
                     db.CommandText = @"
                     INSERT INTO OFS_SCI_PersonnelCost_PersonForm
-                    (Version_ID, Name, IsPending, JobTitle, AvgSalary, Month)
+                    (ProjectID, Name, IsPending, JobTitle, AvgSalary, Month)
                     VALUES
-                    (@Version_ID, @Name, @IsPending, @JobTitle, @AvgSalary, @Month)";
+                    (@ProjectID, @Name, @IsPending, @JobTitle, @AvgSalary, @Month)";
                 
                     db.Parameters.Clear();
-                    db.Parameters.Add("@Version_ID", Version_ID);
+                    db.Parameters.Add("@ProjectID", ProjectID);
                     db.Parameters.Add("@Name", formRow.name ?? "");
                     db.Parameters.Add("@IsPending", formRow.stay);
                     db.Parameters.Add("@JobTitle", formRow.title ?? "");
@@ -127,18 +127,18 @@ public class OFS_SciFundingHelper
     }
 
 
-    public static void ReplaceMaterialList(List<MaterialRow> materialList, string Version_ID)
+    public static void ReplaceMaterialList(List<MaterialRow> materialList, string ProjectID)
     {
         using (DbHelper db = new DbHelper())
         {
             try
             {
-                // 先刪除該 Version_ID 的所有資料
+                // 先刪除該 ProjectID 的所有資料
                 db.CommandText = @"
                 DELETE FROM OFS_SCI_PersonnelCost_Material
-                WHERE Version_ID = @Version_ID";
+                WHERE ProjectID = @ProjectID";
                 db.Parameters.Clear();
-                db.Parameters.Add("@Version_ID", Version_ID);
+                db.Parameters.Add("@ProjectID", ProjectID);
                 db.ExecuteNonQuery();
 
                 // 再逐筆插入
@@ -146,11 +146,11 @@ public class OFS_SciFundingHelper
                 {
                     db.CommandText = @"
                     INSERT INTO OFS_SCI_PersonnelCost_Material
-                    (Version_ID, ItemName, Description, Unit, PreNum, UnitPrice)
+                    (ProjectID, ItemName, Description, Unit, PreNum, UnitPrice)
                     VALUES
-                    (@Version_ID, @ItemName, @Description, @Unit, @PreNum, @UnitPrice)";
+                    (@ProjectID, @ItemName, @Description, @Unit, @PreNum, @UnitPrice)";
                     db.Parameters.Clear();
-                    db.Parameters.Add("@Version_ID", Version_ID);
+                    db.Parameters.Add("@ProjectID", ProjectID);
                     db.Parameters.Add("@ItemName", material.name);
                     db.Parameters.Add("@Description", material.description);
                     db.Parameters.Add("@Unit", material.unit);
@@ -166,16 +166,16 @@ public class OFS_SciFundingHelper
             }
         }
     }
-    public static void ReplaceResearchFees(List<ResearchFeeRow> feeList, string Version_ID)
+    public static void ReplaceResearchFees(List<ResearchFeeRow> feeList, string ProjectID)
     {
         using (DbHelper db = new DbHelper())
         {
             try
             {
-                // 先刪除該 Version_ID 的所有資料
-                db.CommandText = @"DELETE FROM OFS_SCI_PersonnelCost_ResearchFees WHERE Version_ID = @Version_ID";
+                // 先刪除該 ProjectID 的所有資料
+                db.CommandText = @"DELETE FROM OFS_SCI_PersonnelCost_ResearchFees WHERE ProjectID = @ProjectID";
                 db.Parameters.Clear();
-                db.Parameters.Add("@Version_ID", Version_ID);
+                db.Parameters.Add("@ProjectID", ProjectID);
                 db.ExecuteNonQuery();
 
                 // 再一筆一筆插入
@@ -183,12 +183,12 @@ public class OFS_SciFundingHelper
                 {
                     db.CommandText = @"
                     INSERT INTO OFS_SCI_PersonnelCost_ResearchFees
-                    (Version_ID, FeeCategory, StartDate, EndDate, Name, PersonName, Price)
+                    (ProjectID, FeeCategory, StartDate, EndDate, Name, PersonName, Price)
                     VALUES
-                    (@Version_ID, @FeeCategory, @StartDate, @EndDate, @Name, @PersonName, @Price)";
+                    (@ProjectID, @FeeCategory, @StartDate, @EndDate, @Name, @PersonName, @Price)";
                 
                     db.Parameters.Clear();
-                    db.Parameters.Add("@Version_ID", Version_ID);
+                    db.Parameters.Add("@ProjectID", ProjectID);
                     db.Parameters.Add("@FeeCategory", row.category ?? "");
                     db.Parameters.Add("@StartDate", string.IsNullOrWhiteSpace(row.dateStart) ? (object)DBNull.Value : row.dateStart);
                     db.Parameters.Add("@EndDate", string.IsNullOrWhiteSpace(row.dateEnd) ? (object)DBNull.Value : row.dateEnd);
@@ -205,27 +205,27 @@ public class OFS_SciFundingHelper
             }
         }
     }
-    public static void ReplaceTripForm(List<TravelRow> tripList, string Version_ID)
+    public static void ReplaceTripForm(List<TravelRow> tripList, string ProjectID)
     {
         using (DbHelper db = new DbHelper())
         {
             try
             {
-                db.CommandText = @"DELETE FROM OFS_SCI_PersonnelCost_TripForm WHERE Version_ID = @Version_ID";
+                db.CommandText = @"DELETE FROM OFS_SCI_PersonnelCost_TripForm WHERE ProjectID = @ProjectID";
                 db.Parameters.Clear();
-                db.Parameters.Add("@Version_ID", Version_ID);
+                db.Parameters.Add("@ProjectID", ProjectID);
                 db.ExecuteNonQuery();
 
                 foreach (var row in tripList)
                 {
                     db.CommandText = @"
                     INSERT INTO OFS_SCI_PersonnelCost_TripForm
-                    (Version_ID, TripReason, Area, Days, Times, Price)
+                    (ProjectID, TripReason, Area, Days, Times, Price)
                     VALUES
-                    (@Version_ID, @TripReason, @Area, @Days, @Times, @Price)";
+                    (@ProjectID, @TripReason, @Area, @Days, @Times, @Price)";
                 
                     db.Parameters.Clear();
-                    db.Parameters.Add("@Version_ID", Version_ID);
+                    db.Parameters.Add("@ProjectID", ProjectID);
                     db.Parameters.Add("@TripReason", row.reason ?? "");
                     db.Parameters.Add("@Area", row.area ?? "");
                     db.Parameters.Add("@Days", row.days);
@@ -241,27 +241,27 @@ public class OFS_SciFundingHelper
             }
         }
     }
-    public static void ReplaceOtherPersonFee(List<OtherFeeRow> feeList, string Version_ID)
+    public static void ReplaceOtherPersonFee(List<OtherFeeRow> feeList, string ProjectID)
     {
         using (DbHelper db = new DbHelper())
         {
             try
             {
-                db.CommandText = @"DELETE FROM OFS_SCI_PersonnelCost_OtherPersonFee WHERE Version_ID = @Version_ID";
+                db.CommandText = @"DELETE FROM OFS_SCI_PersonnelCost_OtherPersonFee WHERE ProjectID = @ProjectID";
                 db.Parameters.Clear();
-                db.Parameters.Add("@Version_ID", Version_ID);
+                db.Parameters.Add("@ProjectID", ProjectID);
                 db.ExecuteNonQuery();
 
                 foreach (var row in feeList)
                 {
                     db.CommandText = @"
                     INSERT INTO OFS_SCI_PersonnelCost_OtherPersonFee
-                    (Version_ID, JobTitle, AvgSalary, Month, PeopleNum)
+                    (ProjectID, JobTitle, AvgSalary, Month, PeopleNum)
                     VALUES
-                    (@Version_ID, @JobTitle, @AvgSalary, @Month, @PeopleNum)";
+                    (@ProjectID, @JobTitle, @AvgSalary, @Month, @PeopleNum)";
                 
                     db.Parameters.Clear();
-                    db.Parameters.Add("@Version_ID", Version_ID);
+                    db.Parameters.Add("@ProjectID", ProjectID);
                     db.Parameters.Add("@JobTitle", row.title ?? "");
                     db.Parameters.Add("@AvgSalary", row.avgSalary);
                     db.Parameters.Add("@Month", row.months);
@@ -277,27 +277,27 @@ public class OFS_SciFundingHelper
         }
     }
     public static void 
-        ReplaceOtherObjectFee(List<OtherRent> rentList, string Version_ID)
+        ReplaceOtherObjectFee(List<OtherRent> rentList, string ProjectID)
     {
         using (DbHelper db = new DbHelper())
         {
             try
             {
-                db.CommandText = @"DELETE FROM OFS_SCI_PersonnelCost_OtherObjectFee WHERE Version_ID = @Version_ID";
+                db.CommandText = @"DELETE FROM OFS_SCI_PersonnelCost_OtherObjectFee WHERE ProjectID = @ProjectID";
                 db.Parameters.Clear();
-                db.Parameters.Add("@Version_ID", Version_ID);
+                db.Parameters.Add("@ProjectID", ProjectID);
                 db.ExecuteNonQuery();
 
                 foreach (var row in rentList)
                 {
                     db.CommandText = @"
                     INSERT INTO OFS_SCI_PersonnelCost_OtherObjectFee
-                    (Version_ID, Name, Price, CalDescription)
+                    (ProjectID, Name, Price, CalDescription)
                     VALUES
-                    (@Version_ID, @Name, @Price, @CalDescription)";
+                    (@ProjectID, @Name, @Price, @CalDescription)";
                 
                     db.Parameters.Clear();
-                    db.Parameters.Add("@Version_ID", Version_ID);
+                    db.Parameters.Add("@ProjectID", ProjectID);
                     db.Parameters.Add("@Name", row.item ?? "");
                     db.Parameters.Add("@Price", row.amount);
                     db.Parameters.Add("@CalDescription", row.note ?? "");
@@ -312,16 +312,16 @@ public class OFS_SciFundingHelper
         }
     }
 
-    public static void ReplaceTotalFeeList(List<TotalFeeRow> totalFeeList, string Version_ID)
+    public static void ReplaceTotalFeeList(List<TotalFeeRow> totalFeeList, string ProjectID)
     {
         using (DbHelper db = new DbHelper())
         {
             try
             {
-                // 先刪除該 Version_ID 的所有資料
-                db.CommandText = @"DELETE FROM OFS_SCI_PersonnelCost_TotalFee WHERE Version_ID = @Version_ID";
+                // 先刪除該 ProjectID 的所有資料
+                db.CommandText = @"DELETE FROM OFS_SCI_PersonnelCost_TotalFee WHERE ProjectID = @ProjectID";
                 db.Parameters.Clear();
-                db.Parameters.Add("@Version_ID", Version_ID);
+                db.Parameters.Add("@ProjectID", ProjectID);
                 db.ExecuteNonQuery();
 
                 // 再逐筆插入經費總表資料
@@ -362,12 +362,12 @@ public class OFS_SciFundingHelper
 
                     db.CommandText = @"
                     INSERT INTO OFS_SCI_PersonnelCost_TotalFee
-                    (Version_ID, AccountingItem, SubsidyAmount, CoopAmount )
+                    (ProjectID, AccountingItem, SubsidyAmount, CoopAmount )
                     VALUES
-                    (@Version_ID, @AccountingItem, @SubsidyAmount, @CoopAmount)";
+                    (@ProjectID, @AccountingItem, @SubsidyAmount, @CoopAmount)";
                 
                     db.Parameters.Clear();
-                    db.Parameters.Add("@Version_ID", Version_ID);
+                    db.Parameters.Add("@ProjectID", ProjectID);
                     db.Parameters.Add("@AccountingItem", totalFee.accountingItem ?? "");
                     db.Parameters.Add("@SubsidyAmount", subsidyAmount.HasValue ? (object)subsidyAmount.Value : DBNull.Value);
                     db.Parameters.Add("@CoopAmount", coopAmount.HasValue ? (object)coopAmount.Value : DBNull.Value);
@@ -378,6 +378,387 @@ public class OFS_SciFundingHelper
             catch (Exception ex)
             {
                 throw new Exception($"儲存經費總表時發生錯誤: {ex.Message}", ex);
+            }
+        }
+    }
+
+    // 新增讀取資料的方法
+    public static List<PersonRow> GetPersonFormList(string ProjectID)
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            try
+            {
+                db.CommandText = @"
+                SELECT ProjectID, Name, IsPending, JobTitle, AvgSalary, Month
+                FROM OFS_SCI_PersonnelCost_PersonForm
+                WHERE ProjectID = @ProjectID
+                ORDER BY Name";
+                
+                db.Parameters.Clear();
+                db.Parameters.Add("@ProjectID", ProjectID);
+                
+                DataTable dt = db.GetTable();
+                List<PersonRow> personList = new List<PersonRow>();
+                
+                foreach (DataRow row in dt.Rows)
+                {
+                    var person = new PersonRow
+                    {
+                        name = row["Name"]?.ToString() ?? "",
+                        stay = row["IsPending"] != DBNull.Value ? Convert.ToBoolean(row["IsPending"]) : false,
+                        title = row["JobTitle"]?.ToString() ?? "",
+                        salary = row["AvgSalary"] != DBNull.Value ? Convert.ToDecimal(row["AvgSalary"]) : 0,
+                        months = row["Month"] != DBNull.Value ? Convert.ToDecimal(row["Month"]) : 0
+                    };
+                    personList.Add(person);
+                }
+                
+                return personList;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"讀取人員資料時發生錯誤: {ex.Message}", ex);
+            }
+        }
+    }
+
+    public static List<MaterialRow> GetMaterialList(string ProjectID)
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            try
+            {
+                db.CommandText = @"
+                SELECT ProjectID, ItemName, Description, Unit, PreNum, UnitPrice
+                FROM OFS_SCI_PersonnelCost_Material
+                WHERE ProjectID = @ProjectID
+                ORDER BY ItemName";
+                
+                db.Parameters.Clear();
+                db.Parameters.Add("@ProjectID", ProjectID);
+                
+                DataTable dt = db.GetTable();
+                List<MaterialRow> materialList = new List<MaterialRow>();
+                
+                foreach (DataRow row in dt.Rows)
+                {
+                    var material = new MaterialRow
+                    {
+                        name = row["ItemName"]?.ToString() ?? "",
+                        description = row["Description"]?.ToString() ?? "",
+                        unit = row["Unit"]?.ToString() ?? "",
+                        quantity = row["PreNum"] != DBNull.Value ? Convert.ToDecimal(row["PreNum"]) : 0,
+                        unitPrice = row["UnitPrice"] != DBNull.Value ? Convert.ToDecimal(row["UnitPrice"]) : 0
+                    };
+                    materialList.Add(material);
+                }
+                
+                return materialList;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"讀取材料資料時發生錯誤: {ex.Message}", ex);
+            }
+        }
+    }
+
+    public static List<ResearchFeeRow> GetResearchFeesList(string ProjectID)
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            try
+            {
+                db.CommandText = @"
+                SELECT ProjectID, FeeCategory, StartDate, EndDate, Name, PersonName, Price
+                FROM OFS_SCI_PersonnelCost_ResearchFees
+                WHERE ProjectID = @ProjectID
+                ORDER BY FeeCategory";
+                
+                db.Parameters.Clear();
+                db.Parameters.Add("@ProjectID", ProjectID);
+                
+                DataTable dt = db.GetTable();
+                List<ResearchFeeRow> feeList = new List<ResearchFeeRow>();
+                
+                foreach (DataRow row in dt.Rows)
+                {
+                    var fee = new ResearchFeeRow
+                    {
+                        category = row["FeeCategory"]?.ToString() ?? "",
+                        dateStart = ConvertDateToString(row["StartDate"]),
+                        dateEnd = ConvertDateToString(row["EndDate"]),
+                        projectName = row["Name"]?.ToString() ?? "",
+                        targetPerson = row["PersonName"]?.ToString() ?? "",
+                        price = row["Price"] != DBNull.Value ? Convert.ToDecimal(row["Price"]) : 0
+                    };
+                    feeList.Add(fee);
+                }
+                
+                return feeList;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"讀取研究費資料時發生錯誤: {ex.Message}", ex);
+            }
+        }
+    }
+
+    public static List<TravelRow> GetTripFormList(string ProjectID)
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            try
+            {
+                db.CommandText = @"
+                SELECT ProjectID, TripReason, Area, Days, Times, Price
+                FROM OFS_SCI_PersonnelCost_TripForm
+                WHERE ProjectID = @ProjectID
+                ORDER BY TripReason";
+                
+                db.Parameters.Clear();
+                db.Parameters.Add("@ProjectID", ProjectID);
+                
+                DataTable dt = db.GetTable();
+                List<TravelRow> travelList = new List<TravelRow>();
+                
+                foreach (DataRow row in dt.Rows)
+                {
+                    var travel = new TravelRow
+                    {
+                        reason = row["TripReason"]?.ToString() ?? "",
+                        area = row["Area"]?.ToString() ?? "",
+                        days = row["Days"] != DBNull.Value ? Convert.ToDecimal(row["Days"]) : 0,
+                        people = row["Times"] != DBNull.Value ? Convert.ToDecimal(row["Times"]) : 0,
+                        price = row["Price"] != DBNull.Value ? Convert.ToDecimal(row["Price"]) : 0
+                    };
+                    travelList.Add(travel);
+                }
+                
+                return travelList;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"讀取差旅費資料時發生錯誤: {ex.Message}", ex);
+            }
+        }
+    }
+
+    public static List<OtherFeeRow> GetOtherPersonFeeList(string ProjectID)
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            try
+            {
+                db.CommandText = @"
+                SELECT ProjectID, JobTitle, AvgSalary, Month, PeopleNum
+                FROM OFS_SCI_PersonnelCost_OtherPersonFee
+                WHERE ProjectID = @ProjectID
+                ORDER BY JobTitle";
+                
+                db.Parameters.Clear();
+                db.Parameters.Add("@ProjectID", ProjectID);
+                
+                DataTable dt = db.GetTable();
+                List<OtherFeeRow> feeList = new List<OtherFeeRow>();
+                
+                foreach (DataRow row in dt.Rows)
+                {
+                    var fee = new OtherFeeRow
+                    {
+                        title = row["JobTitle"]?.ToString() ?? "",
+                        avgSalary = row["AvgSalary"] != DBNull.Value ? Convert.ToDecimal(row["AvgSalary"]) : 0,
+                        months = row["Month"] != DBNull.Value ? Convert.ToDecimal(row["Month"]) : 0,
+                        people = row["PeopleNum"] != DBNull.Value ? Convert.ToDecimal(row["PeopleNum"]) : 0
+                    };
+                    feeList.Add(fee);
+                }
+                
+                return feeList;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"讀取其他人事費資料時發生錯誤: {ex.Message}", ex);
+            }
+        }
+    }
+
+    public static List<OtherRent> GetOtherObjectFeeList(string ProjectID)
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            try
+            {
+                db.CommandText = @"
+                SELECT ProjectID, Name, Price, CalDescription
+                FROM OFS_SCI_PersonnelCost_OtherObjectFee
+                WHERE ProjectID = @ProjectID
+                ORDER BY Name";
+                
+                db.Parameters.Clear();
+                db.Parameters.Add("@ProjectID", ProjectID);
+                
+                DataTable dt = db.GetTable();
+                List<OtherRent> rentList = new List<OtherRent>();
+                
+                foreach (DataRow row in dt.Rows)
+                {
+                    var rent = new OtherRent
+                    {
+                        item = row["Name"]?.ToString() ?? "",
+                        amount = row["Price"] != DBNull.Value ? Convert.ToDecimal(row["Price"]) : 0,
+                        note = row["CalDescription"]?.ToString() ?? ""
+                    };
+                    rentList.Add(rent);
+                }
+                
+                return rentList;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"讀取其他物件費資料時發生錯誤: {ex.Message}", ex);
+            }
+        }
+    }
+
+    public static List<TotalFeeRow> GetTotalFeeList(string ProjectID)
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            try
+            {
+                db.CommandText = @"
+                SELECT ProjectID, AccountingItem, SubsidyAmount, CoopAmount
+                FROM OFS_SCI_PersonnelCost_TotalFee
+                WHERE ProjectID = @ProjectID
+                ORDER BY AccountingItem";
+                
+                db.Parameters.Clear();
+                db.Parameters.Add("@ProjectID", ProjectID);
+                
+                DataTable dt = db.GetTable();
+                List<TotalFeeRow> totalFeeList = new List<TotalFeeRow>();
+                
+                foreach (DataRow row in dt.Rows)
+                {
+                    var totalFee = new TotalFeeRow
+                    {
+                        accountingItem = row["AccountingItem"]?.ToString() ?? "",
+                        subsidyAmount = row["SubsidyAmount"] != DBNull.Value ? Convert.ToDecimal(row["SubsidyAmount"]) : 0,
+                        coopAmount = row["CoopAmount"] != DBNull.Value ? Convert.ToDecimal(row["CoopAmount"]) : 0
+                    };
+                    totalFeeList.Add(totalFee);
+                }
+                
+                return totalFeeList;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"讀取經費總表資料時發生錯誤: {ex.Message}", ex);
+            }
+        }
+    }
+
+    // 輔助方法：將日期轉換為 HTML Date input 所需的格式 (yyyy-MM-dd)
+    private static string ConvertDateToString(object dateValue)
+    {
+        if (dateValue == null || dateValue == DBNull.Value)
+            return "";
+            
+        try
+        {
+            // 如果已經是字串格式
+            if (dateValue is string dateString)
+            {
+                // 嘗試解析字串日期
+                if (DateTime.TryParse(dateString, out DateTime parsedDate))
+                {
+                    return parsedDate.ToString("yyyy-MM-dd");
+                }
+                // 如果已經是正確格式，直接返回
+                if (System.Text.RegularExpressions.Regex.IsMatch(dateString, @"^\d{4}-\d{2}-\d{2}$"))
+                {
+                    return dateString;
+                }
+                return "";
+            }
+            
+            // 如果是 DateTime 類型
+            if (dateValue is DateTime dateTime)
+            {
+                return dateTime.ToString("yyyy-MM-dd");
+            }
+            
+            // 嘗試轉換為 DateTime
+            if (DateTime.TryParse(dateValue.ToString(), out DateTime convertedDate))
+            {
+                return convertedDate.ToString("yyyy-MM-dd");
+            }
+            
+            return "";
+        }
+        catch
+        {
+            return "";
+        }
+    }
+
+    /// <summary>
+    /// 更新 Form3Status
+    /// </summary>
+    /// <param name="projectId">ProjectID</param>
+    /// <param name="status">狀態 (暫存 或 完成)</param>
+    public static void UpdateForm3Status(string projectId, string status)
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            try
+            {
+                db.CommandText = @"
+                UPDATE OFS_SCI_Project_Main 
+                SET Form3Status = @Status
+                WHERE ProjectID = @ProjectId";
+                
+                db.Parameters.Clear();
+                db.Parameters.Add("@Status", status);
+                db.Parameters.Add("@ProjectId", projectId);
+                
+                db.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"更新 Form3Status 時發生錯誤: {ex.Message}", ex);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 更新 Form3Status 和 CurrentStep
+    /// </summary>
+    /// <param name="projectId">ProjectID</param>
+    /// <param name="status">狀態 (暫存 或 完成)</param>
+    /// <param name="currentStep">當前步驟</param>
+    public static void UpdateForm3StatusAndCurrentStep(string projectId, string status, string currentStep)
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            try
+            {
+                db.CommandText = @"
+                UPDATE OFS_SCI_Project_Main 
+                SET Form3Status = @Status, CurrentStep = @CurrentStep
+                WHERE ProjectID = @ProjectId";
+                
+                db.Parameters.Clear();
+                db.Parameters.Add("@Status", status);
+                db.Parameters.Add("@CurrentStep", currentStep);
+                db.Parameters.Add("@ProjectId", projectId);
+                
+                db.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"更新 Form3Status 和 CurrentStep 時發生錯誤: {ex.Message}", ex);
             }
         }
     }

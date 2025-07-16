@@ -29,6 +29,7 @@ public class SysUnitHelper
         db.CommandText =
             @"SELECT [UnitID]
             ,[UnitName]
+            ,[GovUnitTypeID]
             ,[ParentUnitID]
             ,[IsValid]
             FROM Sys_Unit
@@ -36,6 +37,16 @@ public class SysUnitHelper
         db.Parameters.Clear();
 
         return db.GetTable();
+    }
+
+    /// <summary>
+    /// 查詢全部 
+    /// </summary>
+    /// <returns></returns>
+    public static GisTable QueryAllOrderByUnitID()
+    {
+        // 使用核心查詢方法，查詢全部（govUnitTypeID = null），包含 GovUnitTypeName
+        return QueryUnitsCore(null, true);
     }
 
     /// <summary>
@@ -49,6 +60,7 @@ public class SysUnitHelper
         db.CommandText =
             @"SELECT [UnitID]
             ,[UnitName]
+            ,[GovUnitTypeID]
             ,[ParentUnitID]
             ,[IsValid]
             FROM Sys_Unit
@@ -58,6 +70,17 @@ public class SysUnitHelper
         db.Parameters.Add("@ParentUnitID", parentUnitID);
 
         return db.GetTable();
+    }
+
+    /// <summary>
+    /// 查詢系統單位By GovUnitTypeID (按照排序規則)
+    /// </summary>
+    /// <param name="govUnitTypeID"></param>
+    /// <returns></returns>
+    public static GisTable QueryByGovUnitTypeID(int govUnitTypeID)
+    {
+        // 使用核心查詢方法，查詢特定類型，不包含 GovUnitTypeName
+        return QueryUnitsCore(govUnitTypeID, false);
     }
 
     /// <summary>
@@ -71,6 +94,7 @@ public class SysUnitHelper
         db.CommandText =
             @"SELECT [UnitID]
             ,[UnitName]
+            ,[GovUnitTypeID]
             ,[ParentUnitID]
             ,[IsValid]
             FROM Sys_Unit
@@ -118,6 +142,7 @@ public class SysUnitHelper
         db.CommandText =
             @"SELECT [UnitID]
             ,[UnitName]
+            ,[GovUnitTypeID]
             ,[ParentUnitID]
             ,[IsValid]
             FROM Sys_Unit
@@ -219,6 +244,94 @@ ORDER BY UnitID;";
     }
 
     /// <summary>
+    /// 核心查詢方法，供 QueryAllOrderByUnitID 和 QueryByGovUnitTypeID 共用
+    /// </summary>
+    /// <param name="govUnitTypeID">政府單位類型ID，null 表示查詢全部</param>
+    /// <param name="includeGovUnitTypeName">是否包含 GovUnitType 名稱</param>
+    /// <returns></returns>
+    private static GisTable QueryUnitsCore(int? govUnitTypeID, bool includeGovUnitTypeName)
+    {
+        DbHelper db = new DbHelper();
+        
+        // 建立基本查詢
+        string baseSelect = @"SELECT 
+            u.[UnitID]
+            ,u.[UnitName]
+            ,u.[GovUnitTypeID]";
+        
+        // 決定是否需要 JOIN 和額外欄位
+        string joinClause = "";
+        string additionalColumns = "";
+        if (includeGovUnitTypeName)
+        {
+            additionalColumns = @"
+            ,g.[TypeName] AS GovUnitTypeName";
+            joinClause = @"
+            JOIN Sys_GovUnitType g ON u.GovUnitTypeID = g.TypeID";
+        }
+        
+        // 加入其他欄位
+        string otherColumns = @"
+            ,u.[ParentUnitID]
+            ,u.[IsValid]";
+        
+        // WHERE 條件
+        string whereClause = @"
+            WHERE u.IsValid = 1";
+        if (govUnitTypeID.HasValue)
+        {
+            whereClause += @"
+            AND u.GovUnitTypeID = @GovUnitTypeID";
+        }
+        
+        // ORDER BY 條件
+        string orderByClause = @"
+            ORDER BY 
+                u.GovUnitTypeID,
+                CASE WHEN u.ParentUnitID IS NULL THEN u.UnitID ELSE u.ParentUnitID END,
+                CASE WHEN u.ParentUnitID IS NULL THEN 0 ELSE 1 END,
+                u.UnitID";
+        
+        // 組合完整的 SQL 語句
+        db.CommandText = baseSelect + additionalColumns + otherColumns + 
+                        @"
+            FROM Sys_Unit u" + joinClause + whereClause + orderByClause;
+        
+        db.Parameters.Clear();
+        if (govUnitTypeID.HasValue)
+        {
+            db.Parameters.Add("@GovUnitTypeID", govUnitTypeID.Value);
+        }
+        
+        GisTable table = db.GetTable();
+        
+        // 處理單位名稱顯示格式
+        FormatUnitNames(table);
+        
+        return table;
+    }
+
+    /// <summary>
+    /// 格式化單位名稱（子單位前加空格）
+    /// </summary>
+    /// <param name="table">要格式化的資料表</param>
+    private static void FormatUnitNames(GisTable table)
+    {
+        if (table != null && table.Rows.Count > 0)
+        {
+            foreach (System.Data.DataRow r in table.Rows)
+            {
+                string unitName = r["UnitName"].ToString();
+                if (r["ParentUnitID"] != DBNull.Value && r["ParentUnitID"] != null)
+                {
+                    unitName = "　" + unitName;
+                }
+                r["UnitName"] = unitName;
+            }
+        }
+    }
+
+    /// <summary>
     /// 新增
     /// </summary>
     /// <param name="unit">單位資料</param>
@@ -232,12 +345,13 @@ ORDER BY UnitID;";
         try
         {
             db.CommandText = @"INSERT INTO Sys_Unit
-                                      ([UnitName],[ParentUnitID],[IsValid])
-                               VALUES (@UnitName,@ParentUnitID,@IsValid)";
+                                      ([UnitName],[ParentUnitID],[GovUnitTypeID],[IsValid])
+                               VALUES (@UnitName,@ParentUnitID,@GovUnitTypeID,@IsValid)";
 
             db.Parameters.Clear();
             db.Parameters.Add("@UnitName", unit.UnitName);
             db.Parameters.Add("@ParentUnitID", unit.ParentUnitID);
+            db.Parameters.Add("@GovUnitTypeID", unit.GovUnitTypeID);
             db.Parameters.Add("@IsValid", true);
 
             GisTable Dt1 = db.GetTable();
@@ -267,7 +381,8 @@ ORDER BY UnitID;";
             db.CommandText = @"
             UPDATE Sys_Unit
                SET UnitName = @UnitName,
-                   ParentUnitID = @ParentUnitID
+                   ParentUnitID = @ParentUnitID,
+                   GovUnitTypeID = @GovUnitTypeID
              WHERE UnitID  = @UnitID
 
             SELECT CAST(@@ROWCOUNT AS INT);
@@ -275,6 +390,7 @@ ORDER BY UnitID;";
             db.Parameters.Clear();
             db.Parameters.Add("@UnitName", unit.UnitName);
             db.Parameters.Add("@ParentUnitID", unit.ParentUnitID);
+            db.Parameters.Add("@GovUnitTypeID", unit.GovUnitTypeID);
             db.Parameters.Add("@UnitID", unit.UnitID);
 
             // 取得影響的行數
@@ -334,4 +450,28 @@ ORDER BY UnitID;";
 
         return rowsAffected > 0;
     }
+
+    /// <summary>
+    /// 查詢所有父單位（ParentUnitID 為 NULL 的單位）
+    /// </summary>
+    /// <returns></returns>
+    public static GisTable QueryParentUnits()
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText =
+            @"SELECT [UnitID]
+            ,[UnitName]
+            ,[GovUnitTypeID]
+            ,[ParentUnitID]
+            ,[IsValid]
+            FROM Sys_Unit
+            WHERE IsValid = 1
+            AND ParentUnitID IS NULL
+            AND UnitName <> N'其他'
+            ORDER BY UnitID";
+        db.Parameters.Clear();
+
+        return db.GetTable();
+    }
+
 }
