@@ -8,6 +8,7 @@ using System.Net.Mail;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using System.Xml.Linq;
 using GS.App;
 using GS.Data;
 using GS.Extension;
@@ -289,11 +290,11 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
                     string displayName = GetUnitDisplayName(r["UnitID"].ToString().toInt());
                     ddlUnit.Items.Add(new ListItem(displayName, r["UnitID"].ToString()));
                 }
-                // 設定預設選取為UserInfo.UnitID
-                if (ddlUnit.Items.FindByValue(UserInfo.UnitID) != null)
-                    ddlUnit.SelectedValue = UserInfo.UnitID;
                 ddlUnit.Enabled = false;
             }
+            // 設定預設選取為UserInfo.UnitID
+            if (ddlUnit.Items.FindByValue(UserInfo.UnitID) != null)
+                ddlUnit.SelectedValue = UserInfo.UnitID;
         }
         // 活動名稱
         txtActivityName.Text = string.Empty;
@@ -326,6 +327,7 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
         txtActivityOverview.Text = string.Empty;
         txtSurveyScope.Text = string.Empty;
         lblLastUpdated.Text = string.Empty;
+        txtCorrectionNotes.Text = string.Empty;        
         // List初始化
         ExecList = new List<ExecutorItem>();
         ResearchPeriodList = new List<PeriodItem>();
@@ -333,7 +335,33 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
         SurveyScopeList = new List<SurveyScopeItem>();
         CarrierList = new List<CarrierItem>();
 
+        // 新增時隱藏歷程按鈕
+        btnHistory.Visible = false;
 
+        // 控制標示修正說明欄位的顯示
+        SetCorrectionNotesVisibility();
+
+
+    }
+
+    /// <summary>
+    /// 設定修正說明欄位的顯示狀態
+    /// </summary>
+    private void SetCorrectionNotesVisibility()
+    {
+        if (IsNew)
+        {
+            // 新增時不顯示修正說明
+            trCorrectionNotes.Visible = false;
+            rfvCorrectionNotes.Enabled = false;
+        }
+        else
+        {
+            // 編輯時，判斷是否為非填報區間
+            bool isOutOfPeriod = !OSIDataPeriodsHelper.IsInPeriodByID(reportSave.PeriodID);
+            trCorrectionNotes.Visible = isOutOfPeriod;
+            rfvCorrectionNotes.Enabled = isOutOfPeriod;
+        }
     }
 
     // 編輯資料綁定
@@ -348,7 +376,9 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
         if (periodTbl != null && periodTbl.Rows.Count > 0)
         {
             var r = periodTbl.Rows[0];
-            lblDataPeriod.Text = r["PeriodYear"].ToString() + "年" + r["PeriodQuarter"].ToString();
+            string dataPeriod = r["PeriodYear"].ToString() + "年" + r["PeriodQuarter"].ToString();
+            lblDataPeriod.Text = dataPeriod;
+            lblCorrectionNotes.Text = "目前非「" + dataPeriod + "」填報期間，請針對本次修該填寫說明";
         }
         // 填報機關
         if (ddlUnit.Items.FindByValue(report.ReportingUnitID.ToString()) != null)
@@ -448,7 +478,7 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
         GisTable tbl = SysUserHelper.QueryUserByID(report.LastUpdatedBy.ToString());
         if (tbl != null && tbl.Rows.Count > 0)
             userName = tbl.Rows[0]["Name"].ToString();
-        lblLastUpdated.Text = report.LastUpdated.ToString("yyyy/MM/dd HH:mm") + " " + unitName + " " + userName;
+        lblLastUpdated.Text = DateTimeHelper.ToMinguoDateTime(report.LastUpdated) + " " + unitName + " " + userName;
         // 圖台按鈕新增ReportID
         btnOpenMap.Attributes["data-reportid"] = ReportID.ToString();
 
@@ -458,6 +488,14 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
             // 將 GeoData 存入隱藏欄位，供前端使用
             hdnGeo3826WKT.Value = report.GeoData;
         }
+
+        // 檢查是否有歷史記錄
+        var reportIds = new List<int> { ReportID };
+        var historyStatus = OSIActivityReportsHistoryHelper.CheckHistoryExists(reportIds);
+        btnHistory.Visible = historyStatus.ContainsKey(ReportID) && historyStatus[ReportID];
+
+        // 控制標示修正說明欄位的顯示
+        SetCorrectionNotesVisibility();
 
     }
     private void BindExecRepeater()
@@ -513,29 +551,43 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
 
     protected void btnAddRes_Click(object sender, EventArgs e)
     {
-        if (DateTimeHelper.TryParseMinguoDate(txtResFrom.Text, out var f)
-         && DateTimeHelper.TryParseMinguoDate(txtResTo.Text, out var t)
-         && f <= t)
+        try
         {
-            ResearchPeriodList.Add(new PeriodItem
+            if (DateTimeHelper.TryParseMinguoDate(txtResFrom.Text, out var f)
+             && DateTimeHelper.TryParseMinguoDate(txtResTo.Text, out var t))
             {
-                StartDate = f,
-                EndDate = t,
-                StartDateRoc = f.ToMinguoDate(),
-                EndDateRoc = t.ToMinguoDate(),
-                PeriodLabel = txtResRemark.Text.Trim(),
-                IsNew = true,
-                IsDel = false
-            });
-            BindResRepeater();
-            txtResFrom.Text = "";
-            txtResTo.Text = "";
-            txtResRemark.Text = "";
+                if (f > t)
+                {
+                    ScriptManager.RegisterStartupScript(this.Page, this.Page.GetType(), "dateError",
+                        "showGlobalMessage('結束日期 不可大於 起始日期');", true);
+                    return;
+                }
 
-            // 重新設定readonly屬性（因為UpdatePanel更新後會遺失）
-            ScriptManager.RegisterStartupScript(this, this.GetType(), "setReadonly",
-                "$('#" + txtResFrom.ClientID + "').attr('readonly', 'readonly');" +
-                "$('#" + txtResTo.ClientID + "').attr('readonly', 'readonly');", true);
+                ResearchPeriodList.Add(new PeriodItem
+                {
+                    StartDate = f,
+                    EndDate = t,
+                    StartDateRoc = f.ToMinguoDate(),
+                    EndDateRoc = t.ToMinguoDate(),
+                    PeriodLabel = txtResRemark.Text.Trim(),
+                    IsNew = true,
+                    IsDel = false
+                });
+                BindResRepeater();
+                txtResFrom.Text = "";
+                txtResTo.Text = "";
+                txtResRemark.Text = "";
+
+                // 重新設定readonly屬性（因為UpdatePanel更新後會遺失）
+                ScriptManager.RegisterStartupScript(this.Page, this.Page.GetType(), "setReadonly",
+                    "$('#" + txtResFrom.ClientID + "').attr('readonly', 'readonly');" +
+                    "$('#" + txtResTo.ClientID + "').attr('readonly', 'readonly');", true);
+            }
+        }
+        catch
+        {
+            ScriptManager.RegisterStartupScript(this.Page, this.Page.GetType(), "formatError",
+                "showGlobalMessage('日期格式錯誤');", true);
         }
     }
 
@@ -728,7 +780,6 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
     /// <summary>
     /// 儲存（Insert 或 Update）
     /// </summary>
-
     protected void btnSave_Click(object sender, EventArgs e)
     {
         // 呼叫 UserControl 的 Save
@@ -737,8 +788,8 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
         {
             // 成功後可跳轉或顯示訊息
             ScriptManager.RegisterStartupScript(
-                this,
-                this.GetType(),
+                this.Page,
+                this.Page.GetType(),
                 "saveOk",
                 "showGlobalMessage('儲存成功');",
                 true
@@ -747,12 +798,23 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
         else
         {
             ScriptManager.RegisterStartupScript(
-                this,
-                this.GetType(),
+                this.Page,
+                this.Page.GetType(),
                 "saveNotOk",
                 "showGlobalMessage('儲存失敗，請重新嘗試');",
                 true
             );
+        }
+    }
+
+    /// <summary>
+    /// 查看歷程
+    /// </summary>
+    protected void btnHistory_Click(object sender, EventArgs e)
+    {
+        if (ReportID > 0)
+        {
+            Response.Redirect($"~/OSI/ActivityReportHistory.aspx?ReportID={ReportID}");
         }
     }
 
@@ -1015,7 +1077,8 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
             if (!OSIDataPeriodsHelper.IsInPeriodByID(reportSave.PeriodID))
             {
                 OSI_ActivityReports oldReport = OSIActivityReportsHelper.QueryByIDWithClass(ReportID.ToString());
-                OSIActivityReportsHistoryHelper.InsertReport(oldReport);
+                string correctionNotes = txtCorrectionNotes.Text.Trim();
+                OSIActivityReportsHistoryHelper.InsertReport(oldReport, correctionNotes);
             }
 
             try

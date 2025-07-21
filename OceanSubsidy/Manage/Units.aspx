@@ -22,7 +22,26 @@
 </asp:Content>
 
 <asp:Content ID="C2" ContentPlaceHolderID="MainContent" runat="server">
-    <div class="block rounded-4">
+    <div class="search">
+        <h3><i class="fa-solid fa-magnifying-glass"></i>查詢</h3>
+        <div class="search-form">
+            <div class="row-line">
+                <div class="search-item">
+                    <div class="fs-16 text-gray mb-2">政府機關類別</div>
+                    <asp:RadioButtonList ID="rblSearchGovUnitType" runat="server"
+                        RepeatDirection="Horizontal"
+                        RepeatLayout="Flow"
+                        CssClass="form-check-input-group" />
+                </div>
+                <asp:LinkButton ID="btnSearchUnit" runat="server" CssClass="btn btn-blue" OnClick="btnSearchUnit_Click">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    查詢
+                </asp:LinkButton>
+            </div>
+        </div>
+    </div>
+
+    <div class="block rounded-bottom-4">
         <div class="title">
             <h4>
                 <img src="<%= ResolveUrl("~/assets/img/title-icon02.svg") %>" alt="logo" />
@@ -120,6 +139,7 @@
                 </nav>
             </ContentTemplate>
             <Triggers>
+                <asp:AsyncPostBackTrigger ControlID="btnSearchUnit" EventName="Click" />
                 <asp:AsyncPostBackTrigger ControlID="btnSave" EventName="Click" />
                 <asp:AsyncPostBackTrigger ControlID="btnConfirmDelete" EventName="Click" />
                 <asp:AsyncPostBackTrigger ControlID="lvUnits" EventName="PagePropertiesChanging" />
@@ -256,7 +276,12 @@
             function applyClasses() {
                 $('#<%= rblGovUnitType.ClientID %> input[type=radio]')
                     .addClass('form-check-input');
+                $('#<%= rblSearchGovUnitType.ClientID %> input[type=radio]')
+                    .addClass('form-check-input');
             }
+
+            // 初始載入時套用樣式
+            applyClasses();
 
             $('#unitModal').on('shown.bs.modal', applyClasses);
 

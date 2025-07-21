@@ -537,7 +537,7 @@ VALUES
         db.CommandText = @"
         SELECT *
         FROM Sys_ZgsCode
-        WHERE CodeGroup = @CodeGroup
+        WHERE CodeGroup = @CodeGroup AND IsValid = '1'
         ORDER BY OrderNo";
 
         db.Parameters.Clear();
@@ -621,7 +621,6 @@ VALUES
                     Form3Status = row["Form3Status"]?.ToString(),
                     Form4Status = row["Form4Status"]?.ToString(),
                     Form5Status = row["Form5Status"]?.ToString(),
-                    Form6Status = row["Form6Status"]?.ToString(),
                     CurrentStep = row["CurrentStep"]?.ToString(),
                     created_at = row["created_at"] != DBNull.Value ? (DateTime?)row["created_at"] : null,
                     updated_at = row["updated_at"] != DBNull.Value ? (DateTime?)row["updated_at"] : null
@@ -662,7 +661,6 @@ VALUES
                 Form3Status,
                 Form4Status,
                 Form5Status,
-                Form6Status,
                 CurrentStep,
                 created_at,
                 updated_at
@@ -684,7 +682,6 @@ VALUES
                 @Form3Status,
                 @Form4Status,
                 @Form5Status,
-                @Form6Status,
                 @CurrentStep,
                 @created_at,
                 @updated_at
@@ -707,7 +704,6 @@ VALUES
             db.Parameters.Add("@Form3Status", version.Form3Status);
             db.Parameters.Add("@Form4Status", version.Form4Status);
             db.Parameters.Add("@Form5Status", version.Form5Status);
-            db.Parameters.Add("@Form6Status", version.Form6Status);
             db.Parameters.Add("@CurrentStep", version.CurrentStep);
             db.Parameters.Add("@created_at", version.created_at ?? (object)DBNull.Value);
             db.Parameters.Add("@updated_at", version.updated_at ?? (object)DBNull.Value);
@@ -755,7 +751,6 @@ VALUES
             AddIfNotNull("Form3Status", version.Form3Status);
             AddIfNotNull("Form4Status", version.Form4Status);
             AddIfNotNull("Form5Status", version.Form5Status);
-            AddIfNotNull("Form6Status", version.Form6Status);
             AddIfNotNull("CurrentStep", version.CurrentStep);
             AddIfNotNull("created_at", version.created_at);
             AddIfNotNull("updated_at", version.updated_at);
@@ -783,4 +778,5 @@ VALUES
             }
         }
     }
+
 }

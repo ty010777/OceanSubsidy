@@ -1,0 +1,44 @@
+.mis-content:has(.scroll-bottom-panel) {
+    position: relative;
+}
+
+.scroll-bottom-panel {
+    padding: 16px 32px;
+    background-color: $butter-yellow;
+    position: sticky;
+    bottom: 0;
+    margin: 0 auto;
+    max-width: 1440px;
+    width: 100%;
+    z-index: 20;
+    border-radius: 20px 20px 0px 0px;
+    box-shadow: 0px -4px 20px 0px rgba(0, 0, 0, 0.25);
+    transition: 0.3s ease-in-out;
+    h5 {
+        display: none;
+    }
+
+}
+
+body.scroll-down {
+
+    .scroll-bottom-panel {
+        h5 {
+            display: block;
+        }
+
+    }
+}
+
+.checkPass {
+    span.form-control.textarea {
+        display: none;
+    }
+}
+
+.checkPass:has(.radioFail:checked),
+.checkPass:has(.radioReturn:checked) {
+    span.form-control.textarea {
+        display: block;
+    }
+}

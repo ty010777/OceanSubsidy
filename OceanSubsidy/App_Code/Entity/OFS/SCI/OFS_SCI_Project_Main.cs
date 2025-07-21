@@ -578,42 +578,6 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
                 }
             }
         }
-        
-        protected string _Form6Status = "";
-        ///<summary>
-        /// 申請表單填寫狀態(上傳附件) (申請表單填寫狀態(上傳附件))
-        ///</summary>
-        [DataMember]
-        [GisFieldAttribute("Form6Status", "Form6Status", DataSource.TABLE, "申請表單填寫狀態(上傳附件)", false)]
-        public virtual string Form6Status
-        {
-            get
-            {
-                return _Form6Status;
-            }
-            set
-            {
-                bool isModify = false;
-                if (_Form6Status == null) {
-                    if(value != null) {
-                        isModify = true;
-                    }
-                }
-                else if (!_Form6Status.Equals(value))
-                {
-                    isModify = true;
-                }
-                if(isModify) {
-                    MetaDataState = DataState.UPDATE;
-                    if (UPDATE_COLUMN.IndexOf("Form6Status") == -1)
-                    {
-                        UPDATE_COLUMN.Add("Form6Status");
-                    }
-                    _Form6Status = value;
-                }
-            }
-        }
-        
         protected string _CurrentStep = "";
         ///<summary>
         /// 當前狀態 (當前狀態)

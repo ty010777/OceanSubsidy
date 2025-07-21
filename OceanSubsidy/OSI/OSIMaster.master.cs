@@ -13,10 +13,12 @@ public partial class OSI_OSIMaster : System.Web.UI.MasterPage
         if (!IsPostBack)
         {
             var userInfo = SessionHelper.Get<SessionHelper.UserInfoClass>(SessionHelper.UserInfo);
+            liActivityManage.Visible = false;
             if (userInfo != null)
             {
                 lblUserName.Text = userInfo.UserName;
                 lblUnit.Text = userInfo.UnitName;
+                liActivityManage.Visible = SysPermissionHelper.HasAnyChildPermsWithOSIByID(userInfo.UserID, "OSI_MANAGE");
             }
 
             HighlightCurrentMenu();

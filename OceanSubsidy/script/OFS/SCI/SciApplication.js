@@ -94,10 +94,11 @@ const SciApplication = {
 const KeywordManager = {
     keywordCounter: 0,
     minKeywords: 3,
+    isDataLoaded: false, // 標記是否已載入資料
     
     //#region 初始化
     init: function () {
-        this.initializeDefaultKeywords();
+        // 不再自動初始化預設欄位，等後端資料
         this.bindEvents();
     },
 
@@ -143,7 +144,9 @@ const KeywordManager = {
     // 新增關鍵字欄位
     addKeywordField: function (chineseValue = '', englishValue = '') {
         const container = document.getElementById('keywordsContainer');
-        if (!container) return;
+        if (!container) {
+            return;
+        }
 
         this.keywordCounter++;
         const keywordId = this.keywordCounter;
@@ -222,30 +225,37 @@ const KeywordManager = {
     //#region 資料載入
     // 載入關鍵字資料
     loadFromData: function (keywordsArray) {
-
-        if (!keywordsArray || !Array.isArray(keywordsArray)) {
-            this.initializeDefaultKeywords();
+        const container = document.getElementById('keywordsContainer');
+        if (!container) {
             return;
         }
-
-        const container = document.getElementById('keywordsContainer');
-        if (!container) return;
 
         // 清空容器
         container.innerHTML = '';
         this.keywordCounter = 0;
 
-        // 確保至少有3個關鍵字欄位
-        const keywordsToLoad = Math.max(keywordsArray.length, this.minKeywords);
-
-        for (let i = 0; i < keywordsToLoad; i++) {
-            const keyword = keywordsArray[i] || { chinese: '', english: '' };
-            const chineseValue = keyword.chinese || keyword.KeyWordTw || '';
-            const englishValue = keyword.english || keyword.KeyWordEn || '';
-            
-            this.addKeywordField(chineseValue, englishValue);
+        // 後端保證會給 3 筆資料，直接載入
+        if (keywordsArray && Array.isArray(keywordsArray)) {
+            keywordsArray.forEach((keyword, i) => {
+                const chineseValue = keyword.KeyWordTw || '';
+                const englishValue = keyword.KeyWordEn || '';
+                
+                this.addKeywordField(chineseValue, englishValue);
+            });
         }
 
+    },
+
+    // 載入現有關鍵字資料 (提供給後端呼叫)
+    loadExistingKeywords: function (keywordsArray) {
+        // 檢查是否有容器，如果沒有就等等再試
+        const container = document.getElementById('keywordsContainer');
+        if (!container) {
+            setTimeout(() => this.loadExistingKeywords(keywordsArray), 100);
+            return;
+        }
+        
+        this.loadFromData(keywordsArray);
     },
     //#endregion
 
@@ -264,8 +274,8 @@ const KeywordManager = {
                 const enValue = enInput.value ? enInput.value.trim() : '';
                 
                 keywords.push({
-                    chinese: chValue,
-                    english: enValue
+                    KeyWordTw: chValue,
+                    KeyWordEn: enValue
                 });
             }
         });
@@ -300,7 +310,7 @@ const KeywordManager = {
         }
 
         keywords.forEach((keyword, index) => {
-            if (!keyword.chinese || !keyword.english) {
+            if (!keyword.KeyWordTw || !keyword.KeyWordEn) {
                 errors.push(`第${index + 1}個關鍵字需要同時填寫中文和英文`);
             }
         });

@@ -77,6 +77,24 @@
         color: #fff;
     }
 }
+.btn-royal-blue {
+    background-color: $royal-blue;
+    color: #fff;
+    border: 1px solid $royal-blue;
+    border-radius: 4px;
+    &:hover {
+        background-color: lighten($royal-blue, 20%);
+        color: #fff;
+    }
+    &:active {
+        background-color: darken($royal-blue, 10%) !important ;
+        color: #fff !important;
+    }
+    &:focus {
+        background-color: darken($royal-blue, 10%);
+        color: #fff;
+    }
+}
 
 .btn-ocean-blue {
     background-color: $ocean-blue;
@@ -152,7 +170,25 @@
         background-color: $teal-dark-active;
         color: #fff;
     }
+}
 
+.btn-pink {
+    background-color: $pink;
+    color: #fff;
+    border: 1px solid $pink;
+    border-radius: 4px;
+    &:hover {
+        background-color: lighten($pink, 10%);
+        color: #fff;
+    }
+    &:active {
+        background-color: darken($pink, 10%) !important ;
+        color: #fff !important;
+    }
+    &:focus {
+        background-color: darken($pink, 10%);
+        color: #fff;
+    } 
 }
 
 .btn-outline-blue {
@@ -239,9 +275,58 @@
 }
 
 .btn-sm {
+    display: flex;
     padding: 8px;
     min-width: unset;
     font-size: 1rem;
     text-align: center;
     margin-bottom: 6px;
+    svg {
+        height: 14px;
+        width: 14px;
+    }
+}
+
+.btn-group-teal-dark {
+    display: flex;
+    border-radius: 4px;
+    border: 1px solid $teal-dark;
+    input {
+        display: none;
+    }
+    label {
+        margin: 0;
+        padding: 8px 10px;
+        border-radius: 0;
+        border: none;
+        cursor: pointer;
+        color: $teal-dark;
+        line-height: normal;
+    }
+    input:checked + label {
+        background-color: $teal-dark;
+        color: #fff;
+    }
+}
+//核定模式&排序模式切換顯示
+.block:has(.btn-group-teal-dark .approval-mode:checked ) {
+    .approval-mode-table {
+        display: block;
+    }
+    .sort-mode-table {
+        display: none;
+    }
+}
+.block:has(.btn-group-teal-dark .sort-mode:checked ) {
+    .approval-mode-table {
+        display: none;
+    }
+    .sort-mode-table {
+        display: block;
+    }
+}
+
+.btn-tooltip {
+    outline: none;
+    border: none;
 }

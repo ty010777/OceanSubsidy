@@ -223,7 +223,7 @@ public class OFS_SciRecusedList : System.Web.UI.Page
     /// </summary>
     /// <param name="projectId">ProjectID</param>
     /// <param name="status">狀態 (暫存 或 完成)</param>
-    public static void UpdateForm5Status(string projectId, string status)
+    public static void UpdateForm4Status(string projectId, string status)
     {
         using (DbHelper db = new DbHelper())
         {
@@ -242,7 +242,7 @@ public class OFS_SciRecusedList : System.Web.UI.Page
             }
             catch (Exception ex)
             {
-                throw new Exception($"更新 Form5Status 時發生錯誤: {ex.Message}", ex);
+                throw new Exception($"更新 Form4Status 時發生錯誤: {ex.Message}", ex);
             }
         }
     }
@@ -253,7 +253,7 @@ public class OFS_SciRecusedList : System.Web.UI.Page
     /// <param name="projectId">ProjectID</param>
     /// <param name="status">狀態 (暫存 或 完成)</param>
     /// <param name="currentStep">當前步驟</param>
-    public static void UpdateForm5StatusAndCurrentStep(string projectId, string status, string currentStep)
+    public static void UpdateForm4StatusAndCurrentStep(string projectId, string status, string currentStep)
     {
         using (DbHelper db = new DbHelper())
         {
@@ -261,7 +261,7 @@ public class OFS_SciRecusedList : System.Web.UI.Page
             {
                 db.CommandText = @"
                 UPDATE OFS_SCI_Project_Main 
-                SET Form5Status = @Status, CurrentStep = @CurrentStep
+                SET Form4Status = @Status, CurrentStep = @CurrentStep
                 WHERE ProjectID = @ProjectId";
                 
                 db.Parameters.Clear();
@@ -273,7 +273,7 @@ public class OFS_SciRecusedList : System.Web.UI.Page
             }
             catch (Exception ex)
             {
-                throw new Exception($"更新 Form5Status 和 CurrentStep 時發生錯誤: {ex.Message}", ex);
+                throw new Exception($"更新 Form4Status 和 CurrentStep 時發生錯誤: {ex.Message}", ex);
             }
         }
     }

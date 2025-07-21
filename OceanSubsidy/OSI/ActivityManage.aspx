@@ -131,7 +131,9 @@
                                                 <th width="80">排序</th>
                                                 <th width="150">填報週期</th>
                                                 <th width="360">日期區間</th>
-                                                <th width="150">填報數<br />
+                                                <th width="180">中央機關填報數<br />
+                                                    (已填/總單位數)</th>
+                                                <th width="180">縣市政府填報數<br />
                                                     (已填/總單位數)</th>
                                                 <th>活動範圍標示繪製顏色</th>
                                                 <th width="220">功能</th>
@@ -153,8 +155,11 @@
                                             <%# ((DateTime)Eval("StartDate")).ToMinguoDate() %> ～ 
                                             <%# ((DateTime)Eval("EndDate")).ToMinguoDate() %>
                                         </td>
-                                        <td data-th="填報數(已填/總單位數):">
-                                            <%# Eval("FilledCount") %> / <%# Eval("TotalUnit") %>
+                                        <td data-th="中央機關填報數(已填/總單位數):">
+                                            <%# Eval("CentralFilledCount") %> / <%# Eval("CentralTotalUnit") %>
+                                        </td>
+                                        <td data-th="縣市政府填報數(已填/總單位數):">
+                                            <%# Eval("LocalFilledCount") %> / <%# Eval("LocalTotalUnit") %>
                                         </td>
                                         <td data-th="活動範圍標示繪製顏色:" class="p-0">
                                             <span class="color-tag d-inline-block"
@@ -171,7 +176,7 @@
                                                     CssClass="btn btn-sm btn-outline-blue"
                                                     CommandName="Reminder"
                                                     CommandArgument='<%# Eval("PeriodID") %>'
-                                                    Visible='<%# (int)Eval("FilledCount") < (int)Eval("TotalUnit") %>'>
+                                                    Visible='<%# (int)Eval("CentralFilledCount") < (int)Eval("CentralTotalUnit") || (int)Eval("LocalFilledCount") < (int)Eval("LocalTotalUnit") %>'>
                                                     發送未填報提醒信
                                                 </asp:LinkButton>
                                             </div>
@@ -198,8 +203,11 @@
                                                     TextMode="SingleLine" />
                                             </div>
                                         </td>
-                                        <td data-th="填報數(已填/總單位數):">
-                                            <%# Eval("FilledCount") %> / <%# Eval("TotalUnit") %>
+                                        <td data-th="中央機關填報數(已填/總單位數):">
+                                            <%# Eval("CentralFilledCount") %> / <%# Eval("CentralTotalUnit") %>
+                                        </td>
+                                        <td data-th="縣市政府填報數(已填/總單位數):">
+                                            <%# Eval("LocalFilledCount") %> / <%# Eval("LocalTotalUnit") %>
                                         </td>
                                         <td data-th="活動範圍標示繪製顏色:" class="p-0">
                                             <asp:TextBox ID="txtEditColor" runat="server"

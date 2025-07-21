@@ -1,6 +1,6 @@
 .total-list {
-    display: grid;
-    grid-template-columns: repeat(8, 1fr);
+    display: flex;
+    flex-wrap: nowrap;
     background-color: $teal;
     color: #fff;
     padding: 10px;
@@ -11,9 +11,9 @@
     .total-item-title {
         font-size: 18px;
         margin-bottom: 16px;
-
     }
     .total-item {
+        flex: 1;
         >a {
             display: block;
             text-decoration: none;

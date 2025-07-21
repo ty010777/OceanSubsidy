@@ -87,6 +87,36 @@ WHERE ItemName = @ItemName
         return 0;
     }
 
+    /// <summary>
+    /// 根據ID查詢單筆研究項目
+    /// </summary>
+    /// <param name="itemID">研究項目ID</param>
+    /// <returns></returns>
+    public static GS.OCA_OceanSubsidy.Entity.OSI_ResearchItems GetItemByID(string itemID)
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText =
+            @"
+SELECT [ItemID]
+    ,[ItemName]
+FROM [OCA_OceanSubsidy].[dbo].[OSI_ResearchItems]
+WHERE ItemID = @ItemID
+";
+        db.Parameters.Clear();
+        db.Parameters.Add("@ItemID", itemID);
+
+        GisTable tbl = db.GetTable();
+        if (tbl != null && tbl.Rows.Count > 0)
+        {
+            var item = new GS.OCA_OceanSubsidy.Entity.OSI_ResearchItems();
+            item.ItemID = Convert.ToInt32(tbl.Rows[0]["ItemID"]);
+            item.ItemName = tbl.Rows[0]["ItemName"].ToString();
+            return item;
+        }
+
+        return null;
+    }
+
 
 
 

@@ -87,6 +87,36 @@ WHERE NatureName = @NatureName
         return 0;
     }
 
+    /// <summary>
+    /// 根據ID查詢單筆活動性質
+    /// </summary>
+    /// <param name="natureID">活動性質ID</param>
+    /// <returns></returns>
+    public static GS.OCA_OceanSubsidy.Entity.OSI_ActivityNatures GetNatureByID(string natureID)
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText =
+            @"
+SELECT [NatureID]
+    ,[NatureName]
+FROM [OCA_OceanSubsidy].[dbo].[OSI_ActivityNatures]
+WHERE NatureID = @NatureID
+";
+        db.Parameters.Clear();
+        db.Parameters.Add("@NatureID", natureID);
+
+        GisTable tbl = db.GetTable();
+        if (tbl != null && tbl.Rows.Count > 0)
+        {
+            var nature = new GS.OCA_OceanSubsidy.Entity.OSI_ActivityNatures();
+            nature.NatureID = Convert.ToInt32(tbl.Rows[0]["NatureID"]);
+            nature.NatureName = tbl.Rows[0]["NatureName"].ToString();
+            return nature;
+        }
+
+        return null;
+    }
+
 
 
 }

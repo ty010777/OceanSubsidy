@@ -154,6 +154,34 @@ WHERE IsValid = 1";
     }
 
     /// <summary>
+    /// 獲取最新的決標日期
+    /// </summary>
+    /// <returns>最新的決標日期，如果沒有資料則返回 null</returns>
+    public static DateTime? GetLatestAwardDate()
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText = @"
+SELECT TOP 1 AwardDate
+FROM [OCA_OceanSubsidy].[dbo].[OSI_PccAwardData]
+WHERE IsValid = 1 AND AwardDate IS NOT NULL
+ORDER BY AwardDate DESC";
+        
+        db.Parameters.Clear();
+        
+        var table = db.GetTable();
+        if (table != null && table.Rows.Count > 0)
+        {
+            var dateValue = table.Rows[0]["AwardDate"];
+            if (dateValue != DBNull.Value)
+            {
+                return Convert.ToDateTime(dateValue);
+            }
+        }
+        
+        return null;
+    }
+
+    /// <summary>
     /// Inert List資料
     /// </summary>
     /// <param name="datas"></param>

@@ -95,3 +95,28 @@
     }
 }
 
+.top-wrapper {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: $neutral-200;
+    padding-bottom: 24px;
+}
+
+.top-block {
+    background-color: $light-teal-100;
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 16px;
+
+}
+
+body.scroll-down {
+    .top-block {
+        border-radius: 0;
+        margin-bottom: 0;
+        border-radius: 0 0 16px 16px;
+    }
+}

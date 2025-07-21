@@ -18,6 +18,7 @@ public partial class Manage_Units : System.Web.UI.Page
         if (!IsPostBack)
         {
             BindGovUnitType();
+            BindSearchGovUnitType();
             BindList();
         }
 
@@ -30,11 +31,26 @@ public partial class Manage_Units : System.Web.UI.Page
         rblGovUnitType.DataTextField = "TypeName";
         rblGovUnitType.DataValueField = "TypeID";
         rblGovUnitType.DataBind();
-        
+
         // 預設選中第一筆
         if (rblGovUnitType.Items.Count > 0)
         {
             rblGovUnitType.SelectedIndex = 0;
+        }
+    }
+
+    void BindSearchGovUnitType()
+    {
+        var dt = SysGovUnitTypeHelper.QueryAll();
+        rblSearchGovUnitType.DataSource = dt;
+        rblSearchGovUnitType.DataTextField = "TypeName";
+        rblSearchGovUnitType.DataValueField = "TypeID";
+        rblSearchGovUnitType.DataBind();
+
+        // 預設選中第一筆
+        if (rblSearchGovUnitType.Items.Count > 0)
+        {
+            rblSearchGovUnitType.SelectedIndex = 0;
         }
     }
 
@@ -50,17 +66,47 @@ public partial class Manage_Units : System.Web.UI.Page
             LoadModalParents();
         }
     }
-    
+
+    protected void btnSearchUnit_Click(object sender, EventArgs e)
+    {
+        BindList();
+    }
+
 
     void BindList()
     {
-        var dt = SysUnitHelper.QueryAllOrderByUnitID();
-        
-        // 計算排序號碼
-        CalculateDisplayNumbers(dt);
-        
-        lvUnits.DataSource = dt;
-        lvUnits.DataBind();
+        DataTable dt;
+
+        // 根據選擇的政府機關類別查詢
+        if (!string.IsNullOrEmpty(rblSearchGovUnitType.SelectedValue))
+        {
+            int govUnitTypeID = Convert.ToInt32(rblSearchGovUnitType.SelectedValue);
+            dt = SysUnitHelper.QueryByGovUnitTypeID(govUnitTypeID, true);
+        }
+        else
+        {
+            dt = SysUnitHelper.QueryAllOrderByUnitID();
+        }
+
+        // 排除 UnitName="其他" 的資料 (使用 LINQ)
+        if (dt.Rows.Count > 0)
+        {
+            var filteredDt = dt.AsEnumerable()
+                .Where(row => row.Field<string>("UnitName") != "其他")
+                .CopyToDataTable();
+
+            // 計算排序號碼
+            CalculateDisplayNumbers(filteredDt);
+
+            lvUnits.DataSource = filteredDt;
+            lvUnits.DataBind();
+        }
+        else
+        {
+            // 如果沒有資料，清空列表
+            lvUnits.DataSource = null;
+            lvUnits.DataBind();
+        }
     }
 
     private void CalculateDisplayNumbers(DataTable dt)
@@ -74,7 +120,7 @@ public partial class Manage_Units : System.Web.UI.Page
         {
             int unitId = Convert.ToInt32(row["UnitID"]);
             object parentUnitIdObj = row["ParentUnitID"];
-            
+
             if (parentUnitIdObj == DBNull.Value || parentUnitIdObj == null)
             {
                 // 父單位
@@ -91,7 +137,7 @@ public partial class Manage_Units : System.Web.UI.Page
                     childCounts[parentUnitId] = 0;
                 }
                 childCounts[parentUnitId]++;
-                
+
                 if (parentCounts.ContainsKey(parentUnitId))
                 {
                     unitDisplayNumbers[unitId] = $"{parentCounts[parentUnitId]}-{childCounts[parentUnitId]}";
@@ -107,7 +153,7 @@ public partial class Manage_Units : System.Web.UI.Page
     public string GetDisplayNumber(object unitId)
     {
         if (unitId == null || unitId == DBNull.Value) return "";
-        
+
         int id = Convert.ToInt32(unitId);
         return unitDisplayNumbers.ContainsKey(id) ? unitDisplayNumbers[id] : "";
     }
@@ -116,7 +162,7 @@ public partial class Manage_Units : System.Web.UI.Page
     {
         // 準備新增
         hfUnitID.Value = "";
-        
+
         // 根據選中的政府機關類別載入單位
         if (!string.IsNullOrEmpty(rblGovUnitType.SelectedValue))
         {
@@ -126,7 +172,7 @@ public partial class Manage_Units : System.Web.UI.Page
         {
             LoadModalParents();
         }
-        
+
         txtModalName.Text = "";
 
         // 顯示 Modal
@@ -145,7 +191,7 @@ public partial class Manage_Units : System.Web.UI.Page
             var dr = dt.Rows[0];
 
             hfUnitID.Value = dr["UnitID"].ToString();
-            
+
             // 設定政府機關類別
             string govUnitTypeID = dr["GovUnitTypeID"]?.ToString() ?? "";
             if (!string.IsNullOrEmpty(govUnitTypeID) && rblGovUnitType.Items.FindByValue(govUnitTypeID) != null)
@@ -214,6 +260,10 @@ public partial class Manage_Units : System.Web.UI.Page
         // 查詢該單位是否有使用者
         tbl = SysUserHelper.QueryUserByUnitID(id);
         if (tbl.Rows.Count > 0)
+            return false;
+
+        // 查詢該單位是否有活動報告
+        if (OSIActivityReportsHelper.HasReportsByUnitID(id))
             return false;
 
         return true;

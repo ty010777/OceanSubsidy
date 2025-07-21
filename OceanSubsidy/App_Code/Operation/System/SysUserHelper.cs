@@ -48,7 +48,6 @@ public class SysUserHelper
                 ,[CreateTime]
                 ,[UpdateTime]
                 ,[PwdToken]
-                ,[LastLoginTime]
                 ,[IsActive]
             FROM Sys_User
             WHERE IsValid = 1";
@@ -81,7 +80,6 @@ public class SysUserHelper
                 ,[CreateTime]
                 ,[UpdateTime]
                 ,[PwdToken]
-                ,[LastLoginTime]
                 ,[IsActive]
             FROM Sys_User
             WHERE IsValid = 1
@@ -116,7 +114,6 @@ public class SysUserHelper
                 ,[CreateTime]
                 ,[UpdateTime]
                 ,[PwdToken]
-                ,[LastLoginTime]
                 ,[IsActive]
             FROM Sys_User
             WHERE IsValid = 1
@@ -152,7 +149,6 @@ public class SysUserHelper
                 ,[CreateTime]
                 ,[UpdateTime]
                 ,[PwdToken]
-                ,[LastLoginTime]
                 ,[IsActive]
             FROM Sys_User
             WHERE IsValid = 1
@@ -220,7 +216,6 @@ SELECT [UserID]
     ,[CreateTime]
     ,[UpdateTime]
     ,[PwdToken]
-    ,[LastLoginTime]
     ,[IsActive]
     ,[UnitName]
     ,[UnitType]
@@ -284,7 +279,6 @@ SELECT [UserID]
     ,[CreateTime]
     ,[UpdateTime]
     ,[PwdToken]
-    ,[LastLoginTime]
     ,[IsActive]
     ,[UnitName]
     ,[UnitType]
@@ -345,7 +339,6 @@ WHERE u.UserID = @userID";
                 ,us.[CreateTime]
                 ,us.[UpdateTime]
                 ,us.[PwdToken]
-                ,us.[LastLoginTime]
                 ,us.[IsActive]
                 ,un.[UnitName]
                 ,un.[ParentUnitID]
@@ -384,7 +377,6 @@ SELECT [UserID]
     ,[CreateTime]
     ,[UpdateTime]
     ,[PwdToken]
-    ,[LastLoginTime]
     ,[IsActive]
     ,[UnitName]
     ,[UnitType]
@@ -455,7 +447,6 @@ AND UserID = @userID";
     ,[CreateTime]
     ,[UpdateTime]
     ,[PwdToken]
-    ,[LastLoginTime]
     ,[IsActive]
     ,[UnitName]
     ,[UnitType]
@@ -938,48 +929,6 @@ DELETE [Sys_UserOFSRole] WHERE UserId = @UserID AND RoleID = @RoleID";
     }
 
     /// <summary>
-    /// 更新最後登入時間
-    /// </summary>
-    /// <returns></returns>
-    public static bool UpdateLastLoginTime(int userID)
-    {
-        var db = new DbHelper();
-        int rowsAffected = 0;
-
-        db.BeginTrans();
-        try
-        {
-            db.CommandText = @"
-            UPDATE Sys_User
-               SET LastLoginTime  = GETDATE(),
-                   UpdateTime = GETDATE()
-             WHERE UserID  = @userID
-               AND IsValid = 1
-
-            SELECT CAST(@@ROWCOUNT AS INT);
-            ";
-            db.Parameters.Clear();
-            db.Parameters.Add("@userID", userID);
-
-            // 取得影響的行數
-            object result = db.GetDataSet().Tables[0].Rows[0][0];
-            rowsAffected = (result == null ? 0 : Convert.ToInt32(result));
-
-            if (rowsAffected > 0)
-                db.Commit();
-            else
-                db.Rollback();
-        }
-        catch
-        {
-            db.Rollback();
-            rowsAffected = 0;
-        }
-
-        return rowsAffected > 0;
-    }
-
-    /// <summary>
     /// 更新停用狀態 By LastLoginTime
     /// </summary>
     /// <returns></returns>
@@ -994,7 +943,21 @@ DELETE [Sys_UserOFSRole] WHERE UserId = @UserID AND RoleID = @RoleID";
             db.CommandText = @"
 UPDATE Sys_User
 SET IsActive = 0
-WHERE LastLoginTime < DATEADD(year, -1, GETDATE())
+WHERE UserID IN (
+    SELECT u.UserID
+    FROM Sys_User u
+    LEFT JOIN (
+        SELECT UserID, MAX(LoginTime) AS LastLoginTime
+        FROM Sys_Login
+        GROUP BY UserID
+    ) l ON u.UserID = l.UserID
+    WHERE u.IsActive = 1
+    AND u.IsValid = 1
+    AND (
+        (l.LastLoginTime IS NULL AND u.UpdateTime < DATEADD(year, -1, GETDATE()))
+        OR (l.LastLoginTime IS NOT NULL AND l.LastLoginTime < DATEADD(year, -1, GETDATE()))
+    )
+)
 AND IsActive = 1;
 
 SELECT CAST(@@ROWCOUNT AS INT);
@@ -1043,7 +1006,6 @@ SELECT CAST(@@ROWCOUNT AS INT);
                     OSI_RoleID = @OSI_RoleID,
                     IsReceiveMail = @IsReceiveMail,
                     IsApproved = @IsApproved,
-                    LastLoginTime = GETDATE(),
                     UpdateTime = GETDATE()   
              WHERE IsValid = 1
             AND UserID = @UserID;
@@ -1200,8 +1162,8 @@ VALUES (@UnitType,@UnitID,@UnitName,@Account,@Name,@Tel,@ApprovedSource)
         {
             db.CommandText = @"
 INSERT INTO Sys_User
-    ([UnitType],[UnitID],[UnitName],[Account],[Pwd],[Name],[Tel],[OSI_RoleID],[IsReceiveMail],[IsApproved],[IsValid],[CreateTime],[UpdateTime],[LastLoginTime],[ApprovedSource])
-VALUES (@UnitType,@UnitID,@UnitName,@Account,@Pwd,@Name,@Tel,@OSI_RoleID,@IsReceiveMail,@IsApproved,@IsValid,@CreateTime,@UpdateTime,GETDATE(),@ApprovedSource)
+    ([UnitType],[UnitID],[UnitName],[Account],[Pwd],[Name],[Tel],[OSI_RoleID],[IsReceiveMail],[IsApproved],[IsValid],[CreateTime],[UpdateTime],[ApprovedSource])
+VALUES (@UnitType,@UnitID,@UnitName,@Account,@Pwd,@Name,@Tel,@OSI_RoleID,@IsReceiveMail,@IsApproved,@IsValid,@CreateTime,@UpdateTime,@ApprovedSource)
 
  SELECT SCOPE_IDENTITY();
 ";
@@ -1301,6 +1263,40 @@ VALUES (@UserID,@RoleID)";
             return false;
         }
 
+    }
+
+    /// <summary>
+    /// 查詢指定部門的承辦人員（用於移轉案件）
+    /// </summary>
+    /// <param name="unitID">部門ID</param>
+    /// <returns></returns>
+    public static GisTable QueryReviewersByUnitID(string unitID)
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText = @"
+            SELECT [UserID]
+                ,[UnitID]
+                ,[Account]
+                ,[Name]
+                ,[Tel]
+                ,[IsReceiveMail]
+                ,[IsApproved]
+                ,[IsValid]
+                ,[CreateTime]
+                ,[UpdateTime]
+                ,[IsActive]
+                ,[UnitName]
+                ,[UnitType]
+                ,[ApprovedSource]
+            FROM [Sys_User] 
+            WHERE UnitID = @UnitID
+            AND IsValid = 1
+            AND IsApproved = 1
+            ORDER BY Name";
+        db.Parameters.Clear();
+        db.Parameters.Add("@UnitID", unitID);
+
+        return db.GetTable();
     }
 
     /// <summary>

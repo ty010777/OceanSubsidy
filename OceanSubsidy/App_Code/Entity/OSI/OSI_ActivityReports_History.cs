@@ -16,13 +16,13 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
     public class IOSI_ActivityReports_History : IMeta
     {
 
-        protected long _HistoryID = 0;
+        protected int _HistoryID = 0;
         ///<summary>
         ///  ()
         ///</summary>
         [DataMember]
         [GisFieldAttribute("HistoryID", "HistoryID", DataSource.UN_OPERATE, "", true)]
-        public virtual long HistoryID
+        public virtual int HistoryID
         {
             get
             {
@@ -696,6 +696,44 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
                         UPDATE_COLUMN.Add("CopyReportID");
                     }
                     _CopyReportID = value;
+                }
+            }
+        }
+
+        protected string _CorrectionNotes = "";
+        ///<summary>
+        /// 修正說明 ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("CorrectionNotes", "CorrectionNotes", DataSource.TABLE, "", false)]
+        public virtual string CorrectionNotes
+        {
+            get
+            {
+                return _CorrectionNotes;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_CorrectionNotes == null)
+                {
+                    if (value != null)
+                    {
+                        isModify = true;
+                    }
+                }
+                else if (!_CorrectionNotes.Equals(value))
+                {
+                    isModify = true;
+                }
+                if (isModify)
+                {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("CorrectionNotes") == -1)
+                    {
+                        UPDATE_COLUMN.Add("CorrectionNotes");
+                    }
+                    _CorrectionNotes = value;
                 }
             }
         }

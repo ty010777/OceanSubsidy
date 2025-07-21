@@ -22,6 +22,7 @@ public partial class Manage_Users : Page
             InitUnitFilters();
             BindUserList();
             BindPendingGrid();
+            BindLoginHistory();
             BindOSIRoles();
             BindOFSRoles();
         }
@@ -115,6 +116,15 @@ public partial class Manage_Users : Page
         dt = filtered.CopyToDataTable();
         dt.Columns.Add("OSIRoleName", typeof(string));
         dt.Columns.Add("OFSRoleName", typeof(string));
+        dt.Columns.Add("LastLoginTime", typeof(DateTime));
+
+        // 取得所有使用者的最後登入時間
+        var loginTimeTable = SysLoginHelper.QueryLastLoginTimeByUsers();
+        var loginTimeDict = new Dictionary<int, DateTime?>();
+        foreach (DataRow loginRow in loginTimeTable.Rows)
+        {
+            loginTimeDict[Convert.ToInt32(loginRow["UserID"])] = loginRow["LastLoginTime"] as DateTime?;
+        }
 
         foreach (DataRow row in dt.Rows)
         {
@@ -136,6 +146,17 @@ public partial class Manage_Users : Page
             }
 
             row["UnitName"] = SysUserHelper.QueryUnitNameByUserID(row["UserID"].ToString());
+            
+            // 從 Sys_Login 表更新最後登入時間
+            int userId = Convert.ToInt32(row["UserID"]);
+            if (loginTimeDict.ContainsKey(userId))
+            {
+                row["LastLoginTime"] = loginTimeDict[userId];
+            }
+            else
+            {
+                row["LastLoginTime"] = DBNull.Value;
+            }
         }
 
         lvUsers.DataSource = dt;
@@ -164,6 +185,13 @@ public partial class Manage_Users : Page
 
         lvPendingUsers.DataSource = dt;
         lvPendingUsers.DataBind();
+    }
+
+    private void BindLoginHistory()
+    {
+        var dt = SysLoginHelper.QueryLoginHistory();
+        lvLoginHistory.DataSource = dt;
+        lvLoginHistory.DataBind();
     }
 
     private void BindOSIRoles()
@@ -617,6 +645,26 @@ public partial class Manage_Users : Page
     {
         dpPendingUsers.SetPageProperties(e.StartRowIndex, e.MaximumRows, false);
         BindPendingGrid();
+    }
+
+    protected void lvLoginHistory_PagePropertiesChanging(object sender, PagePropertiesChangingEventArgs e)
+    {
+        dpLoginHistory.SetPageProperties(e.StartRowIndex, e.MaximumRows, false);
+        BindLoginHistory();
+    }
+
+    protected void dpLoginHistory_PreRender(object sender, EventArgs e)
+    {
+        if (dpLoginHistory.Controls.Count < 2) return;
+
+        var container = dpLoginHistory.Controls[1];
+        foreach (Control c in container.Controls)
+        {
+            if (c is Button btn && btn.Text.Trim() == "...")
+            {
+                btn.CssClass = "pagination-item ellipsis";
+            }
+        }
     }
 
     protected void rblNeedOFSRoles_SelectedIndexChanged(object sender, EventArgs e)

@@ -1428,4 +1428,30 @@ ORDER BY UnitName, CountyName
         return db.GetTable();
     }
 
+    /// <summary>
+    /// 檢查指定單位是否有活動報告
+    /// </summary>
+    /// <param name="unitID">單位ID</param>
+    /// <returns>true表示有活動報告，false表示沒有</returns>
+    public static bool HasReportsByUnitID(string unitID)
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText = @"
+            SELECT COUNT(*) as ReportCount
+            FROM OSI_ActivityReports
+            WHERE ReportingUnitID = @UnitID
+            AND IsValid = 1";
+        db.Parameters.Clear();
+        db.Parameters.Add("@UnitID", unitID);
+        
+        var tbl = db.GetTable();
+        if (tbl != null && tbl.Rows.Count > 0)
+        {
+            int reportCount = Convert.ToInt32(tbl.Rows[0]["ReportCount"]);
+            return reportCount > 0;
+        }
+        
+        return false;
+    }
+
 }

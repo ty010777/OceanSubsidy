@@ -44,6 +44,7 @@
         <div class="tab" role="tablist">
             <button class="tab-link active" data-bs-toggle="tab" data-bs-target="#tabMaintain" type="button">使用者維護</button>
             <button class="tab-link" data-bs-toggle="tab" data-bs-target="#tabPending" type="button">待審核帳號</button>
+            <button class="tab-link" data-bs-toggle="tab" data-bs-target="#tabLoginHistory" type="button">帳號登入歷程</button>
         </div>
     </nav>
 
@@ -288,6 +289,92 @@
                                 PagedControlID="lvPendingUsers"
                                 PageSize="30"
                                 OnPreRender="dpPendingUsers_PreRender">
+                                <Fields>
+                                    <asp:NextPreviousPagerField
+                                        ButtonType="Button"
+                                        ButtonCssClass="nav-button"
+                                        ShowPreviousPageButton="True"
+                                        PreviousPageText="‹"
+                                        ShowNextPageButton="False" />
+                                    <asp:NumericPagerField
+                                        ButtonType="Button"
+                                        ButtonCount="5"
+                                        NumericButtonCssClass="pagination-item"
+                                        CurrentPageLabelCssClass="pagination-item active" />
+                                    <asp:NextPreviousPagerField
+                                        ButtonType="Button"
+                                        ButtonCssClass="nav-button"
+                                        ShowPreviousPageButton="False"
+                                        ShowNextPageButton="True"
+                                        NextPageText="›" />
+                                </Fields>
+                            </asp:DataPager>
+                        </nav>
+                    </ContentTemplate>
+                </asp:UpdatePanel>
+
+            </div>
+        </div>
+
+        <!-- 帳號登入歷程 分頁 -->
+        <div id="tabLoginHistory" class="tab-pane fade">
+            <div class="block rounded-bottom-4">
+                <div class="title">
+                    <h4>
+                        <img src="<%= ResolveUrl("~/assets/img/title-icon02.svg") %>" alt="logo" />
+                        列表
+                    </h4>
+                </div>
+
+                <asp:UpdatePanel ID="upListLoginHistory" runat="server" UpdateMode="Always">
+                    <ContentTemplate>
+                        <div class="table-responsive">
+                            <asp:ListView
+                                ID="lvLoginHistory"
+                                runat="server"
+                                DataKeyNames="LoginID"
+                                OnPagePropertiesChanging="lvLoginHistory_PagePropertiesChanging">
+
+                                <LayoutTemplate>
+                                    <table class="table cyan-table">
+                                        <thead>
+                                            <tr>
+                                                <th width="50">排序</th>
+                                                <th class="text-start">單位名稱</th>
+                                                <th class="text-start">帳號</th>
+                                                <th class="text-start">姓名</th>
+                                                <th class="text-start">登入時間</th>
+                                                <th class="text-start">來源IP</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <asp:PlaceHolder ID="itemPlaceholder" runat="server" />
+                                        </tbody>
+                                    </table>
+                                </LayoutTemplate>
+
+                                <ItemTemplate>
+                                    <tr id="itemRow" runat="server">
+                                        <td data-th="排序:"><%# Container.DisplayIndex + 1 %></td>
+                                        <td data-th="單位名稱:" class="text-start"><%# Eval("UnitName") %></td>
+                                        <td data-th="帳號:" class="text-start"><%# Eval("Account") %></td>
+                                        <td data-th="姓名:" class="text-start"><%# Eval("Name") %></td>
+                                        <td data-th="登入時間:" class="text-start">
+                                            <%# DateTimeHelper.ToMinguoDateTime(Eval("LoginTime") as DateTime?) %>
+                                        </td>
+                                        <td data-th="來源IP:" class="text-start"><%# Eval("LoginIP") %></td>
+                                    </tr>
+                                </ItemTemplate>
+                            </asp:ListView>
+                        </div>
+
+                        <nav class="pagination d-flex gap-1 justify-content-center mt-3" aria-label="Pagination">
+                            <asp:DataPager
+                                ID="dpLoginHistory"
+                                runat="server"
+                                PagedControlID="lvLoginHistory"
+                                PageSize="30"
+                                OnPreRender="dpLoginHistory_PreRender">
                                 <Fields>
                                     <asp:NextPreviousPagerField
                                         ButtonType="Button"

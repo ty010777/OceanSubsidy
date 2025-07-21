@@ -140,20 +140,33 @@ public partial class OSI_ActivityManage : System.Web.UI.Page
     {
         DataTable dt = OSIDataPeriodsHelper.QueryByRange(YearFrom, YearTo);
 
-        // 新增兩個欄位
-        if (!dt.Columns.Contains("FilledCount"))
-            dt.Columns.Add("FilledCount", typeof(int));
-        if (!dt.Columns.Contains("TotalUnit"))
-            dt.Columns.Add("TotalUnit", typeof(int));
+        // 新增中央機關和縣市政府的欄位
+        if (!dt.Columns.Contains("CentralFilledCount"))
+            dt.Columns.Add("CentralFilledCount", typeof(int));
+        if (!dt.Columns.Contains("CentralTotalUnit"))
+            dt.Columns.Add("CentralTotalUnit", typeof(int));
+        if (!dt.Columns.Contains("LocalFilledCount"))
+            dt.Columns.Add("LocalFilledCount", typeof(int));
+        if (!dt.Columns.Contains("LocalTotalUnit"))
+            dt.Columns.Add("LocalTotalUnit", typeof(int));
 
-        int totalUnit = SysUnitHelper.QueryParentUnits().Rows.Count;    // 父單位總數，已排除"其他"
+        // 分別計算中央機關和縣市政府的總數
+        int centralTotalUnit = SysUnitHelper.QueryParentUnitsByGovType(1).Rows.Count;  // 中央機關總數
+        int localTotalUnit = SysUnitHelper.QueryParentUnitsByGovType(2).Rows.Count;    // 縣市政府總數
 
         // 逐筆用另一個 helper 拿統計
         foreach (DataRow row in dt.Rows)
         {
-            var filledCount = OSIDataPeriodsHelper.QueryUnitCountByID(row["PeriodID"].ToString());
-            row["FilledCount"] = filledCount;
-            row["TotalUnit"] = totalUnit;
+            string periodID = row["PeriodID"].ToString();
+            
+            // 分別計算中央機關和縣市政府的已填報數
+            var centralFilledCount = OSIDataPeriodsHelper.QueryUnitCountByIDAndGovType(periodID, 1);
+            var localFilledCount = OSIDataPeriodsHelper.QueryUnitCountByIDAndGovType(periodID, 2);
+            
+            row["CentralFilledCount"] = centralFilledCount;
+            row["CentralTotalUnit"] = centralTotalUnit;
+            row["LocalFilledCount"] = localFilledCount;
+            row["LocalTotalUnit"] = localTotalUnit;
         }
 
         lvPeriods.DataSource = dt;

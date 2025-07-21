@@ -125,11 +125,75 @@ public partial class Login : System.Web.UI.Page
         SessionHelper.Set(SessionHelper.UserInfo, userInfo);
     }
 
+    // 取得客戶端 IP
+    private string GetClientIP()
+    {
+        string clientIP = "";
+        
+        // 嘗試從不同的 header 取得真實 IP（優先順序由高到低）
+        string[] headers = {
+            "HTTP_X_FORWARDED_FOR",
+            "HTTP_X_REAL_IP",
+            "HTTP_CLIENT_IP",
+            "HTTP_X_CLUSTER_CLIENT_IP",
+            "HTTP_FORWARDED_FOR",
+            "HTTP_FORWARDED"
+        };
+        
+        foreach (string header in headers)
+        {
+            string value = Request.ServerVariables[header];
+            if (!string.IsNullOrEmpty(value))
+            {
+                // 處理多個 IP 的情況（以逗號分隔）
+                string[] ips = value.Split(',');
+                foreach (string ip in ips)
+                {
+                    string trimmedIP = ip.Trim();
+                    if (!string.IsNullOrEmpty(trimmedIP) && 
+                        !trimmedIP.StartsWith("10.") && 
+                        !trimmedIP.StartsWith("192.168.") && 
+                        !trimmedIP.StartsWith("172.") &&
+                        trimmedIP != "127.0.0.1" &&
+                        trimmedIP != "::1")
+                    {
+                        clientIP = trimmedIP;
+                        break;
+                    }
+                }
+                if (!string.IsNullOrEmpty(clientIP))
+                    break;
+            }
+        }
+        
+        // 如果沒有找到公網 IP，使用 UserHostAddress
+        if (string.IsNullOrEmpty(clientIP))
+        {
+            clientIP = Request.UserHostAddress;
+        }
+        
+        // 將 IPv6 localhost 轉換為 IPv4 格式
+        if (clientIP == "::1")
+        {
+            clientIP = "127.0.0.1";
+        }
+        
+        return clientIP ?? "";
+    }
+
     // 執行登入動作（共用方法）
     private void PerformLogin(string account, int userId)
     {
+        // 取得客戶端 IP
+        string clientIP = GetClientIP();
+        
         // 登入成功
-        SysUserHelper.UpdateLastLoginTime(userId);
+        SysLoginHelper.Insert(new Sys_Login
+        {
+            UserID = userId,
+            LoginIP = clientIP,
+            LoginTime = DateTime.Now.ToString()
+        });
         SetSession(account, userId);
         Response.Redirect("~/Default.aspx");
     }

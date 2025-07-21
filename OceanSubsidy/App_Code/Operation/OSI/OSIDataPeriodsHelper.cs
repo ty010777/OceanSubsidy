@@ -375,6 +375,54 @@ AND (
     }
 
     /// <summary>
+    /// 根據 PeriodID 及機關類型 查詢填報活動資料的單位數（包含子單位有填報資料的）
+    /// </summary>
+    /// <param name="periodID">期間ID</param>
+    /// <param name="govUnitTypeID">機關類型ID (1=中央機關, 2=縣市政府)</param>
+    /// <returns></returns>
+    public static int QueryUnitCountByIDAndGovType(string periodID, int govUnitTypeID)
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText =
+            @"
+SELECT COUNT(DISTINCT p.UnitID) as ParentUnitCount
+FROM Sys_Unit p
+WHERE p.IsValid = 1
+AND p.ParentUnitID IS NULL
+AND p.UnitName <> N'其他'
+AND p.GovUnitTypeID = @GovUnitTypeID
+AND (
+    EXISTS (
+        SELECT 1 FROM OSI_ActivityReports r 
+        WHERE r.PeriodID = @PeriodID 
+        AND r.ReportingUnitID = p.UnitID
+        AND r.IsValid = 1
+    )
+    OR
+    EXISTS (
+        SELECT 1 FROM OSI_ActivityReports r 
+        INNER JOIN Sys_Unit c ON r.ReportingUnitID = c.UnitID
+        WHERE r.PeriodID = @PeriodID 
+        AND c.ParentUnitID = p.UnitID
+        AND c.IsValid = 1
+        AND r.IsValid = 1
+    )
+)
+";
+        db.Parameters.Clear();
+        db.Parameters.Add("@PeriodID", periodID);
+        db.Parameters.Add("@GovUnitTypeID", govUnitTypeID);
+        var tbl = db.GetTable();
+
+        if (tbl != null && tbl.Rows.Count > 0)
+        {
+            return Convert.ToInt32(tbl.Rows[0]["ParentUnitCount"]);
+        }
+
+        return 0;
+    }
+
+    /// <summary>
     /// 更新區間
     /// </summary>
     /// <returns></returns>

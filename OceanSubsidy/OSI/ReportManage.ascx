@@ -136,7 +136,7 @@
                             <td data-th="活動性質:" style="text-align: left;"><%# Eval("NatureName") %></td>
                             <td data-th="活動執行者:" style="text-align: left;"><%# Eval("Executors") %></td>
                             <td data-th="研究調查日期:"><%# Eval("StartDateDisplay","{0:yyy/MM/dd}") %> 至 <%# Eval("EndDateDisplay","{0:yyy/MM/dd}") %></td>
-                            <td data-th="資料更新日期:"><%# Eval("LastUpdatedDisplay","{0:yyy/MM/dd}<br>{0:HH:mm}") %></td>
+                            <td data-th="資料更新日期:"><%# Eval("LastUpdatedDisplay","{0:yyy/MM/dd}") %></td>
                             <td data-th="活動空間範圍:">
                                 <asp:PlaceHolder ID="phGeo" runat="server" />
                             </td>

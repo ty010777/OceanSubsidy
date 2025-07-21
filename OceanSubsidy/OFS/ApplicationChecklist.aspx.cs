@@ -935,7 +935,10 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             
             ApplicationChecklistHelper.UpdateWithdrawalStatus(projectId, false);
             
-            // 取得操作後的狀態
+            // 重新載入資料以取得最新狀態
+            LoadData();
+            
+            // 取得操作後的狀態（從重新載入的資料中取得）
             string afterStatus = GetProjectCurrentStatus(projectId);
             
             // 記錄操作到案件歷程
@@ -946,8 +949,7 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             
             ShowMessage("恢復案件成功", true);
             
-            // 重新載入資料
-            LoadData();
+            // 篩選和綁定資料
             FilterData();
             BindData();
             UpdateTabStatisticsAndActiveState(hidSelectedStage.Value);

@@ -28,6 +28,13 @@ public partial class Map : System.Web.UI.Page
                 string wkt = OSIActivityReportsHelper.QueryGeoDataByID(reportIdStr);
                 InitialWKT3826_JS = "'" + wkt.Replace("'", "\\'").Replace("\r", "").Replace("\n", "") + "'";
             }
+
+            string historyIdStr = Request.QueryString["historyId"];
+            if (!string.IsNullOrEmpty(historyIdStr))
+            {
+                string wkt = OSIActivityReportsHistoryHelper.QueryGeoDataByID(historyIdStr);
+                InitialWKT3826_JS = "'" + wkt.Replace("'", "\\'").Replace("\r", "").Replace("\n", "") + "'";
+            }
         }
 
     }

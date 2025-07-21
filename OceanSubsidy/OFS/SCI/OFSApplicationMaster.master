@@ -75,17 +75,13 @@
                    <div class="step-label">經費／人事</div>
                </div>
            </div>
-           <div class="step-item " role="button" onclick="navigateToStep('SciOutcomes.aspx')">
-               <div class="step-content">
-                   <div class="step-label">成果與績效</div>
-               </div>
-           </div>
+        
            <div class="step-item " role="button" onclick="navigateToStep('SciRecusedList.aspx')">
                <div class="step-content">
                    <div class="step-label">其他</div>
                </div>
            </div>
-           <div class="step-item ">
+           <div class="step-item " role="button" onclick="navigateToStep('SciUploadAttachments.aspx')">
                <div class="step-content">
                    <div class="step-label">上傳附件/提送申請</div>
                </div>

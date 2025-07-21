@@ -546,45 +546,7 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
                     _PwdToken = value;
                 }
             }
-        }
-
-        protected string _LastLoginTime = "";
-        ///<summary>
-        /// 最後登入時間 (最後登入時間)
-        ///</summary>
-        [DataMember]
-        [GisFieldAttribute("LastLoginTime", "LastLoginTime", DataSource.TABLE, "最後登入時間", false)]
-        public virtual string LastLoginTime
-        {
-            get
-            {
-                return _LastLoginTime;
-            }
-            set
-            {
-                bool isModify = false;
-                if (_LastLoginTime == null)
-                {
-                    if (value != null)
-                    {
-                        isModify = true;
-                    }
-                }
-                else if (!_LastLoginTime.Equals(value))
-                {
-                    isModify = true;
-                }
-                if (isModify)
-                {
-                    MetaDataState = DataState.UPDATE;
-                    if (UPDATE_COLUMN.IndexOf("LastLoginTime") == -1)
-                    {
-                        UPDATE_COLUMN.Add("LastLoginTime");
-                    }
-                    _LastLoginTime = value;
-                }
-            }
-        }
+        }       
 
         protected bool _IsActive = true;
         ///<summary>
@@ -738,7 +700,6 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
                 }
             }
         }
-
 
 
     }

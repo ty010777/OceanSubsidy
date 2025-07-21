@@ -121,9 +121,8 @@ public partial class OFSApplicationMaster : System.Web.UI.MasterPage
             { "SciApplication.aspx", 0 },     // 申請表/聲明書
             { "SciWorkSch.aspx", 1 },         // 期程／工作項目／查核
             { "SciFunding.aspx", 2 },         // 經費／人事
-            { "SciOutcomes.aspx", 3 },        // 成果與績效
-            { "SciRecusedList.aspx", 4 }      // 其他
-            // 第6步「上傳附件/提送申請」目前沒有對應的頁面
+            { "SciRecusedList.aspx", 3 },     // 其他
+            { "SciUploadAttachments.aspx", 4 } // 上傳附件/提送申請
         };
         
         var statusMapping = new Dictionary<int, string>
@@ -132,8 +131,7 @@ public partial class OFSApplicationMaster : System.Web.UI.MasterPage
             { 1, "Form2Status" },
             { 2, "Form3Status" },
             { 3, "Form4Status" },
-            { 4, "Form5Status" },
-            { 5, "Form6Status" }  // 保留 Form6Status 以備擴展
+            { 4, "Form5Status" }
         };
         
         string script = @"

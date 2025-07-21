@@ -1,0 +1,74 @@
+.horizontal-scrollable {
+    display: flex;
+    background-color: #fff;
+    padding: 16px;
+    
+    .btn-control {
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        background-color: $teal;
+        color: #fff;
+        aspect-ratio: 1/1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        top: 8px;
+        outline: none;
+        background-color: #fff;
+        border: 1px solid $light-gray;
+        color: $teal-dark;
+        z-index: 5;
+        &.btn-prev {
+            margin-right: -6px;
+        }
+        &.btn-next {
+            margin-left: -6px;
+        }
+        &:disabled {
+            opacity: 0.5;
+            background-color: #fff;
+            border: 1px solid $light-gray;
+            color: $gray;
+        }
+    }
+    ul {
+        overflow-x: auto;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding-bottom: 10px;
+        
+        &::-webkit-scrollbar {
+            height: 6px;
+            background-color: transparent;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background-color: $light-gray;
+            border-radius: 3px;
+        }
+
+        .btn-type {
+            border: 1px solid $teal;
+            padding: 6px 12px;
+            border-radius: 4px;
+            text-wrap: nowrap;
+            background-color: #fff;
+            color: $teal-dark;
+            line-height: normal;
+            transition: all 0.3s ease;
+            &.active {
+                background-color: $teal-dark;
+                color: #fff;
+                border-color: $teal-dark;
+            }
+            &:hover {
+                background-color: $light-teal;
+                color: $teal;
+            }
+
+        }
+    }
+}

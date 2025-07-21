@@ -101,9 +101,9 @@
                             <div class="row g-2 align-items-center">
                                 <div class="col-12 col-md-6 col-lg-5">
                                     <div class="input-group">
-                                        <asp:TextBox ID="txtResFrom" runat="server" CssClass="form-control rocDate" TextMode="SingleLine" />
+                                        <asp:TextBox ID="txtResFrom" runat="server" CssClass="form-control rocDate" TextMode="SingleLine" Placeholder="yyy/mm/dd" />
                                         <span class="input-group-text">至</span>
-                                        <asp:TextBox ID="txtResTo" runat="server" CssClass="form-control rocDate" TextMode="SingleLine" />
+                                        <asp:TextBox ID="txtResTo" runat="server" CssClass="form-control rocDate" TextMode="SingleLine" Placeholder="yyy/mm/dd" />
                                     </div>
                                 </div>
                                 <div class="col-12 col-md-6 col-lg-7">
@@ -315,6 +315,17 @@
                     </div>
                 </td>
             </tr>
+            <!-- 標示修正說明 -->
+            <tr id="trCorrectionNotes" runat="server">
+                <th><span class="text-pink">*</span>標示修正說明</th>
+                <td>
+                    <asp:Label ID="lblCorrectionNotes" runat="server" />
+                    <asp:TextBox ID="txtCorrectionNotes" runat="server" CssClass="form-control" TextMode="MultiLine" Rows="3" Placeholder="請輸入修正說明" />
+                    <asp:RequiredFieldValidator ID="rfvCorrectionNotes" runat="server" ValidationGroup="Main"
+                        ControlToValidate="txtCorrectionNotes" ErrorMessage="標示修正說明為必填"
+                        CssClass="invalid" Display="Dynamic" />
+                </td>
+            </tr>
 
 
 
@@ -340,6 +351,12 @@
             OnClientClick="prepareGeoData();"
             OnClick="btnSave_Click">
                 <i class="fas fa-check"></i>儲存
+        </asp:LinkButton>
+
+        <asp:LinkButton ID="btnHistory" runat="server"
+            CssClass="btn btn-outline-green"
+            OnClick="btnHistory_Click">
+                歷程
         </asp:LinkButton>
     </div>
 </asp:Panel>
@@ -369,29 +386,29 @@
     .gray-table.side-table {
         table-layout: fixed;
     }
-    
-    /* 固定 th 和 td 寬度 */
-    .gray-table.side-table th:first-child {
-        width: 183px;
-    }
-    
-    .gray-table.side-table td {
-        width: auto;
-    }
-    
+
+        /* 固定 th 和 td 寬度 */
+        .gray-table.side-table th:first-child {
+            width: 183px;
+        }
+
+        .gray-table.side-table td {
+            width: auto;
+        }
+
     /* 限制標籤群組寬度 */
     /*.tag-group {
         max-width: 100%;
         overflow: hidden;
     }*/
-    
+
     /* 限制單個標籤寬度和溢出處理 */
     .tag {
         overflow: hidden;
         display: inline-flex;
         line-height: 1.2; /* 覆蓋主要CSS的line-height: 0 */
     }
-    
+
     /* 標籤文字區域 */
     .tag-content {
         flex: 1;
@@ -402,13 +419,13 @@
         line-height: 1.2; /* 確保文字有適當的行高 */
         display: inline-block; /* 確保文字正常顯示 */
     }
-    
+
     /* 確保按鈕顯示 */
     .tag .tag-btn {
         flex-shrink: 0;
         margin-left: 4px;
     }
-    
+
     /* 地圖 Modal 樣式調整 */
     #mapModal .modal-dialog {
         width: 90vw;
@@ -417,20 +434,20 @@
         max-height: 90vh;
         margin: 5vh auto; /* 上下左右各留 5% 的空間 */
     }
-    
+
     #mapModal .modal-content {
         height: 100%;
         display: flex;
         flex-direction: column;
     }
-    
+
     #mapModal .modal-body {
         flex: 1;
         height: auto !important; /* 覆蓋內聯樣式 */
         overflow: hidden;
         padding: 0;
     }
-    
+
     #mapModal iframe {
         width: 100%;
         height: 100%;

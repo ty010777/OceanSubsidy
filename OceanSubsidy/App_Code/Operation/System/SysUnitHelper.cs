@@ -50,6 +50,28 @@ public class SysUnitHelper
     }
 
     /// <summary>
+    /// 查詢指定的審核單位（用於移轉案件）
+    /// </summary>
+    /// <returns></returns>
+    public static GisTable QueryReviewUnits()
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText =
+            @"SELECT [UnitID]
+            ,[UnitName]
+            ,[ParentUnitID]
+            ,[IsValid]
+            ,[GovUnitTypeID]
+            FROM [Sys_Unit]
+            WHERE UnitID IN (49, 50, 51)
+            AND IsValid = 1
+            ORDER BY UnitID";
+        db.Parameters.Clear();
+
+        return db.GetTable();
+    }
+
+    /// <summary>
     /// 查詢系統單位ByParentUnitID
     /// </summary>
     /// <param name="parentUnitID"></param>
@@ -77,10 +99,10 @@ public class SysUnitHelper
     /// </summary>
     /// <param name="govUnitTypeID"></param>
     /// <returns></returns>
-    public static GisTable QueryByGovUnitTypeID(int govUnitTypeID)
+    public static GisTable QueryByGovUnitTypeID(int govUnitTypeID, bool includeGovUnitTypeName = false)
     {
         // 使用核心查詢方法，查詢特定類型，不包含 GovUnitTypeName
-        return QueryUnitsCore(govUnitTypeID, false);
+        return QueryUnitsCore(govUnitTypeID, includeGovUnitTypeName);
     }
 
     /// <summary>
@@ -152,6 +174,43 @@ public class SysUnitHelper
         db.Parameters.Add("@unitID", unitID);
 
         return db.GetTable();
+    }
+
+    /// <summary>
+    /// 根據ID查詢單筆單位資料
+    /// </summary>
+    /// <param name="unitID">單位ID</param>
+    /// <returns></returns>
+    public static Sys_Unit GetUnitByID(string unitID)
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText =
+            @"SELECT [UnitID]
+            ,[UnitName]
+            ,[GovUnitTypeID]
+            ,[ParentUnitID]
+            ,[IsValid]
+            FROM Sys_Unit
+            WHERE IsValid = 1
+            AND UnitID = @unitID";
+        db.Parameters.Clear();
+        db.Parameters.Add("@unitID", unitID);
+
+        GisTable tbl = db.GetTable();
+        if (tbl != null && tbl.Rows.Count > 0)
+        {
+            var unit = new Sys_Unit();
+            unit.UnitID = Convert.ToInt32(tbl.Rows[0]["UnitID"]);
+            unit.UnitName = tbl.Rows[0]["UnitName"].ToString();
+            unit.GovUnitTypeID = tbl.Rows[0]["GovUnitTypeID"] != DBNull.Value ? 
+                Convert.ToInt32(tbl.Rows[0]["GovUnitTypeID"]) : (int?)null;
+            unit.ParentUnitID = tbl.Rows[0]["ParentUnitID"] != DBNull.Value ? 
+                Convert.ToInt32(tbl.Rows[0]["ParentUnitID"]) : (int?)null;
+            unit.IsValid = Convert.ToBoolean(tbl.Rows[0]["IsValid"]);
+            return unit;
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -470,6 +529,32 @@ ORDER BY UnitID;";
             AND UnitName <> N'其他'
             ORDER BY UnitID";
         db.Parameters.Clear();
+
+        return db.GetTable();
+    }
+
+    /// <summary>
+    /// 查詢父單位 (Parent = null 的單位，排除"其他") 根據機關類型
+    /// </summary>
+    /// <param name="govUnitTypeID">機關類型ID (1=中央機關, 2=縣市政府)</param>
+    /// <returns></returns>
+    public static GisTable QueryParentUnitsByGovType(int govUnitTypeID)
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText =
+            @"SELECT [UnitID]
+            ,[UnitName]
+            ,[GovUnitTypeID]
+            ,[ParentUnitID]
+            ,[IsValid]
+            FROM Sys_Unit
+            WHERE IsValid = 1
+            AND ParentUnitID IS NULL
+            AND UnitName <> N'其他'
+            AND GovUnitTypeID = @GovUnitTypeID
+            ORDER BY UnitID";
+        db.Parameters.Clear();
+        db.Parameters.Add("@GovUnitTypeID", govUnitTypeID);
 
         return db.GetTable();
     }

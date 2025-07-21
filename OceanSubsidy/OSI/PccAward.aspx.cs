@@ -16,6 +16,35 @@ public partial class OSI_PccAward : System.Web.UI.Page
             // 中華民國月曆需要在頁面載入後才設定readonly
             txtAwardDateFrom.Attributes.Add("readonly", "readonly");
             txtAwardDateTo.Attributes.Add("readonly", "readonly");
+            
+            // 獲取並設定最新的決標日期
+            SetLatestAwardDate();
+        }
+    }
+    
+    /// <summary>
+    /// 設定最新的決標日期顯示
+    /// </summary>
+    private void SetLatestAwardDate()
+    {
+        DateTime? latestDate = OSIPccAwardDataHelper.GetLatestAwardDate();
+        
+        // 尋找 UpdatePanel 內的 Label 控制項
+        Label lblLatestAwardDate = (Label)upList.ContentTemplateContainer.FindControl("lblLatestAwardDate");
+        
+        if (lblLatestAwardDate != null)
+        {
+            if (latestDate.HasValue)
+            {
+                // 轉換為民國年格式
+                string rocDate = FormatRocDate(latestDate.Value);
+                // 設定 Label 顯示文字
+                lblLatestAwardDate.Text = rocDate;
+            }
+            else
+            {
+                lblLatestAwardDate.Text = "無資料";
+            }
         }
     }
 
@@ -38,6 +67,8 @@ public partial class OSI_PccAward : System.Web.UI.Page
     protected void btnSearch_Click(object sender, EventArgs e)
     {
         SearchData();
+        // 更新最新日期顯示
+        SetLatestAwardDate();
     }
 
     /// <summary>
@@ -133,6 +164,8 @@ public partial class OSI_PccAward : System.Web.UI.Page
     {
         dpPccAward.SetPageProperties(e.StartRowIndex, e.MaximumRows, false);
         BindData();
+        // 更新最新日期顯示
+        SetLatestAwardDate();
     }
 
     /// <summary>

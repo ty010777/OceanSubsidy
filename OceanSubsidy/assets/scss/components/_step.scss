@@ -216,3 +216,9 @@ $app-step-status-size: 14px;
         color: $app-step-active-bg;
     }
 }
+.application-step {
+    &.scroll-sticky-top {
+        top: 90px;
+        z-index: 15;
+    }
+}

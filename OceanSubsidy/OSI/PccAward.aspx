@@ -80,7 +80,7 @@
                 <div class="title">
                     <h4>
                         <img src="<%= ResolveUrl("~/assets/img/title-icon02.svg") %>" alt="logo">
-                        列表
+                        列表 (資料最後更新日期 : <asp:Label ID="lblLatestAwardDate" runat="server" Text="載入中..."></asp:Label>)
                     </h4>
                 </div>
 
