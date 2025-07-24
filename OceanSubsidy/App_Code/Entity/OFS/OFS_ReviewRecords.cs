@@ -56,7 +56,7 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
         
         protected string _ProjectID = null;
         ///<summary>
-        /// 計畫ID
+        ///  ()
         ///</summary>
         [DataMember]
         [GisFieldAttribute("ProjectID", "ProjectID", DataSource.TABLE, "", false)]

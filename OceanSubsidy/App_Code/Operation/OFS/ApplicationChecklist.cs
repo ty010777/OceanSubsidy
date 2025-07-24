@@ -440,4 +440,42 @@ public class ApplicationChecklistHelper
             
         return rtVal;
     }
+
+    /// <summary>
+    /// 取得指定 ProjectID 的最新歷史記錄狀態
+    /// </summary>
+    /// <param name="projectId">計畫 ID</param>
+    /// <returns>最新的 StageStatusAfter，若無記錄則返回 null</returns>
+    public static string GetLatestStageStatus(string projectId)
+    {
+        string result = null;
+        DbHelper db = new DbHelper();
+
+        try
+        {
+            db.CommandText = @"
+                SELECT TOP 1 StageStatusAfter 
+                FROM OFS_CaseHistoryLog 
+                WHERE ProjectID = @ProjectID 
+                ORDER BY ChangeTime DESC, Id DESC";
+
+            db.Parameters.Add("@ProjectID", projectId);
+
+            var dt = db.GetTable();
+            if (dt.Rows.Count > 0)
+            {
+                result = dt.Rows[0]["StageStatusAfter"]?.ToString();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得最新歷史狀態時發生錯誤：{ex.Message}");
+        }
+        finally
+        {
+            db.Dispose();
+        }
+
+        return result;
+    }
 }

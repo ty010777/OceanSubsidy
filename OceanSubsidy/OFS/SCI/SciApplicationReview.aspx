@@ -18,32 +18,20 @@
     
     <!-- 審查結果互動功能 -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // 監聽審查結果選項變更
-            const reviewRadios = document.querySelectorAll('input[name="reviewResult"]');
-            const returnDateInput = document.getElementById('returnDate');
-            
-            reviewRadios.forEach(radio => {
-                radio.addEventListener('change', function() {
-                    if (this.value === 'return') {
-                        // 選擇退回補正補件時顯示日期選擇器
-                        returnDateInput.style.display = 'block';
-                    } else {
-                        // 其他選項隱藏日期選擇器
-                        returnDateInput.style.display = 'none';
-                        returnDateInput.value = '';
+        $(function() {
+            $('input[name="reviewResult"]').change(function() {
+                if ($(this).val() === 'return') {
+                    $('#returnDate').show();
+                    // 預設帶入今天 + 7天
+                    if (!$('#returnDate').val()) {
+                        var defaultDate = new Date();
+                        defaultDate.setDate(defaultDate.getDate() + 7);
+                        $('#returnDate').val(defaultDate.toISOString().split('T')[0]);
                     }
-                });
+                } else {
+                    $('#returnDate').hide().val('');
+                }
             });
-            
-            // 確定按鈕點擊事件
-            const btnConfirmReview = document.getElementById('btnConfirmReview');
-            if (btnConfirmReview) {
-                btnConfirmReview.addEventListener('click', function() {
-                    // TODO: 實作審查結果提交功能
-                });
-            }
-            
         });
     </script>
     
@@ -57,7 +45,7 @@
         <div class="top-block">
             <div class="d-flex align-items-center gap-3">
                 <span>審核承辦人員：<asp:Label ID="lblReviewerName" runat="server" CssClass="fw-bold" /></span>
-                <button type="button" class="btn btn-teal" data-bs-toggle="modal" data-bs-target="#transferCaseModal">
+                <button type="button" id="btnTransferProject" class="btn btn-teal" data-bs-toggle="modal" data-bs-target="#transferCaseModal">
                     移轉案件
                 </button>
             </div>
@@ -172,7 +160,8 @@
                 </div>
             </li>
         </ul>
-        <button type="button" class="btn btn-teal d-table mx-auto" id="btnConfirmReview">確定</button>
+        <asp:Button ID="btnConfirmReview" runat="server" Text="確定" CssClass="btn btn-teal d-table mx-auto" OnClick="btnConfirmReview_Click"/>
+        <asp:HiddenField ID="hdnAssignedReviewerAccount" runat="server" />
     </div>
 
     <!-- Modal 風險評估 -->

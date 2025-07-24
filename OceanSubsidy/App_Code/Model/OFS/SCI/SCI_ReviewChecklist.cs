@@ -18,7 +18,6 @@ public class ReviewChecklistItem
     public string Form3Status { get; set; }
     public string Form4Status { get; set; }
     public string Form5Status { get; set; }
-    public string Form6Status { get; set; }
     public string CurrentStep { get; set; }
     public DateTime? created_at { get; set; }
     public DateTime? updated_at { get; set; }
@@ -31,6 +30,13 @@ public class ReviewChecklistItem
     public string ApplicationAmount { get; set; }
     public bool? isWithdrawal { get; set; }
     public bool? isExists { get; set; }
+    
+    // Progress fields
+    public string ReviewProgress { get; set; }
+    public string ReplyProgress { get; set; }
+    public string ReviewProgressDisplay { get; set; }
+    public string ReplyProgressDisplay { get; set; }
+    public string Field_Descname { get; set; } // 審查組別
     
     // Helper methods for display
     public string GetFormattedExpirationDate()

@@ -5,6 +5,7 @@ using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using GS.OCA_OceanSubsidy.Entity;
+using GS.OCA_OceanSubsidy.Entity.Base;
 using GS.OCA_OceanSubsidy.Operation.OFS;
 using GS.App;
 
@@ -45,13 +46,13 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
 
             if (!IsPostBack)
             {
-                // 初始化頁面
+// 初始化頁面
                 InitializePage();
             }
             else
             {
-                // PostBack 時也要載入 UserControl 資料，確保資料不會消失
-                LoadAllUserControlData();
+// PostBack 時重新設定審核者資訊
+                SetReviewerInfoFromDatabase();
             }
         }
         catch (Exception ex)
@@ -70,6 +71,113 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
     protected void btnDownloadPlan_Click(object sender, EventArgs e)
     {
         // TODO: 實作下載計劃書功能
+    }
+
+    /// <summary>
+    /// 確認審查結果
+    /// </summary>
+    protected void btnConfirmReview_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            // 檢查當前使用者是否為指派的審核承辦人員
+            if (!ValidateReviewer())
+            {
+                ShowSweetAlert("錯誤", "您不是此案件的指派審核承辦人員，無法提交審查結果", "error");
+                return;
+            }
+
+            // 取得審查結果
+            string reviewResult = Request.Form["reviewResult"];
+            string returnDate = Request.Form["returnDate"];
+
+            if (string.IsNullOrEmpty(reviewResult))
+            {
+                ShowSweetAlert("錯誤", "請選擇審查結果", "error");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(ProjectID))
+            {
+                ShowSweetAlert("錯誤", "找不到計畫ID", "error");
+                return;
+            }
+
+            // 建立更新物件
+            var projectMain = new OFS_SCI_Project_Main
+            {
+                ProjectID = ProjectID,
+                updated_at = DateTime.Now
+            };
+
+            // 根據審查結果設定狀態
+            switch (reviewResult)
+            {
+                case "pass":
+                    projectMain.StatusesName = "通過";
+                    break;
+                case "fail":
+                    projectMain.StatusesName = "不通過";
+                    break;
+                case "return":
+                    projectMain.StatusesName = "補正補件";
+                    // 使用使用者設定的日期
+                    if (!string.IsNullOrEmpty(returnDate))
+                    {
+                        if (DateTime.TryParse(returnDate, out DateTime expirationDate))
+                        {
+                            projectMain.ExpirationDate = expirationDate;
+                        }
+                    }
+                    break;
+                default:
+                    ShowSweetAlert("錯誤", "無效的審查結果", "error");
+                    return;
+            }
+
+            // 取得最新歷史記錄的狀態
+            string stageStatusBefore = ApplicationChecklistHelper.GetLatestStageStatus(ProjectID) ?? "";
+            
+            // 更新資料庫
+            OFS_SciApplicationHelper.UpdateOFS_SCIVersion(projectMain);
+            
+            // 新增案件歷史記錄
+            var currentUser = GetCurrentUserInfo();
+            var historyLog = new OFS_CaseHistoryLog
+            {
+                ProjectID = ProjectID,
+                ChangeTime = DateTime.Now,
+                UserName = currentUser?.UserName ?? "系統",
+                StageStatusBefore = stageStatusBefore,
+                StageStatusAfter =  projectMain.Statuses + projectMain.StatusesName,
+                Description = $"審核結果：{projectMain.StatusesName}" + 
+                             (reviewResult == "return" && !string.IsNullOrEmpty(returnDate) ? 
+                             $"，補正期限：{returnDate}" : "")
+            };
+            
+            // 儲存歷史記錄
+            ApplicationChecklistHelper.InsertCaseHistoryLog(historyLog);
+            
+            // 送出成功後直接跳轉，避免 PostBack 問題
+            string script = $@"
+                Swal.fire({{
+                    title: '成功',
+                    text: '審查結果已設定為：{projectMain.StatusesName}',
+                    icon: 'success',
+                    confirmButtonText: '確定'
+                }}).then((result) => {{
+                    if (result.isConfirmed) {{
+                        window.location.href = '{ResolveUrl("~/OFS/ApplicationChecklist.aspx")}';
+                    }}
+                }});
+            ";
+            Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowSuccessAndRedirect", script, true);
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "提交審查結果時發生錯誤");
+            ShowSweetAlert("錯誤", "提交審查結果時發生錯誤，請稍後再試", "error");
+        }
     }
 
     /// <summary>
@@ -168,6 +276,7 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
             ";
             Page.ClientScript.RegisterStartupScript(this.GetType(), "closeModal", script, true);
             
+            SetReviewerInfoFromDatabase();
         }
         catch (Exception ex)
         {
@@ -262,8 +371,9 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
             // 第五頁：上傳附件
             ucSciUploadAttachments.LoadData(ProjectID, isViewMode: true);
             
-            // // 註冊 JavaScript，在所有資料載入完成後重新應用檢視模式
-            // RegisterViewModeScript();
+            // 註冊 JavaScript，在所有資料載入完成後重新應用檢視模式
+            RegisterViewModeScript();
+            
         }
         catch (Exception ex)
         {
@@ -277,40 +387,41 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
     private void RegisterViewModeScript()
     {
         string script = @"
-            // 等待所有 JavaScript 執行完成後，重新應用檢視模式
             setTimeout(function() {
-                // 禁用所有輸入元素（除了特定按鈕）
-                var inputs = document.querySelectorAll('input, textarea, select, button');
-                inputs.forEach(function(element) {
-                    if (!element.classList.contains('btn-close') && 
-                        element.id !== 'btnDownloadPlan' &&
-                        element.id !== '" + ddlDepartment.ClientID + @"' &&
-                        element.id !== '" + ddlReviewer.ClientID + @"' &&
-                        element.id !== 'btnConfirmTransfer') {
-                        element.disabled = true;
-                        
-                        // 文字輸入設為只讀
-                        if (element.type === 'text' || element.tagName === 'TEXTAREA') {
-                            element.readOnly = true;
-                        }
+                // 將所有輸入元素設為唯讀（除了審核相關元素和 transferCaseModal）
+                $('input, textarea, select').not('#transferCaseModal input, #transferCaseModal textarea, #transferCaseModal select').each(function() {
+                    var $element = $(this);
+                    var elementId = $element.attr('id') || '';
+                    var excludeIds = ['radio-pass','radio-fail','radio-return','returnDate'];
+                    
+                    if (elementId.indexOf('ConfirmReview') !== -1 ||
+                        $.inArray(elementId, excludeIds) !== -1) {
+                        return;
+                    }
+                    
+                    // 統一設為 readOnly
+                    if ($element.is('input[type=text], input[type=number], input[type=email], input[type=tel], textarea')) {
+                        $element.prop('readOnly', true);
+                    } else if ($element.is('select')) {
+                        $element.prop('disabled', true); 
+                    } else if ($element.is('input[type=checkbox], input[type=radio]')) {
+                        $element.prop('disabled', true); 
                     }
                 });
                 
-                // 特別處理動態生成的關鍵字欄位
-                var keywordInputs = document.querySelectorAll('.keyword-ch, .keyword-en');
-                keywordInputs.forEach(function(input) {
-                    input.readOnly = true;
+                // 只隱藏非審核相關的按鈕，不禁用（排除 transferCaseModal 內的按鈕）
+                $('button').not('#" + btnConfirmReview.ClientID + @", #btnDownloadPlan, #" + btnConfirmTransfer.ClientID + @", #btnTransferProject, .btn-close, [data-bs-dismiss=modal], #transferCaseModal button').each(function() {
+                    var $element = $(this);
+                    $element.hide(); // 改為隱藏而不是禁用
                 });
+             
+                // 特別處理動態生成的關鍵字欄位
+                $('.keyword-ch, .keyword-en').prop('readOnly', true);
                 
                 // 隱藏所有新增/刪除按鈕
-                var actionButtons = document.querySelectorAll('.delete-keyword, .add-keyword, .add-row, .delete-row, .btn-add, .btn-delete');
-                actionButtons.forEach(function(btn) {
-                    btn.disabled = true;
-                    btn.style.display = 'none';
-                });
-                
-                console.log('檢視模式已應用到所有動態載入的元素');
-            }, 1500); // 延遲1.5秒確保所有動態內容都已載入
+                $('.delete-keyword, .add-keyword, .add-row, .delete-row, .btn-add, .btn-delete')
+                    .hide(); // 改為只隱藏
+            }, 1500);
         ";
         
         Page.ClientScript.RegisterStartupScript(this.GetType(), "ApplyViewMode", script, true);
@@ -476,16 +587,28 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
             // 從 OFS_SCI_Project_Main 表中讀取承辦人員資訊
             var projectMain = OFS_SciApplicationHelper.getVersionByProjectID(ProjectID);
             
+            
             if (projectMain != null && !string.IsNullOrEmpty(projectMain.SupervisoryPersonName))
             {
                 lblReviewerName.Text = projectMain.SupervisoryPersonName;
+                
+                // 將指派的審核承辦人員帳號存到 HiddenField
+                hdnAssignedReviewerAccount.Value = projectMain.SupervisoryPersonAccount ?? "";
+                
+                // 設定有指派審核人員的狀態
+                ViewState["HasAssignedReviewer"] = true;
             }
             else
             {
-                // 如果沒有分配承辦人員，顯示當前登入使用者
-                var currentUser = GetCurrentUserInfo();
-                lblReviewerName.Text = currentUser?.UserName ?? "未分配承辦人員";
+                lblReviewerName.Text = "未分配承辦人員";
+                
+                // 清空 HiddenField
+                hdnAssignedReviewerAccount.Value = "";
+                
+                // 設定沒有指派審核人員的狀態
+                ViewState["HasAssignedReviewer"] = false;
             }
+            
         }
         catch (Exception ex)
         {
@@ -507,6 +630,38 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
         catch (Exception ex)
         {
             HandleException(ex, "更新審核者資訊時發生錯誤");
+        }
+    }
+
+    /// <summary>
+    /// 驗證當前使用者是否為指派的審核承辦人員
+    /// </summary>
+    /// <returns>是否為指派的審核承辦人員</returns>
+    private bool ValidateReviewer()
+    {
+        try
+        {
+            // 取得當前使用者資訊
+            var currentUser = GetCurrentUserInfo();
+            if (currentUser == null || string.IsNullOrEmpty(currentUser.Account))
+            {
+                return false;
+            }
+
+            // 從 HiddenField 取得指派的審核承辦人員帳號
+            string assignedReviewerAccount = hdnAssignedReviewerAccount.Value;
+            if (string.IsNullOrEmpty(assignedReviewerAccount))
+            {
+                return false;
+            }
+
+            // 比較當前使用者帳號與指派的審核承辦人員帳號
+            return string.Equals(currentUser.Account, assignedReviewerAccount, StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "驗證審核權限時發生錯誤");
+            return false;
         }
     }
 
