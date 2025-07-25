@@ -13,6 +13,7 @@
                 window.ReviewChecklist.init();
             }
         });
+
     </script>
 </asp:Content>
 
@@ -286,7 +287,7 @@
             <div class="bg-light-teal-100 mb-5 | checkPlanBtnPanel checkPlanBtnPanel-type1" style="display: none;">
                 <div class="p-3 d-flex justify-content-between align-items-center">
                     <div class="d-flex gap-3">
-                        <button class="btn btn-teal" type="button" data-bs-toggle="modal" data-bs-target="#tipModal2"><i class="fa-solid fa-check"></i>批次通過，轉入下一階段</button>
+                        <button class="btn btn-teal" type="button" onclick="handleBatchApproval('轉入下一階段')"><i class="fa-solid fa-check"></i>批次通過，轉入下一階段</button>
                         <button class="btn btn-pink" type="button"><i class="fa-solid fa-xmark"></i>批次不通過，提送申請者</button>
                     </div>
                 </div>
@@ -495,8 +496,8 @@
         	  <div class="p-3 d-flex justify-content-between align-items-start gap-3 flex-wrap">
         		  <div class="d-flex gap-3 flex-wrap">
         			  <button class="btn btn-royal-blue" type="button" data-bs-toggle="modal" data-bs-target="#tipModal2"><i class="fa-solid fa-check"></i>提送至申請者</button>
-        			  <button class="btn btn-teal" type="button" data-bs-toggle="modal" data-bs-target="#tipModal2"><i class="fa-solid fa-check"></i>批次通過，轉入下一階段</button>
-        			  <button class="btn btn-teal" type="button" data-bs-toggle="modal" data-bs-target="#tipModal2"><i class="fa-solid fa-check"></i>批次通過，進入決審</button>
+        			  <button class="btn btn-teal" type="button" onclick="handleBatchApproval('轉入下一階段')"><i class="fa-solid fa-check"></i>批次通過，轉入下一階段</button>
+        			  <button class="btn btn-teal" type="button" onclick="handleBatchApproval('進入決審')"><i class="fa-solid fa-check"></i>批次通過，進入決審</button>
         			  <button class="btn btn-pink" type="button"><i class="fa-solid fa-xmark"></i>批次不通過</button>
         		  </div>
           
@@ -712,7 +713,7 @@
                  <div class="p-3 d-flex justify-content-between align-items-start gap-3 flex-wrap">
                      <div class="d-flex gap-3 flex-wrap">
                          <button class="btn btn-royal-blue" type="button" data-bs-toggle="modal" data-bs-target="#tipModal2"><i class="fa-solid fa-check"></i>提送至申請者</button>
-                         <button class="btn btn-teal" type="button" data-bs-toggle="modal" data-bs-target="#tipModal2"><i class="fa-solid fa-check"></i>批次通過，轉入下一階段</button>
+                         <button class="btn btn-teal" type="button" onclick="handleBatchApproval('轉入下一階段')"><i class="fa-solid fa-check"></i>批次通過，轉入下一階段</button>
                          <button class="btn btn-pink" type="button"><i class="fa-solid fa-xmark"></i>批次不通過</button>
                      </div>
              
@@ -1018,7 +1019,7 @@
         		  <div class="p-3 d-flex justify-content-between align-items-start gap-3 flex-wrap">
         			  <div class="d-flex gap-3 flex-wrap">
         				  <button class="btn btn-royal-blue" type="button" data-bs-toggle="modal" data-bs-target="#tipModal2"><i class="fa-solid fa-check"></i>提送申請者修正計畫書</button>
-        				  <button class="btn btn-teal" type="button" data-bs-toggle="modal" data-bs-target="#tipModal2"><i class="fa-solid fa-check"></i>批次核定完成，轉入計畫執行階段</button>
+        				  <button class="btn btn-teal" type="button" onclick="handleBatchApproval('轉入計畫執行階段')"><i class="fa-solid fa-check"></i>批次核定完成，轉入計畫執行階段</button>
         				  <button class="btn btn-pink" type="button"><i class="fa-solid fa-xmark"></i>批次不通過</button>
         			  </div>
         	  

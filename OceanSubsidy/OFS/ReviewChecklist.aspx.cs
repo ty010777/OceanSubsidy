@@ -4,6 +4,7 @@ using System.Linq;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using System.Web.Services;
 using GS.OCA_OceanSubsidy.Entity;
 using GS.OCA_OceanSubsidy.Operation.OFS;
 using GS.OCA_OceanSubsidy.Model.OFS;
@@ -184,23 +185,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             return false;
         }
     }
-
-    /// <summary>
-    /// 取得目前登入使用者資訊
-    /// </summary>
-    private SessionHelper.UserInfoClass GetCurrentUserInfo()
-    {
-        try
-        {
-            return SessionHelper.Get<SessionHelper.UserInfoClass>(SessionHelper.UserInfo);
-        }
-        catch (Exception ex)
-        {
-            HandleException(ex, "取得使用者資訊時發生錯誤");
-            return null;
-        }
-    }
-
+    
     /// <summary>
     /// 顯示錯誤訊息並跳轉
     /// </summary>
@@ -586,6 +571,332 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             Page.ClientScript.RegisterStartupScript(this.GetType(), "SearchError_Type3", errorScript, true);
         }
     }
+
+    #endregion
+
+    #region 批次處理 WebMethods
+
+    /// <summary>
+    /// 批次審核 Type1 (資格審查/內容審查)
+    /// </summary>
+    /// <param name="projectIds">專案編號列表</param>
+    /// <param name="actionType">操作類型</param>
+    /// <param name="reviewType">審查類型</param>
+    /// <returns>批次處理結果</returns>
+    [WebMethod]
+    public static BatchApprovalResult BatchApproveType1(List<string> projectIds, string actionType, string reviewType)
+    {
+        var result = new BatchApprovalResult
+        {
+            ActionType = actionType,
+            ReviewType = reviewType
+        };
+
+        try
+        {
+            // 驗證參數
+            if (projectIds == null || projectIds.Count == 0)
+            {
+                result.Success = false;
+                result.Message = "未提供要處理的專案編號";
+                result.ErrorMessages.Add("專案編號列表為空");
+                return result;
+            }
+
+            if (string.IsNullOrEmpty(actionType))
+            {
+                result.Success = false;
+                result.Message = "未指定操作類型";
+                result.ErrorMessages.Add("actionType 參數為空");
+                return result;
+            }
+
+            // 取得當前使用者資訊
+            var currentUser = GetCurrentUserInfo();
+            if (currentUser == null)
+            {
+                result.Success = false;
+                result.Message = "無法取得使用者資訊";
+                result.ErrorMessages.Add("使用者未登入或 Session 已過期");
+                return result;
+            }
+
+            // 記錄操作開始
+            System.Diagnostics.Debug.WriteLine($"開始批次處理: 類型={actionType}, 專案數量={projectIds.Count}");
+
+            // 依補助案類型分組處理
+            var projectGroups = GroupProjectsByType(projectIds);
+            
+            int totalSuccess = 0;
+            var allSuccessIds = new List<string>();
+            var allErrorMessages = new List<string>();
+
+            foreach (var group in projectGroups)
+            {
+                string subsidyType = group.Key;
+                var groupProjectIds = group.Value;
+
+                // 根據補助案類型和操作類型決定狀態轉換
+                string fromStatus, toStatus;
+                if (!GetStatusTransitionBySubsidyType(subsidyType, reviewType, out fromStatus, out toStatus))
+                {
+                    // 如果不支援此補助案類型，直接跳過
+                    continue;
+                }
+
+                // 執行該組的批次更新
+                var groupResult = ReviewCheckListHelper.BatchUpdateProjectStatus(
+                    groupProjectIds, 
+                    fromStatus, 
+                    toStatus, 
+                    currentUser.Account,
+                    actionType
+                );
+
+                // 只對成功更新的專案執行後續處理
+                if (groupResult != null && groupResult.SuccessProjectIds != null && groupResult.SuccessProjectIds.Count > 0)
+                {
+                    // 科專批次審核後的特殊處理（只在資格審查和領域審查階段執行）
+                    if (reviewType == "1" || reviewType == "2")
+                    {
+                        switch (subsidyType)
+                        {
+                            case "SCI":
+                                    ReviewCheckListHelper.ProcessSciPostApproval(groupResult.SuccessProjectIds, toStatus, actionType, currentUser.Account);
+                                break;
+                            case "CUL":
+                                // 文化補助案的特殊處理（未來實作）
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+
+                if (groupResult != null)
+                {
+                    totalSuccess += groupResult.SuccessCount;
+                    allSuccessIds.AddRange(groupResult.SuccessProjectIds);
+                    if (groupResult.ErrorMessages != null)
+                    {
+                        allErrorMessages.AddRange(groupResult.ErrorMessages);
+                    }
+                }
+            }
+
+            // 設定最終結果
+            result.Success = totalSuccess > 0;
+            result.SuccessCount = totalSuccess;
+            result.SuccessProjectIds = allSuccessIds;
+            result.ErrorMessages = allErrorMessages;
+            
+            if (totalSuccess > 0)
+            {
+                result.Message = $"成功處理 {totalSuccess} 件計畫";
+            }
+            else
+            {
+                result.Message = "沒有符合條件的計畫可以處理";
+            }
+
+            // 記錄操作結果
+            System.Diagnostics.Debug.WriteLine($"批次處理完成: 成功={totalSuccess}");
+
+        }
+        catch (Exception ex)
+        {
+            result.Success = false;
+            result.Message = "批次處理時發生系統錯誤";
+            result.ErrorMessages.Add($"例外錯誤: {ex.Message}");
+            
+            // 記錄完整錯誤
+            System.Diagnostics.Debug.WriteLine($"批次處理例外: {ex}");
+        }
+        
+        return result;
+    }
+
+    /// <summary>
+    /// 批次不通過處理
+    /// </summary>
+    /// <param name="projectIds">專案編號列表</param>
+    /// <param name="actionType">操作類型</param>
+    /// <param name="reviewType">審查類型</param>
+    /// <returns>批次處理結果</returns>
+    [WebMethod]
+    public static BatchApprovalResult BatchRejectProjects(List<string> projectIds, string actionType, string reviewType)
+    {
+        var result = new BatchApprovalResult
+        {
+            ActionType = actionType,
+            ProcessedAt = DateTime.Now
+        };
+
+        try
+        {
+            // 驗證參數
+            if (projectIds == null || projectIds.Count == 0)
+            {
+                result.Success = false;
+                result.Message = "未提供要處理的專案編號";
+                result.ErrorMessages.Add("專案編號列表為空");
+                return result;
+            }
+
+            // 取得當前使用者資訊
+            var currentUser = GetCurrentUserInfo();
+            if (currentUser == null)
+            {
+                result.Success = false;
+                result.Message = "無法取得使用者資訊";
+                result.ErrorMessages.Add("使用者未登入或 Session 已過期");
+                return result;
+            }
+
+            // 執行批次不通過處理
+            var batchResult = ReviewCheckListHelper.BatchRejectProjectStatus(
+                projectIds, 
+                currentUser.Account,
+                actionType
+            );
+
+            if (batchResult != null)
+            {
+                result.Success = batchResult.Success;
+                result.SuccessCount = batchResult.SuccessCount;
+                result.SuccessProjectIds = batchResult.SuccessProjectIds;
+                result.ErrorMessages = batchResult.ErrorMessages;
+                
+                if (batchResult.Success)
+                {
+                    result.Message = $"成功處理 {batchResult.SuccessCount} 件計畫";
+                }
+                else
+                {
+                    result.Message = "批次不通過處理失敗";
+                }
+            }
+
+        }
+        catch (Exception ex)
+        {
+            result.Success = false;
+            result.Message = "批次處理時發生系統錯誤";
+            result.ErrorMessages.Add($"例外錯誤: {ex.Message}");
+            
+            System.Diagnostics.Debug.WriteLine($"批次不通過例外: {ex}");
+        }
+        
+        return result;
+    }
+
+    /// <summary>
+    /// 依補助案類型分組專案編號
+    /// </summary>
+    private static Dictionary<string, List<string>> GroupProjectsByType(List<string> projectIds)
+    {
+        var groups = new Dictionary<string, List<string>>();
+
+        foreach (string projectId in projectIds)
+        {
+            if (string.IsNullOrEmpty(projectId)) continue;
+
+            string subsidyType = GetSubsidyTypeFromProjectId(projectId);
+            
+            if (!groups.ContainsKey(subsidyType))
+            {
+                groups[subsidyType] = new List<string>();
+            }
+            
+            groups[subsidyType].Add(projectId);
+        }
+
+        return groups;
+    }
+
+    /// <summary>
+    /// 從專案編號判斷補助案類型
+    /// </summary>
+    private static string GetSubsidyTypeFromProjectId(string projectId)
+    {
+        if (string.IsNullOrEmpty(projectId)) return "UNKNOWN";
+
+        if (projectId.Contains("SCI")) return "SCI";      // 科專
+        if (projectId.Contains("CUL")) return "CUL";      // 文化
+        if (projectId.Contains("EDC")) return "EDC";      // 學校民間
+        if (projectId.Contains("CLB")) return "CLB";      // 學校社團
+        if (projectId.Contains("GOV")) return "GOV";      // 政府機關
+        if (projectId.Contains("NGO")) return "NGO";      // 非政府組織
+        if (projectId.Contains("INT")) return "INT";      // 國際合作
+
+        return "UNKNOWN";
+    }
+
+    /// <summary>
+    /// 根據補助案類型和操作類型取得狀態轉換
+    /// </summary>
+    private static bool GetStatusTransitionBySubsidyType(string subsidyType, string currentReviewType, out string fromStatus, out string toStatus)
+    {
+        fromStatus = "";
+        toStatus = "";
+
+        try
+        {
+            switch (subsidyType)
+            {
+                case "SCI": // 科專: 資格審查 --> 領域審查 --> 技術審查 --> 決審
+                    switch (currentReviewType)
+                    {
+                        case "1": // 資格審查 → 領域審查
+                            fromStatus = "資格審查";
+                            toStatus = "領域審查";
+                            return true;
+                        case "2": // 領域審查 → 技術審查
+                            fromStatus = "領域審查";
+                            toStatus = "技術審查";
+                            return true;
+                        case "3": // 技術審查 → 決審
+                            fromStatus = "技術審查";
+                            toStatus = "決審";
+                            return true;
+                    }
+                    break;
+
+                case "CUL": // 文化 (尚未實作)
+                case "EDC": // 學校民間 (尚未實作)
+                case "CLB": // 學校社團 (尚未實作)
+                case "GOV": // 政府機關 (尚未實作)
+                case "NGO": // 非政府組織 (尚未實作)
+                case "INT": // 國際合作 (尚未實作)
+                    // TODO: 實作其他補助案類型的狀態轉換
+                    return false;
+            }
+
+            return false;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得狀態轉換時發生錯誤: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 取得目前登入使用者資訊 (靜態版本)
+    /// </summary>
+    private static SessionHelper.UserInfoClass GetCurrentUserInfo()
+    {
+        try
+        {
+            return SessionHelper.Get<SessionHelper.UserInfoClass>(SessionHelper.UserInfo);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得使用者資訊時發生錯誤: {ex.Message}");
+            return null;
+        }
+    }
+
 
     #endregion
 }
