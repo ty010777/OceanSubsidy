@@ -7,17 +7,135 @@
 
     
     <script>
+        // 處理提送申請者修正計畫書
+        function handleSendToApplicant() {
+            // 取得選中的專案ID列表
+            const selectedIds = getSelectedProjectIds();
+            console.log('Debug: selectedIds =', selectedIds);
+            
+            if (!selectedIds || selectedIds.length === 0) {
+                console.log('Debug: 沒有選中的項目');
+                Swal.fire({
+                    title: '提醒',
+                    text: '請先選擇要處理的案件',
+                    icon: 'warning',
+                    confirmButtonText: '確定'
+                });
+                return;
+            }
+            
+            console.log('Debug: 找到', selectedIds.length, '個選中的項目:', selectedIds);
+            
+            // SweetAlert2 確認提示
+            Swal.fire({
+                title: '確定提送申請者進行資料修正？',
+                text: `選中 ${selectedIds.length} 件計畫，確定要提送給申請者修正計畫書嗎？`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: '確定提送',
+                cancelButtonText: '取消'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    console.log('Debug: 用戶確認提送，準備執行 submitSendToApplicant');
+                    // 執行提送動作
+                    submitSendToApplicant(selectedIds);
+                }
+            });
+        }
+        
+        // 提交提送申請者的動作
+        function submitSendToApplicant(selectedIds) {
+            console.log('Debug: submitSendToApplicant 被調用，參數:', selectedIds);
+            
+            // 顯示載入中
+            Swal.fire({
+                title: '處理中...',
+                text: '正在提送案件給申請者',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            // 將選中的ID放入HiddenField
+            const hiddenField = document.getElementById('<%= hdnSelectedProjectIds.ClientID %>');
+            console.log('Debug: hiddenField element:', hiddenField);
+            
+            const joinedIds = selectedIds.join(',');
+            console.log('Debug: 準備設定到隱藏欄位的值:', joinedIds);
+            
+            hiddenField.value = joinedIds;
+            console.log('Debug: 隱藏欄位設定後的值:', hiddenField.value);
+            
+            console.log('Debug: 準備觸發 PostBack');
+            // 觸發後端的按鈕點擊事件
+            <%= Page.ClientScript.GetPostBackEventReference(btnSendToApplicant, "") %>;
+        }
+        
+        // 取得選中的專案ID列表（使用ReviewChecklist模組的函數）
+        function getSelectedProjectIds() {
+            console.log('Debug: getSelectedProjectIds 被調用');
+            
+            // Type4 決審階段不需要狀態過濾，直接回傳所有勾選的項目
+            const selectedIds = [];
+            const checkedBoxes = $('#content-type-4 .checkPlan:checked');
+            console.log('Debug: 找到的勾選框數量:', checkedBoxes.length);
+            
+            checkedBoxes.each(function(index) {
+                const projectId = $(this).val();
+                console.log('Debug: 勾選框', index, 'value:', projectId);
+                if (projectId && projectId.trim() !== '') {
+                    selectedIds.push(projectId);
+                    console.log('Debug: 新增 projectId 到列表:', projectId);
+                }
+            });
+            
+            console.log('Debug: 最終回傳的 selectedIds:', selectedIds);
+            return selectedIds;
+        }
+
         $(function() {
             // 初始化審查清單頁面
             if (window.ReviewChecklist) {
                 window.ReviewChecklist.init();
             }
+            
+            // Type4 類別變更事件處理 - 使用共用函數
+            $('#<%= ddlCategory_Type4.ClientID %>').change(function() {
+                var selectedCategory = $(this).val();
+                var reviewGroupDropdown = $('#<%= ddlReviewGroup_Type4.ClientID %>');
+                
+                // 使用 ReviewChecklist 模組中的共用函數
+                if (window.ReviewChecklist && window.ReviewChecklist.loadReviewGroupOptions) {
+                    window.ReviewChecklist.loadReviewGroupOptions(selectedCategory, reviewGroupDropdown);
+                }
+            });
+
+            // Type4 頁面載入時自動載入科專的審查組別選項
+            var defaultCategory = $('#<%= ddlCategory_Type4.ClientID %>').val();
+            if (defaultCategory && window.ReviewChecklist && window.ReviewChecklist.loadReviewGroupOptions) {
+                var reviewGroupDropdown = $('#<%= ddlReviewGroup_Type4.ClientID %>');
+                window.ReviewChecklist.loadReviewGroupOptions(defaultCategory, reviewGroupDropdown);
+            }
+
+            // 排序模式 Modal 開啟事件
+            $('#sortModeModal').on('shown.bs.modal', function() {
+                if (window.ReviewChecklist && window.ReviewChecklist.initSortingModal) {
+                    window.ReviewChecklist.initSortingModal();
+                }
+            });
         });
 
     </script>
 </asp:Content>
 
 <asp:Content ID="MainContent" ContentPlaceHolderID="MainContent" runat="server">
+    <!-- 隱藏欄位和按鈕 -->
+    <asp:HiddenField ID="hdnSelectedProjectIds" runat="server" />
+    <asp:Button ID="btnSendToApplicant" runat="server" Text="提送至申請者" 
+                OnClick="btnSendToApplicant_Click" Style="display: none;" />
     <!-- 頁面標題 -->
     <div class="page-title">
         <img src="<%= ResolveUrl("~/assets/img/information-system-title-icon04.svg") %>" alt="logo">
@@ -288,7 +406,7 @@
                 <div class="p-3 d-flex justify-content-between align-items-center">
                     <div class="d-flex gap-3">
                         <button class="btn btn-teal" type="button" onclick="handleBatchApproval('轉入下一階段')"><i class="fa-solid fa-check"></i>批次通過，轉入下一階段</button>
-                        <button class="btn btn-pink" type="button"><i class="fa-solid fa-xmark"></i>批次不通過，提送申請者</button>
+                        <button class="btn btn-pink" type="button" onclick="handleBatchReject('批次不通過')"><i class="fa-solid fa-xmark"></i>批次不通過，提送申請者</button>
                     </div>
                 </div>
             </div>
@@ -498,7 +616,7 @@
         			  <button class="btn btn-royal-blue" type="button" data-bs-toggle="modal" data-bs-target="#tipModal2"><i class="fa-solid fa-check"></i>提送至申請者</button>
         			  <button class="btn btn-teal" type="button" onclick="handleBatchApproval('轉入下一階段')"><i class="fa-solid fa-check"></i>批次通過，轉入下一階段</button>
         			  <button class="btn btn-teal" type="button" onclick="handleBatchApproval('進入決審')"><i class="fa-solid fa-check"></i>批次通過，進入決審</button>
-        			  <button class="btn btn-pink" type="button"><i class="fa-solid fa-xmark"></i>批次不通過</button>
+        			  <button class="btn btn-pink" type="button" onclick="handleBatchReject('批次不通過')"><i class="fa-solid fa-xmark"></i>批次不通過</button>
         		  </div>
           
         	  </div>
@@ -714,7 +832,7 @@
                      <div class="d-flex gap-3 flex-wrap">
                          <button class="btn btn-royal-blue" type="button" data-bs-toggle="modal" data-bs-target="#tipModal2"><i class="fa-solid fa-check"></i>提送至申請者</button>
                          <button class="btn btn-teal" type="button" onclick="handleBatchApproval('轉入下一階段')"><i class="fa-solid fa-check"></i>批次通過，轉入下一階段</button>
-                         <button class="btn btn-pink" type="button"><i class="fa-solid fa-xmark"></i>批次不通過</button>
+                         <button class="btn btn-pink" type="button" onclick="handleBatchReject('批次不通過')"><i class="fa-solid fa-xmark"></i>批次不通過</button>
                      </div>
              
                      
@@ -787,7 +905,7 @@
          </div>
     </div>
     
-    <!-- 類型4：結果公告 -->
+    <!-- 類型4：決定審核清單 -->
     <div id="content-type-4" class="review-content" style="display: none;">
         <!-- 搜尋表單 -->
         <div class="search bg-light-teal-100 rounded-0">
@@ -797,28 +915,27 @@
                   <!-- 計畫編號或名稱關鍵字 -->
                   <div class="search-item">
                       <div class="fs-16 text-gray mb-2">計畫編號或名稱關鍵字</div>
-                      <input type="text" name=""  class="form-control" placeholder="請輸入計畫編號、計畫名稱相關文字">
+                      <input type="text" name="txtKeyword_Type4" class="form-control" placeholder="請輸入計畫編號、計畫名稱相關文字">
                   </div>
                   
-                  <!-- 年度/類別 -->
+                  <!-- 年度 -->
+                  <div class="search-item">
+                      <div class="fs-16 text-gray mb-2">年度</div>
+                      <asp:DropDownList ID="ddlYear_Type4" runat="server" CssClass="form-select">
+                      </asp:DropDownList>
+                  </div>
+                  
+                  <!-- 類別/審查組別 -->
                   <div class="row g-3">
                       <div class="col-12 col-lg-6">
-                          <div class="fs-16 text-gray mb-2">年度</div>
-                          <select class="form-select" name="" >
-                              <option value="">全部</option>
-                              <option value="">114年</option>
-                              <option value="">113年</option>
-                          </select>
+                          <div class="fs-16 text-gray mb-2">類別</div>
+                          <asp:DropDownList ID="ddlCategory_Type4" runat="server" CssClass="form-select">
+                          </asp:DropDownList>
                       </div>
                       <div class="col-12 col-lg-6">
-                          <div class="fs-16 text-gray mb-2">類別</div>
-                          <select class="form-select" name="" >
-                              <option value="">全部</option>
-                              <option value="">科專</option>
-                              <option value="">文化</option>
-                              <option value="">學校民間</option>
-                              <option value="">學校社團</option>
-                          </select>
+                          <div class="fs-16 text-gray mb-2">審查組別</div>
+                          <asp:DropDownList ID="ddlReviewGroup_Type4" runat="server" CssClass="form-select">
+                          </asp:DropDownList>
                       </div>
                   </div>
               </div>
@@ -826,49 +943,18 @@
               <div class="column-2">
                   <div class="search-item">
                       <div class="fs-16 text-gray mb-2">申請單位</div>
-                      <select class="form-select" name="" >
-                          <option value="">全部申請單位</option>
-                          <option value="">申請單位</option>
-                          <option value="">申請單位</option>
-                      </select>
+                      <asp:DropDownList ID="ddlOrg_Type4" runat="server" CssClass="form-select">
+                      </asp:DropDownList>
                   </div>
                   <div class="search-item">
                       <div class="fs-16 text-gray mb-2">承辦人員</div>
-                      <select class="form-select" name="" >
-                          <option value="">林小名</option>
-                          <option value="">林小名</option>
-                          <option value="">林小名</option>
-                      </select>
+                      <asp:DropDownList ID="ddlSupervisor_Type4" runat="server" CssClass="form-select">
+                      </asp:DropDownList>
                   </div>
               </div>    
       
-              <button type="button" class="btn btn-teal-dark d-table mx-auto">
-                  <i class="fa-solid fa-magnifying-glass"></i>
-                  查詢
-              </button>
+              <asp:Button ID="btnSearch_Type4" runat="server" Text="🔍 查詢" CssClass="btn btn-teal-dark d-table mx-auto" OnClick="btnSearch_Type4_Click" />
           </div>
-        </div>
-        <div class="horizontal-scrollable">
-          <button class="btn-control btn-prev" role="button"><i class="fas fa-angle-left"></i></button>
-          <ul>
-        	  <li><button class="btn-type active">科專/資通訊</button></li>
-        	  <li><button class="btn-type">科專</button></li>
-        	  <li><button class="btn-type">資通訊</button></li>
-        	  <li><button class="btn-type">科專/環境工程</button></li>
-        	  <li><button class="btn-type">科專/材料科技</button></li>
-        	  <li><button class="btn-type">科專/生醫工程</button></li>
-        	  <li><button class="btn-type">科專/機械與機電工程</button></li>
-        	  <li><button class="btn-type">文化/薪傳/航海智慧轉譯類</button></li>
-        	  <li><button class="btn-type">文化/薪傳/海岸聚落發展類</button></li>
-        	  <li><button class="btn-type">文化/薪傳/圖文繪本創新類</button></li>
-        	  <li><button class="btn-type">文化/船藝/造舟技藝傳承類</button></li>
-        	  <li><button class="btn-type">文化/船藝/航海實踐交流類</button></li>
-        	  <li><button class="btn-type">文化/藝海/海洋主題創作類</button></li>
-        	  <li><button class="btn-type">文化/藝海/海洋藝文扎根類</button></li>
-        	  <li><button class="btn-type">學校.民間</button></li>
-        	  <li><button class="btn-type">學校社團</button></li>
-          </ul>
-          <button class="btn-control btn-next" role="button"><i class="fas fa-angle-right"></i></button>
         </div>
         <!-- 列表內容 -->
         <div class="block rounded-bottom-4">
@@ -880,16 +966,13 @@
         		  </h4>
         		  <span>共 <span class="text-teal">3</span> 筆資料</span>
         
-        		  <!-- 切換表格模式 -->
-        		  <div class="btn-group-teal-dark">
-        			  <input id="approvalMode" class="approval-mode"  type="radio" name="btn-checked-group" checked>
-        			  <label  for="approvalMode">核定模式</label>
-        			  <input id="sortMode" class="sort-mode" type="radio" name="btn-checked-group">
-        			  <label  for="sortMode">排序模式</label>
-        		  </div>
-        		  <button class="btn btn-sm btn-teal-dark mb-0" type="button" data-bs-toggle="modal" data-bs-target="#reviewResultModal">
+        		  <button class="btn btn-sm btn-teal-dark mb-0" type="button" onclick="handleType4ApprovalSave()">
         			  <i class="fas fa-check"></i>
         			  儲存
+        		  </button>
+        		  <button class="btn btn-sm btn-outline-teal-dark mb-0" type="button" data-bs-toggle="modal" data-bs-target="#sortModeModal">
+        			  <i class="fas fa-sort"></i>
+        			  排序模式
         		  </button>
         	  </div>
         	  <button class="btn btn-teal-dark" type="button"><i class="fas fa-download"></i>匯出列表資料</button>
@@ -918,7 +1001,6 @@
         					  <th class="text-start">
         						  <span>申請單位</span>
         					  </th>
-        					  <th><span>序位點數</span></th>
         					  <th><span>總分</span></th>
         					  <th ><span>申請經費</span></th>
         					  <th>
@@ -944,7 +1026,6 @@
         						  <a href="#" class="link-black" target="_blank">112-113年水下噪音監測調查計畫</a>
         					  </td>
         					  <td data-th="申請單位:" width="180" style="text-align: left;">淡江大學學校財團法人淡江大學</td>
-        					  <td data-th="序位點數:">11</td>
         					  <td data-th="總分:" nowrap>450</td>
         					  <td data-th="申請經費:" width="120" style="text-align: center; text-wrap: nowrap;">3,000,000</td>
         					  <td data-th="核定經費:">
@@ -972,7 +1053,6 @@
         						  <a href="#" class="link-black" target="_blank">112-113年水下噪音監測調查計畫</a>
         					  </td>
         					  <td data-th="申請單位:" width="180" style="text-align: left;">淡江大學學校財團法人淡江大學</td>
-        					  <td data-th="序位點數:">11</td>
         					  <td data-th="總分:" nowrap>450</td>
         					  <td data-th="申請經費:" width="120" style="text-align: center; text-wrap: nowrap;">3,000,000</td>
         					  <td data-th="核定經費:">
@@ -995,7 +1075,6 @@
         						  <a href="#" class="link-black" target="_blank">112-113年水下噪音監測調查計畫</a>
         					  </td>
         					  <td data-th="申請單位:" width="180" style="text-align: left;">淡江大學學校財團法人淡江大學</td>
-        					  <td data-th="序位點數:">11</td>
         					  <td data-th="總分:" nowrap>450</td>
         					  <td data-th="申請經費:" width="120" style="text-align: center; text-wrap: nowrap;">3,000,000</td>
         					  <td data-th="核定經費:">
@@ -1018,9 +1097,9 @@
         	  <div class="bg-light-teal-100 mb-5 | checkPlanBtnPanel checkPlanBtnPanel-type4" style="display: none;">
         		  <div class="p-3 d-flex justify-content-between align-items-start gap-3 flex-wrap">
         			  <div class="d-flex gap-3 flex-wrap">
-        				  <button class="btn btn-royal-blue" type="button" data-bs-toggle="modal" data-bs-target="#tipModal2"><i class="fa-solid fa-check"></i>提送申請者修正計畫書</button>
+        				  <button class="btn btn-royal-blue" type="button" onclick="handleSendToApplicant()"><i class="fa-solid fa-check"></i>提送申請者修正計畫書</button>
         				  <button class="btn btn-teal" type="button" onclick="handleBatchApproval('轉入計畫執行階段')"><i class="fa-solid fa-check"></i>批次核定完成，轉入計畫執行階段</button>
-        				  <button class="btn btn-pink" type="button"><i class="fa-solid fa-xmark"></i>批次不通過</button>
+        				  <button class="btn btn-pink" type="button" onclick="handleBatchReject('批次不通過')"><i class="fa-solid fa-xmark"></i>批次不通過</button>
         			  </div>
         	  
         
@@ -1028,263 +1107,187 @@
         	  </div>
           </div>
         
-          <!-- 排序模式列表 -->
-          <div class="sort-mode-table">
-        	  <div class="table-responsive mb-0">
-        		  <table class="table teal-table" id="sortTable">
-        			  <thead>
-        				  <tr>
-        					  <th>排序</th>
-        					  <th width="80">年度</th>
-        					  <th width="220">
-        						  <div class="hstack align-items-center">
-        							  <span>計畫名稱</span>
-        						  </div>
-        					  </th>
-        					  <th class="text-start">
-        						  <span>申請單位</span>
-        					  </th>
-        					  <th><span>序位點數</span></th>
-        					  <th><span>總分</span></th>
-        					  <th class="text-center"><span>申請經費</span></th>
-        					  <th class="text-start">備註</th>
-        					  <th>功能</th>
-        				  </tr>
-        			  </thead>
-        			  <tbody>
-        				  <tr data-id="0" data-plan-name="112-113年水下噪音監測調查計畫">
-        					  <td data-th="排序:">1</td>
-        					  <td data-th="年度:">114</td>
-        					  <td data-th="計畫名稱:" class="text-start">
-        						  <a href="#" class="link-black" target="_blank">112-113年水下噪音監測調查計畫</a>
-        					  </td>
-        					  <td width="180" data-th="申請單位:" class="text-start">淡江大學學校財團法人淡江大學</td>
-        					  <td data-th="序位點數:">11</td>
-        					  <td data-th="總分:" nowrap>450</td>
-        					  <td data-th="申請經費:" class="text-center" nowrap>3,000,000</td>
-        					  <td data-th="備註:">
-        						  <input type="text" class="form-control" value="因為XXXXX">
-        					  </td>
-        					  <td data-th="功能:">
-        						  
-        						  <div class="d-flex align-items-center justify-content-end  gap-1">
-        							  <!-- 拖曳排序把手 -->
-        							  <button class="btn btn-sm btn-teal-dark btnDrag" type="button">
-        								  <i class="fas fa-arrows-alt" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="拖曳"></i>
-        							  </button>
-        							  <!-- 置頂按鈕 -->
-        							  <button class="btn btn-sm btn-outline-teal btnTop" type="button">
-        								  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 18" fill="none" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="置頂">
-        									  <g clip-path="url(#clip0_893_5801)">
-        									  <path d="M10.8519 10.038C10.6229 10.037 10.4038 9.94042 10.2435 9.76976L6.00054 5.3408L1.75763 9.76943C1.36703 10.0487 0.833601 9.94474 0.566094 9.53701C0.372381 9.24183 0.365701 8.85468 0.548917 8.55253L5.39205 3.48839C5.7254 3.13744 6.26805 3.13511 6.60426 3.48308C6.60585 3.48474 6.60744 3.4864 6.60935 3.48839L11.4522 8.55253C11.7846 8.9015 11.7846 9.46529 11.4522 9.81425C11.2871 9.96666 11.0724 10.0467 10.8523 10.038H10.8519Z" fill="#26A69A"/>
-        									  <path d="M5.99981 17.4999C5.5265 17.4999 5.14258 17.0992 5.14258 16.6051V4.07891C5.14258 3.58484 5.5265 3.18408 5.99981 3.18408C6.47312 3.18408 6.85705 3.58484 6.85705 4.07891V16.6051C6.85705 17.0992 6.47312 17.4999 5.99981 17.4999Z" fill="#26A69A"/>
-        									  <path d="M11.1431 2.28932H0.857234C0.383926 2.28932 0 1.88889 0 1.39482C0 0.900762 0.383926 0.5 0.857234 0.5H11.1431C11.6164 0.5 12.0003 0.900762 12.0003 1.39482C12.0003 1.88889 11.6164 2.28965 11.1431 2.28965V2.28932Z" fill="#26A69A"/>
-        									  </g>
-        									  <defs>
-        									  <clipPath id="clip0_893_5801">
-        									  <rect width="12" height="17" fill="white" transform="translate(0 0.5)"/>
-        									  </clipPath>
-        									  </defs>
-        								  </svg>
-        							  </button>
-        						  </div>
-        					  </td>
-        				  </tr>
-        				  <tr data-id="1" data-plan-name="112-113年測試計畫名稱A">
-        					  <td data-th="排序:">2</td>
-        					  <td data-th="年度:">114</td>
-        					  <td data-th="計畫名稱:" class="text-start">
-        						  <a href="#" class="link-black" target="_blank">112-113年測試計畫名稱A</a>
-        					  </td>
-        					  <td width="180" data-th="申請單位:" class="text-start">淡江大學學校財團法人淡江大學</td>
-        					  <td data-th="序位點數:">11</td>
-        					  <td data-th="總分:" nowrap>450</td>
-        					  <td data-th="申請經費:" class="text-center" nowrap>3,000,000</td>
-        					  <td data-th="備註:">
-        						  <input type="text" class="form-control" value="因為XXXXX">
-        					  </td>
-        					  <td data-th="功能:">
-        						  
-        						  <div class="d-flex align-items-center justify-content-end  gap-1">
-        							  <!-- 拖曳排序把手 -->
-        							  <button class="btn btn-sm btn-teal-dark btnDrag" type="button">
-        								  <i class="fas fa-arrows-alt" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="拖曳"></i>
-        							  </button>
-        							  <!-- 置頂按鈕 -->
-        							  <button class="btn btn-sm btn-outline-teal btnTop" type="button">
-        								  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 18" fill="none" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="置頂">
-        									  <g clip-path="url(#clip0_893_5801)">
-        									  <path d="M10.8519 10.038C10.6229 10.037 10.4038 9.94042 10.2435 9.76976L6.00054 5.3408L1.75763 9.76943C1.36703 10.0487 0.833601 9.94474 0.566094 9.53701C0.372381 9.24183 0.365701 8.85468 0.548917 8.55253L5.39205 3.48839C5.7254 3.13744 6.26805 3.13511 6.60426 3.48308C6.60585 3.48474 6.60744 3.4864 6.60935 3.48839L11.4522 8.55253C11.7846 8.9015 11.7846 9.46529 11.4522 9.81425C11.2871 9.96666 11.0724 10.0467 10.8523 10.038H10.8519Z" fill="#26A69A"/>
-        									  <path d="M5.99981 17.4999C5.5265 17.4999 5.14258 17.0992 5.14258 16.6051V4.07891C5.14258 3.58484 5.5265 3.18408 5.99981 3.18408C6.47312 3.18408 6.85705 3.58484 6.85705 4.07891V16.6051C6.85705 17.0992 6.47312 17.4999 5.99981 17.4999Z" fill="#26A69A"/>
-        									  <path d="M11.1431 2.28932H0.857234C0.383926 2.28932 0 1.88889 0 1.39482C0 0.900762 0.383926 0.5 0.857234 0.5H11.1431C11.6164 0.5 12.0003 0.900762 12.0003 1.39482C12.0003 1.88889 11.6164 2.28965 11.1431 2.28965V2.28932Z" fill="#26A69A"/>
-        									  </g>
-        									  <defs>
-        									  <clipPath id="clip0_893_5801">
-        									  <rect width="12" height="17" fill="white" transform="translate(0 0.5)"/>
-        									  </clipPath>
-        									  </defs>
-        								  </svg>
-        							  </button>
-        						  </div>
-        					  </td>
-        				  </tr>
-        				  <tr data-id="2" data-plan-name="112-113年測試計畫名稱B">
-        					  <td data-th="排序:">3</td>
-        					  <td data-th="年度:">114</td>
-        					  <td data-th="計畫名稱:" class="text-start">
-        						  <a href="#" class="link-black" target="_blank">112-113年測試計畫名稱B</a>
-        					  </td>
-        					  <td width="180" data-th="申請單位:" class="text-start">淡江大學學校財團法人淡江大學</td>
-        					  <td data-th="序位點數:">11</td>
-        					  <td data-th="總分:" nowrap>450</td>
-        					  <td data-th="申請經費:" class="text-center" nowrap>3,000,000</td>
-        					  <td data-th="備註:">
-        						  <input type="text" class="form-control" value="因為XXXXX">
-        					  </td>
-        					  <td data-th="功能:">
-        						  
-        						  <div class="d-flex align-items-center justify-content-end  gap-1">
-        							  <!-- 拖曳排序把手 -->
-        							  <button class="btn btn-sm btn-teal-dark btnDrag" type="button">
-        								  <i class="fas fa-arrows-alt" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="拖曳"></i>
-        							  </button>
-        							  <!-- 置頂按鈕 -->
-        							  <button class="btn btn-sm btn-outline-teal btnTop" type="button">
-        								  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 18" fill="none" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="置頂">
-        									  <g clip-path="url(#clip0_893_5801)">
-        									  <path d="M10.8519 10.038C10.6229 10.037 10.4038 9.94042 10.2435 9.76976L6.00054 5.3408L1.75763 9.76943C1.36703 10.0487 0.833601 9.94474 0.566094 9.53701C0.372381 9.24183 0.365701 8.85468 0.548917 8.55253L5.39205 3.48839C5.7254 3.13744 6.26805 3.13511 6.60426 3.48308C6.60585 3.48474 6.60744 3.4864 6.60935 3.48839L11.4522 8.55253C11.7846 8.9015 11.7846 9.46529 11.4522 9.81425C11.2871 9.96666 11.0724 10.0467 10.8523 10.038H10.8519Z" fill="#26A69A"/>
-        									  <path d="M5.99981 17.4999C5.5265 17.4999 5.14258 17.0992 5.14258 16.6051V4.07891C5.14258 3.58484 5.5265 3.18408 5.99981 3.18408C6.47312 3.18408 6.85705 3.58484 6.85705 4.07891V16.6051C6.85705 17.0992 6.47312 17.4999 5.99981 17.4999Z" fill="#26A69A"/>
-        									  <path d="M11.1431 2.28932H0.857234C0.383926 2.28932 0 1.88889 0 1.39482C0 0.900762 0.383926 0.5 0.857234 0.5H11.1431C11.6164 0.5 12.0003 0.900762 12.0003 1.39482C12.0003 1.88889 11.6164 2.28965 11.1431 2.28965V2.28932Z" fill="#26A69A"/>
-        									  </g>
-        									  <defs>
-        									  <clipPath id="clip0_893_5801">
-        									  <rect width="12" height="17" fill="white" transform="translate(0 0.5)"/>
-        									  </clipPath>
-        									  </defs>
-        								  </svg>
-        							  </button>
-        						  </div>
-        					  </td>
-        				  </tr>
-        				  <tr data-id="3" data-plan-name="112-113年測試計畫名稱C">
-        					  <td data-th="排序:">4</td>
-        					  <td data-th="年度:">114</td>
-        					  <td data-th="計畫名稱:" class="text-start">
-        						  <a href="#" class="link-black" target="_blank">112-113年測試計畫名稱C</a>
-        					  </td>
-        					  <td width="180" data-th="申請單位:" class="text-start">淡江大學學校財團法人淡江大學</td>
-        					  <td data-th="序位點數:">11</td>
-        					  <td data-th="總分:" nowrap>450</td>
-        					  <td data-th="申請經費:" class="text-center" nowrap>3,000,000</td>
-        					  <td data-th="備註:">
-        						  <input type="text" class="form-control" value="因為XXXXX">
-        					  </td>
-        					  <td data-th="功能:">
-        						  
-        						  <div class="d-flex align-items-center justify-content-end  gap-1">
-        							  <!-- 拖曳排序把手 -->
-        							  <button class="btn btn-sm btn-teal-dark btnDrag" type="button">
-        								  <i class="fas fa-arrows-alt" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="拖曳"></i>
-        							  </button>
-        							  <!-- 置頂按鈕 -->
-        							  <button class="btn btn-sm btn-outline-teal btnTop" type="button">
-        								  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 18" fill="none" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="置頂">
-        									  <g clip-path="url(#clip0_893_5801)">
-        									  <path d="M10.8519 10.038C10.6229 10.037 10.4038 9.94042 10.2435 9.76976L6.00054 5.3408L1.75763 9.76943C1.36703 10.0487 0.833601 9.94474 0.566094 9.53701C0.372381 9.24183 0.365701 8.85468 0.548917 8.55253L5.39205 3.48839C5.7254 3.13744 6.26805 3.13511 6.60426 3.48308C6.60585 3.48474 6.60744 3.4864 6.60935 3.48839L11.4522 8.55253C11.7846 8.9015 11.7846 9.46529 11.4522 9.81425C11.2871 9.96666 11.0724 10.0467 10.8523 10.038H10.8519Z" fill="#26A69A"/>
-        									  <path d="M5.99981 17.4999C5.5265 17.4999 5.14258 17.0992 5.14258 16.6051V4.07891C5.14258 3.58484 5.5265 3.18408 5.99981 3.18408C6.47312 3.18408 6.85705 3.58484 6.85705 4.07891V16.6051C6.85705 17.0992 6.47312 17.4999 5.99981 17.4999Z" fill="#26A69A"/>
-        									  <path d="M11.1431 2.28932H0.857234C0.383926 2.28932 0 1.88889 0 1.39482C0 0.900762 0.383926 0.5 0.857234 0.5H11.1431C11.6164 0.5 12.0003 0.900762 12.0003 1.39482C12.0003 1.88889 11.6164 2.28965 11.1431 2.28965V2.28932Z" fill="#26A69A"/>
-        									  </g>
-        									  <defs>
-        									  <clipPath id="clip0_893_5801">
-        									  <rect width="12" height="17" fill="white" transform="translate(0 0.5)"/>
-        									  </clipPath>
-        									  </defs>
-        								  </svg>
-        							  </button>
-        						  </div>
-        					  </td>
-        				  </tr>
-        				  <tr data-id="4" data-plan-name="112-113年測試計畫名稱D">
-        					  <td data-th="排序:">5</td>
-        					  <td data-th="年度:">114</td>
-        					  <td data-th="計畫名稱:" class="text-start">
-        						  <a href="#" class="link-black" target="_blank">112-113年測試計畫名稱D</a>
-        					  </td>
-        					  <td width="180" data-th="申請單位:" class="text-start">淡江大學學校財團法人淡江大學</td>
-        					  <td data-th="序位點數:">11</td>
-        					  <td data-th="總分:" nowrap>450</td>
-        					  <td data-th="申請經費:" class="text-center" nowrap>3,000,000</td>
-        					  <td data-th="備註:">
-        						  <input type="text" class="form-control" value="因為XXXXX">
-        					  </td>
-        					  <td data-th="功能:">
-        						  
-        						  <div class="d-flex align-items-center justify-content-end  gap-1">
-        							  <!-- 拖曳排序把手 -->
-        							  <button class="btn btn-sm btn-teal-dark btnDrag" type="button">
-        								  <i class="fas fa-arrows-alt" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="拖曳"></i>
-        							  </button>
-        							  <!-- 置頂按鈕 -->
-        							  <button class="btn btn-sm btn-outline-teal btnTop" type="button">
-        								  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 18" fill="none" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="置頂">
-        									  <g clip-path="url(#clip0_893_5801)">
-        									  <path d="M10.8519 10.038C10.6229 10.037 10.4038 9.94042 10.2435 9.76976L6.00054 5.3408L1.75763 9.76943C1.36703 10.0487 0.833601 9.94474 0.566094 9.53701C0.372381 9.24183 0.365701 8.85468 0.548917 8.55253L5.39205 3.48839C5.7254 3.13744 6.26805 3.13511 6.60426 3.48308C6.60585 3.48474 6.60744 3.4864 6.60935 3.48839L11.4522 8.55253C11.7846 8.9015 11.7846 9.46529 11.4522 9.81425C11.2871 9.96666 11.0724 10.0467 10.8523 10.038H10.8519Z" fill="#26A69A"/>
-        									  <path d="M5.99981 17.4999C5.5265 17.4999 5.14258 17.0992 5.14258 16.6051V4.07891C5.14258 3.58484 5.5265 3.18408 5.99981 3.18408C6.47312 3.18408 6.85705 3.58484 6.85705 4.07891V16.6051C6.85705 17.0992 6.47312 17.4999 5.99981 17.4999Z" fill="#26A69A"/>
-        									  <path d="M11.1431 2.28932H0.857234C0.383926 2.28932 0 1.88889 0 1.39482C0 0.900762 0.383926 0.5 0.857234 0.5H11.1431C11.6164 0.5 12.0003 0.900762 12.0003 1.39482C12.0003 1.88889 11.6164 2.28965 11.1431 2.28965V2.28932Z" fill="#26A69A"/>
-        									  </g>
-        									  <defs>
-        									  <clipPath id="clip0_893_5801">
-        									  <rect width="12" height="17" fill="white" transform="translate(0 0.5)"/>
-        									  </clipPath>
-        									  </defs>
-        								  </svg>
-        							  </button>
-        						  </div>
-        					  </td>
-        				  </tr>
-        				  <tr data-id="5" data-plan-name="112-113年測試計畫名稱E">
-        					  <td data-th="排序:">6</td>
-        					  <td data-th="年度:">114</td>
-        					  <td data-th="計畫名稱:" class="text-start">
-        						  <a href="#" class="link-black" target="_blank">112-113年測試計畫名稱E</a>
-        					  </td>
-        					  <td width="180" data-th="申請單位:" class="text-start">淡江大學學校財團法人淡江大學</td>
-        					  <td data-th="序位點數:">11</td>
-        					  <td data-th="總分:" nowrap>450</td>
-        					  <td data-th="申請經費:" class="text-center" nowrap>3,000,000</td>
-        					  <td data-th="備註:">
-        						  <input type="text" class="form-control" value="因為XXXXX">
-        					  </td>
-        					  <td data-th="功能:">
-        						  
-        						  <div class="d-flex align-items-center justify-content-end  gap-1">
-        							  <!-- 拖曳排序把手 -->
-        							  <button class="btn btn-sm btn-teal-dark btnDrag" type="button">
-        								  <i class="fas fa-arrows-alt" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="拖曳"></i>
-        							  </button>
-        							  <!-- 置頂按鈕 -->
-        							  <button class="btn btn-sm btn-outline-teal btnTop" type="button">
-        								  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 18" fill="none" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="置頂">
-        									  <g clip-path="url(#clip0_893_5801)">
-        									  <path d="M10.8519 10.038C10.6229 10.037 10.4038 9.94042 10.2435 9.76976L6.00054 5.3408L1.75763 9.76943C1.36703 10.0487 0.833601 9.94474 0.566094 9.53701C0.372381 9.24183 0.365701 8.85468 0.548917 8.55253L5.39205 3.48839C5.7254 3.13744 6.26805 3.13511 6.60426 3.48308C6.60585 3.48474 6.60744 3.4864 6.60935 3.48839L11.4522 8.55253C11.7846 8.9015 11.7846 9.46529 11.4522 9.81425C11.2871 9.96666 11.0724 10.0467 10.8523 10.038H10.8519Z" fill="#26A69A"/>
-        									  <path d="M5.99981 17.4999C5.5265 17.4999 5.14258 17.0992 5.14258 16.6051V4.07891C5.14258 3.58484 5.5265 3.18408 5.99981 3.18408C6.47312 3.18408 6.85705 3.58484 6.85705 4.07891V16.6051C6.85705 17.0992 6.47312 17.4999 5.99981 17.4999Z" fill="#26A69A"/>
-        									  <path d="M11.1431 2.28932H0.857234C0.383926 2.28932 0 1.88889 0 1.39482C0 0.900762 0.383926 0.5 0.857234 0.5H11.1431C11.6164 0.5 12.0003 0.900762 12.0003 1.39482C12.0003 1.88889 11.6164 2.28965 11.1431 2.28965V2.28932Z" fill="#26A69A"/>
-        									  </g>
-        									  <defs>
-        									  <clipPath id="clip0_893_5801">
-        									  <rect width="12" height="17" fill="white" transform="translate(0 0.5)"/>
-        									  </clipPath>
-        									  </defs>
-        								  </svg>
-        							  </button>
-        						  </div>
-        					  </td>
-        				  </tr>
-        			  </tbody>
-        		  </table>
-        	  </div>
-          </div>
         </div>
     </div>
-     
+     <div class="modal fade" id="planDetailModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="planDetailModalLabel" aria-hidden="true">
+           <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
+               <div class="modal-content">
+                   <div class="modal-header">
+                       <h4 class="fs-24 fw-bold text-green-light">審查結果與意見回覆 - 領域審查/初審</h4>
+                       <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                           <i class="fa-solid fa-circle-xmark"></i>
+                       </button>
+                   </div>
+                   <div class="modal-body">
+                       
+                       <div class="bg-light-gray p-3 mb-4">
+                           <ul class="lh-lg">
+                               <li>
+                                   <span class="text-gray">年度 :</span>
+                                   <span>114</span>
+                               </li>
+                               <li>
+                                   <span class="text-gray">計畫編號 :</span>
+                                   <span>1140023</span>
+                               </li>
+                               <li>
+                                   <span class="text-gray">計畫類別 :</span>
+                                   <span>114年度補助學術機構、研究機關(構)及海洋科技</span>
+                               </li>
+                               <li>
+                                   <span class="text-gray">主題、領域 :</span>
+                                   <span>海洋永續、環境工程</span>
+                               </li>
+                               <li>
+                                   <span class="text-gray">計畫名稱 : </span>
+                                   <span>海洋環境監測與預警系統建置計畫</span>
+                               </li>
+                               <li>
+                                   <span class="text-gray">申請單位 : </span>
+                                   <span>國家海洋研究院環境監測中心</span>
+                               </li>
+                           </ul>
+                       </div>
+       
+                       
+                       <div class="table-responsive">
+                           <table class="table align-middle gray-table lh-base">
+                               <thead>
+                                   <tr>
+                                       <th>審查委員</th>
+                                       <th>評分</th>
+                                       <th>審查意見</th>
+                                       <th>申請單位回覆</th>
+                                   </tr>
+                               </thead>
+                               <tbody>
+                                   <tr>
+                                       <td>廖XXX</td>
+                                       <td class="text-center">90</td>
+                                       <td>意見內容意見內容意見內容意見內容意見內容意見內容意見內容意見內容意見內容意見內容意見內容意見內容意見內容意見內容意見內容意見內容意見內容意見</td>
+                                       <td>申請單位回覆申請單位回覆申請單位回覆申請單位回覆申請單位回覆申請單位回覆申請單位回覆申請單位回覆申請單位回覆</td>
+                                   </tr>
+                               </tbody>
+                           </table>
+                       </div>
+       
+       
+                       <div class="d-flex justify-content-center mt-4 gap-4">
+                           <button type="button" class="btn btn-gray" data-bs-dismiss="modal">
+                               取消
+                           </button>
+                           <button type="button" class="btn btn-teal">
+                               匯出歷次審查結果及回覆對照表
+                           </button>
+                       </div>
+                   </div>
+       
+               </div>
+           </div>
+       </div>
+
+    <!-- 排序模式 Modal -->
+    <div class="modal fade" id="sortModeModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="sortModeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="fs-24 fw-bold text-teal-dark">
+                        <i class="fas fa-sort me-2"></i>
+                        排序模式 - 決定審核清單
+                    </h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- 搜尋表單 -->
+                    <div class="search bg-light-teal-100 rounded-3 mb-4">
+                        <div class="search-form">
+                            <div class="row g-3">
+                                <div class="col-12 col-md-3">
+                                    <div class="fs-16 text-gray mb-2">年度</div>
+                                    <select id="sortingYear" class="form-select">
+                                        <option value="113">113年</option>
+                                        <option value="114">114年</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-3">
+                                    <div class="fs-16 text-gray mb-2">類別</div>
+                                    <select id="sortingCategory" class="form-select" onchange="ReviewChecklist.loadSortingReviewGroupOptions()">
+                                        <option value="SCI">科專</option>
+                                        <option value="CUL">文化</option>
+                                        <option value="EDC">學校民間</option>
+                                        <option value="CLB">學校社團</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-3">
+                                    <div class="fs-16 text-gray mb-2">審查組別</div>
+                                    <select id="sortingReviewGroup" class="form-select">
+                                        <option value="">全部</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-3 d-flex align-items-end">
+                                    <button id="btnSearchSorting" class="btn btn-teal-dark w-100" type="button" onclick="ReviewChecklist.searchSortingMode()">
+                                        <i class="fas fa-search me-1"></i>查詢
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 排序列表 -->
+                    <div class="block rounded-4">
+                        <div class="title border-teal">
+                            <div class="d-flex align-items-center gap-2">
+                                <h5 class="text-teal">
+                                    <img src="<%= ResolveUrl("~/assets/img/title-icon02-teal.svg") %>" alt="logo">
+                                    <span>排序列表</span>
+                                </h5>
+                                <span id="sortingResultCount" class="text-teal">共 0 筆資料</span>
+                            </div>
+                            <button id="btnSaveSorting" class="btn btn-teal-dark" type="button" onclick="ReviewChecklist.saveSortingMode()">
+                                <i class="fas fa-save me-1"></i>儲存排序
+                            </button>
+                        </div>
+
+                        <div class="table-responsive mb-0">
+                            <table class="table teal-table" id="sortingTable">
+                                <thead>
+                                    <tr>
+                                        <th>排序</th>
+                                        <th width="120">計畫編號</th>
+                                        <th width="200">計畫名稱</th>
+                                        <th>申請單位</th>
+                                        <th width="80">總分</th>
+                                        <th width="200">備註</th>
+                                        <th width="100">功能</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sortingTableBody">
+                                    <!-- 排序資料將在這裡動態載入 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 使用說明 -->
+                    <div class="alert alert-info mt-3">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-info-circle me-2 mt-1"></i>
+                            <div>
+                                <strong>使用說明：</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li>使用 <i class="fas fa-arrows-alt text-teal"></i> 按鈕拖曳調整順序</li>
+                                    <li>使用 <i class="fas fa-arrow-up text-teal"></i> 按鈕將項目置頂</li>
+                                    <li>可以修改備註欄位內容</li>
+                                    <li>完成排序後請點擊「儲存排序」按鈕</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </asp:Content>

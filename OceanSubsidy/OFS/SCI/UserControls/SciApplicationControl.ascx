@@ -1,4 +1,5 @@
 ﻿<%@ Control Language="C#" AutoEventWireup="true" CodeFile="SciApplicationControl.ascx.cs" Inherits="OFS_SCI_UserControls_SciApplicationControl" %>
+<%@ Register TagPrefix="uc" TagName="ChangeDescriptionControl" Src="~/OFS/SCI/UserControls/ChangeDescriptionControl.ascx" %>
 
 <div class="block">
 
@@ -478,3 +479,6 @@
     </div>
 
 </div>
+
+<!-- 變更說明 UserControl -->
+<uc:ChangeDescriptionControl ID="ucChangeDescription" runat="server"  SourcePage="SciApplication"/>

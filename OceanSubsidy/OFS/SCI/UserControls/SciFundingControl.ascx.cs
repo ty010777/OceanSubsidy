@@ -87,6 +87,9 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             {
                 ApplyViewMode();
             }
+
+            // 載入變更說明控制項
+            ucChangeDescription.LoadData(projectID);
         }
         catch (Exception ex)
         {
@@ -209,6 +212,9 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             {
                 OFS_SciFundingHelper.ReplaceTotalFeeList(totalFeesData, ProjectID);
             }
+
+            // 儲存變更說明
+            ucChangeDescription.SaveChangeDescription(projectID);
 
             return true;
         }

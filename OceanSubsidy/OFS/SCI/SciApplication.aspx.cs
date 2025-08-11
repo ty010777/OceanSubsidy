@@ -38,6 +38,8 @@ public partial class OFS_SciApplication : System.Web.UI.Page
                 LoadUserControlData();
                 // 檢查表單狀態並隱藏暫存按鈕（如果已完成）
                 CheckFormStatusAndHideTempSaveButton();
+                // 載入變更說明資料到輸入框
+                LoadChangeDescriptionData();
             }
         }
         catch (Exception ex)
@@ -68,16 +70,16 @@ public partial class OFS_SciApplication : System.Web.UI.Page
                 return;
             }
 
-            // 驗證表單資料
-            if (!isTemporarySave)
-            {
-                var validationResult = ucSciApplication.ValidateForm();
-                if (!validationResult.IsValid)
-                {
-                    ShowMessage(validationResult.GetErrorsAsString(), false);
-                    return;
-                }
-            }
+            // // 驗證表單資料
+            // if (!isTemporarySave)
+            // {
+            //     var validationResult = ucSciApplication.ValidateForm();
+            //     if (!validationResult.IsValid)
+            //     {
+            //         ShowMessage(validationResult.GetErrorsAsString(), false);
+            //         return;
+            //     }
+            // }
 
             // 儲存資料
             string resultProjectID = ucSciApplication.SaveData(ProjectID);
@@ -177,11 +179,13 @@ public partial class OFS_SciApplication : System.Web.UI.Page
                 return true; // 沒有資料時允許編輯
             }
             
-            // 只有這兩種狀態可以編輯
+            // 只有這些狀態可以編輯
             string statuses = projectData.Statuses ?? "";
             string statusesName = projectData.StatusesName ?? "";
             
-            return statuses == "尚未提送" || statusesName == "補正補件";
+            return statuses == "尚未提送" || 
+                   statusesName == "補正補件" || 
+                   statusesName == "計畫書修正中";
         }
         catch (Exception ex)
         {
@@ -199,6 +203,7 @@ public partial class OFS_SciApplication : System.Web.UI.Page
     {
         try
         {
+            
             if (isComplete)
             {
                 // 點擊「完成本頁，下一步」按鈕
@@ -208,13 +213,9 @@ public partial class OFS_SciApplication : System.Web.UI.Page
                 var projectData = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
                 if (projectData != null)
                 {
-                    int currentStepNum = 1;
-                    if (!string.IsNullOrEmpty(projectData.CurrentStep) && int.TryParse(projectData.CurrentStep, out currentStepNum))
-                    {
-                        // CurrentStep 保持原值或更新為下一步
-                    }
-                    
-                    bool shouldUpdateCurrentStep = currentStepNum <= 1;
+                    int res;
+                    int.TryParse(projectData.CurrentStep,out res); 
+                    bool shouldUpdateCurrentStep =  res <= 1;
                     string newCurrentStep = shouldUpdateCurrentStep ? "2" : projectData.CurrentStep;
                     
                     // 更新專案版本狀態
@@ -237,7 +238,10 @@ public partial class OFS_SciApplication : System.Web.UI.Page
                 {
                     ProjectID = projectID,
                     Form1Status = "暫存",
-                    updated_at = DateTime.Now
+                    CurrentStep = "1", // 保持在第一步
+                    updated_at = DateTime.Now,
+                    
+                    
                 };
                 
                 OFS_SciApplicationHelper.UpdateOFS_SCIVersion(updateData);
@@ -296,6 +300,42 @@ public partial class OFS_SciApplication : System.Web.UI.Page
         {
             // 發生錯誤時不隱藏按鈕，讓用戶正常使用
             System.Diagnostics.Debug.WriteLine($"檢查表單狀態失敗: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 載入變更說明資料到輸入框
+    /// </summary>
+    private void LoadChangeDescriptionData()
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(ProjectID))
+            {
+                // 從資料庫取得變更說明並設定到頁面元素
+                var changeDescription = OFS_SciApplicationHelper.GetPageModifyNote(ProjectID, "SciApplication");
+                if (changeDescription != null)
+                {
+                    string script = $@"
+                        setTimeout(function() {{
+                            const changeBeforeElement = document.getElementById('txtChangeBefore');
+                            if (changeBeforeElement && '{changeDescription.ChangeBefore?.Replace("'", "\\'")}') {{
+                                changeBeforeElement.textContent = '{changeDescription.ChangeBefore?.Replace("'", "\\'")}';
+                            }}
+                            
+                            const changeAfterElement = document.getElementById('txtChangeAfter');
+                            if (changeAfterElement && '{changeDescription.ChangeAfter?.Replace("'", "\\'")}') {{
+                                changeAfterElement.textContent = '{changeDescription.ChangeAfter?.Replace("'", "\\'")}';
+                            }}
+                        }}, 100);
+                    ";
+                    Page.ClientScript.RegisterStartupScript(this.GetType(), "LoadChangeDescription", script, true);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "載入變更說明資料時發生錯誤");
         }
     }
 

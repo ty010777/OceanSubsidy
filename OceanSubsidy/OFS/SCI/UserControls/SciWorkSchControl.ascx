@@ -1,4 +1,5 @@
 ﻿<%@ Control Language="C#" AutoEventWireup="true" CodeFile="SciWorkSchControl.ascx.cs" Inherits="OFS_SCI_UserControls_SciWorkSchControl" %>
+<%@ Register TagPrefix="uc" TagName="ChangeDescriptionControl" Src="~/OFS/SCI/UserControls/ChangeDescriptionControl.ascx" %>
 
 <div class="block">
 
@@ -407,3 +408,6 @@
     <asp:HiddenField ID="hiddenCheckStandardsData" runat="server"  ClientIDMode="Static"/>
 
 </div>
+
+<!-- 變更說明 UserControl -->
+<uc:ChangeDescriptionControl ID="ucChangeDescription" runat="server" />

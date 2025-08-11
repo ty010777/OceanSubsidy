@@ -72,6 +72,9 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
             {
                 ApplyViewMode();
             }
+
+            // 載入變更說明控制項
+            ucChangeDescription.LoadData(projectID);
         }
         catch (Exception ex)
         {
@@ -121,6 +124,9 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
             // 更新隱藏欄位的附件資料
             var attachmentData = GetAttachmentDataFromForm();
             hdnAttachmentData.Value = Newtonsoft.Json.JsonConvert.SerializeObject(attachmentData);
+            
+            // 儲存變更說明
+            ucChangeDescription.SaveChangeDescription(projectID);
             
             return true;
         }

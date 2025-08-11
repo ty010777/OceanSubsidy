@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Web;
+using GS.App;
 using GS.Data;
 using GS.Data.Sql;
 using GS.OCA_OceanSubsidy.Entity;
@@ -41,13 +42,19 @@ public class OFS_SciApplicationHelper
     [CountryTech_Geology],
     [CountryTech_Physics],
     [OrgName],
+    [OrgPartner],
     [RegisteredAddress],
     [CorrespondenceAddress],
     [Target],
     [Summary],
     [Innovation],
-    [Declaration]
-
+    [Declaration],
+    [IsRecused],
+    [StartTime],
+    [EndTime],
+    [created_at],
+    [updated_at],
+    [isExist]
 )
 VALUES
 (
@@ -55,7 +62,7 @@ VALUES
     @PersonID,               -- 人員申請表外鍵
     @KeywordID,              -- 關鍵字外鍵
     @Year,                   -- 年度
-    @Serial,
+    @Serial,                 -- 流水序號
     @SubsidyPlanType,        -- 補助計畫類別
     @ProjectNameTw,          -- 計畫名稱(中文)
     @ProjectNameEn,          -- 計畫名稱(英文)
@@ -66,14 +73,19 @@ VALUES
     @CountryTech_Geology,    -- 國家核心科技 海洋地質
     @CountryTech_Physics,    -- 國家核心科技 海洋物理
     @OrgName,                -- 申請單位
+    @OrgPartner,             -- 共同執行單位
     @RegisteredAddress,      -- 登記地址
     @CorrespondenceAddress,  -- 通訊地址
     @Target,                 -- 計畫目標
     @Summary,                -- 計畫內容摘要
     @Innovation,             -- 創新重點
-    @Declaration            -- 聲明同意書
-
-
+    @Declaration,            -- 聲明同意書
+    @IsRecused,              -- 是否有勾選迴避委員
+    @StartTime,              -- 工作項目的計畫期程 - 開始
+    @EndTime,                -- 工作項目的計畫期程 - 結束
+    @created_at,             -- 建立時間
+    @updated_at,             -- 更新時間
+    @isExist                 -- 是否存在
 )";
 
         db.Parameters.Clear();
@@ -92,12 +104,19 @@ VALUES
         db.Parameters.Add("@CountryTech_Geology", applicationData.CountryTech_Geology);
         db.Parameters.Add("@CountryTech_Physics", applicationData.CountryTech_Physics);
         db.Parameters.Add("@OrgName", applicationData.OrgName);
+        db.Parameters.Add("@OrgPartner", applicationData.OrgPartner);
         db.Parameters.Add("@RegisteredAddress", applicationData.RegisteredAddress);
         db.Parameters.Add("@CorrespondenceAddress", applicationData.CorrespondenceAddress);
         db.Parameters.Add("@Target", applicationData.Target);
         db.Parameters.Add("@Summary", applicationData.Summary);
         db.Parameters.Add("@Innovation", applicationData.Innovation);
         db.Parameters.Add("@Declaration", applicationData.Declaration);
+        db.Parameters.Add("@IsRecused", applicationData.IsRecused);
+        db.Parameters.Add("@StartTime", applicationData.StartTime);
+        db.Parameters.Add("@EndTime", applicationData.EndTime);
+        db.Parameters.Add("@created_at", applicationData.created_at ?? DateTime.Now);
+        db.Parameters.Add("@updated_at", applicationData.updated_at ?? DateTime.Now);
+        db.Parameters.Add("@isExist", applicationData.isExist ?? true);
 
         try
         {
@@ -147,12 +166,19 @@ VALUES
             AddIfNotNull("CountryTech_Geology", applicationData.CountryTech_Geology);
             AddIfNotNull("CountryTech_Physics", applicationData.CountryTech_Physics);
             AddIfNotNull("OrgName", applicationData.OrgName);
+            AddIfNotNull("OrgPartner", applicationData.OrgPartner);
             AddIfNotNull("RegisteredAddress", applicationData.RegisteredAddress);
             AddIfNotNull("CorrespondenceAddress", applicationData.CorrespondenceAddress);
             AddIfNotNull("Target", applicationData.Target);
             AddIfNotNull("Summary", applicationData.Summary);
             AddIfNotNull("Innovation", applicationData.Innovation);
             AddIfNotNull("Declaration", applicationData.Declaration);
+            AddIfNotNull("IsRecused", applicationData.IsRecused);
+            AddIfNotNull("StartTime", applicationData.StartTime);
+            AddIfNotNull("EndTime", applicationData.EndTime);
+            AddIfNotNull("created_at", applicationData.created_at);
+            AddIfNotNull("updated_at", applicationData.updated_at);
+            AddIfNotNull("isExist", applicationData.isExist);
 
             if (setClauses.Count == 0)
             {
@@ -203,7 +229,7 @@ VALUES
                     ProjectID = row["ProjectID"]?.ToString(),
                     PersonID = row["PersonID"]?.ToString(),
                     KeywordID = row["KeywordID"]?.ToString(),
-                    Year = row["Year"] != DBNull.Value ? Convert.ToInt32(row["Year"]) : 0,
+                    Year = row["Year"] != DBNull.Value ? Convert.ToInt32(row["Year"]) : (int?)null,
                     Serial = row["Serial"]?.ToString(),
                     SubsidyPlanType = row["SubsidyPlanType"]?.ToString(),
                     ProjectNameTw = row["ProjectNameTw"]?.ToString(),
@@ -221,18 +247,27 @@ VALUES
                         ? (bool?)row["CountryTech_Physics"]
                         : null,
                     OrgName = row["OrgName"]?.ToString(),
+                    OrgPartner = row["OrgPartner"]?.ToString(),
                     RegisteredAddress = row["RegisteredAddress"]?.ToString(),
                     CorrespondenceAddress = row["CorrespondenceAddress"]?.ToString(),
                     Target = row["Target"]?.ToString(),
                     Summary = row["Summary"]?.ToString(),
                     Innovation = row["Innovation"]?.ToString(),
                     Declaration = row["Declaration"] != DBNull.Value ? (bool?)row["Declaration"] : null,
+                    IsRecused = row["IsRecused"] != DBNull.Value ? (bool?)row["IsRecused"] : null,
+                    StartTime = row["StartTime"] != DBNull.Value
+                        ? Convert.ToDateTime(row["StartTime"])
+                        : (DateTime?)null,
+                    EndTime = row["EndTime"] != DBNull.Value
+                        ? Convert.ToDateTime(row["EndTime"])
+                        : (DateTime?)null,
                     created_at = row["created_at"] != DBNull.Value
                         ? Convert.ToDateTime(row["created_at"])
                         : (DateTime?)null,
                     updated_at = row["updated_at"] != DBNull.Value
                         ? Convert.ToDateTime(row["updated_at"])
                         : (DateTime?)null,
+                    isExist = row["isExist"] != DBNull.Value ? (bool?)row["isExist"] : null
                 };
             }
 
@@ -308,7 +343,7 @@ VALUES
                     ProjectID = row["ProjectID"]?.ToString(),
                     PersonID = row["PersonID"]?.ToString(),
                     KeywordID = row["KeywordID"]?.ToString(),
-                    Year = row["Year"] != DBNull.Value ? Convert.ToInt32(row["Year"]) : 0,
+                    Year = row["Year"] != DBNull.Value ? Convert.ToInt32(row["Year"]) : (int?)null,
                     Serial = row["Serial"]?.ToString(),
                     SubsidyPlanType = row["SubsidyPlanType"]?.ToString(),
                     ProjectNameTw = row["ProjectNameTw"]?.ToString(),
@@ -326,18 +361,27 @@ VALUES
                         ? (bool?)row["CountryTech_Physics"]
                         : null,
                     OrgName = row["OrgName"]?.ToString(),
+                    OrgPartner = row["OrgPartner"]?.ToString(),
                     RegisteredAddress = row["RegisteredAddress"]?.ToString(),
                     CorrespondenceAddress = row["CorrespondenceAddress"]?.ToString(),
                     Target = row["Target"]?.ToString(),
                     Summary = row["Summary"]?.ToString(),
                     Innovation = row["Innovation"]?.ToString(),
                     Declaration = row["Declaration"] != DBNull.Value ? (bool?)row["Declaration"] : null,
+                    IsRecused = row["IsRecused"] != DBNull.Value ? (bool?)row["IsRecused"] : null,
+                    StartTime = row["StartTime"] != DBNull.Value
+                        ? Convert.ToDateTime(row["StartTime"])
+                        : (DateTime?)null,
+                    EndTime = row["EndTime"] != DBNull.Value
+                        ? Convert.ToDateTime(row["EndTime"])
+                        : (DateTime?)null,
                     created_at = row["created_at"] != DBNull.Value
                         ? Convert.ToDateTime(row["created_at"])
                         : (DateTime?)null,
                     updated_at = row["updated_at"] != DBNull.Value
                         ? Convert.ToDateTime(row["updated_at"])
-                        : (DateTime?)null
+                        : (DateTime?)null,
+                    isExist = row["isExist"] != DBNull.Value ? (bool?)row["isExist"] : null
                 };
             }
 
@@ -639,7 +683,7 @@ VALUES
         }
     }
 
-    public static void InsertOFS_SCIVersion(OFS_SCI_Project_Main version)
+    public static void InsertOFS_SCIProjectMain(OFS_SCI_Project_Main projectMain)
     {
         using (DbHelper db = new DbHelper())
         {
@@ -688,25 +732,25 @@ VALUES
             )";
 
             db.Parameters.Clear();
-            db.Parameters.Add("@ProjectID", version.ProjectID);
-            db.Parameters.Add("@Statuses", version.Statuses);
-            db.Parameters.Add("@StatusesName", version.StatusesName);
-            db.Parameters.Add("@ExpirationDate", version.ExpirationDate ?? (object)DBNull.Value);
-            db.Parameters.Add("@SeqPoint", version.SeqPoint);
-            db.Parameters.Add("@SupervisoryUnit", version.SupervisoryUnit);
-            db.Parameters.Add("@SupervisoryPersonName", version.SupervisoryPersonName);
-            db.Parameters.Add("@SupervisoryPersonAccount", version.SupervisoryPersonAccount);
-            db.Parameters.Add("@UserAccount", version.UserAccount);
-            db.Parameters.Add("@UserOrg", version.UserOrg);
-            db.Parameters.Add("@UserName", version.UserName);
-            db.Parameters.Add("@Form1Status", version.Form1Status);
-            db.Parameters.Add("@Form2Status", version.Form2Status);
-            db.Parameters.Add("@Form3Status", version.Form3Status);
-            db.Parameters.Add("@Form4Status", version.Form4Status);
-            db.Parameters.Add("@Form5Status", version.Form5Status);
-            db.Parameters.Add("@CurrentStep", version.CurrentStep);
-            db.Parameters.Add("@created_at", version.created_at ?? (object)DBNull.Value);
-            db.Parameters.Add("@updated_at", version.updated_at ?? (object)DBNull.Value);
+            db.Parameters.Add("@ProjectID", projectMain.ProjectID);
+            db.Parameters.Add("@Statuses", projectMain.Statuses);
+            db.Parameters.Add("@StatusesName", projectMain.StatusesName);
+            db.Parameters.Add("@ExpirationDate", projectMain.ExpirationDate ?? (object)DBNull.Value);
+            db.Parameters.Add("@SeqPoint", projectMain.SeqPoint);
+            db.Parameters.Add("@SupervisoryUnit", projectMain.SupervisoryUnit);
+            db.Parameters.Add("@SupervisoryPersonName", projectMain.SupervisoryPersonName);
+            db.Parameters.Add("@SupervisoryPersonAccount", projectMain.SupervisoryPersonAccount);
+            db.Parameters.Add("@UserAccount", projectMain.UserAccount);
+            db.Parameters.Add("@UserOrg", projectMain.UserOrg);
+            db.Parameters.Add("@UserName", projectMain.UserName);
+            db.Parameters.Add("@Form1Status", projectMain.Form1Status);
+            db.Parameters.Add("@Form2Status", projectMain.Form2Status);
+            db.Parameters.Add("@Form3Status", projectMain.Form3Status);
+            db.Parameters.Add("@Form4Status", projectMain.Form4Status);
+            db.Parameters.Add("@Form5Status", projectMain.Form5Status);
+            db.Parameters.Add("@CurrentStep", projectMain.CurrentStep);
+            db.Parameters.Add("@created_at", projectMain.created_at ?? (object)DBNull.Value);
+            db.Parameters.Add("@updated_at", projectMain.updated_at ?? (object)DBNull.Value);
 
             try
             {
@@ -776,6 +820,380 @@ VALUES
             {
                 throw new Exception($"更新 OFS_SCI_Project_Main 時發生錯誤: {ex.Message}", ex);
             }
+        }
+    }
+
+    #region 頁面變更說明相關方法
+
+    /// <summary>
+    /// 儲存或更新頁面變更說明（如果已存在則更新，否則新增）
+    /// </summary>
+    /// <param name="projectID">計畫ID</param>
+    /// <param name="sourcePage">來源頁面</param>
+    /// <param name="changeBefore">變更前內容</param>
+    /// <param name="changeAfter">變更後內容</param>
+    /// <returns>是否成功</returns>
+    public static bool SavePageModifyNote(string projectID, string sourcePage, string changeBefore, string changeAfter)
+    {
+        try
+        {
+            // 檢查是否已存在記錄
+            var existingNote = GetPageModifyNote(projectID, sourcePage);
+            
+            if (existingNote != null)
+            {
+                // 已存在，執行更新
+                UpdatePageModifyNote(projectID, sourcePage, changeBefore, changeAfter);
+            }
+            else
+            {
+                // 不存在，執行新增
+                InsertPageModifyNote(projectID, sourcePage, changeBefore, changeAfter);
+            }
+            
+            return true;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"儲存頁面變更說明時發生錯誤：{ex.Message}");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// 新增頁面變更說明記錄
+    /// </summary>
+    /// <param name="projectID">計畫ID</param>
+    /// <param name="sourcePage">來源頁面</param>
+    /// <param name="changeBefore">變更前內容</param>
+    /// <param name="changeAfter">變更後內容</param>
+    private static void InsertPageModifyNote(string projectID, string sourcePage, string changeBefore, string changeAfter)
+    {
+        try
+        {
+            DbHelper db = new DbHelper();
+            db.CommandText = @"
+                INSERT INTO [OCA_OceanSubsidy].[dbo].[OFS_SCI_PageModifyNote]
+                (
+                    [ProjectID],
+                    [SourcePage],
+                    [ChangeBefore],
+                    [ChangeAfter]
+                )
+                VALUES
+                (
+                    @ProjectID,
+                    @SourcePage,
+                    @ChangeBefore,
+                    @ChangeAfter
+                )";
+
+            db.Parameters.Add("@ProjectID", projectID);
+            db.Parameters.Add("@SourcePage", sourcePage);
+            db.Parameters.Add("@ChangeBefore", changeBefore);
+            db.Parameters.Add("@ChangeAfter", changeAfter);
+
+            db.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"新增頁面變更說明時發生錯誤：{ex.Message}");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// 更新頁面變更說明記錄
+    /// </summary>
+    /// <param name="projectID">計畫ID</param>
+    /// <param name="sourcePage">來源頁面</param>
+    /// <param name="changeBefore">變更前內容</param>
+    /// <param name="changeAfter">變更後內容</param>
+    private static void UpdatePageModifyNote(string projectID, string sourcePage, string changeBefore, string changeAfter)
+    {
+        try
+        {
+            DbHelper db = new DbHelper();
+            db.CommandText = @"
+                UPDATE [OCA_OceanSubsidy].[dbo].[OFS_SCI_PageModifyNote] 
+                SET 
+                    [ChangeBefore] = @ChangeBefore,
+                    [ChangeAfter] = @ChangeAfter
+                WHERE [ProjectID] = @ProjectID AND [SourcePage] = @SourcePage";
+
+            db.Parameters.Add("@ProjectID", projectID);
+            db.Parameters.Add("@SourcePage", sourcePage);
+            db.Parameters.Add("@ChangeBefore", changeBefore);
+            db.Parameters.Add("@ChangeAfter", changeAfter);
+
+            db.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"更新頁面變更說明時發生錯誤：{ex.Message}");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// 取得指定計畫和頁面的變更說明記錄
+    /// </summary>
+    /// <param name="projectID">計畫ID</param>
+    /// <param name="sourcePage">來源頁面</param>
+    /// <returns>變更說明記錄</returns>
+    public static OFS_SCI_PageModifyNote GetPageModifyNote(string projectID, string sourcePage)
+    {
+        try
+        {
+            DbHelper db = new DbHelper();
+            db.CommandText = @"
+                SELECT [id], [ProjectID], [SourcePage], [ChangeBefore], [ChangeAfter]
+                FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_PageModifyNote] 
+                WHERE [ProjectID] = @ProjectID AND [SourcePage] = @SourcePage";
+
+            db.Parameters.Add("@ProjectID", projectID);
+            db.Parameters.Add("@SourcePage", sourcePage);
+
+            DataTable dt = db.GetTable();
+            
+            if (dt.Rows.Count > 0)
+            {
+                DataRow row = dt.Rows[0];
+                return new OFS_SCI_PageModifyNote
+                {
+                    id = Convert.ToInt32(row["id"]),
+                    ProjectID = row["ProjectID"].ToString(),
+                    SourcePage = row["SourcePage"].ToString(),
+                    ChangeBefore = row["ChangeBefore"].ToString(),
+                    ChangeAfter = row["ChangeAfter"].ToString()
+                };
+            }
+            
+            return null;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得頁面變更說明時發生錯誤：{ex.Message}");
+            return null;
+        }
+    }
+
+    #endregion
+
+    /// <summary>
+    /// 取得計畫的查核標準資料 (依月份分組)
+    /// </summary>
+    /// <param name="projectID">計畫ID</param>
+    /// <returns>查核標準資料按月份分組的字典</returns>
+    public static Dictionary<string, List<string>> GetCheckStandardByMonth(string projectID)
+    {
+        var result = new Dictionary<string, List<string>>();
+        
+        try
+        {
+            using (DbHelper db = new DbHelper())
+            {
+                db.CommandText = @"
+                    -- 先建立 CheckStandard 加上拼接欄位
+                    WITH CheckStandardCTE AS (
+                        SELECT 
+                            *,
+                            ProjectID + '_' + WorkItem AS ProjectWorkItemKey
+                        FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_WorkSch_CheckStandard]
+                        WHERE ProjectID = @ProjectID
+                    ),
+
+                    -- 再建立 Main 表中：加入母項 ID
+                    MainWithParentCTE AS (
+                        SELECT 
+                            Child.ProjectID,
+                            Child.WorkItem_id AS Child_WorkItem_id,
+                            Child.WorkName AS Child_WorkName,
+                            Parent.WorkItem_id AS Parent_WorkItem_id,
+                            Parent.WorkName AS Parent_WorkName
+                        FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_WorkSch_Main] Child
+                        LEFT JOIN [OCA_OceanSubsidy].[dbo].[OFS_SCI_WorkSch_Main] Parent
+                            ON LEFT(Child.WorkItem_id, CHARINDEX('_', Child.WorkItem_id) + 1) = Parent.WorkItem_id
+                        WHERE Child.ProjectID = @ProjectID
+                    )
+
+                    -- 最終查詢：把母項對應的 CheckStandard 資料加進來
+                    SELECT 
+                        M.Child_WorkItem_id,
+                        M.Child_WorkName,
+                        M.Parent_WorkItem_id,
+                        M.Parent_WorkName,
+                        CS.SerialNumber,
+                        CS.PlannedFinishDate,
+                        CS.CheckDescription,
+                        CS.SerialNumber + N'：' + CS.CheckDescription + N'（' + ISNULL(M.Parent_WorkName, N'') + N'）' AS DisplayCheckInfo
+
+                    FROM MainWithParentCTE M
+                    LEFT JOIN CheckStandardCTE CS
+                        ON M.Child_WorkItem_id = CS.ProjectWorkItemKey
+                    WHERE CS.PlannedFinishDate IS NOT NULL
+                    ORDER BY CS.PlannedFinishDate, CS.SerialNumber";
+
+                db.Parameters.Clear();
+                db.Parameters.Add("@ProjectID", projectID);
+
+                DataTable dt = db.GetTable();
+                
+                foreach (DataRow row in dt.Rows)
+                {
+                    if (row["PlannedFinishDate"] != DBNull.Value && row["DisplayCheckInfo"] != DBNull.Value)
+                    {
+                        DateTime plannedDate = Convert.ToDateTime(row["PlannedFinishDate"]);
+                        string displayCheckInfo = row["DisplayCheckInfo"].ToString();
+                        
+                        // 轉換為民國年月格式作為 Key
+                        string monthKey = DateTimeHelper.ToMinguoDate(plannedDate);
+                        string[] parts = monthKey.Split('/');
+                        if (parts.Length >= 2)
+                        {
+                            monthKey = $"{parts[0]}年{int.Parse(parts[1])}月";
+                        }
+                        
+                        // 將查核點資訊加入對應月份
+                        if (!result.ContainsKey(monthKey))
+                        {
+                            result[monthKey] = new List<string>();
+                        }
+                        
+                        result[monthKey].Add(displayCheckInfo);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得查核標準資料時發生錯誤: {ex.Message}");
+        }
+        
+        return result;
+    }
+
+    /// <summary>
+    /// 更新共同執行單位
+    /// </summary>
+    /// <param name="projectId">計畫ID</param>
+    /// <param name="orgPartner">共同執行單位</param>
+    public static void UpdateCoExecutingUnit(string projectId, string orgPartner)
+    {
+        if (string.IsNullOrEmpty(projectId))
+            return;
+            
+        DbHelper db = new DbHelper();
+        
+        try
+        {
+            db.CommandText = @"
+                UPDATE [OCA_OceanSubsidy].[dbo].[OFS_SCI_Application_Main]
+                SET [OrgPartner] = @OrgPartner,
+                    [updated_at] = GETDATE()
+                WHERE [ProjectID] = @ProjectID";
+            
+            db.Parameters.Add("@OrgPartner", orgPartner ?? "");
+            db.Parameters.Add("@ProjectID", projectId);
+            
+            db.ExecuteNonQuery();
+            
+            System.Diagnostics.Debug.WriteLine($"已更新共同執行單位: ProjectID={projectId}, OrgPartner={orgPartner}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"更新共同執行單位時發生錯誤: {ex.Message}");
+            throw new Exception($"更新共同執行單位時發生錯誤: {ex.Message}", ex);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 更新期中期末審查日期
+    /// </summary>
+    /// <param name="projectId">計畫ID</param>
+    /// <param name="midtermExamDate">期中審查預定日期</param>
+    /// <param name="finalExamDate">期末審查預定日期</param>
+    public static void UpdateExamDates(string projectId, DateTime? midtermExamDate, DateTime? finalExamDate)
+    {
+        if (string.IsNullOrEmpty(projectId))
+            return;
+            
+        DbHelper db = new DbHelper();
+        
+        try
+        {
+            db.CommandText = @"
+                UPDATE [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main]
+                SET [MidtermExamDate] = @MidtermExamDate,
+                    [FinalExamDate] = @FinalExamDate,
+                    [updated_at] = GETDATE()
+                WHERE [ProjectID] = @ProjectID";
+            
+            db.Parameters.Add("@MidtermExamDate", midtermExamDate);
+            db.Parameters.Add("@FinalExamDate", finalExamDate);
+            db.Parameters.Add("@ProjectID", projectId);
+            
+            db.ExecuteNonQuery();
+            
+            System.Diagnostics.Debug.WriteLine($"已更新審查日期: ProjectID={projectId}, 期中={midtermExamDate?.ToString("yyyy-MM-dd")}, 期末={finalExamDate?.ToString("yyyy-MM-dd")}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"更新審查日期時發生錯誤: {ex.Message}");
+            throw new Exception($"更新審查日期時發生錯誤: {ex.Message}", ex);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 取得期中期末審查日期
+    /// </summary>
+    /// <param name="projectId">計畫ID</param>
+    /// <returns>包含期中期末審查日期的物件，若無資料則返回 null</returns>
+    public static (DateTime? MidtermExamDate, DateTime? FinalExamDate) GetExamDates(string projectId)
+    {
+        if (string.IsNullOrEmpty(projectId))
+            return (null, null);
+            
+        DbHelper db = new DbHelper();
+        
+        try
+        {
+            db.CommandText = @"
+                SELECT [MidtermExamDate], [FinalExamDate]
+                FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main]
+                WHERE [ProjectID] = @ProjectID";
+            
+            db.Parameters.Add("@ProjectID", projectId);
+            
+            DataTable dt = db.GetTable();
+            
+            if (dt.Rows.Count > 0)
+            {
+                DataRow row = dt.Rows[0];
+                DateTime? midtermDate = row["MidtermExamDate"] != DBNull.Value ? Convert.ToDateTime(row["MidtermExamDate"]) : (DateTime?)null;
+                DateTime? finalDate = row["FinalExamDate"] != DBNull.Value ? Convert.ToDateTime(row["FinalExamDate"]) : (DateTime?)null;
+                
+                return (midtermDate, finalDate);
+            }
+            
+            return (null, null);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得審查日期時發生錯誤: {ex.Message}");
+            throw new Exception($"取得審查日期時發生錯誤: {ex.Message}", ex);
+        }
+        finally
+        {
+            db.Dispose();
         }
     }
 

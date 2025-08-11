@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Web;
 using System.Web.UI;
@@ -112,7 +113,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                     LoadTechnicalReviewDropdowns();
                     break;
                 case "4":
-                    // TODO: 載入結果公告清單
+                    LoadDecisionReviewDropdowns();
                     break;
                 case "5":
                     // TODO: 載入計畫變更審核清單
@@ -389,6 +390,59 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
     }
 
     #endregion
+    # region type-4 的下拉式選單
+    /// <summary>
+    /// 載入決定審核清單的下拉選單資料
+    /// </summary>
+    private void LoadDecisionReviewDropdowns()
+    {
+        try
+        {
+            // 載入年度選項（移除「全部」選項）
+            ddlYear_Type4.Items.Add(new ListItem("113年", "113"));
+            ddlYear_Type4.Items.Add(new ListItem("114年", "114"));            
+            ddlYear_Type4.DataTextField = "Text";
+            ddlYear_Type4.DataValueField = "Value";
+            ddlYear_Type4.DataBind();
+
+            // 載入類別選項（移除「全部」選項）
+            ddlCategory_Type4.Items.Add(new ListItem("科專", "SCI"));            
+            ddlCategory_Type4.Items.Add(new ListItem("文化", "CUL"));            
+            ddlCategory_Type4.Items.Add(new ListItem("學校/民間", "EDC"));            
+            ddlCategory_Type4.Items.Add(new ListItem("學校/社團", "CLB"));            
+            ddlCategory_Type4.DataTextField = "Text";
+            ddlCategory_Type4.DataValueField = "Value";
+            ddlCategory_Type4.DataBind();
+
+            // 載入申請單位選項
+            var orgOptions = ReviewCheckListHelper.GetReviewOrgOptions("決審核定");
+            ddlOrg_Type4.DataSource = orgOptions;
+            ddlOrg_Type4.DataTextField = "Text";
+            ddlOrg_Type4.DataValueField = "Value";
+            ddlOrg_Type4.DataBind();
+
+            // 載入承辦人員選項
+            var supervisorOptions = ReviewCheckListHelper.GetReviewSupervisorOptions("決審核定");
+            ddlSupervisor_Type4.DataSource = supervisorOptions;
+            ddlSupervisor_Type4.DataTextField = "Text";
+            ddlSupervisor_Type4.DataValueField = "Value";
+            ddlSupervisor_Type4.DataBind();
+            
+            // 初始化審查組別選項 (預設載入科專的審查組別)
+            ddlReviewGroup_Type4.Items.Clear();
+            var reviewGroupOptions = ReviewCheckListHelper.GetSciReviewGroupOptions();
+            ddlReviewGroup_Type4.DataSource = reviewGroupOptions;
+            ddlReviewGroup_Type4.DataTextField = "Text";
+            ddlReviewGroup_Type4.DataValueField = "Value";
+            ddlReviewGroup_Type4.DataBind();
+
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "載入決定審核清單下拉選單時發生錯誤");
+        }
+    }
+    #endregion
 
     #region 查詢事件處理
 
@@ -572,6 +626,198 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
         }
     }
 
+    /// <summary>
+    /// Type4 決定審核清單查詢按鈕點擊事件
+    /// </summary>
+    protected void btnSearch_Type4_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            // 取得查詢條件
+            string year = ddlYear_Type4.SelectedValue;
+            string category = ddlCategory_Type4.SelectedValue;
+            string reviewGroup = ddlReviewGroup_Type4.SelectedValue;
+            string orgName = ddlOrg_Type4.SelectedValue;
+            string supervisor = ddlSupervisor_Type4.SelectedValue;
+            string keyword = Request.Form["txtKeyword_Type4"] ?? "";
+            List<ReviewChecklistItem> Results = new List<ReviewChecklistItem>();
+            
+            // 執行決定審核清單查詢
+            if(category == "SCI" || string.IsNullOrEmpty(category)){
+                Results = ReviewCheckListHelper.Search_SCI_Type4(
+                    year, 
+                    orgName, 
+                    supervisor, 
+                    keyword,
+                    reviewGroup);     // 審查組別代碼
+            }
+            
+            // TODO : 之後要在這邊新增 文化、學校社團、學校民間 的搜尋function
+            // TODO : 然後把它們合併起來 轉乘JSON檔案。
+            
+            // 將查詢結果轉換為 JSON 並傳遞給前端
+            string jsonResults = Newtonsoft.Json.JsonConvert.SerializeObject(Results);
+            
+            string script = $@"
+                $(function() {{
+                    // 將查詢結果傳遞給前端 JavaScript
+                    if (typeof window.ReviewChecklistManager !== 'undefined') {{
+                        window.ReviewChecklistManager.renderSearchResults({jsonResults}, 4);
+                    }} else {{
+                        console.log('Type4 搜尋結果:', {jsonResults});
+                    }}
+                }});
+            ";
+            
+            Page.ClientScript.RegisterStartupScript(this.GetType(), "SearchResults_Type4", script, true);
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "執行 Type4 查詢時發生錯誤");
+            
+            // 顯示錯誤訊息給使用者
+            string errorScript = @"
+                Swal.fire({
+                    title: '查詢錯誤',
+                    text: '查詢時發生錯誤，請稍後再試',
+                    icon: 'error',
+                    confirmButtonText: '確定'
+                });
+            ";
+            Page.ClientScript.RegisterStartupScript(this.GetType(), "SearchError_Type4", errorScript, true);
+        }
+    }
+
+    /// <summary>
+    /// Type4 核定模式儲存按鈕點擊事件
+    /// </summary>
+    [WebMethod]
+    public static string SaveApprovalMode_Type4(List<ApprovalItem> approvalItems)
+    {
+        try
+        {
+            // 處理每一筆資料
+            foreach (var item in approvalItems)
+            {
+                // 根據計畫類別決定要更新的資料表
+                string tableName = GetTableNameByCategory(item.Category);
+                
+                // 準備參數
+                var parameters = new Dictionary<string, object>
+                {
+                    ["@approvedSubsidy"] = item.ApprovedSubsidy ?? "0",
+                    ["@finalReviewNotes"] = item.FinalReviewNotes ?? "",
+                    ["@projectId"] = item.ProjectID
+                };
+
+                // 調用 Helper 執行資料庫更新
+                ReviewCheckListHelper.UpdateApprovalData(tableName, parameters);
+            }
+
+            return JsonConvert.SerializeObject(new { 
+                success = true, 
+                message = "儲存成功",
+                count = approvalItems.Count 
+            });
+        }
+        catch (Exception ex)
+        {
+            return JsonConvert.SerializeObject(new { 
+                success = false, 
+                message = $"儲存時發生錯誤：{ex.Message}" 
+            });
+        }
+    }
+
+    /// <summary>
+    /// 排序模式查詢 WebMethod
+    /// </summary>
+    /// <param name="year">年度</param>
+    /// <param name="category">計畫類別</param>
+    /// <param name="reviewGroupCode">審查組別代碼</param>
+    /// <returns>排序模式查詢結果</returns>
+    [WebMethod]
+    public static string SearchSortingMode(string year, string category, string reviewGroupCode)
+    {
+        try
+        {
+            List<SortingModeItem> results = ReviewCheckListHelper.Search_SCI_ForSorting(
+                year: year,
+                category: category,
+                reviewGroupCode: reviewGroupCode
+            );
+
+            return JsonConvert.SerializeObject(new {
+                success = true,
+                data = results,
+                count = results.Count
+            });
+        }
+        catch (Exception ex)
+        {
+            return JsonConvert.SerializeObject(new {
+                success = false,
+                message = $"查詢時發生錯誤：{ex.Message}",
+                data = new List<SortingModeItem>(),
+                count = 0
+            });
+        }
+    }
+
+    /// <summary>
+    /// 排序模式儲存 WebMethod
+    /// </summary>
+    /// <param name="sortingItems">排序項目清單</param>
+    /// <returns>儲存結果</returns>
+    [WebMethod]
+    public static string SaveSortingMode(List<SortingSaveItem> sortingItems)
+    {
+        try
+        {
+            // 調用 Helper 執行資料庫更新
+            ReviewCheckListHelper.UpdateSortingOrder(sortingItems);
+
+            return JsonConvert.SerializeObject(new { 
+                success = true, 
+                message = "排序儲存成功",
+                count = sortingItems.Count 
+            });
+        }
+        catch (Exception ex)
+        {
+            return JsonConvert.SerializeObject(new { 
+                success = false, 
+                message = $"儲存時發生錯誤：{ex.Message}" 
+            });
+        }
+    }
+
+    /// <summary>
+    /// 根據計畫類別取得對應的資料表名稱
+    /// </summary>
+    /// <param name="category">計畫類別</param>
+    /// <returns>資料表名稱</returns>
+    private static string GetTableNameByCategory(string category)
+    {
+        switch (category?.ToUpper())
+        {
+            case "SCI":
+            case "科專":
+                return "OFS_SCI_Project_Main";
+            case "CUL":  
+            case "文化":
+                return "OFS_CUL_Project_Main";
+            case "EDC":
+            case "學校民間":
+                return "OFS_EDC_Project_Main";
+            case "CLB":
+            case "學校社團":
+                return "OFS_CLB_Project_Main";
+            default:
+                return "";
+        }
+    }
+
     #endregion
 
     #region 批次處理 WebMethods
@@ -637,19 +883,20 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                 var groupProjectIds = group.Value;
 
                 // 根據補助案類型和操作類型決定狀態轉換
-                string fromStatus, toStatus;
-                if (!GetStatusTransitionBySubsidyType(subsidyType, reviewType, out fromStatus, out toStatus))
+                string fromStatus, toStatus,StatusesName;
+                if (!GetStatusTransitionBySubsidyType(subsidyType, reviewType, out fromStatus, out toStatus,out StatusesName))
                 {
                     // 如果不支援此補助案類型，直接跳過
                     continue;
                 }
 
                 // 執行該組的批次更新
-                var groupResult = ReviewCheckListHelper.BatchUpdateProjectStatus(
+                var groupResult = BatchUpdateProjectStatus(
                     groupProjectIds, 
                     fromStatus, 
                     toStatus, 
-                    currentUser.Account,
+                    StatusesName,
+                    currentUser.UserName,
                     actionType
                 );
 
@@ -835,11 +1082,11 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
     /// <summary>
     /// 根據補助案類型和操作類型取得狀態轉換
     /// </summary>
-    private static bool GetStatusTransitionBySubsidyType(string subsidyType, string currentReviewType, out string fromStatus, out string toStatus)
+    private static bool GetStatusTransitionBySubsidyType(string subsidyType, string currentReviewType, out string fromStatus, out string toStatus , out string StatusesName)
     {
         fromStatus = "";
         toStatus = "";
-
+        StatusesName = "";
         try
         {
             switch (subsidyType)
@@ -857,7 +1104,13 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                             return true;
                         case "3": // 技術審查 → 決審
                             fromStatus = "技術審查";
-                            toStatus = "決審";
+                            StatusesName = "核定中";
+                            toStatus = "決審核定";
+                            return true;
+                        case "4": // 決審 → 計畫執行
+                            fromStatus = "決審核定";
+                            StatusesName = "填寫契約資料";
+                            toStatus = "計畫執行";
                             return true;
                     }
                     break;
@@ -897,6 +1150,451 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
         }
     }
 
+
+    #endregion
+
+    #region WebMethods
+
+    /// <summary>
+    /// 取得計畫詳細資料
+    /// </summary>
+    /// <param name="projectId">專案編號</param>
+    /// <param name="reviewType">審查類型 (2:領域審查, 3:技術審查)</param>
+    /// <returns>計畫詳細資料</returns>
+    [WebMethod]
+    public static object GetPlanDetail(string projectId, string reviewType)
+    {
+        try
+        {
+            // 根據 reviewType 決定 ReviewStage
+            string reviewStage = "";
+            if (reviewType == "2")
+            {
+                reviewStage = "領域審查";
+            }
+            else if (reviewType == "3")
+            {
+                reviewStage = "技術審查";
+            }
+
+            DataTable planData = null;
+            DataTable reviewData = null;
+
+            if (projectId.Contains("SCI"))
+            {
+                planData = ReviewCheckListHelper.GetSciPlanDetail(projectId);
+                reviewData = ReviewCheckListHelper.GetSciReviewComments(projectId, reviewStage);
+            }
+            else if (projectId.Contains("CUL"))
+            {
+                planData = ReviewCheckListHelper.GetCulturalPlanDetail(projectId);
+                reviewData = ReviewCheckListHelper.GetCulturalReviewComments(projectId, reviewStage);
+            }
+
+            if (planData != null && planData.Rows.Count > 0)
+            {
+                var planRow = planData.Rows[0];
+                
+                // 處理評審意見資料
+                var reviewComments = new List<object>();
+                if (reviewData != null && reviewData.Rows.Count > 0)
+                {
+                    foreach (DataRow reviewRow in reviewData.Rows)
+                    {
+                        reviewComments.Add(new
+                        {
+                            ReviewerName = reviewRow["ReviewerName"]?.ToString(),
+                            TotalScore = reviewRow["TotalScore"]?.ToString(),
+                            ReviewComment = reviewRow["ReviewComment"]?.ToString(),
+                            ReplyComment = reviewRow["ReplyComment"]?.ToString()
+                        });
+                    }
+                }
+
+                return new
+                {
+                    Success = true,
+                    Data = new
+                    {
+                        ProjectID = planRow["ProjectID"]?.ToString(),
+                        Year = planRow["Year"]?.ToString(),
+                        SubsidyPlanType = planRow["SubsidyPlanType"]?.ToString(),
+                        ProjectNameTw = planRow["ProjectNameTw"]?.ToString(),
+                        TopicField = planRow["TopicField"]?.ToString(),
+                        OrgName = planRow["OrgName"]?.ToString(),
+                        ReviewComments = reviewComments
+                    }
+                };
+            }
+
+            return new { Success = false, Message = "查無資料" };
+        }
+        catch (Exception ex)
+        {
+            return new { Success = false, Message = ex.Message };
+        }
+    }
+
+    /// <summary>
+    /// 取得審查組別選項 (AJAX 方法)
+    /// </summary>
+    /// <param name="category">類別</param>
+    /// <returns>審查組別選項</returns>
+    [WebMethod]
+    public static object GetReviewGroupOptions(string category)
+    {
+        try
+        {
+            List<DropdownItem> options = new List<DropdownItem>();
+            
+            switch (category)
+            {
+                case "SCI":
+                    // 載入科專審查組別選項
+                    options = ReviewCheckListHelper.GetSciReviewGroupOptions();
+                    break;
+                    
+                case "CUL":
+                    // 文化類別，暫時只顯示全部 (未來可擴充)
+                    options.Add(new DropdownItem { Value = "", Text = "全部" });
+                    // TODO: 未來實作文化審查組別選項
+                    break;
+                    
+                default:
+                    // 其他類別 (學校民間、學校社團等) 只顯示全部
+                    options.Add(new DropdownItem { Value = "", Text = "全部" });
+                    break;
+            }
+
+            return new { success = true, options = options };
+        }
+        catch (Exception ex)
+        {
+            return new { success = false, message = ex.Message };
+        }
+    }
+
+    #endregion
+
+    #region 批次處理邏輯
+
+    /// <summary>
+    /// 批次更新專案狀態
+    /// </summary>
+    /// <param name="projectIds">專案編號列表</param>
+    /// <param name="fromStatus">原始狀態</param>
+    /// <param name="toStatus">目標狀態</param>
+    /// <param name="StatusesName">狀態名稱</param>
+    /// <param name="userAccount">操作者帳號</param>
+    /// <param name="actionType">操作類型</param>
+    /// <returns>批次處理結果</returns>
+    public static BatchApprovalResult BatchUpdateProjectStatus(
+        List<string> projectIds,
+        string fromStatus,
+        string toStatus,
+        string StatusesName,
+        string userName,
+        string actionType)
+    {
+        var result = new BatchApprovalResult
+        {
+            ActionType = actionType,
+            ProcessedAt = DateTime.Now
+        };
+
+        if (projectIds == null || projectIds.Count == 0)
+        {
+            result.Success = false;
+            result.Message = "專案編號列表為空";
+            return result;
+        }
+
+        try
+        {
+            int successCount = 0;
+            var successIds = new List<string>();
+            var errorMessages = new List<string>();
+
+            foreach (string projectId in projectIds)
+            {
+                try
+                {
+                    // 更新專案狀態
+                    ReviewCheckListHelper.UpdateProjectStatusInDatabase(projectId, toStatus, userName, StatusesName);
+                    
+                    // 根據補助案類型決定歷程記錄方式
+                    if (projectId.Contains("SCI"))
+                    {
+                        // 科專
+                        RecordSciReviewHistory(projectId, fromStatus, toStatus, actionType, userName);
+                    }
+                    else if (projectId.Contains("CUL"))
+                    {
+                        // 文化
+                        RecordCulturalReviewHistory(projectId, fromStatus, toStatus, actionType, userName);
+                    }
+                    else if (projectId.Contains("EDC"))
+                    {
+                        // 學校民間
+                        RecordEducationReviewHistory(projectId, fromStatus, toStatus, actionType, userName);
+                    }
+                    else if (projectId.Contains("CLB"))
+                    {
+                        // 學校社團
+                        RecordClubReviewHistory(projectId, fromStatus, toStatus, actionType, userName);
+                    }
+                    else
+                    {
+                        // 其他類型或未知類型
+                        RecordGeneralReviewHistory(projectId, fromStatus, toStatus, actionType, userName);
+                    }
+                    
+                    successCount++;
+                    successIds.Add(projectId);
+                }
+                catch (Exception ex)
+                {
+                    errorMessages.Add($"處理專案 {projectId} 時發生錯誤: {ex.Message}");
+                }
+            }
+
+            // 如果有成功的項目，提交事務
+            if (successCount > 0)
+            {
+                result.Success = true;
+                result.SuccessCount = successCount;
+                result.SuccessProjectIds = successIds;
+                result.Message = $"成功處理 {successCount} 件計畫";
+
+                if (errorMessages.Count > 0)
+                {
+                    result.ErrorMessages = errorMessages;
+                }
+            }
+            else
+            {
+                result.Success = false;
+                result.Message = "所有專案處理失敗";
+                result.ErrorMessages = errorMessages;
+            }
+        }
+        catch (Exception ex)
+        {
+            result.Success = false;
+            result.Message = "批次處理時發生系統錯誤";
+            result.ErrorMessages = new List<string> { ex.Message };
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// 科專專用的審查歷程記錄
+    /// </summary>
+    private static void RecordSciReviewHistory(string projectId, string fromStatus, string toStatus, 
+        string actionType, string userAccount)
+    {
+        if (fromStatus != toStatus)
+        {
+            // 檢查是否為需要記錄兩筆歷程的特定轉換
+            if ((fromStatus == "領域審查" && toStatus == "技術審查") || 
+                (fromStatus == "技術審查" && toStatus == "決審核定") ||
+                (fromStatus == "決審核定" && toStatus == "計畫執行"))
+            {
+                // 科專特定轉換：記錄兩筆歷程
+                // 第一筆：當前階段變為完成狀態
+                string firstStageEndStatus = fromStatus == "決審核定" ? "已核定" : "通過";
+                ReviewCheckListHelper.InsertReviewHistory(projectId, fromStatus, fromStatus, $"{fromStatus}{firstStageEndStatus}", userAccount);
+                
+                // 延遲1毫秒確保時間戳記不同
+                System.Threading.Thread.Sleep(1);
+                
+                // 第二筆：轉為下一階段初始狀態
+                string nextStageInitialStatus = toStatus == "計畫執行" ? "簽訂契約" : "審查中";
+                ReviewCheckListHelper.InsertReviewHistory(projectId, fromStatus, toStatus, $"{toStatus}{nextStageInitialStatus}", userAccount);
+            }
+            else
+            {
+                // 一般跨階段轉換：只記錄階段轉換
+                ReviewCheckListHelper.InsertReviewHistory(projectId, fromStatus, toStatus, actionType, userAccount);
+            }
+        }
+        else
+        {
+            // 同階段內的狀態變更
+            ReviewCheckListHelper.InsertReviewHistory(projectId, fromStatus, toStatus, actionType, userAccount);
+        }
+    }
+
+    /// <summary>
+    /// 文化補助案的審查歷程記錄
+    /// </summary>
+    private static void RecordCulturalReviewHistory(string projectId, string fromStatus, string toStatus, 
+        string actionType, string userAccount)
+    {
+        // TODO: 實作文化補助案特殊的歷程記錄邏輯
+        // 目前先使用一般記錄方式
+        RecordGeneralReviewHistory(projectId, fromStatus, toStatus, actionType, userAccount);
+    }
+
+    /// <summary>
+    /// 學校民間補助案的審查歷程記錄
+    /// </summary>
+    private static void RecordEducationReviewHistory(string projectId, string fromStatus, string toStatus, 
+        string actionType, string userAccount)
+    {
+        // TODO: 實作學校民間補助案特殊的歷程記錄邏輯
+        // 目前先使用一般記錄方式
+        RecordGeneralReviewHistory(projectId, fromStatus, toStatus, actionType, userAccount);
+    }
+
+    /// <summary>
+    /// 學校社團補助案的審查歷程記錄
+    /// </summary>
+    private static void RecordClubReviewHistory(string projectId, string fromStatus, string toStatus, 
+        string actionType, string userAccount)
+    {
+        // TODO: 實作學校社團補助案特殊的歷程記錄邏輯
+        // 目前先使用一般記錄方式
+        RecordGeneralReviewHistory(projectId, fromStatus, toStatus, actionType, userAccount);
+    }
+
+    /// <summary>
+    /// 一般補助案的審查歷程記錄
+    /// </summary>
+    private static void RecordGeneralReviewHistory(string projectId, string fromStatus, string toStatus, 
+        string actionType, string userName)
+    {
+        if (fromStatus != toStatus)
+        {
+            // 跨階段轉換：只記錄階段轉換
+            ReviewCheckListHelper.InsertReviewHistory(projectId, fromStatus, toStatus, actionType, userName);
+        }
+        else
+        {
+            // 同階段內的狀態變更
+            ReviewCheckListHelper.InsertReviewHistory(projectId, fromStatus, toStatus, actionType, userName);
+        }
+    }
+
+    /// <summary>
+    /// 提送至申請者按鈕點擊事件
+    /// </summary>
+    protected void btnSendToApplicant_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            // 從前端取得選中的專案ID列表 (假設透過 HiddenField 或 Request.Form 傳遞)
+            string selectedProjectIds = hdnSelectedProjectIds.Value;
+            
+            if (string.IsNullOrEmpty(selectedProjectIds))
+            {
+                ShowMessage("請先選擇要處理的案件", "warning");
+                return;
+            }
+
+            // 將字串分割成專案ID列表
+            var projectIds = selectedProjectIds.Split(',').Where(id => !string.IsNullOrEmpty(id)).ToList();
+            
+            if (projectIds.Count == 0)
+            {
+                ShowMessage("未選擇有效的案件", "warning");
+                return;
+            }
+
+            // 取得當前使用者資訊
+            var currentUser = GetCurrentUserInfo();
+            if (currentUser == null)
+            {
+                ShowMessage("無法取得使用者資訊", "error");
+                return;
+            }
+
+            int successCount = 0;
+            var errorMessages = new List<string>();
+
+            foreach (string projectId in projectIds)
+            {
+                try
+                {
+                    // 更新專案狀態名稱為「計畫書修正中 」
+                    ReviewCheckListHelper.UpdateProjectStatusName(projectId, "計畫書修正中", currentUser.Account);
+                    
+                    // 記錄歷程：核定中 → 計畫書修正中 
+                    ReviewCheckListHelper.InsertReviewHistory(projectId, "核定中", "計畫書修正中", "提送至申請者", currentUser.Account);
+                    
+                    // TODO: 實作寄信功能
+                    // SendNotificationEmail(projectId);
+                    
+                    successCount++;
+                }
+                catch (Exception ex)
+                {
+                    errorMessages.Add($"處理專案 {projectId} 時發生錯誤: {ex.Message}");
+                }
+            }
+
+            // 顯示處理結果
+            if (successCount > 0)
+            {
+                string message = $"成功處理 {successCount} 件計畫";
+                if (errorMessages.Count > 0)
+                {
+                    message += $"，{errorMessages.Count} 件失敗";
+                }
+                ShowMessage(message, "success");
+                
+                // 重新載入頁面資料
+                RefreshPageData();
+            }
+            else
+            {
+                ShowMessage("所有案件處理失敗", "error");
+            }
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "提送至申請者時發生錯誤");
+            ShowMessage("系統發生錯誤，請稍後再試", "error");
+        }
+    }
+
+    /// <summary>
+    /// 顯示訊息給使用者
+    /// </summary>
+    /// <param name="message">訊息內容</param>
+    /// <param name="type">訊息類型 (success, warning, error)</param>
+    private void ShowMessage(string message, string type)
+    {
+        string icon = type == "success" ? "success" : type == "warning" ? "warning" : "error";
+        
+        string script = $@"
+            Swal.fire({{
+                title: '提送至申請者',
+                text: '{message}',
+                icon: '{icon}',
+                confirmButtonText: '確定'
+            }});
+        ";
+        Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowMessage", script, true);
+    }
+
+    /// <summary>
+    /// 重新載入頁面資料
+    /// </summary>
+    private void RefreshPageData()
+    {
+        // 觸發前端重新查詢
+        string script = @"
+            $(function() {
+                // 觸發 Type4 重新查詢
+                if ($('#type4').is(':checked')) {
+                    $('#btnSearch_Type4').click();
+                }
+            });
+        ";
+        Page.ClientScript.RegisterStartupScript(this.GetType(), "RefreshData", script, true);
+    }
 
     #endregion
 }

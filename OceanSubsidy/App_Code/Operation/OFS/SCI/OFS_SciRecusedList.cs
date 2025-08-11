@@ -18,7 +18,7 @@ public class OFS_SciRecusedList : System.Web.UI.Page
         // TODO: 在這裡新增建構函式邏輯
         //
     }   
-        public static void ReplaceRecusedList(List<OFS_SCI_Other_Recused> recusedList, string ProjectID)
+        public static void ReplaceRecusedList(List<OFS_SCI_Other_Recused> recusedList, string ProjectID, bool chkNoAvoidance)
         {
             using (DbHelper db = new DbHelper())
             {
@@ -31,7 +31,11 @@ public class OFS_SciRecusedList : System.Web.UI.Page
                     db.Parameters.Clear();
                     db.Parameters.Add("@ProjectID", ProjectID);
                     db.ExecuteNonQuery();
-        
+                    if(chkNoAvoidance == true)
+                    {
+                        // 如果選擇了「無迴避名單」，則不插入任何資料
+                        return;
+                    }
                     // 2. 再逐筆插入新的資料
                     foreach (var recused in recusedList)
                     {
@@ -55,6 +59,30 @@ public class OFS_SciRecusedList : System.Web.UI.Page
                     throw new Exception($"更新迴避名單資料時發生錯誤: {ex.Message}", ex);
                 }
             }
+        }
+        public static void UpdateIsRecused( string ProjectID, bool chkNoAvoidance)
+        {
+            using (DbHelper db = new DbHelper())
+            {
+                try
+                {
+                    db.CommandText = @"
+                            update OFS_SCI_Application_Main
+                            set IsRecused = @chkNoAvoidance
+                            where ProjectID = @ProjectID";
+                    db.Parameters.Add("@ProjectID", ProjectID);
+                    db.Parameters.Add("@chkNoAvoidance", chkNoAvoidance);
+
+                    db.ExecuteNonQuery();
+                }
+                catch(Exception ex)
+                {
+                    throw new Exception($"更新迴避名單資料時發生錯誤: {ex.Message}", ex);
+
+                }
+            }
+
+        
         }
         public static void ReplaceTechReadinessList(List<OFS_SCI_Other_TechReadiness> techList, string ProjectID)
         {
@@ -274,6 +302,35 @@ public class OFS_SciRecusedList : System.Web.UI.Page
             catch (Exception ex)
             {
                 throw new Exception($"更新 Form4Status 和 CurrentStep 時發生錯誤: {ex.Message}", ex);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 取得專案的 IsRecused 狀態
+    /// </summary>
+    /// <param name="projectID">專案ID</param>
+    /// <returns>IsRecused 狀態</returns>
+    public static bool GetIsRecusedByProjectID(string projectID)
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            try
+            {
+                db.CommandText = @"
+                    SELECT ISNULL(IsRecused, 0) as IsRecused
+                    FROM OFS_SCI_Application_Main
+                    WHERE ProjectID = @ProjectID";
+                
+                db.Parameters.Clear();
+                db.Parameters.Add("@ProjectID", projectID);
+                
+                var result = db.GetTable().Rows.Count > 0;
+                return result != null && Convert.ToBoolean(result);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"取得 IsRecused 狀態時發生錯誤: {ex.Message}", ex);
             }
         }
     }

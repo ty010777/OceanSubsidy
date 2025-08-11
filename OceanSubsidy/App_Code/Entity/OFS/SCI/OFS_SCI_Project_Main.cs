@@ -19,12 +19,12 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
     public class IOFS_SCI_Project_Main : IMeta
     {
         
-        protected string _ProjectID = "";
+        protected string _ProjectID = null;
         ///<summary>
-        /// 計畫ID (計畫ID)
+        /// 計畫原ID(最原始的ID 版控用) (計畫原ID(最原始的ID 版控用))
         ///</summary>
         [DataMember]
-        [GisFieldAttribute("ProjectID", "ProjectID", DataSource.TABLE, "計畫ID", true)]
+        [GisFieldAttribute("ProjectID", "ProjectID", DataSource.TABLE, "計畫原ID(最原始的ID 版控用)", true)]
         public virtual string ProjectID
         {
             get
@@ -194,37 +194,37 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
         
-        protected string _SupervisoryUnit = "";
+        protected string _SupervisoryPersonAccount = "";
         ///<summary>
-        /// 主管審核單位 (主管審核單位)
+        /// 主管審核人員帳號 (主管審核人員帳號)
         ///</summary>
         [DataMember]
-        [GisFieldAttribute("SupervisoryUnit", "SupervisoryUnit", DataSource.TABLE, "主管審核單位", false)]
-        public virtual string SupervisoryUnit
+        [GisFieldAttribute("SupervisoryPersonAccount", "SupervisoryPersonAccount", DataSource.TABLE, "主管審核人員帳號", false)]
+        public virtual string SupervisoryPersonAccount
         {
             get
             {
-                return _SupervisoryUnit;
+                return _SupervisoryPersonAccount;
             }
             set
             {
                 bool isModify = false;
-                if (_SupervisoryUnit == null) {
+                if (_SupervisoryPersonAccount == null) {
                     if(value != null) {
                         isModify = true;
                     }
                 }
-                else if (!_SupervisoryUnit.Equals(value))
+                else if (!_SupervisoryPersonAccount.Equals(value))
                 {
                     isModify = true;
                 }
                 if(isModify) {
                     MetaDataState = DataState.UPDATE;
-                    if (UPDATE_COLUMN.IndexOf("SupervisoryUnit") == -1)
+                    if (UPDATE_COLUMN.IndexOf("SupervisoryPersonAccount") == -1)
                     {
-                        UPDATE_COLUMN.Add("SupervisoryUnit");
+                        UPDATE_COLUMN.Add("SupervisoryPersonAccount");
                     }
-                    _SupervisoryUnit = value;
+                    _SupervisoryPersonAccount = value;
                 }
             }
         }
@@ -264,37 +264,37 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
         
-        protected string _SupervisoryPersonAccount = "";
+        protected string _SupervisoryUnit = "";
         ///<summary>
-        /// 主管審核人員帳號 (主管審核人員帳號)
+        /// 主管審核單位 (主管審核單位)
         ///</summary>
         [DataMember]
-        [GisFieldAttribute("SupervisoryPersonAccount", "SupervisoryPersonAccount", DataSource.TABLE, "主管審核人員帳號", false)]
-        public virtual string SupervisoryPersonAccount
+        [GisFieldAttribute("SupervisoryUnit", "SupervisoryUnit", DataSource.TABLE, "主管審核單位", false)]
+        public virtual string SupervisoryUnit
         {
             get
             {
-                return _SupervisoryPersonAccount;
+                return _SupervisoryUnit;
             }
             set
             {
                 bool isModify = false;
-                if (_SupervisoryPersonAccount == null) {
+                if (_SupervisoryUnit == null) {
                     if(value != null) {
                         isModify = true;
                     }
                 }
-                else if (!_SupervisoryPersonAccount.Equals(value))
+                else if (!_SupervisoryUnit.Equals(value))
                 {
                     isModify = true;
                 }
                 if(isModify) {
                     MetaDataState = DataState.UPDATE;
-                    if (UPDATE_COLUMN.IndexOf("SupervisoryPersonAccount") == -1)
+                    if (UPDATE_COLUMN.IndexOf("SupervisoryUnit") == -1)
                     {
-                        UPDATE_COLUMN.Add("SupervisoryPersonAccount");
+                        UPDATE_COLUMN.Add("SupervisoryUnit");
                     }
-                    _SupervisoryPersonAccount = value;
+                    _SupervisoryUnit = value;
                 }
             }
         }
@@ -334,41 +334,6 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
         
-        protected string _UserOrg = "";
-        ///<summary>
-        /// 申請者單位 (申請者單位)
-        ///</summary>
-        [DataMember]
-        [GisFieldAttribute("UserOrg", "UserOrg", DataSource.TABLE, "申請者單位", false)]
-        public virtual string UserOrg
-        {
-            get
-            {
-                return _UserOrg;
-            }
-            set
-            {
-                bool isModify = false;
-                if (_UserOrg == null) {
-                    if(value != null) {
-                        isModify = true;
-                    }
-                }
-                else if (!_UserOrg.Equals(value))
-                {
-                    isModify = true;
-                }
-                if(isModify) {
-                    MetaDataState = DataState.UPDATE;
-                    if (UPDATE_COLUMN.IndexOf("UserOrg") == -1)
-                    {
-                        UPDATE_COLUMN.Add("UserOrg");
-                    }
-                    _UserOrg = value;
-                }
-            }
-        }
-        
         protected string _UserName = "";
         ///<summary>
         /// 申請者名稱 (申請者名稱)
@@ -400,6 +365,41 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
                         UPDATE_COLUMN.Add("UserName");
                     }
                     _UserName = value;
+                }
+            }
+        }
+        
+        protected string _UserOrg = "";
+        ///<summary>
+        /// 申請者單位 (申請者單位)
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("UserOrg", "UserOrg", DataSource.TABLE, "申請者單位", false)]
+        public virtual string UserOrg
+        {
+            get
+            {
+                return _UserOrg;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_UserOrg == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_UserOrg.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("UserOrg") == -1)
+                    {
+                        UPDATE_COLUMN.Add("UserOrg");
+                    }
+                    _UserOrg = value;
                 }
             }
         }
@@ -578,6 +578,7 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
                 }
             }
         }
+        
         protected string _CurrentStep = "";
         ///<summary>
         /// 當前狀態 (當前狀態)
@@ -749,6 +750,216 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
                         UPDATE_COLUMN.Add("isExist");
                     }
                     _isExist = value;
+                }
+            }
+        }
+        
+        protected double? _FirstRequestedSubsidy = null;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("FirstRequestedSubsidy", "FirstRequestedSubsidy", DataSource.TABLE, "", false)]
+        public virtual double? FirstRequestedSubsidy
+        {
+            get
+            {
+                return _FirstRequestedSubsidy;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_FirstRequestedSubsidy == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_FirstRequestedSubsidy.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("FirstRequestedSubsidy") == -1)
+                    {
+                        UPDATE_COLUMN.Add("FirstRequestedSubsidy");
+                    }
+                    _FirstRequestedSubsidy = value;
+                }
+            }
+        }
+        
+        protected double? _ApprovedSubsidy = 0;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("ApprovedSubsidy", "ApprovedSubsidy", DataSource.TABLE, "", false)]
+        public virtual double? ApprovedSubsidy
+        {
+            get
+            {
+                return _ApprovedSubsidy;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_ApprovedSubsidy == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_ApprovedSubsidy.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("ApprovedSubsidy") == -1)
+                    {
+                        UPDATE_COLUMN.Add("ApprovedSubsidy");
+                    }
+                    _ApprovedSubsidy = value;
+                }
+            }
+        }
+        
+        protected string _FinalReviewNotes = "";
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("FinalReviewNotes", "FinalReviewNotes", DataSource.TABLE, "", false)]
+        public virtual string FinalReviewNotes
+        {
+            get
+            {
+                return _FinalReviewNotes;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_FinalReviewNotes == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_FinalReviewNotes.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("FinalReviewNotes") == -1)
+                    {
+                        UPDATE_COLUMN.Add("FinalReviewNotes");
+                    }
+                    _FinalReviewNotes = value;
+                }
+            }
+        }
+        
+        protected int? _FinalReviewOrder = null;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("FinalReviewOrder", "FinalReviewOrder", DataSource.TABLE, "", false)]
+        public virtual int? FinalReviewOrder
+        {
+            get
+            {
+                return _FinalReviewOrder;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_FinalReviewOrder == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_FinalReviewOrder.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("FinalReviewOrder") == -1)
+                    {
+                        UPDATE_COLUMN.Add("FinalReviewOrder");
+                    }
+                    _FinalReviewOrder = value;
+                }
+            }
+        }
+        
+        protected DateTime? _MidtermExamDate = null;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("MidtermExamDate", "MidtermExamDate", DataSource.TABLE, "", false)]
+        public virtual DateTime? MidtermExamDate
+        {
+            get
+            {
+                return _MidtermExamDate;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_MidtermExamDate == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_MidtermExamDate.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("MidtermExamDate") == -1)
+                    {
+                        UPDATE_COLUMN.Add("MidtermExamDate");
+                    }
+                    _MidtermExamDate = value;
+                }
+            }
+        }
+        
+        protected DateTime? _FinalExamDate = null;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("FinalExamDate", "FinalExamDate", DataSource.TABLE, "", false)]
+        public virtual DateTime? FinalExamDate
+        {
+            get
+            {
+                return _FinalExamDate;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_FinalExamDate == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_FinalExamDate.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("FinalExamDate") == -1)
+                    {
+                        UPDATE_COLUMN.Add("FinalExamDate");
+                    }
+                    _FinalExamDate = value;
                 }
             }
         }

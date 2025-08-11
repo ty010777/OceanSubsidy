@@ -90,6 +90,7 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
             // 取得審查結果
             string reviewResult = Request.Form["reviewResult"];
             string returnDate = Request.Form["returnDate"];
+            string reviewNotes = Request.Form["reviewNotesHidden"];
 
             if (string.IsNullOrEmpty(reviewResult))
             {
@@ -150,9 +151,10 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
                 UserName = currentUser?.UserName ?? "系統",
                 StageStatusBefore = stageStatusBefore,
                 StageStatusAfter =  projectMain.Statuses + projectMain.StatusesName,
-                Description = $"審核結果：{projectMain.StatusesName}" + 
-                             (reviewResult == "return" && !string.IsNullOrEmpty(returnDate) ? 
-                             $"，補正期限：{returnDate}" : "")
+                Description = $"因{reviewNotes}原因「{projectMain.StatusesName}」" +
+                              (reviewResult == "return" && !string.IsNullOrEmpty(returnDate)
+                                  ? $"，補正期限：{returnDate}" 
+                                  : "")
             };
             
             // 儲存歷史記錄

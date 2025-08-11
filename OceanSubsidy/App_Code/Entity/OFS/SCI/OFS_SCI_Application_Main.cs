@@ -544,6 +544,41 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
         
+        protected string _OrgPartner = "";
+        ///<summary>
+        /// 共同執行單位 (共同執行單位)
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("OrgPartner", "OrgPartner", DataSource.TABLE, "共同執行單位", false)]
+        public virtual string OrgPartner
+        {
+            get
+            {
+                return _OrgPartner;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_OrgPartner == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_OrgPartner.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("OrgPartner") == -1)
+                    {
+                        UPDATE_COLUMN.Add("OrgPartner");
+                    }
+                    _OrgPartner = value;
+                }
+            }
+        }
+        
         protected string _RegisteredAddress = "";
         ///<summary>
         /// 登記地址 (登記地址)
@@ -791,10 +826,10 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
         
         protected DateTime? _StartTime = null;
         ///<summary>
-        ///  ()
+        /// 工作項目的計畫期程 - 開始 (工作項目的計畫期程 - 開始)
         ///</summary>
         [DataMember]
-        [GisFieldAttribute("StartTime", "StartTime", DataSource.TABLE, "", false)]
+        [GisFieldAttribute("StartTime", "StartTime", DataSource.TABLE, "工作項目的計畫期程 - 開始", false)]
         public virtual DateTime? StartTime
         {
             get
@@ -826,10 +861,10 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
         
         protected DateTime? _EndTime = null;
         ///<summary>
-        ///  ()
+        /// 工作項目的計畫期程 - 結束 (工作項目的計畫期程 - 結束)
         ///</summary>
         [DataMember]
-        [GisFieldAttribute("EndTime", "EndTime", DataSource.TABLE, "", false)]
+        [GisFieldAttribute("EndTime", "EndTime", DataSource.TABLE, "工作項目的計畫期程 - 結束", false)]
         public virtual DateTime? EndTime
         {
             get

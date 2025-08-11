@@ -66,6 +66,14 @@ namespace GS.OCA_OceanSubsidy.Model.OFS
         public string ReplyProgressDisplay { get; set; }
         public string Field_Descname { get; set; } // 審查組別
         
+        // Type-4 Decision Review fields
+        public string Category { get; set; } // 計畫類別 (科專/文化/學校民間/學校社團)
+        public string TopicField { get; set; } // 審查組別代碼
+        public string ApprovedSubsidy { get; set; } // 核定經費
+        public string FinalReviewNotes { get; set; } // 決審意見
+        public string TotalScore { get; set; } // 總分
+        public string FinalReviewOrder { get; set; } // 決審排序
+        
         // Helper methods for display
         public string GetFormattedExpirationDate()
         {
@@ -142,6 +150,122 @@ namespace GS.OCA_OceanSubsidy.Model.OFS
             
             return StatusesName;
         }
+    }
+
+    /// <summary>
+    /// 核定項目資料類別 - 用於核定模式儲存
+    /// </summary>
+    [Serializable]
+    public class ApprovalItem
+    {
+        /// <summary>
+        /// 專案編號
+        /// </summary>
+        public string ProjectID { get; set; }
+        
+        /// <summary>
+        /// 核定經費
+        /// </summary>
+        public string ApprovedSubsidy { get; set; }
+        
+        /// <summary>
+        /// 備註
+        /// </summary>
+        public string FinalReviewNotes { get; set; }
+        
+        /// <summary>
+        /// 計畫類別 (科專/文化/學校民間/學校社團)
+        /// </summary>
+        public string Category { get; set; }
+    }
+
+    /// <summary>
+    /// 排序模式項目資料類別 - 用於排序模式顯示和操作
+    /// </summary>
+    [Serializable]
+    public class SortingModeItem
+    {
+        /// <summary>
+        /// 專案編號
+        /// </summary>
+        public string ProjectID { get; set; }
+        
+        /// <summary>
+        /// 計畫名稱
+        /// </summary>
+        public string ProjectNameTw { get; set; }
+        
+        /// <summary>
+        /// 申請單位
+        /// </summary>
+        public string OrgName { get; set; }
+        
+        /// <summary>
+        /// 主持人
+        /// </summary>
+        public string SupervisoryPersonName { get; set; }
+        
+        /// <summary>
+        /// 總分
+        /// </summary>
+        public string TotalScore { get; set; }
+        
+        /// <summary>
+        /// 決審排序
+        /// </summary>
+        public string FinalReviewOrder { get; set; }
+        
+        /// <summary>
+        /// 備註
+        /// </summary>
+        public string FinalReviewNotes { get; set; }
+        
+        /// <summary>
+        /// 計畫類別 (科專/文化/學校民間/學校社團)
+        /// </summary>
+        public string Category { get; set; }
+        
+        /// <summary>
+        /// 審查組別
+        /// </summary>
+        public string Field_Descname { get; set; }
+        
+        /// <summary>
+        /// 申請金額
+        /// </summary>
+        public string ApplicationAmount { get; set; }
+        
+        /// <summary>
+        /// 核定經費
+        /// </summary>
+        public string ApprovedSubsidy { get; set; }
+    }
+
+    /// <summary>
+    /// 排序儲存項目資料類別 - 用於排序模式儲存
+    /// </summary>
+    [Serializable]
+    public class SortingSaveItem
+    {
+        /// <summary>
+        /// 專案編號
+        /// </summary>
+        public string ProjectID { get; set; }
+        
+        /// <summary>
+        /// 決審排序
+        /// </summary>
+        public int FinalReviewOrder { get; set; }
+        
+        /// <summary>
+        /// 備註
+        /// </summary>
+        public string FinalReviewNotes { get; set; }
+        
+        /// <summary>
+        /// 計畫類別 (科專/文化/學校民間/學校社團)
+        /// </summary>
+        public string Category { get; set; }
     }
 
     #region 內部資料類別

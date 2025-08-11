@@ -194,6 +194,466 @@ public class ReviewCheckListHelper
         return result;
     }
 
+    /// <summary>
+    /// 取得科專審查組別選項
+    /// </summary>
+    /// <returns>科專審查組別清單</returns>
+    public static List<DropdownItem> GetSciReviewGroupOptions()
+    {
+        DbHelper db = new DbHelper();
+        
+        db.CommandText = @"
+            SELECT [Code], [Descname]
+            FROM [Sys_ZgsCode] 
+            WHERE CodeGroup = 'SCIField' 
+            AND IsValid = 1
+            ORDER BY OrderNo, Code
+        ";
+
+        List<DropdownItem> result = new List<DropdownItem>();
+        
+        try
+        {
+            db.Parameters.Clear();
+            DataTable dt = db.GetTable();
+            
+            if (dt != null && dt.Rows.Count > 0)
+            {
+                foreach (DataRow row in dt.Rows)
+                {
+                    result.Add(new DropdownItem
+                    {
+                        Value = row["Code"].ToString(),
+                        Text = row["Descname"].ToString()
+                    });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得科專審查組別選項時發生錯誤: {ex.Message}");
+        }
+        finally
+        {
+            db.Dispose();
+        }
+
+        return result;
+    }
+
+    #endregion
+
+    #region type-4 Search 決審
+
+    public static List<ReviewChecklistItem> Search_SCI_Type4(
+        string year = "",
+        string orgName = "",
+        string supervisor = "",
+        string keyword = "",
+        string reviewGroupCode = "")
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText = @"
+WITH SubsidySummary AS (
+    SELECT 
+        PM.ProjectID,
+        AM.Year,
+        AM.ProjectNameTw,
+        AM.OrgName,
+        AM.Field,
+        PM.SupervisoryPersonAccount,
+        PM.ApprovedSubsidy,
+        PM.FinalReviewNotes,
+        PM.StatusesName,
+        PM.FinalReviewOrder,
+        SUM(PT.SubsidyAmount) AS TotalSubsidyPrice
+        
+    FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main] PM
+    LEFT JOIN OFS_SCI_Application_Main AM ON PM.ProjectID = AM.ProjectID
+    LEFT JOIN OFS_SCI_PersonnelCost_TotalFee PT ON PM.ProjectID = PT.ProjectID
+    WHERE Statuses = '決審核定'
+    GROUP BY PM.ProjectID, AM.Year, AM.ProjectNameTw, AM.OrgName, AM.Field, PM.SupervisoryPersonAccount, PM.ApprovedSubsidy, PM.FinalReviewNotes, PM.StatusesName, PM.FinalReviewOrder
+),
+ScoreSummary AS (
+    SELECT 
+        PM.ProjectID,
+        SUM(ORR.TotalScore) AS TotalScore
+    FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main] PM
+    LEFT JOIN OFS_ReviewRecords ORR ON PM.ProjectID = ORR.ProjectID
+    WHERE Statuses = '決審核定'
+    GROUP BY PM.ProjectID
+)
+SELECT 
+    S.ProjectID,
+    S.Year,
+    S.ProjectNameTw,
+    S.OrgName,
+    S.Field,
+    S.SupervisoryPersonAccount,
+    S.TotalSubsidyPrice,
+    S.StatusesName,
+    S.ApprovedSubsidy,
+    S.FinalReviewNotes,
+    S.FinalReviewOrder,
+    SC.TotalScore,
+    '科專' AS Category
+FROM SubsidySummary S
+LEFT JOIN ScoreSummary SC ON S.ProjectID = SC.ProjectID
+";
+
+        try
+        {
+            List<ReviewChecklistItem> checklist = new List<ReviewChecklistItem>();
+            db.Parameters.Clear();
+
+            // 添加篩選條件參數
+            bool hasWhereClause = false;
+            
+            if (!string.IsNullOrEmpty(year))
+            {
+                db.CommandText += " WHERE S.Year = @year";
+                db.Parameters.Add("@year", year);
+                hasWhereClause = true;
+            }
+
+            if (!string.IsNullOrEmpty(orgName))
+            {
+                if (hasWhereClause)
+                    db.CommandText += " AND S.OrgName LIKE @orgName";
+                else
+                {
+                    db.CommandText += " WHERE S.OrgName LIKE @orgName";
+                    hasWhereClause = true;
+                }
+                db.Parameters.Add("@orgName", $"%{orgName}%");
+            }
+
+            if (!string.IsNullOrEmpty(supervisor))
+            {
+                if (hasWhereClause)
+                    db.CommandText += " AND S.SupervisoryPersonAccount = @supervisor";
+                else
+                {
+                    db.CommandText += " WHERE S.SupervisoryPersonAccount = @supervisor";
+                    hasWhereClause = true;
+                }
+                db.Parameters.Add("@supervisor", supervisor);
+            }
+
+            if (!string.IsNullOrEmpty(reviewGroupCode))
+            {
+                if (hasWhereClause)
+                    db.CommandText += " AND S.Field = @reviewGroupCode";
+                else
+                {
+                    db.CommandText += " WHERE S.Field = @reviewGroupCode";
+                    hasWhereClause = true;
+                }
+                db.Parameters.Add("@reviewGroupCode", reviewGroupCode);
+            }
+
+            if (!string.IsNullOrEmpty(keyword))
+            {
+                if (hasWhereClause)
+                    db.CommandText += " AND (S.ProjectID LIKE @keyword OR S.ProjectNameTw LIKE @keyword)";
+                else
+                {
+                    db.CommandText += " WHERE (S.ProjectID LIKE @keyword OR S.ProjectNameTw LIKE @keyword)";
+                    hasWhereClause = true;
+                }
+                db.Parameters.Add("@keyword", $"%{keyword}%");
+            }
+
+            db.CommandText += " ORDER BY S.FinalReviewOrder ASC, SC.TotalScore DESC";
+
+            DataTable dt = db.GetTable();
+
+            foreach (DataRow row in dt.Rows)
+            {
+                var item = new ReviewChecklistItem
+                {
+                    ProjectID = row["ProjectID"]?.ToString(),
+                    ProjectNameTw = row["ProjectNameTw"]?.ToString(),
+                    Year = row["Year"]?.ToString(),
+                    Category = row["Category"]?.ToString(),
+                    UserOrg = row["OrgName"]?.ToString(),
+                    OrgName = row["OrgName"]?.ToString(),
+                    StatusesName = row["StatusesName"]?.ToString(),
+                    SupervisoryPersonAccount = row["SupervisoryPersonAccount"]?.ToString(),
+                    TopicField = row["Field"]?.ToString(),
+                    ApplicationAmount = row["TotalSubsidyPrice"]?.ToString() ?? "0",
+                    ApprovedSubsidy = row["ApprovedSubsidy"]?.ToString() ?? "0",
+                    FinalReviewNotes = row["FinalReviewNotes"]?.ToString(),
+                    TotalScore = row["TotalScore"]?.ToString() ?? "0",
+                    FinalReviewOrder = row["FinalReviewOrder"]?.ToString() ?? "0"
+                };
+
+                checklist.Add(item);
+            }
+
+            return checklist;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Search_SCI_Type4 查詢時發生錯誤：{ex.Message}", ex);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 排序模式專用查詢 - 取得決審核定階段的案件用於排序
+    /// </summary>
+    /// <param name="year">年度</param>
+    /// <param name="category">計畫類別</param>
+    /// <param name="reviewGroupCode">審查組別代碼</param>
+    /// <returns>排序模式案件清單</returns>
+    public static List<SortingModeItem> Search_SCI_ForSorting(
+        string year = "",
+        string category = "",
+        string reviewGroupCode = "")
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText = @"
+WITH SubsidySummary AS (
+    SELECT 
+        PM.ProjectID,
+        AM.Year,
+        AM.ProjectNameTw,
+        AM.OrgName,
+        AM.Field,
+        PM.SupervisoryPersonName,
+        PM.ApprovedSubsidy,
+        PM.FinalReviewNotes,
+        PM.FinalReviewOrder,
+        SUM(PT.SubsidyAmount) AS TotalSubsidyPrice
+        
+    FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main] PM
+    LEFT JOIN OFS_SCI_Application_Main AM ON PM.ProjectID = AM.ProjectID
+    LEFT JOIN OFS_SCI_PersonnelCost_TotalFee PT ON PM.ProjectID = PT.ProjectID
+    WHERE Statuses = '決審核定'
+    GROUP BY PM.ProjectID, AM.Year, AM.ProjectNameTw, AM.OrgName, AM.Field, PM.SupervisoryPersonName, PM.ApprovedSubsidy, PM.FinalReviewNotes, PM.FinalReviewOrder
+),
+ScoreSummary AS (
+    SELECT 
+        PM.ProjectID,
+        SUM(ORR.TotalScore) AS TotalScore
+    FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main] PM
+    LEFT JOIN OFS_ReviewRecords ORR ON PM.ProjectID = ORR.ProjectID
+    WHERE Statuses = '決審核定'
+    GROUP BY PM.ProjectID
+),
+FieldData AS (
+    SELECT 
+        PM.ProjectID,
+        ZGS.DescName AS Field_Descname
+    FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main] PM  
+    LEFT JOIN OFS_SCI_Application_Main AM ON PM.ProjectID = AM.ProjectID
+    LEFT JOIN Sys_ZgsCode ZGS ON AM.Field = ZGS.Code AND ZGS.CodeGroup = 'SCIField'
+    WHERE Statuses = '決審核定'
+)
+SELECT 
+    S.ProjectID,
+    S.Year,
+    S.ProjectNameTw,
+    S.OrgName,
+    S.SupervisoryPersonName,
+    S.TotalSubsidyPrice AS ApplicationAmount,
+    S.ApprovedSubsidy,
+    S.FinalReviewNotes,
+    S.FinalReviewOrder,
+    SC.TotalScore,
+    FD.Field_Descname
+FROM SubsidySummary S
+LEFT JOIN ScoreSummary SC ON S.ProjectID = SC.ProjectID
+LEFT JOIN FieldData FD ON S.ProjectID = FD.ProjectID
+WHERE 1=1
+";
+
+        // 動態加入篩選條件
+        if (!string.IsNullOrEmpty(year))
+        {
+            db.CommandText += " AND S.Year = @year";
+        }
+
+        if (!string.IsNullOrEmpty(reviewGroupCode))
+        {
+            db.CommandText += " AND S.Field = @reviewGroupCode";
+        }
+
+        // 排序：優先依決審排序，再依總分降序
+        db.CommandText += " ORDER BY S.FinalReviewOrder ASC, SC.TotalScore DESC";
+
+        try
+        {
+            db.Parameters.Clear();
+            
+            if (!string.IsNullOrEmpty(year))
+            {
+                db.Parameters.Add("@year", year);
+            }
+
+            if (!string.IsNullOrEmpty(reviewGroupCode))
+            {
+                db.Parameters.Add("@reviewGroupCode", reviewGroupCode);
+            }
+
+            DataTable dt = db.GetTable();
+            List<SortingModeItem> result = new List<SortingModeItem>();
+
+            foreach (DataRow row in dt.Rows)
+            {
+                SortingModeItem item = new SortingModeItem
+                {
+                    ProjectID = row["ProjectID"].ToString(),
+                    ProjectNameTw = row["ProjectNameTw"].ToString(),
+                    OrgName = row["OrgName"].ToString(),
+                    SupervisoryPersonName = row["SupervisoryPersonName"].ToString(),
+                    ApplicationAmount = row["ApplicationAmount"] != DBNull.Value ? row["ApplicationAmount"].ToString() : "0",
+                    ApprovedSubsidy = row["ApprovedSubsidy"] != DBNull.Value ? row["ApprovedSubsidy"].ToString() : "0",
+                    FinalReviewNotes = row["FinalReviewNotes"] != DBNull.Value ? row["FinalReviewNotes"].ToString() : "",
+                    FinalReviewOrder = row["FinalReviewOrder"] != DBNull.Value ? row["FinalReviewOrder"].ToString() : "999",
+                    TotalScore = row["TotalScore"] != DBNull.Value ? row["TotalScore"].ToString() : "0",
+                    Field_Descname = row["Field_Descname"] != DBNull.Value ? row["Field_Descname"].ToString() : "",
+                    Category = GetProjectCategoryFromId(row["ProjectID"].ToString())
+                };
+
+                result.Add(item);
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Search_SCI_ForSorting 查詢時發生錯誤：{ex.Message}", ex);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 更新排序順序 - 純資料庫操作
+    /// </summary>
+    /// <param name="sortingItems">要更新的排序項目清單</param>
+    public static void UpdateSortingOrder(List<SortingSaveItem> sortingItems)
+    {
+        DbHelper db = new DbHelper();
+
+        try
+        {
+
+            foreach (var item in sortingItems)
+            {
+                string tableName = GetTableNameByCategory(item.Category);
+                
+                db.CommandText = $@"
+                    UPDATE {tableName} 
+                    SET FinalReviewOrder = @finalReviewOrder,
+                        FinalReviewNotes = @finalReviewNotes,
+                        updated_at = GETDATE()
+                    WHERE ProjectID = @projectId
+                ";
+
+                db.Parameters.Clear();
+                db.Parameters.Add("@finalReviewOrder", item.FinalReviewOrder);
+                db.Parameters.Add("@finalReviewNotes", item.FinalReviewNotes ?? "");
+                db.Parameters.Add("@projectId", item.ProjectID);
+
+                db.ExecuteNonQuery();
+            }
+
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 更新核定資料 - 純資料庫操作
+    /// </summary>
+    /// <param name="tableName">資料表名稱</param>
+    /// <param name="parameters">更新參數</param>
+    public static void UpdateApprovalData(string tableName, Dictionary<string, object> parameters)
+    {
+        DbHelper db = new DbHelper();
+
+        try
+        {
+            // 建立更新 SQL - 只更新核定經費和備註，不更新 FinalReviewOrder
+            db.CommandText = $@"
+                UPDATE {tableName} 
+                SET ApprovedSubsidy = @approvedSubsidy,
+                    FinalReviewNotes = @finalReviewNotes,
+                    updated_at = GETDATE()
+                WHERE ProjectID = @projectId
+            ";
+
+            db.Parameters.Clear();
+            foreach (var param in parameters)
+            {
+                db.Parameters.Add(param.Key, param.Value);
+            }
+
+            db.ExecuteNonQuery();
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 根據專案ID取得計畫類別
+    /// </summary>
+    /// <param name="projectId">專案ID</param>
+    /// <returns>計畫類別</returns>
+    private static string GetProjectCategoryFromId(string projectId)
+    {
+        if (string.IsNullOrEmpty(projectId)) return "其他";
+        
+        if (projectId.Contains("SCI"))
+            return "科專";
+        else if (projectId.Contains("CUL"))
+            return "文化";
+        else if (projectId.Contains("EDC"))
+            return "學校民間";
+        else if (projectId.Contains("CLB"))
+            return "學校社團";
+        else
+            return "其他";
+    }
+
+    /// <summary>
+    /// 根據計畫類別取得對應的資料表名稱
+    /// </summary>
+    /// <param name="category">計畫類別</param>
+    /// <returns>資料表名稱</returns>
+    private static string GetTableNameByCategory(string category)
+    {
+        switch (category)
+        {
+            case "科專":
+                return "OFS_SCI_Project_Main";
+            case "文化":
+                return "OFS_CUL_Project_Main";
+            case "學校民間":
+                return "OFS_EDC_Project_Main";
+            case "學校社團":
+                return "OFS_CLB_Project_Main";
+            default:
+                return "OFS_SCI_Project_Main";
+        }
+    }
+
     #endregion
 
     #region type-1 Search 科專
@@ -218,14 +678,17 @@ WITH ProjectSubsidySummary AS (
         [SupervisoryPersonName],
         [SupervisoryUnit],
         PM.created_at,
-        SUM(SubsidyAmount) AS SubsidyAmount
+        SUM(SubsidyAmount) AS SubsidyAmount,
+        YEAR(PM.created_at) - 1911 AS [Year]  -- 民國年欄位整合進來
     FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main] PM
     LEFT JOIN OFS_SCI_Application_Main AM
         ON AM.ProjectID = PM.ProjectID 
     LEFT JOIN OFS_SCI_PersonnelCost_TotalFee PT
         ON PM.ProjectID = PT.ProjectID 
     WHERE PM.isExist = 1 
-      AND Statuses = '資格審查'
+      AND Statuses = '資格審查' 
+      AND PM.StatusesName != '不通過' 
+      AND isWithdrawal != 1
     GROUP BY 
         PM.[ProjectID],
         AM.ProjectNameTw,
@@ -239,8 +702,7 @@ WITH ProjectSubsidySummary AS (
 )
 
 SELECT *,
-    '科專' AS Category,
-    YEAR(created_at) - 1911 AS [Year]
+    '科專' AS Category
 FROM ProjectSubsidySummary
 ";
         try
@@ -249,45 +711,60 @@ FROM ProjectSubsidySummary
             db.Parameters.Clear();
 
             // 添加篩選條件參數
+            bool hasWhereClause = false;
+            
             if (!string.IsNullOrEmpty(year))
             {
-                db.CommandText += " WHERE [Year] = @year";
+                db.CommandText += " WHERE Year = @year";
                 db.Parameters.Add("@year", year);
+                hasWhereClause = true;
             }
 
             if (!string.IsNullOrEmpty(status))
             {
-                if (db.CommandText.Contains("WHERE"))
+                if (hasWhereClause)
                     db.CommandText += " AND StatusesName LIKE @status";
                 else
+                {
                     db.CommandText += " WHERE StatusesName LIKE @status";
+                    hasWhereClause = true;
+                }
                 db.Parameters.Add("@status", $"%{status}%");
             }
 
             if (!string.IsNullOrEmpty(orgName))
             {
-                if (db.CommandText.Contains("WHERE"))
+                if (hasWhereClause)
                     db.CommandText += " AND UserOrg LIKE @orgName";
                 else
+                {
                     db.CommandText += " WHERE UserOrg LIKE @orgName";
+                    hasWhereClause = true;
+                }
                 db.Parameters.Add("@orgName", $"%{orgName}%");
             }
 
             if (!string.IsNullOrEmpty(supervisor))
             {
-                if (db.CommandText.Contains("WHERE"))
+                if (hasWhereClause)
                     db.CommandText += " AND SupervisoryPersonAccount = @supervisor";
                 else
+                {
                     db.CommandText += " WHERE SupervisoryPersonAccount = @supervisor";
+                    hasWhereClause = true;
+                }
                 db.Parameters.Add("@supervisor", supervisor);
             }
 
             if (!string.IsNullOrEmpty(keyword))
             {
-                if (db.CommandText.Contains("WHERE"))
+                if (hasWhereClause)
                     db.CommandText += " AND (ProjectID LIKE @keyword OR ProjectNameTw LIKE @keyword)";
                 else
+                {
                     db.CommandText += " WHERE (ProjectID LIKE @keyword OR ProjectNameTw LIKE @keyword)";
+                    hasWhereClause = true;
+                }
                 db.Parameters.Add("@keyword", $"%{keyword}%");
             }
 
@@ -393,7 +870,7 @@ FROM ProjectSubsidySummary
 
         // 2. 取得進度資料
         var projectIds = basicProjects.Select(p => p.ProjectID).ToList();
-        var progressData = GetSciProgressData(db, projectIds, reviewProgress, replyProgress);
+        var progressData = GetSciProgressData(db, projectIds, status);
 
         // 3. 取得審查組別資料
         var reviewGroupData = GetSciReviewGroupData(db, projectIds);
@@ -412,7 +889,6 @@ FROM ProjectSubsidySummary
                 Statuses = project.Statuses,
                 StatusesName = project.StatusesName,
                 ExpirationDate = project.ExpirationDate,
-                SeqPoint = project.SeqPoint,
                 SupervisoryUnit = project.SupervisoryUnit,
                 SupervisoryPersonName = project.SupervisoryPersonName,
                 SupervisoryPersonAccount = project.SupervisoryPersonAccount,
@@ -503,7 +979,7 @@ FROM ProjectSubsidySummary
             FROM OFS_SCI_Project_Main p
             LEFT JOIN OFS_SCI_Application_Main m ON p.ProjectID = m.ProjectID
             WHERE p.Statuses LIKE '%{status}%'
-              AND (p.isExist = 1 OR p.isExist IS NULL)
+              AND (p.isExist = 1 OR p.isExist IS NULL) AND p.StatusesName != '不通過' AND isWithdrawal != 1
         ";
 
         // 添加篩選條件
@@ -547,7 +1023,6 @@ FROM ProjectSubsidySummary
                 Statuses = row["Statuses"]?.ToString(),
                 StatusesName = row["StatusesName"]?.ToString(),
                 ExpirationDate = row["ExpirationDate"] != DBNull.Value ? (DateTime?)row["ExpirationDate"] : null,
-                SeqPoint = row["SeqPoint"] != DBNull.Value ? Convert.ToDecimal(row["SeqPoint"]) : 0,
                 SupervisoryUnit = row["SupervisoryUnit"]?.ToString(),
                 SupervisoryPersonName = row["SupervisoryPersonName"]?.ToString(),
                 SupervisoryPersonAccount = row["SupervisoryPersonAccount"]?.ToString(),
@@ -580,8 +1055,7 @@ FROM ProjectSubsidySummary
     /// <summary>
     /// 取得科專進度資料
     /// </summary>
-    private static List<ProgressData> GetSciProgressData(DbHelper db, List<string> projectIds, string reviewProgress,
-        string replyProgress)
+    private static List<ProgressData> GetSciProgressData(DbHelper db, List<string> projectIds, string status)
     {
         if (projectIds.Count == 0) return new List<ProgressData>();
 
@@ -604,7 +1078,7 @@ FROM ProjectSubsidySummary
                     ELSE '未完成'
                 END AS ReplyProgress
             FROM OFS_ReviewRecords RR
-            WHERE RR.ProjectID IN {inClause}
+            WHERE RR.ProjectID IN {inClause} and RR.ReviewStage = @status
             GROUP BY RR.ProjectID
         ";
 
@@ -614,6 +1088,9 @@ FROM ProjectSubsidySummary
         {
             db.Parameters.Add($"@projectId{i}", projectIds[i]);
         }
+        
+        // 添加 status 參數
+        db.Parameters.Add("@status", status);
 
         DataTable dt = db.GetTable();
         List<ProgressData> result = new List<ProgressData>();
@@ -735,93 +1212,6 @@ FROM ProjectSubsidySummary
 
     #region 批次處理方法
 
-    /// <summary>
-    /// 批次更新專案狀態
-    /// </summary>
-    /// <param name="projectIds">專案編號列表</param>
-    /// <param name="fromStatus">原始狀態</param>
-    /// <param name="toStatus">目標狀態</param>
-    /// <param name="userAccount">操作者帳號</param>
-    /// <param name="actionType">操作類型</param>
-    /// <returns>批次處理結果</returns>
-    public static BatchApprovalResult BatchUpdateProjectStatus(
-        List<string> projectIds,
-        string fromStatus,
-        string toStatus,
-        string userAccount,
-        string actionType)
-    {
-        var result = new BatchApprovalResult
-        {
-            ActionType = actionType,
-            ProcessedAt = DateTime.Now
-        };
-
-        if (projectIds == null || projectIds.Count == 0)
-        {
-            result.Success = false;
-            result.Message = "專案編號列表為空";
-            return result;
-        }
-
-        DbHelper db = new DbHelper();
-
-        try
-        {
-            int successCount = 0;
-            var successIds = new List<string>();
-            var errorMessages = new List<string>();
-
-            foreach (string projectId in projectIds)
-            {
-                try
-                {
-                    // 更新專案狀態
-                    UpdateProjectStatusInDatabase(db, projectId, toStatus, userAccount);
-                    // 記錄審查歷程
-                    InsertReviewHistory(db, projectId, fromStatus, toStatus, actionType, userAccount);
-                    successCount++;
-                    successIds.Add(projectId);
-                }
-                catch (Exception ex)
-                {
-                    errorMessages.Add($"處理專案 {projectId} 時發生錯誤: {ex.Message}");
-                }
-            }
-
-            // 如果有成功的項目，提交事務
-            if (successCount > 0)
-            {
-                result.Success = true;
-                result.SuccessCount = successCount;
-                result.SuccessProjectIds = successIds;
-                result.Message = $"成功處理 {successCount} 件計畫";
-
-                if (errorMessages.Count > 0)
-                {
-                    result.ErrorMessages = errorMessages;
-                }
-            }
-            else
-            {
-                result.Success = false;
-                result.Message = "所有專案處理失敗";
-                result.ErrorMessages = errorMessages;
-            }
-        }
-        catch (Exception ex)
-        {
-            result.Success = false;
-            result.Message = "批次處理時發生系統錯誤";
-            result.ErrorMessages = new List<string> { ex.Message };
-        }
-        finally
-        {
-            db.Dispose();
-        }
-
-        return result;
-    }
 
     /// <summary>
     /// 更新專案狀態到資料庫
@@ -831,17 +1221,22 @@ FROM ProjectSubsidySummary
     /// <param name="newStatus">新狀態</param>
     /// <param name="userAccount">操作者帳號</param>
     /// <returns>是否更新成功</returns>
-    private static void UpdateProjectStatusInDatabase(DbHelper db, string projectId, string newStatus,
-        string userAccount)
+    public static void UpdateProjectStatusInDatabase(string projectId, string newStatus,
+        string userAccount, string StatusesName)
     {
-        db.CommandText = $@"
-            UPDATE OFS_SCI_Project_Main 
-            SET Statuses = '{newStatus}',
-                StatusesName = '審查中',
-                updated_at = GETDATE()
-            WHERE ProjectID = '{projectId}'";
+        string finalStatusesName = string.IsNullOrEmpty(StatusesName) ? "審查中" : StatusesName;
 
-        db.ExecuteNonQuery();
+        using (DbHelper db = new DbHelper())
+        {
+            db.CommandText = $@"
+                UPDATE OFS_SCI_Project_Main 
+                SET Statuses = '{newStatus}',
+                    StatusesName = N'{finalStatusesName}',
+                    updated_at = GETDATE()
+                WHERE ProjectID = '{projectId}'";
+
+            db.ExecuteNonQuery();
+        }
     }
 
     /// <summary>
@@ -853,27 +1248,50 @@ FROM ProjectSubsidySummary
     /// <param name="toStatus">目標狀態</param>
     /// <param name="actionType">操作類型</param>
     /// <param name="userAccount">操作者帳號</param>
-    private static void InsertReviewHistory(DbHelper db, string projectId, string fromStatus, string toStatus,
-        string actionType, string userAccount)
+    public static void InsertReviewHistory(string projectId, string fromStatus, string toStatus,
+        string actionType, string userName)
     {
-        db.CommandText = $@"
-            INSERT INTO OFS_CaseHistoryLog (
-                ProjectID, 
-                ChangeTime, 
-                UserName, 
-                StageStatusBefore, 
-                StageStatusAfter, 
-                Description
-            ) VALUES (
-                '{projectId}', 
-                GETDATE(), 
-                '{userAccount}', 
-                '{fromStatus}通過', 
-                '{toStatus}審核中', 
-                '批次{actionType}: {fromStatus}通過 → {toStatus}審核中'
-            )";
+        using (DbHelper db = new DbHelper())
+        {
+            db.CommandText = $@"
+                INSERT INTO OFS_CaseHistoryLog (
+                    ProjectID, 
+                    ChangeTime, 
+                    UserName, 
+                    StageStatusBefore, 
+                    StageStatusAfter, 
+                    Description
+                ) VALUES (
+                    '{projectId}', 
+                    GETDATE(), 
+                    '{userName}', 
+                    '{fromStatus}通過', 
+                    '{toStatus}審核中', 
+                    '批次{actionType}: {fromStatus}通過 → {toStatus}審核中'
+                )";
 
-        db.ExecuteNonQuery();
+            db.ExecuteNonQuery();
+        }
+    }
+
+    /// <summary>
+    /// 更新專案狀態名稱（只更新StatusesName）
+    /// </summary>
+    /// <param name="projectId">專案編號</param>
+    /// <param name="statusName">狀態名稱</param>
+    /// <param name="userAccount">操作者帳號</param>
+    public static void UpdateProjectStatusName(string projectId, string statusName, string userAccount)
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            db.CommandText = $@"
+                UPDATE OFS_SCI_Project_Main 
+                SET StatusesName = N'{statusName}',
+                    updated_at = GETDATE()
+                WHERE ProjectID = '{projectId}'";
+
+            db.ExecuteNonQuery();
+        }
     }
 
     #endregion
@@ -910,9 +1328,9 @@ FROM ProjectSubsidySummary
                 foreach (string projectId in projectIds)
                 {
                     try
-                    {
+                    {   
                         // 更新專案狀態為不通過
-                        UpdateProjectRejectStatus(db, projectId, userAccount);
+                        UpdateProjectRejectStatus(db, projectId);
                         // 記錄審查歷程
                         InsertRejectHistory(db, projectId, actionType, userAccount);
                         successCount++;
@@ -962,13 +1380,12 @@ FROM ProjectSubsidySummary
     /// <param name="db">資料庫連線</param>
     /// <param name="projectId">專案編號</param>
     /// <param name="userAccount">操作者帳號</param>
-    private static void UpdateProjectRejectStatus(DbHelper db, string projectId, string userAccount)
+    private static void UpdateProjectRejectStatus(DbHelper db, string projectId)
     {
         db.CommandText = $@"
             UPDATE OFS_SCI_Project_Main 
             SET StatusesName = '不通過',
-                updated_at = GETDATE(),
-                updated_by = '{userAccount}'
+                updated_at = GETDATE()
             WHERE ProjectID = '{projectId}'";
 
         db.ExecuteNonQuery();
@@ -1106,6 +1523,101 @@ FROM ProjectSubsidySummary
                 System.Diagnostics.Debug.WriteLine($"專案 {projectId} 領域 {field} 找到 {reviewers.Rows.Count} 位審查委員，已完成記錄新增");
             }
         }
+    }
+
+    #endregion
+
+    #region 計畫詳情查詢
+
+    /// <summary>
+    /// 取得科專計畫詳細資料
+    /// </summary>
+    /// <param name="projectId">專案編號</param>
+    /// <returns>計畫詳細資料</returns>
+    public static DataTable GetSciPlanDetail(string projectId)
+    {
+        using (var db = new DbHelper())
+        {
+            string sql = @"
+                SELECT TOP 1 
+                    [ProjectID],
+                    [Year],
+                    [SubsidyPlanType],
+                    [ProjectNameTw],
+                    (
+                        SELECT Descname 
+                        FROM Sys_ZgsCode 
+                        WHERE Code = AM.[Topic]
+                    ) + ' 、 ' + 
+                    (
+                        SELECT Descname 
+                        FROM Sys_ZgsCode 
+                        WHERE Code = AM.[Field]
+                    ) AS [TopicField],
+                    [OrgName]
+                FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Application_Main] AM
+                WHERE [ProjectID] = '{0}'
+            ";
+
+            db.CommandText = string.Format(sql, projectId);
+            return db.GetTable();
+        }
+    }
+
+    /// <summary>
+    /// 取得文化計畫詳細資料
+    /// </summary>
+    /// <param name="projectId">專案編號</param>
+    /// <returns>計畫詳細資料</returns>
+    public static DataTable GetCulturalPlanDetail(string projectId)
+    {
+        // TODO: 文化補助案查詢 - 之後實作
+        return new DataTable();
+    }
+
+    /// <summary>
+    /// 取得科專計畫評審意見
+    /// </summary>
+    /// <param name="projectId">專案編號</param>
+    /// <param name="reviewStage">審查階段</param>
+    /// <returns>評審意見資料</returns>
+    public static DataTable GetSciReviewComments(string projectId, string reviewStage)
+    {
+        using (var db = new DbHelper())
+        {
+            string sql = @"
+                SELECT TOP (1000) 
+                    [ReviewID],
+                    [ProjectID],
+                    [ReviewStage],
+                    [Email],
+                    [ReviewerName],
+                    [ReviewComment],
+                    [ReplyComment],
+                    [TotalScore],
+                    [Token],
+                    [CreateTime],
+                    [IsSubmit]
+                FROM [OCA_OceanSubsidy].[dbo].[OFS_ReviewRecords]
+                WHERE ProjectID = '{0}' AND ReviewStage = '{1}' AND IsSubmit = 1
+                ORDER BY ProjectID
+            ";
+
+            db.CommandText = string.Format(sql, projectId, reviewStage);
+            return db.GetTable();
+        }
+    }
+
+    /// <summary>
+    /// 取得文化計畫評審意見
+    /// </summary>
+    /// <param name="projectId">專案編號</param>
+    /// <param name="reviewStage">審查階段</param>
+    /// <returns>評審意見資料</returns>
+    public static DataTable GetCulturalReviewComments(string projectId, string reviewStage)
+    {
+        // TODO: 文化補助案評審意見查詢 - 之後實作
+        return new DataTable();
     }
 
     #endregion

@@ -4,7 +4,7 @@
 <div class="block">
     <h5 class="square-title">建議迴避之審查委員清單</h5>
     <div class="d-flex align-items-center gap-1 mt-4">
-        <input type="checkbox" ID="chkNoAvoidance" runat="server" Class="form-check-input check-teal" />
+        <input type="checkbox" ID="chkNoAvoidance" runat="server" name="chkNoAvoidance" Class="form-check-input check-teal" />
         <label for="<%=chkNoAvoidance.ClientID%>">無需迴避之審查委員</label>
     </div>
     <div class="table-responsive mt-3 mb-0">
@@ -163,6 +163,10 @@
         </table>
     </div>
 </div>
+
+<!-- 變更說明區塊 -->
+<%@ Register Src="~/OFS/SCI/UserControls/ChangeDescriptionControl.ascx" TagName="ChangeDescriptionControl" TagPrefix="uc" %>
+<uc:ChangeDescriptionControl ID="changeDescriptionControl" runat="server" SourcePage="SciRecusedList" />
 
 <!-- 隱藏欄位用於資料交換 -->
 <asp:HiddenField ID="hdnCommitteeData" runat="server" />

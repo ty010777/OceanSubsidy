@@ -19,37 +19,37 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
     public class IOFS_ReviewRecords : IMeta
     {
         
-        protected int _Id = 0;
+        protected int _ReviewID = 0;
         ///<summary>
         ///  ()
         ///</summary>
         [DataMember]
-        [GisFieldAttribute("Id", "Id", DataSource.UN_OPERATE, "", true)]
-        public virtual int Id
+        [GisFieldAttribute("ReviewID", "ReviewID", DataSource.UN_OPERATE, "", true)]
+        public virtual int ReviewID
         {
             get
             {
-                return _Id;
+                return _ReviewID;
             }
             set
             {
                 bool isModify = false;
-                if (_Id == null) {
+                if (_ReviewID == null) {
                     if(value != null) {
                         isModify = true;
                     }
                 }
-                else if (!_Id.Equals(value))
+                else if (!_ReviewID.Equals(value))
                 {
                     isModify = true;
                 }
                 if(isModify) {
                     MetaDataState = DataState.UPDATE;
-                    if (UPDATE_COLUMN.IndexOf("Id") == -1)
+                    if (UPDATE_COLUMN.IndexOf("ReviewID") == -1)
                     {
-                        UPDATE_COLUMN.Add("Id");
+                        UPDATE_COLUMN.Add("ReviewID");
                     }
-                    _Id = value;
+                    _ReviewID = value;
                 }
             }
         }
@@ -194,76 +194,6 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
         
-        protected int _ReviewID = 0;
-        ///<summary>
-        ///  ()
-        ///</summary>
-        [DataMember]
-        [GisFieldAttribute("ReviewID", "ReviewID", DataSource.TABLE, "", false)]
-        public virtual int ReviewID
-        {
-            get
-            {
-                return _ReviewID;
-            }
-            set
-            {
-                bool isModify = false;
-                if (_ReviewID == null) {
-                    if(value != null) {
-                        isModify = true;
-                    }
-                }
-                else if (!_ReviewID.Equals(value))
-                {
-                    isModify = true;
-                }
-                if(isModify) {
-                    MetaDataState = DataState.UPDATE;
-                    if (UPDATE_COLUMN.IndexOf("ReviewID") == -1)
-                    {
-                        UPDATE_COLUMN.Add("ReviewID");
-                    }
-                    _ReviewID = value;
-                }
-            }
-        }
-        
-        protected bool? _IsPrimaryReviewer = false;
-        ///<summary>
-        ///  ()
-        ///</summary>
-        [DataMember]
-        [GisFieldAttribute("IsPrimaryReviewer", "IsPrimaryReviewer", DataSource.TABLE, "", false)]
-        public virtual bool? IsPrimaryReviewer
-        {
-            get
-            {
-                return _IsPrimaryReviewer;
-            }
-            set
-            {
-                bool isModify = false;
-                if (_IsPrimaryReviewer == null) {
-                    if(value != null) {
-                        isModify = true;
-                    }
-                }
-                else if (!_IsPrimaryReviewer.Equals(value))
-                {
-                    isModify = true;
-                }
-                if(isModify) {
-                    MetaDataState = DataState.UPDATE;
-                    if (UPDATE_COLUMN.IndexOf("IsPrimaryReviewer") == -1)
-                    {
-                        UPDATE_COLUMN.Add("IsPrimaryReviewer");
-                    }
-                    _IsPrimaryReviewer = value;
-                }
-            }
-        }
-        
         protected string _ReviewComment = "";
         ///<summary>
         ///  ()
@@ -404,6 +334,41 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
         
+        protected bool? _IsSubmit = false;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("IsSubmit", "IsSubmit", DataSource.TABLE, "", false)]
+        public virtual bool? IsSubmit
+        {
+            get
+            {
+                return _IsSubmit;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_IsSubmit == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_IsSubmit.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("IsSubmit") == -1)
+                    {
+                        UPDATE_COLUMN.Add("IsSubmit");
+                    }
+                    _IsSubmit = value;
+                }
+            }
+        }
+        
         protected DateTime? _CreateTime = DateTime.Now;
         ///<summary>
         ///  ()
@@ -435,6 +400,41 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
                         UPDATE_COLUMN.Add("CreateTime");
                     }
                     _CreateTime = value;
+                }
+            }
+        }
+        
+        protected DateTime? _updated_at = null;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("updated_at", "updated_at", DataSource.TABLE, "", false)]
+        public virtual DateTime? updated_at
+        {
+            get
+            {
+                return _updated_at;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_updated_at == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_updated_at.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("updated_at") == -1)
+                    {
+                        UPDATE_COLUMN.Add("updated_at");
+                    }
+                    _updated_at = value;
                 }
             }
         }

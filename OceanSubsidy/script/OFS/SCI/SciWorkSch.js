@@ -21,11 +21,79 @@ class EventBindingHelper {
             }
         });
     }
+
+    // 統一的輸入框綁定方法
+    static bindInputsInRows(rows, cellConfigs, updateCallback) {
+        rows.forEach(row => {
+            const cell = row.cells[0];
+            const code = cell ? cell.textContent.trim() : '';
+
+            if (/^[A-Z]\d+$/.test(code)) {
+                cellConfigs.forEach(config => {
+                    const input = row.cells[config.cellIndex] ? 
+                        row.cells[config.cellIndex].querySelector(config.selector) : null;
+                    
+                    if (input && !input.hasAttribute(config.attributeName)) {
+                        if (config.className) input.classList.add(config.className);
+                        if (config.dataAttribute) input.setAttribute(config.dataAttribute, code.charAt(0));
+                        
+                        config.events.forEach(eventType => {
+                            input.addEventListener(eventType, updateCallback);
+                        });
+                        
+                        input.setAttribute(config.attributeName, 'true');
+                    }
+                });
+            }
+
+            // 綁定其他輸入欄位
+            const otherInputs = row.querySelectorAll('input[type="text"], input[type="number"], select, input[type="checkbox"]');
+            otherInputs.forEach(input => {
+                if (!input.hasAttribute('data-bound-update')) {
+                    ['input', 'change'].forEach(eventType => {
+                        input.addEventListener(eventType, updateCallback);
+                    });
+                    input.setAttribute('data-bound-update', 'true');
+                }
+            });
+        });
+    }
+
+    // 統一的按鈕綁定方法
+    static bindButtonsInContainer(container, buttonConfigs) {
+        buttonConfigs.forEach(config => {
+            if (config.type === 'icon') {
+                this.bindButtonsByIcon(config.selector, config.eventType, config.handler, config.attributeName, container);
+            } else if (config.type === 'element') {
+                this.bindElementsWithAttribute(config.selector, config.eventType, config.handler, config.attributeName, container);
+            }
+        });
+    }
 }
 
 class DOMCache {
     constructor() {
         this.cache = new Map();
+        this.elements = {
+            // 常用的DOM元素ID
+            checkStandards: () => document.getElementById('checkStandards'),
+            btnUploadDiagram: () => document.getElementById('btnUploadDiagram'),
+            btnDeleteDiagram: () => document.getElementById('btnDeleteDiagram'),
+            fileUploadDiagram: () => document.getElementById('fileUploadDiagram'),
+            diagramPreviewContainer: () => document.getElementById('diagramPreviewContainer'),
+            diagramPreview: () => document.getElementById('diagramPreview'),
+            form1: () => document.getElementById('form1'),
+            btnTempSave: () => document.getElementById('btnTempSave'),
+            btnSaveAndNext: () => document.getElementById('btnSaveAndNext'),
+            
+            // 常用的選擇器
+            subTable: () => document.querySelector('.sub-table'),
+            subTableTable: () => document.querySelector('.sub-table table'),
+            subTableRows: () => document.querySelectorAll('.sub-table tbody tr'),
+            subTableTfoot: () => document.querySelector('.sub-table table tfoot'),
+            workItemBtns: () => document.querySelectorAll('.btn-blue-green2[type="button"]'),
+            checkStandardsSelects: () => document.querySelectorAll('#checkStandards select')
+        };
     }
 
     get(selector) {
@@ -41,6 +109,14 @@ class DOMCache {
             this.cache.set(cacheKey, document.querySelectorAll(selector));
         }
         return this.cache.get(cacheKey);
+    }
+
+    // 獲取常用元素的快捷方法
+    getElement(elementName) {
+        if (this.elements[elementName]) {
+            return this.elements[elementName]();
+        }
+        return null;
     }
 
     clear() {
@@ -92,71 +168,86 @@ class WorkItemTableManager {
 
     bindEvents() {
         // 綁定新增工作項目按鈕
-        const addWorkItemBtns = document.querySelectorAll('.btn-blue-green2[type="button"]');
+        const addWorkItemBtns = this.domCache.getElement('workItemBtns');
         addWorkItemBtns.forEach(btn => {
             if (btn.textContent.includes('新增工作項目')) {
                 btn.addEventListener('click', () => this.addNewWorkItem());
             }
         });
 
-        this.bindPlusButtons();
-        this.bindDeleteButtons();
+        this.bindTableButtons();
         this.bindWorkItemInputs();
     }
 
-    bindPlusButtons() {
-        const workItemTable = this.domCache.get('.sub-table');
+    bindTableButtons() {
+        const workItemTable = this.domCache.getElement('subTable');
         if (workItemTable) {
-            EventBindingHelper.bindButtonsByIcon(
-                '.btn-dark-green2 .fa-plus',
-                'click',
-                (e) => this.addSubItem(e),
-                'data-bound',
-                workItemTable
-            );
-        }
-    }
+            const buttonConfigs = [
+                {
+                    type: 'icon',
+                    selector: '.btn-dark-green2 .fa-plus',
+                    eventType: 'click',
+                    handler: (e) => this.addSubItem(e),
+                    attributeName: 'data-plus-bound'
+                },
+                {
+                    type: 'icon',
+                    selector: '.btn-dark-green2 .fa-trash-alt',
+                    eventType: 'click',
+                    handler: (e) => this.deleteItem(e),
+                    attributeName: 'data-delete-bound'
+                }
+            ];
 
-    bindDeleteButtons() {
-        const workItemTable = this.domCache.get('.sub-table');
-        if (workItemTable) {
-            EventBindingHelper.bindButtonsByIcon(
-                '.btn-dark-green2 .fa-trash-alt',
-                'click',
-                (e) => this.deleteItem(e),
-                'data-bound',
-                workItemTable
-            );
+            EventBindingHelper.bindButtonsInContainer(workItemTable, buttonConfigs);
         }
     }
 
     bindWorkItemInputs() {
-        const allRows = this.domCache.getAll('.sub-table tbody tr');
-        allRows.forEach(row => {
-            const cell = row.cells[0];
-            const code = cell ? cell.textContent.trim() : '';
+        this.bindAllRowInputs();
+    }
 
-            if (/^[A-Z]\d+$/.test(code)) {
-                const workItemInput = row.cells[1] ? row.cells[1].querySelector('input[type="text"]') : null;
-                if (workItemInput && !workItemInput.hasAttribute('data-workitem-bound')) {
-                    workItemInput.addEventListener('input', () => {
-                        this.parent.checkStandards.updateCheckpointOptions();
-                        this.updateHiddenFieldsNow();
-                    });
-                    workItemInput.setAttribute('data-workitem-bound', 'true');
-                }
+    // 統一的行輸入綁定方法
+    bindAllRowInputs() {
+        const allRows = this.domCache.getElement('subTableRows');
+        
+        const cellConfigs = [
+            {
+                cellIndex: 1,
+                selector: 'input[type="text"]',
+                attributeName: 'data-workitem-bound',
+                events: ['input']
+            },
+            {
+                cellIndex: 3,
+                selector: 'input[type="text"]',
+                className: 'weight-input',
+                dataAttribute: 'data-letter',
+                attributeName: 'data-weight-bound',
+                events: ['input']
+            },
+            {
+                cellIndex: 4,
+                selector: 'input[type="text"]',
+                className: 'person-month-input',
+                dataAttribute: 'data-letter',
+                attributeName: 'data-month-bound',
+                events: ['input']
             }
+        ];
 
-            // 綁定其他輸入欄位
-            const otherInputs = row.querySelectorAll('input[type="text"], input[type="number"], select');
-            otherInputs.forEach(input => {
-                if (!input.hasAttribute('data-bound-update')) {
-                    ['input', 'change'].forEach(eventType => {
-                        input.addEventListener(eventType, () => this.updateHiddenFieldsNow());
-                    });
-                    input.setAttribute('data-bound-update', 'true');
-                }
-            });
+        EventBindingHelper.bindInputsInRows(allRows, cellConfigs, (event) => {
+            const input = event.target;
+            
+            // 根據不同的輸入框類型執行不同的回調
+            if (input.hasAttribute('data-workitem-bound')) {
+                this.parent.checkStandards.updateCheckpointOptions();
+                this.updateHiddenFieldsNow();
+            } else if (input.hasAttribute('data-weight-bound') || input.hasAttribute('data-month-bound')) {
+                this.parent.calculator.updateTotals();
+            } else {
+                this.updateHiddenFieldsNow();
+            }
         });
     }
 
@@ -182,8 +273,10 @@ class WorkItemTableManager {
         this.currentLetters.push(nextLetter);
         const newTbody = this.createNewWorkItemGroup(nextLetter);
 
-        const tfoot = document.querySelector('.sub-table table tfoot');
-        tfoot.parentNode.insertBefore(newTbody, tfoot);
+        const tfoot = this.domCache.getElement('subTableTfoot');
+        if (tfoot) {
+            tfoot.parentNode.insertBefore(newTbody, tfoot);
+        }
 
         this.updatePlusButtonVisibility();
         this.rebindAllEvents();
@@ -240,7 +333,7 @@ class WorkItemTableManager {
                 <input type="text" class="form-control person-month-input" placeholder="" data-letter="${letter}">
             </td>
             <td class="text-center">
-                <input class="form-check-input blue-green-check" type="checkbox" value="">
+                <input class="form-check-input blue-green-check" type="checkbox" value="" checked>
             </td>
             <td>
                 <button class="btn btn-sm btn-dark-green2" type="button"><i class="fas fa-trash-alt"></i></button>
@@ -258,14 +351,14 @@ class WorkItemTableManager {
         return `
             <div class="input-group">
                 <span class="input-group-text">開始</span>
-                <select class="form-select month-select">
+                <select name="" class="form-select month-select">
                     <option value="" selected disabled>請選擇</option>
                     ${monthOptions}
                 </select>
             </div>
             <div class="input-group mt-2">
                 <span class="input-group-text">結束</span>
-                <select class="form-select month-select">
+                <select name="" class="form-select month-select">
                     <option value="" selected disabled>請選擇</option>
                     ${monthOptions}
                 </select>
@@ -433,17 +526,15 @@ class WorkItemTableManager {
                 plusButton.innerHTML = '<i class="fas fa-plus"></i>';
                 functionsCell.appendChild(plusButton);
 
-                this.bindPlusButtons();
+                this.bindTableButtons();
             }
         }
     }
 
     rebindAllEvents() {
         this.domCache.clear();
-        this.bindPlusButtons();
-        this.bindDeleteButtons();
-        this.bindWorkItemInputs();
-        this.parent.calculator.bindInputs();
+        this.bindTableButtons(); // 使用統一的按鈕綁定方法
+        this.bindAllRowInputs(); // 使用統一的綁定方法
         // 更新查核標準的下拉選單選項
         this.parent.checkStandards.updateCheckpointOptions();
     }
@@ -646,103 +737,54 @@ class CalculationManager {
         this.domCache = parentManager.workItems.domCache;
     }
 
-    bindInputs() {
-        this.bindWeightInputs();
-        this.bindPersonMonthInputs();
-    }
 
-    bindWeightInputs() {
-        this.bindExistingInputs('.weight-input', 'data-weight-bound', () => this.calculateWeights());
-        this.bindRowInputs(3, 'weight-input', 'data-weight-bound', () => this.calculateWeights());
-    }
-
-    bindPersonMonthInputs() {
-        this.bindExistingInputs('.person-month-input', 'data-month-bound', () => this.calculatePersonMonths());
-        this.bindRowInputs(4, 'person-month-input', 'data-month-bound', () => this.calculatePersonMonths());
-    }
-
-    bindExistingInputs(selector, attributeName, handler) {
-        EventBindingHelper.bindElementsWithAttribute(selector, 'input', handler, attributeName);
-    }
-
-    bindRowInputs(cellIndex, className, attributeName, handler) {
-        const allRows = this.domCache.getAll('.sub-table tbody tr');
-        allRows.forEach(row => {
-            const cell = row.cells[0];
-            const code = cell ? cell.textContent.trim() : '';
-
-            if (/^[A-Z]\d+$/.test(code)) {
-                const input = row.cells[cellIndex] ? row.cells[cellIndex].querySelector('input[type="text"]') : null;
-                if (input && !input.hasAttribute(attributeName)) {
-                    input.classList.add(className);
-                    const letter = code.charAt(0);
-                    input.setAttribute('data-letter', letter);
-                    input.addEventListener('input', handler);
-                    input.setAttribute(attributeName, 'true');
-                }
-            }
-        });
-    }
-
-    calculateWeights() {
-        this.calculateByType('weight', '.weight-input', 3, '%');
-    }
-
-    calculatePersonMonths() {
-        this.calculateByType('personMonth', '.person-month-input', 4, '');
-    }
-
-    calculateByType(type, inputSelector, cellIndex, suffix) {
+    // 統一的自動加總函數
+    calculateTotals() {
         const letterGroups = this.parent.workItems.getLetterGroups();
         
-        Object.keys(letterGroups).forEach(letter => {
-            this.calculateMainItemByType(letter, letterGroups, inputSelector, cellIndex, suffix);
-        });
+        // 計算權重
+        this.calculateByColumn(letterGroups, '.weight-input', 3, '%', 1);
         
-        this.calculateTotalByType(letterGroups, cellIndex, suffix);
+        // 計算人月數
+        this.calculateByColumn(letterGroups, '.person-month-input', 4, '', 2);
     }
 
-    calculateMainItemByType(letter, letterGroups, inputSelector, cellIndex, suffix) {
-        if (!letterGroups[letter]) return;
-
-        let total = 0;
-        letterGroups[letter].subItems.forEach(subItem => {
-            const row = subItem.closest('tr');
-            const input = row.querySelector(inputSelector);
-            if (input && input.value) {
-                const value = parseFloat(input.value.replace('%', '')) || 0;
-                total += value;
-            }
-        });
-
-        const mainItemRow = this.findMainItemRow(letter);
-        if (mainItemRow) {
-            const cell = mainItemRow.cells[cellIndex];
-            cell.textContent = total + suffix;
-        }
-    }
-
-    calculateTotalByType(letterGroups, cellIndex, suffix) {
+    calculateByColumn(letterGroups, inputSelector, mainCellIndex, suffix, footerCellIndex) {
         let grandTotal = 0;
         
+        // 計算每個主項目的小計
         Object.keys(letterGroups).forEach(letter => {
+            let subtotal = 0;
+            
+            letterGroups[letter].subItems.forEach(subItem => {
+                const row = subItem.closest('tr');
+                const input = row.querySelector(inputSelector);
+                if (input && input.value) {
+                    const value = parseFloat(input.value.replace('%', '')) || 0;
+                    subtotal += value;
+                }
+            });
+
+            // 更新主項目顯示
             const mainItemRow = this.findMainItemRow(letter);
             if (mainItemRow) {
-                const cellText = mainItemRow.cells[cellIndex].textContent.replace('%', '');
-                const value = parseFloat(cellText) || 0;
-                grandTotal += value;
+                mainItemRow.cells[mainCellIndex].textContent = subtotal + suffix;
+                grandTotal += subtotal;
             }
         });
 
-        const tfootRow = this.domCache.get('.sub-table table tfoot tr');
-        if (tfootRow) {
-            const targetCellIndex = cellIndex === 3 ? 1 : 2; // 權重在第2欄，人月在第3欄
-            tfootRow.cells[targetCellIndex].textContent = grandTotal + suffix;
+        // 更新總計
+        const tfoot = this.domCache.getElement('subTableTfoot');
+        if (tfoot) {
+            const tfootRow = tfoot.querySelector('tr');
+            if (tfootRow) {
+                tfootRow.cells[footerCellIndex].textContent = grandTotal + suffix;
+            }
         }
     }
 
     findMainItemRow(letter) {
-        const allRows = document.querySelectorAll('.sub-table tbody tr');
+        const allRows = this.domCache.getElement('subTableRows');
         for (let row of allRows) {
             const cell = row.cells[0];
             if (cell && cell.textContent.trim() === letter) {
@@ -752,11 +794,12 @@ class CalculationManager {
         return null;
     }
 
+    // 簡化的更新總計方法
     updateTotals() {
-        this.calculateWeights();
-        this.calculatePersonMonths();
+        this.calculateTotals();
         this.parent.checkStandards.updateCheckpointOptions();
     }
+
 }
 //#endregion
 
@@ -772,43 +815,44 @@ class CheckStandardManager {
     }
 
     bindCheckpointButtons() {
-        const checkpointTable = document.getElementById('checkStandards');
+        const checkpointTable = this.parent.workItems.domCache.getElement('checkStandards');
         if (!checkpointTable) return;
 
-        // 綁定加號按鈕
-        EventBindingHelper.bindButtonsByIcon(
-            '.fa-plus', 'click', 
-            (e) => this.addCheckpointRow(e), 
-            'data-checkpoint-plus-bound', 
-            checkpointTable
-        );
+        const buttonConfigs = [
+            {
+                type: 'icon',
+                selector: '.fa-plus',
+                eventType: 'click',
+                handler: (e) => this.addCheckpointRow(e),
+                attributeName: 'data-checkpoint-plus-bound'
+            },
+            {
+                type: 'icon',
+                selector: '.fa-trash-alt',
+                eventType: 'click',
+                handler: (e) => this.deleteCheckpointRow(e),
+                attributeName: 'data-checkpoint-delete-bound'
+            },
+            {
+                type: 'element',
+                selector: 'select',
+                eventType: 'change',
+                handler: (e) => {
+                    this.recalculateAllCheckpointNumbers();
+                    this.updateHiddenFieldsNow();
+                },
+                attributeName: 'data-checkpoint-select-bound'
+            },
+            {
+                type: 'element',
+                selector: 'input[type="date"]',
+                eventType: 'change',
+                handler: () => this.updateHiddenFieldsNow(),
+                attributeName: 'data-checkpoint-date-bound'
+            }
+        ];
 
-        // 綁定刪除按鈕
-        EventBindingHelper.bindButtonsByIcon(
-            '.fa-trash-alt', 'click', 
-            (e) => this.deleteCheckpointRow(e), 
-            'data-checkpoint-delete-bound', 
-            checkpointTable
-        );
-
-        // 綁定對應工項選擇事件
-        EventBindingHelper.bindElementsWithAttribute(
-            'select', 'change', 
-            (e) => {
-                this.recalculateAllCheckpointNumbers();
-                this.updateHiddenFieldsNow();
-            }, 
-            'data-checkpoint-select-bound', 
-            checkpointTable
-        );
-
-        // 綁定日期輸入事件
-        EventBindingHelper.bindElementsWithAttribute(
-            'input[type="date"]', 'change', 
-            () => this.updateHiddenFieldsNow(), 
-            'data-checkpoint-date-bound', 
-            checkpointTable
-        );
+        EventBindingHelper.bindButtonsInContainer(checkpointTable, buttonConfigs);
 
         // 綁定內容編輯事件
         const editableSpans = checkpointTable.querySelectorAll('span[contenteditable]');
@@ -860,7 +904,7 @@ class CheckStandardManager {
     deleteCheckpointRow(event) {
         const button = event.currentTarget;
         const row = button.closest('tr');
-        const checkpointTable = document.getElementById('checkStandards');
+        const checkpointTable = this.parent.workItems.domCache.getElement('checkStandards');
 
         const allRows = checkpointTable.querySelectorAll('tbody tr');
         if (allRows.length <= 1) {
@@ -893,7 +937,7 @@ class CheckStandardManager {
 
 
     recalculateAllCheckpointNumbers() {
-        const checkpointTable = document.getElementById('checkStandards');
+        const checkpointTable = this.parent.workItems.domCache.getElement('checkStandards');
         const allRows = checkpointTable.querySelectorAll('tbody tr');
 
         const workItemCounters = {};
@@ -918,7 +962,7 @@ class CheckStandardManager {
     }
 
     updateCheckpointOptions() {
-        const checkpointSelects = document.querySelectorAll('#checkStandards select');
+        const checkpointSelects = this.parent.workItems.domCache.getElement('checkStandardsSelects');
 
         checkpointSelects.forEach(select => {
             const currentValue = select.value;
@@ -1002,20 +1046,17 @@ class DiagramManager {
     }
 
     bindDiagramUpload() {
-        const uploadBtn = document.getElementById('btnUploadDiagram');
-        const deleteBtn = document.getElementById('btnDeleteDiagram');
+        const domCache = this.parent.workItems.domCache;
+        const uploadBtn = domCache.getElement('btnUploadDiagram');
+        const deleteBtn = domCache.getElement('btnDeleteDiagram');
 
         if (uploadBtn) {
             uploadBtn.addEventListener('click', (e) => {
-                // 阻止預設行為，不進行真正的上傳
                 e.preventDefault();
-
-                // 只進行前端驗證和顯示
                 if (!this.validateFileForUpload()) {
                     return false;
                 }
                 this.handleDiagramPreview();
-
             });
         }
 
@@ -1028,7 +1069,7 @@ class DiagramManager {
     }
 
     validateFileForUpload() {
-        const fileInput = document.getElementById('fileUploadDiagram');
+        const fileInput = this.parent.workItems.domCache.getElement('fileUploadDiagram');
 
         if (!fileInput || !fileInput.files.length) {
             alert('請先選擇要上傳的檔案');
@@ -1051,7 +1092,7 @@ class DiagramManager {
     }
 
     handleDiagramPreview() {
-        const fileInput = document.getElementById('fileUploadDiagram');
+        const fileInput = this.parent.workItems.domCache.getElement('fileUploadDiagram');
         const file = fileInput.files[0];
 
         this.showFilePreview(file);
@@ -1210,7 +1251,7 @@ class DataManager {
     }
 
     collectWorkItemsData() {
-        this.parent.calculator.calculateWeights();
+        this.parent.calculator.updateTotals();
 
         const workItems = [];
         const letterGroups = this.parent.workItems.getLetterGroups();

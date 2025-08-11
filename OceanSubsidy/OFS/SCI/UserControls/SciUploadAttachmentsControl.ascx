@@ -1,4 +1,5 @@
 ﻿<%@ Control Language="C#" AutoEventWireup="true" CodeFile="SciUploadAttachmentsControl.ascx.cs" Inherits="OFS_SCI_UserControls_SciUploadAttachmentsControl" %>
+<%@ Register TagPrefix="uc" TagName="ChangeDescriptionControl" Src="~/OFS/SCI/UserControls/ChangeDescriptionControl.ascx" %>
 
 <!-- 內容區塊 -->
 <div class="block">
@@ -267,3 +268,6 @@
 
 <!-- 隱藏欄位用於資料交換 -->
 <asp:HiddenField ID="hdnAttachmentData" runat="server" />
+
+<!-- 變更說明 UserControl -->
+<uc:ChangeDescriptionControl ID="ucChangeDescription" runat="server" />

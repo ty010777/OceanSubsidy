@@ -1,4 +1,5 @@
 ﻿<%@ Control Language="C#" AutoEventWireup="true" CodeFile="SciFundingControl.ascx.cs" Inherits="OFS_SCI_UserControls_SciFundingControl" %>
+<%@ Register TagPrefix="uc" TagName="ChangeDescriptionControl" Src="~/OFS/SCI/UserControls/ChangeDescriptionControl.ascx" %>
 
 <!-- Hidden Fields for dynamic data -->
 <asp:HiddenField ID="hdnPersonnelData" runat="server" ClientIDMode="Static" />
@@ -552,3 +553,6 @@
         </div>
     </div>
 </div>
+
+<!-- 變更說明 UserControl -->
+<uc:ChangeDescriptionControl ID="ucChangeDescription" runat="server" />

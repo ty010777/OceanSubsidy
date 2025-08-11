@@ -3,7 +3,6 @@ const SciApplication = {
     //#region 初始化
     init: function () {
         this.setupCharacterCount();
-        this.setupFormValidation();
         this.bindEvents();
         KeywordManager.init();
     },
@@ -40,24 +39,6 @@ const SciApplication = {
                 updateCount(); // 初始化
             }
         });
-    },
-    //#endregion
-
-    //#region 表單驗證
-    setupFormValidation: function () {
-        const requiredFields = document.querySelectorAll('input[required], textarea[required], select[required]');
-        requiredFields.forEach(field => {
-            field.addEventListener('blur', () => {
-                this.validateField(field);
-            });
-        });
-    },
-
-    validateField: function (field) {
-        const isValid = field.value.trim() !== '';
-        field.classList.toggle('field-error', !isValid);
-        field.classList.toggle('field-success', isValid);
-        return isValid;
     },
     //#endregion
 
@@ -159,40 +140,38 @@ const KeywordManager = {
         const requiredStar = isRequired ? '<span class="text-pink">*</span>' : '';
 
         keywordRow.innerHTML = `
-            <div class="col-12 col-md-6">
-                <div class="input-group">
-                    <span class="input-group-text" style="width: 70px;">
-                        ${requiredStar}中文
-                    </span>
-                    <input type="text" 
-                           class="form-control keyword-ch" 
-                           placeholder="請輸入" 
-                           value="${chineseValue}"
-                           data-keyword-id="${keywordId}"
-                           ${isRequired ? 'required' : ''}>
-                </div>
-            </div>
-            <div class="col-12 col-md-6">
-                <div class="input-group">
-                    <span class="input-group-text" style="width: 70px;">
-                        ${requiredStar}英文
-                    </span>
-                    <input type="text" 
-                           class="form-control keyword-en" 
-                           placeholder="請輸入" 
-                           value="${englishValue}"
-                           data-keyword-id="${keywordId}"
-                           ${isRequired ? 'required' : ''}>
-                    ${!isRequired ? `
-                    <button type="button" 
-                            class="btn btn-outline-danger btn-sm delete-keyword" 
-                            data-keyword-id="${keywordId}"
-                            title="刪除此關鍵字">
-                        <i class="fas fa-trash"></i>
-                    </button>` : ''}
-                </div>
-            </div>
-        `;
+    <div class="col-12 col-md-6">
+        <div class="input-group">
+            <span class="input-group-text" style="width: 70px;">
+                ${requiredStar}中文
+            </span>
+            <input type="text" 
+                   class="form-control keyword-ch" 
+                   placeholder="請輸入" 
+                   value="${chineseValue}"
+                   data-keyword-id="${keywordId}">
+        </div>
+    </div>
+    <div class="col-12 col-md-6">
+        <div class="input-group">
+            <span class="input-group-text" style="width: 70px;">
+                ${requiredStar}英文
+            </span>
+            <input type="text" 
+                   class="form-control keyword-en" 
+                   placeholder="請輸入" 
+                   value="${englishValue}"
+                   data-keyword-id="${keywordId}">
+            ${!isRequired ? `
+            <button type="button" 
+                    class="btn btn-outline-danger btn-sm delete-keyword" 
+                    data-keyword-id="${keywordId}"
+                    title="刪除此關鍵字">
+                <i class="fas fa-trash"></i>
+            </button>` : ''}
+        </div>
+    </div>
+`;
 
         container.appendChild(keywordRow);
 
@@ -298,31 +277,6 @@ const KeywordManager = {
         return keywordsData;
     },
     //#endregion
-
-    //#region 驗證
-    // 驗證關鍵字資料
-    validateKeywords: function() {
-        const keywords = this.getKeywordsData();
-        const errors = [];
-
-        if (keywords.length < this.minKeywords) {
-            errors.push(`至少需要輸入${this.minKeywords}個關鍵字`);
-        }
-
-        keywords.forEach((keyword, index) => {
-            if (!keyword.KeyWordTw || !keyword.KeyWordEn) {
-                errors.push(`第${index + 1}個關鍵字需要同時填寫中文和英文`);
-            }
-        });
-
-        return {
-            isValid: errors.length === 0,
-            errors: errors,
-            keywords: keywords
-        };
-    },
-    //#endregion
-
 };
 window.KeywordManager = KeywordManager;
 //#endregion

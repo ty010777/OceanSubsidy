@@ -33,6 +33,10 @@
                 }
             });
         });
+        $('form').on('submit', function () {
+            const reviewNotes = $('[name="reviewNotes"]').text().trim();
+            $('#reviewNotesHidden').val(reviewNotes);
+        });
     </script>
     
 </asp:Content>
@@ -156,7 +160,8 @@
                         <label for="radio-return">退回補正補件</label>
                         <input id="returnDate" class="form-control" type="date" name="returnDate" style="display: none;">
                     </div>
-                    <span class="form-control textarea w-100" role="textbox" contenteditable="" data-placeholder="請輸入原因" aria-label="文本輸入區域"></span>
+                    <span class="form-control textarea w-100" role="textbox" contenteditable="" data-placeholder="請輸入原因" aria-label="文本輸入區域" name="reviewNotes"></span>
+                    <input type="hidden" name="reviewNotesHidden" id="reviewNotesHidden">
                 </div>
             </li>
         </ul>

@@ -1,4 +1,5 @@
 ﻿<%@ Page Language="C#" AutoEventWireup="true" CodeFile="~/OFS/SCI/SciOutcomes.aspx.cs" Inherits="OFS_SciOutcomes" Culture="zh-TW" UICulture="zh-TW" MasterPageFile="~/OFS/SCI/OFSApplicationMaster.master" %>
+<%@ Register TagPrefix="uc" TagName="ChangeDescriptionControl" Src="~/OFS/SCI/UserControls/ChangeDescriptionControl.ascx" %>
 
 <asp:Content ID="ApplicationTitle" ContentPlaceHolderID="ApplicationTitle" runat="server">
     成果與績效 - 海洋領域補助計畫管理資訊系統
@@ -329,6 +330,9 @@
             </table>
         </div>
     </div>
+    
+    <!-- 變更說明 UserControl -->
+    <uc:ChangeDescriptionControl ID="ucChangeDescription" runat="server" />
     
     <!-- 底部區塊 -->
     <div class="block-bottom bg-light-teal">

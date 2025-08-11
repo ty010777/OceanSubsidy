@@ -87,7 +87,7 @@
                             <option value="">資格審查</option>
                             <option value="">領域審查/初審</option>
                             <option value="">技術審查/複審</option>
-                            <option value="">決審</option>
+                            <option value="">決審核定</option>
                         </select>
                     </div>
                 </div>
@@ -549,6 +549,86 @@
                                    OnClientClick="return validateDeleteReason();" />
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal 審查意見回覆 -->
+    <div class="modal fade" id="planCommentModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="planCommentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="fs-24 fw-bold text-green-light">審查意見回覆</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+
+                    <div class="d-flex justify-content-between">
+                        <h5 class="square-title">計畫資料</h5>
+                        <button class="btn btn-teal-dark" type="button"><i class="fas fa-download"></i>匯出申請資料</button>
+                    </div>
+
+                    <div class="bg-light-gray p-3 mb-5 mt-3">
+                        <ul class="lh-lg">
+                            <li>
+                                <span class="text-gray">年度 :</span>
+                                <span id="projectYearDisplay"></span>
+                            </li>
+                            <li>
+                                <span class="text-gray">計畫編號 :</span>
+                                <span id="projectIdDisplay"></span>
+                            </li>
+                            <li>
+                                <span class="text-gray">計畫類別 :</span>
+                                <span id="projectCategoryDisplay"></span>
+                            </li>
+                            <li>
+                                <span class="text-gray">審查組別 : </span>
+                                <span id="reviewGroupDisplay"></span>
+                            </li>
+                            <li>
+                                <span class="text-gray">計畫名稱 : </span>
+                                <span id="projectNameDisplay"></span>
+                            </li>
+                            <li>
+                                <span class="text-gray">申請單位 : </span>
+                                <span id="applicantUnitDisplay"></span>
+                            </li>
+                        </ul>
+                    </div>
+
+
+                    <div class="d-flex justify-content-between">
+                        <h5 class="square-title">領域審查意見回覆</h5>
+                        <button class="btn btn-teal-dark" type="button"><i class="fas fa-download"></i>匯出審查意見回覆表</button>
+                    </div>
+                    <div class="table-responsive mt-3">
+                        <table class="table align-middle gray-table lh-base">
+                            <thead>
+                                <tr>
+                                    <th width="160"></th>
+                                    <th>審查意見</th>
+                                    <th width="50%">申請單位回覆</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reviewCommentsTableBody">
+                                <!-- 動態內容將在這裡插入 -->
+                            </tbody>
+                        </table>
+                    </div>
+
+
+                    <div class="d-flex gap-3 flex-wrap justify-content-center mt-4">
+                        <button type="button" class="btn btn-teal" onclick="submitReply()">
+                            <i class="fas fa-check"></i>
+                            提送回覆
+                        </button>
+                    </div>
+
+                </div>
+
             </div>
         </div>
     </div>

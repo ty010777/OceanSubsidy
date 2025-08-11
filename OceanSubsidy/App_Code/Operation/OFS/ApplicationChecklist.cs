@@ -478,4 +478,218 @@ public class ApplicationChecklistHelper
 
         return result;
     }
+
+    /// <summary>
+    /// 取得指定 ProjectID 的案件歷程記錄
+    /// </summary>
+    /// <param name="projectId">計畫 ID</param>
+    /// <returns>案件歷程記錄清單</returns>
+    public static List<OFS_CaseHistoryLog> GetCaseHistoryByProjectId(string projectId)
+    {
+        List<OFS_CaseHistoryLog> result = new List<OFS_CaseHistoryLog>();
+        DbHelper db = new DbHelper();
+
+        try
+        {
+            db.CommandText = @"
+                SELECT [Id], [ProjectID], [ChangeTime], [UserName], 
+                       [StageStatusBefore], [StageStatusAfter], [Description]
+                FROM [OCA_OceanSubsidy].[dbo].[OFS_CaseHistoryLog]
+                WHERE [ProjectID] = @ProjectID
+                ORDER BY [ProjectID], [ChangeTime] ASC";
+
+            db.Parameters.Add("@ProjectID", projectId);
+
+            DataTable dt = db.GetTable();
+            
+            foreach (DataRow row in dt.Rows)
+            {
+                var historyLog = new OFS_CaseHistoryLog
+                {
+                    Id = row["Id"] != DBNull.Value ? Convert.ToInt32(row["Id"]) : 0,
+                    ProjectID = row["ProjectID"]?.ToString(),
+                    ChangeTime = row["ChangeTime"] != DBNull.Value ? Convert.ToDateTime(row["ChangeTime"]) : DateTime.MinValue,
+                    UserName = row["UserName"]?.ToString(),
+                    StageStatusBefore = row["StageStatusBefore"]?.ToString(),
+                    StageStatusAfter = row["StageStatusAfter"]?.ToString(),
+                    Description = row["Description"]?.ToString()
+                };
+                
+                result.Add(historyLog);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得案件歷程時發生錯誤：{ex.Message}");
+        }
+        finally
+        {
+            db.Dispose();
+        }
+
+        return result;
+    }
+    
+    /// <summary>
+    /// 取得計畫資料用於審查意見回覆 (參考 SciDomainReview 的 GetProjectData)
+    /// </summary>
+    /// <param name="projectId">計畫ID</param>
+    /// <returns>計畫資料</returns>
+    public static ProjectDataForReview GetProjectDataForReview(string projectId)
+    {
+        if (string.IsNullOrEmpty(projectId))
+            return null;
+
+        DbHelper db = new DbHelper();
+        
+        try
+        {
+            // 根據 ProjectID 判斷計畫類型並查詢對應的表格
+            if (projectId.Contains("SCI"))
+            {
+                // 科專計畫
+                db.CommandText = @"SELECT TOP (1) 
+                    [ProjectID],
+                    [Year],
+                    [SubsidyPlanType],
+                    [ProjectNameTw] as ProjectName,
+                    (SELECT Descname 
+                     FROM Sys_ZgsCode 
+                     WHERE Code = AM.[Field]
+                    ) as ReviewGroup,
+                    [OrgName] as ApplicantUnit,
+                    [updated_at]
+                FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Application_Main] AM
+                WHERE ProjectID = @ProjectID";
+            }
+            else if (projectId.Contains("CUL"))
+            {
+                // TODO: 文化計畫資料查詢的 SQL
+                // TODO: 查詢文化計畫的 Application_Main 表
+                return null;
+            }
+            else
+            {
+                return null;
+            }
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@ProjectID", projectId);
+
+            DataTable dt = db.GetTable();
+            if (dt != null && dt.Rows.Count > 0)
+            {
+                DataRow row = dt.Rows[0];
+                return new ProjectDataForReview
+                {
+                    ProjectID = row["ProjectID"]?.ToString(),
+                    Year = row["Year"]?.ToString(),
+                    ProjectName = row["ProjectName"]?.ToString(),
+                    ReviewGroup = row["ReviewGroup"]?.ToString(),
+                    ApplicantUnit = row["ApplicantUnit"]?.ToString()
+                };
+            }
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"查詢計畫資料時發生錯誤: {ex.Message}", ex);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+    
+    /// <summary>
+    /// 取得當前的審查階段
+    /// </summary>
+    /// <param name="projectId">計畫ID</param>
+    /// <returns>審查階段</returns>
+    public static string GetCurrentReviewStage(string projectId)
+    {
+        if (string.IsNullOrEmpty(projectId))
+            return "領域審查";
+
+        DbHelper db = new DbHelper();
+        
+        try
+        {
+            // 根據 ProjectID 判斷計畫類型並查詢對應的表格
+            if (projectId.Contains("SCI"))
+            {
+                db.CommandText = @"SELECT [Statuses] 
+                                  FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main] 
+                                  WHERE ProjectID = @ProjectID";
+            }
+            else if (projectId.Contains("CUL"))
+            {
+                // TODO: 文化計畫審查階段查詢的 SQL
+                // TODO: 查詢文化計畫的 Project_Main 表
+                return "領域審查"; // 預設
+            }
+            else
+            {
+                return "領域審查"; // 預設
+            }
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@ProjectID", projectId);
+            
+            DataTable dt = db.GetTable();
+            if (dt != null && dt.Rows.Count > 0)
+            {
+                string statuses = dt.Rows[0]["Statuses"]?.ToString();
+                
+                // 根據 Statuses 決定 ReviewStage
+                if (!string.IsNullOrEmpty(statuses))
+                {
+                    if (statuses.Contains("領域審查")) return "領域審查";
+                    if (statuses.Contains("技術審查")) return "技術審查";
+                }
+            }
+            
+            return "領域審查"; // 預設
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得審查階段時發生錯誤：{ex.Message}");
+            return "領域審查"; // 預設
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+    
+    public static void UpdateReplyContent(string ReviewID, string ReplyComment)
+    {
+        DbHelper db = new DbHelper();
+        
+        try
+        {
+            db.CommandText = @"
+                update [OFS_ReviewRecords]
+                    set ReplyComment = @ReplyComment,
+                    updated_at = GETDATE()
+                    WHERE ReviewID  = @ReviewID
+            ";
+            db.Parameters.Add("@ReviewID", ReviewID);
+            db.Parameters.Add("@ReplyComment", ReplyComment);
+            
+            db.ExecuteNonQuery();
+            
+            
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"更新使用者回覆時發生錯誤：{ex.Message}");
+            
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
 }

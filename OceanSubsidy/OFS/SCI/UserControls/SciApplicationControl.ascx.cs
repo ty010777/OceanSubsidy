@@ -131,6 +131,9 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
             {
                 ApplyViewMode();
             }
+
+            // 載入變更說明控制項
+            ucChangeDescription.LoadData(projectID);
         }
         catch (Exception ex)
         {
@@ -286,6 +289,9 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
                 resultProjectID = ProjectID;
             }
 
+            // 儲存變更說明
+            ucChangeDescription.SaveChangeDescription(resultProjectID);
+
             return resultProjectID;
         }
         catch (Exception ex)
@@ -353,7 +359,7 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
     {
         try
         {
-            txtYear.Text = DateTime.Now.Year.ToString();
+            txtYear.Text = DateTimeHelper.GregorianYearToMinguo(DateTime.Now.Year).ToString();
             txtSubsidyPlanType.Text = "科專（114年度補助學術機構、研究機關(構)及海洋科技業者執行海洋科技專案）";
             
             // 初始化空的關鍵字欄位
@@ -568,7 +574,7 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
             ProjectID = txtProjectID.Text,
             PersonID = txtPersonID.Text,
             KeywordID = txtKeywordID.Text,
-            Year = int.TryParse(txtYear.Text, out int year) ? year : DateTime.Now.Year,
+            Year = int.TryParse(txtYear.Text, out int year) ? year :DateTimeHelper.GregorianYearToMinguo(DateTime.Now.Year),
             SubsidyPlanType = txtSubsidyPlanType.Text,
             ProjectNameTw = txtProjectNameCh.Text.Trim(),
             ProjectNameEn = txtProjectNameEn.Text.Trim(),
@@ -717,9 +723,20 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
         List<OFS_SCI_Application_KeyWord> keywordsData)
     {
         // 產生新的ID
-        string newProjectID = GenerateNewProjectID();
-        string newPersonID = Guid.NewGuid().ToString();
-        string newKeywordID = Guid.NewGuid().ToString();
+        string newProjectID = GenerateNewProjectID(applicationData);
+        var user = SessionHelper.Get<SessionHelper.UserInfoClass>(SessionHelper.UserInfo);
+        OFS_SCI_Project_Main newProject = new OFS_SCI_Project_Main
+        {
+            ProjectID = newProjectID,
+            Statuses = "尚未提送",
+            StatusesName = "編輯中",
+            UserAccount = user.Account,
+            UserName = user.UserName,
+            UserOrg = user.UnitName,
+            
+        };
+        string newPersonID = "P"+newProjectID;
+        string newKeywordID = "K"+newProjectID;
 
         applicationData.ProjectID = newProjectID;
         applicationData.PersonID = newPersonID;
@@ -741,6 +758,7 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
         OFS_SciApplicationHelper.insertApplicationMain(applicationData);
         OFS_SciApplicationHelper.SavePersonnel(personnelData);
         OFS_SciApplicationHelper.SaveKeywordsToDatabase(newKeywordID, keywordsData);
+        OFS_SciApplicationHelper.InsertOFS_SCIProjectMain(newProject);
 
         return newProjectID;
     }
@@ -765,11 +783,11 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
     /// <summary>
     /// 產生新的計畫編號
     /// </summary>
-    private string GenerateNewProjectID()
+    private string GenerateNewProjectID(OFS_SCI_Application_Main applicationData)
     {
         try
         {
-            int currentYear = DateTime.Now.Year;
+            int currentYear = DateTimeHelper.GregorianYearToMinguo(DateTime.Now.Year);
             var latestApplication = OFS_SciApplicationHelper.getLatestApplicationMain(currentYear.ToString());
 
             int nextSerial = 1;
@@ -781,7 +799,8 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
                 }
             }
 
-            return $"{currentYear}{nextSerial:D4}";
+            applicationData.Serial = nextSerial.ToString();
+            return $"{currentYear}SCI{nextSerial:D4}";
         }
         catch (Exception ex)
         {

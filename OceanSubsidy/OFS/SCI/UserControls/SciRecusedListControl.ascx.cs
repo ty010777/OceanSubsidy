@@ -28,6 +28,7 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
     /// 是否為檢視模式
     /// </summary>
     public bool IsViewMode { get; set; } = false;
+    public string SourcePage { get; set; }
 
     #endregion
 
@@ -69,6 +70,9 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
                 LoadExistingData(projectID);
                 LoadTechDiagramFile(projectID);
             }
+
+            // 載入變更說明控制項
+            changeDescriptionControl.LoadData(projectID, isViewMode);
 
             // 套用檢視模式
             if (isViewMode)
@@ -128,6 +132,16 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
                     break;
                 }
             }
+
+            // 驗證變更說明
+            var changeDescriptionResult = changeDescriptionControl.ValidateChangeDescription();
+            if (!changeDescriptionResult.IsValid)
+            {
+                foreach (var error in changeDescriptionResult.Errors)
+                {
+                    result.AddError(error);
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -152,12 +166,16 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
             // 取得表單資料
             var committeeData = GetCommitteeDataFromForm();
             var techData = GetTechDataFromForm();
+            bool isChkNoAvoidance = chkNoAvoidance.Checked;
 
             // 儲存委員迴避清單
-            OFS_SciRecusedList.ReplaceRecusedList(committeeData, ProjectID);
-
+            OFS_SciRecusedList.ReplaceRecusedList(committeeData, ProjectID,isChkNoAvoidance);
+            OFS_SciRecusedList.UpdateIsRecused(ProjectID, isChkNoAvoidance);
             // 儲存技術能力資料
             OFS_SciRecusedList.ReplaceTechReadinessList(techData, ProjectID);
+
+            // 儲存變更說明
+            changeDescriptionControl.SaveChangeDescription(projectID);
 
             return true;
         }
@@ -209,11 +227,18 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
                 techProcess = x.Description
             }).ToArray();
 
+            // 載入 IsRecused 狀態
+            bool isRecused = OFS_SciRecusedList.GetIsRecusedByProjectID(projectID);
+            
+            // 設定 checkbox 狀態
+            chkNoAvoidance.Checked = isRecused;
+
             // 將資料傳遞到前端
             var dataToSend = new
             {
                 recusedData = recusedData,
-                techData = techData
+                techData = techData,
+                isRecused = isRecused
             };
 
             var dataJson = new JavaScriptSerializer().Serialize(dataToSend);
@@ -226,6 +251,13 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
                     if (typeof loadExistingData === 'function') {{
                         loadExistingData();
                         console.log('已載入現有資料：', window.existingData);
+                        
+                        // 如果 IsRecused 為 true，需要鎖定委員表格
+                        if (window.existingData.isRecused && typeof clearAndLockCommitteeTable === 'function') {{
+                            const $tbody = $('#committeeTableBody');
+                            clearAndLockCommitteeTable($tbody);
+                            console.log('已鎖定委員表格，因為 IsRecused 為 true');
+                        }}
                     }} else {{
                         console.log('loadExistingData 函數未找到');
                     }}
@@ -237,8 +269,11 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
         catch (Exception ex)
         {
             // 如果載入失敗，設定空資料
-            Page.ClientScript.RegisterStartupScript(this.GetType(), "LoadExistingData",
-                "window.existingData = { recusedData: [], techData: [] };", true);
+            string fallbackScript = @"
+                window.existingData = { recusedData: [], techData: [], isRecused: false };
+                console.log('載入資料失敗，使用預設值');
+            ";
+            Page.ClientScript.RegisterStartupScript(this.GetType(), "LoadExistingData", fallbackScript, true);
             HandleException(ex, "載入現有資料時發生錯誤");
         }
     }

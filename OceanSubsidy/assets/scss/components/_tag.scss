@@ -23,6 +23,10 @@
         a,.tag-btn {
             color: #fff;
         }
+        a {
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
     }
 
     .tag-btn{
@@ -65,4 +69,32 @@
     height: 30px;
     display: inline-block;
     border-radius: 4px;
+}
+
+.tag-white {
+    background-color: #fff;
+    color: $teal;
+    border-radius: 20px;
+    padding: 10px 14px;
+}
+.tag-teal {
+    background-color: $teal-dark;
+    color: #fff;
+    border-radius: 20px;
+    padding: 10px 14px;
+}
+
+.tag-pale-green {
+    background-color: $pale-green;
+    border: 1px solid $teal-dark;
+    color: $teal-dark;
+    line-height: 1;
+    border-radius: 6px;
+}
+
+.tag-pink {
+    background-color: $pink;
+    color: #fff;
+    border-radius: 6px;
+    line-height: 1;
 }

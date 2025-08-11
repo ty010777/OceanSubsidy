@@ -215,7 +215,7 @@
                               </a>
                           </li>
                           <li class="">
-                              <a href="information-plan-execute.html">
+                              <a href="<%= ResolveUrl("~/OFS/inprogressList.aspx") %>">
                                   <div class="circle">
                                       <img src="<%= ResolveUrl("~/assets/img/information-icon-05.svg") %>" alt="計畫執行">
                                   </div>

@@ -89,6 +89,9 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
             {
                 ApplyViewMode();
             }
+
+            // 載入變更說明控制項
+            ucChangeDescription.LoadData(projectID);
         }
         catch (Exception ex)
         {
@@ -181,6 +184,9 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
 
             // 儲存查核標準
             OFS_SciWorkSchHelper.SaveCheckStandards(checkStandards);
+
+            // 儲存變更說明
+            ucChangeDescription.SaveChangeDescription(ProjectID);
 
             return true;
         }

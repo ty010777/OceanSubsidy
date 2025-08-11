@@ -199,8 +199,43 @@ document.addEventListener('DOMContentLoaded', function() {
         initSortButtons();
         initSearchForm();
         initPaginationButtons();
+        initDropdownToggle();
     }, 100);
 });
+
+// 初始化下拉選單切換功能
+function initDropdownToggle() {
+    // 使用事件委派監聽下拉按鈕點擊
+    document.addEventListener('click', function(e) {
+        const dropdownButton = e.target.closest('[data-bs-toggle="dropdown"]');
+        
+        if (dropdownButton) {
+            e.preventDefault();
+            const dropdown = dropdownButton.closest('.dropdown');
+            const dropdownMenu = dropdown.querySelector('.dropdown-menu');
+            
+            if (dropdownMenu.classList.contains('show')) {
+                // 關閉下拉選單
+                dropdownButton.classList.remove('show');
+                dropdownButton.setAttribute('aria-expanded', 'false');
+                dropdownMenu.classList.remove('show');
+            } else {
+                // 先關閉其他所有下拉選單
+                document.querySelectorAll('.dropdown .show').forEach(el => el.classList.remove('show'));
+                document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach(btn => btn.setAttribute('aria-expanded', 'false'));
+                
+                // 打開當前下拉選單
+                dropdownButton.classList.add('show');
+                dropdownButton.setAttribute('aria-expanded', 'true');
+                dropdownMenu.classList.add('show');
+            }
+        } else {
+            // 點擊其他地方時關閉所有下拉選單
+            document.querySelectorAll('.dropdown .show').forEach(el => el.classList.remove('show'));
+            document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach(btn => btn.setAttribute('aria-expanded', 'false'));
+        }
+    });
+}
 
 // 表格工具提示初始化
 function initTooltips() {
@@ -380,10 +415,362 @@ function handleReply(versionId) {
 }
 
 // 顯示案件歷程
-function showHistory(versionId) {
-    // 載入案件歷程資料並顯示模態框
-    // 這裡可以根據需求實現具體功能
+function showHistory(projectId) {
+    // 顯示 Modal 並設定載入狀態
     const modal = new bootstrap.Modal(document.getElementById('planHistoryModal'));
+    showLoadingState();
     modal.show();
-    // 可以在這裡發送AJAX請求載入歷程資料
+    
+    // 發送 AJAX 請求載入歷程資料
+    loadHistoryData(projectId);
+}
+
+// 載入案件歷程資料
+function loadHistoryData(projectId) {
+    $.ajax({
+        type: 'POST',
+        url: 'ApplicationChecklist.aspx/GetCaseHistory',
+        data: JSON.stringify({ projectId: projectId }),
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        success: function(response) {
+            if (response.d && response.d.success) {
+                displayHistoryData(response.d.data);
+            } else {
+                showErrorState(response.d ? response.d.message : '載入歷程資料失敗');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX Error:', error);
+            showErrorState('載入歷程資料時發生錯誤');
+        }
+    });
+}
+
+// 顯示載入狀態
+function showLoadingState() {
+    const modalBody = document.querySelector('#planHistoryModal .modal-body');
+    modalBody.innerHTML = `
+        <div class="table-responsive">
+            <table class="table align-middle gray-table">
+                <thead>
+                    <tr>
+                        <th>時間</th>
+                        <th>人員</th>
+                        <th>階段狀態</th>
+                        <th>說明</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 20px;">
+                            <i class="fas fa-spinner fa-spin"></i> 載入中...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+// 顯示歷程資料
+function displayHistoryData(historyData) {
+    const modalBody = document.querySelector('#planHistoryModal .modal-body');
+    
+    if (!historyData || historyData.length === 0) {
+        modalBody.innerHTML = `
+            <div class="table-responsive">
+                <table class="table align-middle gray-table">
+                    <thead>
+                        <tr>
+                            <th>時間</th>
+                            <th>人員</th>
+                            <th>階段狀態</th>
+                            <th>說明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="4" style="text-align: center; padding: 20px; color: #6c757d;">
+                                <i class="fas fa-info-circle"></i> 目前沒有歷程資料
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        `;
+        return;
+    }
+    
+    let tableRows = '';
+    historyData.forEach(function(item) {
+        tableRows += `
+            <tr>
+                <td>${item.changeTime || ''}</td>
+                <td>${item.userName || ''}</td>
+                <td>${item.stageChange || ''}</td>
+                <td>${item.description || ''}</td>
+            </tr>
+        `;
+    });
+    
+    modalBody.innerHTML = `
+        <div class="table-responsive">
+            <table class="table align-middle gray-table">
+                <thead>
+                    <tr>
+                        <th>時間</th>
+                        <th>人員</th>
+                        <th>階段狀態</th>
+                        <th>說明</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+// 顯示錯誤狀態
+function showErrorState(errorMessage) {
+    const modalBody = document.querySelector('#planHistoryModal .modal-body');
+    modalBody.innerHTML = `
+        <div class="table-responsive">
+            <table class="table align-middle gray-table">
+                <thead>
+                    <tr>
+                        <th>時間</th>
+                        <th>人員</th>
+                        <th>階段狀態</th>
+                        <th>說明</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 20px; color: #dc3545;">
+                            <i class="fas fa-exclamation-triangle"></i> ${errorMessage}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+// 顯示審查意見回覆
+function showReviewComments(projectId) {
+    // 顯示 Modal 並設定載入狀態
+    const modal = new bootstrap.Modal(document.getElementById('planCommentModal'));
+    showCommentLoadingState();
+    modal.show();
+    
+    // 發送 AJAX 請求載入審查意見資料
+    loadReviewCommentsData(projectId);
+}
+
+// 載入審查意見回覆資料
+function loadReviewCommentsData(projectId) {
+    $.ajax({
+        type: 'POST',
+        url: 'ApplicationChecklist.aspx/GetReviewComments',
+        data: JSON.stringify({ projectId: projectId }),
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        success: function(response) {
+            if (response.d && response.d.success) {
+                displayReviewCommentsData(response.d.data);
+            } else {
+                showCommentErrorState(response.d ? response.d.message : '載入審查意見資料失敗');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX Error:', error);
+            showCommentErrorState('載入審查意見資料時發生錯誤');
+        }
+    });
+}
+
+// 顯示審查意見載入狀態
+function showCommentLoadingState() {
+    // 清空計畫基本資訊
+    document.getElementById('projectIdDisplay').textContent = '';
+    document.getElementById('projectYearDisplay').textContent = '';
+    document.getElementById('projectCategoryDisplay').textContent = '';
+    document.getElementById('reviewGroupDisplay').textContent = '';
+    document.getElementById('applicantUnitDisplay').textContent = '';
+    document.getElementById('projectNameDisplay').textContent = '';
+    
+    // 顯示載入中
+    const tableBody = document.getElementById('reviewCommentsTableBody');
+    tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-4">載入中...</td></tr>';
+}
+
+// 顯示審查意見資料
+function displayReviewCommentsData(data) {
+    if (!data) {
+        showCommentErrorState('沒有資料');
+        return;
+    }
+    
+    // 填入計畫基本資訊
+    if (data.projectInfo) {
+        document.getElementById('projectIdDisplay').textContent = data.projectInfo.ProjectID || '';
+        document.getElementById('projectYearDisplay').textContent = data.projectInfo.year || '';
+        document.getElementById('projectCategoryDisplay').textContent = '科專'; // 預設值或從資料取得
+        document.getElementById('reviewGroupDisplay').textContent = data.projectInfo.reviewGroup || '';
+        document.getElementById('applicantUnitDisplay').textContent = data.projectInfo.applicantUnit || '';  
+        document.getElementById('projectNameDisplay').textContent = data.projectInfo.projectName || '';
+    }
+    
+    // 建立審查意見表格內容 (遵照原始 UI 結構)
+    const tableBody = document.getElementById('reviewCommentsTableBody');
+    let tableRows = '';
+    
+    if (data.reviewComments && data.reviewComments.length > 0) {
+        data.reviewComments.forEach(function(comment) {
+            tableRows += `
+                <tr>
+                    <td>${comment.reviewerName || ''}</td>
+                    <td>${comment.reviewComment || ''}</td>
+                    <td>
+                        <span class="form-control textarea" role="textbox" contenteditable="" 
+                              data-placeholder="請輸入" aria-label="文本輸入區域" 
+                              data-review-id="${comment.reviewerReviewID}"
+                              style="height: auto; overflow-y: hidden;">${comment.replyComment || ''}</span>
+                    </td>
+                </tr>
+            `;
+        });
+    } else {
+        tableRows = `
+            <tr>
+                <td colspan="3" class="text-center p-4 text-muted">
+                    <i class="fas fa-info-circle"></i> 尚未有審查意見
+                </td>
+            </tr>
+        `;
+    }
+    
+    tableBody.innerHTML = tableRows;
+    
+    // 檢查是否已有回覆，如果有則禁用提送按鈕
+    const submitButton = document.querySelector('button[onclick="submitReply()"]');
+    if (submitButton && data.reviewComments && data.reviewComments.length > 0) {
+        const hasReply = data.reviewComments.some(comment => 
+            comment.replyComment && comment.replyComment.trim() !== ''
+        );
+        
+        if (hasReply) {
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-check"></i> 已提送回覆';
+            submitButton.classList.add('btn-secondary');
+            submitButton.classList.remove('btn-teal');
+        } else {
+            submitButton.disabled = false;
+            submitButton.innerHTML = '<i class="fas fa-check"></i> 提送回覆';
+            submitButton.classList.add('btn-teal');
+            submitButton.classList.remove('btn-secondary');
+        }
+    }
+}
+
+// 顯示審查意見錯誤狀態
+function showCommentErrorState(message) {
+    const tableBody = document.getElementById('reviewCommentsTableBody');
+    tableBody.innerHTML = `<tr><td colspan="3" class="text-center p-4 text-danger">載入失敗: ${message}</td></tr>`;
+    
+    // 清空計畫基本資訊
+    document.getElementById('projectIdDisplay').textContent = '';
+    document.getElementById('projectYearDisplay').textContent = '';
+    document.getElementById('projectCategoryDisplay').textContent = '';
+    document.getElementById('reviewGroupDisplay').textContent = '';
+    document.getElementById('applicantUnitDisplay').textContent = '';
+    document.getElementById('projectNameDisplay').textContent = '';
+}
+
+// 儲存回覆內容 (根據原始 UI 使用 contenteditable span)
+function saveReply(reviewId) {
+    const editableSpan = document.querySelector(`span[data-review-id="${reviewId}"]`);
+    if (!editableSpan) {
+        alert('找不到回覆內容');
+        return;
+    }
+    
+    const replyContent = editableSpan.textContent.trim();
+    if (!replyContent) {
+        alert('請輸入回覆內容');
+        return;
+    }
+    
+    // TODO: 實作儲存回覆的 AJAX 請求
+    console.log('儲存回覆:', reviewId, replyContent);
+    alert('回覆儲存功能待實作');
+}
+
+// 提送回覆功能
+function submitReply() {
+    // 收集所有回覆內容
+    const replySpans = document.querySelectorAll('span[data-review-id]');
+    const replies = [];
+    
+    replySpans.forEach(span => {
+        const reviewId = span.getAttribute('data-review-id');
+        const replyContent = span.textContent.trim();
+        
+        if (reviewId && replyContent) {
+            replies.push({
+                reviewId: reviewId,
+                replyContent: replyContent
+            });
+        }
+    });
+    
+    if (replies.length === 0) {
+        alert('請至少輸入一項回覆內容');
+        return;
+    }
+    
+    // 禁用按鈕防止重複提送
+    const submitButton = document.querySelector('button[onclick="submitReply()"]');
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 提送中...';
+    }
+    
+    // 發送 AJAX 請求
+    $.ajax({
+        type: 'POST',
+        url: 'ApplicationChecklist.aspx/SubmitReply',
+        data: JSON.stringify({ replies: replies }),
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        success: function(response) {
+            if (response.d && response.d.success) {
+                alert('回覆提送成功');
+                // 關閉 Modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('planCommentModal'));
+                if (modal) {
+                    modal.hide();
+                }
+            } else {
+                alert('提送失敗: ' + (response.d ? response.d.message : '未知錯誤'));
+                // 恢復按鈕狀態
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = '<i class="fas fa-check"></i> 提送回覆';
+                }
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX Error:', error);
+            alert('提送回覆時發生錯誤');
+            // 恢復按鈕狀態
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<i class="fas fa-check"></i> 提送回覆';
+            }
+        }
+    });
 }

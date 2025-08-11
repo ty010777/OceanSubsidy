@@ -37,6 +37,9 @@ public partial class OFS_SciAvoidList : System.Web.UI.Page
                 
                 // 檢查表單狀態並控制暫存按鈕顯示
                 CheckFormStatusAndHideTempSaveButton();
+                
+                // 載入變更說明資料到輸入框
+                LoadChangeDescriptionData();
             }
         }
         catch (Exception ex)
@@ -248,16 +251,55 @@ public partial class OFS_SciAvoidList : System.Web.UI.Page
                 return true; // 沒有資料時允許編輯
             }
             
-            // 只有這兩種狀態可以編輯
+            // 只有這些狀態可以編輯
             string statuses = ApplicationData.Statuses ?? "";
             string statusesName = ApplicationData.StatusesName ?? "";
             
-            return statuses == "尚未提送" || statusesName == "補正補件";
+            return statuses == "尚未提送" || 
+                   statusesName == "補正補件" || 
+                   statusesName == "計畫書修正中 ";
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"取得申請狀態時發生錯誤：{ex.Message}");
             return false; // 發生錯誤時預設為檢視模式
+        }
+    }
+    
+    /// <summary>
+    /// 載入變更說明資料到輸入框
+    /// </summary>
+    private void LoadChangeDescriptionData()
+    {
+        try
+        {
+            string projectId = Request.QueryString["ProjectID"];
+            if (!string.IsNullOrEmpty(projectId))
+            {
+                // 從資料庫取得變更說明並設定到頁面元素
+                var changeDescription = OFS_SciApplicationHelper.GetPageModifyNote(projectId, "SciRecusedList");
+                if (changeDescription != null)
+                {
+                    string script = $@"
+                        setTimeout(function() {{
+                            const changeBeforeElement = document.getElementById('txtChangeBefore');
+                            if (changeBeforeElement && '{changeDescription.ChangeBefore?.Replace("'", "\\'")}') {{
+                                changeBeforeElement.textContent = '{changeDescription.ChangeBefore?.Replace("'", "\\'")}';
+                            }}
+                            
+                            const changeAfterElement = document.getElementById('txtChangeAfter');
+                            if (changeAfterElement && '{changeDescription.ChangeAfter?.Replace("'", "\\'")}') {{
+                                changeAfterElement.textContent = '{changeDescription.ChangeAfter?.Replace("'", "\\'")}';
+                            }}
+                        }}, 100);
+                    ";
+                    Page.ClientScript.RegisterStartupScript(this.GetType(), "LoadChangeDescription", script, true);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"載入變更說明資料時發生錯誤：{ex.Message}");
         }
     }
     

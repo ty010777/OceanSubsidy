@@ -34,11 +34,37 @@ body.scroll-down {
     span.form-control.textarea {
         display: none;
     }
+    &:has(.radioFail:checked),
+    &:has(.radioReturn:checked) {
+        span.form-control.textarea {
+            display: block;
+        }
+    }
 }
+
 
 .checkPass:has(.radioFail:checked),
 .checkPass:has(.radioReturn:checked) {
     span.form-control.textarea {
         display: block;
+    }
+}
+
+.checkinput {
+    .fromOption1 {
+        display: none;
+    }
+    .fromOption2 {
+        display: none;
+    }
+    &:has(.option1:checked) {
+        .fromOption1 {
+            display: block;
+        }
+    }
+    &:has(.option2:checked) {
+        .fromOption2 {
+            display: flex;
+        }
     }
 }

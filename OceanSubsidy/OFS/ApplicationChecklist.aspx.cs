@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Web;
 using System.Web.Script.Serialization;
@@ -420,11 +421,12 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
         StringBuilder buttons = new StringBuilder();
         
         // 根據狀態顯示不同的按鈕
+        string StatusesName = item.StatusesName ?? "";
         string status = item.Statuses ?? "";
         bool isWithdrawn = item.isWithdrawal ?? false;
         
-        // 編輯按鈕（只有「尚未提送」狀態可編輯）
-        if (CanEdit(status))
+        // 編輯按鈕（只有「編輯中、補正補件」狀態可編輯）
+        if (CanEdit(status,StatusesName))
         {
             string editUrl = GetEditUrl(item);
             string projectCategory = item.GetProjectCategory();
@@ -434,15 +436,11 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
                 // 有對應的編輯頁面
                 buttons.Append($"<a href=\"{ResolveUrl(editUrl)}\" class=\"btn btn-sm btn-teal-dark\" data-bs-toggle=\"tooltip\" data-bs-placement=\"top\" data-bs-title=\"編輯\"><i class=\"fa-solid fa-pen\"></i></a>");
             }
-            else
-            {
-                // 尚未有對應的編輯頁面，顯示為禁用狀態
-                buttons.Append($"<button class=\"btn btn-sm btn-gray\" type=\"button\" disabled data-bs-toggle=\"tooltip\" data-bs-placement=\"top\" data-bs-title=\"{projectCategory}編輯功能開發中\"><i class=\"fa-solid fa-pen\"></i></button>");
-            }
+            
         }
         
         // 回覆按鈕（一直顯示）
-        buttons.Append($"<button class=\"btn btn-sm btn-teal-dark\" type=\"button\" onclick=\"handleReply('{item.ProjectID}')\" data-bs-toggle=\"tooltip\" data-bs-placement=\"top\" data-bs-title=\"檢視審查意見\"><i class=\"fas fa-comment-dots\"></i></button>");
+        buttons.Append($"<button class=\"btn btn-sm btn-teal-dark\" type=\"button\" onclick=\"showReviewComments('{item.ProjectID}')\" data-bs-toggle=\"tooltip\" data-bs-placement=\"top\" data-bs-title=\"檢視審查意見\"><i class=\"fas fa-comment-dots\"></i></button>");
         
         // 歷程按鈕（所有項目都有）
         buttons.Append($"<button class=\"btn btn-sm btn-teal-dark\" type=\"button\" onclick=\"showHistory('{item.ProjectID}')\" data-bs-toggle=\"tooltip\" data-bs-placement=\"top\" data-bs-title=\"歷程\"><i class=\"fas fa-history\"></i></button>");
@@ -475,15 +473,22 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
     }
     
     // 檢查是否可編輯
-    private bool CanEdit(string status)
+    private bool CanEdit(string status ,string statusName)
     {
-        return status == "尚未提送";
+        if (status == "決審核定")
+        {
+            return statusName == "計畫書修正中";
+            
+        }else{
+            return statusName == "編輯中" || statusName == "補正補件";
+        }
+        
     }
     
     // 檢查是否可撤案
     private bool CanWithdraw(string status)
     {
-        var withdrawableStatuses = new[] { "資格審查", "內容審查", "領域審查", "初審", "技術審查", "複審", "決審" };
+        var withdrawableStatuses = new[] { "資格審查", "內容審查", "領域審查", "初審", "技術審查", "複審", "決審核定" };
         return withdrawableStatuses.Contains(status);
     }
     
@@ -975,5 +980,139 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
         {
             return $"恢復案件時發生錯誤：{ex.Message}";
         }
+    }
+
+    /// <summary>
+    /// 取得案件歷程資料
+    /// </summary>
+    /// <param name="projectId">計畫ID</param>
+    /// <returns>案件歷程資料</returns>
+    [System.Web.Services.WebMethod]
+    public static object GetCaseHistory(string projectId)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(projectId))
+            {
+                return new { success = false, message = "ProjectID 不能為空" };
+            }
+
+            var historyList = ApplicationChecklistHelper.GetCaseHistoryByProjectId(projectId);
+            
+            var result = historyList.Select(h => new
+            {
+                changeTime = h.ChangeTime.ToMinguoDateTime(),
+                userName = h.UserName,
+                stageChange = !string.IsNullOrEmpty(h.StageStatusBefore) && !string.IsNullOrEmpty(h.StageStatusAfter) 
+                    ? $"{h.StageStatusBefore} → {h.StageStatusAfter}" 
+                    : h.StageStatusAfter,
+                description = h.Description
+            }).ToList();
+
+            return new { success = true, data = result };
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得案件歷程時發生錯誤：{ex.Message}");
+            return new { success = false, message = $"取得案件歷程時發生錯誤：{ex.Message}" };
+        }
+    }
+    
+    /// <summary>
+    /// 取得審查意見回覆資料
+    /// </summary>
+    /// <param name="projectId">計畫ID</param>
+    /// <returns>審查意見回覆資料</returns>
+    [System.Web.Services.WebMethod]
+    public static object GetReviewComments(string projectId)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(projectId))
+            {
+                return new { success = false, message = "ProjectID 不能為空" };
+            }
+
+            // 取得計畫基本資料
+            var projectData = ApplicationChecklistHelper.GetProjectDataForReview(projectId);
+            if (projectData == null)
+            {
+                return new { success = false, message = "找不到計畫資料" };
+            }
+
+            var reviewCommentsList = new List<object>();
+            
+            // 根據 ProjectID 判斷計畫類型並取得審查意見
+            if (projectId.Contains("SCI"))
+            {
+                // 科專計畫處理
+                string reviewStage = ApplicationChecklistHelper.GetCurrentReviewStage(projectId);
+                var reviewCommentsTable = ReviewCheckListHelper.GetSciReviewComments(projectId, reviewStage);
+                
+                if (reviewCommentsTable != null && reviewCommentsTable.Rows.Count > 0)
+                {
+                    foreach (DataRow row in reviewCommentsTable.Rows)
+                    {
+                        reviewCommentsList.Add(new
+                        {
+                            
+                            reviewerReviewID = row["ReviewID"]?.ToString() ?? "",
+                            reviewerName = row["ReviewerName"]?.ToString() ?? "",
+                            reviewComment = row["ReviewComment"]?.ToString() ?? "",
+                            replyComment = row["ReplyComment"]?.ToString() ?? ""
+                        });
+                    }
+                }
+            }
+            else if (projectId.Contains("CUL"))
+            {
+                // TODO: 文化計畫審查意見處理
+                // TODO: 取得文化計畫的審查階段
+                // TODO: 取得文化計畫的審查意見
+            }
+            else
+            {
+                return new { success = false, message = "不支援的計畫類型" };
+            }
+
+            var result = new
+            {
+                projectInfo = new
+                {
+                    year = projectData.Year,
+                    ProjectID = projectData.ProjectID,
+                    projectCategory = projectId.Contains("SCI") ? "科專" : projectId.Contains("CUL") ? "文化" : "其他",
+                    reviewGroup = projectData.ReviewGroup,
+                    projectName = projectData.ProjectName,
+                    applicantUnit = projectData.ApplicantUnit
+                },
+                reviewComments = reviewCommentsList
+            };
+            
+            return new { success = true, data = result };
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得審查意見時發生錯誤：{ex.Message}");
+            return new { success = false, message = $"取得審查意見時發生錯誤：{ex.Message}" };
+        }
+    }
+
+    /// <summary>
+    /// 更新審查意見回覆資料
+    /// </summary>
+    /// <param name="replies">回覆內容</param>
+    /// <returns>審查意見回覆資料</returns>
+    [System.Web.Services.WebMethod]
+    public static object SubmitReply(List<ReplyItem> replies)
+    {
+        foreach (var item in replies)
+        {
+            string reviewId = item.reviewId;
+            string content = item.replyContent;
+            ApplicationChecklistHelper.UpdateReplyContent(reviewId, content);
+        }
+        
+        return new { success = true, message = "已回覆"};
     }
 }

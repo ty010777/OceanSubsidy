@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -304,7 +304,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                     db.Parameters.Add("@ProjectId", projectId);
                     
                     var result = db.GetTable();
-                    return result != null ? Convert.ToInt32(result).ToString() : "1";
+                    return result.Rows[0]["CurrentStep"].ToString();
                 }
                 catch (Exception ex)
                 {
@@ -607,6 +607,267 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                 catch (Exception ex)
                 {
                     return "";
+                }
+            }
+        }
+        
+        #endregion
+        
+        #region 查核點查詢操作
+        
+        /// <summary>
+        /// 根據 ProjectID 和年月份查詢查核點資料
+        /// </summary>
+        /// <param name="projectId">計畫ID</param>
+        /// <param name="yearMonth">年月份 (格式: 114年7月)</param>
+        /// <returns>查核點列表</returns>
+        public static List<OFS_SCI_WorkSch_CheckStandard> GetCheckStandardsByProjectIdAndMonth(string projectId, string yearMonth)
+        {
+            var result = new List<OFS_SCI_WorkSch_CheckStandard>();
+            
+            if (string.IsNullOrEmpty(projectId) || string.IsNullOrEmpty(yearMonth))
+                return result;
+
+            using (DbHelper db = new DbHelper())
+            {
+                try
+                {
+                    // 將年月份轉換為日期範圍 (例如: 114年7月 -> 2025-07-01 到 2025-07-31)
+                    var (startDate, endDate) = ConvertYearMonthToDateRange(yearMonth);
+                    
+                    if (!startDate.HasValue || !endDate.HasValue)
+                        return result;
+
+                    string sql = @"
+                        SELECT * FROM OFS_SCI_WorkSch_CheckStandard 
+                        WHERE ProjectID = @ProjectID 
+                        AND PlannedFinishDate >= @StartDate 
+                        AND PlannedFinishDate <= @EndDate
+                        ORDER BY PlannedFinishDate, SerialNumber";
+
+                    db.CommandText = sql;
+                    db.Parameters.Clear();
+                    db.Parameters.Add("@ProjectID", projectId);
+                    db.Parameters.Add("@StartDate", startDate.Value);
+                    db.Parameters.Add("@EndDate", endDate.Value);
+
+                    DataTable dt = db.GetTable();
+
+                    foreach (DataRow row in dt.Rows)
+                    {
+                        var checkStandard = new OFS_SCI_WorkSch_CheckStandard
+                        {
+                            Id = Convert.ToInt32(row["Id"]),
+                            ProjectID = row["ProjectID"]?.ToString(),
+                            WorkItem = row["WorkItem"]?.ToString(),
+                            SerialNumber = row["SerialNumber"]?.ToString(),
+                            PlannedFinishDate = row["PlannedFinishDate"] != DBNull.Value ? 
+                                Convert.ToDateTime(row["PlannedFinishDate"]) : (DateTime?)null,
+                            CheckDescription = row["CheckDescription"]?.ToString(),
+                            IsFinish = row["IsFinish"] != DBNull.Value ? 
+                                Convert.ToInt32(row["IsFinish"]) : (int?)0,
+                            DelayReason = row["DelayReason"]?.ToString(),
+                            ImprovedWay = row["ImprovedWay"]?.ToString(),
+                            ActFinishTime = row["ActFinishTime"] != DBNull.Value ? 
+                                Convert.ToDateTime(row["ActFinishTime"]) : (DateTime?)null,
+                            CreatedAt = row["CreatedAt"] != DBNull.Value ? 
+                                Convert.ToDateTime(row["CreatedAt"]) : DateTime.Now,
+                            UpdatedAt = row["UpdatedAt"] != DBNull.Value ? 
+                                Convert.ToDateTime(row["UpdatedAt"]) : (DateTime?)null
+                        };
+                        
+                        result.Add(checkStandard);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"GetCheckStandardsByProjectIdAndMonth 發生錯誤: {ex.Message}");
+                }
+            }
+            
+            return result;
+        }
+        
+        /// <summary>
+        /// 將年月份字串轉換為日期範圍
+        /// </summary>
+        /// <param name="yearMonth">年月份 (格式: 114年7月)</param>
+        /// <returns>開始日期和結束日期</returns>
+        private static (DateTime? startDate, DateTime? endDate) ConvertYearMonthToDateRange(string yearMonth)
+        {
+            try
+            {
+                // 解析 "114年7月" 格式
+                if (yearMonth.Contains("年") && yearMonth.Contains("月"))
+                {
+                    var parts = yearMonth.Replace("年", "/").Replace("月", "").Split('/');
+                    if (parts.Length >= 2)
+                    {
+                        int minguoYear = int.Parse(parts[0]);
+                        int month = int.Parse(parts[1]);
+                        
+                        // 民國年轉西元年
+                        int westernYear = minguoYear + 1911;
+                        
+                        // 該月的第一天和最後一天
+                        DateTime startDate = new DateTime(westernYear, month, 1);
+                        DateTime endDate = startDate.AddMonths(1).AddDays(-1);
+                        
+                        return (startDate, endDate);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ConvertYearMonthToDateRange 發生錯誤: {ex.Message}");
+            }
+            
+            return (null, null);
+        }
+        
+        /// <summary>
+        /// 計算專案年度目標達成率
+        /// </summary>
+        /// <param name="projectId">計畫ID</param>
+        /// <returns>達成率百分比，四捨五入到小數點第二位</returns>
+        public static decimal GetProjectAchievementRate(string projectId)
+        {
+            if (string.IsNullOrEmpty(projectId))
+                return 0;
+
+            using (DbHelper db = new DbHelper())
+            {
+                try
+                {
+                    string sql = @"
+                        SELECT 
+                            COUNT(*) AS TotalCount,
+                            SUM(CASE WHEN IsFinish = 3 THEN 1 ELSE 0 END) AS FinishCount
+                        FROM OFS_SCI_WorkSch_CheckStandard
+                        WHERE ProjectID = @ProjectID";
+
+                    db.CommandText = sql;
+                    db.Parameters.Clear();
+                    db.Parameters.Add("@ProjectID", projectId);
+
+                    DataTable dt = db.GetTable();
+
+                    if (dt.Rows.Count > 0)
+                    {
+                        var row = dt.Rows[0];
+                        int totalCount = Convert.ToInt32(row["TotalCount"]);
+                        int finishCount = Convert.ToInt32(row["FinishCount"]);
+
+                        if (totalCount == 0)
+                            return 0;
+
+                        // 計算百分比並四捨五入到小數點第二位
+                        decimal rate = (decimal)finishCount / totalCount * 100;
+                        return Math.Round(rate, 2, MidpointRounding.AwayFromZero);
+                    }
+
+                    return 0;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"GetProjectAchievementRate 發生錯誤: {ex.Message}");
+                    return 0;
+                }
+            }
+        }
+        
+        #endregion
+        
+        #region 查核點狀態更新操作
+        
+        /// <summary>
+        /// 更新查核點狀態
+        /// </summary>
+        /// <param name="checkStandardId">查核點ID</param>
+        /// <param name="isFinish">完成狀態 (1:未完成, 2:部分完成, 3:完成)</param>
+        /// <param name="delayReason">落後原因</param>
+        /// <param name="improvedWay">改善措施</param>
+        /// <param name="actFinishTime">實際完成時間</param>
+        public static void UpdateCheckStandardStatus(int checkStandardId, int? isFinish, string delayReason, string improvedWay, DateTime? actFinishTime)
+        {
+            using (DbHelper db = new DbHelper())
+            {
+                try
+                {
+                    string sql = @"
+                        UPDATE OFS_SCI_WorkSch_CheckStandard 
+                        SET IsFinish = @IsFinish,
+                            DelayReason = @DelayReason,
+                            ImprovedWay = @ImprovedWay,
+                            ActFinishTime = @ActFinishTime,
+                            UpdatedAt = @UpdatedAt
+                        WHERE Id = @Id";
+
+                    db.CommandText = sql;
+                    db.Parameters.Clear();
+                    db.Parameters.Add("@IsFinish", isFinish);
+                    db.Parameters.Add("@DelayReason", delayReason ?? "");
+                    db.Parameters.Add("@ImprovedWay", improvedWay ?? "");
+                    db.Parameters.Add("@ActFinishTime", (object)actFinishTime ?? DBNull.Value);
+                    db.Parameters.Add("@UpdatedAt", DateTime.Now);
+                    db.Parameters.Add("@Id", checkStandardId);
+
+                    db.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"UpdateCheckStandardStatus 發生錯誤: {ex.Message}");
+                    throw;
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 批次更新查核點狀態
+        /// </summary>
+        /// <param name="checkStandardUpdates">查核點更新資料列表</param>
+        public static void BatchUpdateCheckStandardStatus(List<OFS_SCI_WorkSch_CheckStandard> checkStandardUpdates)
+        {
+            if (checkStandardUpdates == null || !checkStandardUpdates.Any())
+                return;
+
+            using (DbHelper db = new DbHelper())
+            {
+                db.BeginTrans();
+                try
+                {
+                    foreach (var update in checkStandardUpdates)
+                    {
+                        string sql = @"
+                            UPDATE OFS_SCI_WorkSch_CheckStandard 
+                            SET IsFinish = @IsFinish,
+                                DelayReason = @DelayReason,
+                                ImprovedWay = @ImprovedWay,
+                                ActFinishTime = @ActFinishTime,
+                                UpdatedAt = @UpdatedAt
+                            WHERE Id = @Id";
+
+                        db.CommandText = sql;
+                        db.Parameters.Clear();
+
+                        // 直接使用 Entity 的屬性，類型安全且清晰
+                        db.Parameters.Add("@IsFinish", update.IsFinish ?? 0);
+                        db.Parameters.Add("@DelayReason", update.DelayReason ?? "");
+                        db.Parameters.Add("@ImprovedWay", update.ImprovedWay ?? "");
+                        db.Parameters.Add("@ActFinishTime", (object)update.ActFinishTime ?? DBNull.Value);
+                        db.Parameters.Add("@UpdatedAt", DateTime.Now);
+                        db.Parameters.Add("@Id", update.Id);
+
+                        db.ExecuteNonQuery();
+                    }
+                    
+                    db.Commit();
+                }
+                catch (Exception ex)
+                {
+                    db.Rollback();
+                    System.Diagnostics.Debug.WriteLine($"BatchUpdateCheckStandardStatus 發生錯誤: {ex.Message}");
+                    throw;
                 }
             }
         }

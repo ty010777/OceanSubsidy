@@ -41,6 +41,12 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
             
             // 載入 UserControl 資料
             ucSciUploadAttachments.LoadData(CurrentProjectID, !ShouldShowInEditMode());
+            
+            // 檢查表單狀態並控制暫存按鈕顯示
+            CheckFormStatusAndHideTempSaveButton();
+            
+            // 載入變更說明資料到輸入框
+            LoadChangeDescriptionData();
         }
     }
 
@@ -111,11 +117,13 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
                 return true; // 沒有資料時允許編輯
             }
             
-            // 只有這兩種狀態可以編輯
+            // 只有這些狀態可以編輯
             string statuses = projectData.Statuses ?? "";
             string statusesName = projectData.StatusesName ?? "";
             
-            return statuses == "尚未提送" || statusesName == "補正補件";
+            return statuses == "尚未提送" || 
+                   statusesName == "補正補件" || 
+                   statusesName == "計畫書修正中";
         }
         catch (Exception ex)
         {
@@ -196,12 +204,23 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
                 ShowSweetAlertError("資料儲存失敗，無法提送申請");
                 return;
             }
-
-            // 更新申請狀態
-            UpdateProjectStatus();
             
-            // 記錄操作歷程
-            LogSubmissionHistory();
+            // 檢查目前狀態
+            var projectData = OFS_SciApplicationHelper.getVersionByProjectID(CurrentProjectID);
+            string currentStatusesName = projectData?.StatusesName ?? "";
+            
+            if (currentStatusesName == "計畫書修正中")
+            {
+                // 計劃書修正中 -> 計劃書審核中
+                UpdateProjectStatusForPlanRevision();
+                LogPlanRevisionSubmissionHistory();
+            }
+            else
+            {
+                // 其他狀態的正常流程
+                UpdateProjectStatus();
+                LogSubmissionHistory();
+            }
 
             // 顯示成功訊息並跳轉
             ShowSweetAlertSuccess();
@@ -370,6 +389,150 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
         {
             System.Diagnostics.Debug.WriteLine($"取得使用者資訊時發生錯誤: {ex.Message}");
             return null;
+        }
+    }
+
+    /// <summary>
+    /// 檢查是否為決審核定+審查中狀態
+    /// </summary>
+    /// <returns>true: 決審核定+審查中, false: 其他狀態</returns>
+    private bool IsDecisionReviewMode()
+    {
+        try
+        {
+            // 取得最新版本的狀態
+            var projectData = OFS_SciApplicationHelper.getVersionByProjectID(CurrentProjectID);
+            if (projectData == null)
+            {
+                return false;
+            }
+            
+            string statuses = projectData.Statuses ?? "";
+            string statusesName = projectData.StatusesName ?? "";
+            
+            return statusesName == "計畫書修正中";
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"檢查決審核定狀態時發生錯誤：{ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 檢查表單狀態並控制暫存按鈕顯示
+    /// </summary>
+    private void CheckFormStatusAndHideTempSaveButton()
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(CurrentProjectID))
+            {
+                var formStatus = OFS_SciWorkSchHelper.GetFormStatusByProjectID(CurrentProjectID, "Form5Status");
+                
+                if (formStatus == "完成")
+                {
+                    // 隱藏暫存按鈕
+                    btnSave.Style["display"] = "none";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // 發生錯誤時不隱藏按鈕，讓用戶正常使用
+            System.Diagnostics.Debug.WriteLine($"檢查表單狀態失敗: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 載入變更說明資料到輸入框
+    /// </summary>
+    private void LoadChangeDescriptionData()
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(CurrentProjectID))
+            {
+                // 從資料庫取得變更說明並設定到頁面元素
+                var changeDescription = OFS_SciApplicationHelper.GetPageModifyNote(CurrentProjectID, "SciUploadAttachments");
+                if (changeDescription != null)
+                {
+                    string script = $@"
+                        setTimeout(function() {{
+                            const changeBeforeElement = document.getElementById('txtChangeBefore');
+                            if (changeBeforeElement && '{changeDescription.ChangeBefore?.Replace("'", "\\'")}') {{
+                                changeBeforeElement.textContent = '{changeDescription.ChangeBefore?.Replace("'", "\\'")}';
+                            }}
+                            
+                            const changeAfterElement = document.getElementById('txtChangeAfter');
+                            if (changeAfterElement && '{changeDescription.ChangeAfter?.Replace("'", "\\'")}') {{
+                                changeAfterElement.textContent = '{changeDescription.ChangeAfter?.Replace("'", "\\'")}';
+                            }}
+                        }}, 100);
+                    ";
+                    Page.ClientScript.RegisterStartupScript(this.GetType(), "LoadChangeDescription", script, true);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"載入變更說明資料時發生錯誤：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 更新計劃書修正狀態 - 計劃書修正中 -> 計劃書審核中
+    /// </summary>
+    private void UpdateProjectStatusForPlanRevision()
+    {
+        try
+        {
+            // 使用ReviewCheckListHelper更新StatusesName
+            ReviewCheckListHelper.UpdateProjectStatusName(CurrentProjectID, "計畫書審核中", GetCurrentUserInfo()?.Account ?? "系統");
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"更新計劃書修正狀態時發生錯誤：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 記錄計劃書修正提送申請的操作歷程
+    /// </summary>
+    private void LogPlanRevisionSubmissionHistory()
+    {
+        try
+        {
+            var currentUser = GetCurrentUserInfo();
+            string userName = currentUser?.UserName ?? "系統";
+
+            // 建立案件歷程記錄
+            var caseHistoryLog = new OFS_CaseHistoryLog
+            {
+                ProjectID = CurrentProjectID,
+                ChangeTime = DateTime.Now,
+                UserName = userName,
+                StageStatusBefore = "計畫書修正中",
+                StageStatusAfter = "計畫書審核中",
+                Description = "完成計劃書修正並重新提送審核"
+            };
+
+            // 儲存到資料庫
+            bool success = ApplicationChecklistHelper.InsertCaseHistoryLog(caseHistoryLog);
+
+            if (success)
+            {
+                System.Diagnostics.Debug.WriteLine($"計劃書修正提送歷程記錄已儲存：{CurrentProjectID}");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"計劃書修正提送歷程記錄儲存失敗：{CurrentProjectID}");
+            }
+        }
+        catch (Exception ex)
+        {
+            // 歷程記錄失敗不影響主要流程，只記錄錯誤
+            System.Diagnostics.Debug.WriteLine($"記錄計劃書修正提送歷程失敗：{ex.Message}");
         }
     }
 
