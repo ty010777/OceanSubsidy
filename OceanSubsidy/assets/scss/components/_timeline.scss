@@ -1,0 +1,63 @@
+.timeline {
+    display: flex;
+    gap: 32px;
+    overflow-x: auto;
+    padding-inline: 18px;
+    .year {
+        color: $neutral-700;
+        font-size: 18px;
+        line-height: normal;
+        display: block;
+    }
+    ul.month {
+        display: flex;
+        gap: 18px;
+        padding-bottom: 0;
+        li {
+            a {
+                color: $teal-dark;
+                font-size: 22px;
+                line-height: normal;
+                font-weight: 800;
+                text-decoration: none;
+                padding: 4px 8px;   
+                display: block;
+                text-wrap: nowrap;                 padding: 4px 8px;
+            }
+            &.active,&:hover {
+                a {
+                    background-color: $teal-dark;
+                    color: #fff;
+
+                    border-radius: 6px;
+                }
+            }
+            &.disabled {
+                pointer-events: none;
+                a {
+                    color: $neutral-400;
+                }
+            }
+        }
+    }
+}
+
+.horizontal-scrollable:has(.timeline) {
+    padding-inline: 0;
+    padding-top: 0;
+    margin-bottom: 24px;
+    .btn-control {
+        top: 50%;
+        transform: translateY(-50%);
+        &.btn-prev {
+            left: -6px;
+        }
+        &.btn-next {
+            right: -6px;
+        }
+    }
+}
+
+.horizontal-scrollable ul.timeline {
+    gap: 40px;
+}

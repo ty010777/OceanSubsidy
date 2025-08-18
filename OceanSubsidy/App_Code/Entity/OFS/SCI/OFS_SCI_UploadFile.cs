@@ -194,40 +194,6 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
         
-        protected string _Statuses = "";
-        ///<summary>
-        ///  ()
-        ///</summary>
-        [DataMember]
-        [GisFieldAttribute("Statuses", "Statuses", DataSource.TABLE, "", false)]
-        public virtual string Statuses
-        {
-            get
-            {
-                return _Statuses;
-            }
-            set
-            {
-                bool isModify = false;
-                if (_Statuses == null) {
-                    if(value != null) {
-                        isModify = true;
-                    }
-                }
-                else if (!_Statuses.Equals(value))
-                {
-                    isModify = true;
-                }
-                if(isModify) {
-                    MetaDataState = DataState.UPDATE;
-                    if (UPDATE_COLUMN.IndexOf("Statuses") == -1)
-                    {
-                        UPDATE_COLUMN.Add("Statuses");
-                    }
-                    _Statuses = value;
-                }
-            }
-        }
         
     }
 

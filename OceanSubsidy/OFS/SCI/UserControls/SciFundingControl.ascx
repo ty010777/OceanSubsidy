@@ -72,7 +72,7 @@
                     <td colspan="5">合計</td>
                     <td class="text-end" id="PersonTotal">0</td>
                     <td>
-                        <button type="button" class="btn btn-sm btn-teal" onclick="calculateAndUpdateTotal()">計算</button>
+                        <button type="button" class="btn btn-sm btn-teal" style="display: none" onclick="calculateAndUpdateTotal()">計算</button>
                     </td>
                 </tr>
                 </tbody>

@@ -142,6 +142,24 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
             ViewState["CarrierList"] = value;
         }
     }
+    // 研究調查範圍(縣市)清單
+    private List<SurveyCountyItem> SurveyCountyList
+    {
+        get
+        {
+            var list = ViewState["SurveyCountyList"] as List<SurveyCountyItem>;
+            if (list == null)
+            {
+                list = new List<SurveyCountyItem>();
+                ViewState["SurveyCountyList"] = list;
+            }
+            return list;
+        }
+        set
+        {
+            ViewState["SurveyCountyList"] = value;
+        }
+    }
     public int ReportID
     {
         get => int.TryParse(hfReportID.Value, out var v) ? v : 0;
@@ -327,13 +345,19 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
         txtActivityOverview.Text = string.Empty;
         txtSurveyScope.Text = string.Empty;
         lblLastUpdated.Text = string.Empty;
-        txtCorrectionNotes.Text = string.Empty;        
+        txtCorrectionNotes.Text = string.Empty;
+        // 研究調查範圍(縣市) - 從資料庫載入
+        ddlScopeCounty.Items.Clear();
+        ddlScopeCounty.Items.Add(new ListItem("請選擇", ""));
+        foreach (DataRow r in OSIMapCountyHelper.QueryAll().Rows)
+            ddlScopeCounty.Items.Add(new ListItem(r["c_name"].ToString(), r["qgs_fid"].ToString()));
         // List初始化
         ExecList = new List<ExecutorItem>();
         ResearchPeriodList = new List<PeriodItem>();
         FileList = new List<ActivityFile>();
         SurveyScopeList = new List<SurveyScopeItem>();
         CarrierList = new List<CarrierItem>();
+        SurveyCountyList = new List<SurveyCountyItem>();
 
         // 新增時隱藏歷程按鈕
         btnHistory.Visible = false;
@@ -458,6 +482,20 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
             });
         }
         BindScopeRepeater();
+        // 載入研究調查範圍(縣市)
+        var surveyCountyTbl = OSISurveyCountiesHelper.QueryByReportID(ReportID.ToString());
+        foreach (DataRow row in surveyCountyTbl.Rows)
+        {
+            SurveyCountyList.Add(new SurveyCountyItem
+            {
+                SurveyCountyID = row["SurveyCountyID"].ToString(),
+                CountyID = row["CountyID"].ToString(),
+                CountyName = row["CountyName"].ToString(),
+                IsNew = false,
+                IsDel = false
+            });
+        }
+        BindScopeCountyRepeater();
         // 相關附件
         var fileTbl = OSIActivityFilesHelper.QueryByReportID(ReportID.ToString());
         foreach (DataRow row in fileTbl.Rows)
@@ -483,10 +521,12 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
         btnOpenMap.Attributes["data-reportid"] = ReportID.ToString();
 
         // 載入 GeoData (WKT 格式，SRID=3826)
-        if (!string.IsNullOrEmpty(report.GeoData))
+        // 從 OSI_Geom 表的 GeoData 欄位載入
+        string geoData = OSIActivityReportsHelper.QueryGeoDataByID(ReportID.ToString());
+        if (!string.IsNullOrEmpty(geoData))
         {
             // 將 GeoData 存入隱藏欄位，供前端使用
-            hdnGeo3826WKT.Value = report.GeoData;
+            hdnGeo3826WKT.Value = geoData;
         }
 
         // 檢查是否有歷史記錄
@@ -527,6 +567,12 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
         rptCarrierList.DataSource = CarrierList.Where(d => !d.IsDel);
         rptCarrierList.DataBind();
         upCarrierList.Update();
+    }
+    private void BindScopeCountyRepeater()
+    {
+        rptScopeCountyList.DataSource = SurveyCountyList.Where(d => !d.IsDel);
+        rptScopeCountyList.DataBind();
+        upScopeCounty.Update();
     }
     // 新增活動執行者
     protected void btnAddExec_Click(object sender, EventArgs e)
@@ -634,6 +680,32 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
         }
     }
 
+    // 新增研究調查範圍(縣市)
+    protected void btnAddScopeCounty_Click(object sender, EventArgs e)
+    {
+        var countyId = ddlScopeCounty.SelectedValue;
+        var countyName = ddlScopeCounty.SelectedItem.Text;
+        
+        if (!string.IsNullOrEmpty(countyId))
+        {
+            // 檢查是否已經存在
+            bool exists = SurveyCountyList.Any(x => x.CountyID == countyId && !x.IsDel);
+            if (!exists)
+            {
+                SurveyCountyList.Add(new SurveyCountyItem
+                {
+                    CountyID = countyId,
+                    CountyName = countyName,
+                    IsNew = true,
+                    IsDel = false
+                });
+                BindScopeCountyRepeater();
+            }
+            // 清空選擇
+            ddlScopeCounty.SelectedValue = "";
+        }
+    }
+
     // 新的刪除事件處理函數
     protected void btnDelExec_Click(object sender, EventArgs e)
     {
@@ -696,6 +768,17 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
             if (rptIdx >= 0 && rptIdx < visible.Count)
                 visible[rptIdx].IsDel = true;
             BindCarrierRepeater();
+        }
+    }
+
+    protected void btnDelScopeCounty_Click(object sender, EventArgs e)
+    {
+        if (int.TryParse(hfDelScopeCountyIndex.Value, out int rptIdx))
+        {
+            var visible = SurveyCountyList.Where(x => !x.IsDel).ToList();
+            if (rptIdx >= 0 && rptIdx < visible.Count)
+                visible[rptIdx].IsDel = true;
+            BindScopeCountyRepeater();
         }
     }
 
@@ -777,26 +860,75 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
         args.IsValid = ResearchPeriodList.Any(x => !x.IsDel);
     }
 
+    protected void cvScopeValidation_ServerValidate(object source, ServerValidateEventArgs args)
+    {
+        // 檢查是否至少有一個縣市或一個描述
+        bool hasCounty = SurveyCountyList.Any(x => !x.IsDel);
+        bool hasScope = SurveyScopeList.Any(x => !x.IsDel);
+        args.IsValid = hasCounty || hasScope;
+    }
+
     /// <summary>
     /// 儲存（Insert 或 Update）
     /// </summary>
     protected void btnSave_Click(object sender, EventArgs e)
     {
+        // 停用儲存按鈕防止重複點擊
+        Button saveButton = sender as Button;
+        if (saveButton != null)
+        {
+            saveButton.Enabled = false;
+            saveButton.Text = "儲存中...";
+        }
+
+        Page.Validate("Main");
+        if (!Page.IsValid)
+        {
+            if (saveButton != null)
+            {
+                saveButton.Enabled = true;
+                saveButton.Text = "儲存";
+            }
+
+            ScriptManager.RegisterStartupScript(
+                this.Page,
+                this.Page.GetType(),
+                "saveNotOk",
+                "showGlobalMessage('必填欄位未填');",
+                true
+            );
+
+            return;
+        }
+
         // 呼叫 UserControl 的 Save
         bool ok = Save();
         if (ok)
         {
-            // 成功後可跳轉或顯示訊息
-            ScriptManager.RegisterStartupScript(
-                this.Page,
-                this.Page.GetType(),
-                "saveOk",
-                "showGlobalMessage('儲存成功');",
-                true
-            );
+            // 構建重新導向的 URL
+            string currentPath = this.Page.Request.Path;
+            var queryParams = HttpUtility.ParseQueryString(this.Page.Request.QueryString.ToString());
+            
+            // 更新或新增 id 參數
+            queryParams["id"] = ReportID.ToString();
+            queryParams["saved"] = "1";
+            
+            // 組合完整 URL
+            string redirectUrl = currentPath + "?" + queryParams.ToString();
+            
+            // 執行重新導向（成功時不需要恢復按鈕，因為會離開頁面）
+            Response.Redirect(redirectUrl, false);
+            Context.ApplicationInstance.CompleteRequest();
         }
         else
         {
+            // 儲存失敗，恢復按鈕狀態
+            if (saveButton != null)
+            {
+                saveButton.Enabled = true;
+                saveButton.Text = "儲存";
+            }
+
             ScriptManager.RegisterStartupScript(
                 this.Page,
                 this.Page.GetType(),
@@ -931,23 +1063,12 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
         reportSave.ResearchItemNote = txtResItemNote.Text;
         reportSave.Instruments = txtResInstruments.Text;
         reportSave.ActivityOverview = txtActivityOverview.Text;
-        // SurveyScope 現在改為多筆，不再直接儲存在主表
         reportSave.LastUpdated = DateTime.Now;
         reportSave.LastUpdatedBy = UserInfo.UserID.toInt();
         reportSave.IsValid = true;
 
         // 獲取地圖標記資料 (EPSG:3826 TWD97 / TM2 zone 121)
         string wkt3826 = hdnGeo3826WKT.Value?.Trim();
-        // 檢查是否為空字串、"Null" 或 "null"
-        if (string.IsNullOrEmpty(wkt3826) ||
-            string.Equals(wkt3826, "Null", StringComparison.OrdinalIgnoreCase))
-        {
-            reportSave.GeoData = null;
-        }
-        else
-        {
-            reportSave.GeoData = wkt3826;
-        }
 
         // 活動執行者
         List<OSI_ActivityExecutors> executors = new List<OSI_ActivityExecutors>();
@@ -1038,6 +1159,22 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
             if (!e.IsNew && e.IsDel && !string.IsNullOrWhiteSpace(e.CarrierID))
                 delCarriers.Add(e.CarrierID.toInt());
         });
+        // 研究調查範圍(縣市)
+        List<OSI_SurveyCounties> surveyCounties = new List<OSI_SurveyCounties>();
+        List<int> delSurveyCounties = new List<int>();
+        SurveyCountyList.ForEach(e =>
+        {
+            if (e.IsNew && !e.IsDel)
+            {
+                surveyCounties.Add(new OSI_SurveyCounties
+                {
+                    CountyID = e.CountyID.toInt(),
+                    IsValid = true,
+                });
+            }
+            if (!e.IsNew && e.IsDel && !string.IsNullOrWhiteSpace(e.SurveyCountyID))
+                delSurveyCounties.Add(e.SurveyCountyID.toInt());
+        });
 
         // 新增
         if (IsNew)
@@ -1045,8 +1182,23 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
             try
             {
                 var newReportID = OSIActivityReportsHelper.InsertReport(
-                    reportSave, executors, resPeriods, files, surveyScopes, carriers, delExecutors, delResPeriods, delFiles, delSurveyScopes, delCarriers, BaseDir);
+                    reportSave, executors, resPeriods, files, surveyScopes, carriers, surveyCounties, delExecutors, delResPeriods, delFiles, delSurveyScopes, delCarriers, delSurveyCounties, BaseDir);
                 rtVal = newReportID != 0;
+                
+                // 儲存圖徵資料到 OSI_Geom 表
+                if (rtVal && newReportID > 0)
+                {
+                    try
+                    {
+                        OSIActivityReportsHelper.SaveGeometries(newReportID, wkt3826, UserInfo.UserID.toInt());
+                    }
+                    catch (Exception ex)
+                    {
+                        // 記錄錯誤但不影響主要儲存流程
+                        System.Diagnostics.Debug.WriteLine($"儲存圖徵資料失敗：{ex.Message}");
+                    }
+                }
+                
                 // 成功，檔案移動
                 if (TempKey != null && rtVal)
                 {
@@ -1084,7 +1236,21 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
             try
             {
                 rtVal = OSIActivityReportsHelper.UpdateReport(
-                    ReportID, reportSave, executors, resPeriods, files, surveyScopes, carriers, delExecutors, delResPeriods, delFiles, delSurveyScopes, delCarriers);
+                    ReportID, reportSave, executors, resPeriods, files, surveyScopes, carriers, surveyCounties, delExecutors, delResPeriods, delFiles, delSurveyScopes, delCarriers, delSurveyCounties);
+                
+                // 儲存圖徵資料到 OSI_Geom 表
+                if (rtVal)
+                {
+                    try
+                    {
+                        OSIActivityReportsHelper.SaveGeometries(ReportID, wkt3826, UserInfo.UserID.toInt());
+                    }
+                    catch (Exception ex)
+                    {
+                        // 記錄錯誤但不影響主要儲存流程
+                        System.Diagnostics.Debug.WriteLine($"儲存圖徵資料失敗：{ex.Message}");
+                    }
+                }
             }
             catch
             {
@@ -1147,6 +1313,16 @@ public class CarrierItem
     public string CarrierTypeName { get; set; }
     public string CarrierDetail { get; set; }
     public string CarrierNo { get; set; }
+    public bool IsNew { get; set; }
+    public bool IsDel { get; set; }
+}
+
+[Serializable]
+public class SurveyCountyItem
+{
+    public string SurveyCountyID { get; set; }
+    public string CountyID { get; set; }
+    public string CountyName { get; set; }
     public bool IsNew { get; set; }
     public bool IsDel { get; set; }
 }

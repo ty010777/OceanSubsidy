@@ -42,14 +42,24 @@
 
                 <!-- 上傳檔案 -->
                 <ul class="d-grid gap-3 fs-18 mb-4">
-                    <li>1. 請先下載 EXCEL 範例檔案　
+                    <li>1. 請先下載範例檔案　
                         <span class="tag tag-gray">
-                            <a href="<%= ResolveUrl("~/wwwroot/OSI/活動批次匯入範本.xlsx") %>" class="tag-link">範例下載
+                            <a href="<%= ResolveUrl("~/wwwroot/OSI/活動批次匯入範本.xlsx") %>" class="tag-link">Excel範例下載
+                                <img src="<%= ResolveUrl("~/assets/img/icon-download.svg") %>" alt="範例下載">
+                            </a>
+                        </span>
+                        <span class="tag tag-gray">
+                            <a href="<%= ResolveUrl("~/wwwroot/OSI/活動批次匯入範本.csv") %>" class="tag-link">CSV範例下載
+                                <img src="<%= ResolveUrl("~/assets/img/icon-download.svg") %>" alt="範例下載">
+                            </a>
+                        </span>
+                        <span class="tag tag-gray">
+                            <a href="<%= ResolveUrl("~/wwwroot/OSI/活動批次匯入範本.ods") %>" class="tag-link">ODS範例下載
                                 <img src="<%= ResolveUrl("~/assets/img/icon-download.svg") %>" alt="範例下載">
                             </a>
                         </span>
                     </li>
-                    <li>2. 上傳欲檢核的 EXCEL 檔案
+                    <li>2. 上傳欲檢核的檔案（支援 Excel、CSV、ODS 格式）
                         <div class="input-group mt-3">
                             <asp:FileUpload ID="fuExcel" runat="server" CssClass="form-control" />
 
@@ -99,10 +109,12 @@
                 <div class="table-responsive mb-4">
                     <asp:GridView ID="gvCheckResults" runat="server"
                         CssClass="table align-middle gray-table"
-                        Width="100%" Style="table-layout:fixed;"
+                        Width="100%" Style="table-layout: fixed;"
                         AutoGenerateColumns="true"
+                        UseAccessibleHeader="true"
                         OnRowCreated="gvCheckResults_RowCreated"
-                        OnRowDataBound="gvCheckResults_RowDataBound" />
+                        OnRowDataBound="gvCheckResults_RowDataBound"
+                        OnPreRender="gvCheckResults_PreRender" />
                 </div>
 
                 <!-- 上一步／下一步 -->

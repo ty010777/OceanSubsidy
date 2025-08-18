@@ -267,7 +267,7 @@ SELECT [PeriodID]
     ,[IsCopy]
 FROM OSI_DataPeriods
 WHERE StartDate <= @DateTime
-AND EndDate >= @DateTime
+AND EndDate >= DATEADD(day, -1, @DateTime)
 ";
         db.Parameters.Clear();
         db.Parameters.Add("@DateTime", dateTime);
@@ -295,7 +295,7 @@ SELECT [PeriodID]
     ,[IsCopy]
 FROM OSI_DataPeriods
 WHERE StartDate <= @DateTime
-AND EndDate >= @DateTime
+AND EndDate >= DATEADD(day, -1, @DateTime)
 ";
         db.Parameters.Clear();
         db.Parameters.Add("@DateTime", dateTime);
@@ -580,6 +580,54 @@ ORDER BY StartDate DESC";
         var list = db.GetList<OSI_DataPeriods>();
         
         return list != null && list.Count > 0 ? list[0] : null;
+    }
+
+    /// <summary>
+    /// 查詢昨天結束的期間
+    /// </summary>
+    /// <returns>昨天結束的期間資料列表</returns>
+    public static List<OSI_DataPeriods> QueryEndedYesterday()
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText = @"
+SELECT [PeriodID]
+      ,[PeriodYear]
+      ,[PeriodQuarter]
+      ,[StartDate]
+      ,[EndDate]
+      ,[Color]
+      ,[QuarterStartDate]
+      ,[QuarterEndDate]
+      ,[IsCopy]
+FROM OSI_DataPeriods 
+WHERE CONVERT(date, EndDate) = CONVERT(date, DATEADD(day, -1, GETDATE()))";
+        
+        db.Parameters.Clear();
+        return db.GetList<OSI_DataPeriods>();
+    }
+
+    /// <summary>
+    /// 查詢今天開始的期間
+    /// </summary>
+    /// <returns>今天開始的期間資料列表</returns>
+    public static List<OSI_DataPeriods> QueryStartingToday()
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText = @"
+SELECT [PeriodID]
+      ,[PeriodYear]
+      ,[PeriodQuarter]
+      ,[StartDate]
+      ,[EndDate]
+      ,[Color]
+      ,[QuarterStartDate]
+      ,[QuarterEndDate]
+      ,[IsCopy]
+FROM OSI_DataPeriods 
+WHERE CONVERT(date, StartDate) = CONVERT(date, GETDATE())";
+        
+        db.Parameters.Clear();
+        return db.GetList<OSI_DataPeriods>();
     }
 
 

@@ -86,10 +86,19 @@
                                 <i class="fas fa-chevron-right"></i>
                             </a>
                         </li>
+                        <li runat="server" id="li1" data-page="VesselRiskAssessments.aspx">
+                            <a href="<%= ResolveUrl("~/OSI/VesselRiskAssessments.aspx") %>">
+                                <div class="circle">
+                                    <img src="<%= ResolveUrl("~/assets/img/menu-icon01.svg") %>" alt="研究船風險檢核">
+                                </div>
+                                <span>研究船風險檢核</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
                     </ul>
                 </nav>
 
-                <nav>
+                <nav runat="server" id="navActivityManage">
                     <span class="nav-title">活動管理模組</span>
                     <ul>
                         <li runat="server" id="liActivityManage" data-page="ActivityManage.aspx">
@@ -104,9 +113,9 @@
                         <li runat="server" id="liTenderQuery" data-page="PccAward.aspx">
                             <a href="<%= ResolveUrl("~/OSI/PccAward.aspx") %>">
                                 <div class="circle">
-                                    <img src="<%= ResolveUrl("~/assets/img/menu-icon05.svg") %>" alt="政府標案查詢">
+                                    <img src="<%= ResolveUrl("~/assets/img/menu-icon05.svg") %>" alt="標案計畫查詢">
                                 </div>
-                                <span>政府標案查詢</span>
+                                <span>標案計畫查詢</span>
                                 <i class="fas fa-chevron-right"></i>
                             </a>
                         </li>

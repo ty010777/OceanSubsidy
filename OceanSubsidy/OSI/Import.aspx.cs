@@ -10,6 +10,7 @@ using System.Web.UI.WebControls;
 using GS.Data;
 using GS.Extension;
 using GS.OCA_OceanSubsidy.Entity;
+using GS.OCA_OceanSubsidy.Operation.OSI.SpreadsheetReaders;
 using NPOI.SS.Formula.Functions;
 using OfficeOpenXml;
 
@@ -30,9 +31,9 @@ public partial class OSI_Import : System.Web.UI.Page
             ToggleAddButtonAvailability();
 
             btnUpload.Enabled = false;
-            fuExcel.Attributes["accept"] = ".xlsx";
+            fuExcel.Attributes["accept"] = ".xlsx,.csv,.ods";
             fuExcel.Attributes["onchange"]
-              = $"document.getElementById('{btnUpload.ClientID}').disabled = this.files.length === 0;";
+              = $"document.getElementById('{btnUpload.ClientID}').disabled = this.files.length === 0;";            
         }
     }
 
@@ -64,20 +65,20 @@ public partial class OSI_Import : System.Web.UI.Page
         // 1. 檔案必選
         if (!fuExcel.HasFile)
         {
-            lblUploadError.Text = "請選擇一個 .xlsx 檔後再上傳";
+            lblUploadError.Text = "請選擇一個檔案後再上傳";
             return;
         }
 
         // 2. 限定副檔名
         var ext = Path.GetExtension(fuExcel.FileName).ToLower();
-        if (ext != ".xlsx")
+        if (!SpreadsheetReaderFactory.IsSupportedFormat(ext))
         {
-            lblUploadError.Text = "只允許上傳 .xlsx 檔";
+            lblUploadError.Text = "只允許上傳 .xlsx、.csv 或 .ods 檔";
             return;
         }
 
-        // 3. 檢核 Excel，取得所有筆的結果
-        DataTable dtResults = CheckExcel(fuExcel.PostedFile.InputStream);
+        // 3. 檢核試算表，取得所有筆的結果
+        DataTable dtResults = CheckSpreadsheet(fuExcel.PostedFile.InputStream, ext);
 
         Session["ImportResults"] = dtResults;
 
@@ -134,24 +135,43 @@ public partial class OSI_Import : System.Web.UI.Page
     {
         if (e.Row.RowType == DataControlRowType.Header)
         {
-            e.Row.Cells[0].Width = Unit.Pixel(150);     // 審核結果
-            e.Row.Cells[1].Width = Unit.Pixel(150);     // 填報機關
-            e.Row.Cells[2].Width = Unit.Pixel(150);     // 活動名稱
-            e.Row.Cells[3].Width = Unit.Pixel(150);     // 活動性質
-            e.Row.Cells[4].Width = Unit.Pixel(150);     // 活動性質(描述)
-            e.Row.Cells[5].Width = Unit.Pixel(180);     // 活動執行者(類別)
-            e.Row.Cells[6].Width = Unit.Pixel(180);     // 活動執行者(描述)
-            e.Row.Cells[7].Width = Unit.Pixel(180);     // 研究調查日期(起始)
-            e.Row.Cells[8].Width = Unit.Pixel(180);     // 研究調查日期(結束)
-            e.Row.Cells[9].Width = Unit.Pixel(180);     // 研究調查日期(描述)
-            e.Row.Cells[10].Width = Unit.Pixel(180);    // 使用載具名稱(類別)
-            e.Row.Cells[11].Width = Unit.Pixel(180);    // 使用載具名稱(描述)
-            e.Row.Cells[12].Width = Unit.Pixel(180);    // 使用載具名稱(核准文號)
-            e.Row.Cells[13].Width = Unit.Pixel(180);    // 研究調查項目(類別)
-            e.Row.Cells[14].Width = Unit.Pixel(180);    // 研究調查項目(描述)
-            e.Row.Cells[15].Width = Unit.Pixel(150);    // 研究調查儀器
-            e.Row.Cells[16].Width = Unit.Pixel(150);    // 研究調查活動內容概述
-            e.Row.Cells[17].Width = Unit.Pixel(150);    // 研究調查範圍            
+            // 設定每個標題儲存格的寬度和樣式
+            e.Row.Cells[0].Width = Unit.Pixel(200);     // 審核結果
+            e.Row.Cells[1].Width = Unit.Pixel(200);     // 填報機關
+            e.Row.Cells[2].Width = Unit.Pixel(200);     // 活動名稱
+            e.Row.Cells[3].Width = Unit.Pixel(200);     // 活動性質
+            e.Row.Cells[4].Width = Unit.Pixel(200);     // 活動性質(描述)
+            e.Row.Cells[5].Width = Unit.Pixel(200);     // 活動執行者(類別)
+            e.Row.Cells[6].Width = Unit.Pixel(200);     // 活動執行者(描述)
+            e.Row.Cells[7].Width = Unit.Pixel(200);     // 研究調查日期(起始)
+            e.Row.Cells[8].Width = Unit.Pixel(200);     // 研究調查日期(結束)
+            e.Row.Cells[9].Width = Unit.Pixel(200);     // 研究調查日期(描述)
+            e.Row.Cells[10].Width = Unit.Pixel(200);    // 使用載具名稱(類別)
+            e.Row.Cells[11].Width = Unit.Pixel(200);    // 使用載具名稱(描述)
+            e.Row.Cells[12].Width = Unit.Pixel(200);    // 使用載具名稱(核准文號)
+            e.Row.Cells[13].Width = Unit.Pixel(200);    // 研究調查項目(類別)
+            e.Row.Cells[14].Width = Unit.Pixel(200);    // 研究調查項目(描述)
+            e.Row.Cells[15].Width = Unit.Pixel(200);    // 研究調查儀器
+            e.Row.Cells[16].Width = Unit.Pixel(220);    // 研究調查活動內容概述
+            e.Row.Cells[17].Width = Unit.Pixel(200);    // 研究調查範圍(縣市)
+            e.Row.Cells[18].Width = Unit.Pixel(200);    // 研究調查範圍(描述)
+            
+            // 對所有標題儲存格套用自動換行樣式
+            foreach (TableCell cell in e.Row.Cells)
+            {
+                cell.Style.Add("white-space", "normal");
+                cell.Style.Add("word-wrap", "break-word");
+                cell.Style.Add("word-break", "break-word");
+            }
+        }
+    }
+
+    protected void gvCheckResults_PreRender(object sender, EventArgs e)
+    {
+        // 將標題列移到 thead
+        if (gvCheckResults.Rows.Count > 0 && gvCheckResults.HeaderRow != null)
+        {
+            gvCheckResults.HeaderRow.TableSection = TableRowSection.TableHeader;
         }
     }
 
@@ -176,10 +196,26 @@ public partial class OSI_Import : System.Web.UI.Page
         Response.Redirect("~/OSI/ActivityReports.aspx");
     }
 
-    // ===== stub methods, 你之後自己填實作 =====
-    private DataTable CheckExcel(Stream excelStream)
+    // ===== stub methods =====
+    private DataTable CheckSpreadsheet(Stream fileStream, string fileExtension)
     {
-        ExcelPackage.License.SetNonCommercialOrganization("GIS.FCU");
+        // 根據檔案類型使用對應的讀取器
+        var reader = SpreadsheetReaderFactory.GetReader(fileExtension);
+        DataTable sourceData = null;
+        
+        try
+        {
+            sourceData = reader.ReadToDataTable(fileStream);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"無法讀取檔案: {ex.Message}", ex);
+        }
+        
+        if (sourceData == null || sourceData.Rows.Count < 2)
+        {
+            throw new InvalidOperationException("檔案沒有資料或資料不足");
+        }
 
         var dt = new DataTable();
         // 先定義要回傳的 DataTable 欄位
@@ -200,35 +236,35 @@ public partial class OSI_Import : System.Web.UI.Page
         dt.Columns.Add("研究調查項目(描述)", typeof(string));       // O 研究調查項目(描述)
         dt.Columns.Add("研究調查儀器", typeof(string));             // P 研究調查儀器
         dt.Columns.Add("研究調查活動內容概述", typeof(string));     // Q 研究調查活動內容概述
-        dt.Columns.Add("研究調查範圍", typeof(string));             // R 研究調查範圍
+        dt.Columns.Add("研究調查範圍(縣市)", typeof(string));       // R 研究調查範圍(縣市)
+        dt.Columns.Add("研究調查範圍(描述)", typeof(string));       // S 研究調查範圍(描述)
 
 
-        using (var pkg = new ExcelPackage(excelStream))
+        // 假設第一列是標題，資料從第二列開始
+        for (int row = 1; row < sourceData.Rows.Count; row++)
         {
-            var ws = pkg.Workbook.Worksheets.First();
-            // 假設第一列是標題，資料從第二列開始
-            for (int row = 2; row <= ws.Dimension.End.Row; row++)
-            {
-                var errors = new System.Collections.Generic.List<string>();
+            var dataRow = sourceData.Rows[row];
+            var errors = new System.Collections.Generic.List<string>();
 
-                // 逐欄讀取
-                string valB = ws.Cells[row, 2].Text.Trim();     // 填報機關
-                string valC = ws.Cells[row, 3].Text.Trim();     // 活動名稱
-                string valD = ws.Cells[row, 4].Text.Trim();     // 活動性質
-                string valE = ws.Cells[row, 5].Text.Trim();     // 活動性質(描述)
-                string valF = ws.Cells[row, 6].Text.Trim();     // 活動執行者(類別)
-                string valG = ws.Cells[row, 7].Text.Trim();     // 活動執行者(描述)
-                string valH = ws.Cells[row, 8].Text.Trim();     // 研究調查日期(起始)
-                string valI = ws.Cells[row, 9].Text.Trim();     // 研究調查日期(結束)
-                string valJ = ws.Cells[row, 10].Text.Trim();    // 研究調查日期(描述)
-                string valK = ws.Cells[row, 11].Text.Trim();    // 使用載具名稱(類別)
-                string valL = ws.Cells[row, 12].Text.Trim();    // 使用載具名稱(描述)
-                string valM = ws.Cells[row, 13].Text.Trim();    // 使用載具名稱(核准文號)
-                string valN = ws.Cells[row, 14].Text.Trim();    // 研究調查項目(類別)
-                string valO = ws.Cells[row, 15].Text.Trim();    // 研究調查項目(描述)
-                string valP = ws.Cells[row, 16].Text.Trim();    // 研究調查儀器
-                string valQ = ws.Cells[row, 17].Text.Trim();    // 研究調查活動內容概述
-                string valR = ws.Cells[row, 18].Text.Trim();    // 研究調查範圍
+            // 逐欄讀取（欄位索引從 0 開始，對應到 Excel 的 B-S 欄）
+            string valB = GetCellValue(dataRow, 1);     // 填報機關
+            string valC = GetCellValue(dataRow, 2);     // 活動名稱
+            string valD = GetCellValue(dataRow, 3);     // 活動性質
+            string valE = GetCellValue(dataRow, 4);     // 活動性質(描述)
+            string valF = GetCellValue(dataRow, 5);     // 活動執行者(類別)
+            string valG = GetCellValue(dataRow, 6);     // 活動執行者(描述)
+            string valH = GetCellValue(dataRow, 7);     // 研究調查日期(起始)
+            string valI = GetCellValue(dataRow, 8);     // 研究調查日期(結束)
+            string valJ = GetCellValue(dataRow, 9);     // 研究調查日期(描述)
+            string valK = GetCellValue(dataRow, 10);    // 使用載具名稱(類別)
+            string valL = GetCellValue(dataRow, 11);    // 使用載具名稱(描述)
+            string valM = GetCellValue(dataRow, 12);    // 使用載具名稱(核准文號)
+            string valN = GetCellValue(dataRow, 13);    // 研究調查項目(類別)
+            string valO = GetCellValue(dataRow, 14);    // 研究調查項目(描述)
+            string valP = GetCellValue(dataRow, 15);    // 研究調查儀器
+            string valQ = GetCellValue(dataRow, 16);    // 研究調查活動內容概述
+            string valR = GetCellValue(dataRow, 17);    // 研究調查範圍(縣市)
+            string valS = GetCellValue(dataRow, 18);    // 研究調查範圍(描述)
 
                 // 1) 必填
                 if (string.IsNullOrWhiteSpace(valB)) errors.Add("填報機關為必填");
@@ -247,7 +283,7 @@ public partial class OSI_Import : System.Web.UI.Page
                 if (resPerStartDate != null && resPerEndDate != null && resPerEndDate < resPerStartDate)
                     errors.Add("研究調查日期(結束)不能早於(起始)");
 
-                // 3) B、D、F、K、N 欄跟 DB 驗證
+                // 3) B、D、F、K、N、R 欄跟 DB 驗證
                 GisTable unitTbl =
                     (UserInfo.OSI_RoleName == "系統管理者") ?
                     SysUnitHelper.QueryAll() :
@@ -260,12 +296,18 @@ public partial class OSI_Import : System.Web.UI.Page
                     errors.Add($"活動性質「{valD}」不存在");
                 if (!string.IsNullOrWhiteSpace(valF) && !OSIExecutorCategoriesHelper.IsExistByCategoryName(valF))
                     errors.Add($"活動執行者(類別)「{valF}」不存在");
-                if (valK != "無" 
-                    && !string.IsNullOrWhiteSpace(valK) 
+                if (valK != "無"
+                    && !string.IsNullOrWhiteSpace(valK)
                     && !OSICarrierTypesHelper.IsExistByCarrierTypeName(valK))
                     errors.Add($"使用載具名稱(類別)「{valK}」不存在");
                 if (!string.IsNullOrWhiteSpace(valN) && !OSIResearchItemsHelper.IsExistByItemName(valN))
                     errors.Add($"研究調查項目(類別)「{valN}」不存在");
+                if (valR != "請選擇"
+                    && !string.IsNullOrWhiteSpace(valR)
+                    && !OSISurveyCountiesHelper.IsExistByCountyName(valR))
+                    errors.Add($"研究調查範圍(縣市)「{valR}」不存在");
+                if ((valR == "請選擇" || string.IsNullOrWhiteSpace(valR)) && string.IsNullOrWhiteSpace(valS))
+                    errors.Add("研究調查範圍(縣市) 與 研究調查範圍(描述) 至少須擇一填寫");
 
                 // 組成 DataRow
                 var dr = dt.NewRow();
@@ -286,11 +328,11 @@ public partial class OSI_Import : System.Web.UI.Page
                 dr["研究調查項目(描述)"] = valO;
                 dr["研究調查儀器"] = valP;
                 dr["研究調查活動內容概述"] = valQ;
-                dr["研究調查範圍"] = valR;
+                dr["研究調查範圍(縣市)"] = valR;
+                dr["研究調查範圍(描述)"] = valS;
 
                 dt.Rows.Add(dr);
             }
-        }
 
         return dt;
     }
@@ -328,7 +370,6 @@ public partial class OSI_Import : System.Web.UI.Page
                 ResearchItemNote = dr["研究調查項目(描述)"].ToString(),
                 Instruments = dr["研究調查儀器"].ToString(),
                 ActivityOverview = dr["研究調查活動內容概述"].ToString(),
-                GeoData = null,
                 LastUpdated = DateTime.Now,
                 LastUpdatedBy = userId,
                 IsValid = true,
@@ -359,17 +400,32 @@ public partial class OSI_Import : System.Web.UI.Page
                 }
             };
 
-            // 8. 只匯入一筆 survey scope
+            // 8. 只匯入一筆 survey County
+            var surveyCounties = new List<OSI_SurveyCounties>();
+            string surveyCountyStr = dr["研究調查範圍(縣市)"].ToString();
+            if (!string.IsNullOrWhiteSpace(surveyCountyStr))
+            {
+                int countyID = OSISurveyCountiesHelper.QueryIDByName(surveyCountyStr);
+                if (countyID > 0)
+                {
+                    surveyCounties.Add(new OSI_SurveyCounties
+                    {
+                        CountyID = countyID
+                    });
+                }                
+            }
+
+            // 9. 只匯入一筆 survey scope
             var surveyScopes = new List<OSI_SurveyScopes>();
-            if (!string.IsNullOrWhiteSpace(dr["研究調查範圍"].ToString()))
+            if (!string.IsNullOrWhiteSpace(dr["研究調查範圍(描述)"].ToString()))
             {
                 surveyScopes.Add(new OSI_SurveyScopes
                 {
-                    SurveyScope = dr["研究調查範圍"].ToString()
+                    SurveyScope = dr["研究調查範圍(描述)"].ToString()
                 });
             }
 
-            // 9. 只匯入一筆 carrier (條件式新增)
+            // 10. 只匯入一筆 carrier (條件式新增)
             var carriers = new List<OSI_Carrier>();
             string carrierTypeStr = dr["使用載具名稱(類別)"].ToString();
             string carrierDetail = dr["使用載具名稱(描述)"].ToString();
@@ -394,7 +450,7 @@ public partial class OSI_Import : System.Web.UI.Page
                 });
             }
 
-            // 10. 呼叫你原本的 InsertReport（files、delLists 都空清單）
+            // 11. 呼叫你原本的 InsertReport（files、delLists 都空清單）
             OSIActivityReportsHelper.InsertReport(
                 report,
                 executors,
@@ -402,16 +458,18 @@ public partial class OSI_Import : System.Web.UI.Page
                 files: new List<OSI_ActivityFiles>(),
                 surveyScopes,
                 carriers,
+                surveyCounties,
                 delExecutors: new List<int>(),
                 delResPeriods: new List<int>(),
                 delFiles: new List<int>(),
                 delSurveyScopes: new List<int>(),
                 delCarriers: new List<int>(),
+                delSurveyCounties: new List<int>(),
                 baseDir
             );
         }
 
-        // 11. 匯入完成後，可以清掉 Session
+        // 12. 匯入完成後，可以清掉 Session
         Session.Remove("ImportResults");
     }
 
@@ -432,6 +490,18 @@ public partial class OSI_Import : System.Web.UI.Page
             return true;
         }
         catch { return false; }
+    }
+    
+    /// <summary>
+    /// 安全地從 DataRow 取得欄位值
+    /// </summary>
+    private string GetCellValue(DataRow row, int columnIndex)
+    {
+        if (columnIndex >= row.Table.Columns.Count)
+            return string.Empty;
+            
+        var value = row[columnIndex];
+        return value?.ToString().Trim() ?? string.Empty;
     }
 
 

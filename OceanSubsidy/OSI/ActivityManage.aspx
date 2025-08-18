@@ -135,6 +135,7 @@
                                                     (已填/總單位數)</th>
                                                 <th width="180">縣市政府填報數<br />
                                                     (已填/總單位數)</th>
+                                                <th width="80">案件數</th>
                                                 <th>活動範圍標示繪製顏色</th>
                                                 <th width="220">功能</th>
                                             </tr>
@@ -160,6 +161,9 @@
                                         </td>
                                         <td data-th="縣市政府填報數(已填/總單位數):">
                                             <%# Eval("LocalFilledCount") %> / <%# Eval("LocalTotalUnit") %>
+                                        </td>
+                                        <td data-th="案件數:">
+                                            <%# Eval("ReportCount") %>
                                         </td>
                                         <td data-th="活動範圍標示繪製顏色:" class="p-0">
                                             <span class="color-tag d-inline-block"
@@ -209,12 +213,14 @@
                                         <td data-th="縣市政府填報數(已填/總單位數):">
                                             <%# Eval("LocalFilledCount") %> / <%# Eval("LocalTotalUnit") %>
                                         </td>
+                                        <td data-th="案件數:">
+                                            <%# Eval("ReportCount") %>
+                                        </td>
                                         <td data-th="活動範圍標示繪製顏色:" class="p-0">
                                             <asp:TextBox ID="txtEditColor" runat="server"
                                                 Text='<%# Bind("Color") %>'
                                                 CssClass="form-control form-control-color d-inline-block"
                                                 TextMode="Color" />
-
                                         </td>
                                         <td data-th="功能:">
                                             <asp:LinkButton ID="lnkUpdate" runat="server"

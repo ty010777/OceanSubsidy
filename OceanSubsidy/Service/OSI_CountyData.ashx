@@ -53,16 +53,19 @@ WITH FilteredActivities AS (
     SELECT 
         r.ReportID,
         r.ActivityName,
-        r.GeoData,
-        r.GeoData.STAsText() as GeoDataWKT,
+        g.GeoData,
+        g.GeoData.STAsText() as GeoDataWKT,
         u.UnitName as ReportingUnit,
         dp.PeriodYear,
         dp.PeriodQuarter
     FROM OSI_ActivityReports r
     JOIN OSI_DataPeriods dp ON r.PeriodID = dp.PeriodID
+    JOIN OSI_Geom g ON r.ReportID = g.ReportID
     LEFT JOIN Sys_Unit u ON r.ReportingUnitID = u.UnitID
     WHERE r.IsValid = 1
-        AND r.GeoData IS NOT NULL
+        AND g.IsValid = 1
+        AND g.DeletedAt IS NULL
+        AND g.GeoData IS NOT NULL
 ";
 
         // 加入查詢條件

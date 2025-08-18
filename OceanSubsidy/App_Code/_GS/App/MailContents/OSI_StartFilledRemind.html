@@ -1,0 +1,95 @@
+﻿
+
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8" />
+    <title>開始填報提醒通知</title>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", Arial, sans-serif;
+            background-color: #f5f8fa;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border: 1px solid #e1e8ed;
+        }
+
+        .header {
+            background-color: #005b9f;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .title {
+            border-bottom: 2px solid #005b9f;
+            padding: 10px 0;
+            font-size: 18px;
+            color: #005b9f;
+            margin-bottom: 20px;
+        }
+
+        .content {
+            background-color: #f0f4f8;
+            padding: 15px;
+            border: 1px solid #d1e3f0;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 14px;
+            color: #777;
+            background-color: #e6eef7;
+            padding: 10px;
+        }
+
+        a {
+            color: #005b9f;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 頁首 -->
+        <div class="header">
+            【海洋領域補助案網站】 開始填報提醒通知
+        </div>
+
+        <!-- 主標題 -->
+        <div class="title">
+            開始填報提醒通知
+        </div>
+
+        <!-- 內文 -->
+        <div class="content">
+            <p>{{UnitName}} 使用者您好：</p>
+            <p>
+                提醒您 <strong>「{{Year}}年{{Quarter}}海洋科學調查活動資料」</strong> 已開始進行填報作業，<br />
+                填報期間為 : {{StartDate}}-{{EndDate}}，請撥冗至系統進行填報，感謝。
+            </p>
+
+            <p>功能路徑：首頁登入 &gt; 海洋科學調查活動填報系統 &gt; 活動資料填報</p>
+        </div>
+
+        <!-- 頁尾 -->
+        <div class="footer">
+            <p>海洋委員會 海洋科學調查活動填報網站</p>
+        </div>
+    </div>
+</body>
+</html>

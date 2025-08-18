@@ -31,7 +31,9 @@ SELECT [qgs_fid]
       ,[add_date]
       ,[add_accept]
       ,[remark]
+      ,[orderBy]
 FROM [OCA_OceanSubsidy].[dbo].[OSI_MapCounty]
+ORDER BY [orderBy]
 ";
         db.Parameters.Clear();
 

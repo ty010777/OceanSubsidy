@@ -182,6 +182,13 @@ var cirColor, cirFillColor, cirWidth, cirOpacity, cirStrokePick, cirFillPick, ci
 var SelectedImgSrc = "images/dot.svg";
 var drawCollection = new ol.Collection();
 
+// 編輯模式相關全域變數
+var MarkOriStyle = null;
+var IsMarkEdit = false;
+var CurrentMarkID = "";
+var CurrentNum = "";
+var modifyInteraction = null;
+
 //選取繪製型態
 function getTypeStyle(selectedValue) {
     $("#ddlCategory").val(selectedValue);
@@ -388,38 +395,27 @@ function drawEnd(olFeature, olGeom, selectedType) {
         case 'Point':
             var offsetY = 35;
             Num = pointNum;
-            var ptTxt = "";
-            pointTxt == undefined ? ptTxt = "點" + Num : ptTxt = pointTxt;
-            if (false && $("#rdoPtCoordYes")[0].checked) {
-                var Coord3857 = olFeature.getGeometry().getCoordinates();
-                var Coord4326 = ol.proj.transform(Coord3857, "EPSG:3857", "EPSG:4326");
-                var CoordTxt = Coord4326[1].toFixed(3) + "," + Coord4326[0].toFixed(3);
-                ptTxt = pointTxt.split('\n')[0].split(" ")[0] + '\n' + CoordTxt;
-                $("#txtPtName").val(ptTxt);
-                olFeature.set("IsCoord", true);
-                pointIsCoord = true;
-                IsCoord = 1;
-                offsetY = 40;
-            }
+            var pointTxt = $("#txtPtName").val() == "" ? "點" + Num : $("#txtPtName").val();
             if (SelectedImgSrc.indexOf("dot") > -1) {
-                styleArr = oltmx.Plugin.prototype.setPointMarkStyle(pointColor, pointScale, ptTxt, olFeature);
+                if (!pointScale) pointScale = 1;
+                styleArr = oltmx.Plugin.prototype.setPointMarkStyle(pointColor, pointScale, pointTxt, olFeature);
                 olFeature.set('olScale', parseInt(pointScale));
             } else {
-                styleArr = oltmx.Plugin.prototype.setIconMarkStyle(pointColor, pointScale, ptTxt, SelectedImgSrc, pointOpacity, olFeature, offsetY);
+                styleArr = oltmx.Plugin.prototype.setIconMarkStyle(pointColor, pointScale, pointTxt, SelectedImgSrc, pointOpacity, olFeature, offsetY);
             }
 
             olFeature.set('num', 'point' + Num);
             if (!(document.getElementById("MarkList").children[selectedType + Num])) {
-                genMarkList(PK, selectedType, Num, ptTxt, "point");
+                genMarkList(PK, selectedType, Num, pointTxt, "point");
                 pointNum++;
             }
-            Name = ptTxt;
+            Name = pointTxt;
             break;
         case 'LineString':
             var LineTypeS = 'non';// $("#ddlLineTypeS").val();
             var LineTypeE = 'non';//$("#ddlLineTypeE").val();
             Num = lineNum;
-            var LineTxt = "線" + Num;// $("#txtLineName").val() == "" ? "線" + Num : $("#txtLineName").val();
+            var LineTxt = $("#txtLineName").val() == "" ? "線" + Num : $("#txtLineName").val();
             var LineGeom = olFeature.getGeometry();
 
             styleArr = oltmx.Plugin.prototype.setLineMarkStyle(lineColor, lineWidth, LineTxt, lineDash1, lineDash2, olFeature);
@@ -496,7 +492,7 @@ function drawEnd(olFeature, olGeom, selectedType) {
             break;
         case 'Polygon':
             Num = polyNum;
-            var PolyTxt = "多邊形" + Num;// $("#txtPolyName").val() == "" ? "多邊形" + Num : $("#txtPolyName").val();
+            var PolyTxt = $("#txtPolyName").val() == "" ? "多邊形" + Num : $("#txtPolyName").val();
             styleArr = oltmx.Plugin.prototype.setPolyMarkStyle(polyFillColor, polyColor, polyWidth, PolyTxt, polyDash1, polyDash2, olFeature);
             olFeature.set('num', 'poly' + Num);
             if (!(document.getElementById("MarkList").children[selectedType + Num])) {
@@ -528,8 +524,7 @@ function drawEnd(olFeature, olGeom, selectedType) {
             break;
         case 'Box':
             Num = boxNum;
-            //$("#txtBoxName").val() == "" ? $("#txtBoxName").val("矩形" + Num) : $("#txtBoxName").val();
-            var BoxTxt = "矩形" + Num;
+            var BoxTxt = $("#txtBoxName").val() == "" ? "矩形" + Num : $("#txtBoxName").val();
             styleArr = oltmx.Plugin.prototype.setBoxMarkStyle(boxFillColor, boxColor, boxWidth, BoxTxt, boxDash1, boxDash2, olFeature);
             olFeature.set('num', 'box' + Num);
             if (!(document.getElementById("MarkList").children[selectedType + Num])) {
@@ -561,7 +556,7 @@ function drawEnd(olFeature, olGeom, selectedType) {
             break;
         case 'Circle':
             Num = cirNum;
-            var cirTxt = "圓形" + Num; // $("#txtCirName").val() == "" ? "圓形" + Num : $("#txtCirName").val();
+            var cirTxt = $("#txtCirName").val() == "" ? "圓形" + Num : $("#txtCirName").val();
             var Radius = olGeom.getRadius();
             var Center3857 = olGeom.getCenter();
             //var Center4326 = ol.proj.transform(Center3857, 'EPSG:3857', 'EPSG:4326');
@@ -748,7 +743,7 @@ function genMarkList(PK, selectedType, typeNum, label, type) {
             + '<span id="Label' + type + typeNum + '" onmouseover="hoverFeature(' + "'" + PK + "', '" + type + "', true" + ')" onmouseout="hoverFeature(' + "'" + PK + "', '" + type + "', false" + ')">' + label + '</span>'
             + '<div class="tools-wrap ms-auto">'
             //+ '<a href="javascript: void(0);" class="layer-tool" title="調整上下層" onclick="setFeatureSort(' + "'" + PK + "'" + '); "><i class="fa-solid fa-arrows-retweet"></i></a>'
-            //+ '<a href="javascript: void(0);" class="layer-tool" title="編輯" onclick="selectFeature(' + "'" + PK + "'" + '); "><i class="fa-solid fa-pen"></i></a>'
+            + '<a href="javascript: void(0);" class="layer-tool" title="編輯" onclick="editMarkerName(' + "'" + PK + "', '" + type + "', " + typeNum + '); "><i class="fa-solid fa-pen"></i></a>'
             + '<a href="javascript: void(0);" class="layer-tool" title="定位" onclick="locateToFeature(' + "'" + PK + "'" + '); "><i class="fa-solid fa-location-dot"></i></a>'
             + '<a href="javascript: void(0);" class="layer-tool" title="匯出GeoJSON" onclick="exportGeoJson(' + "'" + PK + "'" + '); "><i class="fa-solid fa-download"></i></a>'
             + '<a href="javascript: void(0);" class="layer-tool" title="刪除" onclick="deleteMark(' + selectedType + typeNum + ", '" + type + typeNum + "', '" + PK + "'" + ');"><i class="fa-solid fa-trash-can"></i></a>'
@@ -836,7 +831,8 @@ function createPoint() {
         var Coord3857 = ol.proj.transform([lon, lat], "EPSG:4326", "EPSG:3857");
         var olGeom = new ol.geom.Point(Coord3857);
         var olFeature = new ol.Feature(olGeom);
-        var ptTxt = "點" + pointNum; // $("#txtPtName").val() == "" ? "點" + pointNum : $("#txtPtName").val();
+        var customName = $("#txtPtName").val().trim();
+        var ptTxt = customName == "" ? "點" + pointNum : customName;
         //if ($("#rdoPtCoordYes")[0].checked) {
         //    var CoordTxt = lon.toFixed(3) + "," + lat.toFixed(3);
         //    ptTxt = $("#txtPtName").val() + '\n' + CoordTxt;
@@ -946,7 +942,7 @@ function addTxtMark() {
 
 //建立自訂線段標註
 function addLineMark() {
-    if (true && $("#txtLineName").val() != "") {
+    if (true) {
         var PK = CreateGuid();
         var selectedType = document.getElementById("ddlCategory").value;
         var LineCoord = [];
@@ -1006,7 +1002,8 @@ function addLineMark() {
 
         var olGeom = new ol.geom.LineString(LineCoord);
         var olFeature = new ol.Feature(olGeom);
-        var LineTxt = "線" + lineNum; //$("#txtLineName").val() == "" ? $("#txtLineName").val("線" + lineNum) : $("#txtLineName").val();
+        var customName = $("#txtLineName").val().trim();
+        var LineTxt = customName == "" ? "線" + lineNum : customName;
         var LineGeom = olFeature.getGeometry();
         var LineStyle = [];
         var LineDash = 0;   // $("#ddlLineDash").val();
@@ -1178,7 +1175,8 @@ function addPolyMark() {
             }
             var olGeom = new ol.geom.Polygon([polyCoords]);
             var olFeature = new ol.Feature(olGeom);
-            var PolyTxt = "多邊形" + polyNum; // $("#txtPolyName").val() == "" ? $("#txtPolyName").val("多邊形" + polyNum) : $("#txtPolyName").val();
+            var customName = $("#txtPolyName").val().trim();
+            var PolyTxt = customName == "" ? "多邊形" + polyNum : customName;
             var PolyDash = 0;// $("#ddlPolyDash").val();
             polyDash1 = parseInt(PolyDash);
             polyDash2 = parseInt(PolyDash);
@@ -1317,7 +1315,8 @@ function addBoxMark() {
 
             var olGeom = new ol.geom.Polygon([boxCoords]);
             var olFeature = new ol.Feature(olGeom);
-            var BoxTxt = "矩形" + boxNum; // $("#txtBoxName").val() == "" ? "矩形" + boxNum : $("#txtBoxName").val();
+            var customName = $("#txtBoxName").val().trim();
+            var BoxTxt = customName == "" ? "矩形" + boxNum : customName;
             var BoxDash = 0;// $("#ddlBoxDash").val();
             boxDash1 = parseInt(BoxDash);
             boxDash2 = parseInt(BoxDash);
@@ -1437,7 +1436,8 @@ function addCirMark() {
         olFeature.set('Radius', radius);
         olFeature.set('CirUnit', CirUnit);
         olFeature.setId(PK);
-        var cirTxt = "圓形" + cirNum;// $("#txtCirName").val() == "" ? "圓形" + cirNum : $("#txtCirName").val();
+        var customName = $("#txtCirName").val().trim();
+        var cirTxt = customName == "" ? "圓形" + cirNum : customName;
         var CirDash = 0;// $("#ddlCirDash").val();
         cirDash1 = parseInt(CirDash);
         cirDash2 = parseInt(CirDash);
@@ -1695,24 +1695,263 @@ function selectFeature(PK) {
     //});
 }
 
+//編輯標記名稱
+function editMarkerName(PK, type, typeNum) {
+    // 取得標註資料
+    var olFeature = drawSource.getFeatureById(PK);
+    if (!olFeature) return;
+    
+    // 從列表中的 Label 元素取得當前名稱
+    var labelId = 'Label' + type + typeNum;
+    var currentName = $('#' + labelId).text() || '';
+    
+    // 設定對應的標註介面
+    if (type == "point") {
+        getTypeStyle("Point");
+        // 填入名稱
+        $("#txtPtName").val(currentName);
+        // 填入座標
+        var coord = olFeature.getGeometry().getCoordinates();
+        var coord4326 = ol.proj.transform(coord, 'EPSG:3857', 'EPSG:4326');
+        $("#txtPtLatDD").val(coord4326[1].toFixed(6));
+        $("#txtPtLonDD").val(coord4326[0].toFixed(6));
+    } else if (type == "line") {
+        getTypeStyle("LineString");
+        $("#txtLineName").val(currentName);
+        // 填入線段座標
+        var coords = olFeature.getGeometry().getCoordinates();
+        setLineCoord(coords);
+    } else if (type == "poly") {
+        getTypeStyle("Polygon");
+        $("#txtPolyName").val(currentName);
+        // 填入多邊形座標
+        var coords = olFeature.getGeometry().getCoordinates();
+        setPolyCoord(coords);
+    } else if (type == "box") {
+        getTypeStyle("Box");
+        $("#txtBoxName").val(currentName);
+        // 填入矩形座標
+        var coords = olFeature.getGeometry().getCoordinates();
+        setBoxCoord(coords);
+    } else if (type == "cir") {
+        getTypeStyle("Circle");
+        $("#txtCirName").val(currentName);
+        // 填入圓形座標和半徑
+        var center = olFeature.getGeometry().getCenter();
+        var radius = olFeature.getGeometry().getRadius();
+        var coord4326 = ol.proj.transform(center, 'EPSG:3857', 'EPSG:4326');
+        $("#txtCirLatDD").val(coord4326[1].toFixed(6));
+        $("#txtCirLonDD").val(coord4326[0].toFixed(6));
+        $("#txtCirRadius").val(radius.toFixed(2));
+    }
+    
+    // 設定編輯模式相關變數
+    IsMarkEdit = true;
+    CurrentMarkID = PK;
+    CurrentNum = type + typeNum;
+    
+    // 隱藏建立按鈕，顯示修改按鈕
+    $(".btnBoxCenter").hide();
+    $("#divUpdateBtn").show();
+    
+    // 在標註列表中標示為編輯中
+    $("#P" + PK).addClass("active");
+    
+    // 進入編輯模式時的限制
+    // 1. 禁用標註類型選擇
+    $("#ddlCategory").prop("disabled", true);
+    
+    // 2. 禁用所有標註列表中的功能按鈕
+    $("#MarkList .layer-tool").css("pointer-events", "none").css("opacity", "0.5");
+    
+    // 啟用修改功能
+    map.removeInteraction(drawInteraction);
+    if (type != "point" && type != "text") {
+        modifyInteraction = new ol.interaction.Modify({
+            features: new ol.Collection([olFeature]),
+            deleteCondition: ol.events.condition.shiftKeyOnly
+        });
+        map.addInteraction(modifyInteraction);
+    }
+}
+
+
 //修改標註樣式
 function UpdateMark() {
-    if (CurrentNum != "") {
+    if (CurrentMarkID != "") {
         var olF = drawSource.getFeatureById(CurrentMarkID);
-        var BtnID = "BtnSave" + CurrentNum;
-        $("#" + BtnID).click();
+        if (!olF) return;
+        
+        // 取得標註類型
+        var markNum = olF.get('num');
+        var type = '';
+        if (markNum.indexOf('point') === 0) {
+            type = 'point';
+            // 更新點位名稱
+            var newName = $("#txtPtName").val();
+            olF.set('label', newName);
+            pointTxt = newName;
+            
+            // 更新點位座標
+            var lat = parseFloat($("#txtPtLatDD").val());
+            var lon = parseFloat($("#txtPtLonDD").val());
+            if (!isNaN(lat) && !isNaN(lon)) {
+                var coord3857 = ol.proj.transform([lon, lat], 'EPSG:4326', 'EPSG:3857');
+                olF.getGeometry().setCoordinates(coord3857);
+            }
+        } else if (markNum.indexOf('line') === 0) {
+            type = 'line';
+            var newName = $("#txtLineName").val();
+            olF.set('label', newName);
+            lineTxt = newName;
+            
+            // 更新線段座標
+            var coords = [];
+            var i = 1;
+            while ($("#txtLineLatDD" + i).length > 0) {
+                var lat = parseFloat($("#txtLineLatDD" + i).val());
+                var lon = parseFloat($("#txtLineLonDD" + i).val());
+                if (!isNaN(lat) && !isNaN(lon)) {
+                    var coord3857 = ol.proj.transform([lon, lat], 'EPSG:4326', 'EPSG:3857');
+                    coords.push(coord3857);
+                }
+                i++;
+            }
+            if (coords.length >= 2) {
+                olF.getGeometry().setCoordinates(coords);
+            }
+        } else if (markNum.indexOf('poly') === 0) {
+            type = 'poly';
+            var newName = $("#txtPolyName").val();
+            olF.set('label', newName);
+            polyTxt = newName;
+            
+            // 更新多邊形座標
+            var coords = [];
+            var i = 1;
+            while ($("#txtPolyLatDD" + i).length > 0) {
+                var lat = parseFloat($("#txtPolyLatDD" + i).val());
+                var lon = parseFloat($("#txtPolyLonDD" + i).val());
+                if (!isNaN(lat) && !isNaN(lon)) {
+                    var coord3857 = ol.proj.transform([lon, lat], 'EPSG:4326', 'EPSG:3857');
+                    coords.push(coord3857);
+                }
+                i++;
+            }
+            if (coords.length >= 3) {
+                // 多邊形需要閉合，所以要加上第一個點
+                coords.push(coords[0]);
+                olF.getGeometry().setCoordinates([coords]);
+            }
+        } else if (markNum.indexOf('box') === 0) {
+            type = 'box';
+            var newName = $("#txtBoxName").val();
+            olF.set('label', newName);
+            boxTxt = newName;
+            
+            // 更新矩形座標
+            var lat1 = parseFloat($("#txtBoxLatDD1").val());
+            var lon1 = parseFloat($("#txtBoxLonDD1").val());
+            var lat2 = parseFloat($("#txtBoxLatDD2").val());
+            var lon2 = parseFloat($("#txtBoxLonDD2").val());
+            
+            if (!isNaN(lat1) && !isNaN(lon1) && !isNaN(lat2) && !isNaN(lon2)) {
+                var coord1 = ol.proj.transform([lon1, lat1], 'EPSG:4326', 'EPSG:3857');
+                var coord2 = ol.proj.transform([lon2, lat2], 'EPSG:4326', 'EPSG:3857');
+                
+                // 建立矩形的四個頂點
+                var minX = Math.min(coord1[0], coord2[0]);
+                var maxX = Math.max(coord1[0], coord2[0]);
+                var minY = Math.min(coord1[1], coord2[1]);
+                var maxY = Math.max(coord1[1], coord2[1]);
+                
+                var boxCoords = [
+                    [minX, minY],
+                    [maxX, minY],
+                    [maxX, maxY],
+                    [minX, maxY],
+                    [minX, minY]  // 閉合多邊形
+                ];
+                
+                olF.getGeometry().setCoordinates([boxCoords]);
+            }
+        } else if (markNum.indexOf('cir') === 0) {
+            type = 'cir';
+            var newName = $("#txtCirName").val();
+            olF.set('label', newName);
+            cirTxt = newName;
+            
+            // 更新圓形座標和半徑
+            var lat = parseFloat($("#txtCirLatDD").val());
+            var lon = parseFloat($("#txtCirLonDD").val());
+            var radius = parseFloat($("#txtCirRadius").val());
+            if (!isNaN(lat) && !isNaN(lon) && !isNaN(radius)) {
+                // 根據單位轉換半徑為公尺
+                var radiusInMeters = radius;
+                var cirUnit = $("#ddlCirUnit").val();
+                if (cirUnit == "km") {
+                    radiusInMeters = radius * 1000;
+                } else if (cirUnit == "nm") {
+                    radiusInMeters = radius * 1852;
+                }
+                
+                var center3857 = ol.proj.transform([lon, lat], 'EPSG:4326', 'EPSG:3857');
+                olF.setGeometry(new ol.geom.Circle(center3857, radiusInMeters));
+                
+                // 更新 Radius 和 CirUnit 屬性
+                olF.set('Radius', radiusInMeters);
+                olF.set('CirUnit', cirUnit);
+            }
+        }
+        
+        // 更新地圖上標記的顯示文字
+        var style = olF.getStyle();
+        if (style && typeof style.getText === 'function' && style.getText()) {
+            style.getText().setText(olF.get('label'));
+        } else if (Array.isArray(style)) {
+            // 如果樣式是陣列，找到包含文字的樣式
+            for (var i = 0; i < style.length; i++) {
+                if (style[i].getText && style[i].getText()) {
+                    style[i].getText().setText(olF.get('label'));
+                    break;
+                }
+            }
+        }
+        
+        // 更新列表顯示
+        var typeNum = markNum.replace(type, '');
+        $('#Label' + type + typeNum).text(olF.get('label'));
+        
+        // 重設編輯狀態
         IsMarkEdit = false;
         MarkOriStyle = null;
         CurrentMarkID = "";
         CurrentNum = "";
-        //TransformInteraction.select(olF, false);
+        
+        // 移除修改功能
+        if (modifyInteraction) {
+            map.removeInteraction(modifyInteraction);
+            modifyInteraction = null;
+        }
+        
+        // 移除編輯中的標示
+        $("#P" + olF.getId()).removeClass("active");
     }
+    
+    // 恢復介面到非編輯狀態
     $(".btnBoxCenter").show();
     $("#divUpdateBtn").hide();
+    
+    // 恢復被禁用的功能
+    $("#ddlCategory").prop("disabled", false);
+    $("#MarkList .layer-tool").css("pointer-events", "").css("opacity", "");
 }
 
 //列表Hover效果
 function hoverFeature(PK, markType, IsHover) {
+    // 如果在編輯模式中，不執行 hover 效果
+    if (IsMarkEdit) return;
+    
     var olFeature = drawSource.getFeatureById(PK);
     if (IsHover) {
         if (olFeature != null) {
@@ -1725,6 +1964,21 @@ function hoverFeature(PK, markType, IsHover) {
             } else {
                 MarkOriStyle = olFeature.getStyle().clone();
             }
+            
+            // 設定對應的標註介面
+            if (markType == "point") {
+                getTypeStyle("Point");
+            } else if (markType == "line") {
+                getTypeStyle("LineString");
+            } else if (markType == "poly") {
+                getTypeStyle("Polygon");
+            } else if (markType == "box") {
+                getTypeStyle("Box");
+            } else if (markType == "cir") {
+                getTypeStyle("Circle");
+            } else if (markType == "text") {
+                getTypeStyle("Text");
+            }
 
             var olStyle = olFeature.getStyle();
             if (olStyle.length != undefined) {
@@ -1732,14 +1986,28 @@ function hoverFeature(PK, markType, IsHover) {
             }
             setOriginStyle(olFeature, markType);
             if (markType == "point") {
-                var scale = olStyle.getImage().getScale();
+                var scale = 1;
                 var pointStyle = null;
-                if (olStyle.getImage().getSrc == undefined) {
-                    scale = olFeature.get('olScale');
-                    pointStyle = oltmx.Plugin.prototype.setPointMarkStyle("#00FFFF", scale, olStyle.getText().getText(), olFeature);
+                
+                // 檢查是否有圖像樣式
+                if (olStyle.getImage()) {
+                    scale = olStyle.getImage().getScale() || 1;
+                    
+                    // 檢查是否為圖標樣式（有 getSrc 方法）
+                    if (olStyle.getImage().getSrc && typeof olStyle.getImage().getSrc === 'function') {
+                        // 圖標樣式
+                        var src = olStyle.getImage().getSrc();
+                        pointStyle = oltmx.Plugin.prototype.setIconMarkStyle("#00FFFF", scale, olStyle.getText().getText(), src, olStyle.getImage().getOpacity(), olFeature, 35);
+                    } else {
+                        // 一般點樣式
+                        scale = olFeature.get('olScale') || scale;
+                        pointStyle = oltmx.Plugin.prototype.setPointMarkStyle("#00FFFF", scale, olStyle.getText().getText(), olFeature);
+                    }
                 } else {
-                    pointStyle = oltmx.Plugin.prototype.setIconMarkStyle("#00FFFF", scale, olStyle.getText().getText(), olStyle.getImage().getSrc(), olStyle.getImage().getOpacity(), olFeature, 35);
+                    // 沒有圖像樣式，使用預設點樣式
+                    pointStyle = oltmx.Plugin.prototype.setPointMarkStyle("#00FFFF", 1, olStyle.getText().getText(), olFeature);
                 }
+                
                 olFeature.setStyle(pointStyle);
             } else if (markType == "text") {
                 olStyle.getText().getStroke().setWidth(5);
@@ -1769,26 +2037,110 @@ function hoverFeature(PK, markType, IsHover) {
 
 //取消編輯
 function CancelUpdateMark() {
-    if (MarkOriStyle != null && CurrentMarkID != "") {
-        //顯示建立按鈕
-        $(".btnBoxCenter").show();
-        var olF = drawSource.getFeatureById(CurrentMarkID);
-        //恢復原本樣式
-        olF.setStyle(MarkOriStyle);
-        //取消編輯狀態
-        map.removeInteraction(modifyInteraction);
+    if (CurrentMarkID != "") {
+        // 恢復原本樣式
+        if (MarkOriStyle != null) {
+            var olF = drawSource.getFeatureById(CurrentMarkID);
+            if (olF) {
+                olF.setStyle(MarkOriStyle);
+            }
+        }
+        
+        // 取消編輯狀態
+        if (modifyInteraction) {
+            map.removeInteraction(modifyInteraction);
+            modifyInteraction = null;
+        }
         map.removeInteraction(drawInteraction);
+        
+        // 移除編輯中的標示
         $("#P" + CurrentMarkID).removeClass("active");
+        
+        // 重設編輯狀態變數
         IsMarkEdit = false;
         MarkOriStyle = null;
         CurrentMarkID = "";
         CurrentNum = "";
-        //TransformInteraction.select(olF, false);
-        $("#divUpdateBtn").hide();
+        
+        // 清空輸入欄位
         $("._divMarkCoord").find('input').val("");
         $(".addLine").remove();
         $("._CreatePolyCoord").remove();
+        
+        // 清空各種標註類型的名稱欄位
+        $("#txtPtName").val("");
+        $("#txtLineName").val("");
+        $("#txtPolyName").val("");
+        $("#txtBoxName").val("");
+        $("#txtCirName").val("");
+        $("#txtCirRadius").val("");
     }
+    
+    // 恢復介面到非編輯狀態
+    $(".btnBoxCenter").show();
+    $("#divUpdateBtn").hide();
+    
+    // 恢復被禁用的功能
+    $("#ddlCategory").prop("disabled", false);
+    $("#MarkList .layer-tool").css("pointer-events", "").css("opacity", "");
+}
+
+// 清除所有標註輸入欄位
+function clearAllMarkInputs() {
+    // 清空所有輸入欄位
+    $("._divMarkCoord").find('input').val("");
+    $(".addLine").remove();
+    $("._CreatePolyCoord").remove();
+    
+    // 清空各種標註類型的名稱欄位
+    $("#txtPtName").val("");
+    $("#txtLineName").val("");
+    $("#txtPolyName").val("");
+    $("#txtBoxName").val("");
+    $("#txtCirName").val("");
+    $("#txtCirRadius").val("");
+    $("#textfacility").val("");
+    
+    // 清空點位座標欄位
+    $("#txtPtLatDD").val("");
+    $("#txtPtLonDD").val("");
+    $("#txtPtLatD").val("");
+    $("#txtPtLatM").val("");
+    $("#txtPtLatS").val("");
+    $("#txtPtLonD").val("");
+    $("#txtPtLonM").val("");
+    $("#txtPtLonS").val("");
+    
+    // 清空線段座標欄位
+    $("#divLineDD input[type='text']").val("");
+    $("#divLineDMS input[type='text']").val("");
+    
+    // 清空多邊形座標欄位
+    $("#divPolyDD input[type='text']").val("");
+    $("#divPolyDMS input[type='text']").val("");
+    
+    // 清空矩形座標欄位
+    $("#divBoxDD input[type='text']").val("");
+    $("#divBoxDMS input[type='text']").val("");
+    
+    // 清空圓形座標欄位
+    $("#txtCirLatDD").val("");
+    $("#txtCirLonDD").val("");
+    $("#txtCirLatD").val("");
+    $("#txtCirLatM").val("");
+    $("#txtCirLatS").val("");
+    $("#txtCirLonD").val("");
+    $("#txtCirLonM").val("");
+    $("#txtCirLonS").val("");
+    
+    // 清空文字座標欄位
+    $("#txtTxtLatDD").val("");
+    $("#txtTxtLonDD").val("");
+    $("#txtTxtLat").val("");
+    $("#txtTxtLon").val("");
+    
+    // 重置 drawInteraction
+    resetDrawInteraction();
 }
 
 //帶入圖徵原始樣式
@@ -1814,7 +2166,7 @@ function setMkCtrlStyle(olFeature, markType, Text) {
             setRdoBtnChecked($("#rdoTxtCoordNo"), !textIsCoord);
             break;
         case 'point':
-            //$("#txtPtName").val(Text);
+            $("#txtPtName").val(Text);
             //$('.sp-preview-inner')[0].style.backgroundColor = pointColor;
             //$("#iconsize").val(pointScale);
             var Opacity = pointOpacity;
@@ -2160,7 +2512,7 @@ function setCircleCoord(Extent, olFeature) {
     } else if (CirUnit == "nm") {
         Radius = Radius / 1852;
     }
-    $("#txtCirRadius").val(Radius.toFixed(6));
+    $("#txtCirRadius").val(Radius.toFixed(3));
 }
 
 //開啟自訂線段坐標

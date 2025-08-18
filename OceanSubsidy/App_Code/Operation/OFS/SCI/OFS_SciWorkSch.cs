@@ -472,11 +472,10 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                 try
                 {
                     string sql = @"
-                        SELECT ID, ProjectID, FileCode, FileName, TemplatePath, Statuses
+                        SELECT ID, ProjectID, FileCode, FileName, TemplatePath
                         FROM OFS_SCI_UploadFile 
                         WHERE ProjectID = @ProjectId 
-                        AND FileCode = @FileCode 
-                        AND Statuses = 'Active'";
+                        AND FileCode = @FileCode";
                     
                     db.CommandText = sql;
                     db.Parameters.Clear();
@@ -494,8 +493,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                             ProjectID = row["ProjectID"].ToString(),
                             FileCode = row["FileCode"].ToString(),
                             FileName = row["FileName"].ToString(),
-                            TemplatePath = row["TemplatePath"].ToString(),
-                            Statuses = row["Statuses"].ToString()
+                            TemplatePath = row["TemplatePath"].ToString()
                         };
                         result.Add(uploadFile);
                     }
@@ -522,9 +520,9 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                 {
                     string sql = @"
                         INSERT INTO OFS_SCI_UploadFile 
-                        (ProjectID, FileCode, FileName, TemplatePath, Statuses)
+                        (ProjectID, FileCode, FileName, TemplatePath)
                         VALUES 
-                        (@ProjectId, @FileCode, @FileName, @TemplatePath, @Statuses)";
+                        (@ProjectId, @FileCode, @FileName, @TemplatePath)";
                     
                     db.CommandText = sql;
                     db.Parameters.Clear();
@@ -532,7 +530,6 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                     db.Parameters.Add("@FileCode", uploadFile.FileCode);
                     db.Parameters.Add("@FileName", uploadFile.FileName);
                     db.Parameters.Add("@TemplatePath", uploadFile.TemplatePath);
-                    db.Parameters.Add("@Statuses", uploadFile.Statuses);
                     db.ExecuteNonQuery();
                 }
                 catch (Exception ex)
@@ -556,8 +553,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                 try
                 {
                     string sql = @"
-                        UPDATE OFS_SCI_UploadFile 
-                        SET Statuses = 'Deleted'
+                        DELETE FROM OFS_SCI_UploadFile 
                         WHERE ProjectID = @ProjectId 
                         AND FileCode = @FileCode";
                     

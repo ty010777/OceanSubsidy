@@ -686,10 +686,10 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
         
         protected bool? _isWithdrawal = false;
         ///<summary>
-        ///  ()
+        /// 是否撤案 (是否撤案)
         ///</summary>
         [DataMember]
-        [GisFieldAttribute("isWithdrawal", "isWithdrawal", DataSource.TABLE, "", false)]
+        [GisFieldAttribute("isWithdrawal", "isWithdrawal", DataSource.TABLE, "是否撤案", false)]
         public virtual bool? isWithdrawal
         {
             get
@@ -754,47 +754,12 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
         
-        protected double? _FirstRequestedSubsidy = null;
-        ///<summary>
-        ///  ()
-        ///</summary>
-        [DataMember]
-        [GisFieldAttribute("FirstRequestedSubsidy", "FirstRequestedSubsidy", DataSource.TABLE, "", false)]
-        public virtual double? FirstRequestedSubsidy
-        {
-            get
-            {
-                return _FirstRequestedSubsidy;
-            }
-            set
-            {
-                bool isModify = false;
-                if (_FirstRequestedSubsidy == null) {
-                    if(value != null) {
-                        isModify = true;
-                    }
-                }
-                else if (!_FirstRequestedSubsidy.Equals(value))
-                {
-                    isModify = true;
-                }
-                if(isModify) {
-                    MetaDataState = DataState.UPDATE;
-                    if (UPDATE_COLUMN.IndexOf("FirstRequestedSubsidy") == -1)
-                    {
-                        UPDATE_COLUMN.Add("FirstRequestedSubsidy");
-                    }
-                    _FirstRequestedSubsidy = value;
-                }
-            }
-        }
-        
         protected double? _ApprovedSubsidy = 0;
         ///<summary>
-        ///  ()
+        /// 決審核定金額 (決審核定金額)
         ///</summary>
         [DataMember]
-        [GisFieldAttribute("ApprovedSubsidy", "ApprovedSubsidy", DataSource.TABLE, "", false)]
+        [GisFieldAttribute("ApprovedSubsidy", "ApprovedSubsidy", DataSource.TABLE, "決審核定金額", false)]
         public virtual double? ApprovedSubsidy
         {
             get
@@ -826,10 +791,10 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
         
         protected string _FinalReviewNotes = "";
         ///<summary>
-        ///  ()
+        /// 決審備註 (決審備註)
         ///</summary>
         [DataMember]
-        [GisFieldAttribute("FinalReviewNotes", "FinalReviewNotes", DataSource.TABLE, "", false)]
+        [GisFieldAttribute("FinalReviewNotes", "FinalReviewNotes", DataSource.TABLE, "決審備註", false)]
         public virtual string FinalReviewNotes
         {
             get
@@ -861,10 +826,10 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
         
         protected int? _FinalReviewOrder = null;
         ///<summary>
-        ///  ()
+        /// 決審補助案排序順序 (決審補助案排序順序)
         ///</summary>
         [DataMember]
-        [GisFieldAttribute("FinalReviewOrder", "FinalReviewOrder", DataSource.TABLE, "", false)]
+        [GisFieldAttribute("FinalReviewOrder", "FinalReviewOrder", DataSource.TABLE, "決審補助案排序順序", false)]
         public virtual int? FinalReviewOrder
         {
             get
@@ -896,10 +861,10 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
         
         protected DateTime? _MidtermExamDate = null;
         ///<summary>
-        ///  ()
+        /// 期中檢測日期 (期中檢測日期)
         ///</summary>
         [DataMember]
-        [GisFieldAttribute("MidtermExamDate", "MidtermExamDate", DataSource.TABLE, "", false)]
+        [GisFieldAttribute("MidtermExamDate", "MidtermExamDate", DataSource.TABLE, "期中檢測日期", false)]
         public virtual DateTime? MidtermExamDate
         {
             get
@@ -931,10 +896,10 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
         
         protected DateTime? _FinalExamDate = null;
         ///<summary>
-        ///  ()
+        /// 期末檢核日期 (期末檢核日期)
         ///</summary>
         [DataMember]
-        [GisFieldAttribute("FinalExamDate", "FinalExamDate", DataSource.TABLE, "", false)]
+        [GisFieldAttribute("FinalExamDate", "FinalExamDate", DataSource.TABLE, "期末檢核日期", false)]
         public virtual DateTime? FinalExamDate
         {
             get
@@ -960,6 +925,76 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
                         UPDATE_COLUMN.Add("FinalExamDate");
                     }
                     _FinalExamDate = value;
+                }
+            }
+        }
+        
+        protected string _PubNumber = "";
+        ///<summary>
+        /// 發文文號 (發文文號)
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("PubNumber", "PubNumber", DataSource.TABLE, "發文文號", false)]
+        public virtual string PubNumber
+        {
+            get
+            {
+                return _PubNumber;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_PubNumber == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_PubNumber.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("PubNumber") == -1)
+                    {
+                        UPDATE_COLUMN.Add("PubNumber");
+                    }
+                    _PubNumber = value;
+                }
+            }
+        }
+        
+        protected DateTime? _ContractDate = null;
+        ///<summary>
+        /// 契約日期 (契約日期)
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("ContractDate", "ContractDate", DataSource.TABLE, "契約日期", false)]
+        public virtual DateTime? ContractDate
+        {
+            get
+            {
+                return _ContractDate;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_ContractDate == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_ContractDate.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("ContractDate") == -1)
+                    {
+                        UPDATE_COLUMN.Add("ContractDate");
+                    }
+                    _ContractDate = value;
                 }
             }
         }

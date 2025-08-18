@@ -93,7 +93,7 @@ namespace GS.OCA_OceanSubsidy.Model.OFS
             
             switch (StatusesName.ToLower())
             {
-                case "審查中":
+                case "審核中":
                     return "status-review";
                 case "通過":
                     return "status-pass";
@@ -114,7 +114,7 @@ namespace GS.OCA_OceanSubsidy.Model.OFS
             
             switch (StatusesName.ToLower())
             {
-                case "審查中":
+                case "審核中":
                     return "<button class=\"action-btn btn-review\">審查</button>";
                 default:
                     return "--";

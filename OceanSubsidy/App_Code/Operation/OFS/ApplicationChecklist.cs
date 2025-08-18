@@ -609,9 +609,6 @@ public class ApplicationChecklistHelper
     /// <returns>審查階段</returns>
     public static string GetCurrentReviewStage(string projectId)
     {
-        if (string.IsNullOrEmpty(projectId))
-            return "領域審查";
-
         DbHelper db = new DbHelper();
         
         try
@@ -691,5 +688,94 @@ public class ApplicationChecklistHelper
         {
             db.Dispose();
         }
+    }
+    
+    /// <summary>
+    /// 根據關鍵字搜尋專案ID
+    /// </summary>
+    /// <param name="keyword">關鍵字</param>
+    /// <returns>符合條件的專案ID清單</returns>
+    public static List<string> SearchProjectIDsByKeyword(string keyword)
+    {
+        List<string> projectIDs = new List<string>();
+        
+        if (string.IsNullOrWhiteSpace(keyword))
+            return projectIDs;
+
+        DbHelper db = new DbHelper();
+        
+        try
+        {
+            db.CommandText = @"
+                SELECT DISTINCT KeywordID
+                FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Application_KeyWord]
+                WHERE KeyWordTw LIKE @Keyword
+                   OR KeyWordEn LIKE @Keyword";
+            
+            db.Parameters.Add("@Keyword", "%" + keyword.Trim() + "%");
+            
+            DataTable dt = db.GetTable();
+            
+            foreach (DataRow row in dt.Rows)
+            {
+                string keywordID = row["KeywordID"]?.ToString();
+                if (!string.IsNullOrEmpty(keywordID))
+                {
+                    projectIDs.Add(keywordID);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"搜尋關鍵字時發生錯誤：{ex.Message}");
+        }
+        finally
+        {
+            db.Dispose();
+        }
+        
+        return projectIDs;
+    }
+    
+    /// <summary>
+    /// 取得需要回覆的 ProjectID 清單
+    /// 條件：OFS_ReviewRecords.isSubmit = 1 但 ReplyComment 是 null 或空值
+    /// </summary>
+    /// <returns>需要回覆的 ProjectID 清單</returns>
+    public static List<string> GetWaitingReplyProjectIds()
+    {
+        List<string> projectIds = new List<string>();
+        DbHelper db = new DbHelper();
+        
+        try
+        {
+            db.CommandText = @"
+                SELECT DISTINCT ProjectID
+                FROM [OCA_OceanSubsidy].[dbo].[OFS_ReviewRecords]
+                WHERE isSubmit = 1 
+                  AND (ReplyComment IS NULL OR ReplyComment = '' OR LTRIM(RTRIM(ReplyComment)) = '')
+                  AND ProjectID IS NOT NULL";
+            
+            DataTable dt = db.GetTable();
+            
+            foreach (DataRow row in dt.Rows)
+            {
+                string projectId = row["ProjectID"]?.ToString();
+                if (!string.IsNullOrEmpty(projectId))
+                {
+                    projectIds.Add(projectId);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得待回覆 ProjectID 清單時發生錯誤：{ex.Message}");
+        }
+        finally
+        {
+            db.Dispose();
+        }
+        
+        return projectIds;
     }
 }

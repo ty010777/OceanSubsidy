@@ -77,6 +77,9 @@ public partial class Manage_Users : Page
 
     protected void btnSearchUser_Click(object s, EventArgs e)
     {
+        // 重設分頁到第一頁
+        dpUsers.SetPageProperties(0, dpUsers.PageSize, false);
+
         BindUserList();
     }
     private void BindUserList()

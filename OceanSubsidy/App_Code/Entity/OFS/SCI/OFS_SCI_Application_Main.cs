@@ -89,41 +89,6 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
         
-        protected string _KeywordID = "";
-        ///<summary>
-        /// 關鍵字表單外建 (關鍵字表單外建)
-        ///</summary>
-        [DataMember]
-        [GisFieldAttribute("KeywordID", "KeywordID", DataSource.TABLE, "關鍵字表單外建", false)]
-        public virtual string KeywordID
-        {
-            get
-            {
-                return _KeywordID;
-            }
-            set
-            {
-                bool isModify = false;
-                if (_KeywordID == null) {
-                    if(value != null) {
-                        isModify = true;
-                    }
-                }
-                else if (!_KeywordID.Equals(value))
-                {
-                    isModify = true;
-                }
-                if(isModify) {
-                    MetaDataState = DataState.UPDATE;
-                    if (UPDATE_COLUMN.IndexOf("KeywordID") == -1)
-                    {
-                        UPDATE_COLUMN.Add("KeywordID");
-                    }
-                    _KeywordID = value;
-                }
-            }
-        }
-        
         protected int? _Year = null;
         ///<summary>
         /// 年度 (年度)

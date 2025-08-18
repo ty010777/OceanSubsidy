@@ -33,7 +33,7 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
             // 檢查是否有計畫ID
             if (string.IsNullOrEmpty(ProjectID))
             {
-                Response.Redirect("~/OFS/ApplicationChecklist.aspx");
+                Response.Redirect("~/OFS/ReviewChecklist.aspx");
                 return;
             }
 
@@ -169,7 +169,7 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
                     confirmButtonText: '確定'
                 }}).then((result) => {{
                     if (result.isConfirmed) {{
-                        window.location.href = '{ResolveUrl("~/OFS/ApplicationChecklist.aspx")}';
+                        window.location.href = '{ResolveUrl("~/OFS/ReviewChecklist.aspx")}';
                     }}
                 }});
             ";
@@ -712,7 +712,7 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
                 confirmButtonText: '確定'
             }}).then((result) => {{
                 if (result.isConfirmed) {{
-                    window.location.href = '~/OFS/ApplicationChecklist.aspx';
+                    window.location.href = '~/OFS/ReviewChecklist.aspx';
                 }}
             }});
         ";

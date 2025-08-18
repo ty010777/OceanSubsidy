@@ -35,41 +35,72 @@
     {
         // 在新的工作階段啟動時執行的程式碼
 
-        // UserInfo Session過期自訂建立(開發若有需要可自行開啟)
+        // 開發環境自動登入 (讀取 dev.config)
         if (HttpContext.Current.IsDebuggingEnabled &&
             SessionHelper.Get<SessionHelper.UserInfoClass>(SessionHelper.UserInfo) is null)
         {
-            List<string> perms = SysUserHelper.GetOSIPermsByAccount("gregchen@geosense.tw");
-            SessionHelper.Set(SessionHelper.UserPermissions, perms);
-
-            var userInfoTemp = new SessionHelper.UserInfoClass();
-            var tbl = SysUserHelper.QueryUserInfoByID(4);
-            if (tbl != null && tbl.Rows.Count > 0)
+            // 嘗試載入開發者設定檔
+            var devConfigPath = HttpContext.Current.Server.MapPath("~/dev.config");
+            if (System.IO.File.Exists(devConfigPath))
             {
-                var data = tbl.Rows[0];
-                userInfoTemp.UserID = data["UserID"].ToString();
-                userInfoTemp.Account = data["Account"].ToString();
-                userInfoTemp.UserName = data["Name"].ToString();
-                userInfoTemp.UnitID = data["UnitID"].ToString();
-                userInfoTemp.UnitName = data["UnitName"].ToString();
-                userInfoTemp.UnitType = data["UnitType"].ToString();
-                userInfoTemp.UnitName = SysUserHelper.QueryUnitNameByUserID(userInfoTemp.UserID);
-                userInfoTemp.OSI_RoleName = data["OSI_RoleName"].ToString();
-                // 查詢使用者的 OFS 角色名稱
-                var ofsRoleTable = OFSRoleHelper.QueryByUserID(userInfoTemp.UserID);
-                if (ofsRoleTable != null && ofsRoleTable.Rows.Count > 0)
+                try
                 {
-                    userInfoTemp.OFS_RoleName = ofsRoleTable.Rows.Cast<DataRow>()
-                        .Select(row => row["RoleName"].ToString())
-                        .ToArray();
-                }
-                else
-                {
-                    userInfoTemp.OFS_RoleName = new string[0];
-                }
+                    var devConfig = new System.Configuration.ExeConfigurationFileMap();
+                    devConfig.ExeConfigFilename = devConfigPath;
+                    var config = System.Configuration.ConfigurationManager.OpenMappedExeConfiguration(devConfig, System.Configuration.ConfigurationUserLevel.None);
 
+                    var enabledSetting = config.AppSettings.Settings["DevAutoLogin.Enabled"];
+                    if (enabledSetting != null && enabledSetting.Value == "true")
+                    {
+                        var accountSetting = config.AppSettings.Settings["DevAutoLogin.Account"];
+                        var userIdSetting = config.AppSettings.Settings["DevAutoLogin.UserID"];
+
+                        if (accountSetting != null && userIdSetting != null)
+                        {
+                            string devAccount = accountSetting.Value;
+                            int devUserId = int.Parse(userIdSetting.Value);
+
+                            // 設定權限
+                            List<string> perms = SysUserHelper.GetOSIPermsByAccount(devAccount);
+                            SessionHelper.Set(SessionHelper.UserPermissions, perms);
+
+                            // 設定使用者資訊
+                            var userInfoTemp = new SessionHelper.UserInfoClass();
+                            var tbl = SysUserHelper.QueryUserInfoByID(devUserId);
+                            if (tbl != null && tbl.Rows.Count > 0)
+                            {
+                                var data = tbl.Rows[0];
+                                userInfoTemp.UserID = data["UserID"].ToString();
+                                userInfoTemp.Account = data["Account"].ToString();
+                                userInfoTemp.UserName = data["Name"].ToString();
+                                userInfoTemp.UnitID = data["UnitID"].ToString();
+                                userInfoTemp.UnitType = data["UnitType"].ToString();
+                                userInfoTemp.UnitName = SysUserHelper.QueryUnitNameByUserID(userInfoTemp.UserID);
+                                userInfoTemp.OSI_RoleName = data["OSI_RoleName"].ToString();
+
+                                // 查詢使用者的 OFS 角色名稱
+                                var ofsRoleTable = OFSRoleHelper.QueryByUserID(userInfoTemp.UserID);
+                                if (ofsRoleTable != null && ofsRoleTable.Rows.Count > 0)
+                                {
+                                    userInfoTemp.OFS_RoleName = ofsRoleTable.Rows.Cast<DataRow>()
+                                        .Select(row => row["RoleName"].ToString())
+                                        .ToArray();
+                                }
+                                else
+                                {
+                                    userInfoTemp.OFS_RoleName = new string[0];
+                                }
+                            }
+                            SessionHelper.Set(SessionHelper.UserInfo, userInfoTemp);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // 開發者設定檔讀取失敗，記錄錯誤但不中斷程式
+                    System.Diagnostics.Debug.WriteLine("讀取 dev.config 失敗: " + ex.Message);
+                }
             }
-            SessionHelper.Set(SessionHelper.UserInfo, userInfoTemp);
         }
 
     }

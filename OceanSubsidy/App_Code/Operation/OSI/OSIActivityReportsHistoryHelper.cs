@@ -42,7 +42,6 @@ INSERT INTO [dbo].[OSI_ActivityReports_History]
     ,[ResearchItemNote]
     ,[Instruments]
     ,[ActivityOverview]
-    ,[GeoData]
     ,[LastUpdated]
     ,[LastUpdatedBy]
     ,[IsValid]
@@ -61,7 +60,6 @@ VALUES
     ,@ResearchItemNote
     ,@Instruments
     ,@ActivityOverview
-    ,@GeoData
     ,@LastUpdated
     ,@LastUpdatedBy
     ,@IsValid
@@ -82,7 +80,6 @@ VALUES
             db.Parameters.Add("@ResearchItemNote", report.ResearchItemNote);
             db.Parameters.Add("@Instruments", report.Instruments);
             db.Parameters.Add("@ActivityOverview", report.ActivityOverview);
-            db.Parameters.Add("@GeoData", report.GeoData);
             db.Parameters.Add("@LastUpdated", report.LastUpdated);
             db.Parameters.Add("@LastUpdatedBy", report.LastUpdatedBy);
             db.Parameters.Add("@CopyReportID", report.CopyReportID);
@@ -170,6 +167,40 @@ VALUES
     }
 
     /// <summary>
+    /// 取得報告的所有歷史記錄
+    /// </summary>
+    public static List<int> GetReportHistoryIdList(int reportId)
+    {
+        var historyIds = new List<int>();
+
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            SELECT
+                HistoryID
+            FROM OSI_ActivityReports_History
+            WHERE ReportID = @ReportID AND IsValid = 1
+            ORDER BY AuditAt DESC";
+
+        db.Parameters.Clear();
+        db.Parameters.Add("@ReportID", reportId);
+
+        GisTable tbl = db.GetTable();
+        if (tbl != null && tbl.Rows.Count > 0)
+        {
+            foreach (DataRow row in tbl.Rows)
+            {
+                if (row["HistoryID"] != DBNull.Value)
+                {
+                    historyIds.Add(Convert.ToInt32(row["HistoryID"]));
+                }
+            }
+        }
+
+        return historyIds;
+    }
+
+    /// <summary>
     /// 取得單筆歷史記錄
     /// </summary>
     public static OSI_ActivityReports_History GetHistoryById(int historyId)
@@ -188,7 +219,6 @@ VALUES
               ,[ResearchItemNote]
               ,[Instruments]
               ,[ActivityOverview]
-              ,[GeoData]
               ,[LastUpdated]
               ,[IsValid]
               ,[AuditAt]
@@ -225,7 +255,6 @@ VALUES
                 h.[ResearchItemNote],
                 h.[Instruments],
                 h.[ActivityOverview],
-                h.[GeoData],
                 h.[LastUpdated],
                 h.[IsValid],
                 h.[AuditAt],
@@ -418,7 +447,7 @@ VALUES
     }
 
     /// <summary>
-    /// 取得特定歷程時間點的調查範圍
+    /// 取得特定歷程時間點的調查範圍(描述)
     /// </summary>
     public static GisTable GetRelatedScopes(int reportId, DateTime auditTime)
     {
@@ -443,32 +472,116 @@ VALUES
     }
 
     /// <summary>
-    /// 查詢地圖資訊 BY ID
+    /// 取得特定歷程時間點的調查範圍(縣市)
+    /// </summary>
+    public static GisTable GetRelatedCounties(int reportId, DateTime auditTime)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            SELECT 
+                SurveyCountyID,
+                c.c_name as CountyName,
+                CreatedAt
+            FROM OSI_SurveyCounties sc
+            JOIN OSI_MapCounty c ON sc.CountyID = c.qgs_fid
+            WHERE ReportID = @ReportID
+                AND CreatedAt <= @AuditTime
+                AND (DeletedAt IS NULL OR DeletedAt > @AuditTime)
+            ORDER BY sc.CountyID";
+
+        db.Parameters.Clear();
+        db.Parameters.Add("@ReportID", reportId);
+        db.Parameters.Add("@AuditTime", auditTime);
+
+        return db.GetTable();
+    }
+
+    /// <summary>
+    /// 取得特定歷程時間點的圖徵資料
+    /// </summary>
+    public static GisTable GetRelatedGeoms(int reportId, DateTime auditTime)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            SELECT 
+                GeomID,
+                GeomName,
+                GeoData.STAsText() AS GeoData,
+                CreatedAt
+            FROM OSI_Geom
+            WHERE ReportID = @ReportID
+                AND CreatedAt <= @AuditTime
+                AND (DeletedAt IS NULL OR DeletedAt > @AuditTime)
+                AND IsValid = 1
+            ORDER BY GeomID";
+
+        db.Parameters.Clear();
+        db.Parameters.Add("@ReportID", reportId);
+        db.Parameters.Add("@AuditTime", auditTime);
+
+        return db.GetTable();
+    }
+
+    /// <summary>
+    /// 查詢地圖資訊 BY ID，回傳 JSON 格式
     /// </summary>
     /// <returns></returns>
     public static string QueryGeoDataByID(string historyID)
     {
-        string rtVal = "";
         DbHelper db = new DbHelper();
-        db.CommandText =
-            @"
-SELECT GeoData
-FROM OSI_ActivityReports_History
-WHERE HistoryID = @HistoryID
-";
+        
+        // 先查詢歷史記錄以取得 ReportID 和 AuditAt
+        db.CommandText = @"
+            SELECT ReportID, AuditAt
+            FROM OSI_ActivityReports_History
+            WHERE HistoryID = @HistoryID";
+        
         db.Parameters.Clear();
         db.Parameters.Add("@HistoryID", historyID);
-        var tbl = db.GetTable();
-        if (tbl.Rows.Count > 0)
+        
+        var historyTable = db.GetTable();
+        if (historyTable != null && historyTable.Rows.Count > 0)
         {
-            var row = tbl.Rows[0];
-            if (row["GeoData"] != null && row["GeoData"] != DBNull.Value)
+            int reportId = Convert.ToInt32(historyTable.Rows[0]["ReportID"]);
+            DateTime auditTime = Convert.ToDateTime(historyTable.Rows[0]["AuditAt"]);
+            
+            // 查詢該時間點的所有圖徵（包含 ID 和名稱）
+            db.CommandText = @"
+                SELECT 
+                    GeomID,
+                    GeomName,
+                    GeoData.STAsText() AS GeoData
+                FROM OSI_Geom
+                WHERE ReportID = @ReportID
+                    AND CreatedAt <= @AuditTime
+                    AND (DeletedAt IS NULL OR DeletedAt > @AuditTime)";
+            
+            db.Parameters.Clear();
+            db.Parameters.Add("@ReportID", reportId);
+            db.Parameters.Add("@AuditTime", auditTime);
+            
+            var geomsTable = db.GetTable();
+            if (geomsTable != null && geomsTable.Rows.Count > 0)
             {
-                rtVal = row["GeoData"].ToString();
+                // 組合成與 GetReportGeoData 相同的 JSON 格式
+                var result = new
+                {
+                    type = "FeatureCollection",
+                    features = geomsTable.Rows.Cast<DataRow>().Select(row => new
+                    {
+                        id = row["GeomID"]?.ToString() ?? "",
+                        name = row["GeomName"]?.ToString() ?? "",
+                        wkt = row["GeoData"]?.ToString() ?? ""
+                    }).ToArray()
+                };
+                
+                return Newtonsoft.Json.JsonConvert.SerializeObject(result);
             }
         }
-
-        return rtVal;
+        
+        return "";
     }
 
 }

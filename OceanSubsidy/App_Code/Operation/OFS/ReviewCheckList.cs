@@ -32,7 +32,7 @@ public class ReviewCheckListHelper
         List<DropdownItem> result = new List<DropdownItem>
         {
             new DropdownItem { Value = "", Text = "全部" },
-            new DropdownItem { Value = "審查中", Text = "審查中" },
+            new DropdownItem { Value = "審核中", Text = "審核中" },
             new DropdownItem { Value = "通過", Text = "通過" },
             new DropdownItem { Value = "未通過", Text = "未通過" },
             new DropdownItem { Value = "補正補件", Text = "補正補件" },
@@ -1224,7 +1224,7 @@ FROM ProjectSubsidySummary
     public static void UpdateProjectStatusInDatabase(string projectId, string newStatus,
         string userAccount, string StatusesName)
     {
-        string finalStatusesName = string.IsNullOrEmpty(StatusesName) ? "審查中" : StatusesName;
+        string finalStatusesName = string.IsNullOrEmpty(StatusesName) ? "審核中" : StatusesName;
 
         using (DbHelper db = new DbHelper())
         {
@@ -1412,9 +1412,9 @@ FROM ProjectSubsidySummary
                 '{projectId}', 
                 GETDATE(), 
                 '{userAccount}', 
-                '審查中', 
+                '審核中', 
                 '不通過', 
-                '批次{actionType}: 審查中 → 不通過'
+                '批次{actionType}: 審核中 → 不通過'
             )";
 
         db.ExecuteNonQuery();
@@ -1621,4 +1621,44 @@ FROM ProjectSubsidySummary
     }
 
     #endregion
+    
+    /// <summary>
+    /// 取得待回覆的案件清單
+    /// </summary>
+    public static List<string> GetWaitReplyList()
+    {
+        List<string> projectIDs = new List<string>();
+
+        DbHelper db = new DbHelper();
+        
+        try
+        {
+            db.CommandText = @"
+                SELECT DISTINCT ProjectID
+                FROM [OCA_OceanSubsidy].[dbo].[OFS_ReviewRecords]
+                WHERE IsSubmit = 1
+                AND (ReplyComment IS NULL OR ReplyComment = '')";
+            
+            DataTable dt = db.GetTable();
+            
+            foreach (DataRow row in dt.Rows)
+            {
+                string ProjectID = row["ProjectID"]?.ToString();
+                if (!string.IsNullOrEmpty(ProjectID))
+                {
+                    projectIDs.Add(ProjectID);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"搜尋關鍵字時發生錯誤：{ex.Message}");
+        }
+        finally
+        {
+            db.Dispose();
+        }
+        
+        return projectIDs;
+    }
 }

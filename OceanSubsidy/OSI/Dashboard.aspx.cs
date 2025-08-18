@@ -143,7 +143,7 @@ public partial class OSI_Dashboard : System.Web.UI.Page
         ChartDataScript = sb.ToString();
     }
 
-    #region --- 範例 Fetch Data Methods ---
+    #region --- Fetch Data Methods ---
     // 1. 近三年季度案件數
     private List<QuarterData> FetchYearData()
     {

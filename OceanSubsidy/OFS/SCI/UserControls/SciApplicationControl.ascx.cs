@@ -394,7 +394,7 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
             }
 
             // 載入關鍵字資料
-            KeywordsData = OFS_SciApplicationHelper.GetKeywordsByID(ApplicationData?.KeywordID);
+            KeywordsData = OFS_SciApplicationHelper.GetKeywordsByID(ApplicationData?.ProjectID);
             
             // 不管有沒有資料都要傳送關鍵字，讓前端顯示 3 個欄位
             if (KeywordsData == null)
@@ -416,7 +416,7 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
     {
         txtProjectID.Text = data.ProjectID;
         txtPersonID.Text = data.PersonID;
-        txtKeywordID.Text = data.KeywordID;
+        txtKeywordID.Text = data.ProjectID;
         txtYear.Text = data.Year.ToString();
         txtProjectNameCh.Text = data.ProjectNameTw;
         txtProjectNameEn.Text = data.ProjectNameEn;
@@ -573,7 +573,6 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
         {
             ProjectID = txtProjectID.Text,
             PersonID = txtPersonID.Text,
-            KeywordID = txtKeywordID.Text,
             Year = int.TryParse(txtYear.Text, out int year) ? year :DateTimeHelper.GregorianYearToMinguo(DateTime.Now.Year),
             SubsidyPlanType = txtSubsidyPlanType.Text,
             ProjectNameTw = txtProjectNameCh.Text.Trim(),
@@ -666,7 +665,7 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
                     {
                         keywordsList.Add(new OFS_SCI_Application_KeyWord
                         {
-                            KeywordID = txtKeywordID.Text,
+                            KeywordID = txtProjectID.Text,
                             KeyWordTw = item["KeyWordTw"]?.ToString() ?? "",
                             KeyWordEn = item["KeyWordEn"]?.ToString() ?? ""
                         });
@@ -736,11 +735,11 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
             
         };
         string newPersonID = "P"+newProjectID;
-        string newKeywordID = "K"+newProjectID;
+        string newKeywordID = newProjectID;
 
         applicationData.ProjectID = newProjectID;
         applicationData.PersonID = newPersonID;
-        applicationData.KeywordID = newKeywordID;
+        // KeywordID 不再需要設定，直接使用 ProjectID
 
         // 更新人員資料的PersonID
         foreach (var person in personnelData)
@@ -777,7 +776,7 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
         OFS_SciApplicationHelper.SavePersonnel(personnelData);
 
         // 更新關鍵字資料
-        OFS_SciApplicationHelper.SaveKeywordsToDatabase(applicationData.KeywordID, keywordsData);
+        OFS_SciApplicationHelper.SaveKeywordsToDatabase(applicationData.ProjectID, keywordsData);
     }
 
     /// <summary>

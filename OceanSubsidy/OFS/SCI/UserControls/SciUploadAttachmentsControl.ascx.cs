@@ -471,14 +471,12 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
         try
         {
             string templatePath = $"~/UploadFiles/{projectID}/Attachments/{fileName}";
-            string statuses = "已上傳";
 
             OFS_SciUploadAttachmentsHelper.InsertAttachmentRecord(
                 projectID, 
                 fileCode, 
                 fileName, 
-                templatePath, 
-                statuses
+                templatePath
             );
         }
         catch (Exception ex)

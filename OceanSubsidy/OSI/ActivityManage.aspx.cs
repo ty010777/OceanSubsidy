@@ -130,6 +130,9 @@ public partial class OSI_ActivityManage : System.Web.UI.Page
 
     protected void btnSearch_Click(object sender, EventArgs e)
     {
+        // 重設分頁到第一頁
+        dpPeriods.SetPageProperties(0, dpPeriods.PageSize, false);
+
         YearFrom = ddlYearFrom.SelectedValue;
         YearTo = ddlYearTo.SelectedValue;
         lvPeriods.EditIndex = -1;
@@ -149,6 +152,8 @@ public partial class OSI_ActivityManage : System.Web.UI.Page
             dt.Columns.Add("LocalFilledCount", typeof(int));
         if (!dt.Columns.Contains("LocalTotalUnit"))
             dt.Columns.Add("LocalTotalUnit", typeof(int));
+        if (!dt.Columns.Contains("ReportCount"))
+            dt.Columns.Add("ReportCount", typeof(int));
 
         // 分別計算中央機關和縣市政府的總數
         int centralTotalUnit = SysUnitHelper.QueryParentUnitsByGovType(1).Rows.Count;  // 中央機關總數
@@ -167,6 +172,10 @@ public partial class OSI_ActivityManage : System.Web.UI.Page
             row["CentralTotalUnit"] = centralTotalUnit;
             row["LocalFilledCount"] = localFilledCount;
             row["LocalTotalUnit"] = localTotalUnit;
+
+            // 計算已填報的總數
+            var reportCount = OSIActivityReportsHelper.QueryByPeriodID(periodID).Rows.Count;
+            row["ReportCount"] = reportCount;
         }
 
         lvPeriods.DataSource = dt;
@@ -216,27 +225,7 @@ public partial class OSI_ActivityManage : System.Web.UI.Page
 
     private void SendReminderEmail(string periodId)
     {
-        GisTable periodTbl = OSIDataPeriodsHelper.QueryByID(periodId);
-        GisTable unitTbl = SysUnitHelper.GetOSIReminderUnitByPeriodID(periodId);
-
-        if (periodTbl == null || periodTbl.Rows.Count == 0)
-            return;
-
-        var year = periodTbl.Rows[0]["PeriodYear"].ToString();
-        var quarter = periodTbl.Rows[0]["PeriodQuarter"].ToString();
-
-        for (int i = 0; i < unitTbl.Rows.Count; i++)
-        {
-            var unitID = unitTbl.Rows[i]["UnitID"].ToString();
-            var unitName = unitTbl.Rows[i]["UnitName"].ToString();
-            List<string> users = SysUserHelper.GetOSIReminderUserByUnitID(unitID);
-
-            users.ForEach(account =>
-            {
-                string mailBody = MailContent.OCA.OSI_UnFilledRemind.getMail(unitName, year, quarter);
-                GS.App.Utility.Mail.SendMail(account, "", MailContent.OCA.OSI_UnFilledRemind.Subject, mailBody, out string ErrorMsg);
-            });
-        }
+        OSIReminderHelper.SendReminderEmail(periodId);
     }
 
     // 點「編輯」

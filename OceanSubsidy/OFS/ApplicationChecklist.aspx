@@ -51,52 +51,37 @@
                 <!-- 計畫內容關鍵字 -->
                 <div class="search-item">
                     <div class="fs-16 text-gray mb-2">計畫內容關鍵字</div>
-                    <input type="text" class="form-control" placeholder="計畫內容關鍵字">
+                    <asp:TextBox ID="txtContentKeyword" runat="server" CssClass="form-control" placeholder="計畫內容關鍵字"></asp:TextBox>
                 </div>
             </div>
             
             <div class="column-2">
                 <div class="row g-3">
-                    <div class="col-12 col-lg-3">
+                    <div class="col-12 col-lg-4">
                         <div class="fs-16 text-gray mb-2">年度</div>
                         <asp:DropDownList ID="ddlYear" runat="server" CssClass="form-select">
                             <asp:ListItem Text="全部" Value=""></asp:ListItem>
                             <asp:ListItem Text="114年" Value="114"></asp:ListItem>
-                            <asp:ListItem Text="113年" Value="113"></asp:ListItem>
-                            <asp:ListItem Text="112年" Value="112"></asp:ListItem>
                         </asp:DropDownList>
                     </div>
+                    <%-- <div class="col-12 col-lg-4"> --%>
+                    <%--     <div class="fs-16 text-gray mb-2">類別</div> --%>
+                    <%--     <asp:DropDownList ID="ddlCategory" runat="server" CssClass="form-select"> --%>
+                    <%--         <asp:ListItem Text="全部" Value=""></asp:ListItem> --%>
+                    <%--         <asp:ListItem Text="科專" Value="SCI"></asp:ListItem> --%>
+                    <%--         <asp:ListItem Text="文化" Value="CUL"></asp:ListItem> --%>
+                    <%--         <asp:ListItem Text="學校民間" Value="EDC"></asp:ListItem> --%>
+                    <%--         <asp:ListItem Text="學校社團" Value="CLB"></asp:ListItem> --%>
+                    <%--         <asp:ListItem Text="多元" Value="MUL"></asp:ListItem> --%>
+                    <%--         <asp:ListItem Text="素養" Value="LIT"></asp:ListItem> --%>
+                    <%--         <asp:ListItem Text="無障礙" Value="ACC"></asp:ListItem> --%>
+                    <%--     </asp:DropDownList> --%>
+                    <%-- </div> --%>
                     <div class="col-12 col-lg-4">
-                        <div class="fs-16 text-gray mb-2">類別</div>
-                        <asp:DropDownList ID="ddlCategory" runat="server" CssClass="form-select">
-                            <asp:ListItem Text="全部" Value=""></asp:ListItem>
-                            <asp:ListItem Text="科專" Value="SCI"></asp:ListItem>
-                            <asp:ListItem Text="文化" Value="CUL"></asp:ListItem>
-                            <asp:ListItem Text="學校民間" Value="EDC"></asp:ListItem>
-                            <asp:ListItem Text="學校社團" Value="CLB"></asp:ListItem>
-                            <asp:ListItem Text="多元" Value="MUL"></asp:ListItem>
-                            <asp:ListItem Text="素養" Value="LIT"></asp:ListItem>
-                            <asp:ListItem Text="無障礙" Value="ACC"></asp:ListItem>
-                        </asp:DropDownList>
-                    </div>
-                    <div class="col-12 col-lg-5">
-                        <div class="fs-16 text-gray mb-2">階段</div>
-                        <select class="form-select">
-                            <option value="">全部</option>
-                            <option value="">尚未提送</option>
-                            <option value="">資格審查</option>
-                            <option value="">領域審查/初審</option>
-                            <option value="">技術審查/複審</option>
-                            <option value="">決審核定</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="row g-3">
-                    <div class="col-12 col-lg-3">
                         <div class="fs-16 text-gray mb-2">狀態</div>
                         <asp:DropDownList ID="ddlStatus" runat="server" CssClass="form-select">
                             <asp:ListItem Text="全部" Value=""></asp:ListItem>
-                            <asp:ListItem Text="審查中" Value="審查中"></asp:ListItem>
+                            <asp:ListItem Text="審核中" Value="審核中"></asp:ListItem>
                             <asp:ListItem Text="補正補件" Value="補正補件"></asp:ListItem>
                             <asp:ListItem Text="逾期未補" Value="逾期未補"></asp:ListItem>
                             <asp:ListItem Text="未通過" Value="未通過"></asp:ListItem>
@@ -104,10 +89,24 @@
                         </asp:DropDownList>
                     </div>
                     <div class="col-12 col-lg-4">
+                        <div class="fs-16 text-gray mb-2">階段</div>
+                        <asp:DropDownList ID="ddlStage" runat="server" CssClass="form-select">
+                            <asp:ListItem Text="全部" Value=""></asp:ListItem>
+                            <asp:ListItem Text="尚未提送" Value="尚未提送"></asp:ListItem>
+                            <asp:ListItem Text="資格審查" Value="資格審查"></asp:ListItem>
+                            <asp:ListItem Text="領域審查" Value="領域審查"></asp:ListItem>
+                            <asp:ListItem Text="技術審查" Value="技術審查"></asp:ListItem>
+                            <asp:ListItem Text="決審核定" Value="決審核定"></asp:ListItem>
+                            <asp:ListItem Text="計畫執行" Value="計畫執行"></asp:ListItem>
+                        </asp:DropDownList>
+                    </div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-12 col-lg-6">
                         <div class="fs-16 text-gray mb-2">申請單位</div>
                         <asp:TextBox ID="txtDepartment" runat="server" CssClass="form-control" placeholder="請輸入申請單位"></asp:TextBox>
                     </div>
-                    <div class="col-12 col-lg-5">
+                    <div class="col-12 col-lg-6">
                         <div class="fs-16 text-gray mb-2">主管單位</div>
                         <asp:DropDownList ID="ddlReviewer" runat="server" CssClass="form-select">
                             <asp:ListItem Text="全部" Value=""></asp:ListItem>
@@ -120,7 +119,8 @@
             </div>
             
             <div class="form-check-input-group d-flex justify-content-center">
-                <input id="waitingReply" class="form-check-input check-teal" type="checkbox" name="waitingReply">
+                <input id="waitingReply" class="form-check-input check-teal" type="checkbox" 
+                       name="waitingReply" runat="server"/>
                 <label for="waitingReply">待回覆</label>
             </div>
             
@@ -229,7 +229,7 @@
                         <th width="150">
                             <div class="hstack align-items-center">
                                 <span>計畫編號</span>
-                                <button class="sort down">
+                                <button type="button" class="sort" data-col="2">
                                     <i class="fa-solid fa-sort-up"></i>
                                     <i class="fa-solid fa-sort-down"></i>
                                 </button>
@@ -238,7 +238,7 @@
                         <th width="240">
                             <div class="hstack align-items-center">
                                 <span>計畫名稱</span>
-                                <button class="sort up">
+                                <button type="button" class="sort" data-col="3">
                                     <i class="fa-solid fa-sort-up"></i>
                                     <i class="fa-solid fa-sort-down"></i>
                                 </button>
@@ -247,7 +247,7 @@
                         <th width="200">
                             <div class="hstack align-items-center">
                                 <span>申請單位</span>
-                                <button class="sort">
+                                <button type="button" class="sort" data-col="4">
                                     <i class="fa-solid fa-sort-up"></i>
                                     <i class="fa-solid fa-sort-down"></i>
                                 </button>
@@ -256,7 +256,7 @@
                         <th>
                             <div class="hstack align-items-center justify-content-center">
                                 <span>類別</span>
-                                <button class="sort">
+                                <button type="button" class="sort" data-col="5">
                                     <i class="fa-solid fa-sort-up"></i>
                                     <i class="fa-solid fa-sort-down"></i>
                                 </button>
@@ -265,7 +265,7 @@
                         <th>
                             <div class="hstack align-items-center justify-content-center">
                                 <span>申請補助金額</span>
-                                <button class="sort">
+                                <button type="button" class="sort" data-col="6">
                                     <i class="fa-solid fa-sort-up"></i>
                                     <i class="fa-solid fa-sort-down"></i>
                                 </button>
@@ -274,7 +274,7 @@
                         <th>
                             <div class="hstack align-items-center justify-content-center">
                                 <span>階段</span>
-                                <button class="sort">
+                                <button  type="button" class="sort" data-col="7">
                                     <i class="fa-solid fa-sort-up"></i>
                                     <i class="fa-solid fa-sort-down"></i>
                                 </button>
@@ -283,7 +283,7 @@
                         <th>
                             <div class="hstack align-items-center justify-content-center">
                                 <span>狀態</span>
-                                <button class="sort">
+                                <button  type="button" class="sort" data-col="8">
                                     <i class="fa-solid fa-sort-up"></i>
                                     <i class="fa-solid fa-sort-down"></i>
                                 </button>
@@ -304,27 +304,28 @@
         <!-- 分頁控制 -->
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
             <nav class="pagination justify-content-start" aria-label="Pagination" id="paginationNav">
-                <asp:Button ID="btnPrevPage" runat="server" Text="" CssClass="nav-button" aria-label="Previous page" />
+                <button type="button" id="btnPrevPage" class="nav-button" aria-label="Previous page" onclick="changePage('prev')">‹</button>
                 <!-- 動態分頁按鈕將在這裡插入 -->
-                <asp:Button ID="btnNextPage" runat="server" Text="" CssClass="nav-button" aria-label="Next page" />
+                <button type="button" id="btnNextPage" class="nav-button" aria-label="Next page" onclick="changePage('next')">›</button>
             </nav>
             
             <div class="page-number-control">
                 <div class="page-number-control-item">
                     <span>跳到</span>
-                    <asp:DropDownList ID="ddlPageNumber" runat="server" CssClass="form-select" AutoPostBack="true">
-                        <asp:ListItem Text="1" Value="1"></asp:ListItem>
-                    </asp:DropDownList>
+                    <select id="ddlPageNumber" class="form-select" onchange="goToPage(this.value)">
+                        <option value="1">1</option>
+                    </select>
                     <span>頁</span>
                     <span>,</span>
                 </div>
                 <div class="page-number-control-item">
                     <span>每頁顯示</span>
-                    <asp:DropDownList ID="ddlPageSize" runat="server" CssClass="form-select" AutoPostBack="true">
-                        <asp:ListItem Text="10" Value="10"></asp:ListItem>
-                        <asp:ListItem Text="20" Value="20" Selected="true"></asp:ListItem>
-                        <asp:ListItem Text="30" Value="30"></asp:ListItem>
-                    </asp:DropDownList>
+                    <select id="ddlPageSize" class="form-select" onchange="changePageSize()">
+                        <option value="5" selected>5</option>
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="30">30</option>
+                    </select>
                     <span>筆</span>
                 </div>
             </div>
@@ -613,8 +614,27 @@
                                     <th width="50%">申請單位回覆</th>
                                 </tr>
                             </thead>
-                            <tbody id="reviewCommentsTableBody">
-                                <!-- 動態內容將在這裡插入 -->
+                            <tbody id="domainReviewCommentsTableBody">
+                                <!-- 領域審查動態內容將在這裡插入 -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-5">
+                        <h5 class="square-title">技術審查意見回覆</h5>
+                        <button class="btn btn-teal-dark" type="button"><i class="fas fa-download"></i>匯出技術審查意見回覆表</button>
+                    </div>
+                    <div class="table-responsive mt-3">
+                        <table class="table align-middle gray-table lh-base">
+                            <thead>
+                                <tr>
+                                    <th width="160"></th>
+                                    <th>審查意見</th>
+                                    <th width="50%">申請單位回覆</th>
+                                </tr>
+                            </thead>
+                            <tbody id="technicalReviewCommentsTableBody">
+                                <!-- 技術審查動態內容將在這裡插入 -->
                             </tbody>
                         </table>
                     </div>

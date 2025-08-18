@@ -318,7 +318,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
                 ChangeTime = DateTime.Now,
                 UserName = userName,
                 StageStatusBefore = "編輯中",
-                StageStatusAfter = "資格審查 審查中",
+                StageStatusAfter = "資格審查 審核中",
                 Description = "完成附件上傳並提送申請"
             };
 
@@ -393,9 +393,9 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
     }
 
     /// <summary>
-    /// 檢查是否為決審核定+審查中狀態
+    /// 檢查是否為決審核定+審核中狀態
     /// </summary>
-    /// <returns>true: 決審核定+審查中, false: 其他狀態</returns>
+    /// <returns>true: 決審核定+審核中, false: 其他狀態</returns>
     private bool IsDecisionReviewMode()
     {
         try

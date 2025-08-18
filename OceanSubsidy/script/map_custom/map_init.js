@@ -419,63 +419,72 @@ function loadFeaturesFromWKT() {
     if (typeof window.initialWKT3826 === 'undefined' || window.initialWKT3826 === null) {
         return;
     }
-    var wktText = window.initialWKT3826;
-    if (typeof wktText !== 'string') {
+    var dataText = window.initialWKT3826;
+    if (typeof dataText !== 'string') {
         return;
     }
-    wktText = wktText.trim();
-    if (wktText.length === 0 || wktText.toLowerCase() === "null") {
+    dataText = dataText.trim();
+    if (dataText.length === 0 || dataText.toLowerCase() === "null") {
         return;
     }
 
-    // 2. 用 readGeometry 讀取 geometry（支援單一 geometry 或 GeometryCollection）
-    var wktReader = new ol.format.WKT();
-    var geometry;
+    // 2. 嘗試解析 JSON 格式
+    var featureCollection = null;
     try {
-        geometry = wktReader.readGeometry(wktText, {
-            dataProjection: 'EPSG:3826',    // 資料是 3826 座標系統
-            featureProjection: 'EPSG:3857'  // 地圖使用 3857 座標系統
-        });
-    }
-    catch (err) {
-        console.error("WKT 解析失敗：", err, wktText);
-        return;
-    }
-    
-    if (!geometry) {
+        featureCollection = JSON.parse(dataText);
+    } catch (jsonErr) {
+        console.warn('JSON 解析失敗，跳過載入:', jsonErr);
         return;
     }
 
-    // 3. 提取所有的幾何體
-    var geometries = [];
-    if (geometry.getType() === 'GeometryCollection') {
-        // 如果是 GeometryCollection，取出所有子幾何體
-        geometries = geometry.getGeometries();
-    } else {
-        // 如果是單一幾何體，放入陣列
-        geometries = [geometry];
+    if (!featureCollection || !featureCollection.features || !Array.isArray(featureCollection.features)) {
+        console.warn('無效的 FeatureCollection 格式');
+        return;
     }
 
-    // 4. 暫時儲存當前的 drawInteraction 狀態
-    var originalDrawInteraction = drawInteraction;
-    
-    // 5. 批次處理所有幾何體
+    // 3. 處理 JSON 格式的 features
+    var wktReader = new ol.format.WKT();
     var successCount = 0;
     var errorCount = 0;
-    
-    geometries.forEach(function (geom, index) {
-        try {
-            // 5a. 建立 feature
-            var feature = new ol.Feature({
-                geometry: geom
-            });
-            
-            // 5b. 設定唯一 ID
-            var PK = CreateGuid();
-            feature.setId(PK);
+    var originalDrawInteraction = drawInteraction;
 
-            // 5c. 判斷 geometry 類型
-            var geomType = geom.getType();
+    featureCollection.features.forEach(function (featureData, index) {
+        try {
+            if (!featureData.wkt || !featureData.id) {
+                console.warn('Feature 缺少必要的 wkt 或 id 資料：', featureData);
+                errorCount++;
+                return;
+            }
+
+            // 3a. 解析 WKT 幾何體
+            var geometry;
+            try {
+                geometry = wktReader.readGeometry(featureData.wkt, {
+                    dataProjection: 'EPSG:3826',
+                    featureProjection: 'EPSG:3857'
+                });
+            } catch (wktErr) {
+                console.error('WKT 解析失敗:', wktErr, 'WKT:', featureData.wkt);
+                errorCount++;
+                return;
+            }
+
+            if (!geometry) {
+                console.warn('無效的幾何體:', featureData.wkt);
+                errorCount++;
+                return;
+            }
+
+            // 3b. 建立 feature
+            var feature = new ol.Feature({
+                geometry: geometry
+            });
+
+            // 3c. 設定 ID（使用資料庫的 ID）
+            feature.setId(featureData.id);
+
+            // 3d. 判斷 geometry 類型
+            var geomType = geometry.getType();
             var selectedType;
             switch (geomType) {
                 case 'Point':
@@ -502,37 +511,84 @@ function loadFeaturesFromWKT() {
                     break;
             }
 
-            // 5d. 加入到圖層
+            // 3e. 加入到圖層
             drawSource.addFeature(feature);
 
-            // 5e. 套用樣式和加入清單
-            // 暫時設定對應的 interaction（但不實際使用）
+            // 3f. 套用樣式和加入清單，並設定名稱
             if (drawInteraction) {
                 map.removeInteraction(drawInteraction);
             }
             addInteraction(selectedType, false);
-            drawEnd(feature, geom, selectedType);
             
+            // 呼叫 drawEnd 並傳入 feature 名稱
+            drawEndWithName(feature, geometry, selectedType, featureData.name || '');
+
             successCount++;
         }
         catch (err) {
             errorCount++;
-            console.error('處理第 ' + (index + 1) + ' 個幾何體時發生錯誤：', err);
+            console.error('處理第 ' + (index + 1) + ' 個圖徵時發生錯誤：', err);
         }
     });
-    
-    // 6. 清理並恢復狀態
+
+    // 4. 清理並恢復狀態
     if (drawInteraction) {
         map.removeInteraction(drawInteraction);
         drawInteraction = null;
     }
-    
-    // 7. 顯示載入結果（可選）
+
+    // 5. 顯示載入結果
     if (successCount > 0) {
         console.log('成功載入 ' + successCount + ' 個地理標記');
     }
     if (errorCount > 0) {
         console.warn('載入失敗 ' + errorCount + ' 個地理標記');
+    }
+}
+
+// 帶名稱的 drawEnd 函數
+function drawEndWithName(olFeature, olGeom, selectedType, featureName) {
+    var Num, styleArr;
+    var LineStyle = [];
+    var HasIconS = "non";
+    var HasIconE = "non";
+    
+    switch (selectedType) {
+        case 'Point':
+            Num = pointNum;
+            var pointTxt = featureName || ("點" + pointNum);
+            styleArr = oltmx.Plugin.prototype.setPointMarkStyle('#000000', 1, pointTxt, olFeature);
+            olFeature.set('num', 'point' + Num);
+            if (!(document.getElementById("MarkList").children[selectedType + Num])) {
+                genMarkList(olFeature.getId(), selectedType, Num, pointTxt, "point");
+                pointNum++;
+            }
+            olFeature.setStyle(styleArr);
+            olFeature.set('type', 'drawfeature');
+            return;
+        case 'LineString':
+            Num = lineNum;
+            var LineTxt = featureName || ("線段" + lineNum);
+            var StyleArr = oltmx.Plugin.prototype.setLineMarkStyle('#000000', 1, LineTxt, 0, 0, olFeature);
+            LineStyle.push(StyleArr);
+            olFeature.setStyle(LineStyle);
+            olFeature.set('num', 'line' + Num);
+            if (!(document.getElementById("MarkList").children[selectedType + Num])) {
+                genMarkList(olFeature.getId(), selectedType, Num, LineTxt, "line");
+                lineNum++;
+            }
+            return; // LineString 已經設定完成，直接返回
+        case 'Polygon':
+            Num = polyNum;
+            var PolyTxt = featureName || ("多邊形" + polyNum);
+            var polyStyle = oltmx.Plugin.prototype.setPolyMarkStyle('#d0e0e3', '#000000', 1, PolyTxt, 0, 0, olFeature);
+            olFeature.setStyle(polyStyle);
+            olFeature.set('num', 'poly' + Num);
+            if (!(document.getElementById("MarkList").children[selectedType + Num])) {
+                genMarkList(olFeature.getId(), selectedType, Num, PolyTxt, "poly");
+                polyNum++;
+            }
+            return; // Polygon 已經設定完成，直接返回
     }
 }
 

@@ -6,9 +6,17 @@ using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using GS.App;
+using GS.Extension;
 
 public partial class OSI_ActivityReportHistory : System.Web.UI.Page
 {
+    private SessionHelper.UserInfoClass UserInfo
+    {
+        get => SessionHelper.Get<SessionHelper.UserInfoClass>(
+                  SessionHelper.UserInfo)
+                ?? new SessionHelper.UserInfoClass();
+    }
+
     protected void Page_Load(object sender, EventArgs e)
     {
         if (!IsPostBack)
@@ -17,6 +25,24 @@ public partial class OSI_ActivityReportHistory : System.Web.UI.Page
             int reportId = 0;
             if (Request.QueryString["ReportID"] != null && int.TryParse(Request.QueryString["ReportID"], out reportId))
             {
+                // 使用共用權限檢查類別進行權限驗證
+                var permissionResult = OSIReportPermissionHelper.CheckReportPermission(reportId, UserInfo);
+
+                if (!permissionResult.HasPermission)
+                {
+                    // 記錄未授權存取嘗試
+                    OSIReportPermissionHelper.LogUnauthorizedAccess(
+                        UserInfo,
+                        reportId.ToString(),
+                        "Report",
+                        Request.UserHostAddress
+                    );
+
+                    // 處理無權限的情況
+                    HandleUnauthorizedAccess(permissionResult.DeniedReason);
+                    return;
+                }
+
                 LoadHistoryList(reportId);
             }
             else
@@ -35,27 +61,27 @@ public partial class OSI_ActivityReportHistory : System.Web.UI.Page
         {
             // 使用 Helper 查詢該報告的所有歷史記錄
             var historyTable = OSIActivityReportsHistoryHelper.GetReportHistory(reportId);
-            
+
             if (historyTable != null && historyTable.Rows.Count > 0)
             {
                 ddlHistory.Items.Clear();
-                
+
                 foreach (DataRow row in historyTable.Rows)
                 {
                     long historyId = Convert.ToInt64(row["HistoryID"]);
                     DateTime auditAt = Convert.ToDateTime(row["AuditAt"]);
                     string correctionNotes = row["CorrectionNotes"]?.ToString() ?? "";
-                    
+
                     // 截斷過長的修正說明
                     if (correctionNotes.Length > 30)
                     {
                         correctionNotes = correctionNotes.Substring(0, 30) + "...";
                     }
-                    
+
                     // 組合顯示文字
                     string displayText = string.Format("{0}",
                         DateTimeHelper.ToMinguoDateTime(auditAt));
-                        
+
                     if (!string.IsNullOrEmpty(correctionNotes))
                     {
                         displayText += " - " + correctionNotes;
@@ -63,10 +89,10 @@ public partial class OSI_ActivityReportHistory : System.Web.UI.Page
 
                     ddlHistory.Items.Add(new ListItem(displayText, historyId.ToString()));
                 }
-                
+
                 // 儲存 ReportID 到 ViewState
                 ViewState["ReportID"] = reportId;
-                
+
                 // 自動選擇並載入第一筆（最新）資料
                 if (ddlHistory.Items.Count > 0)
                 {
@@ -114,15 +140,8 @@ public partial class OSI_ActivityReportHistory : System.Web.UI.Page
     {
         try
         {
-            // 使用 Helper 查詢歷史記錄
-            var history = OSIActivityReportsHistoryHelper.GetHistoryById(historyId);
-            
-            if (history != null)
-            {
-                // 顯示歷程內容
-                phHistoryContent.Visible = true;
-                ReportFormHistory.LoadHistoryData(history);
-            }
+            // 顯示歷程內容
+            phHistoryContent.Visible = ReportFormHistory.LoadHistoryData(historyId);
         }
         catch (Exception ex)
         {
@@ -136,5 +155,42 @@ public partial class OSI_ActivityReportHistory : System.Web.UI.Page
     protected void btnBack_Click(object sender, EventArgs e)
     {
         Response.Redirect("ActivityReports.aspx");
+    }
+
+    /// <summary>
+    /// 處理未授權存取的情況
+    /// </summary>
+    /// <param name="deniedReason">拒絕原因</param>
+    private void HandleUnauthorizedAccess(string deniedReason)
+    {
+        try
+        {
+            // 顯示錯誤訊息並重新導向
+            string safeReason = HttpUtility.JavaScriptStringEncode(deniedReason);
+            string returnUrl = ResolveUrl("~/OSI/ActivityReports.aspx");
+            string safeReturnUrl = HttpUtility.JavaScriptStringEncode(returnUrl);
+
+            string script = $@"
+                showGlobalMessage('{safeReason}');
+                setTimeout(function() {{
+                    window.location.href = '{safeReturnUrl}';
+                }}, 2000);
+            ";
+
+            ScriptManager.RegisterStartupScript(
+                this,
+                this.GetType(),
+                "unauthorizedAccess",
+                script,
+                true
+            );
+        }
+        catch (Exception ex)
+        {
+            // 如果發生錯誤，直接重新導向
+            System.Diagnostics.Debug.WriteLine($"HandleUnauthorizedAccess Error: {ex.Message}");
+            Response.Redirect("~/OSI/ActivityReports.aspx", false);
+            Context.ApplicationInstance.CompleteRequest();
+        }
     }
 }

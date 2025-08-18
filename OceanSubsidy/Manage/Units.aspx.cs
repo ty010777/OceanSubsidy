@@ -69,6 +69,9 @@ public partial class Manage_Units : System.Web.UI.Page
 
     protected void btnSearchUnit_Click(object sender, EventArgs e)
     {
+        // 重設分頁到第一頁
+        dpUnits.SetPageProperties(0, dpUnits.PageSize, false);
+
         BindList();
     }
 

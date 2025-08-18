@@ -358,6 +358,45 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
 
+        protected int? _orderBy = null;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("orderBy", "orderBy", DataSource.TABLE, "", false)]
+        public virtual int? orderBy
+        {
+            get
+            {
+                return _orderBy;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_orderBy == null)
+                {
+                    if (value != null)
+                    {
+                        isModify = true;
+                    }
+                }
+                else if (!_orderBy.Equals(value))
+                {
+                    isModify = true;
+                }
+                if (isModify)
+                {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("orderBy") == -1)
+                    {
+                        UPDATE_COLUMN.Add("orderBy");
+                    }
+                    _orderBy = value;
+                }
+            }
+        }
+
+
     }
 
 

@@ -29,7 +29,6 @@ public class OFS_SciApplicationHelper
 (
     [ProjectID],
     [PersonID],
-    [KeywordID],
     [Year],
     [Serial],
     [SubsidyPlanType],
@@ -60,7 +59,6 @@ VALUES
 (
     @ProjectID,              -- 計畫編號 (年度 + 流水號4碼)
     @PersonID,               -- 人員申請表外鍵
-    @KeywordID,              -- 關鍵字外鍵
     @Year,                   -- 年度
     @Serial,                 -- 流水序號
     @SubsidyPlanType,        -- 補助計畫類別
@@ -91,7 +89,6 @@ VALUES
         db.Parameters.Clear();
         db.Parameters.Add("@ProjectID", applicationData.ProjectID);
         db.Parameters.Add("@PersonID", applicationData.PersonID);
-        db.Parameters.Add("@KeywordID", applicationData.KeywordID);
         db.Parameters.Add("@Year", applicationData.Year);
         db.Parameters.Add("@Serial", applicationData.Serial);
         db.Parameters.Add("@SubsidyPlanType", applicationData.SubsidyPlanType);
@@ -153,7 +150,6 @@ VALUES
 
             // 檢查並加入欄位
             AddIfNotNull("PersonID", applicationData.PersonID);
-            AddIfNotNull("KeywordID", applicationData.KeywordID);
             AddIfNotNull("Year", applicationData.Year);
             AddIfNotNull("Serial", applicationData.Serial);
             AddIfNotNull("SubsidyPlanType", applicationData.SubsidyPlanType);
@@ -228,7 +224,6 @@ VALUES
                 {
                     ProjectID = row["ProjectID"]?.ToString(),
                     PersonID = row["PersonID"]?.ToString(),
-                    KeywordID = row["KeywordID"]?.ToString(),
                     Year = row["Year"] != DBNull.Value ? Convert.ToInt32(row["Year"]) : (int?)null,
                     Serial = row["Serial"]?.ToString(),
                     SubsidyPlanType = row["SubsidyPlanType"]?.ToString(),
@@ -283,10 +278,10 @@ VALUES
         }
     }
 
-    public static Tuple<string, string, string> GetProjectPersonKeyword(string ProjectID)
+    public static Tuple<string, string> GetProjectPerson(string ProjectID)
     {
         DbHelper db = new DbHelper();
-        db.CommandText = @"SELECT [ProjectID], [PersonID], [KeywordID]
+        db.CommandText = @"SELECT [ProjectID], [PersonID]
                        FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Application_Main] 
                        WHERE [ProjectID] = @ProjectID";
 
@@ -302,8 +297,7 @@ VALUES
                 DataRow row = dt.Rows[0];
                 return Tuple.Create(
                     row["ProjectID"]?.ToString(),
-                    row["PersonID"]?.ToString(),
-                    row["KeywordID"]?.ToString()
+                    row["PersonID"]?.ToString()
                 );
             }
 
@@ -342,7 +336,6 @@ VALUES
                 {
                     ProjectID = row["ProjectID"]?.ToString(),
                     PersonID = row["PersonID"]?.ToString(),
-                    KeywordID = row["KeywordID"]?.ToString(),
                     Year = row["Year"] != DBNull.Value ? Convert.ToInt32(row["Year"]) : (int?)null,
                     Serial = row["Serial"]?.ToString(),
                     SubsidyPlanType = row["SubsidyPlanType"]?.ToString(),
@@ -647,28 +640,70 @@ VALUES
             if (dt.Rows.Count > 0)
             {
                 DataRow row = dt.Rows[0];
-                return new OFS_SCI_Project_Main
-                {
-                    ProjectID = row["ProjectID"]?.ToString(),
-                    Statuses = row["Statuses"]?.ToString(),
-                    StatusesName = row["StatusesName"]?.ToString(),
-                    ExpirationDate = row["ExpirationDate"] != DBNull.Value ? (DateTime?)row["ExpirationDate"] : null,
-                    SeqPoint = row["SeqPoint"] != DBNull.Value ? Convert.ToDecimal(row["SeqPoint"]) : 0,
-                    SupervisoryUnit = row["SupervisoryUnit"]?.ToString(),
-                    SupervisoryPersonName = row["SupervisoryPersonName"]?.ToString(),
-                    SupervisoryPersonAccount = row["SupervisoryPersonAccount"]?.ToString(),
-                    UserAccount = row["UserAccount"]?.ToString(),
-                    UserOrg = row["UserOrg"]?.ToString(),
-                    UserName = row["UserName"]?.ToString(),
-                    Form1Status = row["Form1Status"]?.ToString(),
-                    Form2Status = row["Form2Status"]?.ToString(),
-                    Form3Status = row["Form3Status"]?.ToString(),
-                    Form4Status = row["Form4Status"]?.ToString(),
-                    Form5Status = row["Form5Status"]?.ToString(),
-                    CurrentStep = row["CurrentStep"]?.ToString(),
-                    created_at = row["created_at"] != DBNull.Value ? (DateTime?)row["created_at"] : null,
-                    updated_at = row["updated_at"] != DBNull.Value ? (DateTime?)row["updated_at"] : null
-                };
+                var projectMain = new OFS_SCI_Project_Main();
+                
+                // 基本欄位
+                projectMain.ProjectID = row["ProjectID"]?.ToString();
+                projectMain.Statuses = row["Statuses"]?.ToString();
+                projectMain.StatusesName = row["StatusesName"]?.ToString();
+                
+                // 日期欄位 - 安全轉換
+                if (row["ExpirationDate"] != DBNull.Value)
+                    projectMain.ExpirationDate = Convert.ToDateTime(row["ExpirationDate"]);
+                
+                if (row["created_at"] != DBNull.Value)
+                    projectMain.created_at = Convert.ToDateTime(row["created_at"]);
+                    
+                if (row["updated_at"] != DBNull.Value)
+                    projectMain.updated_at = Convert.ToDateTime(row["updated_at"]);
+
+                // 數值欄位 - 安全轉換
+                if (row["SeqPoint"] != DBNull.Value)
+                    projectMain.SeqPoint = Convert.ToDecimal(row["SeqPoint"]);
+
+                // 字串欄位
+                projectMain.SupervisoryUnit = row["SupervisoryUnit"]?.ToString();
+                projectMain.SupervisoryPersonName = row["SupervisoryPersonName"]?.ToString();
+                projectMain.SupervisoryPersonAccount = row["SupervisoryPersonAccount"]?.ToString();
+                projectMain.UserAccount = row["UserAccount"]?.ToString();
+                projectMain.UserOrg = row["UserOrg"]?.ToString();
+                projectMain.UserName = row["UserName"]?.ToString();
+                projectMain.Form1Status = row["Form1Status"]?.ToString();
+                projectMain.Form2Status = row["Form2Status"]?.ToString();
+                projectMain.Form3Status = row["Form3Status"]?.ToString();
+                projectMain.Form4Status = row["Form4Status"]?.ToString();
+                projectMain.Form5Status = row["Form5Status"]?.ToString();
+                projectMain.CurrentStep = row["CurrentStep"]?.ToString();
+
+                // 新增欄位 - 檢查是否存在
+                if (dt.Columns.Contains("isWithdrawal") && row["isWithdrawal"] != DBNull.Value)
+                    projectMain.isWithdrawal = Convert.ToBoolean(row["isWithdrawal"]);
+
+                if (dt.Columns.Contains("isExist") && row["isExist"] != DBNull.Value)
+                    projectMain.isExist = Convert.ToBoolean(row["isExist"]);
+
+                if (dt.Columns.Contains("ApprovedSubsidy") && row["ApprovedSubsidy"] != DBNull.Value)
+                    projectMain.ApprovedSubsidy = Convert.ToDouble(row["ApprovedSubsidy"]);
+
+                if (dt.Columns.Contains("FinalReviewNotes"))
+                    projectMain.FinalReviewNotes = row["FinalReviewNotes"]?.ToString();
+
+                if (dt.Columns.Contains("FinalReviewOrder") && row["FinalReviewOrder"] != DBNull.Value)
+                    projectMain.FinalReviewOrder = Convert.ToInt32(row["FinalReviewOrder"]);
+
+                if (dt.Columns.Contains("MidtermExamDate") && row["MidtermExamDate"] != DBNull.Value)
+                    projectMain.MidtermExamDate = Convert.ToDateTime(row["MidtermExamDate"]);
+
+                if (dt.Columns.Contains("FinalExamDate") && row["FinalExamDate"] != DBNull.Value)
+                    projectMain.FinalExamDate = Convert.ToDateTime(row["FinalExamDate"]);
+
+                if (dt.Columns.Contains("PubNumber"))
+                    projectMain.PubNumber = row["PubNumber"]?.ToString();
+
+                if (dt.Columns.Contains("ContractDate") && row["ContractDate"] != DBNull.Value)
+                    projectMain.ContractDate = Convert.ToDateTime(row["ContractDate"]);
+
+                return projectMain;
             }
 
             return null;
@@ -1190,6 +1225,77 @@ VALUES
         {
             System.Diagnostics.Debug.WriteLine($"取得審查日期時發生錯誤: {ex.Message}");
             throw new Exception($"取得審查日期時發生錯誤: {ex.Message}", ex);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 更新契約資料
+    /// </summary>
+    /// <param name="projectID">專案ID</param>
+    /// <param name="pubNumber">發文文號</param>
+    /// <param name="contractDate">簽約日期</param>
+    public static void updateContractData(string projectID, string pubNumber, DateTime? contractDate)
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText = @"
+        UPDATE [OFS_SCI_Project_Main] 
+        SET 
+            [PubNumber] = @PubNumber,
+            [ContractDate] = @ContractDate,
+            [updated_at] = @updated_at
+        WHERE [ProjectID] = @ProjectID
+        ";
+
+        db.Parameters.Clear();
+        db.Parameters.Add("@ProjectID", projectID);
+        db.Parameters.Add("@PubNumber", pubNumber);
+        db.Parameters.Add("@ContractDate", contractDate ?? (object)DBNull.Value);
+        db.Parameters.Add("@updated_at", DateTime.Now);
+
+        try
+        {
+            db.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"更新契約資料失敗: {ex.Message}");
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 檢查第一期請款是否待處理
+    /// </summary>
+    /// <param name="projectId">專案ID</param>
+    /// <returns>是否有第一期請款待處理</returns>
+    public static bool IsFirstPaymentPending(string projectId)
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText = @"
+            SELECT COUNT(*) 
+            FROM [OFS_SCI_Payment] 
+            WHERE [ProjectID] = @ProjectID 
+            AND [Stage] = 1 
+            AND [Status] = '通過'";
+        
+        db.Parameters.Clear();
+        db.Parameters.Add("@ProjectID", projectId);
+        
+        try
+        {
+            var result = db.GetTable()[0][0];
+            return Convert.ToInt32(result) > 0;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"檢查第一期請款狀態時發生錯誤: {ex.Message}");
         }
         finally
         {

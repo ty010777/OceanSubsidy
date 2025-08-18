@@ -325,8 +325,8 @@ public class OFS_SciRecusedList : System.Web.UI.Page
                 db.Parameters.Clear();
                 db.Parameters.Add("@ProjectID", projectID);
                 
-                var result = db.GetTable().Rows.Count > 0;
-                return result != null && Convert.ToBoolean(result);
+                var result = db.GetTable().Rows[0][0] ;
+                return Convert.ToBoolean(result);
             }
             catch (Exception ex)
             {

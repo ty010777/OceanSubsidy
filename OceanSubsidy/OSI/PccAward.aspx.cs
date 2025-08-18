@@ -19,6 +19,26 @@ public partial class OSI_PccAward : System.Web.UI.Page
             
             // 獲取並設定最新的決標日期
             SetLatestAwardDate();
+            
+            // 載入國科會年度下拉選單
+            LoadNSTCYears();
+            
+            // 設定最新的國科會資料更新日期
+            SetLatestNSTCDate();
+            
+            // 處理分頁狀態
+            if (!string.IsNullOrEmpty(hfActiveTab.Value))
+            {
+                string script = $@"
+                    document.addEventListener('DOMContentLoaded', function() {{
+                        var tab = document.querySelector('button[data-bs-target=""{hfActiveTab.Value}""]');
+                        if (tab) {{
+                            var tabTrigger = new bootstrap.Tab(tab);
+                            tabTrigger.show();
+                        }}
+                    }});";
+                ScriptManager.RegisterStartupScript(this, GetType(), "RestoreTab", script, true);
+            }
         }
     }
     
@@ -66,6 +86,9 @@ public partial class OSI_PccAward : System.Web.UI.Page
     /// </summary>
     protected void btnSearch_Click(object sender, EventArgs e)
     {
+        // 重設分頁到第一頁
+        dpPccAward.SetPageProperties(0, dpPccAward.PageSize, false);
+
         SearchData();
         // 更新最新日期顯示
         SetLatestAwardDate();
@@ -251,5 +274,193 @@ public partial class OSI_PccAward : System.Web.UI.Page
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// 載入國科會年度下拉選單
+    /// </summary>
+    private void LoadNSTCYears()
+    {
+        ddlNSTCYear.Items.Clear();
+        ddlNSTCYear.Items.Add(new ListItem("全部", ""));
+        
+        var years = OSINSTCDataHelper.GetDistinctYears();
+        foreach (var year in years)
+        {
+            ddlNSTCYear.Items.Add(new ListItem(year, year));
+        }
+    }
+
+    /// <summary>
+    /// 設定最新的國科會資料更新日期顯示
+    /// </summary>
+    private void SetLatestNSTCDate()
+    {
+        DateTime? latestDate = OSINSTCDataHelper.GetLatestUpdateDate();
+        
+        // 尋找 UpdatePanel 內的 Label 控制項
+        Label lblLatestNSTCDate = (Label)upNSTCList.ContentTemplateContainer.FindControl("lblLatestNSTCDate");
+        
+        if (lblLatestNSTCDate != null)
+        {
+            if (latestDate.HasValue)
+            {
+                // 轉換為民國年格式
+                string rocDate = FormatRocDate(latestDate.Value);
+                // 設定 Label 顯示文字
+                lblLatestNSTCDate.Text = rocDate;
+            }
+            else
+            {
+                lblLatestNSTCDate.Text = "無資料";
+            }
+        }
+    }
+
+    /// <summary>
+    /// 國科會查詢按鈕點擊事件
+    /// </summary>
+    protected void btnSearchNSTC_Click(object sender, EventArgs e)
+    {
+        // 重設分頁到第一頁
+        dpNSTCGrant.SetPageProperties(0, dpNSTCGrant.PageSize, false);
+        
+        SearchNSTCData();
+        // 更新最新日期顯示
+        SetLatestNSTCDate();
+    }
+
+    /// <summary>
+    /// 執行國科會資料查詢
+    /// </summary>
+    private void SearchNSTCData()
+    {
+        // 取得查詢條件
+        string year = ddlNSTCYear.SelectedValue;
+        decimal? amountFrom = null;
+        decimal? amountTo = null;
+
+        // 處理金額
+        if (!string.IsNullOrWhiteSpace(txtNSTCAmountFrom.Text))
+        {
+            decimal.TryParse(txtNSTCAmountFrom.Text, out decimal tempAmount);
+            if (tempAmount > 0) amountFrom = tempAmount;
+        }
+        if (!string.IsNullOrWhiteSpace(txtNSTCAmountTo.Text))
+        {
+            decimal.TryParse(txtNSTCAmountTo.Text, out decimal tempAmount);
+            if (tempAmount > 0) amountTo = tempAmount;
+        }
+
+        // 取得計畫名稱關鍵字
+        string projectName = txtNSTCProjectName.Text.Trim();
+
+        // 查詢資料
+        var data = OSINSTCDataHelper.QueryNSTCData(year, amountFrom, amountTo, projectName);
+
+        // 綁定資料
+        lvNSTCGrant.DataSource = data;
+        lvNSTCGrant.DataBind();
+    }
+
+    /// <summary>
+    /// 載入國科會資料
+    /// </summary>
+    private void LoadNSTCData()
+    {
+        var data = OSINSTCDataHelper.QueryNSTCData("", null, null, null);
+        
+        // 綁定資料
+        lvNSTCGrant.DataSource = data;
+        lvNSTCGrant.DataBind();
+    }
+
+    /// <summary>
+    /// 綁定國科會資料
+    /// </summary>
+    private void BindNSTCData()
+    {
+        // 判斷是否有查詢條件
+        if (string.IsNullOrWhiteSpace(ddlNSTCYear.SelectedValue) && 
+            string.IsNullOrWhiteSpace(txtNSTCAmountFrom.Text) && 
+            string.IsNullOrWhiteSpace(txtNSTCAmountTo.Text) &&
+            string.IsNullOrWhiteSpace(txtNSTCProjectName.Text))
+        {
+            LoadNSTCData();
+        }
+        else
+        {
+            SearchNSTCData();
+        }
+    }
+
+    /// <summary>
+    /// 國科會 ListView 分頁變更事件
+    /// </summary>
+    protected void lvNSTCGrant_PagePropertiesChanging(object sender, PagePropertiesChangingEventArgs e)
+    {
+        dpNSTCGrant.SetPageProperties(e.StartRowIndex, e.MaximumRows, false);
+        BindNSTCData();
+        // 更新最新日期顯示
+        SetLatestNSTCDate();
+    }
+
+    /// <summary>
+    /// 國科會 DataPager PreRender 事件（處理分頁樣式）
+    /// </summary>
+    protected void dpNSTCGrant_PreRender(object sender, EventArgs e)
+    {
+        // 處理分頁按鈕樣式
+        if (dpNSTCGrant.Controls.Count < 2) return;
+
+        var container = dpNSTCGrant.Controls[1];
+        foreach (Control c in container.Controls)
+        {
+            if (c is Button btn && btn.Text.Trim() == "...")
+            {
+                btn.CssClass = "pagination-item ellipsis";
+            }
+        }
+    }
+
+    /// <summary>
+    /// 格式化國科會金額顯示
+    /// </summary>
+    protected string FormatNSTCAmount(object amount)
+    {
+        if (amount == null || string.IsNullOrWhiteSpace(amount.ToString()))
+            return "無資料";
+
+        string amountStr = amount.ToString();
+        
+        // 如果已經包含逗號，直接返回
+        if (amountStr.Contains(","))
+            return amountStr;
+
+        // 嘗試解析為數字並格式化
+        decimal amountDecimal;
+        if (decimal.TryParse(amountStr.Replace("元", "").Replace(",", ""), out amountDecimal))
+        {
+            return amountDecimal.ToString("#,##0");
+        }
+
+        return amountStr;
+    }
+
+    /// <summary>
+    /// 格式化執行日期為中華民國年格式 (只顯示日期，不顯示時間)
+    /// </summary>
+    protected string FormatExecutionDate(object date)
+    {
+        if (date == null)
+            return "";
+
+        DateTime dt;
+        if (DateTime.TryParse(date.ToString(), out dt))
+        {
+            return GS.App.DateTimeHelper.ToMinguoDate(dt);
+        }
+
+        return date.ToString();
     }
 }

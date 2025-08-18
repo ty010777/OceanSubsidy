@@ -121,13 +121,13 @@ public partial class OSI_ReportManage : System.Web.UI.UserControl
                 {
                     string unitName = row["UnitName"].ToString();
                     string unitID = row["UnitID"].ToString();
-                    
+
                     // 根據 ParentUnitID 判斷是否為根單位
                     if (!row.IsNull("ParentUnitID"))
                     {
                         unitName = "　" + unitName;
                     }
-                    
+
                     ddlUnit.Items.Add(new ListItem(unitName, unitID));
                 }
                 return;
@@ -187,6 +187,9 @@ public partial class OSI_ReportManage : System.Web.UI.UserControl
     // 查詢列表
     protected void btnSearch_Click(object sender, EventArgs e)
     {
+        // 重設分頁到第一頁
+        dpReports.SetPageProperties(0, dpReports.PageSize, false);        
+
         BindReports();
     }
 
@@ -202,14 +205,16 @@ public partial class OSI_ReportManage : System.Web.UI.UserControl
         if (litUnit != null && string.IsNullOrWhiteSpace(litUnit.Text))
             litUnit.Text = "非政府機關";
 
-        // 活動空間範圍
-        if (drv.Row.IsNull("GeoData") || string.IsNullOrEmpty(drv["GeoData"].ToString()))
+        // 活動空間範圍 - 透過 OSIGeomHelper 查詢新的資料表
+        var reportId = drv["ReportID"].ToString();
+        var geomData = OSIGeomHelper.QueryByReportID(reportId);
+        
+        if (geomData == null || geomData.Rows.Count == 0)
         {
             ph.Controls.Add(new Literal { Text = "未標定" });
         }
         else
         {
-            var reportId = drv["ReportID"].ToString();
             string htmlBtn = $@"
             <button
                 type=""button""
@@ -250,8 +255,8 @@ public partial class OSI_ReportManage : System.Web.UI.UserControl
             case "EditReport":
                 // 判斷當前頁面
                 string currentPage = Request.Path.ToLower();
-                string returnUrl = currentPage.Contains("activitymanage.aspx") 
-                    ? "~/OSI/ActivityManage.aspx" 
+                string returnUrl = currentPage.Contains("activitymanage.aspx")
+                    ? "~/OSI/ActivityManage.aspx"
                     : "~/OSI/ActivityReports.aspx";
                 Response.Redirect($"~/OSI/ActivityReportDetail.aspx?id={id}&returnUrl={returnUrl}");
                 break;
@@ -345,8 +350,8 @@ public partial class OSI_ReportManage : System.Web.UI.UserControl
     {
         // 判斷當前頁面
         string currentPage = Request.Path.ToLower();
-        string returnUrl = currentPage.Contains("activitymanage.aspx") 
-            ? "~/OSI/ActivityManage.aspx" 
+        string returnUrl = currentPage.Contains("activitymanage.aspx")
+            ? "~/OSI/ActivityManage.aspx"
             : "~/OSI/ActivityReports.aspx";
         Response.Redirect($"~/OSI/ActivityReportDetail.aspx?returnUrl={returnUrl}");
     }
@@ -426,10 +431,10 @@ public partial class OSI_ReportManage : System.Web.UI.UserControl
         try
         {
             OSI_DataPeriods periodToSet = null;
-            
+
             // 1. 先嘗試取得今天對應的填報期間
             var currentPeriods = OSIDataPeriodsHelper.QueryByDateTimeWithClass(DateTime.Now);
-            
+
             if (currentPeriods != null && currentPeriods.Count > 0)
             {
                 // 若有資料，取第一筆
@@ -440,7 +445,7 @@ public partial class OSI_ReportManage : System.Web.UI.UserControl
                 // 2. 若無資料，查詢最近已結束的期間
                 periodToSet = OSIDataPeriodsHelper.QueryLatestEndedPeriod();
             }
-            
+
             // 設定年度和季度
             if (periodToSet != null)
             {
@@ -453,7 +458,7 @@ public partial class OSI_ReportManage : System.Web.UI.UserControl
             System.Diagnostics.Debug.WriteLine($"SetDefaultPeriod Error: {ex.Message}");
         }
     }
-    
+
     // 設定年度和季度的值
     private void SetPeriodValues(string periodYear, string periodID)
     {
@@ -462,10 +467,10 @@ public partial class OSI_ReportManage : System.Web.UI.UserControl
         if (yearItem != null)
         {
             ddlYear.SelectedValue = periodYear;
-            
+
             // 觸發年度改變事件以載入季度
             ddlYear_SelectedIndexChanged(ddlYear, EventArgs.Empty);
-            
+
             // 設定季度
             var quarterItem = ddlQuarter.Items.FindByValue(periodID);
             if (quarterItem != null)

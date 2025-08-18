@@ -602,6 +602,7 @@ JOIN OSI_Role r ON u.OSI_RoleID = r.RoleID
 WHERE (r.RoleName = N'機關填報端' 
 OR r.RoleName = N'計畫執行端')
 AND u.IsValid = 1
+AND u.IsActive = 1
 AND u.UnitID = @UnitID
 
 ";

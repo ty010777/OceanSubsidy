@@ -6,6 +6,26 @@
 // 全局變量
 let tabsInitialized = false;
 
+// 純前端分頁系統全局變數
+let currentPageState = {
+    pageNumber: 1,
+    pageSize: 5,
+    totalPages: 1,
+    totalRecords: 0,
+    searchText: '',
+    contentKeyword: '',
+    year: '',
+    status: '',
+    stage: '',
+    department: '',
+    reviewer: '',
+    waitingReply: false,
+    selectedStage: '總申請'
+};
+
+// 儲存完整的篩選後資料集
+let filteredDataSet = [];
+
 // 更新表格資料
 function updateTableData(htmlContent) {
     var tableBody = document.getElementById('dataTableBody');
@@ -55,22 +75,22 @@ function updateSelectAllState() {
         selectAllCheckbox.indeterminate = true;
     }
 }
-
-// 收集選中的案件
-function getSelectedCases() {
-    var selectedCases = [];
-    var checkedBoxes = document.querySelectorAll('.case-checkbox:checked');
-    
-    checkedBoxes.forEach(function(checkbox) {
-        selectedCases.push({
-            projectId: checkbox.getAttribute('data-projectid'),
-            status: checkbox.getAttribute('data-status'),
-            stage: checkbox.getAttribute('data-stage')
-        });
-    });
-    
-    return selectedCases;
-}
+//
+// // 收集選中的案件
+// function getSelectedCases() {
+//     var selectedCases = [];
+//     var checkedBoxes = document.querySelectorAll('.case-checkbox:checked');
+//    
+//     checkedBoxes.forEach(function(checkbox) {
+//         selectedCases.push({
+//             projectId: checkbox.getAttribute('data-projectid'),
+//             status: checkbox.getAttribute('data-status'),
+//             stage: checkbox.getAttribute('data-stage')
+//         });
+//     });
+//    
+//     return selectedCases;
+// }
 
 // 篩選標籤功能
 function initTabs() {
@@ -97,18 +117,8 @@ function initTabs() {
             // 取得選中的申請類別
             const categoryText = tab.querySelector('.total-item-title').textContent.trim();
             
-            // 設定隱藏欄位的值 - 需要在 server side 設定 ClientID
-            const hidSelectedStageElements = document.querySelectorAll('input[id*="hidSelectedStage"]');
-            const btnStageFilterElements = document.querySelectorAll('input[id*="btnStageFilter"]');
-            
-            if (hidSelectedStageElements.length > 0) {
-                hidSelectedStageElements[0].value = categoryText;
-                
-                // 觸發後端查詢
-                if (btnStageFilterElements.length > 0) {
-                    btnStageFilterElements[0].click();
-                }
-            }
+            // 使用新的 AJAX 篩選方式
+            filterByCategory(categoryText);
         });
     });
     
@@ -148,46 +158,96 @@ function setActiveTab(categoryName) {
     });
 }
 
-// 排序功能
+// 排序功能 (支援純前端分頁)
 function initSortButtons() {
-    const sortButtons = document.querySelectorAll('.sort');
-    sortButtons.forEach(function(button) {
-        button.addEventListener('click', function() {
-            // 移除其他按鈕的排序狀態
-            sortButtons.forEach(function(btn) {
-                if (btn !== button) {
-                    btn.classList.remove('up', 'down');
+    document.querySelectorAll("thead .sort").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+            e.preventDefault(); // 避免 PostBack
+
+            // 如果沒有資料就直接返回
+            if (filteredDataSet.length === 0) return;
+
+            // 排序欄位索引對應的資料欄位
+            const colIndex = parseInt(btn.dataset.col);
+            const sortField = getSortFieldByColumn(colIndex);
+            
+            if (!sortField) return;
+
+            // 判斷升序或降序
+            const isAsc = !btn.classList.contains("asc");
+
+            // 清除其他按鈕狀態
+            document.querySelectorAll("thead .sort").forEach(b => b.classList.remove("asc", "desc"));
+
+            // 設定當前按鈕狀態
+            btn.classList.toggle("asc", isAsc);
+            btn.classList.toggle("desc", !isAsc);
+
+            // 對完整資料集進行排序
+            filteredDataSet.sort((a, b) => {
+                const aValue = a[sortField] || '';
+                const bValue = b[sortField] || '';
+
+                // 嘗試數字排序
+                const aNum = parseFloat(String(aValue).replace(/,/g, ''));
+                const bNum = parseFloat(String(bValue).replace(/,/g, ''));
+
+                const isANum = !isNaN(aNum) && /^\d+(\.\d+)?$/.test(String(aValue).replace(/,/g, ''));
+                const isBNum = !isNaN(bNum) && /^\d+(\.\d+)?$/.test(String(bValue).replace(/,/g, ''));
+
+                if (isANum && isBNum) {
+                    return isAsc ? aNum - bNum : bNum - aNum;
+                } else {
+                    const aText = String(aValue);
+                    const bText = String(bValue);
+                    return isAsc
+                        ? aText.localeCompare(bText, 'zh-Hant')
+                        : bText.localeCompare(aText, 'zh-Hant');
                 }
             });
-            
-            // 切換當前按鈕的排序狀態
-            if (button.classList.contains('up')) {
-                button.classList.remove('up');
-                button.classList.add('down');
-            } else if (button.classList.contains('down')) {
-                button.classList.remove('down');
-            } else {
-                button.classList.add('up');
-            }
+
+            // 重新顯示當前頁面
+            updateCurrentPageDisplay();
         });
     });
 }
 
+// 根據欄位索引取得對應的資料欄位名稱
+function getSortFieldByColumn(colIndex) {
+    const fieldMap = {
+        1: 'Year',           // 年度
+        2: 'ProjectID',      // 計畫編號  
+        3: 'ProjectName',    // 計畫名稱
+        4: 'ApplicantUnit',  // 申請單位
+        5: 'Category',       // 類別
+        6: 'SubsidyAmount',  // 申請補助金額
+        7: 'Stage',          // 階段
+        8: 'Status'          // 狀態
+    };
+    return fieldMap[colIndex];
+}
+
 // 初始化搜尋表單
-function initSearchForm() {
+function initSearchForm() { 
     // 為搜尋表單添加Enter鍵支援
     const searchInputs = document.querySelectorAll('.search-form input, .search-form select');
     searchInputs.forEach(function(input) {
         input.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                const searchBtn = document.querySelector('.btn-search') || document.querySelector('input[id*="btnSearch"]');
-                if (searchBtn) {
-                    searchBtn.click();
-                }
+                performSearch();
             }
         });
     });
+    
+    // 綁定搜尋按鈕事件
+    const searchBtn = document.querySelector('input[id*="btnSearch"]');
+    if (searchBtn) {
+        searchBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            performSearch();
+        });
+    }
 }
 
 // 頁面載入完成後的初始化
@@ -200,6 +260,9 @@ document.addEventListener('DOMContentLoaded', function() {
         initSearchForm();
         initPaginationButtons();
         initDropdownToggle();
+        
+        // 載入初始篩選資料
+        loadFilteredData();
     }, 100);
 });
 
@@ -248,21 +311,10 @@ function initTooltips() {
     }
 }
 
-// 初始化分頁按鈕圖示
+// 初始化分頁按鈕
 function initPaginationButtons() {
-    // 為前一頁按鈕添加圖示
-    const prevButton = document.querySelector('input[id*="btnPrevPage"]');
-    if (prevButton) {
-        prevButton.innerHTML = '<i class="fas fa-chevron-left"></i>';
-    }
-    
-    // 為下一頁按鈕添加圖示
-    const nextButton = document.querySelector('input[id*="btnNextPage"]');
-    if (nextButton) {
-        nextButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
-    }
-    
-    // 初始化分頁
+    // 分頁按鈕已經在 ASPX 中設定好文字
+    // 這裡只需要初始化分頁狀態
     updatePagination(1, 1); // 預設第1頁，總共1頁
 }
 
@@ -271,8 +323,8 @@ function updatePagination(currentPage, totalPages) {
     const paginationNav = document.getElementById('paginationNav');
     if (!paginationNav) return;
     
-    const prevButton = paginationNav.querySelector('input[id*="btnPrevPage"]');
-    const nextButton = paginationNav.querySelector('input[id*="btnNextPage"]');
+    const prevButton = document.getElementById('btnPrevPage');
+    const nextButton = document.getElementById('btnNextPage');
     
     // 清除現有的頁碼按鈕
     const existingPageButtons = paginationNav.querySelectorAll('.pagination-item, .ellipsis');
@@ -293,18 +345,18 @@ function updatePagination(currentPage, totalPages) {
     if (prevButton) {
         prevButton.disabled = currentPage <= 1;
         if (currentPage <= 1) {
-            prevButton.setAttribute('disabled', 'disabled');
+            prevButton.classList.add('disabled');
         } else {
-            prevButton.removeAttribute('disabled');
+            prevButton.classList.remove('disabled');
         }
     }
     
     if (nextButton) {
         nextButton.disabled = currentPage >= totalPages;
         if (currentPage >= totalPages) {
-            nextButton.setAttribute('disabled', 'disabled');
+            nextButton.classList.add('disabled');
         } else {
-            nextButton.removeAttribute('disabled');
+            nextButton.classList.remove('disabled');
         }
     }
 }
@@ -375,7 +427,7 @@ function createEllipsis() {
 
 // 更新跳頁下拉選單
 function updatePageDropdown(totalPages, currentPage) {
-    const pageDropdown = document.querySelector('select[id*="ddlPageNumber"]');
+    const pageDropdown = document.getElementById('ddlPageNumber');
     if (!pageDropdown) return;
     
     // 清空現有選項
@@ -393,11 +445,363 @@ function updatePageDropdown(totalPages, currentPage) {
     }
 }
 
-// 跳轉到指定頁面
+// AJAX 載入篩選資料 (純前端分頁架構)
+function loadFilteredData(showLoading = true) {
+    if (showLoading) {
+        showLoadingMessage();
+    }
+    
+    // 準備 AJAX 請求參數 (不再包含分頁參數)
+    const requestData = {
+        searchText: currentPageState.searchText,
+        contentKeyword: currentPageState.contentKeyword,
+        year: currentPageState.year,
+        status: currentPageState.status,
+        stage: currentPageState.stage,
+        department: currentPageState.department,
+        reviewer: currentPageState.reviewer,
+        waitingReply: currentPageState.waitingReply,
+        selectedStage: currentPageState.selectedStage
+    };
+    
+    console.log('Loading filtered data:', requestData);
+    
+    $.ajax({
+        type: 'POST',
+        url: 'ApplicationChecklist.aspx/GetFilteredData',
+        data: JSON.stringify(requestData),
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        success: function(response) {
+            if (response.d && response.d.success) {
+                const responseData = response.d;
+                
+                // 儲存完整的篩選後資料集
+                filteredDataSet = responseData.data || [];
+                
+                // 更新總記錄數和重新計算分頁
+                currentPageState.totalRecords = filteredDataSet.length;
+                currentPageState.totalPages = Math.ceil(currentPageState.totalRecords / currentPageState.pageSize) || 1;
+                
+                // 確保當前頁面在有效範圍內
+                if (currentPageState.pageNumber > currentPageState.totalPages) {
+                    currentPageState.pageNumber = 1;
+                }
+                
+                // 更新當前頁面的表格資料
+                updateCurrentPageDisplay();
+                
+                // 更新分頁控制項
+                updatePaginationControls();
+                
+                // 更新記錄資訊
+                updateRecordInfo();
+                
+                // 更新標籤統計
+                updateTabCounts(responseData.categoryCounts);
+                setActiveTab(currentPageState.selectedStage);
+                
+                console.log('Filtered data loaded successfully:', {
+                    totalRecords: currentPageState.totalRecords,
+                    totalPages: currentPageState.totalPages,
+                    currentPage: currentPageState.pageNumber,
+                    dataLength: filteredDataSet.length
+                });
+            } else {
+                showErrorMessage(response.d ? response.d.message : '載入資料失敗');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX Error:', error);
+            showErrorMessage('載入資料時發生錯誤');
+        }
+    });
+}
+
+// 更新當前頁面顯示 (純前端分頁)
+function updateCurrentPageDisplay() {
+    const startIndex = (currentPageState.pageNumber - 1) * currentPageState.pageSize;
+    const endIndex = startIndex + currentPageState.pageSize;
+    const currentPageData = filteredDataSet.slice(startIndex, endIndex);
+    
+    // 生成當前頁面的 HTML
+    let tableHtml = '';
+    if (currentPageData.length === 0) {
+        tableHtml = '<tr><td colspan="9" style="text-align: center; padding: 20px; color: #6c757d;"><i class="fas fa-info-circle"></i> 沒有符合條件的資料</td></tr>';
+    } else {
+        currentPageData.forEach(record => {
+            tableHtml += generateRowHtml(record);
+        });
+    }
+    
+    // 更新表格
+    updateTableData(tableHtml);
+}
+
+// 生成單筆記錄的 HTML
+function generateRowHtml(record) {
+    // 處理狀態顯示：優先顯示撤案狀態
+    let displayStatus = '';
+    let statusClass = '';
+    
+    if (record.isWithdrawal === true) {
+        displayStatus = '已撤案';
+        statusClass = getStatusColorClass('已撤案');
+    } else {
+        displayStatus = record.StatusesName || '';
+        statusClass = getStatusColorClass(record.StatusesName);
+    }
+    
+    return `
+        <tr>
+            <td data-th="年度:">${record.Year || ''}</td>
+            <td data-th="計畫編號:" style="text-align: left;" nowrap>${record.ProjectID || ''}</td>
+            <td data-th="計畫名稱:" style="text-align: left;">
+                <a href="#" class="link-black" target="_blank">${record.ProjectNameTw || ''}</a>
+            </td>
+            <td data-th="申請單位:" style="text-align: left;">${record.OrgName || ''}</td>
+            <td data-th="類別:">${record.Category || ''}</td>
+            <td data-th="申請補助金額:">${record.ApplicationAmount || '0'}</td>
+            <td data-th="階段:" nowrap><span class="">${record.Statuses || ''}</span></td>
+            <td data-th="狀態:" style="text-align: center;">
+                <span class="${statusClass}">${displayStatus}</span>
+            </td>
+            <td data-th="功能:">
+                <div class="d-flex align-items-center justify-content-end gap-1">
+                    ${generateActionButtons(record)}
+                </div>
+            </td>
+        </tr>
+    `;
+}
+
+// 取得狀態顏色樣式
+function getStatusColorClass(status) {
+    if (!status) return '';
+    
+    switch (status.trim()) {
+        case '補正補件':
+        case '待回覆':
+        case '待修正':
+            return 'text-royal-blue';
+        case '逾期未補':
+        case '未通過':
+        case '已撤案':
+            return 'text-pink';
+        case '已核定':
+            return 'text-teal';
+        case '尚未提送':
+            return 'text-royal-blue';
+        default:
+            return '';
+    }
+}
+
+// 生成操作按鈕
+function generateActionButtons(record) {
+    let buttons = '';
+    
+    if (!record.ProjectID) return buttons;
+    
+    const status = record.Statuses || '';
+    const statusName = record.StatusesName || '';
+    const isWithdrawn = record.isWithdrawal === true;
+    
+    // 編輯按鈕（只有特定狀態可編輯）
+    if (canEdit(status, statusName)) {
+        const editUrl = getEditUrl(record);
+        if (editUrl && editUrl !== '#') {
+            buttons += `<a href="${editUrl}" class="btn btn-sm btn-teal-dark" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="編輯">
+                <i class="fa-solid fa-pen"></i>
+            </a>`;
+        }
+    }
+    
+    // 回覆按鈕（檢視審查意見）
+    buttons += `<button class="btn btn-sm btn-teal-dark" type="button" onclick="showReviewComments('${record.ProjectID}')" 
+                data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="檢視審查意見">
+                <i class="fas fa-comment-dots"></i>
+            </button>`;
+    
+    // 歷程按鈕
+    buttons += `<button class="btn btn-sm btn-teal-dark" type="button" onclick="showHistory('${record.ProjectID}')" 
+                data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="歷程">
+                <i class="fas fa-history"></i>
+            </button>`;
+    
+    // 更多操作選單
+    buttons += `<div class="dropdown">
+        <button class="btn btn-sm btn-outline-teal" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-ellipsis-h"></i>
+        </button>
+        <ul class="dropdown-menu" style="min-width: 120px;">`;
+    
+    // 撤案按鈕（只有在指定狀態下且未撤案時顯示）
+    if (canWithdraw(status) && !isWithdrawn) {
+        buttons += `<li><a class="dropdown-menu-item gap-1" href="#" onclick="handleWithdraw('${record.ProjectID}'); return false;">
+            <i class="fas fa-redo text-teal-dark"></i>撤案
+        </a></li>`;
+    }
+    
+    // 刪除按鈕（只有「尚未提送」狀態可刪除）
+    if (canDelete(status)) {
+        buttons += `<li><a class="dropdown-menu-item gap-1" href="#" onclick="handleDelete('${record.ProjectID}'); return false;">
+            <i class="fas fa-times text-teal-dark"></i>刪除
+        </a></li>`;
+    }
+    
+    // 恢復案件按鈕（只有已撤案的案件顯示）
+    if (isWithdrawn) {
+        buttons += `<li><a class="dropdown-menu-item gap-1" href="#" onclick="handleRestore('${record.ProjectID}')">
+            <i class="fas fa-undo text-teal-dark"></i>恢復案件
+        </a></li>`;
+    }
+    
+    buttons += `</ul></div>`;
+    
+    return buttons;
+}
+
+// 檢查是否可編輯
+function canEdit(status, statusName) {
+    if (status === '決審核定') {
+        return statusName === '計畫書修正中';
+    } else {
+        return statusName === '編輯中' || statusName === '補正補件';
+    }
+}
+
+// 檢查是否可撤案
+function canWithdraw(status) {
+    const withdrawableStatuses = ['資格審查', '內容審查', '領域審查', '初審', '技術審查', '複審', '決審核定'];
+    return withdrawableStatuses.includes(status);
+}
+
+// 檢查是否可刪除
+function canDelete(status) {
+    return status === '尚未提送';
+}
+
+// 取得編輯頁面的網址
+function getEditUrl(record) {
+    if (!record.ProjectID) return '#';
+    
+    const category = record.Category;
+    
+    switch (category) {
+        case '科專':
+            return `SCI/SciApplication.aspx?ProjectID=${record.ProjectID}`;
+        case '文化':
+        case '學校社團':
+        case '學校民間':
+        case '多元':
+        case '素養':
+        case '無障礙':
+        default:
+            return '#'; // 尚未有對應的編輯頁面
+    }
+}
+
+// 換頁功能 (純前端)
+function changePage(direction) {
+    if (direction === 'prev' && currentPageState.pageNumber > 1) {
+        currentPageState.pageNumber--;
+        updateCurrentPageDisplay();
+        updatePaginationControls();
+    } else if (direction === 'next' && currentPageState.pageNumber < currentPageState.totalPages) {
+        currentPageState.pageNumber++;
+        updateCurrentPageDisplay();
+        updatePaginationControls();
+    }
+}
+
+// 跳轉到指定頁面 (純前端)
 function goToPage(pageNumber) {
-    // 這裡可以觸發後端分頁邏輯
-    console.log('跳轉到第', pageNumber, '頁');
-    // 實際實現時可以觸發PostBack或AJAX請求
+    pageNumber = parseInt(pageNumber);
+    if (pageNumber >= 1 && pageNumber <= currentPageState.totalPages) {
+        currentPageState.pageNumber = pageNumber;
+        updateCurrentPageDisplay();
+        updatePaginationControls();
+    }
+}
+
+// 改變每頁筆數 (純前端)
+function changePageSize() {
+    const pageSizeSelect = document.getElementById('ddlPageSize');
+    
+    if (pageSizeSelect) {
+        currentPageState.pageSize = parseInt(pageSizeSelect.value);
+        currentPageState.pageNumber = 1; // 重置到第一頁
+        
+        // 重新計算總頁數
+        currentPageState.totalPages = Math.ceil(currentPageState.totalRecords / currentPageState.pageSize) || 1;
+        
+        // 更新顯示
+        updateCurrentPageDisplay();
+        updatePaginationControls();
+    }
+}
+
+// 執行搜尋
+function performSearch() {
+    // 收集搜尋條件
+    currentPageState.searchText = document.querySelector('input[id*="txtSearch"]')?.value || '';
+    currentPageState.contentKeyword = document.querySelector('input[id*="txtContentKeyword"]')?.value || '';
+    currentPageState.year = document.querySelector('select[id*="ddlYear"]')?.value || '';
+    currentPageState.status = document.querySelector('select[id*="ddlStatus"]')?.value || '';
+    currentPageState.stage = document.querySelector('select[id*="ddlStage"]')?.value || '';
+    currentPageState.department = document.querySelector('input[id*="txtDepartment"]')?.value || '';
+    currentPageState.reviewer = document.querySelector('select[id*="ddlReviewer"]')?.value || '';
+    currentPageState.waitingReply = document.querySelector('input[id*="waitingReply"]')?.checked || false;
+    
+    // 重置到第一頁
+    currentPageState.pageNumber = 1;
+    
+    // 載入篩選資料
+    loadFilteredData();
+}
+
+// 標籤篩選
+function filterByCategory(category) {
+    currentPageState.selectedStage = category;
+    currentPageState.pageNumber = 1; // 重置到第一頁
+    loadFilteredData();
+}
+
+// 顯示載入訊息
+function showLoadingMessage() {
+    const tableBody = document.getElementById('dataTableBody');
+    if (tableBody) {
+        tableBody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> 載入中...</td></tr>';
+    }
+}
+
+// 顯示錯誤訊息
+function showErrorMessage(message) {
+    const tableBody = document.getElementById('dataTableBody');
+    if (tableBody) {
+        tableBody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 20px; color: #dc3545;"><i class="fas fa-exclamation-triangle"></i> ${message}</td></tr>`;
+    }
+}
+
+// 更新記錄資訊
+function updateRecordInfo() {
+    const recordInfo = document.querySelector('span.text-teal');
+    if (recordInfo) {
+        recordInfo.textContent = currentPageState.totalRecords;
+    }
+}
+
+// 更新分頁控制項
+function updatePaginationControls() {
+    // 統一使用 updatePagination 方法來更新所有分頁相關 UI
+    updatePagination(currentPageState.pageNumber, currentPageState.totalPages);
+    
+    // 更新每頁筆數下拉選單
+    const pageSizeDropdown = document.getElementById('ddlPageSize');
+    if (pageSizeDropdown) {
+        pageSizeDropdown.value = currentPageState.pageSize;
+    }
 }
 
 // 在頁面載入後初始化工具提示
@@ -602,9 +1006,17 @@ function showCommentLoadingState() {
     document.getElementById('applicantUnitDisplay').textContent = '';
     document.getElementById('projectNameDisplay').textContent = '';
     
-    // 顯示載入中
-    const tableBody = document.getElementById('reviewCommentsTableBody');
-    tableBody.innerHTML = '<tr><td colspan="3" class="text-center p-4">載入中...</td></tr>';
+    // 顯示載入中到兩個表格
+    const domainTableBody = document.getElementById('domainReviewCommentsTableBody');
+    const technicalTableBody = document.getElementById('technicalReviewCommentsTableBody');
+    
+    if (domainTableBody) {
+        domainTableBody.innerHTML = '<tr><td colspan="3" class="text-center p-4">載入中...</td></tr>';
+    }
+    
+    if (technicalTableBody) {
+        technicalTableBody.innerHTML = '<tr><td colspan="3" class="text-center p-4">載入中...</td></tr>';
+    }
 }
 
 // 顯示審查意見資料
@@ -624,13 +1036,13 @@ function displayReviewCommentsData(data) {
         document.getElementById('projectNameDisplay').textContent = data.projectInfo.projectName || '';
     }
     
-    // 建立審查意見表格內容 (遵照原始 UI 結構)
-    const tableBody = document.getElementById('reviewCommentsTableBody');
-    let tableRows = '';
+    // 建立領域審查意見表格
+    const domainTableBody = document.getElementById('domainReviewCommentsTableBody');
+    let domainTableRows = '';
     
-    if (data.reviewComments && data.reviewComments.length > 0) {
-        data.reviewComments.forEach(function(comment) {
-            tableRows += `
+    if (data.domainReviewComments && data.domainReviewComments.length > 0) {
+        data.domainReviewComments.forEach(function(comment) {
+            domainTableRows += `
                 <tr>
                     <td>${comment.reviewerName || ''}</td>
                     <td>${comment.reviewComment || ''}</td>
@@ -644,42 +1056,95 @@ function displayReviewCommentsData(data) {
             `;
         });
     } else {
-        tableRows = `
+        domainTableRows = `
             <tr>
                 <td colspan="3" class="text-center p-4 text-muted">
-                    <i class="fas fa-info-circle"></i> 尚未有審查意見
+                    <i class="fas fa-info-circle"></i> 尚未有領域審查意見
                 </td>
             </tr>
         `;
     }
+    domainTableBody.innerHTML = domainTableRows;
     
-    tableBody.innerHTML = tableRows;
+    // 建立技術審查意見表格
+    const technicalTableBody = document.getElementById('technicalReviewCommentsTableBody');
+    let technicalTableRows = '';
     
-    // 檢查是否已有回覆，如果有則禁用提送按鈕
+    if (data.technicalReviewComments && data.technicalReviewComments.length > 0) {
+        data.technicalReviewComments.forEach(function(comment) {
+            technicalTableRows += `
+                <tr>
+                    <td>${comment.reviewerName || ''}</td>
+                    <td>${comment.reviewComment || ''}</td>
+                    <td>
+                        <span class="form-control textarea" role="textbox" contenteditable="" 
+                              data-placeholder="請輸入" aria-label="文本輸入區域" 
+                              data-review-id="${comment.reviewerReviewID}"
+                              style="height: auto; overflow-y: hidden;">${comment.replyComment || ''}</span>
+                    </td>
+                </tr>
+            `;
+        });
+    } else {
+        technicalTableRows = `
+            <tr>
+                <td colspan="3" class="text-center p-4 text-muted">
+                    <i class="fas fa-info-circle"></i> 尚未有技術審查意見
+                </td>
+            </tr>
+        `;
+    }
+    technicalTableBody.innerHTML = technicalTableRows;
+    
+    // 檢查提送按鈕狀態
     const submitButton = document.querySelector('button[onclick="submitReply()"]');
-    if (submitButton && data.reviewComments && data.reviewComments.length > 0) {
-        const hasReply = data.reviewComments.some(comment => 
-            comment.replyComment && comment.replyComment.trim() !== ''
-        );
+    if (submitButton) {
+        const allComments = [...(data.domainReviewComments || []), ...(data.technicalReviewComments || [])];
         
-        if (hasReply) {
+        // 情況1：還沒有領域或技術審查意見 → 鎖定
+        if (allComments.length === 0) {
             submitButton.disabled = true;
-            submitButton.innerHTML = '<i class="fas fa-check"></i> 已提送回覆';
+            submitButton.innerHTML = '<i class="fas fa-info-circle"></i> 暫無審查意見';
             submitButton.classList.add('btn-secondary');
             submitButton.classList.remove('btn-teal');
-        } else {
-            submitButton.disabled = false;
-            submitButton.innerHTML = '<i class="fas fa-check"></i> 提送回覆';
-            submitButton.classList.add('btn-teal');
-            submitButton.classList.remove('btn-secondary');
+        } 
+        // 情況2：有審查意見，檢查回覆狀態
+        else {
+            // 檢查是否有任何回覆是 null 或空值
+            const hasAnyEmptyReply = allComments.some(comment =>
+                !comment.replyComment || comment.replyComment.trim() === ''
+            );
+
+            if (hasAnyEmptyReply) {
+                // 開放回覆
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<i class="fas fa-check"></i> 提送回覆';
+                submitButton.classList.add('btn-teal');
+                submitButton.classList.remove('btn-secondary');
+            } else {
+                // 全部都有回覆 → 鎖定（已提送狀態）
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="fas fa-check"></i> 已提送回覆';
+                submitButton.classList.add('btn-secondary');
+                submitButton.classList.remove('btn-teal');
+            }
         }
     }
 }
 
 // 顯示審查意見錯誤狀態
 function showCommentErrorState(message) {
-    const tableBody = document.getElementById('reviewCommentsTableBody');
-    tableBody.innerHTML = `<tr><td colspan="3" class="text-center p-4 text-danger">載入失敗: ${message}</td></tr>`;
+    // 清空兩個表格
+    const domainTableBody = document.getElementById('domainReviewCommentsTableBody');
+    const technicalTableBody = document.getElementById('technicalReviewCommentsTableBody');
+    
+    if (domainTableBody) {
+        domainTableBody.innerHTML = `<tr><td colspan="3" class="text-center p-4 text-danger">載入失敗: ${message}</td></tr>`;
+    }
+    
+    if (technicalTableBody) {
+        technicalTableBody.innerHTML = `<tr><td colspan="3" class="text-center p-4 text-danger">載入失敗: ${message}</td></tr>`;
+    }
     
     // 清空計畫基本資訊
     document.getElementById('projectIdDisplay').textContent = '';
@@ -711,23 +1176,42 @@ function saveReply(reviewId) {
 
 // 提送回覆功能
 function submitReply() {
-    // 收集所有回覆內容
-    const replySpans = document.querySelectorAll('span[data-review-id]');
-    const replies = [];
+    // 收集領域審查回覆內容
+    const domainReplySpans = document.querySelectorAll('#domainReviewCommentsTableBody span[data-review-id]');
+    const domainReplies = [];
     
-    replySpans.forEach(span => {
+    domainReplySpans.forEach(span => {
         const reviewId = span.getAttribute('data-review-id');
         const replyContent = span.textContent.trim();
         
         if (reviewId && replyContent) {
-            replies.push({
+            domainReplies.push({
                 reviewId: reviewId,
                 replyContent: replyContent
             });
         }
     });
     
-    if (replies.length === 0) {
+    // 收集技術審查回覆內容
+    const technicalReplySpans = document.querySelectorAll('#technicalReviewCommentsTableBody span[data-review-id]');
+    const technicalReplies = [];
+    
+    technicalReplySpans.forEach(span => {
+        const reviewId = span.getAttribute('data-review-id');
+        const replyContent = span.textContent.trim();
+        
+        if (reviewId && replyContent) {
+            technicalReplies.push({
+                reviewId: reviewId,
+                replyContent: replyContent
+            });
+        }
+    });
+    
+    // 合併所有回覆
+    const allReplies = [...domainReplies, ...technicalReplies];
+    
+    if (allReplies.length === 0) {
         alert('請至少輸入一項回覆內容');
         return;
     }
@@ -743,7 +1227,7 @@ function submitReply() {
     $.ajax({
         type: 'POST',
         url: 'ApplicationChecklist.aspx/SubmitReply',
-        data: JSON.stringify({ replies: replies }),
+        data: JSON.stringify({ replies: allReplies }),
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         success: function(response) {
@@ -773,4 +1257,9 @@ function submitReply() {
             }
         }
     });
+}
+
+// 向後相容性別名 - 其他程式碼可能仍會呼叫 loadPageData
+function loadPageData(showLoading = true) {
+    loadFilteredData(showLoading);
 }

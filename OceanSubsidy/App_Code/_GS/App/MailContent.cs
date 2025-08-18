@@ -123,6 +123,23 @@ public class MailContent
             }
         }
 
+        // OSI 開始填報通知
+        public class OSI_StartFilledRemind
+        {
+            public static string Subject = "海洋領域補助案網站 - 開始填報提醒通知";
+            public static string getMail(string unitName, string year, string quarter, string startDate, string endDate)
+            {
+                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                string templatePath = Path.Combine(baseDir, "App_Code", "_GS", "App", "MailContents", "OSI_StartFilledRemind.html");
+                return File.ReadAllText(templatePath)
+                 .Replace("{{UnitName}}", unitName)
+                 .Replace("{{Year}}", year)
+                 .Replace("{{Quarter}}", quarter)
+                 .Replace("{{StartDate}}", startDate)
+                 .Replace("{{EndDate}}", endDate);
+            }
+        }
+
 
     }
 }

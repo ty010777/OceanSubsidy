@@ -279,8 +279,8 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
         {
             // 載入科專年度選項
             ddlYear_Type2.Items.Add(new ListItem("全部", ""));
-            ddlYear_Type2.Items.Add(new ListItem("113", "113年"));
-            ddlYear_Type2.Items.Add(new ListItem("114", "114年"));            
+            ddlYear_Type2.Items.Add(new ListItem("113年", "113"));
+            ddlYear_Type2.Items.Add(new ListItem("114年", "114"));            
             ddlYear_Type2.DataTextField = "Text";
             ddlYear_Type2.DataValueField = "Value";
             ddlYear_Type2.DataBind();
@@ -1109,7 +1109,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                             return true;
                         case "4": // 決審 → 計畫執行
                             fromStatus = "決審核定";
-                            StatusesName = "填寫契約資料";
+                            StatusesName = "";
                             toStatus = "計畫執行";
                             return true;
                     }
@@ -1410,7 +1410,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                 System.Threading.Thread.Sleep(1);
                 
                 // 第二筆：轉為下一階段初始狀態
-                string nextStageInitialStatus = toStatus == "計畫執行" ? "簽訂契約" : "審查中";
+                string nextStageInitialStatus = toStatus == "計畫執行" ? "簽訂契約" : "審核中";
                 ReviewCheckListHelper.InsertReviewHistory(projectId, fromStatus, toStatus, $"{toStatus}{nextStageInitialStatus}", userAccount);
             }
             else

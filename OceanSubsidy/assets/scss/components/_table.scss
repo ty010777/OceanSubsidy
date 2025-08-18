@@ -213,6 +213,15 @@
                 line-height: 1.3;
             }
         }
+        tr.total-row {
+            border-top: 8px solid $teal;
+            border-bottom: 1px solid $teal;
+            td {
+                background-color: $light-teal;
+                color: $neutral-700;
+                padding-block: 10px;
+            }
+        }
     }
     td {
         vertical-align: middle;

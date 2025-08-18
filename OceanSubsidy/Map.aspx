@@ -568,7 +568,7 @@
 
         })();
 
-        // 把所有要素轉換成 EPSG:3826 (TWD97 / TM2 zone 121) 座標輸出成 WKT
+        // 把所有要素轉換成 EPSG:3826 (TWD97 / TM2 zone 121) 座標輸出成 JSON 格式
         function getAllFeaturesWKT3826() {
             var wktFormat = new ol.format.WKT();
             var features = drawSource.getFeatures(); // ol.Feature 陣列
@@ -577,7 +577,11 @@
                 return "";
             }
 
-            var geoms3826 = [];
+            var result = {
+                type: "FeatureCollection",
+                features: []
+            };
+
             features.forEach(function (feature) {
                 var geom = feature.getGeometry();
                 if (!geom) return;
@@ -593,16 +597,33 @@
                 // 從 EPSG:3857 轉換到 EPSG:3826
                 clonedGeom.transform('EPSG:3857', 'EPSG:3826');
                 
-                geoms3826.push(clonedGeom);
+                // 取得名稱（從不同的 style 設定中）
+                var name = "";
+                var style = feature.getStyle();
+                if (style) {
+                    if (Array.isArray(style)) {
+                        // 處理 style 陣列的情況（例如線段有多個樣式）
+                        for (var i = 0; i < style.length; i++) {
+                            if (style[i].getText && style[i].getText()) {
+                                name = style[i].getText().getText();
+                                break;
+                            }
+                        }
+                    } else if (style.getText && style.getText()) {
+                        name = style.getText().getText();
+                    }
+                }
+                
+                // 將 feature 資訊加入結果
+                result.features.push({
+                    id: feature.getId(),
+                    name: name,
+                    wkt: wktFormat.writeGeometry(clonedGeom, 
+                        { dataProjection: 'EPSG:3826', featureProjection: 'EPSG:3826' })
+                });
             });
 
-            // 統一使用 GeometryCollection，不管要素數量
-            // 這樣可以確保資料庫中的幾何類型一致
-            var collection = new ol.geom.GeometryCollection(geoms3826);
-            return wktFormat.writeGeometry(
-                collection,
-                { dataProjection: 'EPSG:3826', featureProjection: 'EPSG:3826' }
-            );
+            return JSON.stringify(result);
         }
 
     </script>

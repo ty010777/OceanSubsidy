@@ -282,14 +282,12 @@
                         <div class="row g-3">
                             <div class="col-12 col-xl-2">
                                 <div class="mb-2">
-                                    <span class="text-pink">*</span>
                                     姓名
                                 </div>
                                 <asp:TextBox ID="txtAccountName" runat="server" CssClass="form-control" placeholder="請輸入姓名"/>
                             </div>
                             <div class="col-12 col-xl-3">
                                 <div class="mb-2">
-                                    <span class="text-pink">*</span>
                                     職稱
                                 </div>
                                 <asp:TextBox ID="txtAccountJobTitle" runat="server" CssClass="form-control" placeholder="請輸入職稱"/>
@@ -306,7 +304,6 @@
                             </div>
                             <div class="col-12 col-xl-3">
                                 <div class="mb-2">
-                                    <span class="text-pink">*</span>
                                     手機號碼
                                 </div>
                                 <asp:TextBox ID="txtAccountMobile" runat="server" CssClass="form-control" placeholder="請輸入手機號碼"/>

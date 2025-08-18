@@ -257,12 +257,46 @@
                     </asp:UpdatePanel>
                 </td>
             </tr>
-            <!-- 研究調查範圍 -->
+            <!-- 研究調查範圍(縣市) -->
             <tr>
-                <th>研究調查範圍</th>
+                <th>研究調查範圍<br />
+                    (縣市)</th>
+                <td>
+                    <asp:UpdatePanel ID="upScopeCounty" runat="server" UpdateMode="Conditional">
+                        <ContentTemplate>
+                            <span class="text-muted">研究調查範圍(縣市) 與 研究調查範圍(描述) 至少須擇一填寫</span>
+                            <div class="input-group">
+                                <asp:DropDownList ID="ddlScopeCounty" runat="server" CssClass="form-select" AppendDataBoundItems="true" />
+                                <asp:Button ID="btnAddScopeCounty" runat="server" Text="新增" CssClass="btn btn-cyan" OnClick="btnAddScopeCounty_Click" />
+                            </div>
+                            <asp:HiddenField ID="hfDelScopeCountyIndex" runat="server" />
+                            <asp:LinkButton ID="btnDelScopeCounty" runat="server" OnClick="btnDelScopeCounty_Click" Style="display: none;" />
+                            <div class="tag-group mt-2">
+                                <asp:Repeater ID="rptScopeCountyList" runat="server">
+                                    <ItemTemplate>
+                                        <span class="tag tag-gray me-1">
+                                            <span class="tag-content">
+                                                <%# Eval("CountyName") %>
+                                            </span>
+                                            <button type="button" class="tag-btn" onclick="deleteScopeCounty(<%# Container.ItemIndex %>)">
+                                                <img src="<%= ResolveUrl("~/assets/img/close-circle.svg") %>" alt="" />
+                                            </button>
+                                        </span>
+                                    </ItemTemplate>
+                                </asp:Repeater>
+                            </div>
+                        </ContentTemplate>
+                    </asp:UpdatePanel>
+                </td>
+            </tr>
+            <!-- 研究調查範圍(描述) -->
+            <tr>
+                <th>研究調查範圍<br />
+                    (描述)</th>
                 <td>
                     <asp:UpdatePanel ID="upScopeList" runat="server" UpdateMode="Conditional">
                         <ContentTemplate>
+                            <span class="text-muted">研究調查範圍(縣市) 與 研究調查範圍(描述) 至少須擇一填寫</span>
                             <div class="input-group">
                                 <asp:TextBox ID="txtSurveyScope" runat="server" CssClass="form-control" MaxLength="200" Placeholder="請輸入研究調查範圍" />
                                 <asp:Button ID="btnAddScope" runat="server" Text="新增" CssClass="btn btn-cyan" OnClick="btnAddScope_Click" />
@@ -282,6 +316,10 @@
                                         </span>
                                     </ItemTemplate>
                                 </asp:Repeater>
+                                <asp:CustomValidator ID="cvScopeValidation" runat="server" ValidationGroup="Main"
+                                    CssClass="invalid" Display="Dynamic"
+                                    OnServerValidate="cvScopeValidation_ServerValidate" 
+                                    ErrorMessage="研究調查範圍(縣市) 與 研究調查範圍(描述) 至少須擇一填寫" />
                             </div>
                         </ContentTemplate>
                     </asp:UpdatePanel>
@@ -622,6 +660,14 @@
         var btnDelCarrier = document.getElementById('<%= btnDelCarrier.ClientID %>');
         hfDelCarrierIndex.value = index;
         btnDelCarrier.click();
+    }
+
+    // 刪除研究調查範圍(縣市)
+    function deleteScopeCounty(index) {
+        var hfDelScopeCountyIndex = document.getElementById('<%= hfDelScopeCountyIndex.ClientID %>');
+        var btnDelScopeCounty = document.getElementById('<%= btnDelScopeCounty.ClientID %>');
+        hfDelScopeCountyIndex.value = index;
+        btnDelScopeCounty.click();
     }
 
 </script>

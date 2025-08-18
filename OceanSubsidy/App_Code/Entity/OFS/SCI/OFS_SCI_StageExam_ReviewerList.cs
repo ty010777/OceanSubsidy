@@ -1,0 +1,287 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Data;
+using System.Text;
+using System.Runtime.Serialization;
+using GS.Data;
+using GS.Extension;
+
+namespace GS.OCA_OceanSubsidy.Entity.Base
+{
+    
+    /// <summary>
+    ///  ()
+    /// </summary>
+    [DataContract]
+    [Serializable()]
+    [GisTableAttribute("OFS_SCI_StageExam_ReviewerList", "", false)]
+    public class IOFS_SCI_StageExam_ReviewerList : IMeta
+    {
+        
+        protected int _id = 0;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("id", "id", DataSource.UN_OPERATE, "", false)]
+        public virtual int id
+        {
+            get
+            {
+                return _id;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_id == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_id.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("id") == -1)
+                    {
+                        UPDATE_COLUMN.Add("id");
+                    }
+                    _id = value;
+                }
+            }
+        }
+        
+        protected int? _ExamID = null;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("ExamID", "ExamID", DataSource.TABLE, "", false)]
+        public virtual int? ExamID
+        {
+            get
+            {
+                return _ExamID;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_ExamID == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_ExamID.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("ExamID") == -1)
+                    {
+                        UPDATE_COLUMN.Add("ExamID");
+                    }
+                    _ExamID = value;
+                }
+            }
+        }
+        
+        protected string _Account = "";
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("Account", "Account", DataSource.TABLE, "", false)]
+        public virtual string Account
+        {
+            get
+            {
+                return _Account;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_Account == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_Account.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("Account") == -1)
+                    {
+                        UPDATE_COLUMN.Add("Account");
+                    }
+                    _Account = value;
+                }
+            }
+        }
+        
+        protected string _Reviewer = "";
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("Reviewer", "Reviewer", DataSource.TABLE, "", false)]
+        public virtual string Reviewer
+        {
+            get
+            {
+                return _Reviewer;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_Reviewer == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_Reviewer.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("Reviewer") == -1)
+                    {
+                        UPDATE_COLUMN.Add("Reviewer");
+                    }
+                    _Reviewer = value;
+                }
+            }
+        }
+        
+        protected string _ReviewFilePath = "";
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("ReviewFilePath", "ReviewFilePath", DataSource.TABLE, "", false)]
+        public virtual string ReviewFilePath
+        {
+            get
+            {
+                return _ReviewFilePath;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_ReviewFilePath == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_ReviewFilePath.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("ReviewFilePath") == -1)
+                    {
+                        UPDATE_COLUMN.Add("ReviewFilePath");
+                    }
+                    _ReviewFilePath = value;
+                }
+            }
+        }
+        
+        protected string _token = "";
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("token", "token", DataSource.TABLE, "", false)]
+        public virtual string token
+        {
+            get
+            {
+                return _token;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_token == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_token.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("token") == -1)
+                    {
+                        UPDATE_COLUMN.Add("token");
+                    }
+                    _token = value;
+                }
+            }
+        }
+        
+        protected bool? _isSubmit = false;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("isSubmit", "isSubmit", DataSource.TABLE, "", false)]
+        public virtual bool? isSubmit
+        {
+            get
+            {
+                return _isSubmit;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_isSubmit == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_isSubmit.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("isSubmit") == -1)
+                    {
+                        UPDATE_COLUMN.Add("isSubmit");
+                    }
+                    _isSubmit = value;
+                }
+            }
+        }
+        
+    }
+
+    
+    
+    
+}
+
+namespace GS.OCA_OceanSubsidy.Entity
+{
+    using GS.OCA_OceanSubsidy.Entity.Base;
+    
+    /// <summary>
+    ///  ()
+    /// </summary>
+    [DataContract]
+    [Serializable()]
+    public partial class OFS_SCI_StageExam_ReviewerList : IOFS_SCI_StageExam_ReviewerList
+    {
+    }
+    
+}

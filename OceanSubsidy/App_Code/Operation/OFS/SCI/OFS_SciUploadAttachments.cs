@@ -70,13 +70,13 @@ public class OFS_SciUploadAttachmentsHelper
             db.Parameters.Add("@Form5Status", "完成");
             db.Parameters.Add("@CurrentStep", "6");
             db.Parameters.Add("@Statuses", "資格審查");
-            db.Parameters.Add("@StatusesName", "審查中");
+            db.Parameters.Add("@StatusesName", "審核中");
             db.Parameters.Add("@ProjectID", projectID);
 
             try
             {
                  db.ExecuteNonQuery();
-                System.Diagnostics.Debug.WriteLine($"專案 {projectID} 提送申請狀態更新成功：Form5Status=完成, CurrentStep=5, Statuses=資格審查, StatusesName=審查中");
+                System.Diagnostics.Debug.WriteLine($"專案 {projectID} 提送申請狀態更新成功：Form5Status=完成, CurrentStep=5, Statuses=資格審查, StatusesName=審核中");
             }
             catch (Exception ex)
             {
@@ -92,9 +92,8 @@ public class OFS_SciUploadAttachmentsHelper
     /// <param name="fileCode">附件代碼</param>
     /// <param name="fileName">檔案名稱</param>
     /// <param name="templatePath">檔案路徑</param>
-    /// <param name="statuses">狀態</param>
     public static void InsertAttachmentRecord(string projectID, string fileCode, string fileName, 
-        string templatePath, string statuses = "已上傳")
+        string templatePath)
     {
         using (DbHelper db = new DbHelper())
         {
@@ -103,15 +102,13 @@ public class OFS_SciUploadAttachmentsHelper
                     ProjectID,
                     FileCode,
                     FileName,
-                    TemplatePath,
-                    Statuses
+                    TemplatePath
                 )
                 VALUES (
                     @ProjectID,
                     @FileCode,
                     @FileName,
-                    @TemplatePath,
-                    @Statuses
+                    @TemplatePath
                 )";
 
             db.Parameters.Clear();
@@ -119,7 +116,6 @@ public class OFS_SciUploadAttachmentsHelper
             db.Parameters.Add("@FileCode", fileCode);
             db.Parameters.Add("@FileName", fileName);
             db.Parameters.Add("@TemplatePath", templatePath);
-            db.Parameters.Add("@Statuses", statuses);
 
             try
             {
@@ -164,7 +160,6 @@ public class OFS_SciUploadAttachmentsHelper
                     FileCode = row["FileCode"]?.ToString(),
                     FileName = row["FileName"]?.ToString(),
                     TemplatePath = row["TemplatePath"]?.ToString(),
-                    Statuses = row["Statuses"]?.ToString()
                 };
 
                 attachmentList.Add(attachment);
@@ -242,7 +237,6 @@ public class OFS_SciUploadAttachmentsHelper
                     FileCode = row["FileCode"]?.ToString(),
                     FileName = row["FileName"]?.ToString(),
                     TemplatePath = row["TemplatePath"]?.ToString(),
-                    Statuses = row["Statuses"]?.ToString()
                 };
 
                 attachmentList.Add(attachment);
@@ -311,9 +305,8 @@ public class OFS_SciUploadAttachmentsHelper
     /// <param name="fileCode">檔案代碼</param>
     /// <param name="fileName">新檔案名稱</param>
     /// <param name="templatePath">檔案路徑</param>
-    /// <param name="statuses">狀態</param>
     public static void UpdateAttachmentRecord(string projectID, string fileCode, string fileName,
-        string templatePath, string statuses = "已上傳")
+        string templatePath)
     {
         using (DbHelper db = new DbHelper())
         {
@@ -331,7 +324,7 @@ public class OFS_SciUploadAttachmentsHelper
                 db.ExecuteNonQuery();
 
                 // 插入新的附件記錄
-                InsertAttachmentRecord(projectID, fileCode, fileName, templatePath, statuses);
+                InsertAttachmentRecord(projectID, fileCode, fileName, templatePath);
 
                 System.Diagnostics.Debug.WriteLine($"附件記錄已更新：{projectID} - {fileCode} - {fileName}");
             }

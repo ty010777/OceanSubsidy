@@ -576,8 +576,7 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
                 ProjectID = projectID,
                 FileCode = "WorkSchStructure",
                 FileName = fileName,
-                TemplatePath = relativePath,
-                Statuses = "Active"
+                TemplatePath = relativePath
             };
 
             // 儲存新記錄到資料庫

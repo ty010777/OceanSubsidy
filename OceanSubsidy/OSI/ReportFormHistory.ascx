@@ -5,28 +5,28 @@
     <tbody>
         <!-- 資料時間 -->
         <tr>
-            <th>資料時間</th>
+            <th id="thDataPeriod" runat="server">資料時間</th>
             <td>
                 <asp:Label ID="lblDataPeriod" runat="server" />
             </td>
         </tr>
         <!-- 填報機關 -->
         <tr>
-            <th><span class="text-pink">*</span>填報機關</th>
+            <th id="thUnit" runat="server"><span class="text-pink">*</span>填報機關</th>
             <td>
                 <asp:Label ID="lblUnit" runat="server" />
             </td>
         </tr>
         <!-- 活動名稱 -->
         <tr>
-            <th><span class="text-pink">*</span>活動名稱</th>
+            <th id="thActivityName" runat="server"><span class="text-pink">*</span>活動名稱</th>
             <td>
                 <asp:Label ID="lblActivityName" runat="server" />
             </td>
         </tr>
         <!-- 活動性質 -->
         <tr>
-            <th><span class="text-pink">*</span>活動性質</th>
+            <th id="thNature" runat="server"><span class="text-pink">*</span>活動性質</th>
             <td>
                 <asp:Label ID="lblNature" runat="server" />
                 <asp:Label ID="lblNatureDetail" runat="server" CssClass="d-block mt-2 text-muted" />
@@ -34,7 +34,7 @@
         </tr>
         <!-- 活動執行者 -->
         <tr>
-            <th><span class="text-pink">*</span>活動執行者</th>
+            <th id="thExecutor" runat="server"><span class="text-pink">*</span>活動執行者</th>
             <td>
                 <div class="tag-group">
                     <asp:Repeater ID="rptExecList" runat="server">
@@ -51,7 +51,7 @@
         </tr>
         <!-- 研究調查日期 -->
         <tr>
-            <th><span class="text-pink">*</span>研究調查日期</th>
+            <th id="thPeriod" runat="server"><span class="text-pink">*</span>研究調查日期</th>
             <td>
                 <div class="tag-group">
                     <asp:Repeater ID="rptResList" runat="server">
@@ -69,7 +69,7 @@
         </tr>
         <!-- 使用載具名稱 & 核准文號 -->
         <tr>
-            <th>使用載具名稱</th>
+            <th id="thCarrier" runat="server">使用載具名稱</th>
             <td>
                 <div class="tag-group">
                     <asp:Repeater ID="rptCarrierList" runat="server">
@@ -90,7 +90,7 @@
         </tr>
         <!-- 研究調查項目 -->
         <tr>
-            <th>研究調查項目</th>
+            <th id="thResearchCategory" runat="server">研究調查項目</th>
             <td>
                 <asp:Label ID="lblResearchCategory" runat="server" />
                 <asp:Label ID="lblResItemNote" runat="server" CssClass="d-block mt-2 text-muted" />
@@ -98,14 +98,14 @@
         </tr>
         <!-- 研究調查儀器 -->
         <tr>
-            <th>研究調查儀器</th>
+            <th id="thResInstruments" runat="server">研究調查儀器</th>
             <td>
                 <asp:Label ID="lblResInstruments" runat="server" CssClass="text-pre-wrap" />
             </td>
         </tr>
         <!-- 活動內容概述 -->
         <tr>
-            <th>研究調查活動<br />
+            <th id="thActivityOverview" runat="server">研究調查活動<br />
                 內容概述</th>
             <td>
                 <asp:Label ID="lblActivityOverview" runat="server" CssClass="text-pre-wrap" />
@@ -113,7 +113,7 @@
         </tr>
         <!-- 相關附件 -->
         <tr>
-            <th>相關附件</th>
+            <th id="thActivityFiles" runat="server">相關附件</th>
             <td>
                 <div class="tag-group">
                     <asp:Repeater ID="rptActivityFile" runat="server" OnItemCommand="rptActivityFile_ItemCommand">
@@ -128,9 +128,28 @@
                 </div>
             </td>
         </tr>
-        <!-- 研究調查範圍 -->
+        <!-- 研究調查範圍(縣市) -->
         <tr>
-            <th>研究調查範圍</th>
+            <th id="thSurveyCounties" runat="server">研究調查範圍<br />
+                (縣市)</th>
+            <td>
+                <div class="tag-group">
+                    <asp:Repeater ID="rptScopeCountyList" runat="server">
+                        <ItemTemplate>
+                            <span class="tag tag-gray me-1">
+                                <span class="tag-content">
+                                    <%# Eval("CountyName") %>
+                                </span>
+                            </span>
+                        </ItemTemplate>
+                    </asp:Repeater>
+                </div>
+            </td>
+        </tr>
+        <!-- 研究調查範圍(描述) -->
+        <tr>
+            <th id="thSurveyScopes" runat="server">研究調查範圍<br />
+                (描述)</th>
             <td>
                 <div class="tag-group">
                     <asp:Repeater ID="rptScopeList" runat="server">
@@ -147,7 +166,7 @@
         </tr>
         <!-- 活動空間範圍標定 -->
         <tr>
-            <th>活動空間範圍<br />
+            <th id="thSpatialData" runat="server">活動空間範圍<br />
                 標定</th>
             <td>
                 <div class="d-flex flex-wrap gap-2">
@@ -158,7 +177,7 @@
                         class="btn btn-cyan"
                         data-bs-toggle="modal"
                         data-bs-target="#mapModal"
-                        data-historyId="">
+                        data-historyid="">
                         <i class="fas fa-map"></i>檢視圖台
                     </button>
                 </div>

@@ -227,7 +227,7 @@ SELECT UnitID,UnitName FROM Sys_Unit
 WHERE IsValid = 1
 AND UnitName <> N'其他'
 AND UnitID NOT IN (
-	SELECT DISTINCT ReportingUnitID FROM OSI_ActivityReports WHERE PeriodID = @PeriodID
+	SELECT DISTINCT ReportingUnitID FROM OSI_ActivityReports WHERE PeriodID = @PeriodID AND IsValid = 1
 )
 ";
         db.Parameters.Clear();

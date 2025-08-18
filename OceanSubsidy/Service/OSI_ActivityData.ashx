@@ -76,14 +76,17 @@ WHERE PeriodYear = @yTo   AND PeriodQuarter = @qTo";
     r.ReportID,
     u.UnitName    AS ReportingUnit,
     r.ActivityName,
-    r.GeoData.STAsText() AS WKT,
+    g.GeoData.STAsText() AS WKT,
     dp.Color
 FROM dbo.OSI_ActivityReports r
 JOIN dbo.OSI_DataPeriods dp ON r.PeriodID = dp.PeriodID
+JOIN dbo.OSI_Geom g ON r.ReportID = g.ReportID
 LEFT JOIN dbo.Sys_Unit       u  ON r.ReportingUnitID = u.UnitID
 WHERE dp.QuarterStartDate >= @dtStart
 AND dp.QuarterEndDate   <= @dtEnd
-AND r.IsValid = 1"
+AND r.IsValid = 1
+AND g.IsValid = 1
+AND g.DeletedAt IS NULL"
         );
 
         // 準備參數集合

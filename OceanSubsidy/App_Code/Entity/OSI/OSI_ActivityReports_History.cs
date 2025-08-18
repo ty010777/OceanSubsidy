@@ -434,43 +434,6 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
 
-        protected string _GeoData = "";
-        ///<summary>
-        ///  ()
-        ///</summary>
-        [DataMember]
-        [GisFieldAttribute("GeoData", "GeoData", DataSource.TABLE, "", false)]
-        public virtual string GeoData
-        {
-            get
-            {
-                return _GeoData;
-            }
-            set
-            {
-                bool isModify = false;
-                if (_GeoData == null)
-                {
-                    if (value != null)
-                    {
-                        isModify = true;
-                    }
-                }
-                else if (!_GeoData.Equals(value))
-                {
-                    isModify = true;
-                }
-                if (isModify)
-                {
-                    MetaDataState = DataState.UPDATE;
-                    if (UPDATE_COLUMN.IndexOf("GeoData") == -1)
-                    {
-                        UPDATE_COLUMN.Add("GeoData");
-                    }
-                    _GeoData = value;
-                }
-            }
-        }
 
         protected DateTime _LastUpdated = DateTime.Now;
         ///<summary>

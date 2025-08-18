@@ -1016,77 +1016,7 @@
         				  </tr>
         			  </thead>
         			  <tbody>
-        				  <tr>
-        					  <td>
-        						  <input class="form-check-input check-teal | checkPlan" type="checkbox" name="" >
-        					  </td>
-        					  <td data-th="排序:">1</td>
-        					  <td data-th="年度:">114</td>
-        					  <td data-th="計畫名稱:" style="text-align: left;">
-        						  <a href="#" class="link-black" target="_blank">112-113年水下噪音監測調查計畫</a>
-        					  </td>
-        					  <td data-th="申請單位:" width="180" style="text-align: left;">淡江大學學校財團法人淡江大學</td>
-        					  <td data-th="總分:" nowrap>450</td>
-        					  <td data-th="申請經費:" width="120" style="text-align: center; text-wrap: nowrap;">3,000,000</td>
-        					  <td data-th="核定經費:">
-        						  <input type="text" class="form-control" value="3,000,000" style="width: 160px;">
-        					  </td>
-        					  <td data-th="備註:">
-        						  <input type="text" class="form-control" value="因XXXXX">
-        					  </td>
-        					  <td data-th="修正計畫書:" class="text-center">
-        						  <div class="d-flex align-items-center justify-content-center  gap-1">
-        							  <button class="btn btn-sm btn-teal-dark" type="button" onclick="window.location.href='information-plan-review-result.html'">
-        								  <i class="fas fa-clipboard-check" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="審查"></i>
-        							  </button>
-        						  </div>
-        						  
-        					  </td>
-        				  </tr>
-        				  <tr>
-        					  <td>
-        						  <input class="form-check-input check-teal | checkPlan" type="checkbox" name="" >
-        					  </td>
-        					  <td data-th="排序:">1</td>
-        					  <td data-th="年度:">114</td>
-        					  <td data-th="計畫名稱:" style="text-align: left;">
-        						  <a href="#" class="link-black" target="_blank">112-113年水下噪音監測調查計畫</a>
-        					  </td>
-        					  <td data-th="申請單位:" width="180" style="text-align: left;">淡江大學學校財團法人淡江大學</td>
-        					  <td data-th="總分:" nowrap>450</td>
-        					  <td data-th="申請經費:" width="120" style="text-align: center; text-wrap: nowrap;">3,000,000</td>
-        					  <td data-th="核定經費:">
-        						  <input type="text" class="form-control" value="3,000,000" style="width: 160px;">
-        					  </td>
-        					  <td data-th="備註:">
-        						  <input type="text" class="form-control" value="因XXXXX">
-        					  </td>
-        					  <td data-th="修正計畫書:" class="text-center">
-        						  通過
-        					  </td>
-        				  </tr>
-        				  <tr>
-        					  <td>
-        						  <input class="form-check-input check-teal | checkPlan" type="checkbox" name="" >
-        					  </td>
-        					  <td data-th="排序:">1</td>
-        					  <td data-th="年度:">114</td>
-        					  <td data-th="計畫名稱:" style="text-align: left;">
-        						  <a href="#" class="link-black" target="_blank">112-113年水下噪音監測調查計畫</a>
-        					  </td>
-        					  <td data-th="申請單位:" width="180" style="text-align: left;">淡江大學學校財團法人淡江大學</td>
-        					  <td data-th="總分:" nowrap>450</td>
-        					  <td data-th="申請經費:" width="120" style="text-align: center; text-wrap: nowrap;">3,000,000</td>
-        					  <td data-th="核定經費:">
-        						  <input type="text" class="form-control" value="3,000,000" style="width: 160px;">
-        					  </td>
-        					  <td data-th="備註:">
-        						  <input type="text" class="form-control" value="因XXXXX">
-        					  </td>
-        					  <td data-th="修正計畫書:" class="text-center">
-        						  
-        					  </td>
-        				  </tr>
+        				
         			  </tbody>
         		  </table>
         	  </div>

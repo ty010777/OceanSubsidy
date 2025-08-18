@@ -40,7 +40,6 @@ SELECT [ReportID]
     ,[ResearchItemNote]
     ,[Instruments]
     ,[ActivityOverview]
-    ,[GeoData]
     ,[LastUpdated]
     ,[LastUpdatedBy]
     ,[IsValid]
@@ -71,7 +70,6 @@ SELECT [ReportID]
     ,[ResearchItemNote]
     ,[Instruments]
     ,[ActivityOverview]
-    ,[GeoData]
     ,[LastUpdated]
     ,[LastUpdatedBy]
     ,[IsValid]
@@ -104,7 +102,6 @@ SELECT [ReportID]
     ,[ResearchItemNote]
     ,[Instruments]
     ,[ActivityOverview]
-    ,[GeoData]
     ,[LastUpdated]
     ,[LastUpdatedBy]
     ,[IsValid]
@@ -116,6 +113,38 @@ AND ReportID = @ReportID
         db.Parameters.Add("@ReportID", reportID);
 
         return db.GetList<OSI_ActivityReports>().FirstOrDefault();
+    }
+
+    /// <summary>
+    /// 查詢報表 By PeriodID
+    /// </summary>
+    /// <returns></returns>
+    public static GisTable QueryByPeriodID(string periodID)
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText =
+            @"
+SELECT [ReportID]
+    ,[PeriodID]
+    ,[ReportingUnitID]
+    ,[ActivityName]
+    ,[NatureID]
+    ,[NatureText]
+    ,[ResearchItemID]
+    ,[ResearchItemNote]
+    ,[Instruments]
+    ,[ActivityOverview]
+    ,[LastUpdated]
+    ,[LastUpdatedBy]
+    ,[IsValid]
+FROM [OCA_OceanSubsidy].[dbo].[OSI_ActivityReports]
+WHERE IsValid = 1
+AND PeriodID = @PeriodID
+";
+        db.Parameters.Clear();
+        db.Parameters.Add("@PeriodID", periodID);
+
+        return db.GetTable();
     }
 
     /// <summary>
@@ -137,7 +166,6 @@ SELECT [ReportID]
     ,[ResearchItemNote]
     ,[Instruments]
     ,[ActivityOverview]
-    ,[GeoData]
     ,[LastUpdated]
     ,[LastUpdatedBy]
     ,[IsValid]
@@ -190,7 +218,6 @@ SELECT
   e.Executors,
   d.StartDate,
   d.EndDate,
-  r.GeoData,
   r.LastUpdated
 FROM OSI_ActivityReports r
 LEFT JOIN Sys_Unit u 
@@ -648,22 +675,31 @@ GROUP BY c.CarrierTypeName
     public static string QueryGeoDataByID(string reportID)
     {
         string rtVal = "";
-        DbHelper db = new DbHelper();
-        db.CommandText =
-            @"
-SELECT GeoData
-FROM OSI_ActivityReports
-WHERE ReportID = @ReportID
-";
-        db.Parameters.Clear();
-        db.Parameters.Add("@ReportID", reportID);
-        var tbl = db.GetTable();
-        if (tbl.Rows.Count > 0)
+        
+        // 優先從 OSI_Geom 表取得資料
+        var geomsTable = OSIGeomHelper.QueryByReportID(reportID);
+        if (geomsTable != null && geomsTable.Rows.Count > 0)
         {
-            var row = tbl.Rows[0];
-            if (row["GeoData"] != null && row["GeoData"] != DBNull.Value)
+            if (geomsTable.Rows.Count == 1)
             {
-                rtVal = row["GeoData"].ToString();
+                // 單一圖徵
+                rtVal = geomsTable.Rows[0]["GeoData"].ToString();
+            }
+            else
+            {
+                // 多個圖徵，組合成 GeometryCollection
+                var geoms = new List<string>();
+                foreach (DataRow row in geomsTable.Rows)
+                {
+                    if (row["GeoData"] != null && row["GeoData"] != DBNull.Value)
+                    {
+                        geoms.Add(row["GeoData"].ToString());
+                    }
+                }
+                if (geoms.Count > 0)
+                {
+                    rtVal = "GEOMETRYCOLLECTION(" + string.Join(",", geoms) + ")";
+                }
             }
         }
 
@@ -680,11 +716,13 @@ WHERE ReportID = @ReportID
         List<OSI_ActivityFiles> files,
         List<OSI_SurveyScopes> surveyScopes,
         List<OSI_Carrier> carriers,
+        List<OSI_SurveyCounties> surveyCounties,
         List<int> delExecutors,
         List<int> delResPeriods,
         List<int> delFiles,
         List<int> delSurveyScopes,
         List<int> delCarriers,
+        List<int> delSurveyCounties,
         string baseDir)
     {
         int reportID = 0;
@@ -693,29 +731,12 @@ WHERE ReportID = @ReportID
         db.BeginTrans();
         try
         {
-            // 根據 GeoData 是否為 null 或空字串，動態構建 SQL
-            if (string.IsNullOrEmpty(report.GeoData))
-            {
-                db.CommandText = @"
-INSERT INTO [dbo].[OSI_ActivityReports]([PeriodID],[ReportingUnitID],[ActivityName],[NatureID],[NatureText],[ResearchItemID],[ResearchItemNote],[Instruments],[ActivityOverview],[GeoData],[LastUpdated],[LastUpdatedBy],[IsValid])
-VALUES(@PeriodID,@ReportingUnitID,@ActivityName,@NatureID,@NatureText,@ResearchItemID,@ResearchItemNote,@Instruments,@ActivityOverview,
-NULL,
-@LastUpdated,@LastUpdatedBy,@IsValid)
+            db.CommandText = @"
+INSERT INTO [dbo].[OSI_ActivityReports]([PeriodID],[ReportingUnitID],[ActivityName],[NatureID],[NatureText],[ResearchItemID],[ResearchItemNote],[Instruments],[ActivityOverview],[LastUpdated],[LastUpdatedBy],[IsValid])
+VALUES(@PeriodID,@ReportingUnitID,@ActivityName,@NatureID,@NatureText,@ResearchItemID,@ResearchItemNote,@Instruments,@ActivityOverview,@LastUpdated,@LastUpdatedBy,@IsValid)
 
  SELECT SCOPE_IDENTITY();
 ";
-            }
-            else
-            {
-                db.CommandText = @"
-INSERT INTO [dbo].[OSI_ActivityReports]([PeriodID],[ReportingUnitID],[ActivityName],[NatureID],[NatureText],[ResearchItemID],[ResearchItemNote],[Instruments],[ActivityOverview],[GeoData],[LastUpdated],[LastUpdatedBy],[IsValid])
-VALUES(@PeriodID,@ReportingUnitID,@ActivityName,@NatureID,@NatureText,@ResearchItemID,@ResearchItemNote,@Instruments,@ActivityOverview,
-geometry::STGeomFromText(@GeoData, 3826),
-@LastUpdated,@LastUpdatedBy,@IsValid)
-
- SELECT SCOPE_IDENTITY();
-";
-            }
 
             db.Parameters.Clear();
             db.Parameters.Add("@PeriodID", report.PeriodID);
@@ -727,11 +748,6 @@ geometry::STGeomFromText(@GeoData, 3826),
             db.Parameters.Add("@ResearchItemNote", report.ResearchItemNote);
             db.Parameters.Add("@Instruments", report.Instruments);
             db.Parameters.Add("@ActivityOverview", report.ActivityOverview);
-            // 只有在 GeoData 不為 null 或空字串時才添加參數
-            if (!string.IsNullOrEmpty(report.GeoData))
-            {
-                db.Parameters.Add("@GeoData", report.GeoData);
-            }
             db.Parameters.Add("@LastUpdated", report.LastUpdated);
             db.Parameters.Add("@LastUpdatedBy", report.LastUpdatedBy);
             db.Parameters.Add("@IsValid", report.IsValid);
@@ -894,6 +910,35 @@ WHERE CarrierID IN (" + string.Join(",", delCarriers) + @")
                 db.ExecuteNonQuery();
             }
 
+            // 新增研究調查範圍(縣市)
+            foreach (var county in surveyCounties)
+            {
+                db.CommandText = @"
+INSERT INTO [dbo].[OSI_SurveyCounties]([ReportID],[CountyID],[IsValid],[CreatedAt])
+VALUES(@ReportID,@CountyID,@IsValid,GETDATE())
+";
+                db.Parameters.Clear();
+                db.Parameters.Add("@ReportID", reportID);
+                db.Parameters.Add("@CountyID", county.CountyID);
+                db.Parameters.Add("@IsValid", 1);
+                db.ExecuteNonQuery();
+            }
+
+            // 刪除研究調查範圍(縣市)
+            if (delSurveyCounties.Count > 0)
+            {
+                db.CommandText = @"
+UPDATE [dbo].[OSI_SurveyCounties]
+SET IsValid = 0
+, DeletedAt = GETDATE()
+, DeletedBy = @DeletedBy
+WHERE SurveyCountyID IN (" + string.Join(",", delSurveyCounties) + @")
+";
+                db.Parameters.Clear();
+                db.Parameters.Add("@DeletedBy", report.LastUpdatedBy);
+                db.ExecuteNonQuery();
+            }
+
             db.Commit();
         }
         catch (Exception ex)
@@ -916,21 +961,20 @@ WHERE CarrierID IN (" + string.Join(",", delCarriers) + @")
         List<OSI_ActivityFiles> files,
         List<OSI_SurveyScopes> surveyScopes,
         List<OSI_Carrier> carriers,
+        List<OSI_SurveyCounties> surveyCounties,
         List<int> delExecutors,
         List<int> delResPeriods,
         List<int> delFiles,
         List<int> delSurveyScopes,
-        List<int> delCarriers)
+        List<int> delCarriers,
+        List<int> delSurveyCounties)
     {
         DbHelper db = new DbHelper();
 
         db.BeginTrans();
         try
         {
-            // 根據 GeoData 是否為 null 或空字串，動態構建 SQL
-            if (string.IsNullOrEmpty(report.GeoData))
-            {
-                db.CommandText = @"
+            db.CommandText = @"
 UPDATE [dbo].[OSI_ActivityReports]
 SET 
      [PeriodID] = @PeriodID
@@ -942,34 +986,11 @@ SET
     ,[ResearchItemNote] = @ResearchItemNote
     ,[Instruments] = @Instruments
     ,[ActivityOverview] = @ActivityOverview
-    ,[GeoData] = NULL
     ,[LastUpdated] = @LastUpdated
     ,[LastUpdatedBy] = @LastUpdatedBy
     ,[IsValid] = @IsValid
  WHERE ReportID = @ReportID
 ";
-            }
-            else
-            {
-                db.CommandText = @"
-UPDATE [dbo].[OSI_ActivityReports]
-SET 
-     [PeriodID] = @PeriodID
-    ,[ReportingUnitID] = @ReportingUnitID
-    ,[ActivityName] = @ActivityName
-    ,[NatureID] = @NatureID
-    ,[NatureText] = @NatureText
-    ,[ResearchItemID] = @ResearchItemID
-    ,[ResearchItemNote] = @ResearchItemNote
-    ,[Instruments] = @Instruments
-    ,[ActivityOverview] = @ActivityOverview
-    ,[GeoData] = geometry::STGeomFromText(@GeoData, 3826)
-    ,[LastUpdated] = @LastUpdated
-    ,[LastUpdatedBy] = @LastUpdatedBy
-    ,[IsValid] = @IsValid
- WHERE ReportID = @ReportID
-";
-            }
 
             db.Parameters.Clear();
             db.Parameters.Add("@ReportID", reportID);
@@ -982,11 +1003,6 @@ SET
             db.Parameters.Add("@ResearchItemNote", report.ResearchItemNote);
             db.Parameters.Add("@Instruments", report.Instruments);
             db.Parameters.Add("@ActivityOverview", report.ActivityOverview);
-            // 只有在 GeoData 不為 null 或空字串時才添加參數
-            if (!string.IsNullOrEmpty(report.GeoData))
-            {
-                db.Parameters.Add("@GeoData", report.GeoData);
-            }
             db.Parameters.Add("@LastUpdated", report.LastUpdated);
             db.Parameters.Add("@LastUpdatedBy", report.LastUpdatedBy);
             db.Parameters.Add("@IsValid", report.IsValid);
@@ -1142,6 +1158,35 @@ WHERE CarrierID IN (" + string.Join(",", delCarriers) + @")
                 db.ExecuteNonQuery();
             }
 
+            // 新增研究調查範圍(縣市)
+            foreach (var county in surveyCounties)
+            {
+                db.CommandText = @"
+INSERT INTO [dbo].[OSI_SurveyCounties]([ReportID],[CountyID],[IsValid],[CreatedAt])
+VALUES(@ReportID,@CountyID,@IsValid,GETDATE())
+";
+                db.Parameters.Clear();
+                db.Parameters.Add("@ReportID", reportID);
+                db.Parameters.Add("@CountyID", county.CountyID);
+                db.Parameters.Add("@IsValid", 1);
+                db.ExecuteNonQuery();
+            }
+
+            // 刪除研究調查範圍(縣市)
+            if (delSurveyCounties.Count > 0)
+            {
+                db.CommandText = @"
+UPDATE [dbo].[OSI_SurveyCounties]
+SET IsValid = 0
+, DeletedAt = GETDATE()
+, DeletedBy = @DeletedBy
+WHERE SurveyCountyID IN (" + string.Join(",", delSurveyCounties) + @")
+";
+                db.Parameters.Clear();
+                db.Parameters.Add("@DeletedBy", report.LastUpdatedBy);
+                db.ExecuteNonQuery();
+            }
+
             db.Commit();
             return true;
         }
@@ -1167,10 +1212,8 @@ WHERE CarrierID IN (" + string.Join(",", delCarriers) + @")
         {
             OSI_ActivityReports copyActRptData = QueryByIDWithClass(reportID.ToString());
             db.CommandText = @"
-INSERT INTO [dbo].[OSI_ActivityReports]([PeriodID],[ReportingUnitID],[ActivityName],[NatureID],[NatureText],[ResearchItemID],[ResearchItemNote],[Instruments],[ActivityOverview],[GeoData],[LastUpdated],[LastUpdatedBy],[IsValid],[CopyReportID])
-VALUES(@PeriodID,@ReportingUnitID,@ActivityName,@NatureID,@NatureText,@ResearchItemID,@ResearchItemNote,@Instruments,@ActivityOverview,
-geometry::STGeomFromText(@GeoData, 3826),
-@LastUpdated,@LastUpdatedBy,@IsValid,@CopyReportID)
+INSERT INTO [dbo].[OSI_ActivityReports]([PeriodID],[ReportingUnitID],[ActivityName],[NatureID],[NatureText],[ResearchItemID],[ResearchItemNote],[Instruments],[ActivityOverview],[LastUpdated],[LastUpdatedBy],[IsValid],[CopyReportID])
+VALUES(@PeriodID,@ReportingUnitID,@ActivityName,@NatureID,@NatureText,@ResearchItemID,@ResearchItemNote,@Instruments,@ActivityOverview,@LastUpdated,@LastUpdatedBy,@IsValid,@CopyReportID)
 
  SELECT SCOPE_IDENTITY();
 ";
@@ -1185,7 +1228,6 @@ geometry::STGeomFromText(@GeoData, 3826),
             db.Parameters.Add("@ResearchItemNote", copyActRptData.ResearchItemNote);
             db.Parameters.Add("@Instruments", copyActRptData.Instruments);
             db.Parameters.Add("@ActivityOverview", copyActRptData.ActivityOverview);
-            db.Parameters.Add("@GeoData", copyActRptData.GeoData);
             db.Parameters.Add("@LastUpdated", copyActRptData.LastUpdated);
             db.Parameters.Add("@LastUpdatedBy", copyActRptData.LastUpdatedBy);
             db.Parameters.Add("@IsValid", copyActRptData.IsValid);
@@ -1361,22 +1403,49 @@ WITH ActivityCountyMapping AS (
         c.c_name,
         u.UnitName
     FROM OSI_ActivityReports r
+    INNER JOIN OSI_Geom g ON r.ReportID = g.ReportID
     INNER JOIN OSI_MapCounty c ON 
         (CASE WHEN c.geom.STIsValid() = 1 THEN c.geom ELSE c.geom.MakeValid() END)
         .STIntersects(
-            CASE WHEN r.GeoData.STIsValid() = 1 THEN r.GeoData ELSE r.GeoData.MakeValid() END
+            CASE WHEN g.GeoData.STIsValid() = 1 THEN g.GeoData ELSE g.GeoData.MakeValid() END
         ) = 1
     INNER JOIN Sys_Unit u ON r.ReportingUnitID = u.UnitID
     WHERE r.IsValid = 1 
         AND r.PeriodID = @PeriodID
-        AND r.GeoData IS NOT NULL
+        AND g.IsValid = 1
+        AND g.DeletedAt IS NULL
+        AND g.GeoData IS NOT NULL
         AND c.geom IS NOT NULL
+),
+CountiesBySurvey AS (
+    SELECT
+        r.ReportID,
+        c.c_name,
+        u.UnitName
+    FROM OSI_ActivityReports AS r
+    INNER JOIN OSI_SurveyCounties AS sc
+        ON r.ReportID = sc.ReportID
+       AND sc.IsValid = 1
+       AND sc.DeletedAt IS NULL
+    INNER JOIN OSI_MapCounty AS c
+        ON sc.CountyID = c.qgs_fid
+    INNER JOIN Sys_Unit AS u
+        ON r.ReportingUnitID = u.UnitID
+    WHERE r.IsValid = 1
+      AND r.PeriodID = @PeriodID
+      AND sc.IsValid = 1
+	  AND sc.DeletedAt IS NULL
+),
+ Combined AS (
+  SELECT ReportID, c_name, UnitName FROM ActivityCountyMapping
+  UNION
+  SELECT ReportID, c_name, UnitName FROM CountiesBySurvey
 )
 SELECT 
     c_name AS RegionName,
     COALESCE(UnitName, '未分類') AS SeriesName,
     COUNT(*) AS Value
-FROM ActivityCountyMapping
+FROM Combined
 GROUP BY c_name, UnitName
 HAVING COUNT(*) > 0
 ORDER BY c_name, UnitName
@@ -1397,30 +1466,55 @@ ORDER BY c_name, UnitName
         DbHelper db = new DbHelper();
         db.CommandText = @"
 WITH UnitCountyData AS (
-    SELECT 
-        u.UnitName,
-        c.c_name AS CountyName,
-        COUNT(*) AS ActivityCount
+    SELECT
+        r.ReportID,
+        c.c_name,
+		u.UnitName
     FROM OSI_ActivityReports r
+    INNER JOIN OSI_Geom g ON r.ReportID = g.ReportID
     INNER JOIN Sys_Unit u ON r.ReportingUnitID = u.UnitID
     INNER JOIN OSI_MapCounty c ON 
         (CASE WHEN c.geom.STIsValid() = 1 THEN c.geom ELSE c.geom.MakeValid() END)
         .STIntersects(
-            CASE WHEN r.GeoData.STIsValid() = 1 THEN r.GeoData ELSE r.GeoData.MakeValid() END
+            CASE WHEN g.GeoData.STIsValid() = 1 THEN g.GeoData ELSE g.GeoData.MakeValid() END
         ) = 1
     WHERE r.IsValid = 1 
         AND r.PeriodID = @PeriodID
-        AND r.GeoData IS NOT NULL
+        AND g.IsValid = 1
+        AND g.DeletedAt IS NULL
+        AND g.GeoData IS NOT NULL
         AND c.geom IS NOT NULL
-    GROUP BY u.UnitName, c.c_name
+    GROUP BY u.UnitName, c.c_name, r.ReportID
     HAVING COUNT(*) > 0
+),
+CountiesBySurvey AS (
+    SELECT
+        r.ReportID,
+        c.c_name,
+		u.UnitName
+    FROM OSI_ActivityReports r
+    INNER JOIN OSI_SurveyCounties sc ON r.ReportID = sc.ReportID
+    INNER JOIN Sys_Unit u ON r.ReportingUnitID = u.UnitID
+    INNER JOIN OSI_MapCounty c ON sc.CountyID = c.qgs_fid
+    WHERE r.IsValid = 1 
+        AND r.PeriodID = @PeriodID
+		AND sc.IsValid = 1
+		AND sc.DeletedAt IS NULL
+    GROUP BY u.UnitName, c.c_name, r.ReportID
+    HAVING COUNT(*) > 0
+),
+ Combined AS (
+  SELECT ReportID, c_name, UnitName FROM UnitCountyData
+  UNION
+  SELECT ReportID, c_name, UnitName FROM CountiesBySurvey
 )
 SELECT 
-    UnitName,
-    CountyName,
-    ActivityCount
-FROM UnitCountyData
-ORDER BY UnitName, CountyName
+	UnitName,
+    c_name AS CountyName,
+    COUNT(*) AS ActivityCount
+FROM Combined
+GROUP BY UnitName, c_name
+ORDER BY UnitName, c_name
 ";
         db.Parameters.Clear();
         db.Parameters.Add("@PeriodID", periodID);
@@ -1452,6 +1546,192 @@ ORDER BY UnitName, CountyName
         }
         
         return false;
+    }
+
+    /// <summary>
+    /// 處理 OSI_Geom 的儲存（新增或更新）- 支援 JSON 格式和智慧更新
+    /// </summary>
+    public static bool SaveGeometries(int reportID, string featuresJson, int userID)
+    {
+        bool success = false;
+        DbHelper db = new DbHelper();
+        
+        db.BeginTrans();
+        try
+        {
+            // 如果是空的或 null，則軟刪除所有現有圖徵
+            if (string.IsNullOrEmpty(featuresJson) || string.Equals(featuresJson, "null", StringComparison.OrdinalIgnoreCase))
+            {
+                db.CommandText = @"
+UPDATE OSI_Geom 
+SET IsValid = 0, DeletedAt = GETDATE(), DeletedBy = @DeletedBy
+WHERE ReportID = @ReportID AND IsValid = 1 AND DeletedAt IS NULL";
+                
+                db.Parameters.Clear();
+                db.Parameters.Add("@ReportID", reportID);
+                db.Parameters.Add("@DeletedBy", userID);
+                db.ExecuteNonQuery();
+            }
+            else
+            {
+                // 嘗試解析 JSON 格式
+                try
+                {
+                    var featureCollection = Newtonsoft.Json.JsonConvert.DeserializeObject<FeatureCollection>(featuresJson);
+                    if (featureCollection != null && featureCollection.features != null)
+                    {
+                        // 取得現有的圖徵
+                        var existingGeoms = OSIGeomHelper.QueryByReportIDWithClass(reportID.ToString());
+                        var existingDict = existingGeoms.ToDictionary(g => g.GeomID, g => g);
+                        var processedIds = new HashSet<string>();
+
+                        // 處理每個 feature
+                        foreach (var feature in featureCollection.features)
+                        {
+                            if (!string.IsNullOrEmpty(feature.id) && existingDict.ContainsKey(feature.id))
+                            {
+                                // 檢查現有圖徵是否有變更
+                                var existingGeom = existingDict[feature.id];
+                                var newName = feature.name ?? "";
+                                var newWkt = feature.wkt ?? "";
+                                
+                                // 判斷 GeomName 或 WKT 是否有變更
+                                bool hasNameChanges = !string.Equals(existingGeom.GeomName, newName, StringComparison.Ordinal);
+                                
+                                // 比較 WKT 到小數第4位
+                                bool hasWktChanges = false;
+                                if (!string.IsNullOrEmpty(existingGeom.GeoData) && !string.IsNullOrEmpty(newWkt))
+                                {
+                                    // 正規化 WKT 字串到小數第6位來比較
+                                    var normalizedExisting = NormalizeWktPrecision(existingGeom.GeoData, 4);
+                                    var normalizedNew = NormalizeWktPrecision(newWkt, 4);
+                                    hasWktChanges = !string.Equals(normalizedExisting, normalizedNew, StringComparison.Ordinal);
+                                }
+                                else if (string.IsNullOrEmpty(existingGeom.GeoData) != string.IsNullOrEmpty(newWkt))
+                                {
+                                    // 一個是空的，另一個不是
+                                    hasWktChanges = true;
+                                }
+                                
+                                bool hasChanges = hasNameChanges || hasWktChanges;
+                                
+                                if (hasChanges)
+                                {
+                                    // 有變更：軟刪除舊資料
+                                    OSIGeomHelper.DeleteGeom(existingGeom.GeomID, userID);
+                                    
+                                    // 新增一筆新資料
+                                    var newGeom = new OSI_Geom
+                                    {
+                                        ReportID = reportID,
+                                        GeomName = newName,
+                                        GeoData = newWkt,
+                                        IsValid = true,
+                                        CreatedAt = DateTime.Now
+                                    };
+                                    OSIGeomHelper.InsertGeom(newGeom);
+                                }
+                                
+                                processedIds.Add(feature.id);
+                            }
+                            else
+                            {
+                                // 新增圖徵
+                                var newGeom = new OSI_Geom
+                                {
+                                    ReportID = reportID,
+                                    GeomName = feature.name ?? "",
+                                    GeoData = feature.wkt,
+                                    IsValid = true,
+                                    CreatedAt = DateTime.Now
+                                };
+                                OSIGeomHelper.InsertGeom(newGeom);
+                            }
+                        }
+
+                        // 軟刪除未處理的圖徵
+                        foreach (var existingGeom in existingGeoms)
+                        {
+                            if (!processedIds.Contains(existingGeom.GeomID))
+                            {
+                                OSIGeomHelper.DeleteGeom(existingGeom.GeomID, userID);
+                            }
+                        }
+                    }
+                }
+                catch (Newtonsoft.Json.JsonException)
+                {
+                }
+            }
+            
+            db.Commit();
+            success = true;
+        }
+        catch (Exception ex)
+        {
+            db.Rollback();
+            throw ex;
+        }
+        
+        return success;
+    }
+
+    /// <summary>
+    /// 將 WKT 字串中的座標正規化到指定的小數位數，並標準化格式
+    /// </summary>
+    /// <param name="wkt">原始 WKT 字串</param>
+    /// <param name="precision">小數位數</param>
+    /// <returns>正規化後的 WKT 字串</returns>
+    private static string NormalizeWktPrecision(string wkt, int precision)
+    {
+        if (string.IsNullOrEmpty(wkt))
+            return wkt;
+
+        // 先正規化座標精度
+        var pattern = @"-?\d+\.?\d*";
+        var result = System.Text.RegularExpressions.Regex.Replace(wkt, pattern, match =>
+        {
+            if (double.TryParse(match.Value, out double value))
+            {
+                return Math.Round(value, precision).ToString($"F{precision}");
+            }
+            return match.Value;
+        });
+
+        // 標準化 WKT 格式：移除幾何類型和括號之間的空格
+        // 例如：POINT (x y) -> POINT(x y)
+        result = System.Text.RegularExpressions.Regex.Replace(result, @"(POINT|LINESTRING|POLYGON|MULTIPOINT|MULTILINESTRING|MULTIPOLYGON|GEOMETRYCOLLECTION)\s+\(", "$1(");
+        
+        // 標準化座標之間的空格：確保只有一個空格
+        result = System.Text.RegularExpressions.Regex.Replace(result, @"\s+", " ");
+        
+        // 移除括號內部開頭和結尾的空格
+        result = System.Text.RegularExpressions.Regex.Replace(result, @"\(\s+", "(");
+        result = System.Text.RegularExpressions.Regex.Replace(result, @"\s+\)", ")");
+        
+        // 標準化逗號後的空格：確保逗號後有一個空格
+        result = System.Text.RegularExpressions.Regex.Replace(result, @",\s*", ", ");
+
+        return result.Trim();
+    }
+
+    /// <summary>
+    /// Feature Collection 類別，用於解析前端傳來的 JSON 資料
+    /// </summary>
+    private class FeatureCollection
+    {
+        public string type { get; set; }
+        public List<Feature> features { get; set; }
+    }
+
+    /// <summary>
+    /// Feature 類別
+    /// </summary>
+    private class Feature
+    {
+        public string id { get; set; }
+        public string name { get; set; }
+        public string wkt { get; set; }
     }
 
 }

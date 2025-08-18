@@ -434,3 +434,8 @@ function initializeScrollSpy() {
     
     updateActive(); // 初始檢查
 }
+
+// Fancybox
+Fancybox.bind("[data-fancybox]", {
+    // Your custom options
+});

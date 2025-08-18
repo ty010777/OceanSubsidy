@@ -865,8 +865,8 @@ window.ReviewChecklist = (function() {
                         </button>`;
         }
         
-        // 只有審查中的案件才顯示審查按鈕
-        if (currentType === '1' && item.StatusesName === '審查中') {
+        // 只有審核中的案件才顯示審查按鈕
+        if (currentType === '1' && item.StatusesName === '審核中') {
             const reviewUrl = getReviewUrl(item.ProjectID);
             if (reviewUrl) {
                 buttons += `<button class="btn btn-sm btn-teal-dark" type="button" onclick="window.location.href='${reviewUrl}'">
