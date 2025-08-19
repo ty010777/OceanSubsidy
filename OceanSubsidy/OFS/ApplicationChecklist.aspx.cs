@@ -407,7 +407,15 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
 
             // 根據選擇的計畫類別重定向到相應的申請表單頁面
             // 這裡可以根據 GrantTypeID 判斷要導向哪個申請表單
-            Response.Redirect($"~/OFS/SCI/SciApplication.aspx?GrantTypeID={selectedGrantTypeId}");
+            switch (selectedGrantTypeId)
+            {
+                case "CUL":
+                    Response.Redirect("~/OFS/CUL/Application.aspx");
+                    break;
+                default:
+                    Response.Redirect($"~/OFS/SCI/SciApplication.aspx?GrantTypeID={selectedGrantTypeId}");
+                    break;
+            }
         }
         catch (Exception ex)
         {

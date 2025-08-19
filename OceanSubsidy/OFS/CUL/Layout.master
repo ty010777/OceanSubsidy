@@ -1,0 +1,52 @@
+﻿<%@ Master Language="C#" MasterPageFile="~/OFSMaster.master" AutoEventWireup="true" CodeFile="Layout.master.cs" Inherits="OFSCulLayoutMaster" %>
+
+<asp:Content ContentPlaceHolderID="TitleContent" runat="server">
+    <asp:ContentPlaceHolder ID="TitleContent" runat="server" />
+</asp:Content>
+
+<asp:Content ContentPlaceHolderID="HeadExtra" runat="server">
+    <%-- DatePicker --%>
+    <link href="<%= ResolveUrl("~/assets/vendor/daterangepicker.css") %>" rel="stylesheet" />
+    <script src="<%= ResolveUrl("~/assets/vendor/moment.min.js") %>"></script>
+    <script src="<%= ResolveUrl("~/assets/vendor/moment-taiwan.js") %>"></script>
+    <script src="<%= ResolveUrl("~/assets/vendor/locale/zh-tw.js") %>"></script>
+    <script src="<%= ResolveUrl("~/assets/vendor/daterangepicker.js") %>"></script>
+    <%-- Vue --%>
+    <script src="<%= ResolveUrl("~/assets/vendor/vue-3.5.13.global.prod.min.js") %>"></script>
+    <%-- Pinia --%>
+    <script src="<%= ResolveUrl("~/assets/vendor/vue-demi.iife.min.js") %>"></script>
+    <script src="<%= ResolveUrl("~/assets/vendor/pinia.iife.prod.min.js") %>"></script>
+    <%-- RxJs --%>
+    <script src="<%= ResolveUrl("~/assets/vendor/rxjs.umd.min.js") %>"></script>
+    <%-- Custom --%>
+    <link href="<%= ResolveUrl("~/assets/js/ocean-subsidy-components.css") %>?<%= Guid.NewGuid().ToString("N") %>" rel="stylesheet" />
+    <script src="<%= ResolveUrl("~/assets/js/ocean-subsidy-components.umd.js") %>?<%= Guid.NewGuid().ToString("N") %>"></script>
+    <script src="<%= ResolveUrl("~/assets/js/vue-custom.js") %>"></script>
+    <asp:ContentPlaceHolder ID="HeadExtra" runat="server" />
+</asp:Content>
+
+<asp:Content ContentPlaceHolderID="Breadcrumbs" runat="server">
+    <div class="d-flex justify-content-between mb-4">
+        <div class="page-title">
+            <img src="<%= ResolveUrl("~/assets/img/information-system-title-icon03.svg") %>">
+            <div>
+                <span>目前位置</span>
+                <div class="d-flex align-items-end gap-3">
+                    <h2 class="text-dark-green2"><asp:ContentPlaceHolder ID="MainTitle" runat="server" /></h2>
+                    <a class="text-dark-green2 text-decoration-none" href="#" >
+                        <i class="fas fa-angle-left"></i>
+                        返回列表
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</asp:Content>
+
+<asp:Content ContentPlaceHolderID="MainContent" runat="server">
+    <asp:ContentPlaceHolder ID="MainContent" runat="server" />
+</asp:Content>
+
+<asp:Content ContentPlaceHolderID="FloatContent" runat="server">
+    <asp:ContentPlaceHolder ID="FloatContent" runat="server" />
+</asp:Content>

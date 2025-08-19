@@ -331,7 +331,8 @@
                   
                   </div>
                   <!-- 登入資訊 -->
-                  <div class="d-flex justify-content-end mb-4">
+                  <div class="d-flex justify-content-between mb-4">
+                      <asp:ContentPlaceHolder ID="Breadcrumbs" runat="server"><div></div></asp:ContentPlaceHolder>
                       <div class="login-user">
                           <div class="user-icon">
                               <i class="fa-solid fa-user"></i>
@@ -385,6 +386,7 @@
                       <li>電話：(07)338-1810     Copyright © 海洋委員會 版權所有</li>
                   </ul>
               </footer>
+              <asp:ContentPlaceHolder ID="FloatContent" runat="server"></asp:ContentPlaceHolder>
         </div>
     </div>
   
