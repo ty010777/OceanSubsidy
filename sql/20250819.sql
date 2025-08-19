@@ -85,7 +85,7 @@ GO
 CREATE TABLE [OFS_CUL_Received_Subsidy] (
     [ID]     INT PRIMARY KEY IDENTITY,
     [PID]    INT             NOT NULL,
-    [Name]   NVARCHAR(50)        NULL,  -- 計劃名稱
+    [Name]   NVARCHAR(50)        NULL,  -- 計畫名稱
     [Unit]   NVARCHAR(50)        NULL,  -- 補助單位
     [Amount] INT                 NULL   -- 補助金額
 )
