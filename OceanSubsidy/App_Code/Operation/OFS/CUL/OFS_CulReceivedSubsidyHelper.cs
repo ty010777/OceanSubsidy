@@ -1,5 +1,7 @@
-﻿using GS.Data;
-using GS.Data.Sql;
+﻿using GS.Data.Sql;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
 
 public class OFS_CulReceivedSubsidyHelper
 {
@@ -14,6 +16,7 @@ public class OFS_CulReceivedSubsidyHelper
         ";
 
         db.Parameters.Add("@ID", id);
+
         db.ExecuteNonQuery();
     }
 
@@ -34,7 +37,7 @@ public class OFS_CulReceivedSubsidyHelper
         model.ID = int.Parse(db.GetTable().Rows[0]["ID"].ToString());
     }
 
-    public static GisTable query(int pid)
+    public static List<OFS_CulReceivedSubsidy> query(int pid)
     {
         DbHelper db = new DbHelper();
 
@@ -51,7 +54,7 @@ public class OFS_CulReceivedSubsidyHelper
 
         db.Parameters.Add("@PID", pid);
 
-        return db.GetTable();
+        return db.GetTable().Rows.Cast<DataRow>().Select(r => toModel(r)).ToList();
     }
 
     public static void update(OFS_CulReceivedSubsidy model)
@@ -72,5 +75,17 @@ public class OFS_CulReceivedSubsidyHelper
         db.Parameters.Add("@Amount", model.Amount);
 
         db.ExecuteNonQuery();
+    }
+
+    private static OFS_CulReceivedSubsidy toModel(DataRow row)
+    {
+        return new OFS_CulReceivedSubsidy
+        {
+            ID = row.Field<int>("ID"),
+            PID = row.Field<int>("PID"),
+            Name = row.Field<string>("Name"),
+            Unit = row.Field<string>("Unit"),
+            Amount = row.Field<int>("Amount")
+        };
     }
 }

@@ -1,5 +1,6 @@
-using GS.Data;
 using GS.Data.Sql;
+using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 
 public class OFS_CulAttachmentHelper
@@ -24,26 +25,28 @@ public class OFS_CulAttachmentHelper
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
-            INSERT INTO [OFS_CUL_Attachment] ([PID],[FileCode],[Template])
-                   OUTPUT Inserted.ID VALUES (@PID ,@FileCode ,@Template)
+            INSERT INTO [OFS_CUL_Attachment] ([PID],[Type],[Path],[Name])
+                   OUTPUT Inserted.ID VALUES (@PID ,@Type ,@Path ,@Name)
         ";
 
         db.Parameters.Add("@PID", model.PID);
-        db.Parameters.Add("@FileCode", model.FileCode);
-        db.Parameters.Add("@Template", model.Template);
+        db.Parameters.Add("@Type", model.Type);
+        db.Parameters.Add("@Path", model.Path);
+        db.Parameters.Add("@Name", model.Name);
 
         model.ID = int.Parse(db.GetTable().Rows[0]["ID"].ToString());
     }
 
-    public static GisTable query(int pid)
+    public static List<OFS_CulAttachment> query(int pid)
     {
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
             SELECT [ID]
                   ,[PID]
-                  ,[FileCode]
-                  ,[Template]
+                  ,[Type]
+                  ,[Path]
+                  ,[Name]
               FROM [OFS_CUL_Attachment]
              WHERE [PID] = @PID
           ORDER BY [ID]
@@ -51,24 +54,18 @@ public class OFS_CulAttachmentHelper
 
         db.Parameters.Add("@PID", pid);
 
-        return db.GetTable();
+        return db.GetTable().Rows.Cast<DataRow>().Select(r => toModel(r)).ToList();
     }
 
-    public static void update(OFS_CulAttachment model)
+    private static OFS_CulAttachment toModel(DataRow row)
     {
-        DbHelper db = new DbHelper();
-
-        db.CommandText = @"
-            UPDATE [OFS_CUL_Attachment]
-               SET [FileCode] = @FileCode
-                  ,[Template] = @Template
-             WHERE [ID] = @ID
-        ";
-
-        db.Parameters.Add("@ID", model.ID);
-        db.Parameters.Add("@FileCode", model.FileCode);
-        db.Parameters.Add("@Template", model.Template);
-
-        db.ExecuteNonQuery();
+        return new OFS_CulAttachment
+        {
+            ID = row.Field<int>("ID"),
+            PID = row.Field<int>("PID"),
+            Type = row.Field<int>("Type"),
+            Path = row.Field<string>("Path"),
+            Name = row.Field<string>("Name")
+        };
     }
 }

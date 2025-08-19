@@ -24,7 +24,8 @@ public class CultureServiceHandler
 
         return new
         {
-            Project = OFS_CulProjectHelper.get(id)
+            Project = OFS_CulProjectHelper.get(id),
+            Attachments = OFS_CulAttachmentHelper.query(id)
         };
     }
 
@@ -148,6 +149,35 @@ public class CultureServiceHandler
         }
 
         return new { ID = project.ID };
+    }
+
+    public object saveAttachment(JObject param, HttpContext context)
+    {
+        var id = int.Parse(param["ID"].ToString());
+
+        if (bool.Parse(param["Submit"].ToString()))
+        {
+            OFS_CulProjectHelper.updateFormStep(id, 6);
+            OFS_CulProjectHelper.updateStatus(id, 2);
+        }
+
+        var attachments = param["Attachments"].ToObject<List<OFS_CulAttachment>>();
+
+        foreach (var item in attachments)
+        {
+            if (item.Deleted)
+            {
+                OFS_CulAttachmentHelper.delete(item.ID);
+            }
+            else if (item.ID == 0)
+            {
+                item.PID = id;
+
+                OFS_CulAttachmentHelper.insert(item);
+            }
+        }
+
+        return new {};
     }
 
     public object saveFunding(JObject param, HttpContext context)

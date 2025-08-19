@@ -5,6 +5,7 @@ CREATE TABLE [OFS_Base_File] (
     [Name]       NVARCHAR(200)   NOT NULL,
     [Path]       NVARCHAR(1000)  NOT NULL,
     [Size]       BIGINT          NOT NULL,
+    [Type]       VARCHAR(100)        NULL,
     [CreateTime] DATETIME        NOT NULL,
     [CreateUser] VARCHAR(50)     NOT NULL
 )
@@ -186,19 +187,9 @@ GO
 CREATE TABLE [OFS_CUL_Attachment] (
     [ID]       INT PRIMARY KEY IDENTITY,
     [PID]      INT             NOT NULL,
-    [FileCode] NVARCHAR(50)        NULL, -- 附件名稱
-    [Template] NVARCHAR(100)       NULL  -- 範本
-)
-GO
-
-
--- 附件檔案
-
-CREATE TABLE [OFS_CUL_File] (
-    [ID]     INT PRIMARY KEY IDENTITY,
-    [PID]    INT             NOT NULL,
-    [AttID]  INT             NOT NULL,
-    [FileID] INT             NOT NULL  -- 上傳
+    [Type]     INT             NOT NULL,
+    [Path]     NVARCHAR(100)   NOT NULL,
+    [Name]     NVARCHAR(200)   NOT NULL
 )
 GO
 

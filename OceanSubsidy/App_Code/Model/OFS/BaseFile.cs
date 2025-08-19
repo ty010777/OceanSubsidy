@@ -10,6 +10,8 @@ public class BaseFile
 
     public long Size { get; set; }
 
+    public string Type { get; set; }
+
     public DateTime CreateTime { get; set; }
 
     public string CreateUser { get; set; }

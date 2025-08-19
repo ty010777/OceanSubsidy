@@ -1,5 +1,6 @@
-using GS.Data;
 using GS.Data.Sql;
+using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 
 public class OFS_CulBudgetPlanHelper
@@ -38,7 +39,7 @@ public class OFS_CulBudgetPlanHelper
         model.ID = int.Parse(db.GetTable().Rows[0]["ID"].ToString());
     }
 
-    public static GisTable query(int pid)
+    public static List<OFS_CulBudgetPlan> query(int pid)
     {
         DbHelper db = new DbHelper();
 
@@ -57,7 +58,7 @@ public class OFS_CulBudgetPlanHelper
 
         db.Parameters.Add("@PID", pid);
 
-        return db.GetTable();
+        return db.GetTable().Rows.Cast<DataRow>().Select(r => toModel(r)).ToList();
     }
 
     public static void update(OFS_CulBudgetPlan model)
@@ -82,5 +83,19 @@ public class OFS_CulBudgetPlanHelper
         db.Parameters.Add("@Description", model.Description);
 
         db.ExecuteNonQuery();
+    }
+
+    private static OFS_CulBudgetPlan toModel(DataRow row)
+    {
+        return new OFS_CulBudgetPlan
+        {
+            ID = row.Field<int>("ID"),
+            PID = row.Field<int>("PID"),
+            ItemID = row.Field<int>("ItemID"),
+            Title = row.Field<string>("Title"),
+            Amount = row.Field<int>("Amount"),
+            OtherAmount = row.Field<int>("OtherAmount"),
+            Description = row.Field<string>("Description")
+        };
     }
 }

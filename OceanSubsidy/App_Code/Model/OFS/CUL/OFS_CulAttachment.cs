@@ -3,9 +3,14 @@ public class OFS_CulAttachment
     public int ID { get; set; }
     public int PID { get; set; }
 
-    // 附件名稱
-    public string FileCode { get; set; }
+    // 類型
+    public int Type { get; set; }
 
-    // 範本
-    public string Template { get; set; }
+    // 路徑
+    public string Path { get; set; }
+
+    // 名稱
+    public string Name { get; set; }
+
+    public bool Deleted { get; set; }
 }

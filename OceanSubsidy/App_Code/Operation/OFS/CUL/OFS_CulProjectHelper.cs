@@ -185,6 +185,22 @@ public class OFS_CulProjectHelper
         db.ExecuteNonQuery();
     }
 
+    public static void updateStatus(int id, int status)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            UPDATE [OFS_CUL_Project]
+               SET [Status] = @Status
+             WHERE [ID] = @ID
+        ";
+
+        db.Parameters.Add("@ID", id);
+        db.Parameters.Add("@Status", status);
+
+        db.ExecuteNonQuery();
+    }
+
     private static OFS_CulProject toModel(DataRow row)
     {
         return new OFS_CulProject

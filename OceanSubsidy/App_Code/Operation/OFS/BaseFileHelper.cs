@@ -4,7 +4,7 @@ using System.Data;
 
 public class BaseFileHelper
 {
-    public static BaseFile get(int id)
+    public static BaseFile getByPath(string path)
     {
         DbHelper db = new DbHelper();
 
@@ -13,13 +13,14 @@ public class BaseFileHelper
                   ,[Name]
                   ,[Path]
                   ,[Size]
+                  ,[Type]
                   ,[CreateTime]
                   ,[CreateUser]
               FROM [OFS_Base_File]
-             WHERE [ID] = @ID
+             WHERE [Path] = @Path
         ";
 
-        db.Parameters.Add("@ID", id);
+        db.Parameters.Add("@Path", path);
 
         var table = db.GetTable();
 
@@ -31,15 +32,17 @@ public class BaseFileHelper
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
-            INSERT INTO [OFS_Base_File] ([Name],[Path],[Size],[CreateTime],[CreateUser])
-              OUTPUT Inserted.ID VALUES (@Name, @Path, @Size, @CreateTime, @CreateUser)
+            INSERT INTO [OFS_Base_File] ([Name],[Path],[Size],[Type],[CreateTime],[CreateUser])
+              OUTPUT Inserted.ID VALUES (@Name, @Path, @Size, @Type, @CreateTime, @CreateUser)
         ";
 
         db.Parameters.Add("@Name", model.Name);
         db.Parameters.Add("@Path", model.Path);
         db.Parameters.Add("@Size", model.Size);
-        db.Parameters.Add("@CreateTime", model.CreateTime);
-        db.Parameters.Add("@CreateUser", model.CreateUser);
+        db.Parameters.Add("@Type", model.Type);
+// TODO
+db.Parameters.Add("@CreateTime", DateTime.Now);
+db.Parameters.Add("@CreateUser", "N/A");
 
         model.ID = int.Parse(db.GetTable().Rows[0]["ID"].ToString());
     }
@@ -52,6 +55,7 @@ public class BaseFileHelper
             Name = row.Field<string>("Name"),
             Path = row.Field<string>("Path"),
             Size = row.Field<long>("Size"),
+            Type = row.Field<string>("Type"),
             CreateTime = row.Field<DateTime>("CreateTime"),
             CreateUser = row.Field<string>("CreateUser")
         };
