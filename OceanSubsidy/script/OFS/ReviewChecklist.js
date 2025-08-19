@@ -29,7 +29,6 @@ window.ReviewChecklist = (function() {
             setActiveType(currentType);
             
             isInitialized = true;
-            console.log('ReviewChecklist模組已初始化');
         } catch (error) {
             console.error('初始化ReviewChecklist模組時發生錯誤:', error);
         }
@@ -230,7 +229,6 @@ window.ReviewChecklist = (function() {
                                      $row.find('[data-status-name]').attr('data-status-name') ||
                                      $row.find('.status-cell').text().trim();
                     
-                    console.log(`專案 ${projectId} 的狀態: ${statusCell}`);
                     
                     // 檢查狀態是否為 '通過'
                     if (statusCell === '通過') {
@@ -271,7 +269,6 @@ window.ReviewChecklist = (function() {
                 });
             }
             
-            console.log(`Type${type} 符合條件的專案編號:`, projectIds);
             return projectIds;
         } catch (error) {
             console.error('收集選中專案編號時發生錯誤:', error);
@@ -350,7 +347,6 @@ window.ReviewChecklist = (function() {
                 reviewType: currentType
             };
 
-            console.log('發送批次審核請求:', requestData);
 
             $.ajax({
                 type: "POST",
@@ -374,7 +370,6 @@ window.ReviewChecklist = (function() {
                     });
                 }
             }).done(function(response) {
-                console.log('後端回應:', response);
                 Swal.close(); // 關閉載入中對話框
                 resolve(response);
             }).fail(function(jqXHR, textStatus, errorThrown) {
@@ -403,7 +398,6 @@ window.ReviewChecklist = (function() {
                 result = response.d || response;
             }
 
-            console.log('處理成功回應:', result);
 
             if (result.Success) {
                 // 成功處理
@@ -479,7 +473,6 @@ window.ReviewChecklist = (function() {
      */
     function executeCurrentPageSearch() {
         try {
-            console.log(`重新執行 Type${currentType} 的查詢`);
             
             // 根據當前類型觸發對應的搜尋按鈕
             let buttonId;
@@ -504,7 +497,6 @@ window.ReviewChecklist = (function() {
             if ($button.length > 0) {
                 $button.trigger('click');
             } else {
-                console.log('所有可用的搜尋按鈕:', $('[id*="btnSearch_Type"]').map(function() { return this.id; }).get());
                 reloadCurrentContent();
             }
         } catch (error) {
@@ -556,7 +548,6 @@ window.ReviewChecklist = (function() {
                 // 重新初始化 checkbox 功能
                 updateCheckboxTargets();
 
-                console.log('已渲染', results.length, '筆搜尋結果');
             }
         } catch (error) {
             console.error('渲染搜尋結果時發生錯誤:', error);
@@ -595,7 +586,6 @@ window.ReviewChecklist = (function() {
 
             // 重新初始化 checkbox 功能
             updateCheckboxTargets();
-            console.log('已渲染 Type-4', results.length, '筆搜尋結果');
         } catch (error) {
             console.error('渲染 Type-4 搜尋結果時發生錯誤:', error);
         }
@@ -1000,9 +990,10 @@ window.ReviewChecklist = (function() {
      * 調用儲存 API
      */
     function callSaveApprovalAPI(approvalItems) {
-        $.ajax({
+        var url =  '<%= ResolveUrl("~/OFS/ReviewChecklist.aspx/SaveApprovalMode_Type4") %>';
+            $.ajax({
             type: 'POST',
-            url: '/OFS/ReviewChecklist.aspx/SaveApprovalMode_Type4',
+            url: url,
             data: JSON.stringify({ approvalItems: approvalItems }),
             contentType: 'application/json; charset=utf-8',
             dataType: 'json',
@@ -1245,7 +1236,6 @@ window.ReviewChecklist = (function() {
             // 覆寫保存排序的方法，讓它調用我們的儲存功能
             tableSorter.saveNewOrder = function() {
                 // 當拖曳或置頂後，不需要立即儲存，讓使用者手動按儲存按鈕
-                console.log('排序已更新，請手動儲存');
             };
         } else {
             console.warn('TableSorter 類別不可用，請確認 planAdmJS.js 已載入');
@@ -1494,7 +1484,6 @@ function handleBatchApproval(actionText) {
  * @param {string} projectId - 專案編號
  */
 function openPlanDetail(projectId) {
-    console.log('打開計畫詳情:', projectId);
     
     // 取得當前審查類型
     const currentType = window.ReviewChecklist.getCurrentType();
@@ -1513,7 +1502,6 @@ function openPlanDetail(projectId) {
         contentType: "application/json; charset=utf-8",
         dataType: "json"
     }).done(function(response) {
-        console.log('後端回應:', response);
         
         // 解析回應資料
         let result;
@@ -1809,5 +1797,597 @@ function batchProcess(selectedIds, actionText, currentType) {
             icon: 'error',
             confirmButtonText: '確定'
         });
+    });
+}
+
+/**
+ * 分頁功能管理器 - 支援Type1、Type2和Type3
+ */
+window.PaginationManager = {
+    // 數據存儲
+    data: {
+        type1: [],
+        type2: [],
+        type3: []
+    },
+    
+    // 當前頁
+    currentPage: {
+        type1: 1,
+        type2: 1,
+        type3: 1
+    },
+    
+    // 總頁數
+    totalPages: {
+        type1: 0,
+        type2: 0,
+        type3: 0
+    },
+    
+    // 通用設定
+    pageSize: 10,
+    
+    init: function() {
+        this.bindEvents();
+        this.setupGlobalFunctions();
+    },
+    
+    /**
+     * 設定全域函數供後端調用
+     */
+    setupGlobalFunctions: function() {
+        const self = this;
+        
+        // Type1 數據收集函數
+        window.collectType1DataNow = function() {
+            self.collectTypeData('type1');
+        };
+        
+        // Type2 數據收集函數
+        window.collectType2DataNow = function() {
+            self.collectTypeData('type2');
+        };
+        
+        // Type3 數據收集函數
+        window.collectType3DataNow = function() {
+            self.collectTypeData('type3');
+        };
+    },
+    
+    /**
+     * 綁定分頁相關事件
+     */
+    bindEvents: function() {
+        const self = this;
+        
+        // Type1 分頁按鈕點擊事件
+        $(document).on('click', '#pagination-type1 .pagination-btn', function(e) {
+            e.preventDefault();
+            const page = parseInt($(this).data('page'));
+            if (page && page !== self.currentPage.type1) {
+                self.currentPage.type1 = page;
+                self.renderPage('type1');
+            }
+        });
+        
+        // Type1 前一頁按鈕
+        $(document).on('click', '#pagination-type1 .btn-prev-page', function(e) {
+            e.preventDefault();
+            if (self.currentPage.type1 > 1) {
+                self.currentPage.type1--;
+                self.renderPage('type1');
+            }
+        });
+        
+        // Type1 下一頁按鈕
+        $(document).on('click', '#pagination-type1 .btn-next-page', function(e) {
+            e.preventDefault();
+            if (self.currentPage.type1 < self.totalPages.type1) {
+                self.currentPage.type1++;
+                self.renderPage('type1');
+            }
+        });
+        
+        // Type1 每頁顯示筆數選擇
+        $(document).on('change', '#pagination-type1 .page-size-selector', function() {
+            const newPageSize = parseInt($(this).val());
+            if (newPageSize && newPageSize !== self.pageSize) {
+                self.pageSize = newPageSize;
+                self.currentPage.type1 = 1; // 重設到第一頁
+                self.renderPage('type1');
+            }
+        });
+        
+        // Type1 跳到指定頁
+        $(document).on('change', '#pagination-type1 .jump-to-page', function() {
+            const targetPage = parseInt($(this).val());
+            if (targetPage && targetPage !== self.currentPage.type1 && targetPage >= 1 && targetPage <= self.totalPages.type1) {
+                self.currentPage.type1 = targetPage;
+                self.renderPage('type1');
+            }
+        });
+        
+        // Type2 分頁按鈕點擊事件
+        $(document).on('click', '#pagination-type2 .pagination-btn', function(e) {
+            e.preventDefault();
+            const page = parseInt($(this).data('page'));
+            if (page && page !== self.currentPage.type2) {
+                self.currentPage.type2 = page;
+                self.renderPage('type2');
+            }
+        });
+        
+        // Type2 前一頁按鈕
+        $(document).on('click', '#pagination-type2 .btn-prev-page', function(e) {
+            e.preventDefault();
+            if (self.currentPage.type2 > 1) {
+                self.currentPage.type2--;
+                self.renderPage('type2');
+            }
+        });
+        
+        // Type2 下一頁按鈕
+        $(document).on('click', '#pagination-type2 .btn-next-page', function(e) {
+            e.preventDefault();
+            if (self.currentPage.type2 < self.totalPages.type2) {
+                self.currentPage.type2++;
+                self.renderPage('type2');
+            }
+        });
+        
+        // Type2 每頁顯示筆數選擇
+        $(document).on('change', '#pagination-type2 .page-size-selector', function() {
+            const newPageSize = parseInt($(this).val());
+            if (newPageSize && newPageSize !== self.pageSize) {
+                self.pageSize = newPageSize;
+                self.currentPage.type2 = 1; // 重設到第一頁
+                self.renderPage('type2');
+            }
+        });
+        
+        // Type2 跳到指定頁
+        $(document).on('change', '#pagination-type2 .jump-to-page', function() {
+            const targetPage = parseInt($(this).val());
+            if (targetPage && targetPage !== self.currentPage.type2 && targetPage >= 1 && targetPage <= self.totalPages.type2) {
+                self.currentPage.type2 = targetPage;
+                self.renderPage('type2');
+            }
+        });
+        
+        // Type3 分頁按鈕點擊事件
+        $(document).on('click', '#pagination-type3 .pagination-btn', function(e) {
+            e.preventDefault();
+            const page = parseInt($(this).data('page'));
+            if (page && page !== self.currentPage.type3) {
+                self.currentPage.type3 = page;
+                self.renderPage('type3');
+            }
+        });
+        
+        // Type3 前一頁按鈕
+        $(document).on('click', '#pagination-type3 .btn-prev-page', function(e) {
+            e.preventDefault();
+            if (self.currentPage.type3 > 1) {
+                self.currentPage.type3--;
+                self.renderPage('type3');
+            }
+        });
+        
+        // Type3 下一頁按鈕
+        $(document).on('click', '#pagination-type3 .btn-next-page', function(e) {
+            e.preventDefault();
+            if (self.currentPage.type3 < self.totalPages.type3) {
+                self.currentPage.type3++;
+                self.renderPage('type3');
+            }
+        });
+        
+        // Type3 每頁顯示筆數選擇
+        $(document).on('change', '#pagination-type3 .page-size-selector', function() {
+            const newPageSize = parseInt($(this).val());
+            if (newPageSize && newPageSize !== self.pageSize) {
+                self.pageSize = newPageSize;
+                self.currentPage.type3 = 1; // 重設到第一頁
+                self.renderPage('type3');
+            }
+        });
+        
+        // Type3 跳到指定頁
+        $(document).on('change', '#pagination-type3 .jump-to-page', function() {
+            const targetPage = parseInt($(this).val());
+            if (targetPage && targetPage !== self.currentPage.type3 && targetPage >= 1 && targetPage <= self.totalPages.type3) {
+                self.currentPage.type3 = targetPage;
+                self.renderPage('type3');
+            }
+        });
+    },
+    
+    /**
+     * 收集指定類型的資料
+     */
+    collectTypeData: function(type) {
+        const typeNum = type.replace('type', '');
+        
+        // 嘗試多種表格選擇器
+        let $tableBody = $(`#DataTable_Type${typeNum} tbody`);
+        
+        // 如果找不到 DataTable_TypeX，嘗試content-type-X內的table tbody
+        if ($tableBody.length === 0) {
+            $tableBody = $(`#content-type-${typeNum} .table tbody`);
+        }
+        
+        if ($tableBody.length === 0) {
+            console.warn(`找不到Type${typeNum}的表格元素`);
+            return;
+        }
+        
+        this.data[type] = [];
+        const rows = $tableBody.find('tr');
+        
+        rows.each((index, row) => {
+            this.data[type].push($(row).prop('outerHTML'));
+        });
+        
+        // 更新總筆數顯示
+        this.updateTotalCount(type);
+        
+        if (this.data[type].length > 0) {
+            this.currentPage[type] = 1;
+            this.renderPage(type);
+        }
+    },
+    
+    /**
+     * 渲染指定類型的當前頁面
+     */
+    renderPage: function(type) {
+        if (!this.data[type] || this.data[type].length === 0) {
+            return;
+        }
+        
+        const typeNum = type.replace('type', '');
+        this.totalPages[type] = Math.ceil(this.data[type].length / this.pageSize);
+        
+        const startIndex = (this.currentPage[type] - 1) * this.pageSize;
+        const endIndex = startIndex + this.pageSize;
+        const pageData = this.data[type].slice(startIndex, endIndex);
+        
+        // 嘗試多種表格選擇器
+        let $tableBody = $(`#DataTable_Type${typeNum} tbody`);
+        
+        // 如果找不到 DataTable_TypeX，嘗試content-type-X內的table tbody
+        if ($tableBody.length === 0) {
+            $tableBody = $(`#content-type-${typeNum} .table tbody`);
+        }
+        
+        if ($tableBody.length === 0) {
+            console.warn(`找不到Type${typeNum}的表格元素進行渲染`);
+            return;
+        }
+        
+        // 清空表格
+        $tableBody.empty();
+        
+        // 填入當前頁資料
+        pageData.forEach(function(row) {
+            $tableBody.append(row);
+        });
+        
+        // 更新分頁控件
+        this.updatePaginationControls(type);
+    },
+    
+    /**
+     * 更新分頁控件
+     */
+    updatePaginationControls: function(type) {
+        const typeNum = type.replace('type', '');
+        const $pagination = $(`#pagination-type${typeNum} nav.pagination`);
+        
+        // 清空現有的分頁按鈕，只保留上下頁按鈕
+        $pagination.find('.pagination-item, .ellipsis').remove();
+        
+        // 找到上下頁按鈕的位置
+        const $prevBtn = $pagination.find('.btn-prev-page');
+        const $nextBtn = $pagination.find('.btn-next-page');
+        
+        // 渲染頁碼按鈕
+        this.renderPageButtons(type, $prevBtn, $nextBtn);
+        
+        // 更新上下頁按鈕狀態
+        $prevBtn.prop('disabled', this.currentPage[type] <= 1);
+        $nextBtn.prop('disabled', this.currentPage[type] >= this.totalPages[type]);
+        
+        // 更新page-number-control區域
+        this.updatePageNumberControls(type);
+    },
+    
+    /**
+     * 更新page-number-control控制元素
+     */
+    updatePageNumberControls: function(type) {
+        const typeNum = type.replace('type', '');
+        const $container = $(`#pagination-type${typeNum}`);
+        
+        // 更新分頁資訊顯示
+        const startItem = (this.currentPage[type] - 1) * this.pageSize + 1;
+        const endItem = Math.min(this.currentPage[type] * this.pageSize, this.data[type].length);
+        const totalItems = this.data[type].length;
+        
+        $container.find('.pagination-info').text(`顯示第 ${startItem} - ${endItem} 筆，共 ${totalItems} 筆`);
+        
+        // 更新跳到指定頁的選項
+        const $jumpToPage = $container.find('.jump-to-page');
+        $jumpToPage.empty();
+        
+        for (let i = 1; i <= this.totalPages[type]; i++) {
+            const selected = i === this.currentPage[type] ? 'selected' : '';
+            $jumpToPage.append(`<option value="${i}" ${selected}>${i}</option>`);
+        }
+        
+        // 確保每頁顯示筆數選擇器的值是正確的
+        $container.find('.page-size-selector').val(this.pageSize);
+    },
+    
+    /**
+     * 更新總筆數顯示
+     */
+    updateTotalCount: function(type) {
+        const typeNum = type.replace('type', '');
+        const totalCount = this.data[type] ? this.data[type].length : 0;
+        
+        // 更新對應的總筆數顯示
+        $(`#total-count-type${typeNum}`).text(totalCount);
+    },
+    
+    /**
+     * 渲染頁碼按鈕
+     */
+    renderPageButtons: function(type, $prevBtn, $nextBtn) {
+        const currentPage = this.currentPage[type];
+        const totalPages = this.totalPages[type];
+        
+        if (totalPages <= 5) {
+            // 如果總頁數 <= 5，顯示所有頁碼
+            for (let i = 1; i <= totalPages; i++) {
+                const isActive = i === currentPage;
+                const $pageBtn = $(`<button class="pagination-item pagination-btn ${isActive ? 'active' : ''}" data-page="${i}"><span class="page-number">${i}</span></button>`);
+                $pageBtn.insertBefore($nextBtn);
+            }
+        } else {
+            // 總頁數 > 5，使用省略號邏輯
+            if (currentPage <= 3) {
+                // 當前頁在前面：1 2 3 ... 最後頁
+                for (let i = 1; i <= 3; i++) {
+                    const isActive = i === currentPage;
+                    const $pageBtn = $(`<button class="pagination-item pagination-btn ${isActive ? 'active' : ''}" data-page="${i}"><span class="page-number">${i}</span></button>`);
+                    $pageBtn.insertBefore($nextBtn);
+                }
+                
+                if (totalPages > 4) {
+                    $(`<div class="pagination-item ellipsis"><span>...</span></div>`).insertBefore($nextBtn);
+                    const $lastBtn = $(`<button class="pagination-item pagination-btn" data-page="${totalPages}"><span class="page-number">${totalPages}</span></button>`);
+                    $lastBtn.insertBefore($nextBtn);
+                }
+            } else if (currentPage >= totalPages - 2) {
+                // 當前頁在後面：1 ... 倒數3頁
+                const $firstBtn = $(`<button class="pagination-item pagination-btn" data-page="1"><span class="page-number">1</span></button>`);
+                $firstBtn.insertBefore($nextBtn);
+                
+                $(`<div class="pagination-item ellipsis"><span>...</span></div>`).insertBefore($nextBtn);
+                
+                for (let i = totalPages - 2; i <= totalPages; i++) {
+                    const isActive = i === currentPage;
+                    const $pageBtn = $(`<button class="pagination-item pagination-btn ${isActive ? 'active' : ''}" data-page="${i}"><span class="page-number">${i}</span></button>`);
+                    $pageBtn.insertBefore($nextBtn);
+                }
+            } else {
+                // 當前頁在中間：1 ... 當前頁-1 當前頁 當前頁+1 ... 最後頁
+                const $firstBtn = $(`<button class="pagination-item pagination-btn" data-page="1"><span class="page-number">1</span></button>`);
+                $firstBtn.insertBefore($nextBtn);
+                
+                $(`<div class="pagination-item ellipsis"><span>...</span></div>`).insertBefore($nextBtn);
+                
+                for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+                    const isActive = i === currentPage;
+                    const $pageBtn = $(`<button class="pagination-item pagination-btn ${isActive ? 'active' : ''}" data-page="${i}"><span class="page-number">${i}</span></button>`);
+                    $pageBtn.insertBefore($nextBtn);
+                }
+                
+                $(`<div class="pagination-item ellipsis"><span>...</span></div>`).insertBefore($nextBtn);
+                
+                const $lastBtn = $(`<button class="pagination-item pagination-btn" data-page="${totalPages}"><span class="page-number">${totalPages}</span></button>`);
+                $lastBtn.insertBefore($nextBtn);
+            }
+        }
+    },
+    
+};
+
+// 當頁面載入完成後初始化分頁功能
+$(document).ready(function() {
+    setTimeout(function() {
+        if (typeof window.PaginationManager !== 'undefined') {
+            window.PaginationManager.init();
+        }
+    }, 500);
+});
+
+// 讓 ReviewChecklistManager 指向原本的 ReviewChecklist
+window.ReviewChecklistManager = window.ReviewChecklist;
+
+/**
+ * AJAX搜尋功能 - 支援Type1、Type2、Type3
+ * @param {number} searchType - 搜尋類型 (1, 2, 3)
+ */
+function performAjaxSearch(searchType) {
+    try {
+        // 顯示載入狀態
+        showSearchLoading(searchType, true);
+        
+        // 收集對應類型的查詢條件
+        const searchData = collectSearchConditions(searchType);
+        
+        // 發送AJAX請求
+        $.ajax({
+            type: "POST",
+            url: `${window.location.pathname}/AjaxSearch_Type${searchType}`,
+            data: JSON.stringify(searchData),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            timeout: 30000
+        }).done(function(response) {
+            handleSearchResponse(response, searchType);
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            handleSearchError(jqXHR, textStatus, errorThrown, searchType);
+        }).always(function() {
+            showSearchLoading(searchType, false);
+        });
+        
+    } catch (error) {
+        console.error(`Type${searchType} AJAX搜尋時發生錯誤:`, error);
+        showSearchLoading(searchType, false);
+        Swal.fire({
+            title: '搜尋錯誤',
+            text: '準備搜尋時發生錯誤，請稍後再試',
+            icon: 'error',
+            confirmButtonText: '確定'
+        });
+    }
+}
+
+/**
+ * 收集指定類型的查詢條件
+ * @param {number} searchType - 搜尋類型
+ * @returns {Object} 查詢條件物件
+ */
+function collectSearchConditions(searchType) {
+    const data = {};
+    
+    try {
+        switch (searchType) {
+            case 1:
+                data.year = $(`select[name$="ddlYear_Type1"]`).val() || '';
+                data.category = $(`select[name$="ddlCategory_Type1"]`).val() || '';
+                data.status = $(`select[name$="ddlStatus_Type1"]`).val() || '';
+                data.orgName = $(`select[name$="ddlOrg_Type1"]`).val() || '';
+                data.supervisor = $(`select[name$="ddlSupervisor_Type1"]`).val() || '';
+                data.keyword = $('input[name="txtKeyword_Type1"]').val() || '';
+                break;
+                
+            case 2:
+                data.year = $(`select[name$="ddlYear_Type2"]`).val() || '';
+                data.category = $(`select[name$="ddlCategory_Type2"]`).val() || '';
+                data.reviewGroup = $(`select[name$="ddlReviewGroup_Type2"]`).val() || '';
+                data.progress = $(`select[name$="ddlProgress_Type2"]`).val() || '';
+                data.replyStatus = $(`select[name$="ddlReplyStatus_Type2"]`).val() || '';
+                data.orgName = $(`select[name$="ddlOrg_Type2"]`).val() || '';
+                data.supervisor = $(`select[name$="ddlSupervisor_Type2"]`).val() || '';
+                data.keyword = $('input[name="txtKeyword_Type2"]').val() || '';
+                break;
+                
+            case 3:
+                data.year = $(`select[name$="ddlYear_Type3"]`).val() || '';
+                data.category = $(`select[name$="ddlCategory_Type3"]`).val() || '';
+                data.progress = $(`select[name$="ddlProgress_Type3"]`).val() || '';
+                data.replyStatus = $(`select[name$="ddlReplyStatus_Type3"]`).val() || '';
+                data.orgName = $(`select[name$="ddlOrg_Type3"]`).val() || '';
+                data.supervisor = $(`select[name$="ddlSupervisor_Type3"]`).val() || '';
+                data.keyword = $('input[name="txtKeyword_Type3"]').val() || '';
+                break;
+                
+            default:
+                throw new Error(`不支援的搜尋類型: ${searchType}`);
+        }
+        
+        return data;
+        
+    } catch (error) {
+        console.error('收集查詢條件時發生錯誤:', error);
+        throw error;
+    }
+}
+
+/**
+ * 顯示/隱藏搜尋載入狀態
+ * @param {number} searchType - 搜尋類型
+ * @param {boolean} isLoading - 是否載入中
+ */
+function showSearchLoading(searchType, isLoading) {
+    const $button = $(`#btnSearch_Type${searchType}`);
+    
+    if (isLoading) {
+        $button.prop('disabled', true);
+        $button.html('<i class="fas fa-spinner fa-spin"></i> 查詢中...');
+    } else {
+        $button.prop('disabled', false);
+        $button.html('🔍 查詢');
+    }
+}
+
+/**
+ * 處理搜尋回應
+ * @param {Object} response - 後端回應
+ * @param {number} searchType - 搜尋類型
+ */
+function handleSearchResponse(response, searchType) {
+    try {
+        let result;
+        if (typeof response.d === 'string') {
+            result = JSON.parse(response.d);
+        } else {
+            result = response.d || response;
+        }
+        
+        if (result && result.success) {
+            // 使用現有的renderSearchResults方法渲染結果
+            if (typeof window.ReviewChecklistManager !== 'undefined') {
+                window.ReviewChecklistManager.renderSearchResults(result.data, searchType);
+            }
+            
+            // 延遲執行分頁功能初始化
+            setTimeout(function() {
+                const collectFunction = window[`collectType${searchType}DataNow`];
+                if (typeof collectFunction === 'function') {
+                    collectFunction();
+                }
+            }, 500);
+            
+        } else {
+            throw new Error(result.message || '搜尋失敗');
+        }
+        
+    } catch (error) {
+        console.error('處理搜尋回應時發生錯誤:', error);
+        handleSearchError({ responseText: error.message }, 'parseError', error.toString(), searchType);
+    }
+}
+
+/**
+ * 處理搜尋錯誤
+ * @param {Object} jqXHR - AJAX錯誤物件
+ * @param {string} textStatus - 錯誤狀態文字
+ * @param {string} errorThrown - 錯誤訊息
+ * @param {number} searchType - 搜尋類型
+ */
+function handleSearchError(jqXHR, textStatus, errorThrown, searchType) {
+    console.error(`Type${searchType} AJAX搜尋失敗:`, textStatus, errorThrown);
+    
+    let errorMessage = '搜尋時發生錯誤，請稍後再試';
+    
+    if (jqXHR.status === 500) {
+        errorMessage = '伺服器內部錯誤，請聯繫系統管理員';
+    } else if (jqXHR.status === 0) {
+        errorMessage = '網路連線錯誤，請檢查網路連線';
+    } else if (textStatus === 'timeout') {
+        errorMessage = '搜尋請求超時，請稍後再試';
+    }
+    
+    Swal.fire({
+        title: '搜尋失敗',
+        text: errorMessage,
+        icon: 'error',
+        confirmButtonText: '確定'
     });
 }

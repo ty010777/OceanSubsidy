@@ -39,15 +39,20 @@
                             Text="📄 範本下載" OnClick="btnDownloadTemplate2_Click" />
                     </td>
                     <td class="text-center">
-                        <asp:Label ID="lblStatus2" runat="server" CssClass="text-pink" Text="尚未上傳"></asp:Label>
+                        <asp:Label ID="lblStatus2" runat="server"  Text="已上傳"></asp:Label>
                     </td>
                     <td>
                         <asp:FileUpload ID="fuAttachment2" runat="server" style="display:none;" />
                         <asp:Button ID="btnUpload2" runat="server" 
                             CssClass="btn btn-teal-dark" 
                             Text="📤 上傳" OnClick="btnUpload2_Click" />
-                        <asp:Panel ID="pnlFiles2" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
-                            <!-- 上傳檔案標籤會動態顯示在這裡 -->
+                        <asp:Panel ID="pnlFiles2" runat="server" CssClass="tag-group mt-2 gap-1" >
+                             <span class="tag tag-green-light">
+                                <a class="tag-link" href="#" target="_blank">1140001_海洋科技科專案計畫書.pdf</a>
+                                <button type="button" class="tag-btn">
+                                    <i class="fa-solid fa-circle-xmark"></i>
+                                </button>
+                            </span>
                         </asp:Panel>
                     </td>
                 </tr>
@@ -72,7 +77,7 @@
                             Text="📤 上傳" OnClick="btnUpload3_Click" />
                         <asp:Panel ID="pnlFiles3" runat="server" CssClass="tag-group mt-2 gap-1">
                             <span class="tag tag-green-light">
-                                <a class="tag-link" href="#" target="_blank">1140001_海洋科技科專案計畫書.pdf</a>
+                                <a class="tag-link" href="#" target="_blank">1140001_建議迴避之審查委員清單.pdf</a>
                                 <button type="button" class="tag-btn">
                                     <i class="fa-solid fa-circle-xmark"></i>
                                 </button>
@@ -101,7 +106,7 @@
                             Text="📤 上傳" OnClick="btnUpload4_Click" />
                         <asp:Panel ID="pnlFiles4" runat="server" CssClass="tag-group mt-2 gap-1">
                             <span class="tag tag-green-light">
-                                <a class="tag-link" href="#" target="_blank">1140001_海洋科技科專案計畫書111111111.pdf</a>
+                                <a class="tag-link" href="#" target="_blank">未違反公職人員利益衝突迴避法切結書.pdf</a>
                                 <button type="button" class="tag-btn">
                                     <i class="fa-solid fa-circle-xmark"></i>
                                 </button>
@@ -121,15 +126,20 @@
                             Text="📄 範本下載" OnClick="btnDownloadTemplate5_Click" />
                     </td>
                     <td class="text-center">
-                        <asp:Label ID="lblStatus5" runat="server" CssClass="text-pink" Text="尚未上傳"></asp:Label>
+                        <asp:Label ID="lblStatus5" runat="server" Text="已上傳"></asp:Label>
                     </td>
                     <td>
                         <asp:FileUpload ID="fuAttachment5" runat="server" style="display:none;" />
                         <asp:Button ID="btnUpload5" runat="server" 
                             CssClass="btn btn-teal-dark" 
                             Text="📤 上傳" OnClick="btnUpload5_Click" />
-                        <asp:Panel ID="pnlFiles5" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
-                            <!-- 上傳檔案標籤會動態顯示在這裡 -->
+                        <asp:Panel ID="pnlFiles5" runat="server" CssClass="tag-group mt-2 gap-1" >
+                             <span class="tag tag-green-light">
+                                    <a class="tag-link" href="#" target="_blank">1140001_蒐集個人資料告知事項暨個人資料提供同意書.pdf</a>
+                                    <button type="button" class="tag-btn">
+                                        <i class="fa-solid fa-circle-xmark"></i>
+                                    </button>
+                                </span>
                         </asp:Panel>
                     </td>
                 </tr>
@@ -145,15 +155,20 @@
                             Text="📄 範本下載" OnClick="btnDownloadTemplate6_Click" />
                     </td>
                     <td class="text-center">
-                        <asp:Label ID="lblStatus6" runat="server" CssClass="text-pink" Text="尚未上傳"></asp:Label>
+                        <asp:Label ID="lblStatus6" runat="server"  Text="已上傳"></asp:Label>
                     </td>
                     <td>
                         <asp:FileUpload ID="fuAttachment6" runat="server" style="display:none;" />
                         <asp:Button ID="btnUpload6" runat="server" 
                             CssClass="btn btn-teal-dark" 
                             Text="📤 上傳" OnClick="btnUpload6_Click" />
-                        <asp:Panel ID="pnlFiles6" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
-                            <!-- 上傳檔案標籤會動態顯示在這裡 -->
+                        <asp:Panel ID="pnlFiles6" runat="server" CssClass="tag-group mt-2 gap-1" >
+                             <span class="tag tag-green-light">
+                                <a class="tag-link" href="#" target="_blank">1140001_共同執行單位基本資料表.pdf</a>
+                                <button type="button" class="tag-btn">
+                                    <i class="fa-solid fa-circle-xmark"></i>
+                                </button>
+                            </span>
                         </asp:Panel>
                     </td>
                 </tr>
@@ -169,15 +184,20 @@
                             Text="📄 範本下載" OnClick="btnDownloadTemplate7_Click" />
                     </td>
                     <td class="text-center">
-                        <asp:Label ID="lblStatus7" runat="server" CssClass="text-pink" Text="尚未上傳"></asp:Label>
+                        <asp:Label ID="lblStatus7" runat="server"  Text="已上傳"></asp:Label>
                     </td>
                     <td>
                         <asp:FileUpload ID="fuAttachment7" runat="server" style="display:none;" />
                         <asp:Button ID="btnUpload7" runat="server" 
                             CssClass="btn btn-teal-dark" 
                             Text="📤 上傳" OnClick="btnUpload7_Click" />
-                        <asp:Panel ID="pnlFiles7" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
-                            <!-- 上傳檔案標籤會動態顯示在這裡 -->
+                        <asp:Panel ID="pnlFiles7" runat="server" CssClass="tag-group mt-2 gap-1" >
+                             <span class="tag tag-green-light">
+                                <a class="tag-link" href="#" target="_blank">1140001_申請人自我檢查表.pdf</a>
+                                <button type="button" class="tag-btn">
+                                    <i class="fa-solid fa-circle-xmark"></i>
+                                </button>
+                            </span>
                         </asp:Panel>
                     </td>
                 </tr>
@@ -201,15 +221,20 @@
                             Text="📄 範本下載" OnClick="btnDownloadTemplate9_Click" />
                     </td>
                     <td class="text-center">
-                        <asp:Label ID="lblStatus9" runat="server" CssClass="text-pink" Text="尚未上傳"></asp:Label>
+                        <asp:Label ID="lblStatus9" runat="server"  Text="已上傳"></asp:Label>
                     </td>
                     <td>
                         <asp:FileUpload ID="fuAttachment9" runat="server" style="display:none;" />
                         <asp:Button ID="btnUpload9" runat="server" 
                             CssClass="btn btn-teal-dark" 
                             Text="📤 上傳" OnClick="btnUpload9_Click" />
-                        <asp:Panel ID="pnlFiles9" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
-                            <!-- 上傳檔案標籤會動態顯示在這裡 -->
+                        <asp:Panel ID="pnlFiles9" runat="server" CssClass="tag-group mt-2 gap-1" >
+                             <span class="tag tag-green-light">
+                                <a class="tag-link" href="#" target="_blank">1140001_海洋委員會補助科技專案計畫契約書.pdf</a>
+                                <button type="button" class="tag-btn">
+                                    <i class="fa-solid fa-circle-xmark"></i>
+                                </button>
+                            </span>
                         </asp:Panel>
                     </td>
                 </tr>
@@ -233,15 +258,20 @@
                             Text="📄 範本下載" OnClick="btnDownloadTemplate11_Click" />
                     </td>
                     <td class="text-center">
-                        <asp:Label ID="lblStatus11" runat="server" CssClass="text-pink" Text="尚未上傳"></asp:Label>
+                        <asp:Label ID="lblStatus11" runat="server"  Text="已上傳"></asp:Label>
                     </td>
                     <td>
                         <asp:FileUpload ID="fuAttachment11" runat="server" style="display:none;" />
                         <asp:Button ID="btnUpload11" runat="server" 
                             CssClass="btn btn-teal-dark" 
                             Text="📤 上傳" OnClick="btnUpload11_Click" />
-                        <asp:Panel ID="pnlFiles11" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
-                            <!-- 上傳檔案標籤會動態顯示在這裡 -->
+                        <asp:Panel ID="pnlFiles11" runat="server" CssClass="tag-group mt-2 gap-1" >
+                             <span class="tag tag-green-light">
+                                <a class="tag-link" href="#" target="_blank">1140001_海洋科技專案成效追蹤自評表.pdf</a>
+                                <button type="button" class="tag-btn">
+                                    <i class="fa-solid fa-circle-xmark"></i>
+                                </button>
+                            </span>
                         </asp:Panel>
                     </td>
                 </tr>

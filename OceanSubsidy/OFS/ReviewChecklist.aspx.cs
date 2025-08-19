@@ -11,6 +11,7 @@ using GS.OCA_OceanSubsidy.Operation.OFS;
 using GS.OCA_OceanSubsidy.Model.OFS;
 using GS.App;
 using Newtonsoft.Json;
+using System.Web.Script.Serialization;
 
 /// <summary>
 /// 統一審查清單頁面
@@ -476,9 +477,16 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                     // 將查詢結果傳遞給前端 JavaScript
                     if (typeof window.ReviewChecklistManager !== 'undefined') {{
                         window.ReviewChecklistManager.renderSearchResults({jsonResults}, 1);
-                    }} else {{
-                        console.log('搜尋結果:', {jsonResults});
                     }}
+                    
+                    // 等待DOM更新後啟動分頁
+                    setTimeout(function() {{
+                        if (typeof window.collectType1DataNow === 'function') {{
+                            window.collectType1DataNow();
+                        }} else {{
+                            console.log('collectType1DataNow函數不存在，類型:', typeof window.collectType1DataNow);
+                        }}
+                    }}, 1000);
                 }});
             ";
             
@@ -537,9 +545,14 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                     // 將查詢結果傳遞給前端 JavaScript
                     if (typeof window.ReviewChecklistManager !== 'undefined') {{
                         window.ReviewChecklistManager.renderSearchResults({jsonResults}, 2);
-                    }} else {{
-                        console.log('Type2 搜尋結果:', {jsonResults});
                     }}
+                    
+                    // 啟動Type2分頁功能
+                    setTimeout(function() {{
+                        if (typeof window.collectType2DataNow === 'function') {{
+                            window.collectType2DataNow();
+                        }}
+                    }}, 1000);
                 }});
             ";
             
@@ -604,6 +617,13 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                     }} else {{
                         console.log('Type3 搜尋結果:', {jsonResults});
                     }}
+                    
+                    // 延遲執行分頁功能初始化
+                    setTimeout(function() {{
+                        if (typeof window.collectType3DataNow === 'function') {{
+                            window.collectType3DataNow();
+                        }}
+                    }}, 1000);
                 }});
             ";
             
@@ -1597,4 +1617,141 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
     }
 
     #endregion
+
+    #region AJAX搜尋方法
+
+    /// <summary>
+    /// AJAX Type1 搜尋方法
+    /// </summary>
+    [WebMethod]
+    public static string AjaxSearch_Type1(string year, string category, string status, string orgName, string supervisor, string keyword)
+    {
+        try
+        {
+            List<ReviewChecklistItem> results = new List<ReviewChecklistItem>();
+            
+            // 執行資格審查查詢
+            if (category == "SCI" || string.IsNullOrEmpty(category))
+            {
+                results = ReviewCheckListHelper.Search_SCI_Type1(
+                    year,
+                    orgName,
+                    supervisor,
+                    keyword,
+                    status);
+            }
+            
+            // TODO: 之後要新增其他類別的搜尋function並合併結果
+            
+            return JsonConvert.SerializeObject(new
+            {
+                success = true,
+                data = results,
+                count = results.Count,
+                message = $"成功搜尋到 {results.Count} 筆資料"
+            });
+        }
+        catch (Exception ex)
+        {
+            return JsonConvert.SerializeObject(new
+            {
+                success = false,
+                message = "搜尋時發生錯誤: " + ex.Message,
+                data = new List<ReviewChecklistItem>(),
+                count = 0
+            });
+        }
+    }
+
+    /// <summary>
+    /// AJAX Type2 搜尋方法
+    /// </summary>
+    [WebMethod]
+    public static string AjaxSearch_Type2(string year, string category, string progress, string replyStatus, string orgName, string supervisor, string keyword)
+    {
+        try
+        {
+            List<ReviewChecklistItem> results = new List<ReviewChecklistItem>();
+            
+            // 執行領域審查查詢
+            if (category == "SCI" || string.IsNullOrEmpty(category))
+            {
+                results = ReviewCheckListHelper.Search_SCI_Type2(
+                    year,
+                    orgName,
+                    supervisor,
+                    keyword,
+                    progress,
+                    replyStatus
+                    );
+            }
+            
+            // TODO: 之後要新增其他類別的搜尋function並合併結果
+            
+            return JsonConvert.SerializeObject(new
+            {
+                success = true,
+                data = results,
+                count = results.Count,
+                message = $"成功搜尋到 {results.Count} 筆資料"
+            });
+        }
+        catch (Exception ex)
+        {
+            return JsonConvert.SerializeObject(new
+            {
+                success = false,
+                message = "搜尋時發生錯誤: " + ex.Message,
+                data = new List<ReviewChecklistItem>(),
+                count = 0
+            });
+        }
+    }
+
+    /// <summary>
+    /// AJAX Type3 搜尋方法
+    /// </summary>
+    [WebMethod]
+    public static string AjaxSearch_Type3(string year, string category, string progress, string replyStatus, string orgName, string supervisor, string keyword)
+    {
+        try
+        {
+            List<ReviewChecklistItem> results = new List<ReviewChecklistItem>();
+            
+            // 執行技術審查查詢
+            if (category == "SCI" || string.IsNullOrEmpty(category))
+            {
+                results = ReviewCheckListHelper.Search_SCI_Type3(
+                    year,
+                    orgName,
+                    supervisor,
+                    keyword,
+                    progress,
+                    replyStatus);
+            }
+            
+            // TODO: 之後要新增其他類別的搜尋function並合併結果
+            
+            return JsonConvert.SerializeObject(new
+            {
+                success = true,
+                data = results,
+                count = results.Count,
+                message = $"成功搜尋到 {results.Count} 筆資料"
+            });
+        }
+        catch (Exception ex)
+        {
+            return JsonConvert.SerializeObject(new
+            {
+                success = false,
+                message = "搜尋時發生錯誤: " + ex.Message,
+                data = new List<ReviewChecklistItem>(),
+                count = 0
+            });
+        }
+    }
+
+    #endregion
+
 }

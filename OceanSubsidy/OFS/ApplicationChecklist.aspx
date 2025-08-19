@@ -1,7 +1,7 @@
 ﻿<%@ Page Language="C#" AutoEventWireup="true" CodeFile="ApplicationChecklist.aspx.cs" Inherits="OFS_ApplicationChecklist" Culture="zh-TW" UICulture="zh-TW" MasterPageFile="~/OFSMaster.master" %>
 
 <asp:Content ID="TitleContent" ContentPlaceHolderID="TitleContent" runat="server">
-    計畫審查 - 申請案件清單
+    計畫申請 - 申請案件清單
 </asp:Content>
 
 <asp:Content ID="HeadContent" ContentPlaceHolderID="HeadExtra" runat="server">
@@ -18,7 +18,7 @@
         <div>
             <span>目前位置</span>
             <div class="d-flex align-items-end gap-3">
-                <h2 class="text-teal-dark">計畫審查</h2>
+                <h2 class="text-teal-dark">計畫申請</h2>
             </div>
         </div>
     </div>

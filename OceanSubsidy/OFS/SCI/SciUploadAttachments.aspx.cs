@@ -211,7 +211,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
             
             if (currentStatusesName == "計畫書修正中")
             {
-                // 計劃書修正中 -> 計劃書審核中
+                // 計畫書修正中 -> 計畫書審核中
                 UpdateProjectStatusForPlanRevision();
                 LogPlanRevisionSubmissionHistory();
             }
@@ -481,7 +481,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
     }
 
     /// <summary>
-    /// 更新計劃書修正狀態 - 計劃書修正中 -> 計劃書審核中
+    /// 更新計畫書修正狀態 - 計畫書修正中 -> 計畫書審核中
     /// </summary>
     private void UpdateProjectStatusForPlanRevision()
     {
@@ -492,12 +492,12 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
         }
         catch (Exception ex)
         {
-            throw new Exception($"更新計劃書修正狀態時發生錯誤：{ex.Message}");
+            throw new Exception($"更新計畫書修正狀態時發生錯誤：{ex.Message}");
         }
     }
 
     /// <summary>
-    /// 記錄計劃書修正提送申請的操作歷程
+    /// 記錄計畫書修正提送申請的操作歷程
     /// </summary>
     private void LogPlanRevisionSubmissionHistory()
     {
@@ -514,7 +514,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
                 UserName = userName,
                 StageStatusBefore = "計畫書修正中",
                 StageStatusAfter = "計畫書審核中",
-                Description = "完成計劃書修正並重新提送審核"
+                Description = "完成計畫書修正並重新提送審核"
             };
 
             // 儲存到資料庫
@@ -522,17 +522,17 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
 
             if (success)
             {
-                System.Diagnostics.Debug.WriteLine($"計劃書修正提送歷程記錄已儲存：{CurrentProjectID}");
+                System.Diagnostics.Debug.WriteLine($"計畫書修正提送歷程記錄已儲存：{CurrentProjectID}");
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine($"計劃書修正提送歷程記錄儲存失敗：{CurrentProjectID}");
+                System.Diagnostics.Debug.WriteLine($"計畫書修正提送歷程記錄儲存失敗：{CurrentProjectID}");
             }
         }
         catch (Exception ex)
         {
             // 歷程記錄失敗不影響主要流程，只記錄錯誤
-            System.Diagnostics.Debug.WriteLine($"記錄計劃書修正提送歷程失敗：{ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"記錄計畫書修正提送歷程失敗：{ex.Message}");
         }
     }
 

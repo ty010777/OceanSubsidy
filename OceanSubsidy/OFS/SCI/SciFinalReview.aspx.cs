@@ -66,11 +66,11 @@ public partial class OFS_SCI_Review_SciFinalReview : System.Web.UI.Page
     #region 按鈕事件
 
     /// <summary>
-    /// 下載計劃書
+    /// 下載計畫書
     /// </summary>
     protected void btnDownloadPlan_Click(object sender, EventArgs e)
     {
-        // TODO: 實作下載計劃書功能
+        // TODO: 實作下載計畫書功能
     }
 
     /// <summary>

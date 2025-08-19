@@ -49,7 +49,7 @@
         <div class="top-block">
             <div class="d-flex align-items-center gap-3">
                 <span>審核承辦人員：<asp:Label ID="lblReviewerName" runat="server" CssClass="fw-bold" /></span>
-                <button type="button" id="btnTransferProject" class="btn btn-teal" data-bs-toggle="modal" data-bs-target="#transferCaseModal">
+                <button type="button" id="btnTransferProject" class="btn btn-teal" runat="server" data-bs-toggle="modal" data-bs-target="#transferCaseModal">
                     移轉案件
                 </button>
             </div>
@@ -57,7 +57,7 @@
                CssClass="btn btn-teal-dark"
                OnClick="btnDownloadPlan_Click"
                CausesValidation="false">
-               <i class="fa-solid fa-download"></i> 下載計劃書
+               <i class="fa-solid fa-download"></i> 下載計畫書
            </asp:LinkButton>
         </div>
     </div>
@@ -95,7 +95,7 @@
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-md">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="fs-24 fw-bold text-green-light">移轉案件</h4>
+                    <h4 class="fs-24 fw-bold text-green-light" id="h4TranProject" runat="server" >移轉案件</h4>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                         <i class="fa-solid fa-circle-xmark"></i>
                     </button>

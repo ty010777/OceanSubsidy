@@ -10,7 +10,7 @@ using GS.OCA_OceanSubsidy.Operation.OFS;
 
 /// <summary>
 /// 變更說明 UserControl
-/// 只有在 StatusesName = '計劃書修正中' 時才會顯示
+/// 只有在 StatusesName = '計畫書修正中' 時才會顯示
 /// </summary>
 public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.UI.UserControl
 {
@@ -218,7 +218,7 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
             // 取得專案狀態資訊
             var project = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
             
-            // 只有在 StatusesName = '計劃書修正中' 時才顯示
+            // 只有在 StatusesName = '計畫書修正中' 時才顯示
             return project.StatusesName == "計畫書修正中";
         }
         catch (Exception ex)

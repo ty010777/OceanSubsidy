@@ -290,6 +290,17 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
             if (uploadFiles.Any())
             {
                 var file = uploadFiles.First();
+                bool isProd = Request.Url.Host.Equals("projects.geosense", StringComparison.OrdinalIgnoreCase);
+
+                // 設定 ImageUrl
+                if (isProd)
+                {
+                    file.TemplatePath = ResolveUrl($"~/OceanSubsidy/{file.TemplatePath}");
+                }
+                else
+                {
+                    file.TemplatePath = ResolveUrl($"~/{file.TemplatePath}");
+                }
                 var script = $@"
                     setTimeout(function() {{
                         if (window.techDiagramManager) {{

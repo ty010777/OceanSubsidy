@@ -4,6 +4,7 @@
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="<%= ResolveUrl("~/script/OFS/ReviewChecklist.js") %>"></script>
+    <script src="<%= ResolveUrl("~/script/OFS/PaginationManager_Type12.js") %>"></script>
 
     
     <script>
@@ -269,8 +270,9 @@
 	               </div>
 	           </div>        
 	   
-	           <asp:Button ID="btnSearch_Type1" runat="server" CssClass="btn btn-teal-dark d-table mx-auto" 
-	                       OnClick="btnSearch_Type1_Click" Text="🔍 查詢" />
+	           <button type="button" id="btnSearch_Type1" class="btn btn-teal-dark d-table mx-auto" onclick="performAjaxSearch(1)">
+	               🔍 查詢
+	           </button>
 	       </div>
 		</div>
                            
@@ -283,14 +285,14 @@
                       <img src="<%= ResolveUrl("~/assets/img/title-icon02-teal.svg") %>" alt="logo">
                       <span>列表</span>
                     </h4>
-                    <span>共 <span class="text-teal">27</span> 筆資料</span>
+                    <span>共 <span class="text-teal" id="total-count-type1">0</span> 筆資料</span>
                 </div>
           
                 <button class="btn btn-teal-dark" type="button"><i class="fas fa-download"></i>匯出審查結果</button>
             </div>
           
             <div class="table-responsive mb-0">
-                <table class="table teal-table">
+                <table class="table teal-table" id="DataTable_Type1">
                     <thead>
                         <tr>
                             <th width="60">
@@ -401,6 +403,7 @@
                     </tbody>
                 </table>
             </div>
+            
             <!-- 審查勾選後底部功能按鈕 -->
             <div class="bg-light-teal-100 mb-5 | checkPlanBtnPanel checkPlanBtnPanel-type1" style="display: none;">
                 <div class="p-3 d-flex justify-content-between align-items-center">
@@ -411,33 +414,13 @@
                 </div>
             </div>
               <!-- 分頁 -->
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div id="pagination-type1" class="d-flex align-items-center justify-content-between flex-wrap gap-2 pagination-wrapper" data-review-type="1">
                 <nav class="pagination justify-content-start" aria-label="Pagination">
-                    <button class="nav-button" aria-label="Previous page" disabled>
+                    <button class="nav-button btn-prev-page" aria-label="Previous page" disabled>
                         <i class="fas fa-chevron-left"></i>
                     </button>
-                  
-                    <button class="pagination-item active">
-                        <span class="page-number">1</span>
-                    </button>
-                  
-                    <button class="pagination-item">
-                        <span class="page-number">2</span>
-                    </button>
-                  
-                    <div class="pagination-item ellipsis">
-                        <span class="">...</span>
-                    </div>
-                  
-                    <button class="pagination-item">
-                        <span class="page-number">9</span>
-                    </button>
-                   
-                    <button class="pagination-item">
-                        <span class="page-number">10</span>
-                    </button>
                 
-                    <button class="nav-button" aria-label="Next page">
+                    <button class="nav-button btn-next-page" aria-label="Next page" disabled>
                         <i class="fas fa-chevron-right"></i>
                     </button>
                 </nav>
@@ -445,29 +428,25 @@
                 <div class="page-number-control">
                     <div class="page-number-control-item">
                         <span>跳到</span>
-                        <select class="form-select">
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                            <option value="6">6</option>
-                            <option value="7">7</option>
-                            <option value="8">8</option>
-                            <option value="9">9</option>
-                            <option value="10" selected>10</option>
+                        <select class="form-select jump-to-page">
+                            <!-- 動態渲染頁數選項 -->
                         </select>
                         <span>頁</span>
                         <span>,</span>
                     </div>
                     <div class="page-number-control-item">
                         <span>每頁顯示</span>
-                        <select class="form-select">
-                            <option value="10">10</option>
+                        <select class="form-select page-size-selector">
+                            <option value="5">5</option>
+                            <option value="10" selected>10</option>
                             <option value="20">20</option>
-                            <option value="30">30</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
                         </select>
                         <span>筆</span>
+                    </div>
+                    <div class="pagination-info ms-3 text-muted small">
+                        <!-- 分頁資訊將顯示在這裡 -->
                     </div>
                 </div>
             </div>
@@ -524,8 +503,9 @@
             	  </div>
               </div>    
             
-              <asp:Button ID="btnSearch_Type2" runat="server" CssClass="btn btn-teal-dark d-table mx-auto" 
-                          OnClick="btnSearch_Type2_Click" Text="🔍 查詢" />
+              <button type="button" id="btnSearch_Type2" class="btn btn-teal-dark d-table mx-auto" onclick="performAjaxSearch(2)">
+                  🔍 查詢
+              </button>
             </div>
         </div>   
         <div class="block rounded-bottom-4">
@@ -535,7 +515,7 @@
                       <img src="<%= ResolveUrl("~/assets/img/title-icon02-teal.svg") %>" alt="logo">
         			  <span>列表</span>
         		  </h4>
-        		  <span>共 <span class="text-teal">27</span> 筆資料</span>
+        		  <span>共 <span class="text-teal" id="total-count-type2">0</span> 筆資料</span>
         	  </div>
         
         	  <div>
@@ -551,7 +531,7 @@
           
           
           <div class="table-responsive mb-0">
-        	  <table class="table teal-table">
+        	  <table class="table teal-table" id="DataTable_Type2">
         		  <thead>
         			  <tr>
         				  <th width="60">
@@ -606,8 +586,6 @@
         		  </tbody>
         	  </table>
           </div>
-          
-          
         
           <!-- 審查勾選後底部功能按鈕 -->
           <div class="bg-light-teal-100 mb-5 | checkPlanBtnPanel checkPlanBtnPanel-type2" style="display: none;">
@@ -624,33 +602,13 @@
         
         
           <!-- 分頁 -->
-          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <div id="pagination-type2" class="d-flex align-items-center justify-content-between flex-wrap gap-2 pagination-wrapper" data-review-type="2">
         	  <nav class="pagination justify-content-start" aria-label="Pagination">
-        		  <button class="nav-button" aria-label="Previous page" disabled>
+        		  <button class="nav-button btn-prev-page" aria-label="Previous page" disabled>
         			  <i class="fas fa-chevron-left"></i>
         		  </button>
         	  
-        		  <button class="pagination-item active">
-        			  <span class="page-number">1</span>
-        		  </button>
-        	  
-        		  <button class="pagination-item">
-        			  <span class="page-number">2</span>
-        		  </button>
-        	  
-        		  <div class="pagination-item ellipsis">
-        			  <span class="">...</span>
-        		  </div>
-        	  
-        		  <button class="pagination-item">
-        			  <span class="page-number">9</span>
-        		  </button>
-        	  
-        		  <button class="pagination-item">
-        			  <span class="page-number">10</span>
-        		  </button>
-        	  
-        		  <button class="nav-button" aria-label="Next page">
+        		  <button class="nav-button btn-next-page" aria-label="Next page" disabled>
         			  <i class="fas fa-chevron-right"></i>
         		  </button>
         	  </nav>
@@ -658,30 +616,26 @@
         	  <div class="page-number-control">
         		  <div class="page-number-control-item">
         			  <span>跳到</span>
-        			  <select class="form-select">
-        				  <option value="1">1</option>
-        				  <option value="2">2</option>
-        				  <option value="3">3</option>
-        				  <option value="4">4</option>
-        				  <option value="5">5</option>
-        				  <option value="6">6</option>
-        				  <option value="7">7</option>
-        				  <option value="8">8</option>
-        				  <option value="9">9</option>
-        				  <option value="10" selected>10</option>
+        			  <select class="form-select jump-to-page">
+        				  <!-- 動態渲染頁數選項 -->
         			  </select>
         			  <span>頁</span>
         			  <span>,</span>
         		  </div>
         		  <div class="page-number-control-item">
         			  <span>每頁顯示</span>
-        			  <select class="form-select">
-        				  <option value="10">10</option>
+        			  <select class="form-select page-size-selector">
+        				  <option value="5">5</option>
+        				  <option value="10" selected>10</option>
         				  <option value="20">20</option>
-        				  <option value="30">30</option>
+        				  <option value="50">50</option>
+        				  <option value="100">100</option>
         			  </select>
         			  <span>筆</span>
         		  </div>
+                  <div class="pagination-info ms-3 text-muted small">
+                      <!-- 分頁資訊將顯示在這裡 -->
+                  </div>
         	  </div>
         
           </div>
@@ -740,8 +694,9 @@
                      </div>
                  </div>    
          
-                 <asp:Button ID="btnSearch_Type3" runat="server" CssClass="btn btn-teal-dark d-table mx-auto" 
-                             OnClick="btnSearch_Type3_Click" Text="🔍 查詢" />
+                 <button type="button" id="btnSearch_Type3" class="btn btn-teal-dark d-table mx-auto" onclick="performAjaxSearch(3)">
+                     🔍 查詢
+                 </button>
              </div>
        </div>
        <!-- 列表內容 -->
@@ -752,7 +707,7 @@
                          <img src="<%= ResolveUrl("~/assets/img/title-icon02-teal.svg") %>" alt="logo">
                          <span>列表</span>
                      </h4>
-                     <span>共 <span class="text-teal">27</span> 筆資料</span>
+                     <span>共 <span class="text-teal" id="total-count-type3">0</span> 筆資料</span>
                  </div>
          
                  <div>
@@ -823,8 +778,6 @@
                      </tbody>
                  </table>
              </div>
-             
-             
          
              <!-- 審查勾選後底部功能按鈕 -->
              <div class="bg-light-teal-100 mb-5 | checkPlanBtnPanel checkPlanBtnPanel-type3" style="display: none;">
@@ -841,33 +794,13 @@
          
          
              <!-- 分頁 -->
-             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+             <div id="pagination-type3" class="d-flex align-items-center justify-content-between flex-wrap gap-2 pagination-wrapper" data-review-type="3">
                  <nav class="pagination justify-content-start" aria-label="Pagination">
-                     <button class="nav-button" aria-label="Previous page" disabled>
+                     <button class="nav-button btn-prev-page" aria-label="Previous page" disabled>
                          <i class="fas fa-chevron-left"></i>
                      </button>
                  
-                     <button class="pagination-item active">
-                         <span class="page-number">1</span>
-                     </button>
-                 
-                     <button class="pagination-item">
-                         <span class="page-number">2</span>
-                     </button>
-                 
-                     <div class="pagination-item ellipsis">
-                         <span class="">...</span>
-                     </div>
-                 
-                     <button class="pagination-item">
-                         <span class="page-number">9</span>
-                     </button>
-                 
-                     <button class="pagination-item">
-                         <span class="page-number">10</span>
-                     </button>
-                 
-                     <button class="nav-button" aria-label="Next page">
+                     <button class="nav-button btn-next-page" aria-label="Next page" disabled>
                          <i class="fas fa-chevron-right"></i>
                      </button>
                  </nav>
@@ -875,29 +808,25 @@
                  <div class="page-number-control">
                      <div class="page-number-control-item">
                          <span>跳到</span>
-                         <select class="form-select">
-                             <option value="1">1</option>
-                             <option value="2">2</option>
-                             <option value="3">3</option>
-                             <option value="4">4</option>
-                             <option value="5">5</option>
-                             <option value="6">6</option>
-                             <option value="7">7</option>
-                             <option value="8">8</option>
-                             <option value="9">9</option>
-                             <option value="10" selected>10</option>
+                         <select class="form-select jump-to-page">
+                             <!-- 動態渲染頁數選項 -->
                          </select>
                          <span>頁</span>
                          <span>,</span>
                      </div>
                      <div class="page-number-control-item">
                          <span>每頁顯示</span>
-                         <select class="form-select">
-                             <option value="10">10</option>
+                         <select class="form-select page-size-selector">
+                             <option value="5">5</option>
+                             <option value="10" selected>10</option>
                              <option value="20">20</option>
-                             <option value="30">30</option>
+                             <option value="50">50</option>
+                             <option value="100">100</option>
                          </select>
                          <span>筆</span>
+                     </div>
+                     <div class="pagination-info ms-3 text-muted small">
+                         <!-- 分頁資訊將顯示在這裡 -->
                      </div>
                  </div>
          
@@ -1020,8 +949,6 @@
         			  </tbody>
         		  </table>
         	  </div>
-        	  
-        	  
         	  
         	  <!-- 審查勾選後底部功能按鈕 -->
         	  <div class="bg-light-teal-100 mb-5 | checkPlanBtnPanel checkPlanBtnPanel-type4" style="display: none;">
@@ -1219,5 +1146,84 @@
             </div>
         </div>
     </div>
-
+<!--  modal 資訊系統-計畫審查-決審核定-詳情 -->
+  <div class="modal fade" id="payDetailModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="payDetailModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <h4 class="fs-24 fw-bold text-green-light">補助上限說明</h4>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                      <i class="fa-solid fa-circle-xmark"></i>
+                  </button>
+              </div>
+              <div class="modal-body">
+                  
+                  <div class="table-responsive">
+                      <table class="table align-middle gray-table lh-base">
+                          <thead>
+                              <tr>
+                                  <th width="180">類別</th>
+                                  <th>對象</th>
+                                  <th>補助上限</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              <tr>
+                                  <td>科專</td>
+                                  <td>學術及研究機關(構) / 學界科專
+                                      學術及研究機關(構) / 法人科專
+                                      海洋科技業者</td>
+                                  <td>500萬</td>
+                              </tr>
+                              <tr>
+                                  <td>文化</td>
+                                  <td>公立之博物館及社教館所</td>
+                                  <td>200萬</td>
+                              </tr>
+                              <tr>
+                                  <td>文化</td>
+                                  <td>公私立學校、大專校院</td>
+                                  <td>100萬</td>
+                              </tr>
+                              <tr>
+                                  <td>文化</td>
+                                  <td>財團法人、社團法人及其他人民團體\</td>
+                                  <td>50萬</td>
+                              </tr>
+                              <tr>
+                                  <td>學校.民間</td>
+                                  <td>學校</td>
+                                  <td>2萬</td>
+                              </tr>
+                              <tr>
+                                  <td>學校.民間</td>
+                                  <td>民間團體</td>
+                                  <td>2萬</td>
+                              </tr>
+                              <tr>
+                                  <td>學校社團</td>
+                                  <td>創社</td>
+                                  <td>5萬</td>
+                              </tr>
+                              <tr>
+                                  <td>學校社團</td>
+                                  <td>社務活動</td>
+                                  <td>3萬</td>
+                              </tr>
+                              <tr>
+                                  <td>學校社團</td>
+                                  <td>公共活動費</td>
+                                  <td>2萬</td>
+                              </tr>
+                          </tbody>
+                      </table>
+                  </div>
+  
+              </div>
+  
+          </div>
+      </div>
+  </div>
+  
+  
 </asp:Content>

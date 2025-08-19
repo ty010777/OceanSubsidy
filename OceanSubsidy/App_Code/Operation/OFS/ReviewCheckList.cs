@@ -245,6 +245,46 @@ public class ReviewCheckListHelper
 
     #region type-4 Search 決審
 
+    /// <summary>
+    /// 查詢科專決審核定清單（支援分頁）
+    /// </summary>
+    /// <param name="year">年度</param>
+    /// <param name="orgName">申請單位</param>
+    /// <param name="supervisor">承辦人員</param>
+    /// <param name="keyword">關鍵字</param>
+    /// <param name="reviewGroupCode">審查組別代碼</param>
+    /// <param name="pageNumber">頁碼</param>
+    /// <param name="pageSize">每頁筆數</param>
+    /// <param name="totalRecords">總記錄數（輸出參數）</param>
+    /// <returns>分頁資料</returns>
+    public static PaginatedResult<ReviewChecklistItem> Search_SCI_Type4_Paged(
+        out int totalRecords
+        , string year = "",
+        string orgName = "",
+        string supervisor = "",
+        string keyword = "",
+        string reviewGroupCode = "",
+        int pageNumber = 1,
+        int pageSize = 10)
+    {
+        var allData = Search_SCI_Type4(year, orgName, supervisor, keyword, reviewGroupCode);
+        totalRecords = allData.Count;
+        
+        var pagedData = allData
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+            
+        return new PaginatedResult<ReviewChecklistItem>
+        {
+            Data = pagedData,
+            TotalRecords = totalRecords,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalPages = (int)Math.Ceiling((double)totalRecords / pageSize)
+        };
+    }
+
     public static List<ReviewChecklistItem> Search_SCI_Type4(
         string year = "",
         string orgName = "",
@@ -299,6 +339,7 @@ SELECT
     '科專' AS Category
 FROM SubsidySummary S
 LEFT JOIN ScoreSummary SC ON S.ProjectID = SC.ProjectID
+Where StatusesName != '不通過'
 ";
 
         try
@@ -307,60 +348,36 @@ LEFT JOIN ScoreSummary SC ON S.ProjectID = SC.ProjectID
             db.Parameters.Clear();
 
             // 添加篩選條件參數
-            bool hasWhereClause = false;
             
             if (!string.IsNullOrEmpty(year))
             {
-                db.CommandText += " WHERE S.Year = @year";
+                db.CommandText += " AND S.Year = @year";
                 db.Parameters.Add("@year", year);
-                hasWhereClause = true;
             }
 
             if (!string.IsNullOrEmpty(orgName))
             {
-                if (hasWhereClause)
-                    db.CommandText += " AND S.OrgName LIKE @orgName";
-                else
-                {
-                    db.CommandText += " WHERE S.OrgName LIKE @orgName";
-                    hasWhereClause = true;
-                }
+                
+                db.CommandText += " AND S.OrgName LIKE @orgName";
                 db.Parameters.Add("@orgName", $"%{orgName}%");
             }
 
             if (!string.IsNullOrEmpty(supervisor))
             {
-                if (hasWhereClause)
-                    db.CommandText += " AND S.SupervisoryPersonAccount = @supervisor";
-                else
-                {
-                    db.CommandText += " WHERE S.SupervisoryPersonAccount = @supervisor";
-                    hasWhereClause = true;
-                }
+                
+                db.CommandText += " AND S.SupervisoryPersonAccount = @supervisor";
                 db.Parameters.Add("@supervisor", supervisor);
             }
 
             if (!string.IsNullOrEmpty(reviewGroupCode))
             {
-                if (hasWhereClause)
-                    db.CommandText += " AND S.Field = @reviewGroupCode";
-                else
-                {
-                    db.CommandText += " WHERE S.Field = @reviewGroupCode";
-                    hasWhereClause = true;
-                }
+                db.CommandText += " AND S.Field = @reviewGroupCode";
                 db.Parameters.Add("@reviewGroupCode", reviewGroupCode);
             }
 
             if (!string.IsNullOrEmpty(keyword))
             {
-                if (hasWhereClause)
-                    db.CommandText += " AND (S.ProjectID LIKE @keyword OR S.ProjectNameTw LIKE @keyword)";
-                else
-                {
-                    db.CommandText += " WHERE (S.ProjectID LIKE @keyword OR S.ProjectNameTw LIKE @keyword)";
-                    hasWhereClause = true;
-                }
+                db.CommandText += " AND (S.ProjectID LIKE @keyword OR S.ProjectNameTw LIKE @keyword)";
                 db.Parameters.Add("@keyword", $"%{keyword}%");
             }
 
@@ -658,6 +675,46 @@ WHERE 1=1
 
     #region type-1 Search 科專
 
+    /// <summary>
+    /// 查詢科專資格審查清單（支援分頁）
+    /// </summary>
+    /// <param name="year">年度</param>
+    /// <param name="status">狀態</param>
+    /// <param name="orgName">申請單位</param>
+    /// <param name="supervisor">承辦人員</param>
+    /// <param name="keyword">關鍵字</param>
+    /// <param name="pageNumber">頁碼</param>
+    /// <param name="pageSize">每頁筆數</param>
+    /// <param name="totalRecords">總記錄數（輸出參數）</param>
+    /// <returns>分頁資料</returns>
+    public static PaginatedResult<ReviewChecklistItem> Search_SCI_Type1_Paged(out int totalRecords,
+        string year = "",
+        string status = "",
+        string orgName = "",
+        string supervisor = "",
+        string keyword = "",
+        int pageNumber = 1,
+        int pageSize = 10
+        )
+    {
+        var allData = Search_SCI_Type1(year, status, orgName, supervisor, keyword);
+        totalRecords = allData.Count;
+        
+        var pagedData = allData
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+            
+        return new PaginatedResult<ReviewChecklistItem>
+        {
+            Data = pagedData,
+            TotalRecords = totalRecords,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalPages = (int)Math.Ceiling((double)totalRecords / pageSize)
+        };
+    }
+
     public static List<ReviewChecklistItem> Search_SCI_Type1(
         string year = "",
         string status = "",
@@ -812,10 +869,51 @@ FROM ProjectSubsidySummary
     #region type-2 Search 科專
 
     /// <summary>
+    /// 查詢科專領域審查清單（支援分頁）
+    /// </summary>
+    /// <param name="year">年度</param>
+    /// <param name="orgName">申請單位</param>
+    /// <param name="supervisor">承辦人員</param>
+    /// <param name="keyword">關鍵字</param>
+    /// <param name="reviewProgress">審查進度</param>
+    /// <param name="replyProgress">回覆進度</param>
+    /// <param name="pageNumber">頁碼</param>
+    /// <param name="pageSize">每頁筆數</param>
+    /// <param name="totalRecords">總記錄數（輸出參數）</param>
+    /// <returns>分頁資料</returns>
+    public static PaginatedResult<ReviewChecklistItem> Search_SCI_Type2_Paged(out int totalRecords,
+        string year = "",
+        string orgName = "",
+        string supervisor = "",
+        string keyword = "",
+        string reviewProgress = "",
+        string replyProgress = "",
+        int pageNumber = 1,
+        int pageSize = 10
+        )
+    {
+        var allData = Search_SCI_Type2(year, orgName, supervisor, keyword, reviewProgress, replyProgress);
+        totalRecords = allData.Count;
+        
+        var pagedData = allData
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+            
+        return new PaginatedResult<ReviewChecklistItem>
+        {
+            Data = pagedData,
+            TotalRecords = totalRecords,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalPages = (int)Math.Ceiling((double)totalRecords / pageSize)
+        };
+    }
+
+    /// <summary>
     /// 查詢科專領域審查清單
     /// </summary>
     /// <param name="year">年度</param>
-    /// <param name="status">狀態</param>
     /// <param name="orgName">申請單位</param>
     /// <param name="supervisor">承辦人員</param>
     /// <param name="keyword">關鍵字</param>
@@ -1172,6 +1270,48 @@ FROM ProjectSubsidySummary
     #endregion
 
     #region type-3 Search 科專
+
+    /// <summary>
+    /// 查詢科專技術審查清單（支援分頁）
+    /// </summary>
+    /// <param name="year">年度</param>
+    /// <param name="orgName">申請單位</param>
+    /// <param name="supervisor">承辦人員</param>
+    /// <param name="keyword">關鍵字</param>
+    /// <param name="reviewProgress">審查進度</param>
+    /// <param name="replyProgress">回覆進度</param>
+    /// <param name="pageNumber">頁碼</param>
+    /// <param name="pageSize">每頁筆數</param>
+    /// <param name="totalRecords">總記錄數（輸出參數）</param>
+    /// <returns>分頁資料</returns>
+    public static PaginatedResult<ReviewChecklistItem> Search_SCI_Type3_Paged(out int totalRecords,
+        string year = "",
+        string orgName = "",
+        string supervisor = "",
+        string keyword = "",
+        string reviewProgress = "",
+        string replyProgress = "",
+        int pageNumber = 1,
+        int pageSize = 10
+        )
+    {
+        var allData = Search_SCI_Type3(year, orgName, supervisor, keyword, reviewProgress, replyProgress);
+        totalRecords = allData.Count;
+        
+        var pagedData = allData
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+            
+        return new PaginatedResult<ReviewChecklistItem>
+        {
+            Data = pagedData,
+            TotalRecords = totalRecords,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalPages = (int)Math.Ceiling((double)totalRecords / pageSize)
+        };
+    }
 
     /// <summary>
     /// 查詢科專技術審查清單

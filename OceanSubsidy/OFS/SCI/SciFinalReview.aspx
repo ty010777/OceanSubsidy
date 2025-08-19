@@ -64,7 +64,7 @@
                CssClass="btn btn-teal-dark"
                OnClick="btnDownloadPlan_Click"
                CausesValidation="false">
-               <i class="fa-solid fa-download"></i> 下載計劃書
+               <i class="fa-solid fa-download"></i> 下載計畫書
            </asp:LinkButton>
         </div>
     </div>

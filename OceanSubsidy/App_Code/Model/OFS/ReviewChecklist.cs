@@ -378,5 +378,58 @@ namespace GS.OCA_OceanSubsidy.Model.OFS
         public string OrgName { get; set; }
     }
 
+    /// <summary>
+    /// 分頁結果類別
+    /// </summary>
+    /// <typeparam name="T">資料類型</typeparam>
+    [Serializable]
+    public class PaginatedResult<T>
+    {
+        /// <summary>
+        /// 當前頁面資料
+        /// </summary>
+        public List<T> Data { get; set; } = new List<T>();
+
+        /// <summary>
+        /// 總記錄數
+        /// </summary>
+        public int TotalRecords { get; set; }
+
+        /// <summary>
+        /// 當前頁碼
+        /// </summary>
+        public int PageNumber { get; set; }
+
+        /// <summary>
+        /// 每頁筆數
+        /// </summary>
+        public int PageSize { get; set; }
+
+        /// <summary>
+        /// 總頁數
+        /// </summary>
+        public int TotalPages { get; set; }
+
+        /// <summary>
+        /// 是否有上一頁
+        /// </summary>
+        public bool HasPreviousPage => PageNumber > 1;
+
+        /// <summary>
+        /// 是否有下一頁
+        /// </summary>
+        public bool HasNextPage => PageNumber < TotalPages;
+
+        /// <summary>
+        /// 當前頁面開始記錄索引
+        /// </summary>
+        public int StartRecord => (PageNumber - 1) * PageSize + 1;
+
+        /// <summary>
+        /// 當前頁面結束記錄索引
+        /// </summary>
+        public int EndRecord => Math.Min(PageNumber * PageSize, TotalRecords);
+    }
+
     #endregion
 }

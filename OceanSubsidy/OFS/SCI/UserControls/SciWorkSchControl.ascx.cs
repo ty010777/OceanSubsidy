@@ -348,10 +348,21 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
         if (uploadFiles != null && uploadFiles.Any())
         {
             DiagramFile = uploadFiles.First();
-            
-            // 顯示預覽
-            diagramPreview.ImageUrl = ResolveUrl($"~/{DiagramFile.TemplatePath}");
+            bool isProd = Request.Url.Host.Equals("projects.geosense", StringComparison.OrdinalIgnoreCase);
+
+            // 設定 ImageUrl
+            if (isProd)
+            {
+                diagramPreview.ImageUrl = ResolveUrl($"~/OceanSubsidy/{DiagramFile.TemplatePath}");
+            }
+            else
+            {
+                diagramPreview.ImageUrl = ResolveUrl($"~/{DiagramFile.TemplatePath}");
+            }
+
+            // 顯示容器
             diagramPreviewContainer.Style["display"] = "block";
+
 
             var script = $@"
                 if (window.sciWorkSchManager) {{
