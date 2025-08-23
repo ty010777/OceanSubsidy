@@ -66,11 +66,11 @@ public class OFS_CulProjectHelper
 
         db.CommandText = @"
             INSERT INTO [OFS_CUL_Project] ([Year],[ProjectID],[SubsidyPlanType],[ProjectName],[Field],[OrgName],[OrgCategory],[RegisteredNum],[TaxID],[Address],
-                                           [Target],[Summary],[Quantified],[Qualitative],[ApplyAmount],[SelfAmount],[OtherAmount],[FormStep],
-                                           [Status],[UserAccount],[UserName],[UserOrg])
+                                           [Target],[Summary],[Quantified],[Qualitative],[ApplyAmount],[SelfAmount],[OtherAmount],[FormStep],[Status],[UserAccount],
+                                           [UserName],[UserOrg],[CreateTime],[CreateUser])
                 OUTPUT Inserted.ID VALUES (@Year, @ProjectID, @SubsidyPlanType, @ProjectName, @Field, @OrgName, @OrgCategory, @RegisteredNum, @TaxID, @Address,
-                                           @Target, @Summary, @Quantified, @Qualitative, 0,0,0,1,
-                                           1,@UserAccount, @UserName, @UserOrg)
+                                           @Target, @Summary, @Quantified, @Qualitative, 0,            0,           0,            1,         1,       @UserAccount,
+                                           @UserName, @UserOrg, GETDATE(),   @CreateUser)
         ";
 
         db.Parameters.Add("@Year", model.Year);
@@ -90,6 +90,7 @@ public class OFS_CulProjectHelper
         db.Parameters.Add("@UserAccount", model.UserAccount);
         db.Parameters.Add("@UserName", model.UserName);
         db.Parameters.Add("@UserOrg", model.UserOrg);
+        db.Parameters.Add("@CreateUser", CurrentUser.ID);
 
         model.ID = int.Parse(db.GetTable().Rows[0]["ID"].ToString());
     }
@@ -111,6 +112,8 @@ public class OFS_CulProjectHelper
                   ,[Summary] = @Summary
                   ,[Quantified] = @Quantified
                   ,[Qualitative] = @Qualitative
+                  ,[UpdateTime] = GETDATE()
+                  ,[UpdateUser] = @UpdateUser
              WHERE [ID] = @ID
         ";
 
@@ -126,6 +129,7 @@ public class OFS_CulProjectHelper
         db.Parameters.Add("@Summary", model.Summary);
         db.Parameters.Add("@Quantified", model.Quantified);
         db.Parameters.Add("@Qualitative", model.Qualitative);
+        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
 
         db.ExecuteNonQuery();
     }
@@ -137,12 +141,15 @@ public class OFS_CulProjectHelper
         db.CommandText = @"
             UPDATE [OFS_CUL_Project]
                SET [FormStep] = @FormStep
+                  ,[UpdateTime] = GETDATE()
+                  ,[UpdateUser] = @UpdateUser
              WHERE [ID] = @ID
                AND [FormStep] + 1 = @FormStep
         ";
 
         db.Parameters.Add("@ID", id);
         db.Parameters.Add("@FormStep", step);
+        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
 
         db.ExecuteNonQuery();
     }
@@ -156,6 +163,8 @@ public class OFS_CulProjectHelper
                SET [ApplyAmount] = @ApplyAmount
                   ,[SelfAmount] = @SelfAmount
                   ,[OtherAmount] = @OtherAmount
+                  ,[UpdateTime] = GETDATE()
+                  ,[UpdateUser] = @UpdateUser
              WHERE [ID] = @ID
         ";
 
@@ -163,6 +172,7 @@ public class OFS_CulProjectHelper
         db.Parameters.Add("@ApplyAmount", model.ApplyAmount);
         db.Parameters.Add("@SelfAmount", model.SelfAmount);
         db.Parameters.Add("@OtherAmount", model.OtherAmount);
+        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
 
         db.ExecuteNonQuery();
     }
@@ -175,12 +185,15 @@ public class OFS_CulProjectHelper
             UPDATE [OFS_CUL_Project]
                SET [StartTime] = @StartTime
                   ,[EndTime] = @EndTime
+                  ,[UpdateTime] = GETDATE()
+                  ,[UpdateUser] = @UpdateUser
              WHERE [ID] = @ID
         ";
 
         db.Parameters.Add("@ID", model.ID);
         db.Parameters.Add("@StartTime", model.StartTime);
         db.Parameters.Add("@EndTime", model.EndTime);
+        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
 
         db.ExecuteNonQuery();
     }
@@ -192,11 +205,14 @@ public class OFS_CulProjectHelper
         db.CommandText = @"
             UPDATE [OFS_CUL_Project]
                SET [Status] = @Status
+                  ,[UpdateTime] = GETDATE()
+                  ,[UpdateUser] = @UpdateUser
              WHERE [ID] = @ID
         ";
 
         db.Parameters.Add("@ID", id);
         db.Parameters.Add("@Status", status);
+        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
 
         db.ExecuteNonQuery();
     }

@@ -25,8 +25,8 @@ public class OFS_CulBudgetPlanHelper
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
-            INSERT INTO [OFS_CUL_Budget_Plan] ([PID],[ItemID],[Title],[Amount],[OtherAmount],[Description])
-                    OUTPUT Inserted.ID VALUES (@PID ,@ItemID ,@Title ,@Amount ,@OtherAmount ,@Description)
+            INSERT INTO [OFS_CUL_Budget_Plan] ([PID],[ItemID],[Title],[Amount],[OtherAmount],[Description],[CreateTime],[CreateUser])
+                    OUTPUT Inserted.ID VALUES (@PID ,@ItemID ,@Title ,@Amount ,@OtherAmount ,@Description, GETDATE(),   @CreateUser)
         ";
 
         db.Parameters.Add("@PID", model.PID);
@@ -35,6 +35,7 @@ public class OFS_CulBudgetPlanHelper
         db.Parameters.Add("@Amount", model.Amount);
         db.Parameters.Add("@OtherAmount", model.OtherAmount);
         db.Parameters.Add("@Description", model.Description);
+        db.Parameters.Add("@CreateUser", CurrentUser.ID);
 
         model.ID = int.Parse(db.GetTable().Rows[0]["ID"].ToString());
     }
@@ -72,6 +73,8 @@ public class OFS_CulBudgetPlanHelper
                   ,[Amount] = @Amount
                   ,[OtherAmount] = @OtherAmount
                   ,[Description] = @Description
+                  ,[UpdateTime] = GETDATE()
+                  ,[UpdateUser] = @UpdateUser
              WHERE [ID] = @ID
         ";
 
@@ -81,6 +84,7 @@ public class OFS_CulBudgetPlanHelper
         db.Parameters.Add("@Amount", model.Amount);
         db.Parameters.Add("@OtherAmount", model.OtherAmount);
         db.Parameters.Add("@Description", model.Description);
+        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
 
         db.ExecuteNonQuery();
     }

@@ -25,8 +25,8 @@ public class OFS_CulContactHelper
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
-            INSERT INTO [OFS_CUL_Contact] ([PID],[Role],[Name],[JobTitle],[Phone],[PhoneExt],[MobilePhone],[EMail])
-                OUTPUT Inserted.ID VALUES (@PID ,@Role ,@Name ,@JobTitle ,@Phone ,@PhoneExt ,@MobilePhone ,@EMail)
+            INSERT INTO [OFS_CUL_Contact] ([PID],[Role],[Name],[JobTitle],[Phone],[PhoneExt],[MobilePhone],[EMail],[CreateTime],[CreateUser])
+                OUTPUT Inserted.ID VALUES (@PID ,@Role ,@Name ,@JobTitle ,@Phone ,@PhoneExt ,@MobilePhone ,@EMail, GETDATE(),   @CreateUser)
         ";
 
         db.Parameters.Add("@PID", model.PID);
@@ -37,6 +37,7 @@ public class OFS_CulContactHelper
         db.Parameters.Add("@PhoneExt", model.PhoneExt);
         db.Parameters.Add("@MobilePhone", model.MobilePhone);
         db.Parameters.Add("@EMail", model.EMail);
+        db.Parameters.Add("@CreateUser", CurrentUser.ID);
 
         model.ID = int.Parse(db.GetTable().Rows[0]["ID"].ToString());
     }
@@ -78,6 +79,8 @@ public class OFS_CulContactHelper
                   ,[PhoneExt] = @PhoneExt
                   ,[MobilePhone] = @MobilePhone
                   ,[EMail] = @EMail
+                  ,[UpdateTime] = GETDATE()
+                  ,[UpdateUser] = @UpdateUser
              WHERE [ID] = @ID
         ";
 
@@ -89,6 +92,7 @@ public class OFS_CulContactHelper
         db.Parameters.Add("@PhoneExt", model.PhoneExt);
         db.Parameters.Add("@MobilePhone", model.MobilePhone);
         db.Parameters.Add("@EMail", model.EMail);
+        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
 
         db.ExecuteNonQuery();
     }

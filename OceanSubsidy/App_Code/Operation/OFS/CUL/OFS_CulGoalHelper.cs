@@ -25,13 +25,14 @@ public class OFS_CulGoalHelper
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
-            INSERT INTO [OFS_CUL_Goal] ([PID],[Title],[Content])
-             OUTPUT Inserted.ID VALUES (@PID ,@Title ,@Content)
+            INSERT INTO [OFS_CUL_Goal] ([PID],[Title],[Content],[CreateTime],[CreateUser])
+             OUTPUT Inserted.ID VALUES (@PID ,@Title ,@Content, GETDATE(),   @CreateUser)
         ";
 
         db.Parameters.Add("@PID", model.PID);
         db.Parameters.Add("@Title", model.Title);
         db.Parameters.Add("@Content", model.Content);
+        db.Parameters.Add("@CreateUser", CurrentUser.ID);
 
         model.ID = int.Parse(db.GetTable().Rows[0]["ID"].ToString());
     }
@@ -63,12 +64,15 @@ public class OFS_CulGoalHelper
             UPDATE [OFS_CUL_Goal]
                SET [Title] = @Title
                   ,[Content] = @Content
+                  ,[UpdateTime] = GETDATE()
+                  ,[UpdateUser] = @UpdateUser
              WHERE [ID] = @ID
         ";
 
         db.Parameters.Add("@ID", model.ID);
         db.Parameters.Add("@Title", model.Title);
         db.Parameters.Add("@Content", model.Content);
+        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
 
         db.ExecuteNonQuery();
     }

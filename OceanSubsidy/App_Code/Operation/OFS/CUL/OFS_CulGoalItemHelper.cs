@@ -25,14 +25,15 @@ public class OFS_CulGoalItemHelper
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
-            INSERT INTO [OFS_CUL_Goal_Item] ([PID],[GoalID],[Title],[Indicator])
-                  OUTPUT Inserted.ID VALUES (@PID ,@GoalID ,@Title ,@Indicator)
+            INSERT INTO [OFS_CUL_Goal_Item] ([PID],[GoalID],[Title],[Indicator],[CreateTime],[CreateUser])
+                  OUTPUT Inserted.ID VALUES (@PID ,@GoalID ,@Title ,@Indicator, GETDATE(),   @CreateUser)
         ";
 
         db.Parameters.Add("@PID", model.PID);
         db.Parameters.Add("@GoalID", model.GoalID);
         db.Parameters.Add("@Title", model.Title);
         db.Parameters.Add("@Indicator", model.Indicator);
+        db.Parameters.Add("@CreateUser", CurrentUser.ID);
 
         model.ID = int.Parse(db.GetTable().Rows[0]["ID"].ToString());
     }
@@ -65,12 +66,15 @@ public class OFS_CulGoalItemHelper
             UPDATE [OFS_CUL_Goal_Item]
                SET [Title] = @Title
                   ,[Indicator] = @Indicator
+                  ,[UpdateTime] = GETDATE()
+                  ,[UpdateUser] = @UpdateUser
              WHERE [ID] = @ID
         ";
 
         db.Parameters.Add("@ID", model.ID);
         db.Parameters.Add("@Title", model.Title);
         db.Parameters.Add("@Indicator", model.Indicator);
+        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
 
         db.ExecuteNonQuery();
     }

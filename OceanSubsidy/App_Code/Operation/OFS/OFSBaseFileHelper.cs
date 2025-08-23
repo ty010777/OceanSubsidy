@@ -1,8 +1,8 @@
-using GS.Data.Sql;
+﻿using GS.Data.Sql;
 using System;
 using System.Data;
 
-public class BaseFileHelper
+public class OFSBaseFileHelper
 {
     public static BaseFile getByPath(string path)
     {
@@ -14,8 +14,6 @@ public class BaseFileHelper
                   ,[Path]
                   ,[Size]
                   ,[Type]
-                  ,[CreateTime]
-                  ,[CreateUser]
               FROM [OFS_Base_File]
              WHERE [Path] = @Path
         ";
@@ -33,16 +31,14 @@ public class BaseFileHelper
 
         db.CommandText = @"
             INSERT INTO [OFS_Base_File] ([Name],[Path],[Size],[Type],[CreateTime],[CreateUser])
-              OUTPUT Inserted.ID VALUES (@Name, @Path, @Size, @Type, @CreateTime, @CreateUser)
+              OUTPUT Inserted.ID VALUES (@Name, @Path, @Size, @Type, GETDATE(),   @CreateUser)
         ";
 
         db.Parameters.Add("@Name", model.Name);
         db.Parameters.Add("@Path", model.Path);
         db.Parameters.Add("@Size", model.Size);
         db.Parameters.Add("@Type", model.Type);
-// TODO
-db.Parameters.Add("@CreateTime", DateTime.Now);
-db.Parameters.Add("@CreateUser", "N/A");
+        db.Parameters.Add("@CreateUser", CurrentUser.ID);
 
         model.ID = int.Parse(db.GetTable().Rows[0]["ID"].ToString());
     }
@@ -55,9 +51,7 @@ db.Parameters.Add("@CreateUser", "N/A");
             Name = row.Field<string>("Name"),
             Path = row.Field<string>("Path"),
             Size = row.Field<long>("Size"),
-            Type = row.Field<string>("Type"),
-            CreateTime = row.Field<DateTime>("CreateTime"),
-            CreateUser = row.Field<string>("CreateUser")
+            Type = row.Field<string>("Type")
         };
     }
 }

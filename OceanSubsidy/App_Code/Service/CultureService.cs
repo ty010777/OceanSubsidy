@@ -1,11 +1,10 @@
-﻿using GS.Data.Sql;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 
-public class CultureServiceHandler
+public class CultureService : BaseService
 {
     public object getApplication(JObject param, HttpContext context)
     {
@@ -32,7 +31,9 @@ public class CultureServiceHandler
 
     public object getEmptyApplication(JObject param, HttpContext context)
     {
-        return new { Year = 114, SubsidyPlanType = "114年度海洋文化領航計畫" };
+        var type = OFSGrantTypeHelper.getByCode("CUL");
+
+        return new { Year = type.StartDate.Value.Year - 1911, SubsidyPlanType = $"{type.ShortName} ({type.FullName})" };
     }
 
     public object getFunding(JObject param, HttpContext context)
@@ -97,9 +98,13 @@ public class CultureServiceHandler
 
         if (project.ID == 0)
         {
+            var info = SessionHelper.Get<SessionHelper.UserInfoClass>(SessionHelper.UserInfo);
             var seq = OFS_CulProjectHelper.count(project.Year) + 1;
 
             project.ProjectID = $"CUL{project.Year}{seq:D4}";
+            project.UserAccount = info.Account;
+            project.UserName = info.UserName;
+            project.UserOrg = info.UnitName;
 
             OFS_CulProjectHelper.insert(project);
         }

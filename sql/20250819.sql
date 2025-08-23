@@ -60,7 +60,11 @@ CREATE TABLE [OFS_CUL_Project] (
     [Status]          INT             NOT NULL, -- 狀態
     [UserAccount]     VARCHAR(30)         NULL,
     [UserName]        NVARCHAR(30)        NULL,
-    [UserOrg]         NVARCHAR(30)        NULL
+    [UserOrg]         NVARCHAR(30)        NULL,
+    [CreateTime]      DATETIME        NOT NULL,
+    [CreateUser]      VARCHAR(50)     NOT NULL,
+    [UpdateTime]      DATETIME            NULL,
+    [UpdateUser]      VARCHAR(50)         NULL
 )
 GO
 
@@ -70,13 +74,17 @@ GO
 CREATE TABLE [OFS_CUL_Contact] (
     [ID]          INT PRIMARY KEY IDENTITY,
     [PID]         INT             NOT NULL,
-    [Role]        NVARCHAR(50)        NULL,  -- 角色
-    [Name]        NVARCHAR(100)       NULL,  -- 姓名
-    [JobTitle]    NVARCHAR(50)        NULL,  -- 職稱
-    [Phone]       VARCHAR(20)         NULL,  -- 電話
-    [PhoneExt]    VARCHAR(10)         NULL,  -- 分機
-    [MobilePhone] VARCHAR(20)         NULL,  -- 手機號碼
-    [EMail]       VARCHAR(30)         NULL   -- 電子郵件
+    [Role]        NVARCHAR(50)        NULL, -- 角色
+    [Name]        NVARCHAR(100)       NULL, -- 姓名
+    [JobTitle]    NVARCHAR(50)        NULL, -- 職稱
+    [Phone]       VARCHAR(20)         NULL, -- 電話
+    [PhoneExt]    VARCHAR(10)         NULL, -- 分機
+    [MobilePhone] VARCHAR(20)         NULL, -- 手機號碼
+    [EMail]       VARCHAR(30)         NULL, -- 電子郵件
+    [CreateTime]  DATETIME        NOT NULL,
+    [CreateUser]  VARCHAR(50)     NOT NULL,
+    [UpdateTime]  DATETIME            NULL,
+    [UpdateUser]  VARCHAR(50)         NULL
 )
 GO
 
@@ -84,11 +92,15 @@ GO
 -- 最近三年曾獲本會及所屬補助／合作計畫及經費
 
 CREATE TABLE [OFS_CUL_Received_Subsidy] (
-    [ID]     INT PRIMARY KEY IDENTITY,
-    [PID]    INT             NOT NULL,
-    [Name]   NVARCHAR(50)        NULL,  -- 計畫名稱
-    [Unit]   NVARCHAR(50)        NULL,  -- 補助單位
-    [Amount] INT                 NULL   -- 補助金額
+    [ID]         INT PRIMARY KEY IDENTITY,
+    [PID]        INT             NOT NULL,
+    [Name]       NVARCHAR(50)        NULL, -- 計畫名稱
+    [Unit]       NVARCHAR(50)        NULL, -- 補助單位
+    [Amount]     INT                 NULL, -- 補助金額
+    [CreateTime] DATETIME        NOT NULL,
+    [CreateUser] VARCHAR(50)     NOT NULL,
+    [UpdateTime] DATETIME            NULL,
+    [UpdateUser] VARCHAR(50)         NULL
 )
 GO
 
@@ -96,10 +108,14 @@ GO
 -- 計畫目標
 
 CREATE TABLE [OFS_CUL_Goal] (
-    [ID]      INT PRIMARY KEY IDENTITY,
-    [PID]     INT             NOT NULL,
-    [Title]   NVARCHAR(50)        NULL, -- 計畫目標
-    [Content] NVARCHAR(600)       NULL  -- 預期效益（含量化或質化說明）
+    [ID]         INT PRIMARY KEY IDENTITY,
+    [PID]        INT             NOT NULL,
+    [Title]      NVARCHAR(50)        NULL, -- 計畫目標
+    [Content]    NVARCHAR(600)       NULL, -- 預期效益（含量化或質化說明）
+    [CreateTime] DATETIME        NOT NULL,
+    [CreateUser] VARCHAR(50)     NOT NULL,
+    [UpdateTime] DATETIME            NULL,
+    [UpdateUser] VARCHAR(50)         NULL
 )
 GO
 
@@ -107,11 +123,15 @@ GO
 -- 工作項目
 
 CREATE TABLE [OFS_CUL_Goal_Item] (
-    [ID]        INT PRIMARY KEY IDENTITY,
-    [PID]       INT             NOT NULL,
-    [GoalID]    INT             NOT NULL,
-    [Title]     NVARCHAR(50)        NULL, -- 重要工作項目
-    [Indicator] NVARCHAR(100)       NULL  -- 績效指標
+    [ID]         INT PRIMARY KEY IDENTITY,
+    [PID]        INT             NOT NULL,
+    [GoalID]     INT             NOT NULL,
+    [Title]      NVARCHAR(50)        NULL, -- 重要工作項目
+    [Indicator]  NVARCHAR(100)       NULL, -- 績效指標
+    [CreateTime] DATETIME        NOT NULL,
+    [CreateUser] VARCHAR(50)     NOT NULL,
+    [UpdateTime] DATETIME            NULL,
+    [UpdateUser] VARCHAR(50)         NULL
 )
 GO
 
@@ -119,12 +139,16 @@ GO
 -- 實施步驟
 
 CREATE TABLE [OFS_CUL_Goal_Step] (
-    [ID]     INT PRIMARY KEY IDENTITY,
-    [PID]    INT             NOT NULL,
-    [ItemID] INT             NOT NULL,
-    [Title]  NVARCHAR(50)        NULL, -- 步驟
-    [Begin]  INT                 NULL, -- 月份 (起)
-    [End]    INT                 NULL  -- 月份 (迄)
+    [ID]         INT PRIMARY KEY IDENTITY,
+    [PID]        INT             NOT NULL,
+    [ItemID]     INT             NOT NULL,
+    [Title]      NVARCHAR(50)        NULL, -- 步驟
+    [Begin]      INT                 NULL, -- 月份 (起)
+    [End]        INT                 NULL, -- 月份 (迄)
+    [CreateTime] DATETIME        NOT NULL,
+    [CreateUser] VARCHAR(50)     NOT NULL,
+    [UpdateTime] DATETIME            NULL,
+    [UpdateUser] VARCHAR(50)         NULL
 )
 GO
 
@@ -132,12 +156,16 @@ GO
 -- 工作進度
 
 CREATE TABLE [OFS_CUL_Goal_Schedule] (
-    [ID]     INT PRIMARY KEY IDENTITY,
-    [PID]    INT             NOT NULL,
-    [ItemID] INT             NOT NULL,
-    [Type]   INT             NOT NULL, -- 1:50%, 2:100%
-    [Month]  INT                 NULL, -- 月份
-    [StepID] INT                 NULL  -- 實施步驟ID
+    [ID]         INT PRIMARY KEY IDENTITY,
+    [PID]        INT             NOT NULL,
+    [ItemID]     INT             NOT NULL,
+    [Type]       INT             NOT NULL, -- 1:50%, 2:100%
+    [Month]      INT                 NULL, -- 月份
+    [StepID]     INT                 NULL, -- 實施步驟ID
+    [CreateTime] DATETIME        NOT NULL,
+    [CreateUser] VARCHAR(50)     NOT NULL,
+    [UpdateTime] DATETIME            NULL,
+    [UpdateUser] VARCHAR(50)         NULL
 )
 GO
 
@@ -145,10 +173,14 @@ GO
 -- 其他機關補助
 
 CREATE TABLE [OFS_CUL_Other_Subsidy] (
-    [ID]     INT PRIMARY KEY IDENTITY,
-    [PID]    INT             NOT NULL,
-    [Unit]   NVARCHAR(50)        NULL, -- 單位名稱
-    [Amount] INT                 NULL  -- 補助金額
+    [ID]         INT PRIMARY KEY IDENTITY,
+    [PID]        INT             NOT NULL,
+    [Unit]       NVARCHAR(50)        NULL, -- 單位名稱
+    [Amount]     INT                 NULL, -- 補助金額
+    [CreateTime] DATETIME        NOT NULL,
+    [CreateUser] VARCHAR(50)     NOT NULL,
+    [UpdateTime] DATETIME            NULL,
+    [UpdateUser] VARCHAR(50)         NULL
 )
 GO
 
@@ -162,7 +194,11 @@ CREATE TABLE [OFS_CUL_Budget_Plan] (
     [Title]       NVARCHAR(50)        NULL, -- 預算項目
     [Amount]      INT                 NULL, -- 海洋委員會經費
     [OtherAmount] INT                 NULL, -- 其他配合經費
-    [Description] NVARCHAR(100)       NULL  -- 計算方式及說明
+    [Description] NVARCHAR(100)       NULL, -- 計算方式及說明
+    [CreateTime]  DATETIME        NOT NULL,
+    [CreateUser]  VARCHAR(50)     NOT NULL,
+    [UpdateTime]  DATETIME            NULL,
+    [UpdateUser]  VARCHAR(50)         NULL
 )
 GO
 
@@ -177,7 +213,11 @@ CREATE TABLE [OFS_CUL_Related_Project] (
     [OrgName]     NVARCHAR(50)        NULL, -- 執行單位
     [Amount]      INT                 NULL, -- 計畫經費
     [Description] NVARCHAR(600)       NULL, -- 內容摘述
-    [Benefit]     NVARCHAR(600)       NULL  -- 執行效益
+    [Benefit]     NVARCHAR(600)       NULL, -- 執行效益
+    [CreateTime]  DATETIME        NOT NULL,
+    [CreateUser]  VARCHAR(50)     NOT NULL,
+    [UpdateTime]  DATETIME            NULL,
+    [UpdateUser]  VARCHAR(50)         NULL
 )
 GO
 
@@ -185,11 +225,15 @@ GO
 -- 附件
 
 CREATE TABLE [OFS_CUL_Attachment] (
-    [ID]       INT PRIMARY KEY IDENTITY,
-    [PID]      INT             NOT NULL,
-    [Type]     INT             NOT NULL,
-    [Path]     NVARCHAR(100)   NOT NULL,
-    [Name]     NVARCHAR(200)   NOT NULL
+    [ID]         INT PRIMARY KEY IDENTITY,
+    [PID]        INT             NOT NULL,
+    [Type]       INT             NOT NULL,
+    [Path]       NVARCHAR(100)   NOT NULL,
+    [Name]       NVARCHAR(200)   NOT NULL,
+    [CreateTime] DATETIME        NOT NULL,
+    [CreateUser] VARCHAR(50)     NOT NULL,
+    [UpdateTime] DATETIME            NULL,
+    [UpdateUser] VARCHAR(50)         NULL
 )
 GO
 

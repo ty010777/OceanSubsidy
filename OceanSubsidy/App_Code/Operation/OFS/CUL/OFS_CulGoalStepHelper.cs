@@ -40,8 +40,8 @@ public class OFS_CulGoalStepHelper
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
-            INSERT INTO [OFS_CUL_Goal_Step] ([PID],[ItemID],[Title],[Begin],[End])
-                  OUTPUT Inserted.ID VALUES (@PID ,@ItemID ,@Title ,@Begin ,@End)
+            INSERT INTO [OFS_CUL_Goal_Step] ([PID],[ItemID],[Title],[Begin],[End],[CreateTime],[CreateUser])
+                  OUTPUT Inserted.ID VALUES (@PID ,@ItemID ,@Title ,@Begin ,@End, GETDATE(),   @CreateUser)
         ";
 
         db.Parameters.Add("@PID", model.PID);
@@ -49,6 +49,7 @@ public class OFS_CulGoalStepHelper
         db.Parameters.Add("@Title", model.Title);
         db.Parameters.Add("@Begin", model.Begin);
         db.Parameters.Add("@End", model.End);
+        db.Parameters.Add("@CreateUser", CurrentUser.ID);
 
         model.ID = int.Parse(db.GetTable().Rows[0]["ID"].ToString());
     }
@@ -83,6 +84,8 @@ public class OFS_CulGoalStepHelper
                SET [Title] = @Title
                   ,[Begin] = @Begin
                   ,[End] = @End
+                  ,[UpdateTime] = GETDATE()
+                  ,[UpdateUser] = @UpdateUser
              WHERE [ID] = @ID
         ";
 
@@ -90,6 +93,7 @@ public class OFS_CulGoalStepHelper
         db.Parameters.Add("@Title", model.Title);
         db.Parameters.Add("@Begin", model.Begin);
         db.Parameters.Add("@End", model.End);
+        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
 
         db.ExecuteNonQuery();
     }

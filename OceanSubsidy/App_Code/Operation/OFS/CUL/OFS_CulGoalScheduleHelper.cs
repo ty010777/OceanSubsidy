@@ -40,8 +40,8 @@ public class OFS_CulGoalScheduleHelper
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
-            INSERT INTO [OFS_CUL_Goal_Schedule] ([PID],[ItemID],[Type],[Month],[StepID])
-                      OUTPUT Inserted.ID VALUES (@PID ,@ItemID ,@Type ,@Month ,@StepID)
+            INSERT INTO [OFS_CUL_Goal_Schedule] ([PID],[ItemID],[Type],[Month],[StepID],[CreateTime],[CreateUser])
+                      OUTPUT Inserted.ID VALUES (@PID ,@ItemID ,@Type ,@Month ,@StepID, GETDATE(),   @CreateUser)
         ";
 
         db.Parameters.Add("@PID", model.PID);
@@ -49,6 +49,7 @@ public class OFS_CulGoalScheduleHelper
         db.Parameters.Add("@Type", model.Type);
         db.Parameters.Add("@Month", model.Month);
         db.Parameters.Add("@StepID", model.StepID);
+        db.Parameters.Add("@CreateUser", CurrentUser.ID);
 
         model.ID = int.Parse(db.GetTable().Rows[0]["ID"].ToString());
     }
@@ -82,12 +83,15 @@ public class OFS_CulGoalScheduleHelper
             UPDATE [OFS_CUL_Goal_Schedule]
                SET [Month] = @Month
                   ,[StepID] = @StepID
+                  ,[UpdateTime] = GETDATE()
+                  ,[UpdateUser] = @UpdateUser
              WHERE [ID] = @ID
         ";
 
         db.Parameters.Add("@ID", model.ID);
         db.Parameters.Add("@Month", model.Month);
         db.Parameters.Add("@StepID", model.StepID);
+        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
 
         db.ExecuteNonQuery();
     }

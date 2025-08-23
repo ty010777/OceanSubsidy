@@ -25,14 +25,15 @@ public class OFS_CulReceivedSubsidyHelper
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
-            INSERT INTO [OFS_CUL_Received_Subsidy] ([PID],[Name],[Unit],[Amount])
-                         OUTPUT Inserted.ID VALUES (@PID ,@Name ,@Unit ,@Amount)
+            INSERT INTO [OFS_CUL_Received_Subsidy] ([PID],[Name],[Unit],[Amount],[CreateTime],[CreateUser])
+                         OUTPUT Inserted.ID VALUES (@PID ,@Name ,@Unit ,@Amount, GETDATE(),   @CreateUser)
         ";
 
         db.Parameters.Add("@PID", model.PID);
         db.Parameters.Add("@Name", model.Name);
         db.Parameters.Add("@Unit", model.Unit);
         db.Parameters.Add("@Amount", model.Amount);
+        db.Parameters.Add("@CreateUser", CurrentUser.ID);
 
         model.ID = int.Parse(db.GetTable().Rows[0]["ID"].ToString());
     }
@@ -66,6 +67,8 @@ public class OFS_CulReceivedSubsidyHelper
                SET [Name] = @Name
                   ,[Unit] = @Unit
                   ,[Amount] = @Amount
+                  ,[UpdateTime] = GETDATE()
+                  ,[UpdateUser] = @UpdateUser
              WHERE [ID] = @ID
         ";
 
@@ -73,6 +76,7 @@ public class OFS_CulReceivedSubsidyHelper
         db.Parameters.Add("@Name", model.Name);
         db.Parameters.Add("@Unit", model.Unit);
         db.Parameters.Add("@Amount", model.Amount);
+        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
 
         db.ExecuteNonQuery();
     }

@@ -25,14 +25,15 @@ public class OFS_CulAttachmentHelper
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
-            INSERT INTO [OFS_CUL_Attachment] ([PID],[Type],[Path],[Name])
-                   OUTPUT Inserted.ID VALUES (@PID ,@Type ,@Path ,@Name)
+            INSERT INTO [OFS_CUL_Attachment] ([PID],[Type],[Path],[Name],[CreateTime],[CreateUser])
+                   OUTPUT Inserted.ID VALUES (@PID ,@Type ,@Path ,@Name, GETDATE(),   @CreateUser)
         ";
 
         db.Parameters.Add("@PID", model.PID);
         db.Parameters.Add("@Type", model.Type);
         db.Parameters.Add("@Path", model.Path);
         db.Parameters.Add("@Name", model.Name);
+        db.Parameters.Add("@CreateUser", CurrentUser.ID);
 
         model.ID = int.Parse(db.GetTable().Rows[0]["ID"].ToString());
     }

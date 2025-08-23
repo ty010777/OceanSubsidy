@@ -25,8 +25,8 @@ public class OFS_CulRelatedProjectHelper
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
-            INSERT INTO [OFS_CUL_Related_Project] ([PID],[Title],[Year],[OrgName],[Amount],[Description],[Benefit])
-                        OUTPUT Inserted.ID VALUES (@PID ,@Title ,@Year ,@OrgName ,@Amount ,@Description ,@Benefit)
+            INSERT INTO [OFS_CUL_Related_Project] ([PID],[Title],[Year],[OrgName],[Amount],[Description],[Benefit],[CreateTime],[CreateUser])
+                        OUTPUT Inserted.ID VALUES (@PID ,@Title ,@Year ,@OrgName ,@Amount ,@Description ,@Benefit, GETDATE(),   @CreateUser)
         ";
 
         db.Parameters.Add("@PID", model.PID);
@@ -36,6 +36,7 @@ public class OFS_CulRelatedProjectHelper
         db.Parameters.Add("@Amount", model.Amount);
         db.Parameters.Add("@Description", model.Description);
         db.Parameters.Add("@Benefit", model.Benefit);
+        db.Parameters.Add("@CreateUser", CurrentUser.ID);
 
         model.ID = int.Parse(db.GetTable().Rows[0]["ID"].ToString());
     }
@@ -75,6 +76,8 @@ public class OFS_CulRelatedProjectHelper
                   ,[Amount] = @Amount
                   ,[Description] = @Description
                   ,[Benefit] = @Benefit
+                  ,[UpdateTime] = GETDATE()
+                  ,[UpdateUser] = @UpdateUser
              WHERE [ID] = @ID
         ";
 
@@ -85,6 +88,7 @@ public class OFS_CulRelatedProjectHelper
         db.Parameters.Add("@Amount", model.Amount);
         db.Parameters.Add("@Description", model.Description);
         db.Parameters.Add("@Benefit", model.Benefit);
+        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
 
         db.ExecuteNonQuery();
     }
