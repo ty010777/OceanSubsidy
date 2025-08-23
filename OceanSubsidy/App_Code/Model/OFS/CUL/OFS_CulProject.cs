@@ -40,10 +40,10 @@ public class OFS_CulProject
     // 計畫內容概要
     public string Summary { get; set; }
 
-    // 預期效益
+    // 預期效益 (量化)
     public string Quantified { get; set; }
 
-    // 預期效益
+    // 預期效益 (質化)
     public string Qualitative { get; set; }
 
     // 計畫期程 (起)
