@@ -52,7 +52,7 @@ public class CultureService : IHttpHandler, IRequiresSessionState
         }
         catch (Exception ex)
         {
-            WriteJson(context, new { success = false, error = "Exception: " + ex.ToString() });
+            WriteJson(context, new { success = false, message = ex.InnerException?.Message, exception = ex.ToString() });
         }
     }
 

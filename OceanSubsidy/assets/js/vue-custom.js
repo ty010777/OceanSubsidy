@@ -1,7 +1,9 @@
 (function () {
 
-    window.startVueApp = (selector, options = {}) => {
-        Vue.createApp(options).use(Pinia.createPinia()).use(OceanSubsidyComponents).mount(selector);
-    };
+    const rootOptions = {};
+
+    window.setupVueApp = (options) => Object.assign(rootOptions, options);
+
+    window.startVueApp = (selector) => setTimeout(() => Vue.createApp(rootOptions).use(Pinia.createPinia()).use(OceanSubsidyComponents).mount(selector));
 
 }());

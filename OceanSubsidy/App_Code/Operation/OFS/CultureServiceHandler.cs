@@ -1,5 +1,6 @@
 ﻿using GS.Data.Sql;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -104,6 +105,8 @@ public class CultureServiceHandler
         }
         else
         {
+            getProject(project.ID, new int[] {1});
+
             OFS_CulProjectHelper.update(project);
         }
 
@@ -155,6 +158,8 @@ public class CultureServiceHandler
     {
         var id = int.Parse(param["ID"].ToString());
 
+        getProject(id, new int[] {1});
+
         if (bool.Parse(param["Submit"].ToString()))
         {
             OFS_CulProjectHelper.updateFormStep(id, 6);
@@ -183,6 +188,8 @@ public class CultureServiceHandler
     public object saveFunding(JObject param, HttpContext context)
     {
         var project = param["Project"].ToObject<OFS_CulProject>();
+
+        getProject(project.ID, new int[] {1});
 
         OFS_CulProjectHelper.updateFunding(project);
 
@@ -238,6 +245,8 @@ public class CultureServiceHandler
     {
         var id = int.Parse(param["ID"].ToString());
 
+        getProject(id, new int[] {1});
+
         if (bool.Parse(param["Submit"].ToString()))
         {
             OFS_CulProjectHelper.updateFormStep(id, 5);
@@ -269,6 +278,8 @@ public class CultureServiceHandler
     public object saveWorkSchedule(JObject param, HttpContext context)
     {
         var project = param["Project"].ToObject<OFS_CulProject>();
+
+        getProject(project.ID, new int[] {1});
 
         OFS_CulProjectHelper.updateSchedule(project);
 
@@ -375,5 +386,22 @@ public class CultureServiceHandler
         OFS_CulGoalStepHelper.deleteByItemID(id);
         OFS_CulGoalScheduleHelper.deleteByItemID(id);
         OFS_CulGoalItemHelper.delete(id);
+    }
+
+    private OFS_CulProject getProject(int id, int[] statusList = null)
+    {
+        var project = OFS_CulProjectHelper.get(id);
+
+        if (project == null)
+        {
+            throw new Exception("查無資料");
+        }
+
+        if (statusList != null && !statusList.Contains(project.Status))
+        {
+            throw new Exception("狀態錯誤");
+        }
+
+        return project;
     }
 }
