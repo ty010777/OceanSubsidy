@@ -97,7 +97,7 @@ public class MultipleService : BaseService
             var info = SessionHelper.Get<SessionHelper.UserInfoClass>(SessionHelper.UserInfo);
             var seq = OFS_MulProjectHelper.count(project.Year) + 1;
 
-            project.ProjectID = $"CUL{project.Year}{seq:D4}";
+            project.ProjectID = $"MUL{project.Year}{seq:D4}";
             project.UserAccount = info.Account;
             project.UserName = info.UserName;
             project.UserOrg = info.UnitName;

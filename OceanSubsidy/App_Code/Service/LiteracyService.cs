@@ -97,7 +97,7 @@ public class LiteracyService : BaseService
             var info = SessionHelper.Get<SessionHelper.UserInfoClass>(SessionHelper.UserInfo);
             var seq = OFS_LitProjectHelper.count(project.Year) + 1;
 
-            project.ProjectID = $"CUL{project.Year}{seq:D4}";
+            project.ProjectID = $"LIT{project.Year}{seq:D4}";
             project.UserAccount = info.Account;
             project.UserName = info.UserName;
             project.UserOrg = info.UnitName;
