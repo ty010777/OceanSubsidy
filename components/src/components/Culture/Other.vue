@@ -131,7 +131,7 @@
             project.value = data.Project;
             projects.value = data.Projects;
 
-            useProgressStore().culture = { step: project.value.FormStep, status: project.value.Status };
+            useProgressStore().culture = { step: project.value.FormStep, status: project.value.Status, organizer: project.value.Organizer, organizerName: project.value.OrganizerName };
         });
     });
 

@@ -36,7 +36,9 @@ import MultipleBenefit from "./components/Multiple/Benefit.vue";
 import MultipleFunding from "./components/Multiple/Funding.vue";
 import MultipleProgressBar from "./components/Multiple/ProgressBar.vue";
 import MultipleWorkSchedule from "./components/Multiple/WorkSchedule.vue";
+import ProjectOrganizer from "./components/ProjectOrganizer.vue";
 import RequiredLabel from "./components/RequiredLabel.vue";
+import { useProgressStore } from "./stores/progress";
 
 const components = {
     AccessibilityApplication,
@@ -77,6 +79,7 @@ const components = {
     MultipleFunding,
     MultipleProgressBar,
     MultipleWorkSchedule,
+    ProjectOrganizer,
     RequiredLabel
 };
 
@@ -85,5 +88,6 @@ export default {
         for (const name in components) {
             app.component(name, components[name]);
         }
-    }
+    },
+    useProgressStore
 };

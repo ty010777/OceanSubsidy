@@ -281,7 +281,7 @@
 
     onMounted(() => {
         rxjs.forkJoin([
-            api.culture("getZgsCodes", { CodeGroup: "ACCOrgCategory" })
+            api.accessibility("getZgsCodes", { CodeGroup: "ACCOrgCategory" })
         ]).subscribe((result) => {
             categories.value = result[0];
 
@@ -293,7 +293,7 @@
 
                     form.value.OrgCategory = form.value.OrgCategory || null;
 
-                    useProgressStore().accessibility = { step: form.value.FormStep, status: form.value.Status };
+                    useProgressStore().accessibility = { step: form.value.FormStep, status: form.value.Status, organizer: form.value.Organizer, organizerName: form.value.OrganizerName };
                 });
             } else {
                 api.accessibility("getEmptyApplication").subscribe((res) => {

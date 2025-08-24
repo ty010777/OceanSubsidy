@@ -24,33 +24,36 @@ public class OFS_CulProjectHelper
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
-            SELECT [ID]
-                  ,[Year]
-                  ,[ProjectID]
-                  ,[SubsidyPlanType]
-                  ,[ProjectName]
-                  ,[Field]
-                  ,[OrgName]
-                  ,[OrgCategory]
-                  ,[RegisteredNum]
-                  ,[TaxID]
-                  ,[Address]
-                  ,[Target]
-                  ,[Summary]
-                  ,[Quantified]
-                  ,[Qualitative]
-                  ,[StartTime]
-                  ,[EndTime]
-                  ,[ApplyAmount]
-                  ,[SelfAmount]
-                  ,[OtherAmount]
-                  ,[FormStep]
-                  ,[Status]
-                  ,[UserAccount]
-                  ,[UserName]
-                  ,[UserOrg]
-              FROM [OFS_CUL_Project]
-             WHERE [ID] = @ID
+            SELECT P.[ID]
+                  ,P.[Year]
+                  ,P.[ProjectID]
+                  ,P.[SubsidyPlanType]
+                  ,P.[ProjectName]
+                  ,P.[Field]
+                  ,P.[OrgName]
+                  ,P.[OrgCategory]
+                  ,P.[RegisteredNum]
+                  ,P.[TaxID]
+                  ,P.[Address]
+                  ,P.[Target]
+                  ,P.[Summary]
+                  ,P.[Quantified]
+                  ,P.[Qualitative]
+                  ,P.[StartTime]
+                  ,P.[EndTime]
+                  ,P.[ApplyAmount]
+                  ,P.[SelfAmount]
+                  ,P.[OtherAmount]
+                  ,P.[FormStep]
+                  ,P.[Status]
+                  ,P.[Organizer]
+                  ,U.[Name] AS [OrganizerName]
+                  ,P.[UserAccount]
+                  ,P.[UserName]
+                  ,P.[UserOrg]
+              FROM [OFS_CUL_Project] AS P
+         LEFT JOIN [Sys_User] AS U ON (U.UserID = P.Organizer)
+             WHERE P.[ID] = @ID
         ";
 
         db.Parameters.Add("@ID", id);
@@ -177,6 +180,25 @@ public class OFS_CulProjectHelper
         db.ExecuteNonQuery();
     }
 
+    public static void updateOrganizer(int id, int organizer)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            UPDATE [OFS_CUL_Project]
+               SET [Organizer] = @Organizer
+                  ,[UpdateTime] = GETDATE()
+                  ,[UpdateUser] = @UpdateUser
+             WHERE [ID] = @ID
+        ";
+
+        db.Parameters.Add("@ID", id);
+        db.Parameters.Add("@Organizer", organizer);
+        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
+
+        db.ExecuteNonQuery();
+    }
+
     public static void updateSchedule(OFS_CulProject model)
     {
         DbHelper db = new DbHelper();
@@ -243,6 +265,8 @@ public class OFS_CulProjectHelper
             OtherAmount = row.Field<int>("OtherAmount"),
             FormStep = row.Field<int>("FormStep"),
             Status = row.Field<int>("Status"),
+            Organizer = row.Field<int>("Organizer"),
+            OrganizerName = row.Field<string>("OrganizerName"),
             UserAccount = row.Field<string>("UserAccount"),
             UserName = row.Field<string>("UserName"),
             UserOrg = row.Field<string>("UserOrg")

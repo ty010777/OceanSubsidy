@@ -64,6 +64,10 @@ public class OFS_LitProject
     // 狀態
     public int Status { get; set; }
 
+    // 承辦
+    public int Organizer { get; set; }
+    public string OrganizerName { get; set; }
+
     public string UserAccount { get; set; }
     public string UserName { get; set; }
     public string UserOrg { get; set; }

@@ -24,32 +24,35 @@ public class OFS_EdcProjectHelper
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
-            SELECT [ID]
-                  ,[Year]
-                  ,[ProjectID]
-                  ,[SubsidyPlanType]
-                  ,[ProjectName]
-                  ,[OrgCategory]
-                  ,[OrgName]
-                  ,[RegisteredNum]
-                  ,[TaxID]
-                  ,[Address]
-                  ,[StartTime]
-                  ,[EndTime]
-                  ,[Target]
-                  ,[Summary]
-                  ,[Quantified]
-                  ,[ApplyAmount]
-                  ,[SelfAmount]
-                  ,[OtherGovAmount]
-                  ,[OtherUnitAmount]
-                  ,[FormStep]
-                  ,[Status]
-                  ,[UserAccount]
-                  ,[UserName]
-                  ,[UserOrg]
-              FROM [OFS_EDC_Project]
-             WHERE [ID] = @ID
+            SELECT P.[ID]
+                  ,P.[Year]
+                  ,P.[ProjectID]
+                  ,P.[SubsidyPlanType]
+                  ,P.[ProjectName]
+                  ,P.[OrgCategory]
+                  ,P.[OrgName]
+                  ,P.[RegisteredNum]
+                  ,P.[TaxID]
+                  ,P.[Address]
+                  ,P.[StartTime]
+                  ,P.[EndTime]
+                  ,P.[Target]
+                  ,P.[Summary]
+                  ,P.[Quantified]
+                  ,P.[ApplyAmount]
+                  ,P.[SelfAmount]
+                  ,P.[OtherGovAmount]
+                  ,P.[OtherUnitAmount]
+                  ,P.[FormStep]
+                  ,P.[Status]
+                  ,P.[Organizer]
+                  ,U.[Name] AS [OrganizerName]
+                  ,P.[UserAccount]
+                  ,P.[UserName]
+                  ,P.[UserOrg]
+              FROM [OFS_EDC_Project] AS P
+         LEFT JOIN [Sys_User] AS U ON (U.UserID = P.Organizer)
+             WHERE P.[ID] = @ID
         ";
 
         db.Parameters.Add("@ID", id);
@@ -165,6 +168,25 @@ public class OFS_EdcProjectHelper
         db.ExecuteNonQuery();
     }
 
+    public static void updateOrganizer(int id, int organizer)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            UPDATE [OFS_EDC_Project]
+               SET [Organizer] = @Organizer
+                  ,[UpdateTime] = GETDATE()
+                  ,[UpdateUser] = @UpdateUser
+             WHERE [ID] = @ID
+        ";
+
+        db.Parameters.Add("@ID", id);
+        db.Parameters.Add("@Organizer", organizer);
+        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
+
+        db.ExecuteNonQuery();
+    }
+
     public static void updateStatus(int id, int status)
     {
         DbHelper db = new DbHelper();
@@ -209,6 +231,8 @@ public class OFS_EdcProjectHelper
             OtherUnitAmount = row.Field<int>("OtherUnitAmount"),
             FormStep = row.Field<int>("FormStep"),
             Status = row.Field<int>("Status"),
+            Organizer = row.Field<int>("Organizer"),
+            OrganizerName = row.Field<string>("OrganizerName"),
             UserAccount = row.Field<string>("UserAccount"),
             UserName = row.Field<string>("UserName"),
             UserOrg = row.Field<string>("UserOrg")

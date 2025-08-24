@@ -287,7 +287,7 @@
                 addGoal();
             }
 
-            useProgressStore().culture = { step: form.value.FormStep, status: form.value.Status };
+            useProgressStore().culture = { step: form.value.FormStep, status: form.value.Status, organizer: form.value.Organizer, organizerName: form.value.OrganizerName };
         });
     });
 

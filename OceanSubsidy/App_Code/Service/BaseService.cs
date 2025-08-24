@@ -54,6 +54,21 @@ public class BaseService : IHttpHandler, IRequiresSessionState
         }
     }
 
+    public object getZgsCodes(JObject param, HttpContext context)
+    {
+        return SysZgsCodeHelper.getZgsCodes(param["CodeGroup"].ToString());
+    }
+
+    public object queryReviewUnits(JObject param, HttpContext context)
+    {
+        return SysUnitHelper.QueryReviewUnits();
+    }
+
+    public object queryReviewersByUnit(JObject param, HttpContext context)
+    {
+        return SysUserHelper.QueryReviewersByUnitID(param["ID"].ToString());
+    }
+
     private void WriteJson(HttpContext context, object obj)
     {
         context.Response.ContentType = "application/json";

@@ -87,11 +87,6 @@ public class CultureService : BaseService
         };
     }
 
-    public object getZgsCodes(JObject param, HttpContext context)
-    {
-        return SysZgsCodeHelper.getZgsCodes(param["CodeGroup"].ToString());
-    }
-
     public object saveApplication(JObject param, HttpContext context)
     {
         var project = param["Project"].ToObject<OFS_CulProject>();
@@ -242,6 +237,17 @@ public class CultureService : BaseService
                 OFS_CulBudgetPlanHelper.update(item);
             }
         }
+
+        return new {};
+    }
+
+    public object saveOrganizer(JObject param, HttpContext context)
+    {
+        var id = int.Parse(param["ID"].ToString());
+
+        getProject(id, new int[] {2});
+
+        OFS_CulProjectHelper.updateOrganizer(id, int.Parse(param["Organizer"].ToString()));
 
         return new {};
     }

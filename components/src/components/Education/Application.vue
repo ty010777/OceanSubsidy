@@ -323,7 +323,7 @@
 
     onMounted(() => {
         rxjs.forkJoin([
-            api.culture("getZgsCodes", { CodeGroup: "EDCOrgCategory" })
+            api.education("getZgsCodes", { CodeGroup: "EDCOrgCategory" })
         ]).subscribe((result) => {
             categories.value = result[0];
 
@@ -335,7 +335,7 @@
 
                     form.value.OrgCategory = form.value.OrgCategory || null;
 
-                    useProgressStore().education = { step: form.value.FormStep, status: form.value.Status };
+                    useProgressStore().education = { step: form.value.FormStep, status: form.value.Status, organizer: form.value.Organizer, organizerName: form.value.OrganizerName };
                 });
             } else {
                 api.education("getEmptyApplication").subscribe((res) => {

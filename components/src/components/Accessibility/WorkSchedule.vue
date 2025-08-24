@@ -208,7 +208,7 @@
                 addSchedule();
             }
 
-            useProgressStore().accessibility = { step: form.value.FormStep, status: form.value.Status };
+            useProgressStore().accessibility = { step: form.value.FormStep, status: form.value.Status, organizer: form.value.Organizer, organizerName: form.value.OrganizerName };
         });
     });
 

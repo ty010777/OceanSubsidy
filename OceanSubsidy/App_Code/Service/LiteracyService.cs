@@ -278,6 +278,17 @@ public class LiteracyService : BaseService
         return new {};
     }
 
+    public object saveOrganizer(JObject param, HttpContext context)
+    {
+        var id = int.Parse(param["ID"].ToString());
+
+        getProject(id, new int[] {2});
+
+        OFS_LitProjectHelper.updateOrganizer(id, int.Parse(param["Organizer"].ToString()));
+
+        return new {};
+    }
+
     public object saveWorkSchedule(JObject param, HttpContext context)
     {
         var project = param["Project"].ToObject<OFS_LitProject>();

@@ -121,7 +121,7 @@
                 doc.Uploaded = computed(() => doc.Files.filter((file) => !file.Deleted).length);
             });
 
-            useProgressStore().multiple = { step: project.value.FormStep, status: project.value.Status };
+            useProgressStore().multiple = { step: project.value.FormStep, status: project.value.Status, organizer: project.value.Organizer, organizerName: project.value.OrganizerName };
         });
     });
 

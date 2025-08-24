@@ -134,6 +134,17 @@ public class EducationService : BaseService
         return new {};
     }
 
+    public object saveOrganizer(JObject param, HttpContext context)
+    {
+        var id = int.Parse(param["ID"].ToString());
+
+        getProject(id, new int[] {2});
+
+        OFS_EdcProjectHelper.updateOrganizer(id, int.Parse(param["Organizer"].ToString()));
+
+        return new {};
+    }
+
     private OFS_EdcProject getProject(int id, int[] statusList = null)
     {
         var project = OFS_EdcProjectHelper.get(id);

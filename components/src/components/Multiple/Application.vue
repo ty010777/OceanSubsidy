@@ -278,8 +278,8 @@
 
     onMounted(() => {
         rxjs.forkJoin([
-            api.culture("getZgsCodes", { CodeGroup: "MULField" }),
-            api.culture("getZgsCodes", { CodeGroup: "MULOrgCategory" })
+            api.multiple("getZgsCodes", { CodeGroup: "MULField" }),
+            api.multiple("getZgsCodes", { CodeGroup: "MULOrgCategory" })
         ]).subscribe((result) => {
             fields.value = result[0];
             categories.value = result[1];
@@ -292,7 +292,7 @@
 
                     form.value.OrgCategory = form.value.OrgCategory || null;
 
-                    useProgressStore().multiple = { step: form.value.FormStep, status: form.value.Status };
+                    useProgressStore().multiple = { step: form.value.FormStep, status: form.value.Status, organizer: form.value.Organizer, organizerName: form.value.OrganizerName };
                 });
             } else {
                 api.multiple("getEmptyApplication").subscribe((res) => {

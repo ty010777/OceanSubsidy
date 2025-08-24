@@ -311,7 +311,7 @@
                     field.value = fields.value.find((item) => item.Code === form.value.Field)?.ParentCode || null;
                     form.value.OrgCategory = form.value.OrgCategory || null;
 
-                    useProgressStore().culture = { step: form.value.FormStep, status: form.value.Status };
+                    useProgressStore().culture = { step: form.value.FormStep, status: form.value.Status, organizer: form.value.Organizer, organizerName: form.value.OrganizerName };
                 });
             } else {
                 api.culture("getEmptyApplication").subscribe((res) => {

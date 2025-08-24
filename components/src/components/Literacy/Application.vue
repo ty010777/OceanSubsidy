@@ -264,7 +264,7 @@
 
     onMounted(() => {
         rxjs.forkJoin([
-            api.culture("getZgsCodes", { CodeGroup: "LITField" })
+            api.literacy("getZgsCodes", { CodeGroup: "LITField" })
         ]).subscribe((result) => {
             fields.value = result[0];
 
@@ -274,7 +274,7 @@
                     contacts.value = res.Contacts;
                     studies.value = res.PreviousStudies;
 
-                    useProgressStore().literacy = { step: form.value.FormStep, status: form.value.Status };
+                    useProgressStore().literacy = { step: form.value.FormStep, status: form.value.Status, organizer: form.value.Organizer, organizerName: form.value.OrganizerName };
                 });
             } else {
                 api.literacy("getEmptyApplication").subscribe((res) => {

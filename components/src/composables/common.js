@@ -1,7 +1,6 @@
 let current = Date.now();
 
 export const isProjectEditable = (type, status, step) => {
-console.log(type, status, step);
     if (status === 1) {
         return true;
     }
