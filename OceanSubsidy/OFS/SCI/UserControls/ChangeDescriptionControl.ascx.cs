@@ -92,7 +92,7 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
             bool shouldShow = CheckDisplayCondition(projectID);
             changeDescriptionSection.Visible = shouldShow;
 
-            if (string.IsNullOrEmpty(projectID))
+            if (!string.IsNullOrEmpty(projectID))
             {
                 // 載入已儲存的變更說明資料
                 LoadExistingChangeDescription(projectID);
@@ -218,8 +218,20 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
             // 取得專案狀態資訊
             var project = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
             
-            // 只有在 StatusesName = '計畫書修正中' 時才顯示
-            return project.StatusesName == "計畫書修正中";
+            // 取得當前頁面名稱和 SourcePage
+            string currentPageName = GetCurrentPageName();
+            string sourcePage = !string.IsNullOrEmpty(SourcePage) ? SourcePage : currentPageName;
+            
+            // 如果是在審核頁面中（SciFinalReview），則總是顯示
+            if (currentPageName == "SciFinalReview")
+            {
+                return true; // 審核頁面總是顯示變更說明區塊，讓審核者查看
+            }
+            
+            // 其他頁面只有在特定狀態下才顯示
+            return project.StatusesName == "計畫書修正中" ||
+                   project.StatusesName == "計畫書審查中";
+            
         }
         catch (Exception ex)
         {
@@ -237,13 +249,21 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
     {
         try
         {
-            // 從資料庫載入已儲存的變更說明
-            var changeDescription = GetChangeDescriptionFromDatabase(projectID);
-            
-            if (changeDescription != null)
+            // 如果是 SciFinalReview 模式，載入所有 SourcePage 的變更說明
+            if (SourcePage == "SciFinalReview")
             {
-                ChangeBefore = changeDescription.ChangeBefore ?? "";
-                ChangeAfter = changeDescription.ChangeAfter ?? "";
+                LoadAllChangeDescriptionsForReview(projectID);
+            }
+            else
+            {
+                // 一般模式：從資料庫載入已儲存的變更說明
+                var changeDescription = GetChangeDescriptionFromDatabase(projectID);
+                
+                if (changeDescription != null)
+                {
+                    ChangeBefore = changeDescription.ChangeBefore ?? "";
+                    ChangeAfter = changeDescription.ChangeAfter ?? "";
+                }
             }
         }
         catch (Exception ex)
@@ -261,8 +281,8 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
     {
         try
         {
-            // 取得目前頁面名稱作為 SourcePage
-            string sourcePage = GetCurrentPageName();
+            // 優先使用設定的 SourcePage，否則使用當前頁面名稱
+            string sourcePage = !string.IsNullOrEmpty(SourcePage) ? SourcePage : GetCurrentPageName();
             
             // 從資料庫載入變更說明
             return OFS_SciApplicationHelper.GetPageModifyNote(projectID, sourcePage);
@@ -278,14 +298,15 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
     /// 儲存變更說明到資料庫
     /// </summary>
     /// <param name="projectID">專案ID</param>
+    /// <param name="pageName">頁面名稱</param>
     /// <param name="changeBefore">變更前內容</param>
     /// <param name="changeAfter">變更後內容</param>
     private void SaveChangeDescriptionToDatabase(string projectID, string pageName, string changeBefore, string changeAfter)
     {
         try
         {
-            // 取得目前頁面名稱作為 SourcePage
-            string sourcePage = GetCurrentPageName();
+            // 優先使用設定的 SourcePage，否則使用當前頁面名稱
+            string sourcePage = !string.IsNullOrEmpty(SourcePage) ? SourcePage : GetCurrentPageName();
             
             // 儲存到資料庫
             bool success = OFS_SciApplicationHelper.SavePageModifyNote(projectID, sourcePage, changeBefore, changeAfter);
@@ -409,6 +430,8 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
                         return "SciUploadAttachments";
                     case "scirecusedlist":
                         return "SciRecusedList";
+                    case "scifinalreview":
+                        return "SciFinalReview";
                     default:
                         return pageName;
                 }
@@ -488,6 +511,69 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"載入變更說明到輸入框時發生錯誤：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 載入所有 SourcePage 的變更說明資料供審核頁面使用
+    /// </summary>
+    /// <param name="projectID">專案ID</param>
+    private void LoadAllChangeDescriptionsForReview(string projectID)
+    {
+        try
+        {
+            var sourcePages = new[] { "SciApplication", "SciWorkSch", "SciFunding", "SciRecusedList", "SciUploadAttachments" };
+            
+            // 將所有 SourcePage 的變更說明資料寫入 JavaScript 變數
+            string script = "window.allChangeDescriptions = {";
+            
+            for (int i = 0; i < sourcePages.Length; i++)
+            {
+                var sourcePage = sourcePages[i];
+                var changeDescription = GetChangeDescriptionBySourcePage(projectID, sourcePage);
+                
+                string changeBefore = changeDescription?.ChangeBefore?.Replace("'", "\\'").Replace("\n", "\\n").Replace("\r", "") ?? "";
+                string changeAfter = changeDescription?.ChangeAfter?.Replace("'", "\\'").Replace("\n", "\\n").Replace("\r", "") ?? "";
+                
+                script += $"'{sourcePage}': {{ 'ChangeBefore': '{changeBefore}', 'ChangeAfter': '{changeAfter}' }}";
+                
+                if (i < sourcePages.Length - 1)
+                {
+                    script += ",";
+                }
+            }
+            
+            script += "};";
+            script += "console.log('已載入所有變更說明資料:', window.allChangeDescriptions);";
+            
+            // 註冊 JavaScript 到頁面
+            if (HttpContext.Current?.Handler is Page page)
+            {
+                page.ClientScript.RegisterStartupScript(typeof(Page), "LoadAllChangeDescriptions", script, true);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"載入所有變更說明資料時發生錯誤：{ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// 根據 SourcePage 取得變更說明資料
+    /// </summary>
+    /// <param name="projectID">專案ID</param>
+    /// <param name="sourcePage">來源頁面</param>
+    /// <returns>變更說明資料</returns>
+    private OFS_SCI_PageModifyNote GetChangeDescriptionBySourcePage(string projectID, string sourcePage)
+    {
+        try
+        {
+            return OFS_SciApplicationHelper.GetPageModifyNote(projectID, sourcePage);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得 {sourcePage} 變更說明資料時發生錯誤：{ex.Message}");
+            return null;
         }
     }
 

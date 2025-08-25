@@ -55,6 +55,19 @@ window.ReviewChecklist = (function() {
                     window.location.reload();
                 }
             });
+
+            // Type4 類別變更事件監聽
+            $('#ddlCategory_Type4').on('change', function() {
+                var selectedCategory = $(this).val();
+                updateReviewGroupType4(selectedCategory);
+            });
+
+            // 排序模式中的類別變更事件監聽
+            $('#sortingCategory').on('change', function() {
+                var selectedCategory = $(this).val();
+                updateSortingReviewGroup(selectedCategory);
+            });
+
         } catch (error) {
             console.error('綁定事件時發生錯誤:', error);
         }
@@ -145,12 +158,15 @@ window.ReviewChecklist = (function() {
             const checkPlan = currentContent.find('.checkPlan');
             const checkPlanBtnPanel = currentContent.find('.checkPlanBtnPanel')[0];
 
-            if (!checkAll || !checkPlanBtnPanel || checkPlan.length === 0) {
+            // 如果找不到全選checkbox，直接返回
+            if (!checkAll) {
                 return;
             }
 
             // 檢查是否有任何項目被勾選，並控制批次按鈕面板的顯示
             function toggleBatchButtons() {
+                if (!checkPlanBtnPanel) return;
+                
                 let hasChecked = false;
                 checkPlan.each(function() {
                     if (this.checked) {
@@ -176,17 +192,30 @@ window.ReviewChecklist = (function() {
             // 個別 checkbox 事件
             checkPlan.on('change.reviewChecklist', function() {
                 let allChecked = true;
+                let hasAny = false;
                 checkPlan.each(function() {
+                    hasAny = true;
                     if (!this.checked) {
                         allChecked = false;
                     }
                 });
-                checkAll.checked = allChecked;
+                
+                // 只有當有個別checkbox時才更新全選狀態
+                if (hasAny) {
+                    checkAll.checked = allChecked;
+                }
                 toggleBatchButtons();
             });
 
             // 初始化狀態
             toggleBatchButtons();
+            
+            console.log('checkbox功能已初始化:', {
+                checkAll: !!checkAll,
+                checkPlan: checkPlan.length,
+                checkPlanBtnPanel: !!checkPlanBtnPanel,
+                currentType: currentType
+            });
             
         } catch (error) {
             console.error('更新 checkbox 目標時發生錯誤:', error);
@@ -349,8 +378,8 @@ window.ReviewChecklist = (function() {
 
 
             $.ajax({
-                type: "POST",
-                url: "ReviewChecklist.aspx/BatchApproveType1",
+                type: "POST",   
+                url: "ReviewChecklist.aspx/BatchApproveType",
                 data: JSON.stringify(requestData),
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
@@ -621,7 +650,7 @@ window.ReviewChecklist = (function() {
      */
     function createType1TableRow(item, index) {
         const statusClass = getStatusClass(item.StatusesName);
-        const formattedAmount = formatAmount(item.ApplicationAmount);
+        const formattedAmount = formatAmount(item.Req_SubsidyAmount);
         const expirationDate = formatDate(item.ExpirationDate);
         const projectCategory = getProjectCategory(item.ProjectID);
         const year = item.Year || '';
@@ -638,7 +667,7 @@ window.ReviewChecklist = (function() {
                     <a href="#" class="link-black" target="_blank">${item.ProjectNameTw || ''}</a>
                 </td>
                 <td data-th="申請單位:" style="text-align: left;">${item.UserOrg || ''}</td>
-                <td data-th="申請經費:">${formattedAmount}</td>
+                <td data-th="申請經費:">${item.Req_SubsidyAmount}</td>
                 <td data-th="狀態:" nowrap>
                     <span class="${statusClass}">${item.StatusesName || ''}</span>
                 </td>
@@ -662,8 +691,6 @@ window.ReviewChecklist = (function() {
      * @returns {string} HTML 字串
      */
     function createType2TableRow(item, index) {
-        const statusClass = getStatusClass(item.StatusesName);
-        const formattedAmount = formatAmount(item.ApplicationAmount);
         const projectCategory = getProjectCategory(item.ProjectID);
         const year = item.Year || '';
         const reviewGroup = getReviewGroup(item); // 審查組別
@@ -706,7 +733,7 @@ window.ReviewChecklist = (function() {
      * @returns {string} HTML 字串
      */
     function createType4TableRow(item, index) {
-        const formattedApplicationAmount = formatAmount(item.ApplicationAmount);
+        const formattedReq_SubsidyAmount = formatAmount(item.Req_SubsidyAmount);
         const year = item.Year || '';
         const totalScore = item.TotalScore || '';
         const approvedSubsidy = item.ApprovedSubsidy || '';
@@ -739,7 +766,7 @@ window.ReviewChecklist = (function() {
                 </td>
                 <td data-th="申請單位:" width="180" style="text-align: left;">${item.OrgName || ''}</td>
                 <td data-th="總分:" nowrap>${totalScore}</td>
-                <td data-th="申請經費:" width="120" style="text-align: center; text-wrap: nowrap;">${formattedApplicationAmount}</td>
+                <td data-th="申請經費:" width="120" style="text-align: center; text-wrap: nowrap;">${formattedReq_SubsidyAmount}</td>
                 <td data-th="核定經費:">
                     <input type="text" class="form-control" value="${approvedSubsidy}" style="width: 160px;" data-project-id="${item.ProjectID || ''}" data-field="ApprovedSubsidy">
                 </td>
@@ -990,10 +1017,9 @@ window.ReviewChecklist = (function() {
      * 調用儲存 API
      */
     function callSaveApprovalAPI(approvalItems) {
-        var url =  '<%= ResolveUrl("~/OFS/ReviewChecklist.aspx/SaveApprovalMode_Type4") %>';
             $.ajax({
             type: 'POST',
-            url: url,
+            url: 'ReviewChecklist.aspx/SaveApprovalMode_Type4',
             data: JSON.stringify({ approvalItems: approvalItems }),
             contentType: 'application/json; charset=utf-8',
             dataType: 'json',
@@ -1052,75 +1078,7 @@ window.ReviewChecklist = (function() {
             });
         });
     }
-
-    /**
-     * 共用函數：載入審查組別選項
-     * @param {string} category - 選擇的類別
-     * @param {jQuery} $targetSelect - 目標下拉選單元素
-     */
-    function loadReviewGroupOptions(category, $targetSelect) {
-        // 清空現有選項
-        $targetSelect.empty();
-
-        if (!category) {
-            // 類別為空時，保持空白
-            return;
-        }
-
-        // 顯示載入中
-        $targetSelect.prop('disabled', true);
-        $targetSelect.html('<option value="">載入中...</option>');
-
-        // AJAX 請求取得審查組別選項
-        $.ajax({
-            type: "POST",
-            url: "ReviewChecklist.aspx/GetReviewGroupOptions",
-            data: JSON.stringify({ category: category }),
-            contentType: "application/json; charset=utf-8",
-            dataType: "json",
-            success: function(response) {
-                if (response.d.success) {
-                    // 清空並重新填入選項（不自動加入「全部」選項）
-                    $targetSelect.empty();
-                    $.each(response.d.options, function(index, option) {
-                        $targetSelect.append($('<option>', {
-                            value: option.Value,
-                            text: option.Text
-                        }));
-                    });
-                } else {
-                    console.error('載入審查組別選項失敗:', response.d.message);
-                    $targetSelect.empty();
-                }
-                $targetSelect.prop('disabled', false);
-            },
-            error: function(xhr, status, error) {
-                console.error('AJAX 請求失敗:', error);
-                $targetSelect.empty();
-                $targetSelect.prop('disabled', false);
-            }
-        });
-    }
-
-    /**
-     * 載入排序模式的審查組別選項 (當類別改變時)
-     */
-    function loadSortingReviewGroupOptions() {
-        const category = $('#sortingCategory').val();
-        const $reviewGroupSelect = $('#sortingReviewGroup');
-        loadReviewGroupOptions(category, $reviewGroupSelect);
-    }
-
-    /**
-     * 初始化排序模式 Modal (當 Modal 開啟時)
-     */
-    function initSortingModal() {
-        // 確保預設選中科專
-        $('#sortingCategory').val('SCI');
-        
-        // 自動載入科專的審查組別選項
-        loadSortingReviewGroupOptions();
-    }
+    
 
     /**
      * 排序模式查詢功能
@@ -1358,6 +1316,117 @@ window.ReviewChecklist = (function() {
         }
     }
 
+
+    // 手動重新初始化checkbox功能的公開方法
+    function forceUpdateCheckboxTargets() {
+        console.log('手動重新初始化checkbox功能');
+        
+    }
+
+    /**
+     * Type4 類別變更時更新審查組別選項
+     * @param {string} category - 選中的類別代碼
+     */
+    function updateReviewGroupType4(category) {
+        try {
+            // 顯示載入狀態
+            const $reviewGroupSelect = $('#ddlReviewGroup_Type4');
+            $reviewGroupSelect.prop('disabled', true).html('<option>載入中...</option>');
+
+            // 調用後端 WebMethod 取得審查組別選項
+            $.ajax({
+                type: 'POST',
+                url: 'ReviewChecklist.aspx/GetReviewGroupOptionsByCategory',
+                data: JSON.stringify({ category: category }),
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                success: function(response) {
+                    try {
+                        const result = JSON.parse(response.d);
+                        
+                        if (result.Success) {
+                            // 清空並重新填充選項
+                            $reviewGroupSelect.empty();
+                            
+                            result.Options.forEach(function(option) {
+                                $reviewGroupSelect.append($('<option>', {
+                                    value: option.Value,
+                                    text: option.Text
+                                }));
+                            });
+                            
+                            $reviewGroupSelect.prop('disabled', false);
+                        } else {
+                            console.error('取得審查組別選項失敗:', result.Message);
+                            $reviewGroupSelect.html('<option value="">取得選項失敗</option>').prop('disabled', false);
+                        }
+                    } catch (parseError) {
+                        console.error('解析回應資料時發生錯誤:', parseError);
+                        $reviewGroupSelect.html('<option value="">解析錯誤</option>').prop('disabled', false);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX 請求失敗:', error);
+                    $reviewGroupSelect.html('<option value="">載入失敗</option>').prop('disabled', false);
+                }
+            });
+        } catch (error) {
+            console.error('更新審查組別時發生錯誤:', error);
+        }
+    }
+
+    /**
+     * 排序模式中類別變更時更新審查組別選項
+     * @param {string} category - 選中的類別代碼
+     */
+    function updateSortingReviewGroup(category) {
+        try {
+            // 顯示載入狀態
+            const $reviewGroupSelect = $('#sortingReviewGroup');
+            $reviewGroupSelect.prop('disabled', true).html('<option>載入中...</option>');
+
+            // 調用後端 WebMethod 取得審查組別選項
+            $.ajax({
+                type: 'POST',
+                url: 'ReviewChecklist.aspx/GetReviewGroupOptionsByCategory',
+                data: JSON.stringify({ category: category }),
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                success: function(response) {
+                    try {
+                        const result = JSON.parse(response.d);
+                        
+                        if (result.Success) {
+                            // 清空並重新填充選項
+                            $reviewGroupSelect.empty();
+                            
+                            result.Options.forEach(function(option) {
+                                $reviewGroupSelect.append($('<option>', {
+                                    value: option.Value,
+                                    text: option.Text
+                                }));
+                            });
+                            
+                            $reviewGroupSelect.prop('disabled', false);
+                        } else {
+                            console.error('取得排序審查組別選項失敗:', result.Message);
+                            $reviewGroupSelect.html('<option value="">取得選項失敗</option>').prop('disabled', false);
+                        }
+                    } catch (parseError) {
+                        console.error('解析排序回應資料時發生錯誤:', parseError);
+                        $reviewGroupSelect.html('<option value="">解析錯誤</option>').prop('disabled', false);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('排序 AJAX 請求失敗:', error);
+                    $reviewGroupSelect.html('<option value="">載入失敗</option>').prop('disabled', false);
+                }
+            });
+        } catch (error) {
+            console.error('更新排序審查組別時發生錯誤:', error);
+        }
+    }
+
     return {
         init: init,
         switchReviewType: switchReviewType,
@@ -1372,10 +1441,16 @@ window.ReviewChecklist = (function() {
         saveApprovalMode_Type4: saveApprovalMode_Type4,
         searchSortingMode: searchSortingMode,
         saveSortingMode: saveSortingMode,
-        loadSortingReviewGroupOptions: loadSortingReviewGroupOptions,
-        loadReviewGroupOptions: loadReviewGroupOptions,
-        initSortingModal: initSortingModal,
+        
+        updateCheckboxTargets: updateCheckboxTargets,
+        updateReviewGroupType4: updateReviewGroupType4,
+        updateSortingReviewGroup: updateSortingReviewGroup,
     };
+    
+    /**
+     * 當審查組別資料準備好時的回調函數
+     */
+
 })();
 
 // 將模組暴露為全域變數，供 C# 後端調用
@@ -1397,6 +1472,273 @@ function handleType4ApprovalSave() {
         });
     }
 }
+
+/**
+ * 處理提送申請者修正計畫書 - 全域函數供按鈕直接調用
+ */
+function handleSendToApplicant() {
+    // 取得選中的專案ID列表
+    const selectedIds = getSelectedProjectIds();
+    
+    if (!selectedIds || selectedIds.length === 0) {
+        Swal.fire({
+            title: '提醒',
+            text: '請先選擇要處理的案件',
+            icon: 'warning',
+            confirmButtonText: '確定'
+        });
+        return;
+    }
+    
+    // SweetAlert2 確認提示
+    Swal.fire({
+        title: '確定提送申請者進行資料修正？',
+        text: `選中 ${selectedIds.length} 件計畫，確定要提送給申請者修正計畫書嗎？`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: '確定提送',
+        cancelButtonText: '取消'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // 執行提送動作
+            submitSendToApplicant(selectedIds);
+        }
+    });
+}
+
+/**
+ * 提交提送申請者的動作
+ */
+function submitSendToApplicant(selectedIds) {
+    // 顯示載入中
+    Swal.fire({
+        title: '處理中...',
+        text: '正在提送案件給申請者',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    // 將選中的ID放入HiddenField (需要從後端取得ClientID)
+    const hiddenField = document.getElementById('MainContent_hdnSelectedProjectIds');
+    
+    const joinedIds = selectedIds.join(',');
+    
+    hiddenField.value = joinedIds;
+    
+    // 觸發後端的按鈕點擊事件 (需要從後端取得PostBackEventReference)
+    __doPostBack('MainContent$btnSendToApplicant', '');
+}
+
+/**
+ * Type2 和 Type3 的提送至申請者功能 - 全域函數供按鈕直接調用
+ */
+function handleSendToApplicantType2Type3() {
+    try {
+        // 取得當前審查類型
+        const currentType = window.ReviewChecklist ? window.ReviewChecklist.getCurrentType() : '2';
+        
+        // 檢查是否為 Type2 或 Type3
+        if (currentType !== '2' && currentType !== '3') {
+            Swal.fire({
+                title: '權限錯誤',
+                text: '提送至申請者功能只適用於領域審查(Type2)和技術審查(Type3)',
+                icon: 'error',
+                confirmButtonText: '確定'
+            });
+            return;
+        }
+        
+        // 1. 收集選中的專案 (參考 handleBatchApproval 的邏輯)
+        const currentContent = $('#content-type-' + currentType);
+        const selectedCheckboxes = currentContent.find('.checkPlan:checked');
+        
+        if (selectedCheckboxes.length === 0) {
+            Swal.fire({
+                title: '提醒',
+                text: '請先選擇要處理的計畫項目',
+                icon: 'warning',
+                confirmButtonText: '確定'
+            });
+            return;
+        }
+        
+        const selectedIds = [];
+        selectedCheckboxes.each(function() {
+            const projectId = $(this).val();
+            if (projectId && projectId.trim() !== '') {
+                selectedIds.push(projectId);
+            }
+        });
+        
+        console.log('選中的計畫ID:', selectedIds);
+        
+        // SweetAlert2 確認提示
+        Swal.fire({
+            title: '確定提送申請者？',
+            text: `選中 ${selectedIds.length} 件計畫，確定要提送給申請者嗎？`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: '確定提送',
+            cancelButtonText: '取消'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // 執行提送動作
+                submitSendToApplicantType2Type3(selectedIds, currentType);
+            }
+        });
+        
+    } catch (error) {
+        console.error('提送至申請者處理時發生錯誤:', error);
+        Swal.fire({
+            title: '系統錯誤',
+            text: '處理提送操作時發生錯誤',
+            icon: 'error',
+            confirmButtonText: '確定'
+        });
+    }
+}
+
+/**
+ * 提交提送申請者的動作（Type2 和 Type3）
+ */
+function submitSendToApplicantType2Type3(selectedIds, reviewType) {
+    // 顯示載入中
+    Swal.fire({
+        title: '處理中...',
+        text: '正在提送案件給申請者',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    // AJAX 呼叫後端 WebMethod
+    $.ajax({
+        type: "POST",
+        url: "ReviewChecklist.aspx/SendToApplicant",
+        data: JSON.stringify({
+            projectIds: selectedIds,
+            reviewType: reviewType
+        }),
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        timeout: 30000
+    }).done(function(response) {
+        const result = response.d || response;
+        
+        if (result.Success) {
+            // 成功 - 只顯示成功寄出的筆數
+            const successCount = result.SuccessCount || 0;
+            const message = `成功提送 ${successCount} 筆計畫給申請者`;
+            
+            Swal.fire({
+                title: '提送成功',
+                text: message,
+                icon: 'success',
+                confirmButtonText: '確定'
+            }).then(() => {
+                // 重新載入頁面或更新清單
+                location.reload();
+            });
+        } else {
+            // 失敗
+            let errorMessage = result.Message || '提送失敗';
+            if (result.ErrorMessages && result.ErrorMessages.length > 0) {
+                errorMessage += '\n錯誤詳情：\n' + result.ErrorMessages.join('\n');
+            }
+            
+            Swal.fire({
+                title: '提送失敗',
+                text: errorMessage,
+                icon: 'error',
+                confirmButtonText: '確定'
+            });
+        }
+    }).fail(function(xhr, status, error) {
+        Swal.fire({
+            title: '系統錯誤',
+            text: '提送過程中發生系統錯誤，請稍後再試',
+            icon: 'error',
+            confirmButtonText: '確定'
+        });
+        console.error('提送至申請者失敗:', xhr.responseText);
+    });
+}
+
+/**
+ * 取得選中的專案ID列表（Type4專用）
+ */
+function getSelectedProjectIds() {
+    // Type4 決審階段不需要狀態過濾，直接回傳所有勾選的項目
+    const selectedIds = [];
+    const checkedBoxes = $('#content-type-4 .checkPlan:checked');
+    
+    checkedBoxes.each(function(index) {
+        const projectId = $(this).val();
+        if (projectId && projectId.trim() !== '') {
+            selectedIds.push(projectId);
+        }
+    });
+    
+    return selectedIds;
+}
+
+/**
+ * 頁面初始化函數
+ */
+function initializeReviewChecklistPage() {
+    // 初始化審查清單頁面
+    if (window.ReviewChecklist) {
+        window.ReviewChecklist.init();
+    }
+    
+    // Type4 初始化審查組別選項
+    if (window.ReviewChecklist && window.ReviewChecklist.updateReviewGroupType4) {
+        // 延遲執行以確保頁面完全載入
+        setTimeout(function() {
+            var initialCategory = $('#ddlCategory_Type4').val() || 'SCI';
+            window.ReviewChecklist.updateReviewGroupType4(initialCategory);
+        }, 100);
+    }
+
+    // 排序模式 Modal 開啟事件
+    $('#sortModeModal').on('shown.bs.modal', function() {
+        // 根據主要頁面的選項設定排序模式的預設值
+        if (window.ReviewChecklist && window.ReviewChecklist.updateSortingReviewGroup) {
+            // 設定預設年度
+            var mainYear = $('#ddlYear_Type4').val() || '114';
+            $('#sortingYear').val(mainYear);
+            
+            // 設定預設類別
+            var mainCategory = $('#ddlCategory_Type4').val() || 'SCI';
+            $('#sortingCategory').val(mainCategory);
+            
+            // 根據類別更新審查組別選項
+            window.ReviewChecklist.updateSortingReviewGroup(mainCategory);
+            
+            // 延遲設定審查組別的預設值，等待選項載入完成
+            setTimeout(function() {
+                var mainReviewGroup = $('#ddlReviewGroup_Type4').val() || '';
+                $('#sortingReviewGroup').val(mainReviewGroup);
+            }, 500);
+        }
+        
+        if (window.ReviewChecklist && window.ReviewChecklist.initSortingModal) {
+            window.ReviewChecklist.initSortingModal();
+        }
+    });
+}
+
+// 當 DOM 準備好時執行初始化
+$(function() {
+    initializeReviewChecklistPage();
+});
 
 /**
  * 簡化版批次審核處理函數 - 全域函數供按鈕直接調用
@@ -1751,7 +2093,7 @@ function batchProcess(selectedIds, actionText, currentType) {
 
     $.ajax({
         type: "POST",
-        url: "ReviewChecklist.aspx/BatchApproveType1", // 註：此方法實際支援所有審查類型（Type1-4）
+        url: "ReviewChecklist.aspx/BatchApproveType", // 註：此方法實際支援所有審查類型（Type1-4）
         data: JSON.stringify({
             projectIds: selectedIds,
             actionType: actionText,
@@ -2352,6 +2694,7 @@ function handleSearchResponse(response, searchType) {
                 if (typeof collectFunction === 'function') {
                     collectFunction();
                 }
+                window.ReviewChecklistManager.updateCheckboxTargets();
             }, 500);
             
         } else {
@@ -2391,3 +2734,4 @@ function handleSearchError(jqXHR, textStatus, errorThrown, searchType) {
         confirmButtonText: '確定'
     });
 }
+

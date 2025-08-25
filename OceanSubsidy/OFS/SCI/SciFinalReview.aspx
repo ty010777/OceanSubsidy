@@ -4,6 +4,7 @@
 <%@ Register TagPrefix="uc" TagName="SciFundingControl" Src="~/OFS/SCI/UserControls/SciFundingControl.ascx" %>
 <%@ Register TagPrefix="uc" TagName="SciRecusedListControl" Src="~/OFS/SCI/UserControls/SciRecusedListControl.ascx" %>
 <%@ Register TagPrefix="uc" TagName="SciUploadAttachmentsControl" Src="~/OFS/SCI/UserControls/SciUploadAttachmentsControl.ascx" %>
+<%@ Register TagPrefix="uc" TagName="ChangeDescriptionControl" Src="~/OFS/SCI/UserControls/ChangeDescriptionControl.ascx" %>
 
 <asp:Content ID="HeadContent" ContentPlaceHolderID="HeadExtra" runat="server">
     <!-- SweetAlert2 -->
@@ -15,6 +16,94 @@
     <script src="<%= ResolveUrl("~/script/OFS/SCI/SciFunding.js") %>"></script>
     <script src="<%= ResolveUrl("~/script/OFS/SCI/SciRecusedList.js") %>"></script>
     <script src="<%= ResolveUrl("~/script/OFS/SCI/SciUploadAttachments.js") %>"></script>
+    
+    <!-- 動態載入 ChangeDescriptionControl 的 JavaScript -->
+    <script type="text/javascript">
+        // 加入自定義邏輯來處理步驟點擊
+        function setupChangeDescriptionLoader() {
+            // 獲取 Master Page 的元素
+            var stepItems = document.querySelectorAll('.application-step .step-item');
+            
+            for (var i = 0; i < stepItems.length; i++) {
+                stepItems[i].addEventListener('click', function() {
+                    var stepNumber = this.getAttribute('data-review-step');
+                    loadChangeDescriptionForStep(stepNumber);
+                });
+            }
+        }
+        
+        // 根據步驟載入對應的 ChangeDescriptionControl
+        function loadChangeDescriptionForStep(stepNumber) {
+            var sourcePage = '';
+            switch(stepNumber) {
+                case '1':
+                    sourcePage = 'SciApplication';
+                    break;
+                case '2':
+                    sourcePage = 'SciWorkSch';
+                    break;
+                case '3':
+                    sourcePage = 'SciFunding';
+                    break;
+                case '4':
+                    sourcePage = 'SciRecusedList';
+                    break;
+                case '5':
+                    sourcePage = 'SciUploadAttachments';
+                    break;
+            }
+            
+            // 更新隱藏欄位
+            var hiddenField = document.getElementById('<%= hdnCurrentSourcePage.ClientID %>');
+            if (hiddenField) {
+                hiddenField.value = sourcePage;
+            }
+            
+            // 使用預先載入的變更說明資料更新顯示
+            if (window.allChangeDescriptions && window.allChangeDescriptions[sourcePage]) {
+                var changeData = window.allChangeDescriptions[sourcePage];
+                
+                // 找到變更說明的輸入框並更新內容
+                var changeBeforeElement = document.getElementById('txtChangeBefore');
+                var changeAfterElement = document.getElementById('txtChangeAfter');
+                
+                if (changeBeforeElement) {
+                    changeBeforeElement.textContent = changeData.ChangeBefore || '';
+                }
+                
+                if (changeAfterElement) {
+                    changeAfterElement.textContent = changeData.ChangeAfter || '';
+                }
+                
+                console.log('已載入 ' + sourcePage + ' 的變更說明:', changeData);
+            } else {
+                // 清空變更說明內容
+                var changeBeforeElement = document.getElementById('txtChangeBefore');
+                var changeAfterElement = document.getElementById('txtChangeAfter');
+                
+                if (changeBeforeElement) {
+                    changeBeforeElement.textContent = '';
+                }
+                
+                if (changeAfterElement) {
+                    changeAfterElement.textContent = '';
+                }
+                
+                console.log('沒有找到 ' + sourcePage + ' 的變更說明內容');
+            }
+        }
+        
+        // 等待頁面載入完成後初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 等待 Master Page 的 JavaScript 執行完成
+            setTimeout(setupChangeDescriptionLoader, 500);
+            
+            // 初始載入第一個 tab 的變更說明
+            setTimeout(function() {
+                loadChangeDescriptionForStep('1');
+            }, 800);
+        });
+    </script>
     
     <!-- 審查結果互動功能 -->
     <script>
@@ -136,7 +225,12 @@
             </div>
         </div>
     </div>
-
+       <!-- 變更說明 UserControl 包裝在 UpdatePanel 中 -->
+        <asp:UpdatePanel ID="upChangeDescription" runat="server" UpdateMode="Conditional">
+            <ContentTemplate>
+                <uc:ChangeDescriptionControl ID="ucChangeDescription" runat="server" />
+            </ContentTemplate>
+        </asp:UpdatePanel>
     <!-- 審查結果面板 (計畫審查-資格審查-點選不通過或退回補正補件) -->
     <div class="scroll-bottom-panel">
         <h5 class="text-pink fs-18 fw-bold mb-3">審查結果</h5>
@@ -228,4 +322,12 @@
             </div>
         </div>
     </div>
+    
+    
+    <!-- 隱藏的按鈕用於觸發 UpdatePanel 更新 -->
+    <asp:Button ID="btnLoadChangeDescription" runat="server" 
+        OnClick="btnLoadChangeDescription_Click" 
+        Style="display: none;" />
+    <asp:HiddenField ID="hdnCurrentSourcePage" runat="server" />
+
 </asp:Content>

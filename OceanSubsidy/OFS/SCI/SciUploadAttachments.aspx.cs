@@ -42,6 +42,9 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
             // 載入 UserControl 資料
             ucSciUploadAttachments.LoadData(CurrentProjectID, !ShouldShowInEditMode());
             
+            // 載入變更說明控制項
+            ucChangeDescription.LoadData(CurrentProjectID, !ShouldShowInEditMode());
+            
             // 檢查表單狀態並控制暫存按鈕顯示
             CheckFormStatusAndHideTempSaveButton();
             
@@ -156,6 +159,12 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
             
             if (saveSuccess)
             {
+                // 儲存變更說明
+                ucChangeDescription.SaveChangeDescription(CurrentProjectID);
+            }
+            
+            if (saveSuccess)
+            {
                 // 更新專案狀態為暫存
                 UpdateProjectSaveStatus();
                 
@@ -199,6 +208,12 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
 
             // 儲存資料
             bool saveSuccess = ucSciUploadAttachments.SaveData(CurrentProjectID);
+            if (saveSuccess)
+            {
+                // 儲存變更說明
+                ucChangeDescription.SaveChangeDescription(CurrentProjectID);
+            }
+            
             if (!saveSuccess)
             {
                 ShowSweetAlertError("資料儲存失敗，無法提送申請");

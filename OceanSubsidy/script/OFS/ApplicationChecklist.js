@@ -464,7 +464,6 @@ function loadFilteredData(showLoading = true) {
         selectedStage: currentPageState.selectedStage
     };
     
-    console.log('Loading filtered data:', requestData);
     
     $.ajax({
         type: 'POST',
@@ -561,7 +560,7 @@ function generateRowHtml(record) {
             </td>
             <td data-th="申請單位:" style="text-align: left;">${record.OrgName || ''}</td>
             <td data-th="類別:">${record.Category || ''}</td>
-            <td data-th="申請補助金額:">${record.ApplicationAmount || '0'}</td>
+            <td data-th="申請補助金額:">${record.Req_SubsidyAmount || '0'}</td>
             <td data-th="階段:" nowrap><span class="">${record.Statuses || ''}</span></td>
             <td data-th="狀態:" style="text-align: center;">
                 <span class="${statusClass}">${displayStatus}</span>
@@ -687,7 +686,7 @@ function getEditUrl(record) {
     if (!record.ProjectID) return '#';
     
     const category = record.Category;
-    
+    //TODO 正文  請輸入 計畫申請表的編輯網址
     switch (category) {
         case '科專':
             return `SCI/SciApplication.aspx?ProjectID=${record.ProjectID}`;
@@ -1139,11 +1138,11 @@ function showCommentErrorState(message) {
     const technicalTableBody = document.getElementById('technicalReviewCommentsTableBody');
     
     if (domainTableBody) {
-        domainTableBody.innerHTML = `<tr><td colspan="3" class="text-center p-4 text-danger">載入失敗: ${message}</td></tr>`;
+        domainTableBody.innerHTML = `<tr><td colspan="3" class="text-center p-4 ">載入失敗: ${message}</td></tr>`;
     }
     
     if (technicalTableBody) {
-        technicalTableBody.innerHTML = `<tr><td colspan="3" class="text-center p-4 text-danger">載入失敗: ${message}</td></tr>`;
+        technicalTableBody.innerHTML = `<tr><td colspan="3" class="text-center p-4 ">載入失敗: ${message}</td></tr>`;
     }
     
     // 清空計畫基本資訊

@@ -128,27 +128,36 @@ public partial class OFS_SCI_SciInprogress : System.Web.UI.MasterPage
         placeholder.Controls.Clear();
 
         List<string> todoItems = new List<string>();
+        bool hasToDoitems = false;
         
         // 1. 檢查契約資料
-        if (string.IsNullOrWhiteSpace(projectMain.PubNumber) || projectMain.ContractDate == null)
+        if ((string.IsNullOrWhiteSpace(projectMain.PubNumber) || projectMain.ContractDate == null) && hasToDoitems == false )
         {
-            todoItems.Add("代辦事項:填寫契約資料");
+            todoItems.Add("待辦事項:填寫契約資料");
+            hasToDoitems = true;
         }
 
         // 2. 檢查第一期請款
-        if (!OFS_SciApplicationHelper.IsFirstPaymentPending(ProjectID))
+        if (!OFS_SciApplicationHelper.IsFirstPaymentPending(ProjectID) && hasToDoitems == false)
         {
-            todoItems.Add("代辦事項:第一期請款");
+            todoItems.Add("待辦事項:第一期請款");
+            hasToDoitems = true;
+
         }
 
         // 3. 檢查預定進度
-        if (projectMain.MidtermExamDate == null || projectMain.FinalExamDate == null)
+        if ((projectMain.MidtermExamDate == null || projectMain.FinalExamDate == null)&& hasToDoitems == false)
         {
-            todoItems.Add("代辦事項:填寫預定進度");
-        }
+            todoItems.Add("待辦事項:填寫預定進度");
+            hasToDoitems = true;
 
-        // 4. 檢查每月進度 - 如果今天已過當月20號，且當月進度資料的ActProgress沒有值
-        CheckMonthlyProgressTodo(ProjectID, todoItems);
+        }
+        
+        if(hasToDoitems == false)
+        {
+            // 4. 檢查每月進度 - 如果今天已過當月20號，且當月進度資料的ActProgress沒有值
+            CheckMonthlyProgressTodo(ProjectID, todoItems);
+        }
 
       
         // 為每個代辦事項建立獨立的 span 控制項
@@ -223,7 +232,8 @@ public partial class OFS_SCI_SciInprogress : System.Web.UI.MasterPage
                     if (monthProgress == null || !monthProgress.ActProgress.HasValue)
                     {
                         // 新增代辦事項
-                        todoItems.Add($"代辦事項:請填寫{monthString}進度");
+                        todoItems.Add($"待辦事項:請填寫{monthString}進度");
+                        break;
                     }
                 }
                 

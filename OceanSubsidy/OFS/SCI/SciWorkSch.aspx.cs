@@ -30,6 +30,9 @@ public partial class OFS_SciWorkSch : System.Web.UI.Page
                 var isViewMode = !ShouldShowInEditMode();
                 sciWorkSchControl.LoadData(ProjectID, isViewMode);
                 
+                // 載入變更說明控制項
+                ucChangeDescription.LoadData(ProjectID, isViewMode);
+                
                 // 載入變更說明資料到輸入框
                 LoadChangeDescriptionData();
             }
@@ -71,6 +74,9 @@ public partial class OFS_SciWorkSch : System.Web.UI.Page
             // 儲存資料
             sciWorkSchControl.SaveData();
             
+            // 儲存變更說明
+            ucChangeDescription.SaveChangeDescription(ProjectID);
+            
             // 更新版本狀態
             UpdateVersionStatusBasedOnAction(ProjectID, false);
             
@@ -104,6 +110,9 @@ public partial class OFS_SciWorkSch : System.Web.UI.Page
             {
                 // 儲存資料
                 sciWorkSchControl.SaveData();
+                
+                // 儲存變更說明
+                ucChangeDescription.SaveChangeDescription(ProjectID);
                 
                 // 更新版本狀態
                 UpdateVersionStatusBasedOnAction(ProjectID, true);

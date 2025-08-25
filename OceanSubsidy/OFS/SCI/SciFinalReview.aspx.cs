@@ -46,12 +46,13 @@ public partial class OFS_SCI_Review_SciFinalReview : System.Web.UI.Page
 
             if (!IsPostBack)
             {
-// 初始化頁面
+                // 初始化頁面
                 InitializePage();
+                
             }
             else
             {
-// PostBack 時重新設定審核者資訊
+                // PostBack 時重新設定審核者資訊
                 SetReviewerInfoFromDatabase();
             }
         }
@@ -71,6 +72,31 @@ public partial class OFS_SCI_Review_SciFinalReview : System.Web.UI.Page
     protected void btnDownloadPlan_Click(object sender, EventArgs e)
     {
         // TODO: 實作下載計畫書功能
+    }
+    
+    /// <summary>
+    /// 載入變更說明控制項
+    /// </summary>
+    protected void btnLoadChangeDescription_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            string sourcePage = hdnCurrentSourcePage.Value;
+            
+            if (!string.IsNullOrEmpty(sourcePage) && !string.IsNullOrEmpty(ProjectID))
+            {
+                // 設定 SourcePage 並重新載入 ChangeDescriptionControl
+                ucChangeDescription.SourcePage = sourcePage;
+                ucChangeDescription.LoadData(ProjectID, true); // 審核頁面總是 View Mode
+                
+                // 更新 UpdatePanel
+                upChangeDescription.Update();
+            }
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "載入變更說明時發生錯誤");
+        }
     }
 
     /// <summary>
@@ -333,6 +359,10 @@ public partial class OFS_SCI_Review_SciFinalReview : System.Web.UI.Page
             
             // 設定 Master Page 的進度條狀態
             InitializeReviewSteps();
+            
+            // 載入變更說明控制項（設定為 SciFinalReview 模式）
+            ucChangeDescription.SourcePage = "SciFinalReview";
+            ucChangeDescription.LoadData(ProjectID, true);
         }
         catch (Exception ex)
         {
@@ -739,6 +769,7 @@ public partial class OFS_SCI_Review_SciFinalReview : System.Web.UI.Page
         ";
         Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowErrorAndRedirect", script, true);
     }
+
 
     /// <summary>
     /// 例外處理

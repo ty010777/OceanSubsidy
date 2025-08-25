@@ -132,8 +132,6 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
                 ApplyViewMode();
             }
 
-            // 載入變更說明控制項
-            ucChangeDescription.LoadData(projectID);
         }
         catch (Exception ex)
         {
@@ -289,8 +287,6 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
                 resultProjectID = ProjectID;
             }
 
-            // 儲存變更說明
-            ucChangeDescription.SaveChangeDescription(resultProjectID);
 
             return resultProjectID;
         }

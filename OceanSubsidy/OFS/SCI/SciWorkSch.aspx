@@ -1,5 +1,6 @@
 ﻿<%@ Page Language="C#" AutoEventWireup="true" CodeFile="SciWorkSch.aspx.cs" Inherits="OFS_SciWorkSch" Culture="zh-TW" UICulture="zh-TW" MasterPageFile="~/OFS/SCI/OFSApplicationMaster.master" %>
 <%@ Register Src="~/OFS/SCI/UserControls/SciWorkSchControl.ascx" TagName="SciWorkSchControl" TagPrefix="uc" %>
+<%@ Register TagPrefix="uc" TagName="ChangeDescriptionControl" Src="~/OFS/SCI/UserControls/ChangeDescriptionControl.ascx" %>
 
 <asp:Content ID="HeadContent" ContentPlaceHolderID="HeadExtra" runat="server">
     <!-- SweetAlert2 -->
@@ -12,6 +13,9 @@
     
     <!-- 使用 UserControl -->
     <uc:SciWorkSchControl ID="sciWorkSchControl" runat="server" />
+    
+    <!-- 變更說明 UserControl -->
+    <uc:ChangeDescriptionControl ID="ucChangeDescription" runat="server" SourcePage="SciWorkSch" />
                   
     <!-- 底部區塊 -->
     <div class="block-bottom bg-light-teal">

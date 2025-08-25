@@ -46,12 +46,12 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
 
             if (!IsPostBack)
             {
-// 初始化頁面
+                // 初始化頁面
                 InitializePage();
             }
             else
             {
-// PostBack 時重新設定審核者資訊
+            // PostBack 時重新設定審核者資訊
                 SetReviewerInfoFromDatabase();
             }
         }
@@ -599,6 +599,7 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
                 
                 // 設定有指派審核人員的狀態
                 ViewState["HasAssignedReviewer"] = true;
+                scrollBottomPanel.Visible = true;
             }
             else
             {
@@ -607,9 +608,9 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
                 btnTransferProject.InnerHtml = "認領案件";
                 // 清空 HiddenField
                 hdnAssignedReviewerAccount.Value = "";
-                
                 // 設定沒有指派審核人員的狀態
                 ViewState["HasAssignedReviewer"] = false;
+                scrollBottomPanel.Visible = false;
             }
             
         }

@@ -33,6 +33,9 @@ public partial class OFS_SciAvoidList : System.Web.UI.Page
                 if (!string.IsNullOrEmpty(projectId))
                 {
                     sciRecusedListControl.LoadData(projectId, isViewMode == "true");
+                    
+                    // 載入變更說明控制項
+                    ucChangeDescription.LoadData(projectId, isViewMode == "true");
                 }
                 
                 // 檢查表單狀態並控制暫存按鈕顯示
@@ -67,6 +70,8 @@ public partial class OFS_SciAvoidList : System.Web.UI.Page
             // 儲存 UserControl 資料
             if (sciRecusedListControl.SaveData(ProjectID))
             {
+                // 儲存變更說明
+                ucChangeDescription.SaveChangeDescription(ProjectID);
                 
 
                 // 更新版本狀態（暫存）
@@ -104,6 +109,8 @@ public partial class OFS_SciAvoidList : System.Web.UI.Page
             // 儲存 UserControl 資料
             if (sciRecusedListControl.SaveData(ProjectID))
             {
+                // 儲存變更說明
+                ucChangeDescription.SaveChangeDescription(ProjectID);
 
                 // 更新版本狀態（完成）
                 UpdateVersionStatusBasedOnAction(ProjectID, true);
@@ -257,7 +264,7 @@ public partial class OFS_SciAvoidList : System.Web.UI.Page
             
             return statuses == "尚未提送" || 
                    statusesName == "補正補件" || 
-                   statusesName == "計畫書修正中 ";
+                   statusesName == "計畫書修正中";
         }
         catch (Exception ex)
         {

@@ -49,7 +49,7 @@
         <div class="top-block">
             <div class="d-flex align-items-center gap-3">
                 <span>審核承辦人員：<asp:Label ID="lblReviewerName" runat="server" CssClass="fw-bold" /></span>
-                <button type="button" id="btnTransferProject" class="btn btn-teal" runat="server" data-bs-toggle="modal" data-bs-target="#transferCaseModal">
+                <button type="button" id="btnTransferProject" class="btn btn-teal" runat="server" data-bs-toggle="modal" data-bs-target="#transferCaseModal" ClientIDMode="Static">
                     移轉案件
                 </button>
             </div>
@@ -131,7 +131,7 @@
     </div>
 
     <!-- 審查結果面板 (計畫審查-資格審查-點選不通過或退回補正補件) -->
-    <div class="scroll-bottom-panel">
+    <div class="scroll-bottom-panel" id="scrollBottomPanel" runat="server" >
         <h5 class="text-pink fs-18 fw-bold mb-3">審查結果</h5>
 
         <ul class="d-flex flex-column gap-3 mb-3">

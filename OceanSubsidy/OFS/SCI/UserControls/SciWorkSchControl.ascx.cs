@@ -90,8 +90,6 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
                 ApplyViewMode();
             }
 
-            // 載入變更說明控制項
-            ucChangeDescription.LoadData(projectID);
         }
         catch (Exception ex)
         {
@@ -185,8 +183,6 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
             // 儲存查核標準
             OFS_SciWorkSchHelper.SaveCheckStandards(checkStandards);
 
-            // 儲存變更說明
-            ucChangeDescription.SaveChangeDescription(ProjectID);
 
             return true;
         }
@@ -348,18 +344,12 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
         if (uploadFiles != null && uploadFiles.Any())
         {
             DiagramFile = uploadFiles.First();
-            bool isProd = Request.Url.Host.Equals("projects.geosense", StringComparison.OrdinalIgnoreCase);
+            bool isProd = Request.Url.Host.Equals("projects.geosense.tw", StringComparison.OrdinalIgnoreCase);
 
             // 設定 ImageUrl
-            if (isProd)
-            {
-                diagramPreview.ImageUrl = ResolveUrl($"~/OceanSubsidy/{DiagramFile.TemplatePath}");
-            }
-            else
-            {
-                diagramPreview.ImageUrl = ResolveUrl($"~/{DiagramFile.TemplatePath}");
-            }
-
+            
+            DiagramFile.TemplatePath = ResolveUrl($"~/{DiagramFile.TemplatePath}");
+            diagramPreview.ImageUrl = ResolveUrl($"~/{DiagramFile.TemplatePath}");
             // 顯示容器
             diagramPreviewContainer.Style["display"] = "block";
 
@@ -529,7 +519,8 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
                 // 建立檔案名稱
                 var fileExtension = Path.GetExtension(uploadedFile.FileName).ToLower();
                 var fileName = $"WorkSchStructure{fileExtension}";
-
+                
+                
                 // 建立完整檔案路徑
                 var uploadDir = Server.MapPath($"~/UploadFiles/OFS/SCI/{ProjectID}/");
                 if (!Directory.Exists(uploadDir))

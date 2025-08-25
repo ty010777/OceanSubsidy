@@ -1,5 +1,6 @@
 ﻿<%@ Page Language="C#" AutoEventWireup="true" CodeFile="~/OFS/SCI/SciFunding.aspx.cs" Inherits="OFS_SciFunding" Culture="zh-TW" UICulture="zh-TW" MasterPageFile="~/OFS/SCI/OFSApplicationMaster.master" %>
 <%@ Register Src="~/OFS/SCI/UserControls/SciFundingControl.ascx" TagName="SciFundingControl" TagPrefix="uc" %>
+<%@ Register TagPrefix="uc" TagName="ChangeDescriptionControl" Src="~/OFS/SCI/UserControls/ChangeDescriptionControl.ascx" %>
 
 <asp:Content ID="ApplicationTitle" ContentPlaceHolderID="ApplicationTitle" runat="server">
     計畫申請 - 經費/人事 - 海洋領域補助計畫管理資訊系統
@@ -14,9 +15,12 @@
 
 <asp:Content ID="ApplicationContent" ContentPlaceHolderID="ApplicationContent" runat="server">
     <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePageMethods="true" />
-    
+    f
     <!-- 使用 UserControl -->
     <uc:SciFundingControl ID="sciFundingControl" runat="server" />
+    
+    <!-- 變更說明 UserControl -->
+    <uc:ChangeDescriptionControl ID="ucChangeDescription" runat="server" SourcePage="SciFunding" />
 
     <!-- 底部區塊 -->
     <div class="block-bottom bg-light-teal">

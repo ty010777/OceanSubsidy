@@ -1302,5 +1302,53 @@ VALUES
             db.Dispose();
         }
     }
+    
+    /// <summary>
+    /// 根據 ProjectID 從 OFS_SCI_Project_Main 取得申請者帳號
+    /// </summary>
+    /// <param name="projectId">專案ID</param>
+    /// <returns>申請者帳號，未找到時返回 null</returns>
+    public static string GetApplicantAccountByProjectId(string projectId)
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText = @"
+            SELECT TOP 1 UserAccount 
+            FROM OFS_SCI_Project_Main 
+            WHERE ProjectID = @ProjectID 
+            AND UserAccount IS NOT NULL 
+            AND UserAccount != ''
+            ";
+        
+        db.Parameters.Clear();
+        db.Parameters.Add("@ProjectID", projectId);
+        
+        try
+        {
+            DataTable result = db.GetTable();
+            
+            if (result != null && result.Rows.Count > 0)
+            {
+                var userAccount = result.Rows[0]["UserAccount"];
+                if (userAccount != null && userAccount != DBNull.Value)
+                {
+                    string accountStr = userAccount.ToString().Trim();
+                    if (!string.IsNullOrEmpty(accountStr))
+                    {
+                        return accountStr;
+                    }
+                }
+            }
+            
+            return null;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"取得 ProjectID {projectId} 申請者帳號時發生錯誤: {ex.Message}");
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
 
 }

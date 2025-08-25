@@ -1,5 +1,6 @@
 ﻿<%@ Page Title="" Language="C#" MasterPageFile="~/OFS/SCI/OFSApplicationMaster.master" AutoEventWireup="true" CodeFile="SciUploadAttachments.aspx.cs" Inherits="OFS_SCI_SciUploadAttachments" %>
 <%@ Register TagPrefix="uc" TagName="SciUploadAttachmentsControl" Src="~/OFS/SCI/UserControls/SciUploadAttachmentsControl.ascx" %>
+<%@ Register TagPrefix="uc" TagName="ChangeDescriptionControl" Src="~/OFS/SCI/UserControls/ChangeDescriptionControl.ascx" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="ApplicationTitle" runat="server">
     上傳附件 - 海洋科技專案計畫申請
@@ -15,6 +16,9 @@
 <asp:Content ID="Content3" ContentPlaceHolderID="ApplicationContent" runat="server">
     <!-- 上傳附件 UserControl -->
     <uc:SciUploadAttachmentsControl ID="ucSciUploadAttachments" runat="server" />
+    
+    <!-- 變更說明 UserControl -->
+    <uc:ChangeDescriptionControl ID="ucChangeDescription" runat="server" SourcePage="SciUploadAttachments" />
     
     <!-- 底部區塊 -->
     <div class="block-bottom bg-light-teal">

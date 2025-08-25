@@ -71,8 +71,6 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
                 LoadTechDiagramFile(projectID);
             }
 
-            // 載入變更說明控制項
-            changeDescriptionControl.LoadData(projectID, isViewMode);
 
             // 套用檢視模式
             if (isViewMode)
@@ -133,15 +131,6 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
                 }
             }
 
-            // 驗證變更說明
-            var changeDescriptionResult = changeDescriptionControl.ValidateChangeDescription();
-            if (!changeDescriptionResult.IsValid)
-            {
-                foreach (var error in changeDescriptionResult.Errors)
-                {
-                    result.AddError(error);
-                }
-            }
         }
         catch (Exception ex)
         {
@@ -174,8 +163,6 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
             // 儲存技術能力資料
             OFS_SciRecusedList.ReplaceTechReadinessList(techData, ProjectID);
 
-            // 儲存變更說明
-            changeDescriptionControl.SaveChangeDescription(projectID);
 
             return true;
         }

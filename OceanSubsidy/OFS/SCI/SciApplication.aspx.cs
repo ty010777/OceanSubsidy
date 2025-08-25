@@ -83,6 +83,9 @@ public partial class OFS_SciApplication : System.Web.UI.Page
 
             // 儲存資料
             string resultProjectID = ucSciApplication.SaveData(ProjectID);
+            
+            // 儲存變更說明
+            ucChangeDescription.SaveChangeDescription(resultProjectID);
 
             // 更新版本狀態
             UpdateVersionStatusBasedOnAction(resultProjectID, !isTemporarySave);
@@ -124,6 +127,9 @@ public partial class OFS_SciApplication : System.Web.UI.Page
         {
             bool isViewMode = ShouldShowInEditMode() ? false : true;
             ucSciApplication.LoadData(ProjectID, isViewMode);
+            
+            // 載入變更說明控制項
+            ucChangeDescription.LoadData(ProjectID, isViewMode);
         }
         catch (Exception ex)
         {

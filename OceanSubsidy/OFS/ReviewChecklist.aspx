@@ -1,135 +1,10 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeFile="ReviewChecklist.aspx.cs" Inherits="OFS_ReviewChecklist" Culture="zh-TW" UICulture="zh-TW" MasterPageFile="~/OFSMaster.master" EnableViewState="true" %>
+﻿<%@ Page Language="C#" AutoEventWireup="true" CodeFile="ReviewChecklist.aspx.cs" Inherits="OFS_ReviewChecklist" Culture="zh-TW" UICulture="zh-TW" MasterPageFile="~/OFSMaster.master" EnableViewState="true" EnableEventValidation="false" %>
 
 <asp:Content ID="HeadContent" ContentPlaceHolderID="HeadExtra" runat="server">
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="<%= ResolveUrl("~/script/OFS/ReviewChecklist.js") %>"></script>
-    <script src="<%= ResolveUrl("~/script/OFS/PaginationManager_Type12.js") %>"></script>
 
-    
-    <script>
-        // 處理提送申請者修正計畫書
-        function handleSendToApplicant() {
-            // 取得選中的專案ID列表
-            const selectedIds = getSelectedProjectIds();
-            console.log('Debug: selectedIds =', selectedIds);
-            
-            if (!selectedIds || selectedIds.length === 0) {
-                console.log('Debug: 沒有選中的項目');
-                Swal.fire({
-                    title: '提醒',
-                    text: '請先選擇要處理的案件',
-                    icon: 'warning',
-                    confirmButtonText: '確定'
-                });
-                return;
-            }
-            
-            console.log('Debug: 找到', selectedIds.length, '個選中的項目:', selectedIds);
-            
-            // SweetAlert2 確認提示
-            Swal.fire({
-                title: '確定提送申請者進行資料修正？',
-                text: `選中 ${selectedIds.length} 件計畫，確定要提送給申請者修正計畫書嗎？`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: '確定提送',
-                cancelButtonText: '取消'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    console.log('Debug: 用戶確認提送，準備執行 submitSendToApplicant');
-                    // 執行提送動作
-                    submitSendToApplicant(selectedIds);
-                }
-            });
-        }
-        
-        // 提交提送申請者的動作
-        function submitSendToApplicant(selectedIds) {
-            console.log('Debug: submitSendToApplicant 被調用，參數:', selectedIds);
-            
-            // 顯示載入中
-            Swal.fire({
-                title: '處理中...',
-                text: '正在提送案件給申請者',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-            
-            // 將選中的ID放入HiddenField
-            const hiddenField = document.getElementById('<%= hdnSelectedProjectIds.ClientID %>');
-            console.log('Debug: hiddenField element:', hiddenField);
-            
-            const joinedIds = selectedIds.join(',');
-            console.log('Debug: 準備設定到隱藏欄位的值:', joinedIds);
-            
-            hiddenField.value = joinedIds;
-            console.log('Debug: 隱藏欄位設定後的值:', hiddenField.value);
-            
-            console.log('Debug: 準備觸發 PostBack');
-            // 觸發後端的按鈕點擊事件
-            <%= Page.ClientScript.GetPostBackEventReference(btnSendToApplicant, "") %>;
-        }
-        
-        // 取得選中的專案ID列表（使用ReviewChecklist模組的函數）
-        function getSelectedProjectIds() {
-            console.log('Debug: getSelectedProjectIds 被調用');
-            
-            // Type4 決審階段不需要狀態過濾，直接回傳所有勾選的項目
-            const selectedIds = [];
-            const checkedBoxes = $('#content-type-4 .checkPlan:checked');
-            console.log('Debug: 找到的勾選框數量:', checkedBoxes.length);
-            
-            checkedBoxes.each(function(index) {
-                const projectId = $(this).val();
-                console.log('Debug: 勾選框', index, 'value:', projectId);
-                if (projectId && projectId.trim() !== '') {
-                    selectedIds.push(projectId);
-                    console.log('Debug: 新增 projectId 到列表:', projectId);
-                }
-            });
-            
-            console.log('Debug: 最終回傳的 selectedIds:', selectedIds);
-            return selectedIds;
-        }
-
-        $(function() {
-            // 初始化審查清單頁面
-            if (window.ReviewChecklist) {
-                window.ReviewChecklist.init();
-            }
-            
-            // Type4 類別變更事件處理 - 使用共用函數
-            $('#<%= ddlCategory_Type4.ClientID %>').change(function() {
-                var selectedCategory = $(this).val();
-                var reviewGroupDropdown = $('#<%= ddlReviewGroup_Type4.ClientID %>');
-                
-                // 使用 ReviewChecklist 模組中的共用函數
-                if (window.ReviewChecklist && window.ReviewChecklist.loadReviewGroupOptions) {
-                    window.ReviewChecklist.loadReviewGroupOptions(selectedCategory, reviewGroupDropdown);
-                }
-            });
-
-            // Type4 頁面載入時自動載入科專的審查組別選項
-            var defaultCategory = $('#<%= ddlCategory_Type4.ClientID %>').val();
-            if (defaultCategory && window.ReviewChecklist && window.ReviewChecklist.loadReviewGroupOptions) {
-                var reviewGroupDropdown = $('#<%= ddlReviewGroup_Type4.ClientID %>');
-                window.ReviewChecklist.loadReviewGroupOptions(defaultCategory, reviewGroupDropdown);
-            }
-
-            // 排序模式 Modal 開啟事件
-            $('#sortModeModal').on('shown.bs.modal', function() {
-                if (window.ReviewChecklist && window.ReviewChecklist.initSortingModal) {
-                    window.ReviewChecklist.initSortingModal();
-                }
-            });
-        });
-
-    </script>
 </asp:Content>
 
 <asp:Content ID="MainContent" ContentPlaceHolderID="MainContent" runat="server">
@@ -296,7 +171,7 @@
                     <thead>
                         <tr>
                             <th width="60">
-                                <input class="form-check-input check-teal | checkAll" type="checkbox" name="" >
+                                <input class="form-check-input check-teal checkAll" type="checkbox" name="" >
                             </th>
                             <th width="50">年度</th>
                             <th width="100">
@@ -405,7 +280,7 @@
             </div>
             
             <!-- 審查勾選後底部功能按鈕 -->
-            <div class="bg-light-teal-100 mb-5 | checkPlanBtnPanel checkPlanBtnPanel-type1" style="display: none;">
+            <div class="bg-light-teal-100 mb-5 checkPlanBtnPanel checkPlanBtnPanel-type1" style="display: none;">
                 <div class="p-3 d-flex justify-content-between align-items-center">
                     <div class="d-flex gap-3">
                         <button class="btn btn-teal" type="button" onclick="handleBatchApproval('轉入下一階段')"><i class="fa-solid fa-check"></i>批次通過，轉入下一階段</button>
@@ -535,7 +410,7 @@
         		  <thead>
         			  <tr>
         				  <th width="60">
-        					  <input class="form-check-input check-teal | checkAll" type="checkbox" name="" >
+        					  <input class="form-check-input check-teal checkAll" type="checkbox" name="" >
         				  </th>
         				  <th width="50">年度</th>
         				  <th width="100">
@@ -588,10 +463,10 @@
           </div>
         
           <!-- 審查勾選後底部功能按鈕 -->
-          <div class="bg-light-teal-100 mb-5 | checkPlanBtnPanel checkPlanBtnPanel-type2" style="display: none;">
+          <div class="bg-light-teal-100 mb-5 checkPlanBtnPanel checkPlanBtnPanel-type2" style="display: none;">
         	  <div class="p-3 d-flex justify-content-between align-items-start gap-3 flex-wrap">
         		  <div class="d-flex gap-3 flex-wrap">
-        			  <button class="btn btn-royal-blue" type="button" data-bs-toggle="modal" data-bs-target="#tipModal2"><i class="fa-solid fa-check"></i>提送至申請者</button>
+        			  <button class="btn btn-royal-blue" type="button" onclick="handleSendToApplicantType2Type3()"><i class="fa-solid fa-check"></i>提送至申請者</button>
         			  <button class="btn btn-teal" type="button" onclick="handleBatchApproval('轉入下一階段')"><i class="fa-solid fa-check"></i>批次通過，轉入下一階段</button>
         			  <button class="btn btn-teal" type="button" onclick="handleBatchApproval('進入決審')"><i class="fa-solid fa-check"></i>批次通過，進入決審</button>
         			  <button class="btn btn-pink" type="button" onclick="handleBatchReject('批次不通過')"><i class="fa-solid fa-xmark"></i>批次不通過</button>
@@ -727,7 +602,7 @@
                      <thead>
                          <tr>
                              <th width="60">
-                                 <input class="form-check-input check-teal | checkAll" type="checkbox" name="" >
+                                 <input class="form-check-input check-teal checkAll" type="checkbox" name="" >
                              </th>
                              <th width="50">年度</th>
                              <th width="100">
@@ -780,10 +655,10 @@
              </div>
          
              <!-- 審查勾選後底部功能按鈕 -->
-             <div class="bg-light-teal-100 mb-5 | checkPlanBtnPanel checkPlanBtnPanel-type3" style="display: none;">
+             <div class="bg-light-teal-100 mb-5 checkPlanBtnPanel checkPlanBtnPanel-type3" style="display: none;">
                  <div class="p-3 d-flex justify-content-between align-items-start gap-3 flex-wrap">
                      <div class="d-flex gap-3 flex-wrap">
-                         <button class="btn btn-royal-blue" type="button" data-bs-toggle="modal" data-bs-target="#tipModal2"><i class="fa-solid fa-check"></i>提送至申請者</button>
+                         <button class="btn btn-royal-blue" type="button" onclick="handleSendToApplicantType2Type3()"><i class="fa-solid fa-check"></i>提送至申請者</button>
                          <button class="btn btn-teal" type="button" onclick="handleBatchApproval('轉入下一階段')"><i class="fa-solid fa-check"></i>批次通過，轉入下一階段</button>
                          <button class="btn btn-pink" type="button" onclick="handleBatchReject('批次不通過')"><i class="fa-solid fa-xmark"></i>批次不通過</button>
                      </div>
@@ -858,12 +733,12 @@
                   <div class="row g-3">
                       <div class="col-12 col-lg-6">
                           <div class="fs-16 text-gray mb-2">類別</div>
-                          <asp:DropDownList ID="ddlCategory_Type4" runat="server" CssClass="form-select">
+                          <asp:DropDownList ID="ddlCategory_Type4" runat="server" CssClass="form-select" ClientIDMode="Static">
                           </asp:DropDownList>
                       </div>
                       <div class="col-12 col-lg-6">
                           <div class="fs-16 text-gray mb-2">審查組別</div>
-                          <asp:DropDownList ID="ddlReviewGroup_Type4" runat="server" CssClass="form-select">
+                          <asp:DropDownList ID="ddlReviewGroup_Type4" runat="server" CssClass="form-select" ClientIDMode="Static" EnableEventValidation="false">
                           </asp:DropDownList>
                       </div>
                   </div>
@@ -918,7 +793,7 @@
         			  <thead>
         				  <tr>
         					  <th width="60">
-        						  <input class="form-check-input check-teal | checkAll" type="checkbox" name="" >
+        						  <input class="form-check-input check-teal checkAll" type="checkbox" name="" >
         					  </th>
         					  <th>排序</th>
         					  <th width="50">年度</th>
@@ -951,7 +826,7 @@
         	  </div>
         	  
         	  <!-- 審查勾選後底部功能按鈕 -->
-        	  <div class="bg-light-teal-100 mb-5 | checkPlanBtnPanel checkPlanBtnPanel-type4" style="display: none;">
+        	  <div class="bg-light-teal-100 mb-5 checkPlanBtnPanel checkPlanBtnPanel-type4" style="display: none;">
         		  <div class="p-3 d-flex justify-content-between align-items-start gap-3 flex-wrap">
         			  <div class="d-flex gap-3 flex-wrap">
         				  <button class="btn btn-royal-blue" type="button" onclick="handleSendToApplicant()"><i class="fa-solid fa-check"></i>提送申請者修正計畫書</button>
@@ -1070,7 +945,7 @@
                                 </div>
                                 <div class="col-12 col-md-3">
                                     <div class="fs-16 text-gray mb-2">類別</div>
-                                    <select id="sortingCategory" class="form-select" onchange="ReviewChecklist.loadSortingReviewGroupOptions()">
+                                    <select id="sortingCategory" class="form-select" >
                                         <option value="SCI">科專</option>
                                         <option value="CUL">文化</option>
                                         <option value="EDC">學校民間</option>

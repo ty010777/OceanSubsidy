@@ -30,6 +30,9 @@ public partial class OFS_SciFunding : System.Web.UI.Page
                 if (!string.IsNullOrEmpty(projectId))
                 {
                     sciFundingControl.LoadData(projectId, isViewMode == "true");
+                    
+                    // 載入變更說明控制項
+                    ucChangeDescription.LoadData(projectId, isViewMode == "true");
                 }
                 
                 CheckFormStatusAndHideTempSaveButton();
@@ -65,6 +68,8 @@ public partial class OFS_SciFunding : System.Web.UI.Page
             // 儲存 UserControl 資料
             if (sciFundingControl.SaveData(ProjectID))
             {
+                // 儲存變更說明
+                ucChangeDescription.SaveChangeDescription(ProjectID);
                 // 更新版本狀態（暫存）
                 if (!string.IsNullOrEmpty(ProjectID))
                 {
@@ -101,6 +106,8 @@ public partial class OFS_SciFunding : System.Web.UI.Page
             // 儲存 UserControl 資料
             if (sciFundingControl.SaveData(ProjectID))
             {
+                // 儲存變更說明
+                ucChangeDescription.SaveChangeDescription(ProjectID);
                 // 更新版本狀態
                 if (!string.IsNullOrEmpty(ProjectID))
                 {

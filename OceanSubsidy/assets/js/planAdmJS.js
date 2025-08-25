@@ -1,5 +1,11 @@
 // 等待 DOM 載入完成後再執行
 document.addEventListener('DOMContentLoaded', function() {
+    // 如果是 ReviewChecklist 頁面，跳過初始化，讓 ReviewChecklist.js 處理
+    if (window.location.pathname.includes('ReviewChecklist.aspx')) {
+        console.log('ReviewChecklist 頁面，跳過 planAdmJS 初始化');
+        return;
+    }
+    
     // 取得全選按鈕
     const checkAll = document.querySelector('.checkAll')
     // 取得所有計畫項目的 checkbox

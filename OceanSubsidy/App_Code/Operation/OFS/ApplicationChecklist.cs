@@ -25,45 +25,33 @@ public class ApplicationChecklistHelper
     {
         DbHelper db = new DbHelper();
         db.CommandText = @"
-        WITH SubsidySummary AS (
-    SELECT 
-        ProjectID, 
-        SUM(SubsidyAmount) AS TotalSubsidyAmount
-    FROM 
-        [OCA_OceanSubsidy].[dbo].[OFS_SCI_PersonnelCost_TotalFee]
-    GROUP BY 
-        ProjectID
-)
-        SELECT 
-            v.ProjectID,
-            v.Statuses,
-            v.StatusesName,
-            v.ExpirationDate,
-            v.SupervisoryUnit,	
-            v.SupervisoryPersonName,
-            v.SupervisoryPersonAccount,
-            v.UserAccount,
-            v.UserOrg,
-            v.UserName,
-            v.isWithdrawal,
-            v.isExist,
-            m.SubsidyPlanType,
-            m.ProjectNameTw,
-            m.OrgName,
-            m.Year,
-            ISNULL(s.TotalSubsidyAmount, 0) AS TotalSubsidyAmount
-        FROM OFS_SCI_Project_Main v
-        LEFT JOIN OFS_SCI_Application_Main m ON v.ProjectID = m.ProjectID
-		LEFT JOIN SubsidySummary s on v.ProjectID = s.ProjectID
-        WHERE (v.isExist = 1)
-        ORDER BY v.ProjectID DESC
+    SELECT TOP (1000) [ProjectID]
+      ,[Statuses]
+      ,[StatusesName]
+      ,[ExpirationDate]
+      ,[SupervisoryUnit]
+      ,[SupervisoryPersonName]
+      ,[SupervisoryPersonAccount]
+      ,[UserAccount]
+      ,[UserOrg]
+      ,[UserName]
+      ,[isWithdrawal]
+      ,[isExist]
+      ,[SubsidyPlanType]
+      ,[ProjectNameTw]
+      ,[OrgName]
+      ,[Year]
+      ,[TotalSubsidyAmount]
+  FROM [OCA_OceanSubsidy].[dbo].[ApplicationChecklistSearch]
+
 ";
 
         try
         {
+            db.CommandText += "WHERE isExist = 1 ";
             DataTable dt = db.GetTable();
             List<ReviewChecklistItem> resultList = new List<ReviewChecklistItem>();
-
+            
             foreach (DataRow row in dt.Rows)
             {
                 var item = new ReviewChecklistItem
@@ -74,7 +62,7 @@ public class ApplicationChecklistHelper
                     Year = row["Year"]?.ToString(),
                     ProjectNameTw = row["ProjectNameTw"]?.ToString(),
                     OrgName = row["OrgName"]?.ToString(),
-                    ApplicationAmount = row["TotalSubsidyAmount"] != DBNull.Value ? 
+                    Req_SubsidyAmount = row["TotalSubsidyAmount"] != DBNull.Value ? 
                         Convert.ToDecimal(row["TotalSubsidyAmount"]).ToString("N0") : "0",
                     
                     // 狀態相關

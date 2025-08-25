@@ -245,101 +245,70 @@ public class ReviewCheckListHelper
 
     #region type-4 Search 決審
 
-    /// <summary>
-    /// 查詢科專決審核定清單（支援分頁）
-    /// </summary>
-    /// <param name="year">年度</param>
-    /// <param name="orgName">申請單位</param>
-    /// <param name="supervisor">承辦人員</param>
-    /// <param name="keyword">關鍵字</param>
-    /// <param name="reviewGroupCode">審查組別代碼</param>
-    /// <param name="pageNumber">頁碼</param>
-    /// <param name="pageSize">每頁筆數</param>
-    /// <param name="totalRecords">總記錄數（輸出參數）</param>
-    /// <returns>分頁資料</returns>
-    public static PaginatedResult<ReviewChecklistItem> Search_SCI_Type4_Paged(
-        out int totalRecords
-        , string year = "",
-        string orgName = "",
-        string supervisor = "",
-        string keyword = "",
-        string reviewGroupCode = "",
-        int pageNumber = 1,
-        int pageSize = 10)
-    {
-        var allData = Search_SCI_Type4(year, orgName, supervisor, keyword, reviewGroupCode);
-        totalRecords = allData.Count;
-        
-        var pagedData = allData
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
-            .ToList();
-            
-        return new PaginatedResult<ReviewChecklistItem>
-        {
-            Data = pagedData,
-            TotalRecords = totalRecords,
-            PageNumber = pageNumber,
-            PageSize = pageSize,
-            TotalPages = (int)Math.Ceiling((double)totalRecords / pageSize)
-        };
-    }
+    // /// <summary>
+    // /// 查詢科專決審核定清單（支援分頁）
+    // /// </summary>
+    // /// <param name="year">年度</param>
+    // /// <param name="orgName">申請單位</param>
+    // /// <param name="supervisor">承辦人員</param>
+    // /// <param name="keyword">關鍵字</param>
+    // /// <param name="reviewGroupCode">審查組別代碼</param>
+    // /// <param name="pageNumber">頁碼</param>
+    // /// <param name="pageSize">每頁筆數</param>
+    // /// <param name="totalRecords">總記錄數（輸出參數）</param>
+    // /// <returns>分頁資料</returns>
+    // public static PaginatedResult<ReviewChecklistItem> Search_SCI_Type4_Paged(
+    //     out int totalRecords
+    //     , string year = "",
+    //     string orgName = "",
+    //     string supervisor = "",
+    //     string keyword = "",
+    //     string reviewGroupCode = "",
+    //     int pageNumber = 1,
+    //     int pageSize = 10)
+    // {
+    //     var allData = Search_SCI_Type4(year, orgName, supervisor, keyword, reviewGroupCode);
+    //     totalRecords = allData.Count;
+    //     
+    //     var pagedData = allData
+    //         .Skip((pageNumber - 1) * pageSize)
+    //         .Take(pageSize)
+    //         .ToList();
+    //         
+    //     return new PaginatedResult<ReviewChecklistItem>
+    //     {
+    //         Data = pagedData,
+    //         TotalRecords = totalRecords,
+    //         PageNumber = pageNumber,
+    //         PageSize = pageSize,
+    //         TotalPages = (int)Math.Ceiling((double)totalRecords / pageSize)
+    //     };
+    // }
 
     public static List<ReviewChecklistItem> Search_SCI_Type4(
         string year = "",
         string orgName = "",
         string supervisor = "",
         string keyword = "",
+        string category="",
         string reviewGroupCode = "")
     {
         DbHelper db = new DbHelper();
         db.CommandText = @"
-WITH SubsidySummary AS (
-    SELECT 
-        PM.ProjectID,
-        AM.Year,
-        AM.ProjectNameTw,
-        AM.OrgName,
-        AM.Field,
-        PM.SupervisoryPersonAccount,
-        PM.ApprovedSubsidy,
-        PM.FinalReviewNotes,
-        PM.StatusesName,
-        PM.FinalReviewOrder,
-        SUM(PT.SubsidyAmount) AS TotalSubsidyPrice
-        
-    FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main] PM
-    LEFT JOIN OFS_SCI_Application_Main AM ON PM.ProjectID = AM.ProjectID
-    LEFT JOIN OFS_SCI_PersonnelCost_TotalFee PT ON PM.ProjectID = PT.ProjectID
-    WHERE Statuses = '決審核定'
-    GROUP BY PM.ProjectID, AM.Year, AM.ProjectNameTw, AM.OrgName, AM.Field, PM.SupervisoryPersonAccount, PM.ApprovedSubsidy, PM.FinalReviewNotes, PM.StatusesName, PM.FinalReviewOrder
-),
-ScoreSummary AS (
-    SELECT 
-        PM.ProjectID,
-        SUM(ORR.TotalScore) AS TotalScore
-    FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main] PM
-    LEFT JOIN OFS_ReviewRecords ORR ON PM.ProjectID = ORR.ProjectID
-    WHERE Statuses = '決審核定'
-    GROUP BY PM.ProjectID
-)
-SELECT 
-    S.ProjectID,
-    S.Year,
-    S.ProjectNameTw,
-    S.OrgName,
-    S.Field,
-    S.SupervisoryPersonAccount,
-    S.TotalSubsidyPrice,
-    S.StatusesName,
-    S.ApprovedSubsidy,
-    S.FinalReviewNotes,
-    S.FinalReviewOrder,
-    SC.TotalScore,
-    '科專' AS Category
-FROM SubsidySummary S
-LEFT JOIN ScoreSummary SC ON S.ProjectID = SC.ProjectID
-Where StatusesName != '不通過'
+SELECT TOP (1000) [ProjectID]
+      ,[Year]
+      ,[ProjectNameTw]
+      ,[OrgName]
+      ,[Field]
+      ,[SupervisoryPersonAccount]
+      ,[TotalSubsidyPrice]
+      ,[StatusesName]
+      ,[ApprovedSubsidy]
+      ,[FinalReviewNotes]
+      ,[FinalReviewOrder]
+      ,[TotalScore]
+  FROM [OCA_OceanSubsidy].[dbo].[ReviewChecklist_type4]
+
 ";
 
         try
@@ -348,40 +317,44 @@ Where StatusesName != '不通過'
             db.Parameters.Clear();
 
             // 添加篩選條件參數
-            
+            db.CommandText += "Where StatusesName != '不通過'";
             if (!string.IsNullOrEmpty(year))
             {
-                db.CommandText += " AND S.Year = @year";
+                db.CommandText += " AND Year = @year";
                 db.Parameters.Add("@year", year);
             }
 
             if (!string.IsNullOrEmpty(orgName))
             {
-                
-                db.CommandText += " AND S.OrgName LIKE @orgName";
+                db.CommandText += " AND OrgName LIKE @orgName";
                 db.Parameters.Add("@orgName", $"%{orgName}%");
             }
 
             if (!string.IsNullOrEmpty(supervisor))
             {
-                
-                db.CommandText += " AND S.SupervisoryPersonAccount = @supervisor";
+                db.CommandText += " AND SupervisoryPersonAccount = @supervisor";
                 db.Parameters.Add("@supervisor", supervisor);
             }
-
+            
+            if (!string.IsNullOrEmpty(category))
+            {
+                db.CommandText += " AND ProjectID LIKE @category";
+                db.Parameters.Add("@category", $"%{category}%");
+            }
+            
             if (!string.IsNullOrEmpty(reviewGroupCode))
             {
-                db.CommandText += " AND S.Field = @reviewGroupCode";
+                db.CommandText += " AND Field = @reviewGroupCode";
                 db.Parameters.Add("@reviewGroupCode", reviewGroupCode);
             }
 
             if (!string.IsNullOrEmpty(keyword))
             {
-                db.CommandText += " AND (S.ProjectID LIKE @keyword OR S.ProjectNameTw LIKE @keyword)";
+                db.CommandText += " AND (ProjectID LIKE @keyword OR ProjectNameTw LIKE @keyword)";
                 db.Parameters.Add("@keyword", $"%{keyword}%");
             }
 
-            db.CommandText += " ORDER BY S.FinalReviewOrder ASC, SC.TotalScore DESC";
+            db.CommandText += " ORDER BY FinalReviewOrder ASC, TotalScore DESC";
 
             DataTable dt = db.GetTable();
 
@@ -392,13 +365,12 @@ Where StatusesName != '不通過'
                     ProjectID = row["ProjectID"]?.ToString(),
                     ProjectNameTw = row["ProjectNameTw"]?.ToString(),
                     Year = row["Year"]?.ToString(),
-                    Category = row["Category"]?.ToString(),
                     UserOrg = row["OrgName"]?.ToString(),
                     OrgName = row["OrgName"]?.ToString(),
                     StatusesName = row["StatusesName"]?.ToString(),
                     SupervisoryPersonAccount = row["SupervisoryPersonAccount"]?.ToString(),
                     TopicField = row["Field"]?.ToString(),
-                    ApplicationAmount = row["TotalSubsidyPrice"]?.ToString() ?? "0",
+                    Req_SubsidyAmount = row["TotalSubsidyPrice"]?.ToString() ?? "0",
                     ApprovedSubsidy = row["ApprovedSubsidy"]?.ToString() ?? "0",
                     FinalReviewNotes = row["FinalReviewNotes"]?.ToString(),
                     TotalScore = row["TotalScore"]?.ToString() ?? "0",
@@ -477,7 +449,7 @@ SELECT
     S.ProjectNameTw,
     S.OrgName,
     S.SupervisoryPersonName,
-    S.TotalSubsidyPrice AS ApplicationAmount,
+    S.TotalSubsidyPrice AS Req_SubsidyAmount,
     S.ApprovedSubsidy,
     S.FinalReviewNotes,
     S.FinalReviewOrder,
@@ -528,7 +500,7 @@ WHERE 1=1
                     ProjectNameTw = row["ProjectNameTw"].ToString(),
                     OrgName = row["OrgName"].ToString(),
                     SupervisoryPersonName = row["SupervisoryPersonName"].ToString(),
-                    ApplicationAmount = row["ApplicationAmount"] != DBNull.Value ? row["ApplicationAmount"].ToString() : "0",
+                    Req_SubsidyAmount = row["Req_SubsidyAmount"] != DBNull.Value ? row["Req_SubsidyAmount"].ToString() : "0",
                     ApprovedSubsidy = row["ApprovedSubsidy"] != DBNull.Value ? row["ApprovedSubsidy"].ToString() : "0",
                     FinalReviewNotes = row["FinalReviewNotes"] != DBNull.Value ? row["FinalReviewNotes"].ToString() : "",
                     FinalReviewOrder = row["FinalReviewOrder"] != DBNull.Value ? row["FinalReviewOrder"].ToString() : "999",
@@ -674,46 +646,46 @@ WHERE 1=1
     #endregion
 
     #region type-1 Search 科專
-
-    /// <summary>
-    /// 查詢科專資格審查清單（支援分頁）
-    /// </summary>
-    /// <param name="year">年度</param>
-    /// <param name="status">狀態</param>
-    /// <param name="orgName">申請單位</param>
-    /// <param name="supervisor">承辦人員</param>
-    /// <param name="keyword">關鍵字</param>
-    /// <param name="pageNumber">頁碼</param>
-    /// <param name="pageSize">每頁筆數</param>
-    /// <param name="totalRecords">總記錄數（輸出參數）</param>
-    /// <returns>分頁資料</returns>
-    public static PaginatedResult<ReviewChecklistItem> Search_SCI_Type1_Paged(out int totalRecords,
-        string year = "",
-        string status = "",
-        string orgName = "",
-        string supervisor = "",
-        string keyword = "",
-        int pageNumber = 1,
-        int pageSize = 10
-        )
-    {
-        var allData = Search_SCI_Type1(year, status, orgName, supervisor, keyword);
-        totalRecords = allData.Count;
-        
-        var pagedData = allData
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
-            .ToList();
-            
-        return new PaginatedResult<ReviewChecklistItem>
-        {
-            Data = pagedData,
-            TotalRecords = totalRecords,
-            PageNumber = pageNumber,
-            PageSize = pageSize,
-            TotalPages = (int)Math.Ceiling((double)totalRecords / pageSize)
-        };
-    }
+    //TODO 想刪除
+    // /// <summary>
+    // /// 查詢科專資格審查清單（支援分頁）
+    // /// </summary>
+    // /// <param name="year">年度</param>
+    // /// <param name="status">狀態</param>
+    // /// <param name="orgName">申請單位</param>
+    // /// <param name="supervisor">承辦人員</param>
+    // /// <param name="keyword">關鍵字</param>
+    // /// <param name="pageNumber">頁碼</param>
+    // /// <param name="pageSize">每頁筆數</param>
+    // /// <param name="totalRecords">總記錄數（輸出參數）</param>
+    // /// <returns>分頁資料</returns>
+    // public static PaginatedResult<ReviewChecklistItem> Search_SCI_Type1_Paged(out int totalRecords,
+    //     string year = "",
+    //     string status = "",
+    //     string orgName = "",
+    //     string supervisor = "",
+    //     string keyword = "",
+    //     int pageNumber = 1,
+    //     int pageSize = 10
+    //     )
+    // {
+    //     var allData = Search_SCI_Type1(year, status, orgName, supervisor, keyword);
+    //     totalRecords = allData.Count;
+    //     
+    //     var pagedData = allData
+    //         .Skip((pageNumber - 1) * pageSize)
+    //         .Take(pageSize)
+    //         .ToList();
+    //         
+    //     return new PaginatedResult<ReviewChecklistItem>
+    //     {
+    //         Data = pagedData,
+    //         TotalRecords = totalRecords,
+    //         PageNumber = pageNumber,
+    //         PageSize = pageSize,
+    //         TotalPages = (int)Math.Ceiling((double)totalRecords / pageSize)
+    //     };
+    // }
 
     public static List<ReviewChecklistItem> Search_SCI_Type1(
         string year = "",
@@ -724,43 +696,20 @@ WHERE 1=1
     {
         DbHelper db = new DbHelper();
         db.CommandText = $@"
-WITH ProjectSubsidySummary AS (
-    SELECT 
-        PM.[ProjectID],
-        AM.ProjectNameTw,
-        [UserOrg],
-        [StatusesName],
-        [ExpirationDate],
-        [SupervisoryPersonAccount],
-        [SupervisoryPersonName],
-        [SupervisoryUnit],
-        PM.created_at,
-        SUM(SubsidyAmount) AS SubsidyAmount,
-        YEAR(PM.created_at) - 1911 AS [Year]  -- 民國年欄位整合進來
-    FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main] PM
-    LEFT JOIN OFS_SCI_Application_Main AM
-        ON AM.ProjectID = PM.ProjectID 
-    LEFT JOIN OFS_SCI_PersonnelCost_TotalFee PT
-        ON PM.ProjectID = PT.ProjectID 
-    WHERE PM.isExist = 1 
-      AND Statuses = '資格審查' 
-      AND PM.StatusesName != '不通過' 
-      AND isWithdrawal != 1
-    GROUP BY 
-        PM.[ProjectID],
-        AM.ProjectNameTw,
-        [UserOrg],
-        [StatusesName],
-        [ExpirationDate],
-        [SupervisoryPersonAccount],
-        [SupervisoryPersonName],
-        [SupervisoryUnit],
-        PM.created_at
-)
+        SELECT TOP (1000) [ProjectID]
+              ,[ProjectNameTw]
+              ,[UserOrg]
+              ,[StatusesName]
+              ,[ExpirationDate]
+              ,[SupervisoryPersonAccount]
+              ,[SupervisoryPersonName]
+              ,[SupervisoryUnit]
+              ,[created_at]
+              ,[Req_SubsidyAmount]
+              ,[Year]
+              ,[Category]
+          FROM [OCA_OceanSubsidy].[dbo].[ReviewChecklist_tpye1]
 
-SELECT *,
-    '科專' AS Category
-FROM ProjectSubsidySummary
 ";
         try
         {
@@ -846,7 +795,7 @@ FROM ProjectSubsidySummary
                     // 從 SQL 結果設定的額外欄位
                     ProjectNameTw = row["ProjectNameTw"]?.ToString(),
                     Year = row["Year"]?.ToString(),
-                    ApplicationAmount = row["SubsidyAmount"]?.ToString() ?? "0"
+                    Req_SubsidyAmount = row["Req_SubsidyAmount"]?.ToString() ?? "0"
                 };
 
                 checklist.Add(item);
@@ -867,203 +816,68 @@ FROM ProjectSubsidySummary
     #endregion
 
     #region type-2 Search 科專
+    // TODO 想刪除
+    // /// <summary>
+    // /// 查詢科專領域審查清單（支援分頁）
+    // /// </summary>
+    // /// <param name="year">年度</param>
+    // /// <param name="orgName">申請單位</param>
+    // /// <param name="supervisor">承辦人員</param>
+    // /// <param name="keyword">關鍵字</param>
+    // /// <param name="reviewProgress">審查進度</param>
+    // /// <param name="replyProgress">回覆進度</param>
+    // /// <param name="pageNumber">頁碼</param>
+    // /// <param name="pageSize">每頁筆數</param>
+    // /// <param name="totalRecords">總記錄數（輸出參數）</param>
+    // /// <returns>分頁資料</returns>
+    // public static PaginatedResult<ReviewChecklistItem> Search_SCI_Type2_Paged(out int totalRecords,
+    //     string year = "",
+    //     string orgName = "",
+    //     string supervisor = "",
+    //     string keyword = "",
+    //     string reviewProgress = "",
+    //     string replyProgress = "",
+    //     int pageNumber = 1,
+    //     int pageSize = 10
+    //     )
+    // {
+    //     var allData = Search_SCI_Type2(year, orgName, supervisor, keyword, reviewProgress, replyProgress);
+    //     totalRecords = allData.Count;
+    //     
+    //     var pagedData = allData
+    //         .Skip((pageNumber - 1) * pageSize)
+    //         .Take(pageSize)
+    //         .ToList();
+    //         
+    //     return new PaginatedResult<ReviewChecklistItem>
+    //     {
+    //         Data = pagedData,
+    //         TotalRecords = totalRecords,
+    //         PageNumber = pageNumber,
+    //         PageSize = pageSize,
+    //         TotalPages = (int)Math.Ceiling((double)totalRecords / pageSize)
+    //     };
+    // }
 
-    /// <summary>
-    /// 查詢科專領域審查清單（支援分頁）
-    /// </summary>
-    /// <param name="year">年度</param>
-    /// <param name="orgName">申請單位</param>
-    /// <param name="supervisor">承辦人員</param>
-    /// <param name="keyword">關鍵字</param>
-    /// <param name="reviewProgress">審查進度</param>
-    /// <param name="replyProgress">回覆進度</param>
-    /// <param name="pageNumber">頁碼</param>
-    /// <param name="pageSize">每頁筆數</param>
-    /// <param name="totalRecords">總記錄數（輸出參數）</param>
-    /// <returns>分頁資料</returns>
-    public static PaginatedResult<ReviewChecklistItem> Search_SCI_Type2_Paged(out int totalRecords,
-        string year = "",
-        string orgName = "",
-        string supervisor = "",
-        string keyword = "",
-        string reviewProgress = "",
-        string replyProgress = "",
-        int pageNumber = 1,
-        int pageSize = 10
-        )
-    {
-        var allData = Search_SCI_Type2(year, orgName, supervisor, keyword, reviewProgress, replyProgress);
-        totalRecords = allData.Count;
-        
-        var pagedData = allData
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
-            .ToList();
-            
-        return new PaginatedResult<ReviewChecklistItem>
-        {
-            Data = pagedData,
-            TotalRecords = totalRecords,
-            PageNumber = pageNumber,
-            PageSize = pageSize,
-            TotalPages = (int)Math.Ceiling((double)totalRecords / pageSize)
-        };
-    }
-
-    /// <summary>
-    /// 查詢科專領域審查清單
-    /// </summary>
-    /// <param name="year">年度</param>
-    /// <param name="orgName">申請單位</param>
-    /// <param name="supervisor">承辦人員</param>
-    /// <param name="keyword">關鍵字</param>
-    /// <param name="reviewProgress">審查進度</param>
-    /// <param name="replyProgress">回覆進度</param>
-    /// <returns>科專審查清單</returns>
-    public static List<ReviewChecklistItem> Search_SCI_Type2(
-        string year = "",
-        string orgName = "",
-        string supervisor = "",
-        string keyword = "",
-        string reviewProgress = "",
-        string replyProgress = "")
-    {
-        DbHelper db = new DbHelper();
-
-        try
-        {
-            // 直接查詢科專領域審查資料
-            return GetSciProjectData(db, year, orgName, supervisor, keyword, reviewProgress, replyProgress);
-        }
-        catch (Exception ex)
-        {
-            throw new Exception($"查詢審查清單時發生錯誤：{ex.Message}", ex);
-        }
-        finally
-        {
-            db.Dispose();
-        }
-    }
-
+    
     /// <summary>
     /// 取得科專專案資料
     /// </summary>
-    private static List<ReviewChecklistItem> GetSciProjectData(
-        DbHelper db,
-        string year,
-        string orgName,
-        string supervisor,
-        string keyword,
-        string reviewProgress,
-        string replyProgress,
-        string status = "領域審查")
-    {
-        // 1. 先取得科專的基本專案資料
-        var basicProjects = GetSciBasicData(db, year, orgName, supervisor, keyword, status);
-
-        if (basicProjects.Count == 0)
-        {
-            return new List<ReviewChecklistItem>();
-        }
-
-        // 2. 取得進度資料
-        var projectIds = basicProjects.Select(p => p.ProjectID).ToList();
-        var progressData = GetSciProgressData(db, projectIds, status);
-
-        // 3. 取得審查組別資料
-        var reviewGroupData = GetSciReviewGroupData(db, projectIds);
-
-        // 4. 組合結果
-        List<ReviewChecklistItem> result = new List<ReviewChecklistItem>();
-
-        foreach (var project in basicProjects)
-        {
-            var progress = progressData.FirstOrDefault(p => p.ProjectID == project.ProjectID);
-            var reviewGroup = reviewGroupData.FirstOrDefault(r => r.ProjectID == project.ProjectID);
-
-            var item = new ReviewChecklistItem
-            {
-                ProjectID = project.ProjectID,
-                Statuses = project.Statuses,
-                StatusesName = project.StatusesName,
-                ExpirationDate = project.ExpirationDate,
-                SupervisoryUnit = project.SupervisoryUnit,
-                SupervisoryPersonName = project.SupervisoryPersonName,
-                SupervisoryPersonAccount = project.SupervisoryPersonAccount,
-                UserAccount = project.UserAccount,
-                UserOrg = project.UserOrg,
-                UserName = project.UserName,
-                Form1Status = project.Form1Status,
-                Form2Status = project.Form2Status,
-                Form3Status = project.Form3Status,
-                Form4Status = project.Form4Status,
-                Form5Status = project.Form5Status,
-                CurrentStep = project.CurrentStep,
-                created_at = project.created_at,
-                updated_at = project.updated_at,
-
-                // Additional fields from Application Main
-                ProjectNameTw = project.ProjectNameTw,
-                OrgName = project.OrgName,
-                Year = project.Year,
-                SubsidyPlanType = project.SubsidyPlanType,
-                ApplicationAmount = project.ApplicationAmount,
-
-                // Progress fields
-                ReviewProgress = progress?.ReviewProgress,
-                ReplyProgress = progress?.ReplyProgress,
-                ReviewProgressDisplay = progress?.ReviewProgressDisplay,
-                ReplyProgressDisplay = progress?.ReplyProgressDisplay,
-                Field_Descname = reviewGroup?.Field_Descname // 審查組別
-            };
-
-            result.Add(item);
-        }
-
-        // 統一進行進度篩選
-        if (!string.IsNullOrEmpty(reviewProgress) || !string.IsNullOrEmpty(replyProgress))
-        {
-            result = result.Where(item =>
-            {
-                bool includeItem = true;
-
-                // 審查進度篩選
-                if (!string.IsNullOrEmpty(reviewProgress))
-                {
-                    if (reviewProgress == "已完成" && item.ReviewProgress != "完成")
-                        includeItem = false;
-                    else if (reviewProgress == "進行中" && item.ReviewProgress != "未完成")
-                        includeItem = false;
-                }
-
-                // 回覆進度篩選
-                if (!string.IsNullOrEmpty(replyProgress) && includeItem)
-                {
-                    if (replyProgress == "已完成" && item.ReplyProgress != "完成")
-                        includeItem = false;
-                    else if (replyProgress == "進行中" && item.ReplyProgress != "未完成")
-                        includeItem = false;
-                }
-
-                return includeItem;
-            }).ToList();
-        }
-
-        // 按照更新時間和專案編號排序
-        return result.OrderByDescending(r => r.updated_at).ThenByDescending(r => r.ProjectID).ToList();
-    }
+   
 
     /// <summary>
     /// 取得科專基本資料
     /// </summary>
-    private static List<ReviewChecklistItem> GetSciBasicData(
-        DbHelper db,
+    public static List<ReviewChecklistItem> GetSciBasicData(
+       
         string year,
         string orgName,
         string supervisor,
         string keyword,
-        string status = "領域審查")
+        string status )
     {
+        DbHelper db = new DbHelper();
+
         db.CommandText = $@"
             SELECT p.*, 
                    m.ProjectNameTw, 
@@ -1073,7 +887,7 @@ FROM ProjectSubsidySummary
                    '科專' AS 'Category',
                    ISNULL((SELECT SUM(SubsidyAmount) 
                            FROM OFS_SCI_PersonnelCost_TotalFee tf 
-                           WHERE tf.ProjectID = p.ProjectID), 0) AS 'ApplicationAmount'
+                           WHERE tf.ProjectID = p.ProjectID), 0) AS 'Req_SubsidyAmount'
             FROM OFS_SCI_Project_Main p
             LEFT JOIN OFS_SCI_Application_Main m ON p.ProjectID = m.ProjectID
             WHERE p.Statuses LIKE '%{status}%'
@@ -1141,7 +955,7 @@ FROM ProjectSubsidySummary
                 OrgName = row["OrgName"]?.ToString(),
                 Year = row["Year"]?.ToString(),
                 SubsidyPlanType = row["SubsidyPlanType"]?.ToString(),
-                ApplicationAmount = row["ApplicationAmount"]?.ToString() ?? "0"
+                Req_SubsidyAmount = row["Req_SubsidyAmount"]?.ToString() ?? "0"
             };
 
             result.Add(item);
@@ -1153,13 +967,14 @@ FROM ProjectSubsidySummary
     /// <summary>
     /// 取得科專進度資料
     /// </summary>
-    private static List<ProgressData> GetSciProgressData(DbHelper db, List<string> projectIds, string status)
+    public static List<ProgressData> GetSciProgressData(List<string> projectIds, string status)
     {
         if (projectIds.Count == 0) return new List<ProgressData>();
 
         // 建立 IN 子句的參數
         var projectIdParams = projectIds.Select((id, index) => $"@projectId{index}").ToList();
         string inClause = "(" + string.Join(",", projectIdParams) + ")";
+        DbHelper db = new DbHelper();
 
         db.CommandText = $@"
             SELECT 
@@ -1226,8 +1041,9 @@ FROM ProjectSubsidySummary
     /// <summary>
     /// 取得科專審查組別資料
     /// </summary>
-    private static List<ReviewGroupData> GetSciReviewGroupData(DbHelper db, List<string> projectIds)
+    public static List<ReviewGroupData> GetSciReviewGroupData(List<string> projectIds)
     {
+        DbHelper db = new DbHelper();
         if (projectIds.Count == 0) return new List<ReviewGroupData>();
 
         // 建立 IN 子句的參數
@@ -1270,83 +1086,50 @@ FROM ProjectSubsidySummary
     #endregion
 
     #region type-3 Search 科專
+    //TODO 想刪除
+    // /// <summary>
+    // /// 查詢科專技術審查清單（支援分頁）
+    // /// </summary>
+    // /// <param name="year">年度</param>
+    // /// <param name="orgName">申請單位</param>
+    // /// <param name="supervisor">承辦人員</param>
+    // /// <param name="keyword">關鍵字</param>
+    // /// <param name="reviewProgress">審查進度</param>
+    // /// <param name="replyProgress">回覆進度</param>
+    // /// <param name="pageNumber">頁碼</param>
+    // /// <param name="pageSize">每頁筆數</param>
+    // /// <param name="totalRecords">總記錄數（輸出參數）</param>
+    // /// <returns>分頁資料</returns>
+    // public static PaginatedResult<ReviewChecklistItem> Search_SCI_Type3_Paged(out int totalRecords,
+    //     string year = "",
+    //     string orgName = "",
+    //     string supervisor = "",
+    //     string keyword = "",
+    //     string reviewProgress = "",
+    //     string replyProgress = "",
+    //     int pageNumber = 1,
+    //     int pageSize = 10
+    //     )
+    // {
+    //     var allData = Search_SCI_Type3(year, orgName, supervisor, keyword, reviewProgress, replyProgress);
+    //     totalRecords = allData.Count;
+    //     
+    //     var pagedData = allData
+    //         .Skip((pageNumber - 1) * pageSize)
+    //         .Take(pageSize)
+    //         .ToList();
+    //         
+    //     return new PaginatedResult<ReviewChecklistItem>
+    //     {
+    //         Data = pagedData,
+    //         TotalRecords = totalRecords,
+    //         PageNumber = pageNumber,
+    //         PageSize = pageSize,
+    //         TotalPages = (int)Math.Ceiling((double)totalRecords / pageSize)
+    //     };
+    // }
 
-    /// <summary>
-    /// 查詢科專技術審查清單（支援分頁）
-    /// </summary>
-    /// <param name="year">年度</param>
-    /// <param name="orgName">申請單位</param>
-    /// <param name="supervisor">承辦人員</param>
-    /// <param name="keyword">關鍵字</param>
-    /// <param name="reviewProgress">審查進度</param>
-    /// <param name="replyProgress">回覆進度</param>
-    /// <param name="pageNumber">頁碼</param>
-    /// <param name="pageSize">每頁筆數</param>
-    /// <param name="totalRecords">總記錄數（輸出參數）</param>
-    /// <returns>分頁資料</returns>
-    public static PaginatedResult<ReviewChecklistItem> Search_SCI_Type3_Paged(out int totalRecords,
-        string year = "",
-        string orgName = "",
-        string supervisor = "",
-        string keyword = "",
-        string reviewProgress = "",
-        string replyProgress = "",
-        int pageNumber = 1,
-        int pageSize = 10
-        )
-    {
-        var allData = Search_SCI_Type3(year, orgName, supervisor, keyword, reviewProgress, replyProgress);
-        totalRecords = allData.Count;
-        
-        var pagedData = allData
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
-            .ToList();
-            
-        return new PaginatedResult<ReviewChecklistItem>
-        {
-            Data = pagedData,
-            TotalRecords = totalRecords,
-            PageNumber = pageNumber,
-            PageSize = pageSize,
-            TotalPages = (int)Math.Ceiling((double)totalRecords / pageSize)
-        };
-    }
 
-    /// <summary>
-    /// 查詢科專技術審查清單
-    /// </summary>
-    /// <param name="year">年度</param>
-    /// <param name="orgName">申請單位</param>
-    /// <param name="supervisor">承辦人員</param>
-    /// <param name="keyword">關鍵字</param>
-    /// <param name="reviewProgress">審查進度</param>
-    /// <param name="replyProgress">回覆進度</param>
-    /// <returns>科專審查清單</returns>
-    public static List<ReviewChecklistItem> Search_SCI_Type3(
-        string year = "",
-        string orgName = "",
-        string supervisor = "",
-        string keyword = "",
-        string reviewProgress = "",
-        string replyProgress = "")
-    {
-        DbHelper db = new DbHelper();
-
-        try
-        {
-            // 直接查詢科專技術審查資料
-            return GetSciProjectData(db, year, orgName, supervisor, keyword, reviewProgress, replyProgress, "技術審查");
-        }
-        catch (Exception ex)
-        {
-            throw new Exception($"查詢審查清單時發生錯誤：{ex.Message}", ex);
-        }
-        finally
-        {
-            db.Dispose();
-        }
-    }
 
     #endregion
 
@@ -1469,13 +1252,36 @@ FROM ProjectSubsidySummary
                 {
                     try
                     {   
-                        // 更新專案狀態為不通過
-                        UpdateProjectRejectStatus(db, projectId);
-                        // 記錄審查歷程
-                        InsertRejectHistory(db, projectId, actionType, userAccount);
-                        successCount++;
-                        successIds.Add(projectId);
-                        System.Diagnostics.Debug.WriteLine($"成功設定專案 {projectId} 為不通過");
+                        if(projectId.Contains("SCI")){
+                            // 更新專案狀態為不通過
+                            UpdateProjectRejectStatus(db, projectId);
+                            // 記錄審查歷程
+                            InsertRejectHistory(db, projectId, actionType, userAccount);
+                            successCount++;
+                            successIds.Add(projectId);
+                        }
+                        // TODO 正文 更新狀態為不通過，並記錄審查歷程。
+                        else if (projectId.Contains("CUL"))
+                        {
+                            // 文化
+                        }
+                        else if (projectId.Contains("EDC"))
+                        {
+                            // 學校民間
+                        }
+                        else if (projectId.Contains("CLB"))
+                        {
+                            // 學校社團
+                        }else if (projectId.Contains("MUL"))
+                        {
+                            // 多元
+                        }else if (projectId.Contains("LIT"))
+                        {
+                            // 素養
+                        }else if (projectId.Contains("ACC"))
+                        {
+                            // 無障礙
+                        }
                     }
                     catch (Exception ex)
                     {

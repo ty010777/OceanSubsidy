@@ -41,8 +41,8 @@ public partial class OFS_SciOutcomes : System.Web.UI.Page
                     // 檢查表單狀態並控制暫存按鈕顯示
                     CheckFormStatusAndHideTempSaveButton();
                     
-                    // 載入變更說明控制項
-                    ucChangeDescription.LoadData(ProjectID);
+                    // 載入變更說明控制項 (已廢棄)
+                    // ucChangeDescription.LoadData(ProjectID);
                     
                     // 載入變更說明資料到輸入框
                     LoadChangeDescriptionData();
@@ -79,8 +79,8 @@ public partial class OFS_SciOutcomes : System.Web.UI.Page
             // 儲存資料
             OFS_SciOutcomeHelper.SaveOutcomeData(entity);
             
-            // 儲存變更說明
-            ucChangeDescription.SaveChangeDescription(ProjectID);
+            // 儲存變更說明 (已廢棄)
+            // ucChangeDescription.SaveChangeDescription(ProjectID);
             
             // 更新版本狀態（暫存）
             UpdateVersionStatusBasedOnAction(ProjectID, false);
@@ -119,8 +119,8 @@ public partial class OFS_SciOutcomes : System.Web.UI.Page
             // 儲存資料
             OFS_SciOutcomeHelper.SaveOutcomeData(entity);
             
-            // 儲存變更說明
-            ucChangeDescription.SaveChangeDescription(ProjectID);
+            // 儲存變更說明 (已廢棄)
+            // ucChangeDescription.SaveChangeDescription(ProjectID);
             
             // 更新版本狀態
             UpdateVersionStatusBasedOnAction(ProjectID, true);

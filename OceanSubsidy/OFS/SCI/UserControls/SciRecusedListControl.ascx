@@ -165,8 +165,6 @@
 </div>
 
 <!-- 變更說明區塊 -->
-<%@ Register Src="~/OFS/SCI/UserControls/ChangeDescriptionControl.ascx" TagName="ChangeDescriptionControl" TagPrefix="uc" %>
-<uc:ChangeDescriptionControl ID="changeDescriptionControl" runat="server" SourcePage="SciRecusedList" />
 
 <!-- 隱藏欄位用於資料交換 -->
 <asp:HiddenField ID="hdnCommitteeData" runat="server" />
