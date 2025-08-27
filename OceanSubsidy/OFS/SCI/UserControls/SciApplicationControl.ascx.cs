@@ -795,7 +795,7 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
             }
 
             applicationData.Serial = nextSerial.ToString();
-            return $"{currentYear}SCI{nextSerial:D4}";
+            return $"SCI{currentYear}{nextSerial:D4}";
         }
         catch (Exception ex)
         {

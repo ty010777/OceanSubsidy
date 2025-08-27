@@ -118,10 +118,10 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                     LoadDecisionReviewDropdowns();
                     break;
                 case "5":
-                    // TODO: 載入計畫變更審核清單
+                    LoadPlanChangeReviewDropdowns();
                     break;
                 case "6":
-                    // TODO: 載入執行計畫審核清單
+                    LoadExecutionPlanReviewDropdowns();
                     break;
                 case "7":
                     // TODO: 載入階段報告審核清單
@@ -253,15 +253,16 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             ddlStage_Type1.DataValueField = "Value";
             ddlStage_Type1.DataBind();
 
+            
             // 載入申請單位選項
-            var orgOptions = ReviewCheckListHelper.GetReviewOrgOptions("資格審查");
+            var orgOptions = ReviewCheckListHelper.GetType1OrgOptions();
             ddlOrg_Type1.DataSource = orgOptions;
             ddlOrg_Type1.DataTextField = "Text";
             ddlOrg_Type1.DataValueField = "Value";
             ddlOrg_Type1.DataBind();
 
-            // 載入承辦人員選項
-            var supervisorOptions = ReviewCheckListHelper.GetReviewSupervisorOptions("資格審查");
+            // 載入承辦人員選項 - 從 V_OFS_ReviewChecklist_type1 動態載入
+            var supervisorOptions = ReviewCheckListHelper.GetType1SupervisorOptions();
             ddlSupervisor_Type1.DataSource = supervisorOptions;
             ddlSupervisor_Type1.DataTextField = "Text";
             ddlSupervisor_Type1.DataValueField = "Value";
@@ -300,13 +301,19 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             ddlCategory_Type2.DataBind();
 
             // 載入申請單位選項
+            // TODO 正文 載入申請單位選項
+            // TODO 正文 這裡是 領域審查的申請單位 下拉選單，但因為type2 3 沒有view 所以請搜尋文化 目前project的 領域審查 的申請單位
+
             var orgOptions = ReviewCheckListHelper.GetReviewOrgOptions("領域審查");
             ddlOrg_Type2.DataSource = orgOptions;
             ddlOrg_Type2.DataTextField = "Text";
             ddlOrg_Type2.DataValueField = "Value";
             ddlOrg_Type2.DataBind();
 
-            // 載入承辦人員選項
+            // 
+            // TODO 正文 載入承辦人員選項
+            // TODO 正文 這裡是 領域審查的承辦人 下拉選單，但因為type2 3 沒有view 所以請搜尋文化 目前project的 領域審查 的承辦人
+            
             var supervisorOptions = ReviewCheckListHelper.GetReviewSupervisorOptions("領域審查");
             ddlSupervisor_Type2.DataSource = supervisorOptions;
             ddlSupervisor_Type2.DataTextField = "Text";
@@ -360,11 +367,18 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             ddlCategory_Type3.DataBind();
 
             // 載入申請單位選項
+            // TODO 正文 載入申請單位選項
+            // TODO 正文 這裡是 技術審查的申請單位 下拉選單，但因為type2 3 沒有view 所以請搜尋文化 目前project的 技術審查 的申請單位
+
             var orgOptions = ReviewCheckListHelper.GetReviewOrgOptions("技術審查");
             ddlOrg_Type3.DataSource = orgOptions;
             ddlOrg_Type3.DataTextField = "Text";
             ddlOrg_Type3.DataValueField = "Value";
             ddlOrg_Type3.DataBind();
+            
+            
+            // TODO 正文 載入承辦人員選項
+            // TODO 正文 這裡是 技術審查的承辦人 下拉選單，但因為type2 3 沒有view 所以請搜尋文化 目前project的 技術審查 的承辦人
 
             // 載入承辦人員選項
             var supervisorOptions = ReviewCheckListHelper.GetReviewSupervisorOptions("技術審查");
@@ -412,14 +426,14 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
            
 
             // 載入申請單位選項
-            var orgOptions = ReviewCheckListHelper.GetReviewOrgOptions("決審核定");
+            var orgOptions = ReviewCheckListHelper.GetType4OrgOptions();
             ddlOrg_Type4.DataSource = orgOptions;
             ddlOrg_Type4.DataTextField = "Text";
             ddlOrg_Type4.DataValueField = "Value";
             ddlOrg_Type4.DataBind();
 
-            // 載入承辦人員選項
-            var supervisorOptions = ReviewCheckListHelper.GetReviewSupervisorOptions("決審核定");
+            // 載入承辦人員選項 - 從 V_OFS_ReviewChecklist_type4 動態載入
+            var supervisorOptions = ReviewCheckListHelper.GetType4SupervisorOptions();
             ddlSupervisor_Type4.DataSource = supervisorOptions;
             ddlSupervisor_Type4.DataTextField = "Text";
             ddlSupervisor_Type4.DataValueField = "Value";
@@ -449,6 +463,94 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
         }
     }
     #endregion
+    
+    #region type-5 的下拉式選單
+    /// <summary>
+    /// 載入計畫變更審核的下拉選單資料
+    /// </summary>
+    private void LoadPlanChangeReviewDropdowns()
+    {
+        try
+        {
+            // 載入年度選項
+            ddlYear_Type5.Items.Add(new ListItem("全部", ""));
+            ddlYear_Type5.Items.Add(new ListItem("113年", "113"));
+            ddlYear_Type5.Items.Add(new ListItem("114年", "114"));
+
+            // 載入類別選項
+            ddlCategory_Type5.Items.Add(new ListItem("全部", ""));
+            ddlCategory_Type5.Items.Add(new ListItem("科專", "SCI"));
+            ddlCategory_Type5.Items.Add(new ListItem("文化", "CUL"));
+            ddlCategory_Type5.Items.Add(new ListItem("學校民間", "EDC"));
+            ddlCategory_Type5.Items.Add(new ListItem("學校社團", "CLB"));
+            ddlCategory_Type5.Items.Add(new ListItem("多元", "MUL"));
+            ddlCategory_Type5.Items.Add(new ListItem("素養", "LIT"));
+            ddlCategory_Type5.Items.Add(new ListItem("無障礙", "ACC"));
+
+            // 載入主管單位選項 - 從 V_OFS_ReviewChecklist_type5 動態載入
+            var supervisoryOptions = ReviewCheckListHelper.GetType5SupervisoryUnitOptions();
+            ddlDepartment_Type5.DataSource = supervisoryOptions;
+            ddlDepartment_Type5.DataTextField = "Text";
+            ddlDepartment_Type5.DataValueField = "Value";
+            ddlDepartment_Type5.DataBind();
+
+            // 載入申請單位選項 - 從 V_OFS_ReviewChecklist_type5 動態載入
+            var orgOptions = ReviewCheckListHelper.GetType5OrgOptions();
+            ddlOrg_Type5.DataSource = orgOptions;
+            ddlOrg_Type5.DataTextField = "Text";
+            ddlOrg_Type5.DataValueField = "Value";
+            ddlOrg_Type5.DataBind();
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "載入計畫變更審核下拉選單時發生錯誤");
+        }
+    }
+    #endregion
+    
+    #region type-6 的下拉式選單
+    /// <summary>
+    /// 載入執行計畫審核的下拉選單資料
+    /// </summary>
+    private void LoadExecutionPlanReviewDropdowns()
+    {
+        try
+        {
+            // 載入年度選項
+            ddlYear_Type6.Items.Add(new ListItem("全部", ""));
+            ddlYear_Type6.Items.Add(new ListItem("113年", "113"));
+            ddlYear_Type6.Items.Add(new ListItem("114年", "114"));
+
+            // 載入類別選項
+            ddlCategory_Type6.Items.Add(new ListItem("全部", ""));
+            ddlCategory_Type6.Items.Add(new ListItem("科專", "SCI"));
+            ddlCategory_Type6.Items.Add(new ListItem("文化", "CUL"));
+            ddlCategory_Type6.Items.Add(new ListItem("學校民間", "EDC"));
+            ddlCategory_Type6.Items.Add(new ListItem("學校社團", "CLB"));
+            ddlCategory_Type6.Items.Add(new ListItem("多元", "MUL"));
+            ddlCategory_Type6.Items.Add(new ListItem("素養", "LIT"));
+            ddlCategory_Type6.Items.Add(new ListItem("無障礙", "ACC"));
+
+            // 載入主管單位選項 - 從 V_OFS_ReviewChecklist_type6 動態載入
+            var supervisoryOptions = ReviewCheckListHelper.GetType6SupervisoryUnitOptions();
+            ddlDepartment_Type6.DataSource = supervisoryOptions;
+            ddlDepartment_Type6.DataTextField = "Text";
+            ddlDepartment_Type6.DataValueField = "Value";
+            ddlDepartment_Type6.DataBind();
+
+            // 載入申請單位選項 - 從 V_OFS_ReviewChecklist_type6 動態載入
+            var orgOptions = ReviewCheckListHelper.GetType6OrgOptions();
+            ddlOrg_Type6.DataSource = orgOptions;
+            ddlOrg_Type6.DataTextField = "Text";
+            ddlOrg_Type6.DataValueField = "Value";
+            ddlOrg_Type6.DataBind();
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "載入執行計畫審核下拉選單時發生錯誤");
+        }
+    }
+    #endregion
 
     #region 查詢事件處理
 
@@ -474,7 +576,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             
             // 執行決定審核清單查詢
             if(category == "SCI" || string.IsNullOrEmpty(category)){
-                Results = ReviewCheckListHelper.Search_SCI_Type4(
+                Results = ReviewCheckListHelper.Search_Type4(
                     year, 
                     orgName, 
                     supervisor, 
@@ -1777,15 +1879,15 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             // 執行資格審查查詢
             if (category == "SCI" || string.IsNullOrEmpty(category))
             {
-                results = ReviewCheckListHelper.Search_SCI_Type1(
+                results = ReviewCheckListHelper.Search_Type1(
                     year,
+                    status,
                     orgName,
                     supervisor,
-                    keyword,
-                    status);
+                    keyword
+                    );
             }
             
-            // TODO: 之後要新增其他類別的搜尋function並合併結果
             
             return JsonConvert.SerializeObject(new
             {
@@ -1916,7 +2018,11 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                 // 年度與補助類別
                 Year = project.Year,
                 SubsidyPlanType = project.SubsidyPlanType,
-
+                //ReviewProgress,ReplyProgress
+                
+                ReviewProgress = progress?.ReviewProgress,
+                ReplyProgress = progress?.ReplyProgress,
+                
                 // 前端顯示進度用
                 ReviewProgressDisplay = progress?.ReviewProgressDisplay,
                 ReplyProgressDisplay = progress?.ReplyProgressDisplay,
@@ -1937,18 +2043,18 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                 // 審查進度篩選
                 if (!string.IsNullOrEmpty(reviewProgress))
                 {
-                    if (reviewProgress == "已完成" && item.ReviewProgress != "完成")
+                    if (reviewProgress == "完成" && item.ReviewProgress != "完成")
                         includeItem = false;
-                    else if (reviewProgress == "進行中" && item.ReviewProgress != "未完成")
+                    else if (reviewProgress == "未完成" && item.ReviewProgress != "未完成")
                         includeItem = false;
                 }
 
                 // 回覆進度篩選
                 if (!string.IsNullOrEmpty(replyProgress) && includeItem)
                 {
-                    if (replyProgress == "已完成" && item.ReplyProgress != "完成")
+                    if (replyProgress == "完成" && item.ReplyProgress != "完成")
                         includeItem = false;
-                    else if (replyProgress == "進行中" && item.ReplyProgress != "未完成")
+                    else if (replyProgress == "未完成" && item.ReplyProgress != "未完成")
                         includeItem = false;
                 }
 
@@ -2006,6 +2112,90 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
         }
     }
 
+    #endregion
+    
+    #region Type5 搜尋方法
+
+    /// <summary>
+    /// AJAX Type5 搜尋方法 - 計畫變更審核
+    /// </summary>
+    [WebMethod]
+    public static string AjaxSearch_Type5(string year, string category, string orgName, string supervisoryUnit, string keyword)
+    {
+        try
+        {
+            // 執行計畫變更審核查詢（前端分頁）
+            List<PlanChangeReviewItem> results = ReviewCheckListHelper.Search_Type5_PlanChangeReview(
+                year, 
+                category, 
+                orgName, 
+                supervisoryUnit, 
+                keyword
+            );
+            
+            return JsonConvert.SerializeObject(new
+            {
+                success = true,
+                data = results,
+                count = results.Count,
+                message = $"成功搜尋到 {results.Count} 筆資料"
+            });
+        }
+        catch (Exception ex)
+        {
+            return JsonConvert.SerializeObject(new
+            {
+                success = false,
+                message = "搜尋時發生錯誤: " + ex.Message,
+                data = new List<PlanChangeReviewItem>(),
+                count = 0
+            });
+        }
+    }
+
+    /// <summary>
+    /// AJAX 搜尋 Type=6 執行計畫審核資料
+    /// </summary>
+    /// <param name="year">年度</param>
+    /// <param name="category">類別</param>
+    /// <param name="orgName">申請單位</param>
+    /// <param name="supervisoryUnit">主管單位</param>
+    /// <param name="keyword">關鍵字</param>
+    /// <returns>JSON格式的搜尋結果</returns>
+    [WebMethod]
+    public static string AjaxSearch_Type6(string year, string category, string orgName, string supervisoryUnit, string keyword)
+    {
+        try
+        {
+            // 執行計畫審核查詢（前端分頁）
+            List<ExecutionPlanReviewItem> results = ReviewCheckListHelper.Search_Type6_ExecutionPlanReview(
+                year, 
+                category, 
+                orgName, 
+                supervisoryUnit, 
+                keyword
+            );
+            
+            return JsonConvert.SerializeObject(new
+            {
+                success = true,
+                data = results,
+                count = results.Count,
+                message = $"成功搜尋到 {results.Count} 筆資料"
+            });
+        }
+        catch (Exception ex)
+        {
+            return JsonConvert.SerializeObject(new
+            {
+                success = false,
+                message = "搜尋時發生錯誤: " + ex.Message,
+                data = new List<ExecutionPlanReviewItem>(),
+                count = 0
+            });
+        }
+    }
+    
     #endregion
 
 }

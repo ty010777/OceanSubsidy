@@ -1,3 +1,4 @@
+
 .btn {
     padding: 8px 14px;
     min-width: 90px;
@@ -40,7 +41,7 @@
         color: #fff;
     }
 }
-.btn-teal {
+.btn-teal,.btn-blue-green2 {
     background-color: $teal;
     color: #fff;
     border: 1px solid $teal;
@@ -74,6 +75,24 @@
     }
     &:focus {
         background-color: $blue-active;
+        color: #fff;
+    }
+}
+.btn-blue-deep {
+    background-color: $blue-deep;
+    color: #fff;
+    border: 1px solid $blue-deep;
+    border-radius: 4px;
+    &:hover {
+        background-color: $blue-deep-hover;
+        color: #fff;
+    }
+    &:active {
+        background-color: $blue-deep !important ;
+        color: #fff !important;
+    }
+    &:focus {
+        background-color: $blue-deep;
         color: #fff;
     }
 }
@@ -153,7 +172,7 @@
     }
 }
 
-.btn-teal-dark {
+.btn-teal-dark,.btn-dark-green2{
     background-color: $teal-dark;
     color: #fff;
     border: 1px solid $teal-dark;
@@ -281,7 +300,6 @@
     font-size: 1rem;
     text-align: center;
     margin-bottom: 6px;
-    min-width: 33px;
     min-height: 33px;
     svg {
         height: 14px;

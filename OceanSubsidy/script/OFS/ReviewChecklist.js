@@ -4,6 +4,34 @@
  * 處理頁面切換、URL參數管理等功能
  */
 
+/**
+ * 將英文類別代碼轉換為中文類別名稱
+ * @param {string} categoryCode - 英文類別代碼
+ * @returns {string} 中文類別名稱
+ */
+function convertCategoryCodeToName(categoryCode) {
+    if (!categoryCode) return '';
+    
+    switch (categoryCode.toUpperCase()) {
+        case 'SCI':
+            return '科專';
+        case 'CUL':
+            return '文化';
+        case 'EDC':
+            return '學校民間';
+        case 'CLB':
+            return '學校社團';
+        case 'MUL':
+            return '多元';
+        case 'LIT':
+            return '素養';
+        case 'ACC':
+            return '無障礙';
+        default:
+            return categoryCode;
+    }
+}
+
 window.ReviewChecklist = (function() {
     'use strict';
 
@@ -633,6 +661,10 @@ window.ReviewChecklist = (function() {
                 return createType4TableRow(item, index);
             } else if (currentType === '2' || currentType === '3') {
                 return createType2TableRow(item, index);
+            } else if (currentType === '5') {
+                return createType5TableRow(item, index);
+            } else if (currentType === '6') {
+                return createType6TableRow(item, index);
             } else {
                 return createType1TableRow(item, index);
             }
@@ -666,7 +698,7 @@ window.ReviewChecklist = (function() {
                 <td data-th="計畫名稱:" style="text-align: left;">
                     <a href="#" class="link-black" target="_blank">${item.ProjectNameTw || ''}</a>
                 </td>
-                <td data-th="申請單位:" style="text-align: left;">${item.UserOrg || ''}</td>
+                <td data-th="申請單位:" style="text-align: left;">${item.OrgName || ''}</td>
                 <td data-th="申請經費:">${item.Req_SubsidyAmount}</td>
                 <td data-th="狀態:" nowrap>
                     <span class="${statusClass}">${item.StatusesName || ''}</span>
@@ -775,6 +807,76 @@ window.ReviewChecklist = (function() {
                 </td>
                 <td data-th="修正計畫書:" class="text-center">
                     ${planRevisionContent}
+                </td>
+            </tr>
+        `;
+    }
+
+    /**
+     * 建立 Type5 表格行 (計畫變更審核)
+     * @param {Object} item - 資料項目
+     * @param {number} index - 序號
+     * @returns {string} HTML 字串
+     */
+    function createType5TableRow(item, index) {
+        const year = item.Year || '';
+        const projectId = item.ProjectID || '';
+        const category = item.Category || '';
+        const categoryDisplay = convertCategoryCodeToName(category); // 轉換為中文顯示
+        const projectName = item.ProjectNameTw || '';
+        const orgName = item.OrgName || '';
+        
+        return `
+            <tr>
+                <td data-th="年度:">${year}</td>
+                <td data-th="計畫編號:" style="text-align: left;" nowrap>${projectId}</td>
+                <td data-th="類別:" style="text-align: center;">${categoryDisplay}</td>
+                <td data-th="計畫名稱:" style="text-align: left;">
+                    <a href="#" class="link-black" target="_blank">${projectName}</a>
+                </td>
+                <td data-th="申請單位:" style="text-align: left;">${orgName}</td>
+                <td data-th="操作:" style="text-align: center;">
+                    <div class="d-flex align-items-center justify-content-center gap-1">
+                        <button class="btn btn-sm btn-teal-dark" type="button" onclick="handlePlanChangeReview('${projectId}')">
+                            <i class="fas fa-clipboard-check" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="審核"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
+
+    /**
+     * 建立 Type6 表格行 (執行計畫審核)
+     * @param {Object} item - 資料項目
+     * @param {number} index - 序號
+     * @returns {string} HTML 字串
+     */
+    function createType6TableRow(item, index) {
+        const year = item.Year || '';
+        const projectId = item.ProjectID || '';
+        const category = item.Category || '';
+        const categoryDisplay = convertCategoryCodeToName(category); // 轉換為中文顯示
+        const projectName = item.ProjectNameTw || '';
+        const orgName = item.OrgName || '';
+        const reviewItem = item.ReviewTodo || '';  // 待審項目
+        
+        return `
+            <tr>
+                <td data-th="年度:">${year}</td>
+                <td data-th="類別:" style="text-align: center;">${categoryDisplay}</td>
+                <td data-th="計畫編號:" style="text-align: left;" nowrap>${projectId}</td>
+                <td data-th="計畫名稱:" style="text-align: left;">
+                    <a href="#" class="link-black" target="_blank">${projectName}</a>
+                </td>
+                <td data-th="申請單位:" style="text-align: left;">${orgName}</td>
+                <td data-th="待審項目:" style="text-align: left;">${reviewItem}</td>
+                <td data-th="功能:" class="text-center">
+                    <div class="d-flex align-items-center justify-content-center gap-1">
+                        <button class="btn btn-sm btn-teal-dark" type="button" onclick="handleExecutionPlanReview('${projectId}','${reviewItem}')">
+                            <i class="fas fa-clipboard-check" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="審查"></i>
+                        </button>
+                    </div>
                 </td>
             </tr>
         `;
@@ -1474,6 +1576,139 @@ function handleType4ApprovalSave() {
 }
 
 /**
+ * Type5 計畫變更審核處理函數 - 全域函數供按鈕直接調用
+ * @param {string} projectId - 計畫編號
+ */
+function handlePlanChangeReview(projectId) {
+    try {
+        if (!projectId) {
+            Swal.fire({
+                title: '參數錯誤',
+                text: '計畫編號不能為空',
+                icon: 'error',
+                confirmButtonText: '確定'
+            });
+            return;
+        }
+
+        // TODO: 導向到計畫變更審核頁面
+        // 根據計畫編號的類型決定跳轉到對應的審核頁面
+        // TODO 正文 請提供 變更計畫時 所需跳轉的各類型計畫變更審核頁面 URL
+        let reviewUrl = '';
+        
+        if (projectId.includes('SCI')) {
+            // 科專計畫變更審核頁面
+            reviewUrl = `SCI/SciInprogress_Approved.aspx?ProjectID=${projectId}`;
+        } else if (projectId.includes('CUL')) {
+            // 文化計畫變更審核頁面
+            
+        } else if (projectId.includes('EDC')) {
+            // 學校民間計畫變更審核頁面
+            
+        } else if (projectId.includes('CLB')) {
+            // 學校社團計畫變更審核頁面
+            
+        } else if (projectId.includes('MUL')) {
+            // 多元計畫變更審核頁面
+            
+        } else if (projectId.includes('LIT')) {
+            // 素養計畫變更審核頁面
+            
+        } else if (projectId.includes('ACC')) {
+            // 無障礙計畫變更審核頁面
+            
+        }
+        
+        if (reviewUrl) {
+            // 跳轉到對應的審核頁面
+            window.location.href = reviewUrl;
+        } else {
+            Swal.fire({
+                title: '功能開發中',
+                text: `該類型計畫 (${projectId}) 的變更審核功能尚未開放`,
+                icon: 'info',
+                confirmButtonText: '確定'
+            });
+        }
+
+    } catch (error) {
+        console.error('處理計畫變更審核時發生錯誤:', error);
+        Swal.fire({
+            title: '系統錯誤',
+            text: '處理計畫變更審核時發生錯誤',
+            icon: 'error',
+            confirmButtonText: '確定'
+        });
+    }
+}
+
+/**
+ * Type6 執行計畫審核處理函數 - 全域函數供按鈕直接調用
+ * @param {string} projectId - 計畫編號
+ */
+function handleExecutionPlanReview(projectId,reviewItem) {
+    try {
+        if (!projectId) {
+            Swal.fire({
+                title: '參數錯誤',
+                text: '計畫編號不能為空',
+                icon: 'error',
+                confirmButtonText: '確定'
+            });
+            return;
+        }
+
+        // TODO: 正文 導向到執行計畫審核頁面 的網址
+        // 根據計畫編號的類型決定跳轉到對應的審核頁面
+        let reviewUrl = '';
+        
+        if (projectId.includes('SCI')) {
+            // 科專執行計畫審核頁面
+            if(reviewItem.includes('檢核')) {
+                reviewUrl = `SCI/SciInterimReport.aspx?ProjectID=${projectId}`;
+            }
+            else if (reviewItem.includes('請款')){
+                reviewUrl = `SCI/SciReimbursement.aspx?ProjectID=${projectId}`;
+            }
+        } else if (projectId.includes('CUL')) {
+            // 文化執行計畫審核頁面
+            
+        } else if (projectId.includes('EDC')) {
+            // 學校民間執行計畫審核頁面
+        } else if (projectId.includes('CLB')) {
+            // 學校社團執行計畫審核頁面
+        } else if (projectId.includes('MUL')) {
+            // 多元執行計畫審核頁面
+        } else if (projectId.includes('LIT')) {
+            // 素養執行計畫審核頁面
+        } else if (projectId.includes('ACC')) {
+            // 無障礙執行計畫審核頁面
+        }
+        
+        if (reviewUrl) {
+            // 跳轉到對應的審核頁面
+            window.location.href = reviewUrl;
+        } else {
+            Swal.fire({
+                title: '功能開發中',
+                text: `該類型計畫 (${projectId}) 的執行計畫審核功能尚未開放`,
+                icon: 'info',
+                confirmButtonText: '確定'
+            });
+        }
+
+    } catch (error) {
+        console.error('處理執行計畫審核時發生錯誤:', error);
+        Swal.fire({
+            title: '系統錯誤',
+            text: '處理執行計畫審核時發生錯誤',
+            icon: 'error',
+            confirmButtonText: '確定'
+        });
+    }
+}
+
+/**
  * 處理提送申請者修正計畫書 - 全域函數供按鈕直接調用
  */
 function handleSendToApplicant() {
@@ -2150,21 +2385,27 @@ window.PaginationManager = {
     data: {
         type1: [],
         type2: [],
-        type3: []
+        type3: [],
+        type5: [],
+        type6: []
     },
     
     // 當前頁
     currentPage: {
         type1: 1,
         type2: 1,
-        type3: 1
+        type3: 1,
+        type5: 1,
+        type6: 1
     },
     
     // 總頁數
     totalPages: {
         type1: 0,
         type2: 0,
-        type3: 0
+        type3: 0,
+        type5: 0,
+        type6: 0
     },
     
     // 通用設定
@@ -2194,6 +2435,16 @@ window.PaginationManager = {
         // Type3 數據收集函數
         window.collectType3DataNow = function() {
             self.collectTypeData('type3');
+        };
+        
+        // Type5 數據收集函數
+        window.collectType5DataNow = function() {
+            self.collectTypeData('type5');
+        };
+        
+        // Type6 數據收集函數
+        window.collectType6DataNow = function() {
+            self.collectTypeData('type6');
         };
     },
     
@@ -2343,6 +2594,100 @@ window.PaginationManager = {
                 self.renderPage('type3');
             }
         });
+
+        // Type5 分頁按鈕點擊事件
+        $(document).on('click', '#pagination-type5 .pagination-btn', function(e) {
+            e.preventDefault();
+            const page = parseInt($(this).data('page'));
+            if (page && page !== self.currentPage.type5) {
+                self.currentPage.type5 = page;
+                self.renderPage('type5');
+            }
+        });
+        
+        // Type5 前一頁按鈕
+        $(document).on('click', '#pagination-type5 .btn-prev-page', function(e) {
+            e.preventDefault();
+            if (self.currentPage.type5 > 1) {
+                self.currentPage.type5--;
+                self.renderPage('type5');
+            }
+        });
+        
+        // Type5 下一頁按鈕
+        $(document).on('click', '#pagination-type5 .btn-next-page', function(e) {
+            e.preventDefault();
+            if (self.currentPage.type5 < self.totalPages.type5) {
+                self.currentPage.type5++;
+                self.renderPage('type5');
+            }
+        });
+        
+        // Type5 每頁顯示筆數選擇
+        $(document).on('change', '#pagination-type5 .page-size-selector', function() {
+            const newPageSize = parseInt($(this).val());
+            if (newPageSize && newPageSize !== self.pageSize) {
+                self.pageSize = newPageSize;
+                self.currentPage.type5 = 1; // 重設到第一頁
+                self.renderPage('type5');
+            }
+        });
+        
+        // Type5 跳到指定頁
+        $(document).on('change', '#pagination-type5 .jump-to-page', function() {
+            const targetPage = parseInt($(this).val());
+            if (targetPage && targetPage !== self.currentPage.type5 && targetPage >= 1 && targetPage <= self.totalPages.type5) {
+                self.currentPage.type5 = targetPage;
+                self.renderPage('type5');
+            }
+        });
+
+        // Type6 分頁按鈕點擊事件
+        $(document).on('click', '#pagination-type6 .pagination-btn', function(e) {
+            e.preventDefault();
+            const page = parseInt($(this).data('page'));
+            if (page && page !== self.currentPage.type6) {
+                self.currentPage.type6 = page;
+                self.renderPage('type6');
+            }
+        });
+        
+        // Type6 前一頁按鈕
+        $(document).on('click', '#pagination-type6 .btn-prev-page', function(e) {
+            e.preventDefault();
+            if (self.currentPage.type6 > 1) {
+                self.currentPage.type6--;
+                self.renderPage('type6');
+            }
+        });
+        
+        // Type6 下一頁按鈕
+        $(document).on('click', '#pagination-type6 .btn-next-page', function(e) {
+            e.preventDefault();
+            if (self.currentPage.type6 < self.totalPages.type6) {
+                self.currentPage.type6++;
+                self.renderPage('type6');
+            }
+        });
+        
+        // Type6 每頁顯示筆數選擇
+        $(document).on('change', '#pagination-type6 .page-size-selector', function() {
+            const newPageSize = parseInt($(this).val());
+            if (newPageSize && newPageSize !== self.pageSize) {
+                self.pageSize = newPageSize;
+                self.currentPage.type6 = 1; // 重設到第一頁
+                self.renderPage('type6');
+            }
+        });
+        
+        // Type6 跳到指定頁
+        $(document).on('change', '#pagination-type6 .jump-to-page', function() {
+            const targetPage = parseInt($(this).val());
+            if (targetPage && targetPage !== self.currentPage.type6 && targetPage >= 1 && targetPage <= self.totalPages.type6) {
+                self.currentPage.type6 = targetPage;
+                self.renderPage('type6');
+            }
+        });
     },
     
     /**
@@ -2389,6 +2734,8 @@ window.PaginationManager = {
         }
         
         const typeNum = type.replace('type', '');
+        
+        // 所有類型統一使用前端分頁 (仿照Type=1)
         this.totalPages[type] = Math.ceil(this.data[type].length / this.pageSize);
         
         const startIndex = (this.currentPage[type] - 1) * this.pageSize;
@@ -2411,7 +2758,7 @@ window.PaginationManager = {
         // 清空表格
         $tableBody.empty();
         
-        // 填入當前頁資料
+        // 填入當前頁資料 (所有類型統一處理 - 仿照Type=1)
         pageData.forEach(function(row) {
             $tableBody.append(row);
         });
@@ -2560,13 +2907,21 @@ $(document).ready(function() {
 window.ReviewChecklistManager = window.ReviewChecklist;
 
 /**
- * AJAX搜尋功能 - 支援Type1、Type2、Type3
- * @param {number} searchType - 搜尋類型 (1, 2, 3)
+ * AJAX搜尋功能 - 支援Type1、Type2、Type3、Type5、Type6
+ * @param {number} searchType - 搜尋類型 (1, 2, 3, 5, 6)
  */
 function performAjaxSearch(searchType) {
     try {
         // 顯示載入狀態
         showSearchLoading(searchType, true);
+        
+        // 重設分頁 (除非是分頁導航觸發的搜尋)
+        if (window.PaginationManager && !window.PaginationManager._isPaginationNavigation) {
+            if (searchType === 5 || searchType === 6) {
+                const type = `type${searchType}`;
+                window.PaginationManager.currentPage[type] = 1;
+            }
+        }
         
         // 收集對應類型的查詢條件
         const searchData = collectSearchConditions(searchType);
@@ -2639,6 +2994,22 @@ function collectSearchConditions(searchType) {
                 data.keyword = $('input[name="txtKeyword_Type3"]').val() || '';
                 break;
                 
+            case 5:
+                data.year = $(`select[name$="ddlYear_Type5"]`).val() || '';
+                data.category = $(`select[name$="ddlCategory_Type5"]`).val() || '';
+                data.orgName = $(`select[name$="ddlOrg_Type5"]`).val() || '';
+                data.supervisoryUnit = $(`select[name$="ddlDepartment_Type5"]`).val() || '';
+                data.keyword = $('input[name="txtKeyword_Type5"]').val() || '';
+                break;
+                
+            case 6:
+                data.year = $(`select[name$="ddlYear_Type6"]`).val() || '';
+                data.category = $(`select[name$="ddlCategory_Type6"]`).val() || '';
+                data.orgName = $(`select[name$="ddlOrg_Type6"]`).val() || '';
+                data.supervisoryUnit = $(`select[name$="ddlDepartment_Type6"]`).val() || '';
+                data.keyword = $('input[name="txtKeyword_Type6"]').val() || '';
+                break;
+                
             default:
                 throw new Error(`不支援的搜尋類型: ${searchType}`);
         }
@@ -2683,7 +3054,7 @@ function handleSearchResponse(response, searchType) {
         }
         
         if (result && result.success) {
-            // 使用現有的renderSearchResults方法渲染結果
+            // 使用現有的renderSearchResults方法渲染結果 (所有類型統一處理)
             if (typeof window.ReviewChecklistManager !== 'undefined') {
                 window.ReviewChecklistManager.renderSearchResults(result.data, searchType);
             }

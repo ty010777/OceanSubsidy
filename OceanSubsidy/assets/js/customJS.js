@@ -84,188 +84,38 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 初始化滾動監聽
     initializeScrollSpy();
+    
+    // 初始化 Tom Select
+    initializeTomSelect();
 
 });
 
 
 // ===================================================
 // 自動調整高度的文本區域功能
-// ===================================================
-/**
- * 初始化所有自動調整高度的文本區域
- */
 function initializeAutoResizeTextareas() {
-    // 處理真正的 textarea 元素
     const textareas = document.querySelectorAll('textarea.textarea-auto-resize');
+    
     textareas.forEach(textarea => {
-        // 初始設定高度
-        autoResizeTextarea(textarea);
+        const handleResize = () => {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        };
         
-        // 監聽輸入事件
-        textarea.addEventListener('input', () => autoResizeTextarea(textarea));
-        textarea.addEventListener('focus', () => autoResizeTextarea(textarea));
-    });
-    
-    // 處理 contenteditable 元素
-    const editableElements = document.querySelectorAll('[contenteditable].textarea');
-    editableElements.forEach(element => {
-        // 初始化 placeholder 顯示
-        handlePlaceholderDisplay(element);
+        // 初始設定
+        handleResize();
         
-        // 監聽輸入事件
-        element.addEventListener('input', () => autoResizeContentEditable(element));
-        element.addEventListener('focus', () => autoResizeContentEditable(element));
-        element.addEventListener('blur', () => autoResizeContentEditable(element));
-        element.addEventListener('paste', (e) => handlePaste(e, element));
-        
-        // 監聽鍵盤事件（處理刪除鍵等）
-        element.addEventListener('keyup', () => autoResizeContentEditable(element));
+        // 監聽事件
+        textarea.addEventListener('input', handleResize);
+        textarea.addEventListener('focus', handleResize);
     });
 }
-
-/**
- * 自動調整 textarea 高度
- * @param {HTMLTextAreaElement} textarea 
- */
-function autoResizeTextarea(textarea) {
-    // 重置高度以獲得正確的 scrollHeight
-    textarea.style.height = 'auto';
-    
-    // 計算新高度
-    const computedStyle = window.getComputedStyle(textarea);
-    const paddingTop = parseFloat(computedStyle.paddingTop);
-    const paddingBottom = parseFloat(computedStyle.paddingBottom);
-    const borderTop = parseFloat(computedStyle.borderTopWidth);
-    const borderBottom = parseFloat(computedStyle.borderBottomWidth);
-    
-    const minHeight = parseFloat(computedStyle.minHeight) || 48; // 3rem = 48px
-    const maxHeight = parseFloat(computedStyle.maxHeight) || 320; // 20rem = 320px
-    
-    // 使用 scrollHeight 獲得內容實際高度
-    let newHeight = textarea.scrollHeight + borderTop + borderBottom;
-    
-    // 限制在最小和最大高度之間
-    newHeight = Math.max(minHeight, Math.min(newHeight, maxHeight));
-    
-    // 設定新高度
-    textarea.style.height = newHeight + 'px';
-    
-    // 如果達到最大高度，顯示滾動條
-    if (newHeight >= maxHeight) {
-        textarea.style.overflowY = 'auto';
-    } else {
-        textarea.style.overflowY = 'hidden';
-    }
-}
-
-/**
- * 自動調整 contenteditable 元素高度
- * @param {HTMLElement} element 
- */
-function autoResizeContentEditable(element) {
-    // 處理 placeholder 顯示邏輯
-    handlePlaceholderDisplay(element);
-    
-    // contenteditable 元素會自然調整高度，但我們需要處理最大高度
-    const computedStyle = window.getComputedStyle(element);
-    const maxHeight = parseFloat(computedStyle.maxHeight) || 320;
-    
-    if (element.scrollHeight > maxHeight) {
-        element.style.height = maxHeight + 'px';
-        element.style.overflowY = 'auto';
-    } else {
-        element.style.height = 'auto';
-        element.style.overflowY = 'hidden';
-    }
-}
-
-/**
- * 處理 placeholder 的顯示邏輯
- * @param {HTMLElement} element 
- */
-function handlePlaceholderDisplay(element) {
-    // 獲取純文字內容（移除HTML標籤和多餘空白）
-    const textContent = element.textContent || element.innerText || '';
-    const trimmedContent = textContent.trim();
-    
-    // 如果內容為空或只有空白字符，確保元素被標記為空
-    if (trimmedContent === '') {
-        // 清空元素內容，觸發 :empty 偽類
-        if (element.innerHTML !== '') {
-            element.innerHTML = '';
-        }
-    }
-}
-
-/**
- * 處理 contenteditable 元素的貼上事件，確保貼上純文字
- * @param {Event} e 
- * @param {HTMLElement} element 
- */
-function handlePaste(e, element) {
-    e.preventDefault();
-    
-    // 獲取純文字內容
-    const text = (e.clipboardData || window.clipboardData).getData('text/plain');
-    
-    // 插入純文字
-    if (document.execCommand) {
-        document.execCommand('insertText', false, text);
-    } else {
-        // 現代瀏覽器的方法
-        const selection = window.getSelection();
-        if (selection.rangeCount > 0) {
-            const range = selection.getRangeAt(0);
-            range.deleteContents();
-            range.insertNode(document.createTextNode(text));
-            range.collapse(false);
-            selection.removeAllRanges();
-            selection.addRange(range);
-        }
-    }
-    
-    // 觸發調整大小
-    autoResizeContentEditable(element);
-}
-
-/**
- * 為動態添加的元素初始化自動調整功能
- * @param {HTMLElement} container 
- */
-function initializeNewAutoResizeElements(container = document) {
-    const newTextareas = container.querySelectorAll('textarea.textarea-auto-resize:not([data-auto-resize-initialized])');
-    const newEditables = container.querySelectorAll('[contenteditable].textarea:not([data-auto-resize-initialized])');
-    
-    newTextareas.forEach(textarea => {
-        autoResizeTextarea(textarea);
-        textarea.addEventListener('input', () => autoResizeTextarea(textarea));
-        textarea.addEventListener('focus', () => autoResizeTextarea(textarea));
-        textarea.setAttribute('data-auto-resize-initialized', 'true');
-    });
-    
-    newEditables.forEach(element => {
-        // 初始化 placeholder 顯示
-        handlePlaceholderDisplay(element);
-        
-        element.addEventListener('input', () => autoResizeContentEditable(element));
-        element.addEventListener('focus', () => autoResizeContentEditable(element));
-        element.addEventListener('blur', () => autoResizeContentEditable(element));
-        element.addEventListener('paste', (e) => handlePaste(e, element));
-        element.addEventListener('keyup', () => autoResizeContentEditable(element));
-        element.setAttribute('data-auto-resize-initialized', 'true');
-    });
-}
-
+// ===================================================
 
 
 // ===================================================
-// 聲明書閱讀滾動事件功能
-// ===================================================
-
-/**
- * 初始化聲明書閱讀滾動事件
- * 當滾動到最下方時，才解除 checkbox 的 disabled 狀態
- */
+//初始化聲明書閱讀滾動事件
+//當滾動到最下方時，才解除 checkbox 的 disabled 狀態
 function initializeAgreementScroll() {
     const agreementContent = document.getElementById('agreementContent');
     const agreeCheckbox = document.getElementById('agreeTerms');
@@ -337,8 +187,10 @@ function checkInitialScrollState(scrollContainer, checkbox) {
         }
              }, 100);
  }
+// ===================================================
 
 
+// ===================================================
 // 錨點選單平滑滑動
 function initializeAnchorMenu() {
     document.querySelectorAll('.anchor-wrapper .anchor-menu-item').forEach(item => {
@@ -434,8 +286,55 @@ function initializeScrollSpy() {
     
     updateActive(); // 初始檢查
 }
+// ===================================================
+
+
 
 // Fancybox
 Fancybox.bind("[data-fancybox]", {
     // Your custom options
 });
+
+// Tom Select 初始化
+function initializeTomSelect() {
+    // 年度多選下拉選單
+    const yearSelect = document.getElementById('year-select');
+    if (yearSelect) {
+        new TomSelect('#year-select', {
+            plugins: ['remove_button'],
+            placeholder: '請選擇年度...',
+            allowEmptyOption: false,
+            closeAfterSelect: false,
+            maxItems: null, // 允許選擇所有項目
+            render: {
+                item: function(data, escape) {
+                    return '<div class="item">' + escape(data.text) + '</div>';
+                },
+                option: function(data, escape) {
+                    return '<div class="option">' + escape(data.text) + '</div>';
+                }
+            }
+        });
+    }
+    
+    // 類別多選下拉選單
+    const categorySelect = document.getElementById('category-select');
+    if (categorySelect) {
+        new TomSelect('#category-select', {
+            plugins: ['remove_button'],
+            placeholder: '請選擇類別...',
+            allowEmptyOption: false,
+            closeAfterSelect: false,
+            maxItems: null, // 允許選擇所有項目
+            render: {
+                item: function(data, escape) {
+                    return '<div class="item">' + escape(data.text) + '</div>';
+                },
+                option: function(data, escape) {
+                    return '<div class="option">' + escape(data.text) + '</div>';
+                }
+            }
+        });
+    }
+}
+

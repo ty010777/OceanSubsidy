@@ -103,3 +103,32 @@
     }
 
 }
+
+// 經費顯示樣式
+.total-label {
+    border-left: 10px solid $teal-dark;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    background-color: $neutral-100;
+    .total-label-item-title {
+        font-size: 21.6px;
+        font-weight: 700;
+        color: $teal-dark;
+    }
+    .total-label-item-content {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        .count {
+            font-size: 39px;
+            color: $dark-green;
+        }
+        .unit {
+            font-size: 21.6px;
+            color: $teal-dark;
+        }
+    }
+}

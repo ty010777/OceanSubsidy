@@ -431,5 +431,182 @@ namespace GS.OCA_OceanSubsidy.Model.OFS
         public int EndRecord => Math.Min(PageNumber * PageSize, TotalRecords);
     }
 
+    /// <summary>
+    /// 計畫變更審核項目資料類別 - 用於 Type=5
+    /// </summary>
+    [Serializable]
+    public class PlanChangeReviewItem
+    {
+        /// <summary>
+        /// 年度
+        /// </summary>
+        public string Year { get; set; }
+
+        /// <summary>
+        /// 計畫編號
+        /// </summary>
+        public string ProjectID { get; set; }
+
+        /// <summary>
+        /// 類別
+        /// </summary>
+        public string Category { get; set; }
+
+        /// <summary>
+        /// 計畫名稱(中文)
+        /// </summary>
+        public string ProjectNameTw { get; set; }
+
+        /// <summary>
+        /// 申請單位
+        /// </summary>
+        public string OrgName { get; set; }
+
+        /// <summary>
+        /// 主管單位
+        /// </summary>
+        public string SupervisoryUnit { get; set; }
+        
+        /// <summary>
+        /// 取得類別顯示名稱 (渲染時使用)
+        /// </summary>
+        public string GetCategoryDisplayName()
+        {
+            switch (Category?.ToUpper())
+            {
+                case "SCI":
+                    return "科專";
+                case "CUL":
+                    return "文化";
+                case "EDC":
+                    return "學校民間";
+                case "CLB":
+                    return "學校社團";
+                case "MUL":
+                    return "多元";
+                case "LIT":
+                    return "素養";
+                case "ACC":
+                    return "無障礙";
+                default:
+                    return Category ?? "";
+            }
+        }
+        
+        /// <summary>
+        /// 取得主管單位顯示名稱
+        /// </summary>
+        public string GetSupervisoryUnitDisplayName()
+        {
+            switch (SupervisoryUnit?.ToUpper())
+            {
+                case "TECH":
+                    return "海洋科技科";
+                case "CULTURE":
+                    return "海洋文化科";
+                case "EDUCATION":
+                    return "海洋教育科";
+                default:
+                    return SupervisoryUnit ?? "";
+            }
+        }
+    }
+
+    /// <summary>
+    /// 執行計畫審核項目資料類別 - 用於 Type=6
+    /// </summary>
+    [Serializable]
+    public class ExecutionPlanReviewItem
+    {
+        /// <summary>
+        /// 年度
+        /// </summary>
+        public string Year { get; set; }
+
+        /// <summary>
+        /// 計畫編號
+        /// </summary>
+        public string ProjectID { get; set; }
+
+        /// <summary>
+        /// 類別 (直接儲存中文名稱如:科專、文化、學校民間、學校社團等)
+        /// </summary>
+        public string Category { get; set; }
+
+        /// <summary>
+        /// 階段
+        /// </summary>
+        public string Stage { get; set; }
+
+        /// <summary>
+        /// 審核待辦事項
+        /// </summary>
+        public string ReviewTodo { get; set; }
+
+        /// <summary>
+        /// 主管人員帳號
+        /// </summary>
+        public string SupervisoryPersonAccount { get; set; }
+
+        /// <summary>
+        /// 主管單位 (完整名稱如:海洋委員會科技文教處海洋科技科)
+        /// </summary>
+        public string SupervisoryUnit { get; set; }
+
+        /// <summary>
+        /// 申請單位
+        /// </summary>
+        public string OrgName { get; set; }
+
+        /// <summary>
+        /// 計畫名稱(中文)
+        /// </summary>
+        public string ProjectNameTw { get; set; }
+        
+        /// <summary>
+        /// 取得類別顯示名稱 (渲染時使用)
+        /// </summary>
+        public string GetCategoryDisplayName()
+        {
+            switch (Category?.ToUpper())
+            {
+                case "SCI":
+                    return "科專";
+                case "CUL":
+                    return "文化";
+                case "EDC":
+                    return "學校民間";
+                case "CLB":
+                    return "學校社團";
+                case "MUL":
+                    return "多元";
+                case "LIT":
+                    return "素養";
+                case "ACC":
+                    return "無障礙";
+                default:
+                    return Category ?? "";
+            }
+        }
+
+        /// <summary>
+        /// 取得主管單位簡稱 (用於下拉選單比對)
+        /// </summary>
+        public string GetSupervisoryUnitShortName()
+        {
+            if (string.IsNullOrEmpty(SupervisoryUnit)) 
+                return "";
+            
+            if (SupervisoryUnit.Contains("海洋科技科"))
+                return "海洋科技科";
+            else if (SupervisoryUnit.Contains("海洋文化科"))
+                return "海洋文化科";
+            else if (SupervisoryUnit.Contains("海洋教育科"))
+                return "海洋教育科";
+            else
+                return SupervisoryUnit;
+        }
+    }
+
     #endregion
 }

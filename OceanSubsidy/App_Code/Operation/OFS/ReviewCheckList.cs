@@ -20,6 +20,70 @@ public class ReviewCheckListHelper
         //
     }
 
+    #region 資料轉換方法
+
+    /// <summary>
+    /// 將英文類別代碼轉換為中文類別名稱
+    /// </summary>
+    /// <param name="categoryCode">英文類別代碼</param>
+    /// <returns>中文類別名稱</returns>
+    public static string ConvertCategoryCodeToName(string categoryCode)
+    {
+        if (string.IsNullOrEmpty(categoryCode)) return "";
+        
+        switch (categoryCode.ToUpper())
+        {
+            case "SCI":
+                return "科專";
+            case "CUL":
+                return "文化";
+            case "EDC":
+                return "學校民間";
+            case "CLB":
+                return "學校社團";
+            case "MUL":
+                return "多元";
+            case "LIT":
+                return "素養";
+            case "ACC":
+                return "無障礙";
+            default:
+                return categoryCode; // 如果找不到對應，返回原始值
+        }
+    }
+
+    /// <summary>
+    /// 將中文類別名稱轉換為英文類別代碼
+    /// </summary>
+    /// <param name="categoryName">中文類別名稱</param>
+    /// <returns>英文類別代碼</returns>
+    public static string ConvertCategoryNameToCode(string categoryName)
+    {
+        if (string.IsNullOrEmpty(categoryName)) return "";
+        
+        switch (categoryName)
+        {
+            case "科專":
+                return "SCI";
+            case "文化":
+                return "CUL";
+            case "學校民間":
+                return "EDC";
+            case "學校社團":
+                return "CLB";
+            case "多元":
+                return "MUL";
+            case "素養":
+                return "LIT";
+            case "無障礙":
+                return "ACC";
+            default:
+                return categoryName; // 如果找不到對應，返回原始值
+        }
+    }
+
+    #endregion
+
     #region 下拉選單資料載入方法
 
     /// <summary>
@@ -41,7 +105,94 @@ public class ReviewCheckListHelper
 
         return result;
     }
+    /// <summary>
+    /// 取得指定資格審查的申請單位選項
+    /// </summary>
+    /// <returns>申請單位清單</returns>
+    public static List<DropdownItem> GetType1OrgOptions()
+    {
+        DbHelper db = new DbHelper();
 
+        db.CommandText = @"
+            SELECT　distinct OrgName
+              FROM [OCA_OceanSubsidy].[dbo].[V_OFS_ReviewChecklist_type1]
+              WHERE OrgName != '' AND OrgName IS NOT NULL
+         ";
+        
+        
+        try
+        {
+            db.Parameters.Clear();
+
+            DataTable dt = db.GetTable();
+            List<DropdownItem> result = new List<DropdownItem>();
+
+            // 加入「全部申請單位」選項
+            result.Add(new DropdownItem { Value = "", Text = "全部申請單位" });
+
+            foreach (DataRow row in dt.Rows)
+            {
+                if (row["OrgName"] != DBNull.Value)
+                {
+                    string org = row["OrgName"].ToString();
+                    result.Add(new DropdownItem { Value = org, Text = org });
+                }
+            }
+            return result;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"取得申請單位選項時發生錯誤：{ex.Message}", ex);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+    /// <summary>
+    /// 取得指定資格審查的申請單位選項
+    /// </summary>
+    /// <returns>申請單位清單</returns>
+    public static List<DropdownItem> GetType4OrgOptions()
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            SELECT　distinct OrgName
+              FROM [OCA_OceanSubsidy].[dbo].[V_OFS_ReviewChecklist_type4]
+              WHERE OrgName != '' AND OrgName IS NOT NULL
+         ";
+        
+        
+        try
+        {
+            db.Parameters.Clear();
+
+            DataTable dt = db.GetTable();
+            List<DropdownItem> result = new List<DropdownItem>();
+
+            // 加入「全部申請單位」選項
+            result.Add(new DropdownItem { Value = "", Text = "全部申請單位" });
+
+            foreach (DataRow row in dt.Rows)
+            {
+                if (row["OrgName"] != DBNull.Value)
+                {
+                    string org = row["OrgName"].ToString();
+                    result.Add(new DropdownItem { Value = org, Text = org });
+                }
+            }
+            return result;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"取得申請單位選項時發生錯誤：{ex.Message}", ex);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
     /// <summary>
     /// 取得指定審查階段的申請單位選項
     /// </summary>
@@ -52,11 +203,13 @@ public class ReviewCheckListHelper
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
-            SELECT DISTINCT UserOrg
-            FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main]
-            WHERE UserOrg != '' AND UserOrg IS NOT NULL
-        ";
-
+         SELECT DISTINCT OrgName
+            FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main] PM
+	        LEFT JOIN OFS_SCI_Application_Main AM
+	        on AM.ProjectID = PM.ProjectID
+            WHERE OrgName != '' AND OrgName IS NOT NULL
+         ";
+        
         // 如果有指定審查階段，加入篩選條件
         if (!string.IsNullOrEmpty(status))
         {
@@ -79,19 +232,321 @@ public class ReviewCheckListHelper
 
             foreach (DataRow row in dt.Rows)
             {
-                if (row["UserOrg"] != DBNull.Value)
+                if (row["OrgName"] != DBNull.Value)
                 {
-                    string org = row["UserOrg"].ToString();
+                    string org = row["OrgName"].ToString();
                     result.Add(new DropdownItem { Value = org, Text = org });
                 }
             }
-
-            // TODO  目前只有科專，之後還要有文化、學校民間、學校社團等等的申請單位 和併入到result。
             return result;
         }
         catch (Exception ex)
         {
             throw new Exception($"取得申請單位選項時發生錯誤：{ex.Message}", ex);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 取得 Type6 執行計畫審核的申請單位選項
+    /// </summary>
+    /// <returns>申請單位清單</returns>
+    public static List<DropdownItem> GetType6OrgOptions()
+    {
+        DbHelper db = new DbHelper();
+        List<DropdownItem> result = new List<DropdownItem>();
+
+        try
+        {
+            db.CommandText = @"
+                SELECT distinct [OrgName]
+                FROM [OCA_OceanSubsidy].[dbo].[V_OFS_ReviewChecklist_type6]
+                WHERE [OrgName] IS NOT NULL AND [OrgName] != ''
+                ORDER BY [OrgName]
+            ";
+
+            DataTable dt = db.GetTable();
+
+            // 加入「全部申請單位」選項
+            result.Add(new DropdownItem { Value = "", Text = "全部申請單位" });
+
+            foreach (DataRow row in dt.Rows)
+            {
+                if (row["OrgName"] != DBNull.Value)
+                {
+                    string orgName = row["OrgName"].ToString().Trim();
+                    if (!string.IsNullOrEmpty(orgName))
+                    {
+                        result.Add(new DropdownItem { Value = orgName, Text = orgName });
+                    }
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine($"Type6 申請單位選項載入完成，共 {result.Count - 1} 個單位");
+            return result;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得 Type6 申請單位選項時發生錯誤：{ex.Message}");
+            throw new Exception($"取得 Type6 申請單位選項時發生錯誤：{ex.Message}", ex);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 取得 Type6 執行計畫審核的主管單位選項
+    /// </summary>
+    /// <returns>主管單位清單</returns>
+    public static List<DropdownItem> GetType6SupervisoryUnitOptions()
+    {
+        DbHelper db = new DbHelper();
+        List<DropdownItem> result = new List<DropdownItem>();
+
+        try
+        {
+            db.CommandText = @"
+                SELECT distinct [SupervisoryUnit]
+                FROM [OCA_OceanSubsidy].[dbo].[V_OFS_ReviewChecklist_type6]
+                WHERE [SupervisoryUnit] IS NOT NULL AND [SupervisoryUnit] != ''
+                ORDER BY [SupervisoryUnit]
+            ";
+
+            DataTable dt = db.GetTable();
+
+            // 加入「全部主管單位」選項
+            result.Add(new DropdownItem { Value = "", Text = "全部主管單位" });
+
+            foreach (DataRow row in dt.Rows)
+            {
+                if (row["SupervisoryUnit"] != DBNull.Value)
+                {
+                    string supervisoryUnit = row["SupervisoryUnit"].ToString().Trim();
+                    if (!string.IsNullOrEmpty(supervisoryUnit))
+                    {
+                        result.Add(new DropdownItem { Value = supervisoryUnit, Text = supervisoryUnit });
+                    }
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine($"Type6 主管單位選項載入完成，共 {result.Count - 1} 個單位");
+            return result;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得 Type6 主管單位選項時發生錯誤：{ex.Message}");
+            throw new Exception($"取得 Type6 主管單位選項時發生錯誤：{ex.Message}", ex);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 取得 Type5 計畫變更審核的申請單位選項
+    /// </summary>
+    /// <returns>申請單位清單</returns>
+    public static List<DropdownItem> GetType5OrgOptions()
+    {
+        DbHelper db = new DbHelper();
+        List<DropdownItem> result = new List<DropdownItem>();
+
+        try
+        {
+            db.CommandText = @"
+                SELECT distinct [OrgName]
+                FROM [OCA_OceanSubsidy].[dbo].[V_OFS_ReviewChecklist_type5]
+                WHERE [OrgName] IS NOT NULL AND [OrgName] != ''
+                ORDER BY [OrgName]
+            ";
+
+            DataTable dt = db.GetTable();
+
+            // 加入「全部申請單位」選項
+            result.Add(new DropdownItem { Value = "", Text = "全部申請單位" });
+
+            foreach (DataRow row in dt.Rows)
+            {
+                if (row["OrgName"] != DBNull.Value)
+                {
+                    string orgName = row["OrgName"].ToString().Trim();
+                    if (!string.IsNullOrEmpty(orgName))
+                    {
+                        result.Add(new DropdownItem { Value = orgName, Text = orgName });
+                    }
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine($"Type5 申請單位選項載入完成，共 {result.Count - 1} 個單位");
+            return result;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得 Type5 申請單位選項時發生錯誤：{ex.Message}");
+            throw new Exception($"取得 Type5 申請單位選項時發生錯誤：{ex.Message}", ex);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 取得 Type5 計畫變更審核的主管單位選項
+    /// </summary>
+    /// <returns>主管單位清單</returns>
+    public static List<DropdownItem> GetType5SupervisoryUnitOptions()
+    {
+        DbHelper db = new DbHelper();
+        List<DropdownItem> result = new List<DropdownItem>();
+
+        try
+        {
+            db.CommandText = @"
+                SELECT distinct [SupervisoryUnit]
+                FROM [OCA_OceanSubsidy].[dbo].[V_OFS_ReviewChecklist_type5]
+                WHERE [SupervisoryUnit] IS NOT NULL AND [SupervisoryUnit] != ''
+                ORDER BY [SupervisoryUnit]
+            ";
+
+            DataTable dt = db.GetTable();
+
+            // 加入「全部主管單位」選項
+            result.Add(new DropdownItem { Value = "", Text = "全部主管單位" });
+
+            foreach (DataRow row in dt.Rows)
+            {
+                if (row["SupervisoryUnit"] != DBNull.Value)
+                {
+                    string supervisoryUnit = row["SupervisoryUnit"].ToString().Trim();
+                    if (!string.IsNullOrEmpty(supervisoryUnit))
+                    {
+                        result.Add(new DropdownItem { Value = supervisoryUnit, Text = supervisoryUnit });
+                    }
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine($"Type5 主管單位選項載入完成，共 {result.Count - 1} 個單位");
+            return result;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得 Type5 主管單位選項時發生錯誤：{ex.Message}");
+            throw new Exception($"取得 Type5 主管單位選項時發生錯誤：{ex.Message}", ex);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 取得 Type1 資格審查的承辦人員選項
+    /// </summary>
+    /// <returns>承辦人員清單</returns>
+    public static List<DropdownItem> GetType1SupervisorOptions()
+    {
+        DbHelper db = new DbHelper();
+        List<DropdownItem> result = new List<DropdownItem>();
+
+        try
+        {
+            db.CommandText = @"
+                SELECT DISTINCT SupervisoryPersonAccount, SupervisoryPersonName
+                FROM [OCA_OceanSubsidy].[dbo].[V_OFS_ReviewChecklist_type1]
+                WHERE SupervisoryPersonAccount != '' 
+                  AND SupervisoryPersonName != ''
+                  AND SupervisoryPersonAccount IS NOT NULL
+                  AND SupervisoryPersonName IS NOT NULL
+                ORDER BY SupervisoryPersonName
+            ";
+
+            DataTable dt = db.GetTable();
+
+            // 加入「全部承辦人員」選項
+            result.Add(new DropdownItem { Value = "", Text = "全部承辦人員" });
+
+            foreach (DataRow row in dt.Rows)
+            {
+                if (row["SupervisoryPersonAccount"] != DBNull.Value && row["SupervisoryPersonName"] != DBNull.Value)
+                {
+                    string account = row["SupervisoryPersonAccount"].ToString().Trim();
+                    string name = row["SupervisoryPersonName"].ToString().Trim();
+                    
+                    if (!string.IsNullOrEmpty(account) && !string.IsNullOrEmpty(name))
+                    {
+                        result.Add(new DropdownItem { Value = account, Text = name });
+                    }
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine($"Type1 承辦人員選項載入完成，共 {result.Count - 1} 個人員");
+            return result;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得 Type1 承辦人員選項時發生錯誤：{ex.Message}");
+            throw new Exception($"取得 Type1 承辦人員選項時發生錯誤：{ex.Message}", ex);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 取得 Type4 決審核定的承辦人員選項
+    /// </summary>
+    /// <returns>承辦人員清單</returns>
+    public static List<DropdownItem> GetType4SupervisorOptions()
+    {
+        DbHelper db = new DbHelper();
+        List<DropdownItem> result = new List<DropdownItem>();
+
+        try
+        {
+            db.CommandText = @"
+                SELECT DISTINCT SupervisoryPersonAccount, SupervisoryPersonName
+                FROM [OCA_OceanSubsidy].[dbo].[V_OFS_ReviewChecklist_type4]
+                WHERE SupervisoryPersonAccount != '' 
+                  AND SupervisoryPersonName != ''
+                  AND SupervisoryPersonAccount IS NOT NULL
+                  AND SupervisoryPersonName IS NOT NULL
+                ORDER BY SupervisoryPersonName
+            ";
+
+            DataTable dt = db.GetTable();
+
+            // 加入「全部承辦人員」選項
+            result.Add(new DropdownItem { Value = "", Text = "全部承辦人員" });
+
+            foreach (DataRow row in dt.Rows)
+            {
+                if (row["SupervisoryPersonAccount"] != DBNull.Value && row["SupervisoryPersonName"] != DBNull.Value)
+                {
+                    string account = row["SupervisoryPersonAccount"].ToString().Trim();
+                    string name = row["SupervisoryPersonName"].ToString().Trim();
+                    
+                    if (!string.IsNullOrEmpty(account) && !string.IsNullOrEmpty(name))
+                    {
+                        result.Add(new DropdownItem { Value = account, Text = name });
+                    }
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine($"Type4 承辦人員選項載入完成，共 {result.Count - 1} 個人員");
+            return result;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得 Type4 承辦人員選項時發生錯誤：{ex.Message}");
+            throw new Exception($"取得 Type4 承辦人員選項時發生錯誤：{ex.Message}", ex);
         }
         finally
         {
@@ -170,8 +625,8 @@ public class ReviewCheckListHelper
         List<DropdownItem> result = new List<DropdownItem>
         {
             new DropdownItem { Value = "", Text = "全部" },
-            new DropdownItem { Value = "進行中", Text = "進行中" },
-            new DropdownItem { Value = "已完成", Text = "已完成" }
+            new DropdownItem { Value = "未完成", Text = "未完成" },
+            new DropdownItem { Value = "完成", Text = "完成" }
         };
 
         return result;
@@ -183,12 +638,12 @@ public class ReviewCheckListHelper
     /// <returns>回覆狀態清單</returns>
     public static List<DropdownItem> GetReviewReplyStatusOptions()
     {
-        // 固定的回覆狀態選項
+        // 固定的審查進度選項
         List<DropdownItem> result = new List<DropdownItem>
         {
             new DropdownItem { Value = "", Text = "全部" },
-            new DropdownItem { Value = "進行中", Text = "進行中" },
-            new DropdownItem { Value = "已完成", Text = "已完成" }
+            new DropdownItem { Value = "未完成", Text = "未完成" },
+            new DropdownItem { Value = "完成", Text = "完成" }
         };
 
         return result;
@@ -285,7 +740,7 @@ public class ReviewCheckListHelper
     //     };
     // }
 
-    public static List<ReviewChecklistItem> Search_SCI_Type4(
+    public static List<ReviewChecklistItem> Search_Type4(
         string year = "",
         string orgName = "",
         string supervisor = "",
@@ -307,7 +762,7 @@ SELECT TOP (1000) [ProjectID]
       ,[FinalReviewNotes]
       ,[FinalReviewOrder]
       ,[TotalScore]
-  FROM [OCA_OceanSubsidy].[dbo].[ReviewChecklist_type4]
+  FROM [OCA_OceanSubsidy].[dbo].[V_OFS_ReviewChecklist_type4]
 
 ";
 
@@ -687,7 +1142,7 @@ WHERE 1=1
     //     };
     // }
 
-    public static List<ReviewChecklistItem> Search_SCI_Type1(
+    public static List<ReviewChecklistItem> Search_Type1(
         string year = "",
         string status = "",
         string orgName = "",
@@ -696,9 +1151,9 @@ WHERE 1=1
     {
         DbHelper db = new DbHelper();
         db.CommandText = $@"
-        SELECT TOP (1000) [ProjectID]
+         SELECT TOP (1000) [ProjectID]
               ,[ProjectNameTw]
-              ,[UserOrg]
+              ,[OrgName]
               ,[StatusesName]
               ,[ExpirationDate]
               ,[SupervisoryPersonAccount]
@@ -708,7 +1163,8 @@ WHERE 1=1
               ,[Req_SubsidyAmount]
               ,[Year]
               ,[Category]
-          FROM [OCA_OceanSubsidy].[dbo].[ReviewChecklist_tpye1]
+          FROM [OCA_OceanSubsidy].[dbo].[V_OFS_ReviewChecklist_type1]
+
 
 ";
         try
@@ -741,10 +1197,10 @@ WHERE 1=1
             if (!string.IsNullOrEmpty(orgName))
             {
                 if (hasWhereClause)
-                    db.CommandText += " AND UserOrg LIKE @orgName";
+                    db.CommandText += " AND OrgName LIKE @orgName";
                 else
                 {
-                    db.CommandText += " WHERE UserOrg LIKE @orgName";
+                    db.CommandText += " WHERE OrgName LIKE @orgName";
                     hasWhereClause = true;
                 }
                 db.Parameters.Add("@orgName", $"%{orgName}%");
@@ -789,7 +1245,7 @@ WHERE 1=1
                     SupervisoryUnit = row["SupervisoryUnit"]?.ToString(),
                     SupervisoryPersonName = row["SupervisoryPersonName"]?.ToString(),
                     SupervisoryPersonAccount = row["SupervisoryPersonAccount"]?.ToString(),
-                    UserOrg = row["UserOrg"]?.ToString(),
+                    OrgName = row["OrgName"]?.ToString(),
                     created_at = row["created_at"] != DBNull.Value ? (DateTime?)row["created_at"] : null,
 
                     // 從 SQL 結果設定的額外欄位
@@ -977,7 +1433,7 @@ WHERE 1=1
         DbHelper db = new DbHelper();
 
         db.CommandText = $@"
-            SELECT 
+             SELECT 
                 RR.ProjectID,
                 COUNT(RR.ProjectID) AS TotalCount,
                 COUNT(RR.ReviewComment) AS CommentCount,
@@ -987,11 +1443,11 @@ WHERE 1=1
                     ELSE '未完成'
                 END AS ReviewProgress,
                 CASE 
-                    WHEN COUNT(RR.ReviewComment) > 0 AND COUNT(RR.ReviewComment) = COUNT(RR.ReplyComment) THEN '完成'
+                    WHEN COUNT(RR.ReviewComment) > 0 AND COUNT(RR.ProjectID) = COUNT(RR.ReplyComment) THEN '完成'
                     ELSE '未完成'
                 END AS ReplyProgress
             FROM OFS_ReviewRecords RR
-            WHERE RR.ProjectID IN {inClause} and RR.ReviewStage = @status
+            WHERE RR.ReviewStage = '領域審查'
             GROUP BY RR.ProjectID
         ";
 
@@ -1607,4 +2063,306 @@ WHERE 1=1
         
         return projectIDs;
     }
+
+    #region Type=5 計畫變更審核查詢方法
+
+    /// <summary>
+    /// 查詢計畫變更審核清單 (Type=5)
+    /// </summary>
+    /// <param name="year">年度</param>
+    /// <param name="category">類別</param>
+    /// <param name="orgName">申請單位</param>
+    /// <param name="supervisoryUnit">主管單位</param>
+    /// <param name="keyword">計畫編號或名稱關鍵字</param>
+    /// <returns>計畫變更審核項目清單</returns>
+    public static List<PlanChangeReviewItem> Search_Type5_PlanChangeReview(
+        string year = "",
+        string category = "",
+        string orgName = "",
+        string supervisoryUnit = "",
+        string keyword = "")
+    {
+        List<PlanChangeReviewItem> results = new List<PlanChangeReviewItem>();
+        var db = new DbHelper();
+
+        try
+        {
+            // 建立基礎查詢語句
+            db.CommandText = @"
+                SELECT 
+                    [Year],
+                    [ProjectID], 
+                    [Category],
+                    [ProjectNameTw],
+                    [OrgName],
+                    [SupervisoryUnit]
+                FROM [OCA_OceanSubsidy].[dbo].[V_OFS_ReviewChecklist_type5]
+                WHERE 1=1";
+
+            // 清除參數
+            db.Parameters.Clear();
+
+            // 動態新增查詢條件
+            if (!string.IsNullOrEmpty(year))
+            {
+                db.CommandText += " AND [Year] = @Year";
+                db.Parameters.Add("@Year", year);
+            }
+
+            if (!string.IsNullOrEmpty(category))
+            {
+                db.CommandText += " AND [Category] = @Category";
+                db.Parameters.Add("@Category", category);
+            }
+
+            if (!string.IsNullOrEmpty(orgName))
+            {
+                db.CommandText += " AND [OrgName] LIKE @OrgName";
+                db.Parameters.Add("@OrgName", $"%{orgName}%");
+            }
+
+            if (!string.IsNullOrEmpty(supervisoryUnit))
+            {
+                db.CommandText += " AND [SupervisoryUnit] LIKE @SupervisoryUnit";
+                db.Parameters.Add("@SupervisoryUnit", $"%{supervisoryUnit}%");
+            }
+
+            if (!string.IsNullOrEmpty(keyword))
+            {
+                db.CommandText += " AND ([ProjectID] LIKE @Keyword OR [ProjectNameTw] LIKE @Keyword)";
+                db.Parameters.Add("@Keyword", $"%{keyword}%");
+            }
+
+            // 排序
+            db.CommandText += " ORDER BY [Year] DESC, [ProjectID] ASC";
+
+            // 執行查詢
+            DataTable dt = db.GetTable();
+
+            // 處理查詢結果
+            foreach (DataRow row in dt.Rows)
+            {
+                var item = new PlanChangeReviewItem
+                {
+                    Year = row["Year"]?.ToString() ?? "",
+                    ProjectID = row["ProjectID"]?.ToString() ?? "",
+                    Category = row["Category"]?.ToString() ?? "",
+                    ProjectNameTw = row["ProjectNameTw"]?.ToString() ?? "",
+                    OrgName = row["OrgName"]?.ToString() ?? "",
+                    SupervisoryUnit = row["SupervisoryUnit"]?.ToString() ?? ""
+                };
+
+                results.Add(item);
+            }
+
+            System.Diagnostics.Debug.WriteLine($"Type5 查詢完成，共找到 {results.Count} 筆資料");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Search_Type5_PlanChangeReview 查詢時發生錯誤：{ex.Message}");
+            throw new Exception($"Search_Type5_PlanChangeReview 查詢時發生錯誤：{ex.Message}", ex);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// 搜尋 Type=5 計畫變更審核資料（支援分頁）
+    /// </summary>
+    /// <param name="year">年度</param>
+    /// <param name="category">類別</param>
+    /// <param name="orgName">申請單位</param>
+    /// <param name="supervisoryUnit">主管單位</param>
+    /// <param name="keyword">關鍵字</param>
+    /// <param name="pageNumber">頁碼</param>
+    /// <param name="pageSize">每頁筆數</param>
+    /// <returns>分頁結果</returns>
+    public static PaginatedResult<PlanChangeReviewItem> Search_Type5_PlanChangeReview_Paged(
+        string year = "",
+        string category = "",
+        string orgName = "",
+        string supervisoryUnit = "",
+        string keyword = "",
+        int pageNumber = 1,
+        int pageSize = 10)
+    {
+        // 取得所有資料
+        var allData = Search_Type5_PlanChangeReview(year, category, orgName, supervisoryUnit, keyword);
+        
+        // 計算分頁資料
+        int totalRecords = allData.Count;
+        int totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+        
+        var pagedData = allData
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+            
+        return new PaginatedResult<PlanChangeReviewItem>
+        {
+            Data = pagedData,
+            TotalRecords = totalRecords,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalPages = totalPages
+        };
+    }
+
+    /// <summary>
+    /// 搜尋 Type=6 執行計畫審核資料
+    /// </summary>
+    /// <param name="year">年度</param>
+    /// <param name="category">類別</param>
+    /// <param name="orgName">申請單位</param>
+    /// <param name="supervisoryUnit">主管單位</param>
+    /// <param name="keyword">關鍵字</param>
+    /// <returns>執行計畫審核項目清單</returns>
+    public static List<ExecutionPlanReviewItem> Search_Type6_ExecutionPlanReview(
+        string year = "",
+        string category = "",
+        string orgName = "",
+        string supervisoryUnit = "",
+        string keyword = "")
+    {
+        List<ExecutionPlanReviewItem> results = new List<ExecutionPlanReviewItem>();
+        var db = new DbHelper();
+
+        try
+        {
+            // 建立基礎查詢語句
+            db.CommandText = @"
+                SELECT TOP (1000) 
+                    [Year], 
+                    [ProjectID], 
+                    [Category], 
+                    [Stage], 
+                    [ReviewTodo], 
+                    [SupervisoryPersonAccount], 
+                    [SupervisoryUnit], 
+                    [OrgName], 
+                    [ProjectNameTw]
+                FROM [OCA_OceanSubsidy].[dbo].[V_OFS_ReviewChecklist_type6]
+                WHERE 1=1";
+
+            // 清除參數
+            db.Parameters.Clear();
+
+            // 動態新增查詢條件
+            if (!string.IsNullOrEmpty(year))
+            {
+                db.CommandText += " AND [Year] = @Year";
+                db.Parameters.Add("@Year", year);
+            }
+
+            if (!string.IsNullOrEmpty(category))
+            {
+                db.CommandText += " AND [Category] = @Category";
+                db.Parameters.Add("@Category", category);
+            }
+
+            if (!string.IsNullOrEmpty(orgName))
+            {
+                db.CommandText += " AND [OrgName] LIKE @OrgName";
+                db.Parameters.Add("@OrgName", "%" + orgName + "%");
+            }
+
+            if (!string.IsNullOrEmpty(supervisoryUnit))
+            {
+                db.CommandText += " AND [SupervisoryUnit] LIKE @SupervisoryUnit";
+                db.Parameters.Add("@SupervisoryUnit", "%" + supervisoryUnit + "%");
+            }
+
+            if (!string.IsNullOrEmpty(keyword))
+            {
+                db.CommandText += " AND ([ProjectID] LIKE @Keyword OR [ProjectNameTw] LIKE @Keyword OR [OrgName] LIKE @Keyword)";
+                db.Parameters.Add("@Keyword", "%" + keyword + "%");
+            }
+
+            // 排序
+            db.CommandText += " ORDER BY [Year] DESC, [ProjectID] ASC";
+
+            // 執行查詢
+            DataTable dt = db.GetTable();
+
+            // 轉換資料
+            foreach (DataRow row in dt.Rows)
+            {
+                var item = new ExecutionPlanReviewItem
+                {
+                    Year = row["Year"]?.ToString() ?? "",
+                    ProjectID = row["ProjectID"]?.ToString() ?? "",
+                    Category = row["Category"]?.ToString() ?? "",
+                    Stage = row["Stage"]?.ToString() ?? "",
+                    ReviewTodo = row["ReviewTodo"]?.ToString() ?? "",
+                    SupervisoryPersonAccount = row["SupervisoryPersonAccount"]?.ToString() ?? "",
+                    SupervisoryUnit = row["SupervisoryUnit"]?.ToString() ?? "",
+                    OrgName = row["OrgName"]?.ToString() ?? "",
+                    ProjectNameTw = row["ProjectNameTw"]?.ToString() ?? ""
+                };
+
+                results.Add(item);
+            }
+
+            System.Diagnostics.Debug.WriteLine($"Search_Type6_ExecutionPlanReview 共查詢到 {results.Count} 筆資料");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Search_Type6_ExecutionPlanReview 查詢時發生錯誤：{ex.Message}");
+            throw new Exception($"Search_Type6_ExecutionPlanReview 查詢時發生錯誤：{ex.Message}", ex);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// 搜尋 Type=6 執行計畫審核資料（支援分頁）
+    /// </summary>
+    /// <param name="year">年度</param>
+    /// <param name="category">類別</param>
+    /// <param name="orgName">申請單位</param>
+    /// <param name="supervisoryUnit">主管單位</param>
+    /// <param name="keyword">關鍵字</param>
+    /// <param name="pageNumber">頁碼</param>
+    /// <param name="pageSize">每頁筆數</param>
+    /// <returns>分頁結果</returns>
+    public static PaginatedResult<ExecutionPlanReviewItem> Search_Type6_ExecutionPlanReview_Paged(
+        string year = "",
+        string category = "",
+        string orgName = "",
+        string supervisoryUnit = "",
+        string keyword = "",
+        int pageNumber = 1,
+        int pageSize = 10)
+    {
+        // 取得所有資料
+        var allData = Search_Type6_ExecutionPlanReview(year, category, orgName, supervisoryUnit, keyword);
+        
+        // 計算分頁資料
+        int totalRecords = allData.Count;
+        int totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+        
+        var pagedData = allData
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+            
+        return new PaginatedResult<ExecutionPlanReviewItem>
+        {
+            Data = pagedData,
+            TotalRecords = totalRecords,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalPages = totalPages
+        };
+    }
+
+    #endregion
 }

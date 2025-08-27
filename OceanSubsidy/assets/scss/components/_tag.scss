@@ -10,10 +10,11 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    font-size: 0.78125rem;
+    font-size: 0.875rem;
     white-space: nowrap;
     line-height: 0;
     transition: background-color 0.3s ease;
+    min-height: 26px;
     &.tag-gray {
         background-color: $neutral-700;
         color: #FFFFFF;
@@ -61,6 +62,16 @@
 }
 .tag-green-light:has(.tag-link):hover {
     background-color: darken($green-light, 5%);
+}
+
+.app-mode-view:has(.tag) {
+    .tag {
+        .tag-link {
+            ~.tag-btn {
+                display: none;
+            }
+        }
+    }
 }
 
 

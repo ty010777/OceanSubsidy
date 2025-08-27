@@ -42,7 +42,7 @@ public class ApplicationChecklistHelper
       ,[OrgName]
       ,[Year]
       ,[TotalSubsidyAmount]
-  FROM [OCA_OceanSubsidy].[dbo].[ApplicationChecklistSearch]
+  FROM [OCA_OceanSubsidy].[dbo].[V_OFS_ApplicationChecklistSearch]
 
 ";
 
