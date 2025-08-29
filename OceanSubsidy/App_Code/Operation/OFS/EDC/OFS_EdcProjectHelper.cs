@@ -47,6 +47,8 @@ public class OFS_EdcProjectHelper
                   ,P.[Status]
                   ,P.[Organizer]
                   ,U.[Name] AS [OrganizerName]
+                  ,P.[RejectReason]
+                  ,P.[CorrectionDeadline]
                   ,P.[UserAccount]
                   ,P.[UserName]
                   ,P.[UserOrg]
@@ -71,7 +73,7 @@ public class OFS_EdcProjectHelper
                                            [EndTime],[Target],[Summary],[Quantified],[ApplyAmount],[SelfAmount],[OtherGovAmount],[OtherUnitAmount],[FormStep],[Status],
                                            [UserAccount],[UserName],[UserOrg],[CreateTime],[CreateUser])
                 OUTPUT Inserted.ID VALUES (@Year, @ProjectID, @SubsidyPlanType, @ProjectName, @OrgCategory, @OrgName, @RegisteredNum, @TaxID, @Address, @StartTime,
-                                           @EndTime, @Target, @Summary, @Quantified, @ApplyAmount, @SelfAmount, @OtherGovAmount, @OtherUnitAmount, 1, 1,
+                                           @EndTime, @Target, @Summary, @Quantified, @ApplyAmount, @SelfAmount, @OtherGovAmount, @OtherUnitAmount, 1,         1,
                                            @UserAccount, @UserName, @UserOrg, GETDATE(),   @CreateUser)
         ";
 
@@ -225,14 +227,16 @@ public class OFS_EdcProjectHelper
             Target = row.Field<string>("Target"),
             Summary = row.Field<string>("Summary"),
             Quantified = row.Field<string>("Quantified"),
-            ApplyAmount = row.Field<int>("ApplyAmount"),
-            SelfAmount = row.Field<int>("SelfAmount"),
-            OtherGovAmount = row.Field<int>("OtherGovAmount"),
-            OtherUnitAmount = row.Field<int>("OtherUnitAmount"),
+            ApplyAmount = row.Field<int?>("ApplyAmount"),
+            SelfAmount = row.Field<int?>("SelfAmount"),
+            OtherGovAmount = row.Field<int?>("OtherGovAmount"),
+            OtherUnitAmount = row.Field<int?>("OtherUnitAmount"),
             FormStep = row.Field<int>("FormStep"),
             Status = row.Field<int>("Status"),
-            Organizer = row.Field<int>("Organizer"),
+            Organizer = row.Field<int?>("Organizer"),
             OrganizerName = row.Field<string>("OrganizerName"),
+            RejectReason = row.Field<string>("RejectReason"),
+            CorrectionDeadline = row.Field<DateTime?>("CorrectionDeadline"),
             UserAccount = row.Field<string>("UserAccount"),
             UserName = row.Field<string>("UserName"),
             UserOrg = row.Field<string>("UserOrg")

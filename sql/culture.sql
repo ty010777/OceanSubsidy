@@ -36,35 +36,38 @@ GO
 -- 基本資料
 
 CREATE TABLE [OFS_CUL_Project] (
-    [ID]              INT PRIMARY KEY IDENTITY,
-    [Year]            INT             NOT NULL, -- 年度
-    [ProjectID]       VARCHAR(50)     NOT NULL, -- 計畫編號
-    [SubsidyPlanType] VARCHAR(50)     NOT NULL, -- 補助計畫類別
-    [ProjectName]     NVARCHAR(200)       NULL, -- 計畫名稱
-    [Field]           VARCHAR(50)         NULL, -- 徵件類別
-    [OrgName]         NVARCHAR(50)        NULL, -- 申請單位
-    [OrgCategory]     VARCHAR(50)         NULL, -- 申請單位類別
-    [RegisteredNum]   NVARCHAR(50)        NULL, -- 立案登記證字號
-    [TaxID]           VARCHAR(10)         NULL, -- 統一編號
-    [Address]         NVARCHAR(200)       NULL, -- 立案聯絡地址
-    [Target]          NVARCHAR(600)       NULL, -- 計畫目標
-    [Summary]         NVARCHAR(600)       NULL, -- 計畫內容概要
-    [Quantified]      NVARCHAR(300)       NULL, -- 預期效益 (量化)
-    [Qualitative]     NVARCHAR(300)       NULL, -- 預期效益 (質化)
-    [StartTime]       DATETIME            NULL, -- 計畫期程 (起)
-    [EndTime]         DATETIME            NULL, -- 計畫期程 (迄)
-    [ApplyAmount]     INT                 NULL, -- 申請海委會補助／合作金額
-    [SelfAmount]      INT                 NULL, -- 申請單位自籌款
-    [OtherAmount]     INT                 NULL, -- 其他機關補助／合作總金額
-    [FormStep]        INT             NOT NULL, -- 申請進度
-    [Status]          INT             NOT NULL, -- 狀態
-    [UserAccount]     VARCHAR(30)         NULL,
-    [UserName]        NVARCHAR(30)        NULL,
-    [UserOrg]         NVARCHAR(30)        NULL,
-    [CreateTime]      DATETIME        NOT NULL,
-    [CreateUser]      VARCHAR(50)     NOT NULL,
-    [UpdateTime]      DATETIME            NULL,
-    [UpdateUser]      VARCHAR(50)         NULL
+    [ID]                 INT PRIMARY KEY IDENTITY,
+    [Year]               INT             NOT NULL, -- 年度
+    [ProjectID]          VARCHAR(50)     NOT NULL, -- 計畫編號
+    [SubsidyPlanType]    VARCHAR(50)     NOT NULL, -- 補助計畫類別
+    [ProjectName]        NVARCHAR(200)       NULL, -- 計畫名稱
+    [Field]              VARCHAR(50)         NULL, -- 徵件類別
+    [OrgName]            NVARCHAR(50)        NULL, -- 申請單位
+    [OrgCategory]        VARCHAR(50)         NULL, -- 申請單位類別
+    [RegisteredNum]      NVARCHAR(50)        NULL, -- 立案登記證字號
+    [TaxID]              VARCHAR(10)         NULL, -- 統一編號
+    [Address]            NVARCHAR(200)       NULL, -- 立案聯絡地址
+    [Target]             NVARCHAR(600)       NULL, -- 計畫目標
+    [Summary]            NVARCHAR(600)       NULL, -- 計畫內容概要
+    [Quantified]         NVARCHAR(300)       NULL, -- 預期效益 (量化)
+    [Qualitative]        NVARCHAR(300)       NULL, -- 預期效益 (質化)
+    [StartTime]          DATETIME            NULL, -- 計畫期程 (起)
+    [EndTime]            DATETIME            NULL, -- 計畫期程 (迄)
+    [ApplyAmount]        INT                 NULL, -- 申請海委會補助／合作金額
+    [SelfAmount]         INT                 NULL, -- 申請單位自籌款
+    [OtherAmount]        INT                 NULL, -- 其他機關補助／合作總金額
+    [FormStep]           INT             NOT NULL, -- 申請進度
+    [Status]             INT             NOT NULL, -- 狀態
+    [Organizer]          INT                 NULL, -- 承辦人員
+    [RejectReason]       NVARCHAR(600)       NULL, -- 不通過原因
+    [CorrectionDeadline] DATETIME            NULL, -- 補正期限
+    [UserAccount]        VARCHAR(30)         NULL,
+    [UserName]           NVARCHAR(30)        NULL,
+    [UserOrg]            NVARCHAR(30)        NULL,
+    [CreateTime]         DATETIME        NOT NULL,
+    [CreateUser]         VARCHAR(50)     NOT NULL,
+    [UpdateTime]         DATETIME            NULL,
+    [UpdateUser]         VARCHAR(50)         NULL
 )
 GO
 

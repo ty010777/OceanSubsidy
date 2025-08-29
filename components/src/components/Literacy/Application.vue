@@ -289,5 +289,19 @@
 
     provide("editable", editable);
 
-    watch(() => form.value.OrgName, () => form.value.ProjectName = `素養-${form.value.OrgName}`);
+    watch(() => [form.value.Field, form.value.OrgName], () => {
+        if (editable.value) {
+            const names = [];
+
+            if (form.value.Field) {
+                names.push(fields.value.find((field) => field.Code === form.value.Field)?.Descname);
+            }
+
+            if (form.value.OrgName) {
+                names.push(form.value.OrgName);
+            }
+
+            form.value.ProjectName = names.join("-");
+        }
+    });
 </script>

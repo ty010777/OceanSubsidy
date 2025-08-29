@@ -48,6 +48,8 @@ public class OFS_AccProjectHelper
                   ,P.[Status]
                   ,P.[Organizer]
                   ,U.[Name] AS [OrganizerName]
+                  ,P.[RejectReason]
+                  ,P.[CorrectionDeadline]
                   ,P.[UserAccount]
                   ,P.[UserName]
                   ,P.[UserOrg]
@@ -69,11 +71,9 @@ public class OFS_AccProjectHelper
 
         db.CommandText = @"
             INSERT INTO [OFS_ACC_Project] ([Year],[ProjectID],[SubsidyPlanType],[ProjectName],[OrgName],[OrgCategory],[RegisteredNum],[TaxID],[Address],[Target],
-                                           [Summary],[Quantified],[Qualitative],[ApplyAmount],[SelfAmount],[OtherAmount],[FormStep],[Status],[UserAccount],[UserName],
-                                           [UserOrg],[CreateTime],[CreateUser])
+                                           [Summary],[Quantified],[Qualitative],[FormStep],[Status],[UserAccount],[UserName],[UserOrg],[CreateTime],[CreateUser])
                 OUTPUT Inserted.ID VALUES (@Year, @ProjectID, @SubsidyPlanType, @ProjectName, @OrgName, @OrgCategory, @RegisteredNum, @TaxID, @Address, @Target,
-                                           @Summary, @Quantified, @Qualitative, 0,            0,           0,            1,         1,       @UserAccount, @UserName,
-                                           @UserOrg, GETDATE(),   @CreateUser)
+                                           @Summary, @Quantified, @Qualitative, 1,         1,       @UserAccount, @UserName, @UserOrg, GETDATE(),   @CreateUser)
         ";
 
         db.Parameters.Add("@Year", model.Year);
@@ -275,14 +275,16 @@ public class OFS_AccProjectHelper
             Qualitative = row.Field<string>("Qualitative"),
             StartTime = row.Field<DateTime?>("StartTime"),
             EndTime = row.Field<DateTime?>("EndTime"),
-            ApplyAmount = row.Field<int>("ApplyAmount"),
-            SelfAmount = row.Field<int>("SelfAmount"),
-            OtherAmount = row.Field<int>("OtherAmount"),
+            ApplyAmount = row.Field<int?>("ApplyAmount"),
+            SelfAmount = row.Field<int?>("SelfAmount"),
+            OtherAmount = row.Field<int?>("OtherAmount"),
             Benefit = row.Field<string>("Benefit"),
             FormStep = row.Field<int>("FormStep"),
             Status = row.Field<int>("Status"),
-            Organizer = row.Field<int>("Organizer"),
+            Organizer = row.Field<int?>("Organizer"),
             OrganizerName = row.Field<string>("OrganizerName"),
+            RejectReason = row.Field<string>("RejectReason"),
+            CorrectionDeadline = row.Field<DateTime?>("CorrectionDeadline"),
             UserAccount = row.Field<string>("UserAccount"),
             UserName = row.Field<string>("UserName"),
             UserOrg = row.Field<string>("UserOrg")

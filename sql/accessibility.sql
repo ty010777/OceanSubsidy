@@ -1,50 +1,53 @@
 
 
 INSERT INTO [Sys_ZgsCode] ([CodeGroup], [Code], [Descname], [OrderNo], [IsValid], [ParentCode])
-                   VALUES ('LITField', '1', '入校教學教師社群運作',             1, 1, ''),
-                          ('LITField', '2', '教師實施OSS教材入校教學',          2, 1, ''),
-                          ('LITField', '3', '專家輔導員教學實踐研究及社群發展', 3, 1, '')
+                   VALUES ('ACCOrgCategory', '1', '大專院校',                         1, 1, ''),
+                          ('ACCOrgCategory', '2', '財團法人、社團法人及其他人民團體', 2, 1, '')
 GO
 
 
 -- 基本資料
 
-CREATE TABLE [OFS_LIT_Project] (
-    [ID]              INT PRIMARY KEY IDENTITY,
-    [Year]            INT             NOT NULL, -- 年度
-    [ProjectID]       VARCHAR(50)     NOT NULL, -- 計畫編號
-    [SubsidyPlanType] VARCHAR(50)     NOT NULL, -- 補助計畫類別
-    [ProjectName]     NVARCHAR(200)       NULL, -- 計畫名稱
-    [Field]           VARCHAR(50)         NULL, -- 計畫類別
-    [OrgName]         NVARCHAR(50)        NULL, -- 申請單位
-    [OrgLeader]       NVARCHAR(50)        NULL, -- 校長姓名
-    [Address]         NVARCHAR(200)       NULL, -- 學校地址
-    [Target]          NVARCHAR(600)       NULL, -- 計畫目標
-    [Summary]         NVARCHAR(600)       NULL, -- 計畫內容概要
-    [Quantified]      NVARCHAR(300)       NULL, -- 預期效益 (量化)
-    [Qualitative]     NVARCHAR(300)       NULL, -- 預期效益 (質化)
-    [StartTime]       DATETIME            NULL, -- 計畫期程 (起)
-    [EndTime]         DATETIME            NULL, -- 計畫期程 (迄)
-    [ApplyAmount]     INT                 NULL, -- 申請海委會補助／合作金額
-    [SelfAmount]      INT                 NULL, -- 申請單位自籌款
-    [OtherAmount]     INT                 NULL, -- 其他機關補助／合作總金額
-    [Benefit]         NVARCHAR(600)       NULL, -- 不可量化成果
-    [FormStep]        INT             NOT NULL, -- 申請進度
-    [Status]          INT             NOT NULL, -- 狀態
-    [UserAccount]     VARCHAR(30)         NULL,
-    [UserName]        NVARCHAR(30)        NULL,
-    [UserOrg]         NVARCHAR(30)        NULL,
-    [CreateTime]      DATETIME        NOT NULL,
-    [CreateUser]      VARCHAR(50)     NOT NULL,
-    [UpdateTime]      DATETIME            NULL,
-    [UpdateUser]      VARCHAR(50)         NULL
+CREATE TABLE [OFS_ACC_Project] (
+    [ID]                 INT PRIMARY KEY IDENTITY,
+    [Year]               INT             NOT NULL, -- 年度
+    [ProjectID]          VARCHAR(50)     NOT NULL, -- 計畫編號
+    [SubsidyPlanType]    VARCHAR(50)     NOT NULL, -- 補助計畫類別
+    [ProjectName]        NVARCHAR(200)       NULL, -- 計畫名稱
+    [OrgName]            NVARCHAR(50)        NULL, -- 申請單位
+    [OrgCategory]        VARCHAR(50)         NULL, -- 申請單位類別
+    [RegisteredNum]      NVARCHAR(50)        NULL, -- 立案登記證字號
+    [TaxID]              VARCHAR(10)         NULL, -- 統一編號
+    [Address]            NVARCHAR(200)       NULL, -- 立案聯絡地址
+    [Target]             NVARCHAR(600)       NULL, -- 計畫目標
+    [Summary]            NVARCHAR(600)       NULL, -- 計畫內容概要
+    [Quantified]         NVARCHAR(300)       NULL, -- 預期效益 (量化)
+    [Qualitative]        NVARCHAR(300)       NULL, -- 預期效益 (質化)
+    [StartTime]          DATETIME            NULL, -- 計畫期程 (起)
+    [EndTime]            DATETIME            NULL, -- 計畫期程 (迄)
+    [ApplyAmount]        INT                 NULL, -- 申請海委會補助／合作金額
+    [SelfAmount]         INT                 NULL, -- 申請單位自籌款
+    [OtherAmount]        INT                 NULL, -- 其他機關補助／合作總金額
+    [Benefit]            NVARCHAR(600)       NULL, -- 不可量化成果
+    [FormStep]           INT             NOT NULL, -- 申請進度
+    [Status]             INT             NOT NULL, -- 狀態
+    [Organizer]          INT                 NULL, -- 承辦人員
+    [RejectReason]       NVARCHAR(600)       NULL, -- 不通過原因
+    [CorrectionDeadline] DATETIME            NULL, -- 補正期限
+    [UserAccount]        VARCHAR(30)         NULL,
+    [UserName]           NVARCHAR(30)        NULL,
+    [UserOrg]            NVARCHAR(30)        NULL,
+    [CreateTime]         DATETIME        NOT NULL,
+    [CreateUser]         VARCHAR(50)     NOT NULL,
+    [UpdateTime]         DATETIME            NULL,
+    [UpdateUser]         VARCHAR(50)         NULL
 )
 GO
 
 
 -- 人員聯絡資訊
 
-CREATE TABLE [OFS_LIT_Contact] (
+CREATE TABLE [OFS_ACC_Contact] (
     [ID]          INT PRIMARY KEY IDENTITY,
     [PID]         INT             NOT NULL,
     [Role]        NVARCHAR(50)        NULL, -- 角色
@@ -62,13 +65,14 @@ CREATE TABLE [OFS_LIT_Contact] (
 GO
 
 
--- 最近三年參與本會辦理之相關研習或課程
+-- 最近三年曾獲本會及所屬補助／合作計畫及經費
 
-CREATE TABLE [OFS_LIT_Previous_Study] (
+CREATE TABLE [OFS_ACC_Received_Subsidy] (
     [ID]         INT PRIMARY KEY IDENTITY,
     [PID]        INT             NOT NULL,
-    [Title]      NVARCHAR(50)        NULL, -- 研習/課程名稱
-    [TheDate]    DATETIME            NULL, -- 辦理日期
+    [Name]       NVARCHAR(50)        NULL, -- 計畫名稱
+    [Unit]       NVARCHAR(50)        NULL, -- 補助單位
+    [Amount]     INT                 NULL, -- 補助金額
     [CreateTime] DATETIME        NOT NULL,
     [CreateUser] VARCHAR(50)     NOT NULL,
     [UpdateTime] DATETIME            NULL,
@@ -79,7 +83,7 @@ GO
 
 -- 工作項目
 
-CREATE TABLE [OFS_LIT_Item] (
+CREATE TABLE [OFS_ACC_Item] (
     [ID]         INT PRIMARY KEY IDENTITY,
     [PID]        INT             NOT NULL,
     [Title]      NVARCHAR(50)        NULL, -- 工作項目
@@ -97,7 +101,7 @@ GO
 
 -- 進度說明
 
-CREATE TABLE [OFS_LIT_Schedule] (
+CREATE TABLE [OFS_ACC_Schedule] (
     [ID]         INT PRIMARY KEY IDENTITY,
     [PID]        INT             NOT NULL,
     [Type]       INT             NOT NULL, -- 1:50%, 2:100%
@@ -114,7 +118,7 @@ GO
 
 -- 其他機關補助
 
-CREATE TABLE [OFS_LIT_Other_Subsidy] (
+CREATE TABLE [OFS_ACC_Other_Subsidy] (
     [ID]         INT PRIMARY KEY IDENTITY,
     [PID]        INT             NOT NULL,
     [Unit]       NVARCHAR(50)        NULL, -- 單位名稱
@@ -130,7 +134,7 @@ GO
 
 -- 經費預算規劃
 
-CREATE TABLE [OFS_LIT_Budget_Plan] (
+CREATE TABLE [OFS_ACC_Budget_Plan] (
     [ID]          INT PRIMARY KEY IDENTITY,
     [PID]         INT             NOT NULL,
     [Title]       NVARCHAR(50)        NULL, -- 預算項目
@@ -147,7 +151,7 @@ GO
 
 -- 可量化成果
 
-CREATE TABLE [OFS_LIT_Benefit] (
+CREATE TABLE [OFS_ACC_Benefit] (
     [ID]          INT PRIMARY KEY IDENTITY,
     [PID]         INT             NOT NULL,
     [Title]       NVARCHAR(50)        NULL, -- 指標
@@ -163,7 +167,7 @@ GO
 
 -- 附件
 
-CREATE TABLE [OFS_LIT_Attachment] (
+CREATE TABLE [OFS_ACC_Attachment] (
     [ID]         INT PRIMARY KEY IDENTITY,
     [PID]        INT             NOT NULL,
     [Type]       INT             NOT NULL,

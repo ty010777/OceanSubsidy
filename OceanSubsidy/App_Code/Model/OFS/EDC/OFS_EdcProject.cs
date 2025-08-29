@@ -47,16 +47,16 @@ public class OFS_EdcProject
     public string Quantified { get; set; }
 
     // 申請海委會補助經費
-    public int ApplyAmount { get; set; }
+    public int? ApplyAmount { get; set; }
 
     // 申請單位自籌款
-    public int SelfAmount { get; set; }
+    public int? SelfAmount { get; set; }
 
     // 其他政府機關補助經費
-    public int OtherGovAmount { get; set; }
+    public int? OtherGovAmount { get; set; }
 
     // 其他單位補助經費（含總收費）
-    public int OtherUnitAmount { get; set; }
+    public int? OtherUnitAmount { get; set; }
 
     // 申請進度
     public int FormStep { get; set; }
@@ -65,8 +65,14 @@ public class OFS_EdcProject
     public int Status { get; set; }
 
     // 承辦
-    public int Organizer { get; set; }
+    public int? Organizer { get; set; }
     public string OrganizerName { get; set; }
+
+    // 不通過原因
+    public string RejectReason { get; set; }
+
+    // 補正期限
+    public DateTime? CorrectionDeadline { get; set; }
 
     public string UserAccount { get; set; }
     public string UserName { get; set; }

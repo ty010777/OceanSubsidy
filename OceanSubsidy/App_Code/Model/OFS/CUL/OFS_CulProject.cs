@@ -53,23 +53,41 @@ public class OFS_CulProject
     public DateTime? EndTime { get; set; }
 
     // 申請海委會補助／合作金額
-    public int ApplyAmount { get; set; }
+    public int? ApplyAmount { get; set; }
 
     // 申請單位自籌款
-    public int SelfAmount { get; set; }
+    public int? SelfAmount { get; set; }
 
     // 其他機關補助／合作總金額
-    public int OtherAmount { get; set; }
+    public int? OtherAmount { get; set; }
 
     // 申請進度
     public int FormStep { get; set; }
 
     // 狀態
+    //  1: 申請中
+    //  2: 資格審查
+    //  3: 退回補正
+    //  4: 不通過
+    //  5: 初審
+    //  6: 初審不通過
+    //  7: 複審
+    //  8: 複審不通過
+    //  9: 複審
+    // 10: 修正計畫書
+    // 11: 複審不通過
+    // 12: 核定通過
     public int Status { get; set; }
 
     // 承辦
-    public int Organizer { get; set; }
+    public int? Organizer { get; set; }
     public string OrganizerName { get; set; }
+
+    // 不通過原因
+    public string RejectReason { get; set; }
+
+    // 補正期限
+    public DateTime? CorrectionDeadline { get; set; }
 
     public string UserAccount { get; set; }
     public string UserName { get; set; }
