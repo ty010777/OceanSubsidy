@@ -37,6 +37,7 @@ import MultipleFunding from "./components/Multiple/Funding.vue";
 import MultipleProgressBar from "./components/Multiple/ProgressBar.vue";
 import MultipleWorkSchedule from "./components/Multiple/WorkSchedule.vue";
 import ProjectOrganizer from "./components/ProjectOrganizer.vue";
+import ProjectReview from "./components/ProjectReview.vue";
 import RequiredLabel from "./components/RequiredLabel.vue";
 import { useProgressStore } from "./stores/progress";
 
@@ -80,6 +81,7 @@ const components = {
     MultipleProgressBar,
     MultipleWorkSchedule,
     ProjectOrganizer,
+    ProjectReview,
     RequiredLabel
 };
 

@@ -36,6 +36,36 @@ public class EducationService : BaseService
         return new { Year = type.StartDate.Value.Year - 1911, SubsidyPlanType = $"{type.ShortName} ({type.FullName})" };
     }
 
+    public object reviewApplication(JObject param, HttpContext context)
+    {
+        var id = int.Parse(param["ID"].ToString());
+
+        var project = getProject(id, new int[] {2}); //資格審查
+
+        project.RejectReason = null;
+        project.CorrectionDeadline = null;
+
+        switch (int.Parse(param["Result"].ToString()))
+        {
+            case 2:
+                project.Status = 4; //資格審查不通過
+                project.RejectReason = param["Reason"].ToString(); //原因
+                break;
+            case 3:
+                project.Status = 3; //退回補正
+                project.RejectReason = param["Reason"].ToString(); //原因
+                project.CorrectionDeadline = DateTime.Parse(param["CorrectionDeadline"].ToString()); //補正期限
+                break;
+            default:
+                project.Status = 9; //核定補助經費
+                break;
+        }
+
+        OFS_EdcProjectHelper.reviewApplication(project);
+
+        return new {};
+    }
+
     public object saveApplication(JObject param, HttpContext context)
     {
         var project = param["Project"].ToObject<OFS_EdcProject>();

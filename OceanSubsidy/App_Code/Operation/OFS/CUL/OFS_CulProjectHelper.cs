@@ -100,6 +100,30 @@ public class OFS_CulProjectHelper
         model.ID = int.Parse(db.GetTable().Rows[0]["ID"].ToString());
     }
 
+    public static void reviewApplication(OFS_CulProject model)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            UPDATE [OFS_CUL_Project]
+               SET [Status] = @Status
+                  ,[RejectReason] = @RejectReason
+                  ,[CorrectionDeadline] = @CorrectionDeadline
+                  ,[UpdateTime] = GETDATE()
+                  ,[UpdateUser] = @UpdateUser
+             WHERE [ID] = @ID
+               AND [Status] = 2
+        ";
+
+        db.Parameters.Add("@ID", model.ID);
+        db.Parameters.Add("@Status", model.Status);
+        db.Parameters.Add("@RejectReason", model.RejectReason);
+        db.Parameters.Add("@CorrectionDeadline", model.CorrectionDeadline);
+        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
+
+        db.ExecuteNonQuery();
+    }
+
     public static void update(OFS_CulProject model)
     {
         DbHelper db = new DbHelper();

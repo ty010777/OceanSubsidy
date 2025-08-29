@@ -65,6 +65,15 @@ public class OFS_MulProject
     public int FormStep { get; set; }
 
     // 狀態
+    //  1: 申請中
+    //  2: 資格審查
+    //  3: 退回補正
+    //  4: 資格審查不通過
+    //  9: 核定補助經費
+    // 10: 修正計畫書
+    // 11: 決審
+    // 12: 決審不通過
+    // 13: 核定通過
     public int Status { get; set; }
 
     // 承辦

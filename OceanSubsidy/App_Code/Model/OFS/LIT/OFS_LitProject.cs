@@ -62,6 +62,12 @@ public class OFS_LitProject
     public int FormStep { get; set; }
 
     // 狀態
+    //  1: 申請中
+    //  2: 資格審查
+    //  3: 退回補正
+    //  4: 資格審查不通過
+    //  9: 核定補助經費
+    // 13: 核定通過
     public int Status { get; set; }
 
     // 承辦
