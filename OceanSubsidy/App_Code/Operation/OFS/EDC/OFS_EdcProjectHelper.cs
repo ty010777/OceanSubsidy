@@ -103,7 +103,7 @@ public class OFS_EdcProjectHelper
         model.ID = int.Parse(db.GetTable().Rows[0]["ID"].ToString());
     }
 
-    public static void reviewApplication(OFS_CulProject model)
+    public static void reviewApplication(OFS_EdcProject model)
     {
         DbHelper db = new DbHelper();
 

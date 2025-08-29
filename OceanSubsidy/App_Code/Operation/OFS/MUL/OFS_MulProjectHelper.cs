@@ -97,7 +97,7 @@ public class OFS_MulProjectHelper
         model.ID = int.Parse(db.GetTable().Rows[0]["ID"].ToString());
     }
 
-    public static void reviewApplication(OFS_CulProject model)
+    public static void reviewApplication(OFS_MulProject model)
     {
         DbHelper db = new DbHelper();
 
