@@ -33,3 +33,6 @@ packages/
 /OceanSubsidy/Bin
 /PrecompiledWeb/localhost_50929
 .claude/
+
+node_modules/
+UploadFiles/

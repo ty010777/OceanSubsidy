@@ -18,7 +18,7 @@ using GS.Data;
 public partial class OFS_ApplicationChecklist : System.Web.UI.Page
 {
     private List<ReviewChecklistItem> OriginalSciMainList;
-    
+
     // 已改為純前端分頁架構，移除 ViewState 快取相關屬性
 
     protected void Page_Load(object sender, EventArgs e)
@@ -37,12 +37,12 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
 
             // 初始狀態顯示總申請的資料
             hidSelectedStage.Value = "總申請";
-            
+
             // 更新標籤統計
             UpdateTabStatisticsAndActiveState("總申請");
-            
+
             // 初始載入時，觸發前端載入資料
-            ClientScript.RegisterStartupScript(this.GetType(), "InitialLoad", 
+            ClientScript.RegisterStartupScript(this.GetType(), "InitialLoad",
                 "$(document).ready(function() { setTimeout(function() { loadFilteredData(); }, 200); });", true);
         }
         else
@@ -77,7 +77,7 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
     {
         ViewState["OriginalSciMainList"] = OriginalSciMainList;
     }
-    
+
 
     private void LoadData()
     {
@@ -95,18 +95,18 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             System.Diagnostics.Debug.WriteLine($"載入資料時發生錯誤: {ex.Message}");
             Response.Write($"<script>alert('載入資料時發生錯誤: {ex.Message}');</script>");
         }
-        
+
         // Debug 資訊
         System.Diagnostics.Debug.WriteLine($"LoadData completed: OriginalSciMainList.Count = {OriginalSciMainList?.Count ?? 0}");
     }
-    
+
     // 搜尋按鈕事件處理 - 觸發前端載入篩選資料
     protected void btnSearch_Click(object sender, EventArgs e)
     {
         try
         {
             // 觸發前端重新載入篩選資料
-            ClientScript.RegisterStartupScript(this.GetType(), "TriggerSearch", 
+            ClientScript.RegisterStartupScript(this.GetType(), "TriggerSearch",
                 "loadFilteredData();", true);
         }
         catch (Exception ex)
@@ -132,7 +132,7 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
         try
         {
             // 觸發前端重新載入篩選資料
-            ClientScript.RegisterStartupScript(this.GetType(), "TriggerStageFilter", 
+            ClientScript.RegisterStartupScript(this.GetType(), "TriggerStageFilter",
                 "loadFilteredData();", true);
         }
         catch (Exception ex)
@@ -280,10 +280,10 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
         }
 
         // 刪除按鈕（只有「尚未提送」狀態可刪除）
-       
+
         buttons.Append(
             $"<li><a class=\"dropdown-menu-item gap-1\" href=\"#\" onclick=\"handleDelete('{item.ProjectID}'); return false;\" data-bs-toggle=\"modal\" data-bs-target=\"#planDeleteModal\"><i class=\"fas fa-times text-teal-dark\"></i>刪除</a></li>");
-        
+
 
         // 恢復案件按鈕（只有已撤案的案件顯示）
         if (isWithdrawn)
@@ -317,13 +317,13 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
         return withdrawableStatuses.Contains(status);
     }
 
-  
+
 
     // 取得編輯頁面的網址
     private string GetEditUrl(ReviewChecklistItem item)
     {
         if (item == null || string.IsNullOrEmpty(item.ProjectID)) return "#";
-            
+
         // 根據計畫類型決定編輯頁面
         string projectCategory = item.GetProjectCategory();
         //TODO 正文 請提供 編輯相關網址
@@ -377,7 +377,7 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
                 Response.Redirect($"~/OFS/SCI/SciApplication.aspx?GrantTypeID={selectedGrantTypeId}");
             }else if (selectedGrantTypeId == "CUL")
             {
-                
+
             }else if (selectedGrantTypeId =="EDC")
             {
                 // EDC 的處理邏輯
@@ -401,8 +401,8 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             {
                 // 其他不符合的情況
             }
-            
-            
+
+
         }
         catch (Exception ex)
         {
@@ -464,7 +464,7 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
                 StageStatusAfter = stageStatusAfter,
                 Description = description
             };
-            
+
             // 儲存到資料庫
             bool success = ApplicationChecklistHelper.InsertCaseHistoryLog(caseHistoryLog);
 
@@ -599,7 +599,7 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             {
                 // 其他不符合的情況
             }
-           
+
             // 清空輸入欄位
             txtWithdrawReason.Text = "";
             hdnWithdrawProjectId.Value = "";
@@ -638,7 +638,7 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
         {
             string projectId = hdnDeleteProjectId.Value;
             string reason = txtDeleteReason.Text.Trim();
-            
+
             if (string.IsNullOrEmpty(reason))
             {
                 ShowMessage("請輸入刪除原因", false);
@@ -688,7 +688,7 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             }
 
 
-          
+
             // 清空輸入欄位
             txtDeleteReason.Text = "";
             hdnDeleteProjectId.Value = "";
@@ -768,8 +768,8 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             {
                 // ACC 的處理邏輯
             }
-           
-            
+
+
             // 重新載入資料以取得最新狀態
             LoadData();
             // 清空 HiddenField
@@ -779,7 +779,7 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
 
             // 更新標籤統計
             UpdateTabStatisticsAndActiveState(hidSelectedStage.Value);
-          
+
         }
         catch (Exception ex)
         {
@@ -861,7 +861,7 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             }
             else
             {
-                
+
             }
 
             return new { success = true, data = result };
@@ -898,7 +898,7 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             var technicalReviewComments = new List<object>();
 
             // 根據 ProjectID 判斷計畫類型並取得審查意見
-            
+
             // 科專計畫處理 - 同時查詢領域審查和技術審查
             string Stage1 = "";
             string Stage2 = "";
@@ -909,13 +909,13 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
                  Stage2 = "技術審查";
             }else if (projectId.Contains("CUL"))
             {
-                // TODO FOR 正文  
-                //僅確認。 確認 Stage1 和Stage2 是否有 是在 OFS_ReviewRecords中搜尋資料。 
+                // TODO FOR 正文
+                //僅確認。 確認 Stage1 和Stage2 是否有 是在 OFS_ReviewRecords中搜尋資料。
                 //以及Stage 名稱。
                 Stage1 = "初審";
                 Stage2 = "複審";
             }
-            
+
             // 查詢領域/初審 審查意見
             var domainCommentsTable = ReviewCheckListHelper.GetSciReviewComments(projectId, Stage1);
             if (domainCommentsTable != null && domainCommentsTable.Rows.Count > 0)
@@ -1011,9 +1011,9 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
     /// <param name="selectedStage">選中的標籤</param>
     /// <returns>篩選後的完整資料</returns>
     [System.Web.Services.WebMethod]
-    public static object GetFilteredData(string searchText = "", string contentKeyword = "", 
-                                        string year = "", string status = "", string stage = "", 
-                                        string department = "", string reviewer = "", 
+    public static object GetFilteredData(string searchText = "", string contentKeyword = "",
+                                        string year = "", string status = "", string stage = "",
+                                        string department = "", string reviewer = "",
                                         bool waitingReply = false, string selectedStage = "")
     {
         try
@@ -1021,12 +1021,12 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             // 載入原始資料
             // TODO 改 VIEW
             var originalData = ApplicationChecklistHelper.GetLatestApplicationChecklist();
-            
-            
+
+
             // 篩選資料
-            var filteredData = FilterDataStatic(originalData, searchText, contentKeyword, year, 
+            var filteredData = FilterDataStatic(originalData, searchText, contentKeyword, year,
                                                status, stage, department, reviewer, waitingReply, selectedStage);
-            
+
             // 將資料轉換為前端需要的格式
             var dataList = filteredData.Select(item => new {
                 Year = item.Year ?? "",
@@ -1041,7 +1041,7 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
                 // 其他需要的欄位
                 SupervisoryUnit = item.SupervisoryUnit ?? ""
             }).ToList();
-            
+
             // 統計各類別數量
             var categoryCounts = new Dictionary<string, int>
             {
@@ -1054,9 +1054,9 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
                 ["素養"] = originalData.Count(x => x.ProjectID?.Contains("LIT") == true),
                 ["無障礙"] = originalData.Count(x => x.ProjectID?.Contains("ACC") == true)
             };
-            
-            return new { 
-                success = true, 
+
+            return new {
+                success = true,
                 data = dataList,
                 totalRecords = filteredData.Count,
                 categoryCounts = categoryCounts
@@ -1068,11 +1068,11 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             return new { success = false, message = $"載入資料時發生錯誤：{ex.Message}" };
         }
     }
-    
-    
+
+
     // 靜態方法：篩選資料
-    private static List<ReviewChecklistItem> FilterDataStatic(List<ReviewChecklistItem> originalData, 
-        string searchText, string contentKeyword, string year, string status, string stage, 
+    private static List<ReviewChecklistItem> FilterDataStatic(List<ReviewChecklistItem> originalData,
+        string searchText, string contentKeyword, string year, string status, string stage,
         string department, string reviewer, bool waitingReply, string selectedStage)
     {
         var filteredList = originalData.AsEnumerable();
@@ -1140,11 +1140,11 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
         {
             // 取得需要待回覆的 ProjectID 清單
             var waitingReplyProjectIds = ApplicationChecklistHelper.GetWaitingReplyProjectIds();
-            
+
             if (waitingReplyProjectIds != null && waitingReplyProjectIds.Count > 0)
             {
-                filteredList = filteredList.Where(x => 
-                    !string.IsNullOrEmpty(x.ProjectID) && 
+                filteredList = filteredList.Where(x =>
+                    !string.IsNullOrEmpty(x.ProjectID) &&
                     waitingReplyProjectIds.Contains(x.ProjectID));
             }
             else
@@ -1156,13 +1156,13 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
 
         return filteredList.ToList();
     }
-    
-    
+
+
     // 靜態輔助方法
     private static string GetProjectCategoryStatic(string projectId)
     {
         if (string.IsNullOrEmpty(projectId)) return "";
-        
+
         if (projectId.Contains("SCI")) return "科專";
         else if (projectId.Contains("CUL")) return "文化";
         else if (projectId.Contains("EDC")) return "學校民間";
@@ -1172,7 +1172,7 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
         else if (projectId.Contains("ACC")) return "無障礙";
         return "";
     }
-    
+
     private static string FormatAmountStatic(string amount)
     {
         if (string.IsNullOrEmpty(amount) || amount == "0")
@@ -1185,7 +1185,7 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
 
         return amount;
     }
-    
+
 }
 
 public class ReplyItem

@@ -7,12 +7,9 @@
 <asp:Content ID="HeadContent" ContentPlaceHolderID="HeadExtra" runat="server">
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-     <!-- JavaScript 文件 -->
-    <script src="<%= ResolveUrl("~/assets/vendor/bootstrap-5.3.3/dist/js/bootstrap.bundle.min.js") %>"></script>
     <!-- SortableJS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <script src="<%= ResolveUrl("~/assets/js/planAdmJS.js") %>"></script>
-    <script src="<%= ResolveUrl("~/assets/js/customJS.js") %>"></script>
     <script>
         function toggleMenu() {
             const layout = document.querySelector('.mis-layout');
@@ -331,7 +328,8 @@
                   
                   </div>
                   <!-- 登入資訊 -->
-                  <div class="d-flex justify-content-end mb-4">
+                  <div class="d-flex justify-content-between mb-4">
+                      <asp:ContentPlaceHolder ID="Breadcrumbs" runat="server"><div></div></asp:ContentPlaceHolder>
                       <div class="login-user">
                           <div class="user-icon">
                               <i class="fa-solid fa-user"></i>
@@ -385,6 +383,7 @@
                       <li>電話：(07)338-1810     Copyright © 海洋委員會 版權所有</li>
                   </ul>
               </footer>
+              <asp:ContentPlaceHolder ID="FloatContent" runat="server"></asp:ContentPlaceHolder>
         </div>
     </div>
   
