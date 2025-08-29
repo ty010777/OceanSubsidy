@@ -5,7 +5,8 @@
 </asp:Content>
 
 <asp:Content ID="HeadContent" ContentPlaceHolderID="HeadExtra" runat="server">
-    <!-- 計畫執行頁面特定的樣式或腳本可以在這裡添加 -->
+    <!-- 引用 inprogressList.js -->
+    <script src="<%= ResolveUrl("~/script/OFS/inprogressList.js") %>"></script>
 </asp:Content>
 
 <asp:Content ID="MainContent" ContentPlaceHolderID="MainContent" runat="server">
@@ -47,19 +48,11 @@
                     <div class="col-12 col-lg-6">
                         <div class="fs-16 text-gray mb-2">年度</div>
                         <asp:DropDownList ID="ddlYear" runat="server" CssClass="form-select">
-                            <asp:ListItem Text="全部" Value=""></asp:ListItem>
-                            <asp:ListItem Text="114年" Value="114"></asp:ListItem>
-                            <asp:ListItem Text="113年" Value="113"></asp:ListItem>
                         </asp:DropDownList>
                     </div>
                     <div class="col-12 col-lg-6">
                         <div class="fs-16 text-gray mb-2">類別</div>
                         <asp:DropDownList ID="ddlCategory" runat="server" CssClass="form-select">
-                            <asp:ListItem Text="全部" Value=""></asp:ListItem>
-                            <asp:ListItem Text="科專" Value="SCI"></asp:ListItem>
-                            <asp:ListItem Text="文化" Value="CUL"></asp:ListItem>
-                            <asp:ListItem Text="學校民間" Value="EDC"></asp:ListItem>
-                            <asp:ListItem Text="學校社團" Value="CLB"></asp:ListItem>
                         </asp:DropDownList>
                     </div>
                 </div>
@@ -67,21 +60,11 @@
                     <div class="col-12 col-lg-6">
                         <div class="fs-16 text-gray mb-2">申請單位</div>
                         <asp:DropDownList ID="ddlApplyUnit" runat="server" CssClass="form-select">
-                            <asp:ListItem Text="全部" Value=""></asp:ListItem>
-                            <asp:ListItem Text="主管單位" Value=""></asp:ListItem>
-                            <asp:ListItem Text="海洋科技科" Value=""></asp:ListItem>
-                            <asp:ListItem Text="海洋文化科" Value=""></asp:ListItem>
-                            <asp:ListItem Text="海洋教育科" Value=""></asp:ListItem>
                         </asp:DropDownList>
                     </div>
                     <div class="col-12 col-lg-6">
                         <div class="fs-16 text-gray mb-2">主管單位</div>
                         <asp:DropDownList ID="ddlSupervisoryUnit" runat="server" CssClass="form-select">
-                            <asp:ListItem Text="全部" Value=""></asp:ListItem>
-                            <asp:ListItem Text="主管單位" Value=""></asp:ListItem>
-                            <asp:ListItem Text="海洋科技科" Value=""></asp:ListItem>
-                            <asp:ListItem Text="海洋文化科" Value=""></asp:ListItem>
-                            <asp:ListItem Text="海洋教育科" Value=""></asp:ListItem>
                         </asp:DropDownList>
                     </div>
                 </div>
@@ -101,11 +84,11 @@
             </div>
             
             <div class="form-check-input-group d-flex justify-content-center">
-                <asp:CheckBox ID="chkPendingReply" runat="server" CssClass="form-check-input check-teal" />
-                <label for="<%= chkPendingReply.ClientID %>">待回覆</label>
+                <input id="chkPendingReply" class="form-check-input check-teal" type="checkbox" name="type2">
+                <label for="chkPendingReply">待回覆</label>
             </div>
             
-            <asp:Button ID="btnSearch" runat="server" Text="查詢" CssClass="btn btn-teal-dark d-table mx-auto" />
+            <asp:Button ID="btnSearch" runat="server" Text="查詢" CssClass="btn btn-teal-dark d-table mx-auto" OnClick="btnSearch_Click" />
         </div>
     </div>
     
@@ -166,7 +149,7 @@
                     <img src="<%= ResolveUrl("~/assets/img/title-icon02-teal.svg") %>" alt="logo">
                     <span>列表</span>
                 </h4>
-                <span>共 <span class="text-teal">27</span> 筆資料</span>
+                <span>共 <span class="text-teal" id="totalRecordsSpan"><asp:Label ID="lblTotalRecords" runat="server" Text="0"></asp:Label></span> 筆資料</span>
             </div>
         </div>
         
@@ -228,87 +211,42 @@
                         <th>功能</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <!-- 範例資料 -->
-                    <tr>
-                        <td data-th="年度:">114</td>
-                        <td data-th="類別:">科專</td>
-                        <td data-th="計畫編號:" style="text-align: left;" nowrap>SCI1140012</td>
-                        <td data-th="計畫名稱:" style="text-align: left;">
-                            <a href="#" class="link-black">112-113年水下噪音監測調查計畫</a>
-                        </td>
-                        <td data-th="執行單位:" style="text-align: left;">淡江大學學校財團法人淡江大學</td>
-                        <td data-th="完成狀態:">計畫已核定</td>
-                        <td data-th="待辦事項:"><span class="text-teal">請填寫契約資料</span></td>
-                        <td data-th="功能:">
-                            <div class="d-flex align-items-center justify-content-center gap-1">
-                                <button class="btn btn-sm btn-teal-dark" type="button"><i class="fa-solid fa-pen" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="編輯"></i></button>
-                            </div>
-                        </td>
-                    </tr>
-                    <!-- 更多範例資料可以在這裡添加 -->
+                <tbody id="tableBody">
+                    <!-- 資料列將由 JavaScript 動態產生 -->
                 </tbody>
             </table>
         </div>
         
-        <!-- 分頁 -->
+        <!-- 前端分頁系統 -->
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <nav class="pagination justify-content-start" aria-label="Pagination">
-                <button class="nav-button" aria-label="Previous page" disabled>
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                
-                <button class="pagination-item active">
-                    <span class="page-number">1</span>
-                </button>
-                
-                <button class="pagination-item">
-                    <span class="page-number">2</span>
-                </button>
-                
-                <div class="pagination-item ellipsis">
-                    <span class="">...</span>
-                </div>
-                
-                <button class="pagination-item">
-                    <span class="page-number">9</span>
-                </button>
-                
-                <button class="pagination-item">
-                    <span class="page-number">10</span>
-                </button>
-                
-                <button class="nav-button" aria-label="Next page">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
+            <nav class="pagination justify-content-start" aria-label="Pagination" id="paginationNav">
+                <button type="button" id="btnPrevPage" class="nav-button" aria-label="Previous page">‹</button>
+                <!-- 動態分頁按鈕將在這裡插入 -->
+                <button type="button" id="btnNextPage" class="nav-button" aria-label="Next page">›</button>
             </nav>
-            
+      
             <div class="page-number-control">
                 <div class="page-number-control-item">
                     <span>跳到</span>
-                    <select class="form-select">
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="6">6</option>
-                        <option value="7">7</option>
-                        <option value="8">8</option>
-                        <option value="9">9</option>
-                        <option value="10" selected>10</option>
+                    <select id="ddlGoToPage" class="form-select jump-to-page">
+                        <!-- 選項將由 JavaScript 動態生成 -->
                     </select>
                     <span>頁</span>
                     <span>,</span>
                 </div>
                 <div class="page-number-control-item">
                     <span>每頁顯示</span>
-                    <select class="form-select">
-                        <option value="10">10</option>
+                    <select id="ddlPageSize" class="form-select page-size-selector">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
                         <option value="20">20</option>
                         <option value="30">30</option>
+                        <option value="50">50</option>
                     </select>
                     <span>筆</span>
+                </div>
+                <div class="pagination-info ms-3 text-muted small" id="paginationInfo">
+                    <!-- 分頁資訊將顯示在這裡 -->
                 </div>
             </div>
         </div>

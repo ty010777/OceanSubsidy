@@ -164,7 +164,7 @@
  
                        </div>
                    </li>
-                   <li class="d-flex gap-2"> 
+                   <li class="d-flex d-none gap-2" id="reviewResultSection" > 
                        <span class="text-gray mt-2">審查結果 :</span>
                        <div class="d-flex flex-column gap-2 align-items-start flex-grow-1 checkPass">
                            <div class="form-check-input-group d-flex text-nowrap mt-2 align-items-center">
@@ -177,7 +177,7 @@
                        </div>
                   </li>
                </ul>
-               <button type="button" class="btn btn-teal d-table mx-auto" onclick="submitReview()">確定</button>
+               <button type="button" class="btn btn-teal d-table mx-auto" id="submitReviewButton" onclick="submitReview()">確定</button>
      
           </div>
                                   
@@ -221,10 +221,15 @@
         var currentProjectID = '<%= Request.QueryString["ProjectID"] %>';
         var currentReportType = 1; // 公共變數：代表目前是期中報告(1)還是期末報告(2)
         
-        // 頁面載入時載入期中報告資料
+        // 頁面載入時載入報告資料
         $(document).ready(function() {
-            loadReportData(1);
+            // 從URL參數讀取stage，預設為1
+            var urlParams = new URLSearchParams(window.location.search);
+            var stage = parseInt(urlParams.get('stage')) || 1;
+            
+            loadReportData(stage);
             checkReviewPermissionAndStatus();
+            initializeReviewSections();
         });
         
         // 載入報告資料
@@ -474,20 +479,69 @@
             });
         }
         
+        // 初始化審查區塊的顯示狀態
+        function initializeReviewSections() {
+            var needMemberCheckbox = document.getElementById('needmember');
+            var reviewerListSection = document.getElementById('reviewerListSection');
+            var reviewResultSection = document.getElementById('reviewResultSection');
+            var submitReviewButton = document.getElementById('submitReviewButton');
+            
+            // 預設狀態：沒有勾選「需審查委員」
+            if (needMemberCheckbox && !needMemberCheckbox.checked) {
+                // 隱藏審查委員名單
+                if (reviewerListSection) {
+                    reviewerListSection.classList.add('d-none');
+                    reviewerListSection.classList.remove('d-flex');
+                }
+                // 顯示審查結果
+                if (reviewResultSection) {
+                    reviewResultSection.classList.remove('d-none');
+                    reviewResultSection.classList.add('d-flex');
+                }
+                // 顯示確定按鈕
+                if (submitReviewButton) {
+                    submitReviewButton.classList.remove('d-none');
+                    submitReviewButton.classList.add('d-table');
+                }
+            }
+        }
+        
         // 切換審查委員名單顯示
         function toggleReviewerList() {
             var needMemberCheckbox = document.getElementById('needmember');
             var reviewerListSection = document.getElementById('reviewerListSection');
+            var reviewResultSection = document.getElementById('reviewResultSection');
+            var submitReviewButton = document.getElementById('submitReviewButton');
                 
             if (needMemberCheckbox.checked) {
-                reviewerListSection.style.setProperty('display', 'flex');
+                // 顯示審查委員名單
+                reviewerListSection.classList.remove('d-none');
+                reviewerListSection.classList.add('d-flex');
+                // 隱藏審查結果
+                reviewResultSection.classList.add('d-none');
+                reviewResultSection.classList.remove('d-flex');
+                // 隱藏確定按鈕
+                if (submitReviewButton) {
+                    submitReviewButton.classList.add('d-none');
+                    submitReviewButton.classList.remove('d-table');
+                }
                 // 預設選擇逐筆輸入
                 document.getElementById('radio-single').checked = true;
                 document.getElementById('radio-batch').checked = false;
                 // 觸發輸入模式切換，顯示逐筆輸入並添加預設一行
                 toggleInputMode();
             } else {
-                reviewerListSection.style.setProperty('display', 'none');
+                // 隱藏審查委員名單
+                reviewerListSection.classList.add('d-none');
+                reviewerListSection.classList.remove('d-flex');
+                // 顯示審查結果
+                reviewResultSection.classList.remove('d-none');
+                reviewResultSection.classList.add('d-flex');
+                // 顯示確定按鈕
+                if (submitReviewButton) {
+                    submitReviewButton.classList.remove('d-none');
+                    submitReviewButton.classList.add('d-table');
+                }
                 // 清空所有資料
                 clearAllReviewerRows();
                 // 重置為批次輸入預設

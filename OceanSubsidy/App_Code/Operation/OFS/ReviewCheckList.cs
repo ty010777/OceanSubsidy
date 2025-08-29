@@ -1611,6 +1611,7 @@ WHERE 1=1
                 UPDATE OFS_SCI_Project_Main 
                 SET Statuses = '{newStatus}',
                     StatusesName = N'{finalStatusesName}',
+                    LastOperation = '計畫已核定',
                     updated_at = GETDATE()
                 WHERE ProjectID = '{projectId}'";
 
@@ -2291,11 +2292,14 @@ WHERE 1=1
             // 轉換資料
             foreach (DataRow row in dt.Rows)
             {
+                var projectId = row["ProjectID"]?.ToString() ?? "";
+                var rowCategory = row["Category"]?.ToString() ?? "";
+                
                 var item = new ExecutionPlanReviewItem
                 {
                     Year = row["Year"]?.ToString() ?? "",
-                    ProjectID = row["ProjectID"]?.ToString() ?? "",
-                    Category = row["Category"]?.ToString() ?? "",
+                    ProjectID = projectId,
+                    Category = rowCategory,
                     Stage = row["Stage"]?.ToString() ?? "",
                     ReviewTodo = row["ReviewTodo"]?.ToString() ?? "",
                     SupervisoryPersonAccount = row["SupervisoryPersonAccount"]?.ToString() ?? "",
@@ -2303,6 +2307,12 @@ WHERE 1=1
                     OrgName = row["OrgName"]?.ToString() ?? "",
                     ProjectNameTw = row["ProjectNameTw"]?.ToString() ?? ""
                 };
+
+                // 僅針對科專專案加入審查委員進度
+                if (rowCategory == "SCI")
+                {
+                    item.ReviewProgress = GetSciReviewProgress(projectId);
+                }
 
                 results.Add(item);
             }
@@ -2322,46 +2332,242 @@ WHERE 1=1
         return results;
     }
 
+    // /// <summary>
+    // /// 搜尋 Type=6 執行計畫審核資料（支援分頁）
+    // /// </summary>
+    // /// <param name="year">年度</param>
+    // /// <param name="category">類別</param>
+    // /// <param name="orgName">申請單位</param>
+    // /// <param name="supervisoryUnit">主管單位</param>
+    // /// <param name="keyword">關鍵字</param>
+    // /// <param name="pageNumber">頁碼</param>
+    // /// <param name="pageSize">每頁筆數</param>
+    // /// <returns>分頁結果</returns>
+    // public static PaginatedResult<ExecutionPlanReviewItem> Search_Type6_ExecutionPlanReview_Paged(
+    //     string year = "",
+    //     string category = "",
+    //     string orgName = "",
+    //     string supervisoryUnit = "",
+    //     string keyword = "",
+    //     int pageNumber = 1,
+    //     int pageSize = 10)
+    // {
+    //     // 取得所有資料
+    //     var allData = Search_Type6_ExecutionPlanReview(year, category, orgName, supervisoryUnit, keyword);
+    //     
+    //     // 計算分頁資料
+    //     int totalRecords = allData.Count;
+    //     int totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+    //     
+    //     var pagedData = allData
+    //         .Skip((pageNumber - 1) * pageSize)
+    //         .Take(pageSize)
+    //         .ToList();
+    //         
+    //     return new PaginatedResult<ExecutionPlanReviewItem>
+    //     {
+    //         Data = pagedData,
+    //         TotalRecords = totalRecords,
+    //         PageNumber = pageNumber,
+    //         PageSize = pageSize,
+    //         TotalPages = totalPages
+    //     };
+    // }
+
     /// <summary>
-    /// 搜尋 Type=6 執行計畫審核資料（支援分頁）
+    /// 取得科專專案的審查委員進度
     /// </summary>
-    /// <param name="year">年度</param>
-    /// <param name="category">類別</param>
-    /// <param name="orgName">申請單位</param>
-    /// <param name="supervisoryUnit">主管單位</param>
-    /// <param name="keyword">關鍵字</param>
-    /// <param name="pageNumber">頁碼</param>
-    /// <param name="pageSize">每頁筆數</param>
-    /// <returns>分頁結果</returns>
-    public static PaginatedResult<ExecutionPlanReviewItem> Search_Type6_ExecutionPlanReview_Paged(
-        string year = "",
-        string category = "",
-        string orgName = "",
-        string supervisoryUnit = "",
-        string keyword = "",
-        int pageNumber = 1,
-        int pageSize = 10)
+    /// <param name="projectId">專案編號</param>
+    /// <returns>審查委員進度字串，格式：已繳交人數/總人數 狀態</returns>
+    public static string GetSciReviewProgress(string projectId)
     {
-        // 取得所有資料
-        var allData = Search_Type6_ExecutionPlanReview(year, category, orgName, supervisoryUnit, keyword);
-        
-        // 計算分頁資料
-        int totalRecords = allData.Count;
-        int totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
-        
-        var pagedData = allData
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
-            .ToList();
-            
-        return new PaginatedResult<ExecutionPlanReviewItem>
+        if (string.IsNullOrEmpty(projectId) || !projectId.Contains("SCI"))
         {
-            Data = pagedData,
-            TotalRecords = totalRecords,
-            PageNumber = pageNumber,
-            PageSize = pageSize,
-            TotalPages = totalPages
-        };
+            return null;
+        }
+
+        DbHelper db = new DbHelper();
+        try
+        {
+            db.CommandText = @"
+                SELECT 
+                    CAST(SUM(CASE WHEN SR.isSubmit = 1 THEN 1 ELSE 0 END) AS VARCHAR(10)) + '/' +
+                    CAST(COUNT(*) AS VARCHAR(10)) + ' ' +
+                    CASE 
+                        WHEN SUM(CASE WHEN SR.isSubmit = 1 THEN 1 ELSE 0 END) < COUNT(*) 
+                            THEN N'未完成'
+                        ELSE N'完成'
+                    END AS ReviewProgress
+                FROM dbo.OFS_SCI_StageExam SE
+                INNER JOIN dbo.OFS_SCI_StageExam_ReviewerList SR 
+                    ON SE.id = SR.ExamID
+                WHERE SE.Status = '審核中'
+                  AND SE.ProjectID = @ProjectID
+                GROUP BY SE.ProjectID";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@ProjectID", projectId);
+
+            DataTable dt = db.GetTable();
+            
+            if (dt != null && dt.Rows.Count > 0)
+            {
+                return dt.Rows[0]["ReviewProgress"]?.ToString();
+            }
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得科專審查委員進度時發生錯誤：{ex.Message}");
+            return null;
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    #endregion
+
+    #region 待辦事項管理
+
+    /// <summary>
+    /// 為專案建立預設的待辦事項模板
+    /// </summary>
+    /// <param name="projectId">專案編號</param>
+    /// <returns>是否成功建立</returns>
+    public static void CreateTaskQueueTemplate(string projectId)
+    {
+        try
+        {
+            
+            // 定義待辦事項模板
+            var taskTemplates = new List<(string TaskNameEn, string TaskName, int PriorityLevel, bool IsTodo, bool IsCompleted)>
+            {
+                ("Contract", "簽訂契約資料", 1, true, false),
+                ("Payment1", "第一次請款(預撥)", 2, true, false),
+                ("Change", "計畫變更", 3, false, false),
+                ("Schedule", "填寫預定進度", 4, true, false),
+                ("MidReport", "填寫期中報告", 5, false, false),
+                ("FinalReport", "填寫期末報告", 6, false, false),
+                ("MonthlyReport", "填寫每月進度報告", 7, false, false),
+                ("Payment2", "第二期請款", 8, false, false)
+            };
+
+            // 批次插入待辦事項
+            BatchInsertTaskQueue(projectId, taskTemplates);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"建立待辦事項模板時發生錯誤：{ex.Message}");
+        }
+    }
+
+ 
+
+    /// <summary>
+    /// 批次插入待辦事項
+    /// </summary>
+    /// <param name="projectId">專案編號</param>
+    /// <param name="taskTemplates">待辦事項模板列表</param>
+    /// <returns>是否成功插入</returns>
+    private static bool BatchInsertTaskQueue(string projectId, List<(string TaskNameEn, string TaskName, int PriorityLevel, bool IsTodo, bool IsCompleted)> taskTemplates)
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            try
+            {
+                foreach (var template in taskTemplates)
+                {
+                    db.CommandText = $@"
+                        INSERT INTO OFS_TaskQueue (ProjectID, TaskNameEn, TaskName, PriorityLevel, IsTodo, IsCompleted)
+                        VALUES ('{projectId}', '{template.TaskNameEn}', '{template.TaskName}', {template.PriorityLevel}, {(template.IsTodo ? 1 : 0)}, {(template.IsCompleted ? 1 : 0)})";
+                    
+                    db.ExecuteNonQuery();
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"批次插入待辦事項時發生錯誤：{ex.Message}");
+                return false;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 取得專案的待辦事項列表
+    /// </summary>
+    /// <param name="projectId">專案編號</param>
+    /// <returns>待辦事項列表</returns>
+    public static List<OFS_TaskQueue> GetTaskQueueByProjectId(string projectId)
+    {
+        var taskList = new List<OFS_TaskQueue>();
+        
+        using (DbHelper db = new DbHelper())
+        {
+            try
+            {
+                db.CommandText = $@"
+                    SELECT ProjectID, TaskName, PriorityLevel, IsTodo, IsCompleted
+                    FROM OFS_TaskQueue 
+                    WHERE ProjectID = '{projectId}' 
+                    ORDER BY PriorityLevel";
+                
+                DataTable dt = db.GetTable();
+                
+                if (dt != null && dt.Rows.Count > 0)
+                {
+                    foreach (DataRow row in dt.Rows)
+                    {
+                        var task = new OFS_TaskQueue
+                        {
+                            ProjectID = row["ProjectID"]?.ToString(),
+                            TaskName = row["TaskName"]?.ToString(),
+                            PriorityLevel = row["PriorityLevel"] as int?,
+                            IsTodo = Convert.ToBoolean(row["IsTodo"]),
+                            IsCompleted = Convert.ToBoolean(row["IsCompleted"])
+                        };
+                        taskList.Add(task);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"取得待辦事項時發生錯誤：{ex.Message}");
+            }
+        }
+        
+        return taskList;
+    }
+
+    /// <summary>
+    /// 更新待辦事項狀態
+    /// </summary>
+    /// <param name="projectId">專案編號</param>
+    /// <param name="taskName">任務名稱</param>
+    /// <param name="isCompleted">是否完成</param>
+    /// <returns>是否成功更新</returns>
+    public static void UpdateTaskQueueStatus(string projectId, string taskName, bool isCompleted)
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            try
+            {
+                db.CommandText = $@"
+                    UPDATE OFS_TaskQueue 
+                    SET IsCompleted = {(isCompleted ? 1 : 0)} 
+                    WHERE ProjectID = '{projectId}' AND TaskName = '{taskName}'";
+                
+               db.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"更新待辦事項狀態時發生錯誤：{ex.Message}");
+            }
+        }
     }
 
     #endregion

@@ -1,0 +1,12 @@
+button,a {
+    &:focus {
+        outline: 3px solid #D12972 !important;
+    }
+}
+
+input,select,textarea {
+    &:focus {
+        outline: 3px solid #D12972 !important;
+    }
+}
+

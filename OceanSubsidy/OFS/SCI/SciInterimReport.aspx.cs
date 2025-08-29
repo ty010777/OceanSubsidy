@@ -243,13 +243,17 @@ public partial class OFS_SCI_SciInterimReport : System.Web.UI.Page
             {
                 return new { Success = false, Message = "專案ID不可為空" };
             }
-
+        
             string status = isDraft ? "暫存" : "審核中";
             string stageName = stage == 1 ? "期中報告" : "期末報告";
-            
+            string TaskNameEn = stage == 1 ? "MidReport" : "FinalReport";
             // 呼叫 Helper 方法處理資料庫操作
             OFS_SciInterimReportHelper.SubmitStageExam(projectID, stage, status);
-            
+            if (!isDraft)
+            {   
+                InprogressListHelper.UpdateTaskCompleted(projectID,TaskNameEn, true);
+            }
+        
             string message = isDraft ? $"{stageName}暫存成功" : $"{stageName}提送成功";
             return new { Success = true, Message = message };
         }
@@ -331,11 +335,23 @@ public partial class OFS_SCI_SciInterimReport : System.Web.UI.Page
             }
 
             string status = reviewResult == "pass" ? "通過" : "暫存";
-            string stageName = stage == 1 ? "期中報告" : "期末報告";
-            
+            string stageName = stage == 1 ? "期中" : "期末";
+            string TaskNameEn = stage == 1 ? "MidReport" : "FinalReport";
             // 呼叫 Helper 方法處理審核
             OFS_SciInterimReportHelper.ReviewStageExam(projectID, stage, reviewMethod, status, reviewComment, currentUser.UserName, currentUser.Account);
-            
+            if (reviewResult == "pass")
+            {   
+                InprogressListHelper.UpdateLastOperation(projectID, $"已通過{stageName}審查");
+                if(stage == 2)
+                {
+                    //開啟第二次請款待辦事項檢查
+                    InprogressListHelper.UpdateTaskTodo(projectID, "Payment2", true);
+                }
+            }
+            else
+            {
+                InprogressListHelper.UpdateTaskCompleted(projectID, TaskNameEn, false);
+            }
             return new { Success = true, Message = $"{stageName}審核完成" };
         }
         catch (Exception ex)

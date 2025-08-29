@@ -269,6 +269,11 @@ public partial class OFS_SCI_SciReimbursement : System.Web.UI.Page
             string Status = reviewResult == "pass" ? "通過" : "請款中";
             currentPayment = reviewResult == "pass" ?  currentPayment: 0;
             OFS_SciReimbursementHelper.UpdatePayment(projectID,phaseOrder, currentPayment,Status,  reviewComment,currentUser.Account);
+            if (reviewResult == "pass")
+            {
+                InprogressListHelper.UpdateLastOperation(projectID, $"已完成第{phaseOrder}期請款");
+                InprogressListHelper.UpdateTaskCompleted(projectID, $"Payment{phaseOrder}", true);
+            }
             return new { Success = true, Message = "審查結果已成功儲存" };
         }
         catch (Exception ex)

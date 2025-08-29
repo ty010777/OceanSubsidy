@@ -185,16 +185,20 @@
             </li>
 
         </ul>
-        <button class="btn btn-teal d-table mx-auto" id = "confirmReviewBtn">確定撥款</button>
+        <button type="button" class="btn btn-teal d-table mx-auto" id = "confirmReviewBtn">確定撥款</button>
     </div>
 
     <script>
         var currentProjectID = '<%= Request.QueryString["ProjectID"] %>';
         var currentPhase = 1; // 公共變數：代表目前是第幾期 (1, 2)
         
-        // 頁面載入時自動帶入第一期資料
+        // 頁面載入時自動帶入期別資料
         $(document).ready(function() {
-            loadPhaseData(1);
+            // 從URL參數讀取stage，預設為1
+            var urlParams = new URLSearchParams(window.location.search);
+            var stage = parseInt(urlParams.get('stage')) || 1;
+            
+            loadPhaseData(stage);
             $('#confirmReviewBtn').on('click', submitReview);
 
         });

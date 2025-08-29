@@ -6,6 +6,9 @@
 <%@ Register TagPrefix="uc" TagName="SciUploadAttachmentsControl" Src="~/OFS/SCI/UserControls/SciUploadAttachmentsControl.ascx" %>
 
 <asp:Content ID="HeadContent" ContentPlaceHolderID="HeadExtra" runat="server">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <!-- UserControl 相關 JavaScript 檔案 -->
     <script src="<%= ResolveUrl("~/script/OFS/SCI/SciApplication.js") %>"></script>
     <script src="<%= ResolveUrl("~/script/OFS/SCI/SciWorkSch.js") %>"></script>
@@ -90,9 +93,17 @@
                     下載核定計畫書
                 </a>
             </div>
-            <button class="btn btn-pink" type="button" data-bs-toggle="modal" data-bs-target="#planStopModal">
-                計畫終止
-            </button>
+            <div class="d-flex gap-3 align-items-center">
+                <div class="text-muted small">
+                    承辦人員：<asp:Label ID="lblCurrentReviewer" runat="server" CssClass="fw-bold text-dark" Text="未設定" />
+                </div>
+                <button type="button" id="btnTransferProject" class="btn btn-teal" runat="server" data-bs-toggle="modal" data-bs-target="#transferCaseModal" ClientIDMode="Static">
+                    移轉案件
+                </button>
+                <button class="btn btn-pink" type="button" data-bs-toggle="modal" data-bs-target="#planStopModal">
+                    計畫終止
+                </button>
+            </div>
         </div>
         
     <!-- 申請表的進度圖 -->
@@ -154,6 +165,46 @@
             <!-- 第五頁：上傳附件/提送申請 -->
             <div class="tab-pane" id="tab5" style="display: none;">
                 <uc:SciUploadAttachmentsControl ID="ucSciUploadAttachments" runat="server" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 移轉案件 -->
+    <div class="modal fade" id="transferCaseModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="transferCaseModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-md">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="fs-24 fw-bold text-green-light" id="h4TransferProject" runat="server" >移轉案件</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="">
+                        <div class="fs-16 text-gray mb-3">承辦人員</div>
+                        <asp:UpdatePanel ID="upTransferCase" runat="server" UpdateMode="Conditional">
+                            <ContentTemplate>
+                                <asp:DropDownList ID="ddlDepartment" runat="server" CssClass="form-select" AutoPostBack="true" OnSelectedIndexChanged="ddlDepartment_SelectedIndexChanged">
+                                </asp:DropDownList>
+                                <asp:DropDownList ID="ddlReviewer" runat="server" CssClass="form-select mt-2">
+                                </asp:DropDownList>
+                            </ContentTemplate>
+                            <Triggers>
+                                <asp:AsyncPostBackTrigger ControlID="ddlDepartment" EventName="SelectedIndexChanged" />
+                            </Triggers>
+                        </asp:UpdatePanel>
+                    </div>
+
+                    <div class="d-flex gap-4 flex-wrap justify-content-center mt-5">
+                        <button type="button" class="btn btn-gray" data-bs-dismiss="modal">
+                            取消
+                        </button>
+                        <asp:Button ID="btnConfirmTransfer" runat="server" 
+                            Text="確認移轉" 
+                            CssClass="btn btn-teal" 
+                            OnClick="btnConfirmTransfer_Click" />
+                    </div>
+                </div>
             </div>
         </div>
     </div>

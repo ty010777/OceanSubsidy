@@ -47,6 +47,113 @@ public partial class OFS_SCI_SciInprogress_Approved : System.Web.UI.Page
 
     #endregion
 
+    #region 按鈕事件
+
+    /// <summary>
+    /// 部門下拉選單變更事件
+    /// </summary>
+    protected void ddlDepartment_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        try
+        {
+            string selectedUnitID = ddlDepartment.SelectedValue;
+            LoadReviewerDropDown(selectedUnitID);
+            
+            // 更新 UpdatePanel
+            upTransferCase.Update();
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "載入承辦人員時發生錯誤");
+        }
+    }
+
+    /// <summary>
+    /// 確認移轉案件
+    /// </summary>
+    protected void btnConfirmTransfer_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            string selectedDepartmentID = ddlDepartment.SelectedValue;
+            string selectedReviewerAccount = ddlReviewer.SelectedValue;
+            
+            // 驗證必填欄位
+            if (string.IsNullOrEmpty(selectedDepartmentID))
+            {
+                ShowSweetAlert("錯誤", "請選擇部門", "error");
+                return;
+            }
+            
+            if (string.IsNullOrEmpty(selectedReviewerAccount))
+            {
+                ShowSweetAlert("錯誤", "請選擇承辦人員", "error");
+                return;
+            }
+            
+            if (string.IsNullOrEmpty(ProjectID))
+            {
+                ShowSweetAlert("錯誤", "找不到計畫ID", "error");
+                return;
+            }
+            
+            // 取得選中的承辦人員詳細資訊
+            var reviewerData = SysUserHelper.QueryUserByAccount(selectedReviewerAccount);
+            if (reviewerData == null || reviewerData.Rows.Count == 0)
+            {
+                ShowSweetAlert("錯誤", "找不到選擇的承辦人員資訊", "error");
+                return;
+            }
+            
+            // 取得部門名稱
+            var departmentData = SysUnitHelper.QueryByID(selectedDepartmentID);
+            if (departmentData == null || departmentData.Rows.Count == 0)
+            {
+                ShowSweetAlert("錯誤", "找不到選擇的部門資訊", "error");
+                return;
+            }
+            
+            string reviewerName = reviewerData.Rows[0]["Name"].ToString();
+            string departmentName = departmentData.Rows[0]["UnitName"].ToString();
+            
+            // 建立更新物件
+            var projectMain = new OFS_SCI_Project_Main
+            {
+                ProjectID = ProjectID,
+                SupervisoryPersonAccount = selectedReviewerAccount,
+                SupervisoryPersonName = reviewerName,
+                SupervisoryUnit = departmentName,
+                updated_at = DateTime.Now
+            };
+            
+            // 更新資料庫
+            OFS_SciApplicationHelper.UpdateOFS_SCIVersion(projectMain);
+            
+            // 更新頁面上的承辦人員資訊顯示
+            LoadCurrentReviewerInfo();
+            
+            ShowSweetAlert("成功", "案件移轉完成", "success");
+            
+            // 清空選項並關閉 Modal
+            ddlDepartment.SelectedIndex = 0;
+            ddlReviewer.Items.Clear();
+            ddlReviewer.Items.Add(new ListItem("請選擇承辦人員", ""));
+            
+            // 關閉 Modal
+            string script = @"
+                document.getElementById('transferCaseModal').querySelector('.btn-close').click();
+            ";
+            Page.ClientScript.RegisterStartupScript(this.GetType(), "closeModal", script, true);
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "移轉案件時發生錯誤");
+            ShowSweetAlert("錯誤", "移轉案件時發生錯誤，請稍後再試", "error");
+        }
+    }
+
+    #endregion
+
     #region 私有方法
 
     /// <summary>
@@ -60,7 +167,13 @@ public partial class OFS_SCI_SciInprogress_Approved : System.Web.UI.Page
             LoadAllUserControlData();
 
             // 設定計畫資訊到 Master Page
-             SetProjectInfoToMaster();
+            SetProjectInfoToMaster();
+            
+            // 載入移轉案件的部門下拉選單
+            LoadDepartmentDropDown();
+            
+            // 載入目前的承辦人員資訊
+            LoadCurrentReviewerInfo();
         }
         catch (Exception ex)
         {
@@ -132,8 +245,8 @@ public partial class OFS_SCI_SciInprogress_Approved : System.Web.UI.Page
     {
         string script = @"
             setTimeout(function() {
-                // 將所有輸入元素設為唯讀
-                $('input, textarea, select').each(function() {
+                // 將所有輸入元素設為唯讀，但排除移轉案件 Modal 中的元素
+                $('input, textarea, select').not('#transferCaseModal input, #transferCaseModal textarea, #transferCaseModal select').each(function() {
                     var $element = $(this);
                     
                     // 統一設為 readOnly 或 disabled
@@ -147,15 +260,17 @@ public partial class OFS_SCI_SciInprogress_Approved : System.Web.UI.Page
                 });
                 
                 // 隱藏操作按鈕，但保留重要的按鈕
-                $('button').not('.btn-close, [data-bs-dismiss=modal], [data-bs-toggle=modal], .btn-teal-dark, .btn-pink').each(function() {
+                $('button').not('.btn-close, [data-bs-dismiss=modal], [data-bs-toggle=modal], .btn-teal-dark, .btn-pink, .btn-teal, #transferCaseModal button').each(function() {
                     var $element = $(this);
                     var buttonText = $element.text().trim();
                     
-                    // 保留這 4 個重要按鈕
+                    // 保留重要按鈕
                     if (buttonText.indexOf('計畫變更申請') === -1 && 
                         buttonText.indexOf('計畫變更紀錄') === -1 && 
                         buttonText.indexOf('下載核定計畫書') === -1 && 
                         buttonText.indexOf('計畫終止') === -1 &&
+                        buttonText.indexOf('移轉案件') === -1 &&
+                        buttonText.indexOf('確認移轉') === -1 &&
                         buttonText.indexOf('查核紀錄') === -1) {
                         $element.hide();
                     }
@@ -170,6 +285,135 @@ public partial class OFS_SCI_SciInprogress_Approved : System.Web.UI.Page
         ";
         
         Page.ClientScript.RegisterStartupScript(this.GetType(), "ApplyViewMode", script, true);
+    }
+
+    /// <summary>
+    /// 載入移轉案件的部門下拉選單
+    /// </summary>
+    private void LoadDepartmentDropDown()
+    {
+        try
+        {
+            // 載入指定的審核單位（用於移轉案件）
+            var departmentData = SysUnitHelper.QueryReviewUnits();
+            
+            // 清空並重新綁定部門下拉選單
+            ddlDepartment.Items.Clear();
+            ddlDepartment.Items.Add(new ListItem("請選擇部門", ""));
+            
+            if (departmentData != null && departmentData.Rows.Count > 0)
+            {
+                foreach (System.Data.DataRow row in departmentData.Rows)
+                {
+                    string unitID = row["UnitID"].ToString();
+                    string unitName = row["UnitName"].ToString();
+                    ddlDepartment.Items.Add(new ListItem(unitName, unitID));
+                }
+            }
+            
+            // 初始化承辦人員下拉選單
+            ddlReviewer.Items.Clear();
+            ddlReviewer.Items.Add(new ListItem("請選擇承辦人員", ""));
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "載入部門下拉選單時發生錯誤");
+        }
+    }
+
+    /// <summary>
+    /// 載入指定部門的承辦人員下拉選單
+    /// </summary>
+    private void LoadReviewerDropDown(string unitID)
+    {
+        try
+        {
+            // 清空承辦人員下拉選單
+            ddlReviewer.Items.Clear();
+            ddlReviewer.Items.Add(new ListItem("請選擇承辦人員", ""));
+            
+            if (!string.IsNullOrEmpty(unitID))
+            {
+                // 根據部門ID載入使用者
+                var userData = SysUserHelper.QueryUserByUnitID(unitID);
+                
+                if (userData != null && userData.Rows.Count > 0)
+                {
+                    foreach (System.Data.DataRow row in userData.Rows)
+                    {
+                        string account = row["Account"].ToString();
+                        string name = row["Name"].ToString();
+                        ddlReviewer.Items.Add(new ListItem(name, account));
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "載入承辦人員下拉選單時發生錯誤");
+        }
+    }
+
+    /// <summary>
+    /// 載入目前的承辦人員資訊
+    /// </summary>
+    private void LoadCurrentReviewerInfo()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(ProjectID))
+            {
+                return;
+            }
+            
+            // 從 OFS_SCI_Project_Main 表中讀取承辦人員資訊（參考 SciApplicationReview.aspx.cs）
+            var projectMain = OFS_SciApplicationHelper.getVersionByProjectID(ProjectID);
+            
+            if (projectMain != null)
+            {
+                // 設定承辦人員顯示文字
+                if (!string.IsNullOrEmpty(projectMain.SupervisoryPersonName))
+                {
+                    lblCurrentReviewer.Text = projectMain.SupervisoryPersonName;
+                }
+                else
+                {
+                    lblCurrentReviewer.Text = "未設定";
+                }
+            }
+            else
+            {
+                lblCurrentReviewer.Text = "未設定";
+            }
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "載入承辦人員資訊時發生錯誤");
+            lblCurrentReviewer.Text = "載入錯誤";
+        }
+    }
+
+    /// <summary>
+    /// 顯示 SweetAlert 提示訊息
+    /// </summary>
+    private void ShowSweetAlert(string title, string text, string icon)
+    {
+        try
+        {
+            string script = $@"
+                Swal.fire({{
+                    title: '{title}',
+                    text: '{text}',
+                    icon: '{icon}',
+                    confirmButtonText: '確定'
+                }});
+            ";
+            Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowAlert", script, true);
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "顯示提示訊息時發生錯誤");
+        }
     }
 
     /// <summary>

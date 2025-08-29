@@ -157,7 +157,11 @@ public partial class OFS_SCI_SciInprogress_Contract : System.Web.UI.Page
 
             // 儲存到資料庫
             OFS_SciApplicationHelper.updateContractData(ProjectID, txtDocumentNumber.Text.Trim(), contractDate);
-
+            if (isSubmit)
+            {
+                InprogressListHelper.UpdateLastOperation(ProjectID, "已完成契約資料");
+                InprogressListHelper.UpdateTaskCompleted(ProjectID,"Contract", true);
+            }
             // 顯示成功訊息
             string message = isSubmit ? "契約資料提送成功" : "契約資料暫存成功";
             ScriptManager.RegisterStartupScript(this, GetType(), "success", 
@@ -174,13 +178,13 @@ public partial class OFS_SCI_SciInprogress_Contract : System.Web.UI.Page
         }
     }
 
-    /// <summary>
-    /// 暫存按鈕點擊事件
-    /// </summary>
-    protected void btnSave_Click(object sender, EventArgs e)
-    {
-        SaveContractData(false);
-    }
+    // /// <summary>
+    // /// 暫存按鈕點擊事件
+    // /// </summary>
+    // protected void btnSave_Click(object sender, EventArgs e)
+    // {
+    //     SaveContractData(false);
+    // }
 
     /// <summary>
     /// 提送按鈕點擊事件

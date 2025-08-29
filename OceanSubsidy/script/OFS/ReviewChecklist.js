@@ -602,6 +602,11 @@ window.ReviewChecklist = (function() {
                     $tableBody.append(row);
                 });
 
+                // Type6 特殊處理：控制審查委員進度欄位的顯示
+                if (type === '6') {
+                    handleType6ReviewProgressDisplay(results);
+                }
+
                 // 重新初始化 checkbox 功能
                 updateCheckboxTargets();
 
@@ -860,6 +865,13 @@ window.ReviewChecklist = (function() {
         const projectName = item.ProjectNameTw || '';
         const orgName = item.OrgName || '';
         const reviewItem = item.ReviewTodo || '';  // 待審項目
+        const reviewProgress = item.ReviewProgress || '';  // 審查委員進度
+        
+        // 決定是否顯示審查委員進度欄位 (僅科專專案)
+        const showReviewProgress = category === 'SCI';
+        const reviewProgressCell = showReviewProgress ? 
+            `<td data-th="審查委員進度:" class="review-progress-cell text-center">${reviewProgress}</td>` : 
+            `<td class="review-progress-cell" style="display: none;"></td>`;
         
         return `
             <tr>
@@ -871,6 +883,7 @@ window.ReviewChecklist = (function() {
                 </td>
                 <td data-th="申請單位:" style="text-align: left;">${orgName}</td>
                 <td data-th="待審項目:" style="text-align: left;">${reviewItem}</td>
+                ${reviewProgressCell}
                 <td data-th="功能:" class="text-center">
                     <div class="d-flex align-items-center justify-content-center gap-1">
                         <button class="btn btn-sm btn-teal-dark" type="button" onclick="handleExecutionPlanReview('${projectId}','${reviewItem}')">
@@ -880,6 +893,38 @@ window.ReviewChecklist = (function() {
                 </td>
             </tr>
         `;
+    }
+
+    /**
+     * 處理 Type6 審查委員進度欄位的顯示/隱藏
+     * @param {Array} results - 搜尋結果數組
+     */
+    function handleType6ReviewProgressDisplay(results) {
+        // 檢查是否有科專專案
+        const hasSciProjects = results.some(item => item.Category === 'SCI');
+        
+        // 控制表格標題的顯示/隱藏
+        const $headerCell = $('#content-type-6 .review-progress-header');
+        const $dataCells = $('#content-type-6 .review-progress-cell');
+        
+        if (hasSciProjects) {
+            $headerCell.show();
+            $dataCells.each(function() {
+                const $cell = $(this);
+                const $row = $cell.closest('tr');
+                const categoryCell = $row.find('td:nth-child(2)');
+                
+                // 只顯示科專專案的進度資料
+                if (categoryCell.text().trim() === '科專') {
+                    $cell.show();
+                } else {
+                    $cell.hide();
+                }
+            });
+        } else {
+            $headerCell.hide();
+            $dataCells.hide();
+        }
     }
 
     /**
@@ -2332,8 +2377,7 @@ function batchProcess(selectedIds, actionText, currentType) {
         data: JSON.stringify({
             projectIds: selectedIds,
             actionType: actionText,
-            reviewType: currentType
-        }),
+            reviewType: currentType        }),
         contentType: "application/json; charset=utf-8",
         dataType: "json",
         timeout: 30000

@@ -614,76 +614,6 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
         
-        protected DateTime? _created_at = DateTime.Now;
-        ///<summary>
-        ///  ()
-        ///</summary>
-        [DataMember]
-        [GisFieldAttribute("created_at", "created_at", DataSource.TABLE, "", false)]
-        public virtual DateTime? created_at
-        {
-            get
-            {
-                return _created_at;
-            }
-            set
-            {
-                bool isModify = false;
-                if (_created_at == null) {
-                    if(value != null) {
-                        isModify = true;
-                    }
-                }
-                else if (!_created_at.Equals(value))
-                {
-                    isModify = true;
-                }
-                if(isModify) {
-                    MetaDataState = DataState.UPDATE;
-                    if (UPDATE_COLUMN.IndexOf("created_at") == -1)
-                    {
-                        UPDATE_COLUMN.Add("created_at");
-                    }
-                    _created_at = value;
-                }
-            }
-        }
-        
-        protected DateTime? _updated_at = DateTime.Now;
-        ///<summary>
-        ///  ()
-        ///</summary>
-        [DataMember]
-        [GisFieldAttribute("updated_at", "updated_at", DataSource.TABLE, "", false)]
-        public virtual DateTime? updated_at
-        {
-            get
-            {
-                return _updated_at;
-            }
-            set
-            {
-                bool isModify = false;
-                if (_updated_at == null) {
-                    if(value != null) {
-                        isModify = true;
-                    }
-                }
-                else if (!_updated_at.Equals(value))
-                {
-                    isModify = true;
-                }
-                if(isModify) {
-                    MetaDataState = DataState.UPDATE;
-                    if (UPDATE_COLUMN.IndexOf("updated_at") == -1)
-                    {
-                        UPDATE_COLUMN.Add("updated_at");
-                    }
-                    _updated_at = value;
-                }
-            }
-        }
-        
         protected bool? _isWithdrawal = false;
         ///<summary>
         /// 是否撤案 (是否撤案)
@@ -995,6 +925,146 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
                         UPDATE_COLUMN.Add("ContractDate");
                     }
                     _ContractDate = value;
+                }
+            }
+        }
+        
+        protected string _LastOperation = "";
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("LastOperation", "LastOperation", DataSource.TABLE, "", false)]
+        public virtual string LastOperation
+        {
+            get
+            {
+                return _LastOperation;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_LastOperation == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_LastOperation.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("LastOperation") == -1)
+                    {
+                        UPDATE_COLUMN.Add("LastOperation");
+                    }
+                    _LastOperation = value;
+                }
+            }
+        }
+        
+        protected int? _IsProjChanged = 0;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("IsProjChanged", "IsProjChanged", DataSource.TABLE, "", false)]
+        public virtual int? IsProjChanged
+        {
+            get
+            {
+                return _IsProjChanged;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_IsProjChanged == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_IsProjChanged.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("IsProjChanged") == -1)
+                    {
+                        UPDATE_COLUMN.Add("IsProjChanged");
+                    }
+                    _IsProjChanged = value;
+                }
+            }
+        }
+        
+        protected DateTime? _updated_at = DateTime.Now;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("updated_at", "updated_at", DataSource.TABLE, "", false)]
+        public virtual DateTime? updated_at
+        {
+            get
+            {
+                return _updated_at;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_updated_at == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_updated_at.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("updated_at") == -1)
+                    {
+                        UPDATE_COLUMN.Add("updated_at");
+                    }
+                    _updated_at = value;
+                }
+            }
+        }
+        
+        protected DateTime? _created_at = DateTime.Now;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("created_at", "created_at", DataSource.TABLE, "", false)]
+        public virtual DateTime? created_at
+        {
+            get
+            {
+                return _created_at;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_created_at == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_created_at.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("created_at") == -1)
+                    {
+                        UPDATE_COLUMN.Add("created_at");
+                    }
+                    _created_at = value;
                 }
             }
         }

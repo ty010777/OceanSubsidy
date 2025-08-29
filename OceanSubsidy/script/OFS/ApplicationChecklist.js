@@ -556,7 +556,7 @@ function generateRowHtml(record) {
             <td data-th="年度:">${record.Year || ''}</td>
             <td data-th="計畫編號:" style="text-align: left;" nowrap>${record.ProjectID || ''}</td>
             <td data-th="計畫名稱:" style="text-align: left;">
-                <a href="#" class="link-black" target="_blank">${record.ProjectNameTw || ''}</a>
+                ${generateProjectNameLink(record)}
             </td>
             <td data-th="申請單位:" style="text-align: left;">${record.OrgName || ''}</td>
             <td data-th="類別:">${record.Category || ''}</td>
@@ -765,6 +765,26 @@ function filterByCategory(category) {
     currentPageState.selectedStage = category;
     currentPageState.pageNumber = 1; // 重置到第一頁
     loadFilteredData();
+}
+
+// 產生計畫名稱連結
+function generateProjectNameLink(record) {
+    const projectId = record.ProjectID || '';
+    const projectName = record.ProjectNameTw || '';
+    
+    if (!projectId || !projectName) {
+        return projectName;
+    }
+    
+    // 檢查 ProjectID 是否包含 SCI 來決定路由
+    if (projectId.includes('SCI')) {
+        return `<a href="../OFS/SCI/SciApplication.aspx?ProjectID=${projectId}" class="link-black" target="_blank">${projectName}</a>`;
+    } else if (projectId.includes('CUL'))  {
+        //TODO 正文 請來這邊將其他類型的計畫連結補上  (申請列表-->點選名稱-->對應連結)
+        //TODO 正文 根據討論，如果該計畫正在，計畫執行 之後應該要修正成 從快照中讀取資料。會指向不同連結 (待做)。
+       
+        return `<span class="text-muted">${projectName}</span>`;
+    }
 }
 
 // 顯示載入訊息

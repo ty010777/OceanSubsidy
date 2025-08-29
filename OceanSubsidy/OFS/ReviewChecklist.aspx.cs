@@ -92,7 +92,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
     private bool IsValidReviewType(string type)
     {
         return !string.IsNullOrEmpty(type) && 
-               new[] { "1", "2", "3", "4", "5", "6", "7" }.Contains(type);
+               new[] { "1", "2", "3", "4", "5", "6" }.Contains(type);
     }
 
     /// <summary>
@@ -122,9 +122,6 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                     break;
                 case "6":
                     LoadExecutionPlanReviewDropdowns();
-                    break;
-                case "7":
-                    // TODO: 載入階段報告審核清單
                     break;
             }
         }
@@ -1614,6 +1611,13 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                         // 科專
                         // 更新科專專案狀態
                         ReviewCheckListHelper.UpdateProjectStatusInDatabase(projectId, toStatus, userName, StatusesName);
+                        
+                        // 如果是進入計畫執行階段，建立待辦事項模板
+                        if (toStatus == "計畫執行")
+                        {
+                            ReviewCheckListHelper.CreateTaskQueueTemplate(projectId);
+                        }
+                        
                         RecordSciReviewHistory(projectId, fromStatus, toStatus, actionType, userName);
                     }
                     // TODO 正文: 實作轉入下一階段時，要update資料庫。

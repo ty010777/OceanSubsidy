@@ -1,0 +1,38 @@
+.chart-wrapper {
+    width: 100%;
+    height: 200px;
+    @media (min-width: 768px) and (max-width: 1024px) { 
+      height: 130px;
+    }
+}
+
+
+.chart-group {
+  display: flex;
+  width: 100%;
+  margin-top: 24px;
+  .chart-item {
+    width: 50%;
+    display: flex;
+    align-items: center;
+  }
+  @media (min-width: 768px) and (max-width: 1024px) {
+    .chart-item:nth-child(1) {
+        width: 40%;
+    }
+    .chart-item:nth-child(2) {
+        width: 60%;
+    }
+  }
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 40px;
+    margin-top: 40px;
+    .chart-item:nth-child(1) {
+        width: 100%;
+    }
+    .chart-item:nth-child(2) {
+        width: 100%;
+    }
+  }
+}

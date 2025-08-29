@@ -562,6 +562,11 @@ namespace GS.OCA_OceanSubsidy.Model.OFS
         /// 計畫名稱(中文)
         /// </summary>
         public string ProjectNameTw { get; set; }
+
+        /// <summary>
+        /// 審查委員進度 (僅限科專專案，格式：已繳交人數/總人數 狀態)
+        /// </summary>
+        public string ReviewProgress { get; set; }
         
         /// <summary>
         /// 取得類別顯示名稱 (渲染時使用)

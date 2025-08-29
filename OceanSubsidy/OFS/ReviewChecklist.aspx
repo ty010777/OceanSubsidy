@@ -89,15 +89,6 @@
                 </div>
             </a>
         </li>
-        <li class="total-item " id="total-item-7" >
-            <a href="javascript:void(0)" onclick="ReviewChecklist.switchReviewType(7)">
-                <div class="total-item-title">階段報告審核</div>
-                <div class="total-item-content">
-                    <span class="count">6</span>
-                    <span class="unit">件</span>
-                </div>
-            </a>
-        </li>
     </ul>
     
     <div id="content-type-1" class="review-content" style="display: none;">
@@ -1117,6 +1108,11 @@
                           <th width="150">
                               <div class="hstack align-items-center">
                                   <span>待審項目</span>
+                              </div>
+                          </th>
+                          <th width="130" class="review-progress-header" style="display: none;">
+                              <div class="hstack align-items-center justify-content-center">
+                                  <span>審查委員進度</span>
                               </div>
                           </th>
                           <th width="120">功能</th>

@@ -93,7 +93,6 @@
 
         <h5 class="square-title mt-5">計畫聯絡人資訊</h5>
         <asp:PlaceHolder ID="contactPersonnelContainer" runat="server" />
-1
         <h5 class="square-title mt-5">預定報告期程</h5>
         <table class="table align-middle gray-table side-table mt-4">
             <tbody>
@@ -153,7 +152,7 @@
     
     <!-- 底部區塊 -->
     <div class="block-bottom bg-light-teal">
-        <asp:Button ID="btnTempSave" runat="server" Text="暫存" CssClass="btn btn-outline-teal" OnClick="btnTempSave_Click" />
+        <%-- <asp:Button ID="btnTempSave" runat="server" Text="暫存" CssClass="btn btn-outline-teal" OnClick="btnTempSave_Click" /> --%>
         <asp:Button ID="btnSubmit" runat="server" Text="提送" CssClass="btn btn-teal btn-submit-icon" OnClick="btnSubmit_Click" />
     </div>
 </asp:Content>

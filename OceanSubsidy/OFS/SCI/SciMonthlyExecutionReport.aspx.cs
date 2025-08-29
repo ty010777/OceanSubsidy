@@ -587,6 +587,7 @@ public partial class OFS_SCI_SciMonthlyExecutionReport : System.Web.UI.Page
             {
                 return saveResult; // 暫存失敗，直接回傳
             }
+            InprogressListHelper.UpdateLastOperation(projectID, $"已完成{month}月進度回報");
 
             // TODO: 實作寄信功能
             // 目前暫時跳過寄信，直接回傳成功並附上寄信提示

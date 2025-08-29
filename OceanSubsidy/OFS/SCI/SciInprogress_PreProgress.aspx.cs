@@ -496,46 +496,41 @@ public partial class OFS_SCI_SciInprogress_PreProgress : System.Web.UI.Page
     /// <summary>
     /// 暫存按鈕事件
     /// </summary>
-    protected void btnTempSave_Click(object sender, EventArgs e)
-    {
-        try
-        {
-            // 收集表單資料
-            var progressData = CollectMonthlyProgressData();
-            
-            if (progressData.Count > 0)
-            {
-                // 儲存預定分月進度資料
-                bool success = OFS_PreMonthProgressHelper.SavePreMonthProgress(ProjectID, progressData);
-                
-                if (success)
-                {
-                    // 同時儲存其他欄位資料（包含共同執行單位）
-                    SaveOtherFields();
-                    
-                    // 顯示成功訊息
-                    ScriptManager.RegisterStartupScript(this, GetType(), "TempSaveSuccess",
-                        "Swal.fire({title: '暫存成功', text: '預定分月進度已暫存', icon: 'success'});", true);
-                }
-                else
-                {
-                    ScriptManager.RegisterStartupScript(this, GetType(), "TempSaveError",
-                        "Swal.fire({title: '暫存失敗', text: '系統發生錯誤，請稍後再試', icon: 'error'});", true);
-                }
-            }
-            else
-            {
-                ScriptManager.RegisterStartupScript(this, GetType(), "NoDataError",
-                    "Swal.fire({title: '沒有資料', text: '請填寫至少一筆預定分月進度資料', icon: 'warning'});", true);
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"暫存時發生錯誤: {ex.Message}");
-            ScriptManager.RegisterStartupScript(this, GetType(), "TempSaveException",
-                $"Swal.fire({{title: '系統錯誤', text: '暫存時發生錯誤：{ex.Message}', icon: 'error'}});", true);
-        }
-    }
+    /// TODO 可能刪掉
+    // protected void btnTempSave_Click(object sender, EventArgs e)
+    // {
+    //     try
+    //     {
+    //         // 收集表單資料
+    //         var progressData = CollectMonthlyProgressData();
+    //         
+    //         // 暫存功能：無論有無資料都允許儲存
+    //         bool success = OFS_PreMonthProgressHelper.SavePreMonthProgress(ProjectID, progressData);
+    //         
+    //         if (success)
+    //         {
+    //             // 同時儲存其他欄位資料（包含共同執行單位）
+    //             SaveOtherFields();
+    //             
+    //             // 顯示成功訊息
+    //             string message = "預定分月進度已暫存";
+    //             ScriptManager.RegisterStartupScript(this, GetType(), "TempSaveSuccess",
+    //                 $"Swal.fire({{title: '暫存成功', text: '{message}', icon: 'success'}});", true);
+    //             InitializePage();
+    //         }
+    //         else
+    //         {
+    //             ScriptManager.RegisterStartupScript(this, GetType(), "TempSaveError",
+    //                 "Swal.fire({title: '暫存失敗', text: '系統發生錯誤，請稍後再試', icon: 'error'});", true);
+    //         }
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         System.Diagnostics.Debug.WriteLine($"暫存時發生錯誤: {ex.Message}");
+    //         ScriptManager.RegisterStartupScript(this, GetType(), "TempSaveException",
+    //             $"Swal.fire({{title: '系統錯誤', text: '暫存時發生錯誤：{ex.Message}', icon: 'error'}});", true);
+    //     }
+    // }
     
     /// <summary>
     /// 提送按鈕事件
@@ -555,12 +550,14 @@ public partial class OFS_SCI_SciInprogress_PreProgress : System.Web.UI.Page
                 string errorMessages = string.Join("\\n", validationResult.Errors);
                 ScriptManager.RegisterStartupScript(this, GetType(), "ValidationError",
                     $"Swal.fire({{title: '資料驗證失敗', text: '{errorMessages}', icon: 'warning'}});", true);
+                InitializePage();
                 return;
             }
             
             // 驗證其他必填欄位
             if (!ValidateOtherRequiredFields())
             {
+                InitializePage();
                 return; // 驗證失敗的訊息已在方法內處理
             }
             
@@ -571,6 +568,8 @@ public partial class OFS_SCI_SciInprogress_PreProgress : System.Web.UI.Page
             {
                 // 儲存其他欄位資料
                 SaveOtherFields();
+                InprogressListHelper.UpdateLastOperation(ProjectID, "已完成預定進度規劃");
+                InprogressListHelper.UpdateTaskCompleted(ProjectID, "Schedule", true);
                 
                 // TODO: 更新計畫狀態或發送通知
                 // 顯示成功訊息並跳轉
@@ -580,8 +579,9 @@ public partial class OFS_SCI_SciInprogress_PreProgress : System.Web.UI.Page
                         text: '預定分月進度已提送',
                         icon: 'success'
                     }).then(function() {
-                        window.location.href = 'inprogressList.aspx';
                     });", true);
+                InitializePage();
+
             }
             else
             {
@@ -632,7 +632,7 @@ public partial class OFS_SCI_SciInprogress_PreProgress : System.Web.UI.Page
                     // 透過 JavaScript 或 Hidden Field 取得對應的月份
                     string month = GetMonthFromFormIndex(i);
                     
-                    if (!string.IsNullOrEmpty(month) && !string.IsNullOrEmpty(workAbstract))
+                    if (!string.IsNullOrEmpty(month))
                     {
                         // 取得該月份的查核點資料
                         string checkDescription = "";

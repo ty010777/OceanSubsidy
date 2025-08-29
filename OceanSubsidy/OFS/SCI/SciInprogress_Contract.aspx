@@ -179,8 +179,8 @@
     
     <!-- 底部區塊 -->
     <div class="block-bottom bg-light-teal">
-        <asp:Button ID="btnSave" runat="server" CssClass="btn btn-outline-teal" 
-                    Text="暫存" OnClick="btnSave_Click" />
+        <%-- <asp:Button ID="btnSave" runat="server" CssClass="btn btn-outline-teal"  --%>
+        <%--             Text="暫存" OnClick="btnSave_Click" /> --%>
         <button type="button" class="btn btn-teal" onclick="<%= ClientScript.GetPostBackEventReference(btnSubmit, null) %>">
             <i class="fas fa-check"></i>
             提送

@@ -75,8 +75,6 @@ public class OFS_PreMonthProgressHelper
     /// <returns>是否成功</returns>
     public static bool SavePreMonthProgress(string projectId, List<OFS_SCI_PreMonthProgress> progressList)
     {
-        if (string.IsNullOrEmpty(projectId) || progressList == null)
-            return false;
 
         DbHelper db = new DbHelper();
         db.BeginTrans();
@@ -86,8 +84,6 @@ public class OFS_PreMonthProgressHelper
             // 逐筆處理資料，檢查是否存在後決定 UPDATE 或 INSERT
             foreach (var progress in progressList)
             {
-                if (string.IsNullOrEmpty(progress.Month))
-                    continue; // 跳過沒有月份的資料
 
                 // 檢查是否已存在該月份資料
                 db.CommandText = @"
