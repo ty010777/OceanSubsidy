@@ -123,6 +123,14 @@
         <button class="btn btn-outline-teal me-3" @click="save()" type="button">暫存</button>
         <button class="btn btn-teal" @click="save(true)" type="button"><i class="fas fa-check"></i>完成本頁，下一步</button>
     </div>
+    <confirm-modal ref="modal">
+        <div class="text-center">
+            <div class="mb-3">［提醒您］</div>
+            <div class="mb-5">您申請的補助款經費總計，已超過補助原則上限：{{ setting.GrantLimit }}萬</div>
+            <div class="mb-2">繼續申請請按【確定】</div>
+            <div>返回調整請按【取消】</div>
+        </div>
+    </confirm-modal>
 </template>
 
 <script setup>
@@ -136,8 +144,10 @@
     const filteredPlans = computed(() => plans.value.filter((item) => !item.Deleted));
     const form = ref({});
     const items = ref([]);
+    const modal = ref();
     const others = ref([]);
     const plans = ref([]);
+    const setting = ref({});
     const total = ref(0);
 
     const addOther = () => others.value.push({});
@@ -148,11 +158,16 @@
 
     const removePlan = (plan) => plan.Deleted = true;
 
-    const save = (submit) => {
+    const save = (submit, confirm) => {
         errors.value = {};
 
         if (submit && !verify()) {
             nextTick(() => document.querySelector(".invalid")?.scrollIntoView({ behavior: "smooth", block: "center" }));
+            return;
+        }
+
+        if (!confirm && form.value.ApplyAmount > setting.value.GrantLimit * 10000) {
+            modal.value.show(() => save(submit, true));
             return;
         }
 
@@ -210,6 +225,7 @@
             others.value = data.OtherSubsidies;
             plans.value = data.BudgetPlans;
             items.value = data.Items;
+            setting.value = data.GrantTargetSetting;
 
             if (!others.value.length) {
                 addOther();

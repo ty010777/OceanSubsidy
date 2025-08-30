@@ -10,7 +10,7 @@ public class LiteracyService : BaseService
     {
         var id = int.Parse(param["ID"].ToString());
 
-        getProject(id, new int[] {1});
+        getProject(id, new int[] {1,3}); //申請中,退回補正
 
         var item = new OFS_LitItem {
             PID = id,
@@ -67,12 +67,14 @@ public class LiteracyService : BaseService
     public object getFunding(JObject param, HttpContext context)
     {
         var id = int.Parse(param["ID"].ToString());
+        var project = OFS_LitProjectHelper.get(id);
 
         return new
         {
-            Project = OFS_LitProjectHelper.get(id),
+            Project = project,
             OtherSubsidies = OFS_LitOtherSubsidyHelper.query(id),
-            BudgetPlans = OFS_LitBudgetPlanHelper.query(id)
+            BudgetPlans = OFS_LitBudgetPlanHelper.query(id),
+            GrantTargetSetting = OFSGrantTargetSettingHelper.getByTargetTypeID($"LIT{project.Field}")
         };
     }
 
@@ -84,7 +86,8 @@ public class LiteracyService : BaseService
         {
             Project = OFS_LitProjectHelper.get(id),
             Items = OFS_LitItemHelper.query(id),
-            Schedules = OFS_LitScheduleHelper.query(id)
+            Schedules = OFS_LitScheduleHelper.query(id),
+            GrantType = OFSGrantTypeHelper.getByCode("LIT")
         };
     }
 
@@ -136,7 +139,7 @@ public class LiteracyService : BaseService
         }
         else
         {
-            getProject(project.ID, new int[] {1});
+            getProject(project.ID, new int[] {1,3}); //申請中,退回補正
 
             OFS_LitProjectHelper.update(project);
         }
@@ -189,7 +192,7 @@ public class LiteracyService : BaseService
     {
         var id = int.Parse(param["ID"].ToString());
 
-        getProject(id, new int[] {1});
+        getProject(id, new int[] {1,3}); //申請中,退回補正
 
         if (bool.Parse(param["Submit"].ToString()))
         {
@@ -220,7 +223,7 @@ public class LiteracyService : BaseService
     {
         var project = param["Project"].ToObject<OFS_LitProject>();
 
-        getProject(project.ID, new int[] {1});
+        getProject(project.ID, new int[] {1,3}); //申請中,退回補正
 
         OFS_LitProjectHelper.updateBenefit(project);
 
@@ -256,7 +259,7 @@ public class LiteracyService : BaseService
     {
         var project = param["Project"].ToObject<OFS_LitProject>();
 
-        getProject(project.ID, new int[] {1});
+        getProject(project.ID, new int[] {1,3}); //申請中,退回補正
 
         OFS_LitProjectHelper.updateFunding(project);
 
@@ -312,7 +315,7 @@ public class LiteracyService : BaseService
     {
         var id = int.Parse(param["ID"].ToString());
 
-        getProject(id, new int[] {2});
+        getProject(id, new int[] {2}); //資格審查
 
         OFS_LitProjectHelper.updateOrganizer(id, int.Parse(param["Organizer"].ToString()));
 
@@ -323,7 +326,7 @@ public class LiteracyService : BaseService
     {
         var project = param["Project"].ToObject<OFS_LitProject>();
 
-        getProject(project.ID, new int[] {1});
+        getProject(project.ID, new int[] {1,3}); //申請中,退回補正
 
         OFS_LitProjectHelper.updateSchedule(project);
 

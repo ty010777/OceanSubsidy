@@ -6,6 +6,24 @@ using System.Web;
 
 public class CultureService : BaseService
 {
+    public object createGoalStep(JObject param, HttpContext context)
+    {
+        var id = int.Parse(param["ID"].ToString());
+
+        getProject(id, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
+
+        var step = new OFS_CulGoalStep {
+            PID = id,
+            ItemID = int.Parse(param["ItemID"].ToString()),
+            Begin = 0,
+            End = 0
+        };
+
+        OFS_CulGoalStepHelper.insert(step);
+
+        return step;
+    }
+
     public object getApplication(JObject param, HttpContext context)
     {
         var id = int.Parse(param["ID"].ToString());
@@ -39,13 +57,15 @@ public class CultureService : BaseService
     public object getFunding(JObject param, HttpContext context)
     {
         var id = int.Parse(param["ID"].ToString());
+        var project = OFS_CulProjectHelper.get(id);
 
         return new
         {
-            Project = OFS_CulProjectHelper.get(id),
+            Project = project,
             OtherSubsidies = OFS_CulOtherSubsidyHelper.query(id),
             BudgetPlans = OFS_CulBudgetPlanHelper.query(id),
-            Items = OFS_CulGoalItemHelper.query(id)
+            Items = OFS_CulGoalItemHelper.query(id),
+            GrantTargetSetting = OFSGrantTargetSettingHelper.getByTargetTypeID($"CUL{project.OrgCategory}")
         };
     }
 
@@ -83,7 +103,8 @@ public class CultureService : BaseService
         return new
         {
             Project = OFS_CulProjectHelper.get(id),
-            Goals = goals
+            Goals = goals,
+            GrantType = OFSGrantTypeHelper.getByCode("CUL")
         };
     }
 
@@ -135,7 +156,7 @@ public class CultureService : BaseService
         }
         else
         {
-            getProject(project.ID, new int[] {1});
+            getProject(project.ID, new int[] {1,3}); //申請中,退回補正
 
             OFS_CulProjectHelper.update(project);
         }
@@ -188,7 +209,7 @@ public class CultureService : BaseService
     {
         var id = int.Parse(param["ID"].ToString());
 
-        getProject(id, new int[] {1});
+        getProject(id, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
 
         if (bool.Parse(param["Submit"].ToString()))
         {
@@ -219,7 +240,7 @@ public class CultureService : BaseService
     {
         var project = param["Project"].ToObject<OFS_CulProject>();
 
-        getProject(project.ID, new int[] {1});
+        getProject(project.ID, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
 
         OFS_CulProjectHelper.updateFunding(project);
 
@@ -275,7 +296,7 @@ public class CultureService : BaseService
     {
         var id = int.Parse(param["ID"].ToString());
 
-        getProject(id, new int[] {2});
+        getProject(id, new int[] {2}); //資格審查
 
         OFS_CulProjectHelper.updateOrganizer(id, int.Parse(param["Organizer"].ToString()));
 
@@ -286,7 +307,7 @@ public class CultureService : BaseService
     {
         var id = int.Parse(param["ID"].ToString());
 
-        getProject(id, new int[] {1});
+        getProject(id, new int[] {1,3}); //申請中,退回補正
 
         if (bool.Parse(param["Submit"].ToString()))
         {
@@ -320,7 +341,7 @@ public class CultureService : BaseService
     {
         var project = param["Project"].ToObject<OFS_CulProject>();
 
-        getProject(project.ID, new int[] {1});
+        getProject(project.ID, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
 
         OFS_CulProjectHelper.updateSchedule(project);
 
@@ -382,13 +403,6 @@ public class CultureService : BaseService
                             if (step.Deleted)
                             {
                                 OFS_CulGoalStepHelper.delete(step.ID);
-                            }
-                            else if (step.ID == 0)
-                            {
-                                step.PID = project.ID;
-                                step.ItemID = item.ID;
-
-                                OFS_CulGoalStepHelper.insert(step);
                             }
                             else
                             {

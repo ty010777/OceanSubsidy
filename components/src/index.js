@@ -4,6 +4,7 @@ import AccessibilityBenefit from "./components/Accessibility/Benefit.vue";
 import AccessibilityFunding from "./components/Accessibility/Funding.vue";
 import AccessibilityProgressBar from "./components/Accessibility/ProgressBar.vue";
 import AccessibilityWorkSchedule from "./components/Accessibility/WorkSchedule.vue";
+import ConfirmModal from "./components/ConfirmModal.vue";
 import CommonProgressBar from "./components/CommonProgressBar.vue";
 import CultureApplication from "./components/Culture/Application.vue";
 import CultureAttachment from "./components/Culture/Attachment.vue";
@@ -39,6 +40,7 @@ import MultipleWorkSchedule from "./components/Multiple/WorkSchedule.vue";
 import ProjectOrganizer from "./components/ProjectOrganizer.vue";
 import ProjectReview from "./components/ProjectReview.vue";
 import RequiredLabel from "./components/RequiredLabel.vue";
+import TwDate from "./components/TwDate.vue";
 import { useProgressStore } from "./stores/progress";
 
 const components = {
@@ -48,6 +50,7 @@ const components = {
     AccessibilityFunding,
     AccessibilityProgressBar,
     AccessibilityWorkSchedule,
+    ConfirmModal,
     CommonProgressBar,
     CultureApplication,
     CultureAttachment,
@@ -82,7 +85,8 @@ const components = {
     MultipleWorkSchedule,
     ProjectOrganizer,
     ProjectReview,
-    RequiredLabel
+    RequiredLabel,
+    TwDate
 };
 
 export default {

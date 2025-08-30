@@ -61,7 +61,7 @@
                     <tr>
                         <th><required-label>統一編號<br />(稅籍)</required-label></th>
                         <td>
-                            <input-text :error="errors.TaxID" v-model.trim="form.TaxID"></input-text>
+                            <input-text :error="errors.TaxID" :max-length="8" v-model.trim="form.TaxID"></input-text>
                         </td>
                     </tr>
                     <tr>

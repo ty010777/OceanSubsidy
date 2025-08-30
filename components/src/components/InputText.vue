@@ -19,12 +19,21 @@
     const editable = inject("editable", true);
     const model = defineModel();
 
-    defineOptions({ inheritAttrs: false });
-
-    defineProps({
+    const props = defineProps({
         error: { type: String },
+        maxLength: { type: Number },
         placeholder: { default: "請輸入", type: String },
         prefix: { type: String },
         type: { default: "text", type: String }
     });
+
+    defineOptions({ inheritAttrs: false });
+
+    if (props.maxLength) {
+        watch(model, () => {
+            if (model.value?.length > props.maxLength) {
+                model.value = model.value.substring(0, props.maxLength);
+            }
+        });
+    }
 </script>

@@ -18,6 +18,7 @@
         drops: { default: "down", type: String },
         error: { type: String },
         format: { default: "YYYY-MM-DD", type: String },
+        maxDate: { type: String },
         modelValue: { default: "", type: String },
         noFuture: { default: false, type: Boolean }
     });
@@ -56,7 +57,7 @@
             autoUpdateInput: false,
             drops: props.drops,
             locale: { format: props.displayFormat },
-            maxDate: props.noFuture ? new Date() : undefined,
+            maxDate: props.maxDate ? new Date(props.maxDate) : (props.noFuture ? new Date() : undefined),
             showDropdowns: true,
             singleDatePicker: true
         }).on("apply.daterangepicker", (_, picker) => sync(picker.startDate));

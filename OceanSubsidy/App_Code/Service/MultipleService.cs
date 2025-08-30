@@ -10,7 +10,7 @@ public class MultipleService : BaseService
     {
         var id = int.Parse(param["ID"].ToString());
 
-        getProject(id, new int[] {1});
+        getProject(id, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
 
         var item = new OFS_MulItem {
             PID = id,
@@ -67,12 +67,14 @@ public class MultipleService : BaseService
     public object getFunding(JObject param, HttpContext context)
     {
         var id = int.Parse(param["ID"].ToString());
+        var project = OFS_MulProjectHelper.get(id);
 
         return new
         {
-            Project = OFS_MulProjectHelper.get(id),
+            Project = project,
             OtherSubsidies = OFS_MulOtherSubsidyHelper.query(id),
-            BudgetPlans = OFS_MulBudgetPlanHelper.query(id)
+            BudgetPlans = OFS_MulBudgetPlanHelper.query(id),
+            GrantTargetSetting = OFSGrantTargetSettingHelper.getByTargetTypeID($"MUL{project.OrgCategory}")
         };
     }
 
@@ -84,7 +86,8 @@ public class MultipleService : BaseService
         {
             Project = OFS_MulProjectHelper.get(id),
             Items = OFS_MulItemHelper.query(id),
-            Schedules = OFS_MulScheduleHelper.query(id)
+            Schedules = OFS_MulScheduleHelper.query(id),
+            GrantType = OFSGrantTypeHelper.getByCode("MUL")
         };
     }
 
@@ -136,7 +139,7 @@ public class MultipleService : BaseService
         }
         else
         {
-            getProject(project.ID, new int[] {1});
+            getProject(project.ID, new int[] {1,3}); //申請中,退回補正
 
             OFS_MulProjectHelper.update(project);
         }
@@ -189,7 +192,7 @@ public class MultipleService : BaseService
     {
         var id = int.Parse(param["ID"].ToString());
 
-        getProject(id, new int[] {1});
+        getProject(id, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
 
         if (bool.Parse(param["Submit"].ToString()))
         {
@@ -220,7 +223,7 @@ public class MultipleService : BaseService
     {
         var project = param["Project"].ToObject<OFS_MulProject>();
 
-        getProject(project.ID, new int[] {1});
+        getProject(project.ID, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
 
         OFS_MulProjectHelper.updateBenefit(project);
 
@@ -256,7 +259,7 @@ public class MultipleService : BaseService
     {
         var project = param["Project"].ToObject<OFS_MulProject>();
 
-        getProject(project.ID, new int[] {1});
+        getProject(project.ID, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
 
         OFS_MulProjectHelper.updateFunding(project);
 
@@ -312,7 +315,7 @@ public class MultipleService : BaseService
     {
         var id = int.Parse(param["ID"].ToString());
 
-        getProject(id, new int[] {2});
+        getProject(id, new int[] {2}); //資格審查
 
         OFS_MulProjectHelper.updateOrganizer(id, int.Parse(param["Organizer"].ToString()));
 
@@ -323,7 +326,7 @@ public class MultipleService : BaseService
     {
         var project = param["Project"].ToObject<OFS_MulProject>();
 
-        getProject(project.ID, new int[] {1});
+        getProject(project.ID, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
 
         OFS_MulProjectHelper.updateSchedule(project);
 

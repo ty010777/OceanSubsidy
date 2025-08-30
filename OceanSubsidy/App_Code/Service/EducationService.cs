@@ -84,7 +84,7 @@ public class EducationService : BaseService
         }
         else
         {
-            getProject(project.ID, new int[] {1});
+            getProject(project.ID, new int[] {1,3}); //申請中,退回補正
 
             OFS_EdcProjectHelper.update(project);
         }
@@ -137,7 +137,7 @@ public class EducationService : BaseService
     {
         var id = int.Parse(param["ID"].ToString());
 
-        getProject(id, new int[] {1});
+        getProject(id, new int[] {1,3}); //申請中,退回補正
 
         if (bool.Parse(param["Submit"].ToString()))
         {
@@ -168,7 +168,7 @@ public class EducationService : BaseService
     {
         var id = int.Parse(param["ID"].ToString());
 
-        getProject(id, new int[] {2});
+        getProject(id, new int[] {2}); //資格審查
 
         OFS_EdcProjectHelper.updateOrganizer(id, int.Parse(param["Organizer"].ToString()));
 

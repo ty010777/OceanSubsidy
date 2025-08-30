@@ -7,13 +7,13 @@
                     <tr>
                         <th><required-label>計畫期程</required-label></th>
                         <td>
-                            <div class="d-flex align-items-center gap-2">
+                            <div class="d-flex align-items-center gap-2" v-if="end">
                                 <div class="input-group w-auto">
-                                    <input-tw-date class="w-auto" v-model="form.StartTime"></input-tw-date>
+                                    <input-tw-date class="w-auto" :max-date="end" v-model="form.StartTime"></input-tw-date>
                                     <span class="input-group-text">至</span>
-                                    <input-tw-date class="w-auto" v-model="form.EndTime"></input-tw-date>
+                                    <input-tw-date class="w-auto" :max-date="end" v-model="form.EndTime"></input-tw-date>
                                 </div>
-<span class="text-teal-dark">(期程不可超過 115/04/30)</span>
+                                <span class="text-teal-dark">(期程不可超過 <tw-date :value="end"></tw-date>)</span>
                             </div>
                             <div class="invalid mt-0" v-if="errors.StartTime || errors.EndTime">{{ errors.StartTime || errors.EndTime }}</div>
                         </td>
@@ -170,10 +170,12 @@
     });
 
     const editable = computed(() => isProjectEditable("culture", form.value.Status, 2));
+    const end = computed(() => info.value.EndDate);
     const errors = ref({});
     const filteredGoals = computed(() => goals.value.filter((goal) => !goal.Deleted));
     const form = ref({});
     const goals = ref([]);
+    const info = ref({});
 
     const addGoal = () => {
         const goal = { Items: [] };
@@ -197,7 +199,7 @@
 
     const addSchedule = (item, type) => item.Schedules.push({ Type: type, Month: 0, StepID: 0 });
 
-    const addStep = (item) => item.Steps.push({ Begin: 0, End: 0 });
+    const addStep = (item) => api.culture("createGoalStep", { ID: props.id, ItemID: item.ID }).subscribe((result) => item.Steps.push(result));
 
     const removeGoal = (goal) => goal.Deleted = true;
 
@@ -282,6 +284,7 @@
 
             form.value = data.Project;
             goals.value = data.Goals;
+            info.value = data.GrantType;
 
             if (!goals.value.length) {
                 addGoal();

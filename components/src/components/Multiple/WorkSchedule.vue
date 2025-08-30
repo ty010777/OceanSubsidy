@@ -7,13 +7,13 @@
                     <tr>
                         <th><required-label>計畫期程</required-label></th>
                         <td>
-                            <div class="d-flex align-items-center gap-2">
+                            <div class="d-flex align-items-center gap-2" v-if="end">
                                 <div class="input-group w-auto">
-                                    <input-tw-date class="w-auto" v-model="form.StartTime"></input-tw-date>
+                                    <input-tw-date class="w-auto" :max-date="end" v-model="form.StartTime"></input-tw-date>
                                     <span class="input-group-text">至</span>
-                                    <input-tw-date class="w-auto" v-model="form.EndTime"></input-tw-date>
+                                    <input-tw-date class="w-auto" :max-date="end" v-model="form.EndTime"></input-tw-date>
                                 </div>
-<span class="text-teal-dark">(期程不可超過 115/04/30)</span>
+                                <span class="text-teal-dark">(期程不可超過 <tw-date :value="end"></tw-date>)</span>
                             </div>
                             <div class="invalid mt-0" v-if="errors.StartTime || errors.EndTime">{{ errors.StartTime || errors.EndTime }}</div>
                         </td>
@@ -122,11 +122,13 @@
         { value: 2, text: "100%" }
     ];
 
+    const end = computed(() => info.value.EndDate);
     const editable = computed(() => isProjectEditable("multiple", form.value.Status, 2));
     const errors = ref({});
     const filteredItems = computed(() => items.value.filter((item) => !item.Deleted));
     const filteredSchedules = computed(() => schedules.value.filter((item) => !item.Deleted));
     const form = ref({});
+    const info = ref({});
     const items = ref([]);
     const schedules = ref([]);
 
@@ -197,6 +199,7 @@
             const data = result[0];
 
             form.value = data.Project;
+            info.value = data.GrantType;
             items.value = data.Items;
             schedules.value = data.Schedules;
 

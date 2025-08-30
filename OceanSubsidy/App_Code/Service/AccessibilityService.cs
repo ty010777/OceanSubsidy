@@ -10,7 +10,7 @@ public class AccessibilityService : BaseService
     {
         var id = int.Parse(param["ID"].ToString());
 
-        getProject(id, new int[] {1});
+        getProject(id, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
 
         var item = new OFS_AccItem {
             PID = id,
@@ -67,12 +67,14 @@ public class AccessibilityService : BaseService
     public object getFunding(JObject param, HttpContext context)
     {
         var id = int.Parse(param["ID"].ToString());
+        var project = OFS_AccProjectHelper.get(id);
 
         return new
         {
-            Project = OFS_AccProjectHelper.get(id),
+            Project = project,
             OtherSubsidies = OFS_AccOtherSubsidyHelper.query(id),
-            BudgetPlans = OFS_AccBudgetPlanHelper.query(id)
+            BudgetPlans = OFS_AccBudgetPlanHelper.query(id),
+            GrantTargetSetting = OFSGrantTargetSettingHelper.getByTargetTypeID($"ACC{project.OrgCategory}")
         };
     }
 
@@ -84,7 +86,8 @@ public class AccessibilityService : BaseService
         {
             Project = OFS_AccProjectHelper.get(id),
             Items = OFS_AccItemHelper.query(id),
-            Schedules = OFS_AccScheduleHelper.query(id)
+            Schedules = OFS_AccScheduleHelper.query(id),
+            GrantType = OFSGrantTypeHelper.getByCode("ACC")
         };
     }
 
@@ -136,7 +139,7 @@ public class AccessibilityService : BaseService
         }
         else
         {
-            getProject(project.ID, new int[] {1});
+            getProject(project.ID, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
 
             OFS_AccProjectHelper.update(project);
         }
@@ -189,7 +192,7 @@ public class AccessibilityService : BaseService
     {
         var id = int.Parse(param["ID"].ToString());
 
-        getProject(id, new int[] {1});
+        getProject(id, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
 
         if (bool.Parse(param["Submit"].ToString()))
         {
@@ -220,7 +223,7 @@ public class AccessibilityService : BaseService
     {
         var project = param["Project"].ToObject<OFS_AccProject>();
 
-        getProject(project.ID, new int[] {1});
+        getProject(project.ID, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
 
         OFS_AccProjectHelper.updateBenefit(project);
 
@@ -256,7 +259,7 @@ public class AccessibilityService : BaseService
     {
         var project = param["Project"].ToObject<OFS_AccProject>();
 
-        getProject(project.ID, new int[] {1});
+        getProject(project.ID, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
 
         OFS_AccProjectHelper.updateFunding(project);
 
@@ -312,7 +315,7 @@ public class AccessibilityService : BaseService
     {
         var id = int.Parse(param["ID"].ToString());
 
-        getProject(id, new int[] {2});
+        getProject(id, new int[] {2}); //資格審查
 
         OFS_AccProjectHelper.updateOrganizer(id, int.Parse(param["Organizer"].ToString()));
 
@@ -323,7 +326,7 @@ public class AccessibilityService : BaseService
     {
         var project = param["Project"].ToObject<OFS_AccProject>();
 
-        getProject(project.ID, new int[] {1});
+        getProject(project.ID, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
 
         OFS_AccProjectHelper.updateSchedule(project);
 

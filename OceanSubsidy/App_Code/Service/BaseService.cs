@@ -54,6 +54,11 @@ public class BaseService : IHttpHandler, IRequiresSessionState
         }
     }
 
+    public object getGrantTargetSetting(JObject param, HttpContext context)
+    {
+        return OFSGrantTargetSettingHelper.getByTargetTypeID(param["TargetTypeID"].ToString());
+    }
+
     public object getZgsCodes(JObject param, HttpContext context)
     {
         return SysZgsCodeHelper.getZgsCodes(param["CodeGroup"].ToString());
