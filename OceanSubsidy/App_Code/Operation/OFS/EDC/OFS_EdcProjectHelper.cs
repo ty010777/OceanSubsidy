@@ -174,6 +174,25 @@ public class OFS_EdcProjectHelper
         db.ExecuteNonQuery();
     }
 
+    public static void updateExistsStatus(string projectID, bool isExists)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            UPDATE [OFS_EDC_Project]
+               SET [IsExists] = @IsExists
+                  ,[UpdateTime] = GETDATE()
+                  ,[UpdateUser] = @UpdateUser
+             WHERE [ProjectID] = @ProjectID
+        ";
+
+        db.Parameters.Add("@ProjectID", projectID);
+        db.Parameters.Add("@IsExists", isExists);
+        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
+
+        db.ExecuteNonQuery();
+    }
+
     public static void updateFormStep(int id, int step)
     {
         DbHelper db = new DbHelper();
@@ -227,6 +246,44 @@ public class OFS_EdcProjectHelper
 
         db.Parameters.Add("@ID", id);
         db.Parameters.Add("@Status", status);
+        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
+
+        db.ExecuteNonQuery();
+    }
+
+    public static void updateStatus(string projectID, int status)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            UPDATE [OFS_EDC_Project]
+               SET [Status] = @Status
+                  ,[UpdateTime] = GETDATE()
+                  ,[UpdateUser] = @UpdateUser
+             WHERE [ProjectID] = @ProjectID
+        ";
+
+        db.Parameters.Add("@ProjectID", projectID);
+        db.Parameters.Add("@Status", status);
+        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
+
+        db.ExecuteNonQuery();
+    }
+
+    public static void updateWithdrawalStatus(string projectID, bool isWithdrawal)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            UPDATE [OFS_EDC_Project]
+               SET [IsWithdrawal] = @IsWithdrawal
+                  ,[UpdateTime] = GETDATE()
+                  ,[UpdateUser] = @UpdateUser
+             WHERE [ProjectID] = @ProjectID
+        ";
+
+        db.Parameters.Add("@ProjectID", projectID);
+        db.Parameters.Add("@IsWithdrawal", isWithdrawal);
         db.Parameters.Add("@UpdateUser", CurrentUser.ID);
 
         db.ExecuteNonQuery();

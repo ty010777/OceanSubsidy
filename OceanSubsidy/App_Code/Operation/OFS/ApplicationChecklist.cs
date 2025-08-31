@@ -360,7 +360,7 @@ public class ApplicationChecklistHelper
     /// <param name="projectId">版本ID</param>
     /// <param name="action">動作</param>
     /// <param name="description">說明</param>
-    private static void LogCaseHistory(string projectId, string action, string description)
+    public static void LogCaseHistory(string projectId, string action, string description)
     {
         DbHelper db = new DbHelper();
         

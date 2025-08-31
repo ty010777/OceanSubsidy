@@ -326,29 +326,23 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
 
         // 根據計畫類型決定編輯頁面
         string projectCategory = item.GetProjectCategory();
-        //TODO 正文 請提供 編輯相關網址
         switch (projectCategory)
         {
             case "科專":
                 return $"~/OFS/SCI/SciApplication.aspx?ProjectID={item.ProjectID}";
             case "文化":
-                // 尚未有這個網址，暫時返回空值
-                return "#";
+                return $"~/OFS/CUL/Application.aspx?ID={item.ProjectID}";
             case "學校社團":
                 // 尚未有這個網址，暫時返回空值
                 return "#";
             case "學校民間":
-                // 尚未有這個網址，暫時返回空值
-                return "#";
+                return $"~/OFS/EDC/Application.aspx?ID={item.ProjectID}";
             case "多元":
-                // 尚未有這個網址，暫時返回空值
-                return "#";
+                return $"~/OFS/MUL/Application.aspx?ID={item.ProjectID}";
             case "素養":
-                // 尚未有這個網址，暫時返回空值
-                return "#";
+                return $"~/OFS/LIT/Application.aspx?ID={item.ProjectID}";
             case "無障礙":
-                // 尚未有這個網址，暫時返回空值
-                return "#";
+                return $"~/OFS/ACC/Application.aspx?ID={item.ProjectID}";
             default:
                 return "#";
         }
@@ -371,31 +365,33 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
 
             // 根據選擇的計畫類別重定向到相應的申請表單頁面
             // 這裡可以根據 GrantTypeID 判斷要導向哪個申請表單
-            //TODO 正文  這裡是申請計畫之新增功能。請補上要引導到的申請表網頁。
             if (selectedGrantTypeId == "SCI")
             {
                 Response.Redirect($"~/OFS/SCI/SciApplication.aspx?GrantTypeID={selectedGrantTypeId}");
-            }else if (selectedGrantTypeId == "CUL")
+            }
+            else if (selectedGrantTypeId == "CUL")
             {
-
-            }else if (selectedGrantTypeId =="EDC")
+                Response.Redirect("~/OFS/CUL/Application.aspx");
+            }
+            else if (selectedGrantTypeId =="EDC")
             {
-                // EDC 的處理邏輯
+                Response.Redirect("~/OFS/EDC/Application.aspx");
             }
             else if (selectedGrantTypeId =="CLB")
             {
-                Response.Redirect($"~/OFS/CLB/ClbApplication.aspx?GrantTypeID={selectedGrantTypeId}");            }
+                Response.Redirect($"~/OFS/CLB/ClbApplication.aspx?GrantTypeID={selectedGrantTypeId}");
+            }
             else if (selectedGrantTypeId =="MUL")
             {
-                // MUL 的處理邏輯
+                Response.Redirect("~/OFS/MUL/Application.aspx");
             }
             else if (selectedGrantTypeId =="LIT")
             {
-                // LIT 的處理邏輯
+                Response.Redirect("~/OFS/LIT/Application.aspx");
             }
             else if (selectedGrantTypeId =="ACC")
             {
-                // ACC 的處理邏輯
+                Response.Redirect("~/OFS/ACC/Application.aspx");
             }
             else
             {
@@ -555,11 +551,7 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
                 ShowMessage("系統錯誤：未找到專案資訊", false);
                 return;
             }
-            if (string.IsNullOrEmpty(projectId))
-            {
-                ShowMessage("系統錯誤：未找到專案資訊", false);
-                return;
-            }else if (projectId.Contains("SCI"))
+            else if (projectId.Contains("SCI"))
             {
                 // 取得操作前的狀態
                 string beforeStatus = GetProjectCurrentStatus(projectId);
@@ -570,14 +562,19 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
                 LogCaseOperation(projectId, "撤案", reason, beforeStatus, "已撤案");
 
             }
-            // TODO 正文 這是案件撤案 ，請補上案件撤案時要調整的Status 、並 insert案件歷程
             else if (projectId.Contains("CUL"))
             {
-                // CUL 的處理邏輯
+                string beforeStatus = GetProjectCurrentStatus(projectId);
+                OFS_CulProjectHelper.updateWithdrawalStatus(projectId, true);
+                ApplicationChecklistHelper.LogCaseHistory(projectId, "撤案", reason);
+                LogCaseOperation(projectId, "撤案", reason, beforeStatus, "已撤案");
             }
             else if (projectId.Contains("EDC"))
             {
-                // EDC 的處理邏輯
+                string beforeStatus = GetProjectCurrentStatus(projectId);
+                OFS_EdcProjectHelper.updateWithdrawalStatus(projectId, true);
+                ApplicationChecklistHelper.LogCaseHistory(projectId, "撤案", reason);
+                LogCaseOperation(projectId, "撤案", reason, beforeStatus, "已撤案");
             }
             else if (projectId.Contains("CLB"))
             {
@@ -585,15 +582,24 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             }
             else if (projectId.Contains("MUL"))
             {
-                // MUL 的處理邏輯
+                string beforeStatus = GetProjectCurrentStatus(projectId);
+                OFS_MulProjectHelper.updateWithdrawalStatus(projectId, true);
+                ApplicationChecklistHelper.LogCaseHistory(projectId, "撤案", reason);
+                LogCaseOperation(projectId, "撤案", reason, beforeStatus, "已撤案");
             }
             else if (projectId.Contains("LIT"))
             {
-                // LIT 的處理邏輯
+                string beforeStatus = GetProjectCurrentStatus(projectId);
+                OFS_LitProjectHelper.updateWithdrawalStatus(projectId, true);
+                ApplicationChecklistHelper.LogCaseHistory(projectId, "撤案", reason);
+                LogCaseOperation(projectId, "撤案", reason, beforeStatus, "已撤案");
             }
             else if (projectId.Contains("ACC"))
             {
-                // ACC 的處理邏輯
+                string beforeStatus = GetProjectCurrentStatus(projectId);
+                OFS_AccProjectHelper.updateWithdrawalStatus(projectId, true);
+                ApplicationChecklistHelper.LogCaseHistory(projectId, "撤案", reason);
+                LogCaseOperation(projectId, "撤案", reason, beforeStatus, "已撤案");
             }
             else
             {
@@ -657,14 +663,19 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
                 // 記錄操作到案件歷程
                 LogCaseOperation(projectId, "刪除", reason, beforeStatus, "已刪除");
             }
-            // TODO 正文 這裡是案件刪除 (isExist = 0 ) 請補上案件刪除會變更的欄位 、並補上 案件歷程
             else if (projectId.Contains("CUL"))
             {
-                // CUL 的處理邏輯
+                string beforeStatus = GetProjectCurrentStatus(projectId);
+                OFS_CulProjectHelper.updateExistsStatus(projectId, false);
+                ApplicationChecklistHelper.LogCaseHistory(projectId, "刪除案件", reason);
+                LogCaseOperation(projectId, "刪除", reason, beforeStatus, "已刪除");
             }
             else if (projectId.Contains("EDC"))
             {
-                // EDC 的處理邏輯
+                string beforeStatus = GetProjectCurrentStatus(projectId);
+                OFS_EdcProjectHelper.updateExistsStatus(projectId, false);
+                ApplicationChecklistHelper.LogCaseHistory(projectId, "刪除案件", reason);
+                LogCaseOperation(projectId, "刪除", reason, beforeStatus, "已刪除");
             }
             else if (projectId.Contains("CLB"))
             {
@@ -672,15 +683,24 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             }
             else if (projectId.Contains("MUL"))
             {
-                // MUL 的處理邏輯
+                string beforeStatus = GetProjectCurrentStatus(projectId);
+                OFS_MulProjectHelper.updateExistsStatus(projectId, false);
+                ApplicationChecklistHelper.LogCaseHistory(projectId, "刪除案件", reason);
+                LogCaseOperation(projectId, "刪除", reason, beforeStatus, "已刪除");
             }
             else if (projectId.Contains("LIT"))
             {
-                // LIT 的處理邏輯
+                string beforeStatus = GetProjectCurrentStatus(projectId);
+                OFS_LitProjectHelper.updateExistsStatus(projectId, false);
+                ApplicationChecklistHelper.LogCaseHistory(projectId, "刪除案件", reason);
+                LogCaseOperation(projectId, "刪除", reason, beforeStatus, "已刪除");
             }
             else if (projectId.Contains("ACC"))
             {
-                // ACC 的處理邏輯
+                string beforeStatus = GetProjectCurrentStatus(projectId);
+                OFS_AccProjectHelper.updateExistsStatus(projectId, false);
+                ApplicationChecklistHelper.LogCaseHistory(projectId, "刪除案件", reason);
+                LogCaseOperation(projectId, "刪除", reason, beforeStatus, "已刪除");
             }
             else
             {
@@ -743,14 +763,21 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
                 LogCaseOperation(projectId, "恢復案件", "恢復已撤案的案件", beforeStatus, afterStatus);
 
             }
-            // TODO :正文 請處理  恢復案件 邏輯 (恢復撤案) 的處理邏輯 以及 案件歷程。
             else if (projectId.Contains("CUL"))
             {
-                // CUL 的處理邏輯
+                string beforeStatus = GetProjectCurrentStatus(projectId);
+                OFS_CulProjectHelper.updateWithdrawalStatus(projectId, false);
+                ApplicationChecklistHelper.LogCaseHistory(projectId, "恢復案件", "恢復已撤案的申請案件");
+                string afterStatus = GetProjectCurrentStatus(projectId);
+                LogCaseOperation(projectId, "恢復案件", "恢復已撤案的案件", beforeStatus, afterStatus);
             }
             else if (projectId.Contains("EDC"))
             {
-                // EDC 的處理邏輯
+                string beforeStatus = GetProjectCurrentStatus(projectId);
+                OFS_EdcProjectHelper.updateWithdrawalStatus(projectId, false);
+                ApplicationChecklistHelper.LogCaseHistory(projectId, "恢復案件", "恢復已撤案的申請案件");
+                string afterStatus = GetProjectCurrentStatus(projectId);
+                LogCaseOperation(projectId, "恢復案件", "恢復已撤案的案件", beforeStatus, afterStatus);
             }
             else if (projectId.Contains("CLB"))
             {
@@ -758,15 +785,27 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             }
             else if (projectId.Contains("MUL"))
             {
-                // MUL 的處理邏輯
+                string beforeStatus = GetProjectCurrentStatus(projectId);
+                OFS_MulProjectHelper.updateWithdrawalStatus(projectId, false);
+                ApplicationChecklistHelper.LogCaseHistory(projectId, "恢復案件", "恢復已撤案的申請案件");
+                string afterStatus = GetProjectCurrentStatus(projectId);
+                LogCaseOperation(projectId, "恢復案件", "恢復已撤案的案件", beforeStatus, afterStatus);
             }
             else if (projectId.Contains("LIT"))
             {
-                // LIT 的處理邏輯
+                string beforeStatus = GetProjectCurrentStatus(projectId);
+                OFS_LitProjectHelper.updateWithdrawalStatus(projectId, false);
+                ApplicationChecklistHelper.LogCaseHistory(projectId, "恢復案件", "恢復已撤案的申請案件");
+                string afterStatus = GetProjectCurrentStatus(projectId);
+                LogCaseOperation(projectId, "恢復案件", "恢復已撤案的案件", beforeStatus, afterStatus);
             }
             else if (projectId.Contains("ACC"))
             {
-                // ACC 的處理邏輯
+                string beforeStatus = GetProjectCurrentStatus(projectId);
+                OFS_AccProjectHelper.updateWithdrawalStatus(projectId, false);
+                ApplicationChecklistHelper.LogCaseHistory(projectId, "恢復案件", "恢復已撤案的申請案件");
+                string afterStatus = GetProjectCurrentStatus(projectId);
+                LogCaseOperation(projectId, "恢復案件", "恢復已撤案的案件", beforeStatus, afterStatus);
             }
 
 
