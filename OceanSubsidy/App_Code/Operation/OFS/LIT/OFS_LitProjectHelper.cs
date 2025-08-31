@@ -45,6 +45,7 @@ public class OFS_LitProjectHelper
                   ,P.[Benefit]
                   ,P.[FormStep]
                   ,P.[Status]
+                  ,P.[ProgressStatus]
                   ,P.[Organizer]
                   ,U.[Name] AS [OrganizerName]
                   ,P.[RejectReason]
@@ -52,6 +53,8 @@ public class OFS_LitProjectHelper
                   ,P.[UserAccount]
                   ,P.[UserName]
                   ,P.[UserOrg]
+                  ,P.[IsWithdrawal]
+                  ,P.[IsExists]
               FROM [OFS_LIT_Project] AS P
          LEFT JOIN [Sys_User] AS U ON (U.UserID = P.Organizer)
              WHERE P.[ID] = @ID
@@ -70,9 +73,11 @@ public class OFS_LitProjectHelper
 
         db.CommandText = @"
             INSERT INTO [OFS_LIT_Project] ([Year],[ProjectID],[SubsidyPlanType],[ProjectName],[Field],[OrgName],[OrgLeader],[Address],[Target],[Summary],
-                                           [Quantified],[Qualitative],[FormStep],[Status],[UserAccount],[UserName],[UserOrg],[CreateTime],[CreateUser])
+                                           [Quantified],[Qualitative],[FormStep],[Status],[ProgressStatus],[UserAccount],[UserName],[UserOrg],[IsWithdrawal],[IsExists],
+                                           [CreateTime],[CreateUser])
                 OUTPUT Inserted.ID VALUES (@Year, @ProjectID, @SubsidyPlanType, @ProjectName, @Field, @OrgName, @OrgLeader, @Address, @Target, @Summary,
-                                           @Quantified, @Qualitative, 1,         1,       @UserAccount, @UserName, @UserOrg, GETDATE(),   @CreateUser)
+                                           @Quantified, @Qualitative, 1,         1,       0,               @UserAccount, @UserName, @UserOrg, 0,             1,
+                                           GETDATE(),   @CreateUser)
         ";
 
         db.Parameters.Add("@Year", model.Year);
@@ -192,7 +197,7 @@ public class OFS_LitProjectHelper
         db.ExecuteNonQuery();
     }
 
-    public static void updateFormStep(int id, int step)
+    public static void updateFormStep(string projectID, int step)
     {
         DbHelper db = new DbHelper();
 
@@ -201,11 +206,11 @@ public class OFS_LitProjectHelper
                SET [FormStep] = @FormStep
                   ,[UpdateTime] = GETDATE()
                   ,[UpdateUser] = @UpdateUser
-             WHERE [ID] = @ID
+             WHERE [ProjectID] = @ProjectID
                AND [FormStep] + 1 = @FormStep
         ";
 
-        db.Parameters.Add("@ID", id);
+        db.Parameters.Add("@ProjectID", projectID);
         db.Parameters.Add("@FormStep", step);
         db.Parameters.Add("@UpdateUser", CurrentUser.ID);
 
@@ -275,25 +280,6 @@ public class OFS_LitProjectHelper
         db.ExecuteNonQuery();
     }
 
-    public static void updateStatus(int id, int status)
-    {
-        DbHelper db = new DbHelper();
-
-        db.CommandText = @"
-            UPDATE [OFS_LIT_Project]
-               SET [Status] = @Status
-                  ,[UpdateTime] = GETDATE()
-                  ,[UpdateUser] = @UpdateUser
-             WHERE [ID] = @ID
-        ";
-
-        db.Parameters.Add("@ID", id);
-        db.Parameters.Add("@Status", status);
-        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
-
-        db.ExecuteNonQuery();
-    }
-
     public static void updateStatus(string projectID, int status)
     {
         DbHelper db = new DbHelper();
@@ -357,13 +343,16 @@ public class OFS_LitProjectHelper
             Benefit = row.Field<string>("Benefit"),
             FormStep = row.Field<int>("FormStep"),
             Status = row.Field<int>("Status"),
+            ProgressStatus = row.Field<int>("ProgressStatus"),
             Organizer = row.Field<int?>("Organizer"),
             OrganizerName = row.Field<string>("OrganizerName"),
             RejectReason = row.Field<string>("RejectReason"),
             CorrectionDeadline = row.Field<DateTime?>("CorrectionDeadline"),
             UserAccount = row.Field<string>("UserAccount"),
             UserName = row.Field<string>("UserName"),
-            UserOrg = row.Field<string>("UserOrg")
+            UserOrg = row.Field<string>("UserOrg"),
+            IsWithdrawal = row.Field<bool>("IsWithdrawal"),
+            IsExists = row.Field<bool>("IsExists")
         };
     }
 }

@@ -84,14 +84,16 @@ public class EducationService : BaseService
         }
         else
         {
-            getProject(project.ID, new int[] {1,3}); //申請中,退回補正
+            var data = getProject(project.ID, new int[] {1,3}); //申請中,退回補正
+
+            project.ProjectID = data.ProjectID;
 
             OFS_EdcProjectHelper.update(project);
         }
 
         if (bool.Parse(param["Submit"].ToString()))
         {
-            OFS_EdcProjectHelper.updateFormStep(project.ID, 2);
+            OFS_EdcProjectHelper.updateFormStep(project.ProjectID, 2);
         }
 
         var contacts = param["Contacts"].ToObject<List<OFS_EdcContact>>();
@@ -136,13 +138,12 @@ public class EducationService : BaseService
     public object saveAttachment(JObject param, HttpContext context)
     {
         var id = int.Parse(param["ID"].ToString());
-
-        getProject(id, new int[] {1,3}); //申請中,退回補正
+        var data = getProject(id, new int[] {1,3}); //申請中,退回補正
 
         if (bool.Parse(param["Submit"].ToString()))
         {
-            OFS_EdcProjectHelper.updateFormStep(id, 3);
-            OFS_EdcProjectHelper.updateStatus(id, 2);
+            OFS_EdcProjectHelper.updateFormStep(data.ProjectID, 3);
+            OFS_EdcProjectHelper.updateStatus(data.ProjectID, 2);
         }
 
         var attachments = param["Attachments"].ToObject<List<OFS_EdcAttachment>>();
@@ -167,10 +168,9 @@ public class EducationService : BaseService
     public object saveOrganizer(JObject param, HttpContext context)
     {
         var id = int.Parse(param["ID"].ToString());
+        var data = getProject(id, new int[] {2}); //資格審查
 
-        getProject(id, new int[] {2}); //資格審查
-
-        OFS_EdcProjectHelper.updateOrganizer(id, int.Parse(param["Organizer"].ToString()));
+        OFS_EdcProjectHelper.updateOrganizer(data.ID, int.Parse(param["Organizer"].ToString()));
 
         return new {};
     }
@@ -179,12 +179,12 @@ public class EducationService : BaseService
     {
         var project = OFS_EdcProjectHelper.get(id);
 
-        if (project == null)
+        if (project == null || !project.IsExists)
         {
             throw new Exception("查無資料");
         }
 
-        if (statusList != null && !statusList.Contains(project.Status))
+        if ((statusList != null && !statusList.Contains(project.Status)) || project.IsWithdrawal)
         {
             throw new Exception("狀態錯誤");
         }

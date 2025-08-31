@@ -139,14 +139,16 @@ public class MultipleService : BaseService
         }
         else
         {
-            getProject(project.ID, new int[] {1,3}); //申請中,退回補正
+            var data = getProject(project.ID, new int[] {1,3}); //申請中,退回補正
+
+            project.ProjectID = data.ProjectID;
 
             OFS_MulProjectHelper.update(project);
         }
 
         if (bool.Parse(param["Submit"].ToString()))
         {
-            OFS_MulProjectHelper.updateFormStep(project.ID, 2);
+            OFS_MulProjectHelper.updateFormStep(project.ProjectID, 2);
         }
 
         var contacts = param["Contacts"].ToObject<List<OFS_MulContact>>();
@@ -191,13 +193,12 @@ public class MultipleService : BaseService
     public object saveAttachment(JObject param, HttpContext context)
     {
         var id = int.Parse(param["ID"].ToString());
-
-        getProject(id, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
+        var data = getProject(id, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
 
         if (bool.Parse(param["Submit"].ToString()))
         {
-            OFS_MulProjectHelper.updateFormStep(id, 6);
-            OFS_MulProjectHelper.updateStatus(id, 2);
+            OFS_MulProjectHelper.updateFormStep(data.ProjectID, 6);
+            OFS_MulProjectHelper.updateStatus(data.ProjectID, 2);
         }
 
         var attachments = param["Attachments"].ToObject<List<OFS_MulAttachment>>();
@@ -222,14 +223,13 @@ public class MultipleService : BaseService
     public object saveBenefit(JObject param, HttpContext context)
     {
         var project = param["Project"].ToObject<OFS_MulProject>();
-
-        getProject(project.ID, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
+        var data = getProject(project.ID, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
 
         OFS_MulProjectHelper.updateBenefit(project);
 
         if (bool.Parse(param["Submit"].ToString()))
         {
-            OFS_MulProjectHelper.updateFormStep(project.ID, 5);
+            OFS_MulProjectHelper.updateFormStep(data.ProjectID, 5);
         }
 
         var benefits = param["Benefits"].ToObject<List<OFS_MulBenefit>>();
@@ -258,14 +258,13 @@ public class MultipleService : BaseService
     public object saveFunding(JObject param, HttpContext context)
     {
         var project = param["Project"].ToObject<OFS_MulProject>();
-
-        getProject(project.ID, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
+        var data = getProject(project.ID, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
 
         OFS_MulProjectHelper.updateFunding(project);
 
         if (bool.Parse(param["Submit"].ToString()))
         {
-            OFS_MulProjectHelper.updateFormStep(project.ID, 4);
+            OFS_MulProjectHelper.updateFormStep(data.ProjectID, 4);
         }
 
         var others = param["OtherSubsidies"].ToObject<List<OFS_MulOtherSubsidy>>();
@@ -314,10 +313,9 @@ public class MultipleService : BaseService
     public object saveOrganizer(JObject param, HttpContext context)
     {
         var id = int.Parse(param["ID"].ToString());
+        var data = getProject(id, new int[] {2}); //資格審查
 
-        getProject(id, new int[] {2}); //資格審查
-
-        OFS_MulProjectHelper.updateOrganizer(id, int.Parse(param["Organizer"].ToString()));
+        OFS_MulProjectHelper.updateOrganizer(data.ID, int.Parse(param["Organizer"].ToString()));
 
         return new {};
     }
@@ -325,14 +323,13 @@ public class MultipleService : BaseService
     public object saveWorkSchedule(JObject param, HttpContext context)
     {
         var project = param["Project"].ToObject<OFS_MulProject>();
-
-        getProject(project.ID, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
+        var data = getProject(project.ID, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
 
         OFS_MulProjectHelper.updateSchedule(project);
 
         if (bool.Parse(param["Submit"].ToString()))
         {
-            OFS_MulProjectHelper.updateFormStep(project.ID, 3);
+            OFS_MulProjectHelper.updateFormStep(data.ProjectID, 3);
         }
 
         var items = param["Items"].ToObject<List<OFS_MulItem>>();
@@ -376,12 +373,12 @@ public class MultipleService : BaseService
     {
         var project = OFS_MulProjectHelper.get(id);
 
-        if (project == null)
+        if (project == null || !project.IsExists)
         {
             throw new Exception("查無資料");
         }
 
-        if (statusList != null && !statusList.Contains(project.Status))
+        if ((statusList != null && !statusList.Contains(project.Status)) || project.IsWithdrawal)
         {
             throw new Exception("狀態錯誤");
         }

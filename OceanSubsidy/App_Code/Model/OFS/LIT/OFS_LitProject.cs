@@ -70,6 +70,9 @@ public class OFS_LitProject
     // 13: 核定通過
     public int Status { get; set; }
 
+    // 執行狀態
+    public int ProgressStatus { get; set; }
+
     // 承辦
     public int? Organizer { get; set; }
     public string OrganizerName { get; set; }
@@ -83,4 +86,10 @@ public class OFS_LitProject
     public string UserAccount { get; set; }
     public string UserName { get; set; }
     public string UserOrg { get; set; }
+
+    // 是否撤銷
+    public bool IsWithdrawal { get; set; }
+
+    // 是否有效
+    public bool IsExists { get; set; }
 }

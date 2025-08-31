@@ -156,14 +156,16 @@ public class CultureService : BaseService
         }
         else
         {
-            getProject(project.ID, new int[] {1,3}); //申請中,退回補正
+            var data = getProject(project.ID, new int[] {1,3}); //申請中,退回補正
+
+            project.ProjectID = data.ProjectID;
 
             OFS_CulProjectHelper.update(project);
         }
 
         if (bool.Parse(param["Submit"].ToString()))
         {
-            OFS_CulProjectHelper.updateFormStep(project.ID, 2);
+            OFS_CulProjectHelper.updateFormStep(project.ProjectID, 2);
         }
 
         var contacts = param["Contacts"].ToObject<List<OFS_CulContact>>();
@@ -208,13 +210,12 @@ public class CultureService : BaseService
     public object saveAttachment(JObject param, HttpContext context)
     {
         var id = int.Parse(param["ID"].ToString());
-
-        getProject(id, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
+        var data = getProject(id, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
 
         if (bool.Parse(param["Submit"].ToString()))
         {
-            OFS_CulProjectHelper.updateFormStep(id, 6);
-            OFS_CulProjectHelper.updateStatus(id, 2);
+            OFS_CulProjectHelper.updateFormStep(data.ProjectID, 6);
+            OFS_CulProjectHelper.updateStatus(data.ProjectID, 2);
         }
 
         var attachments = param["Attachments"].ToObject<List<OFS_CulAttachment>>();
@@ -239,14 +240,13 @@ public class CultureService : BaseService
     public object saveFunding(JObject param, HttpContext context)
     {
         var project = param["Project"].ToObject<OFS_CulProject>();
-
-        getProject(project.ID, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
+        var data = getProject(project.ID, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
 
         OFS_CulProjectHelper.updateFunding(project);
 
         if (bool.Parse(param["Submit"].ToString()))
         {
-            OFS_CulProjectHelper.updateFormStep(project.ID, 4);
+            OFS_CulProjectHelper.updateFormStep(data.ProjectID, 4);
         }
 
         var others = param["OtherSubsidies"].ToObject<List<OFS_CulOtherSubsidy>>();
@@ -295,10 +295,9 @@ public class CultureService : BaseService
     public object saveOrganizer(JObject param, HttpContext context)
     {
         var id = int.Parse(param["ID"].ToString());
+        var data = getProject(id, new int[] {2}); //資格審查
 
-        getProject(id, new int[] {2}); //資格審查
-
-        OFS_CulProjectHelper.updateOrganizer(id, int.Parse(param["Organizer"].ToString()));
+        OFS_CulProjectHelper.updateOrganizer(data.ID, int.Parse(param["Organizer"].ToString()));
 
         return new {};
     }
@@ -306,12 +305,11 @@ public class CultureService : BaseService
     public object saveRelatedProject(JObject param, HttpContext context)
     {
         var id = int.Parse(param["ID"].ToString());
-
-        getProject(id, new int[] {1,3}); //申請中,退回補正
+        var data = getProject(id, new int[] {1,3}); //申請中,退回補正
 
         if (bool.Parse(param["Submit"].ToString()))
         {
-            OFS_CulProjectHelper.updateFormStep(id, 5);
+            OFS_CulProjectHelper.updateFormStep(data.ProjectID, 5);
         }
 
         var projects = param["Projects"].ToObject<List<OFS_CulRelatedProject>>();
@@ -340,14 +338,13 @@ public class CultureService : BaseService
     public object saveWorkSchedule(JObject param, HttpContext context)
     {
         var project = param["Project"].ToObject<OFS_CulProject>();
-
-        getProject(project.ID, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
+        var data = getProject(project.ID, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
 
         OFS_CulProjectHelper.updateSchedule(project);
 
         if (bool.Parse(param["Submit"].ToString()))
         {
-            OFS_CulProjectHelper.updateFormStep(project.ID, 3);
+            OFS_CulProjectHelper.updateFormStep(data.ProjectID, 3);
         }
 
         var goals = param["Goals"].ToObject<List<OFS_CulGoal>>();
@@ -447,12 +444,12 @@ public class CultureService : BaseService
     {
         var project = OFS_CulProjectHelper.get(id);
 
-        if (project == null)
+        if (project == null || !project.IsExists)
         {
             throw new Exception("查無資料");
         }
 
-        if (statusList != null && !statusList.Contains(project.Status))
+        if ((statusList != null && !statusList.Contains(project.Status)) || project.IsWithdrawal)
         {
             throw new Exception("狀態錯誤");
         }

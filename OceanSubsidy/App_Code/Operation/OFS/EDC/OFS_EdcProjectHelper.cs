@@ -45,6 +45,7 @@ public class OFS_EdcProjectHelper
                   ,P.[OtherUnitAmount]
                   ,P.[FormStep]
                   ,P.[Status]
+                  ,P.[ProgressStatus]
                   ,P.[Organizer]
                   ,U.[Name] AS [OrganizerName]
                   ,P.[RejectReason]
@@ -52,6 +53,8 @@ public class OFS_EdcProjectHelper
                   ,P.[UserAccount]
                   ,P.[UserName]
                   ,P.[UserOrg]
+                  ,P.[IsWithdrawal]
+                  ,P.[IsExists]
               FROM [OFS_EDC_Project] AS P
          LEFT JOIN [Sys_User] AS U ON (U.UserID = P.Organizer)
              WHERE P.[ID] = @ID
@@ -71,10 +74,10 @@ public class OFS_EdcProjectHelper
         db.CommandText = @"
             INSERT INTO [OFS_EDC_Project] ([Year],[ProjectID],[SubsidyPlanType],[ProjectName],[OrgCategory],[OrgName],[RegisteredNum],[TaxID],[Address],[StartTime],
                                            [EndTime],[Target],[Summary],[Quantified],[ApplyAmount],[SelfAmount],[OtherGovAmount],[OtherUnitAmount],[FormStep],[Status],
-                                           [UserAccount],[UserName],[UserOrg],[CreateTime],[CreateUser])
+                                           [ProgressStatus],[UserAccount],[UserName],[UserOrg],[IsWithdrawal],[IsExists],[CreateTime],[CreateUser])
                 OUTPUT Inserted.ID VALUES (@Year, @ProjectID, @SubsidyPlanType, @ProjectName, @OrgCategory, @OrgName, @RegisteredNum, @TaxID, @Address, @StartTime,
                                            @EndTime, @Target, @Summary, @Quantified, @ApplyAmount, @SelfAmount, @OtherGovAmount, @OtherUnitAmount, 1,         1,
-                                           @UserAccount, @UserName, @UserOrg, GETDATE(),   @CreateUser)
+                                           0,               @UserAccount, @UserName, @UserOrg, 0,             1,         GETDATE(),   @CreateUser)
         ";
 
         db.Parameters.Add("@Year", model.Year);
@@ -193,7 +196,7 @@ public class OFS_EdcProjectHelper
         db.ExecuteNonQuery();
     }
 
-    public static void updateFormStep(int id, int step)
+    public static void updateFormStep(string projectID, int step)
     {
         DbHelper db = new DbHelper();
 
@@ -202,11 +205,11 @@ public class OFS_EdcProjectHelper
                SET [FormStep] = @FormStep
                   ,[UpdateTime] = GETDATE()
                   ,[UpdateUser] = @UpdateUser
-             WHERE [ID] = @ID
+             WHERE [ProjectID] = @ProjectID
                AND [FormStep] + 1 = @FormStep
         ";
 
-        db.Parameters.Add("@ID", id);
+        db.Parameters.Add("@ProjectID", projectID);
         db.Parameters.Add("@FormStep", step);
         db.Parameters.Add("@UpdateUser", CurrentUser.ID);
 
@@ -227,25 +230,6 @@ public class OFS_EdcProjectHelper
 
         db.Parameters.Add("@ID", id);
         db.Parameters.Add("@Organizer", organizer);
-        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
-
-        db.ExecuteNonQuery();
-    }
-
-    public static void updateStatus(int id, int status)
-    {
-        DbHelper db = new DbHelper();
-
-        db.CommandText = @"
-            UPDATE [OFS_EDC_Project]
-               SET [Status] = @Status
-                  ,[UpdateTime] = GETDATE()
-                  ,[UpdateUser] = @UpdateUser
-             WHERE [ID] = @ID
-        ";
-
-        db.Parameters.Add("@ID", id);
-        db.Parameters.Add("@Status", status);
         db.Parameters.Add("@UpdateUser", CurrentUser.ID);
 
         db.ExecuteNonQuery();
@@ -314,13 +298,16 @@ public class OFS_EdcProjectHelper
             OtherUnitAmount = row.Field<int?>("OtherUnitAmount"),
             FormStep = row.Field<int>("FormStep"),
             Status = row.Field<int>("Status"),
+            ProgressStatus = row.Field<int>("ProgressStatus"),
             Organizer = row.Field<int?>("Organizer"),
             OrganizerName = row.Field<string>("OrganizerName"),
             RejectReason = row.Field<string>("RejectReason"),
             CorrectionDeadline = row.Field<DateTime?>("CorrectionDeadline"),
             UserAccount = row.Field<string>("UserAccount"),
             UserName = row.Field<string>("UserName"),
-            UserOrg = row.Field<string>("UserOrg")
+            UserOrg = row.Field<string>("UserOrg"),
+            IsWithdrawal = row.Field<bool>("IsWithdrawal"),
+            IsExists = row.Field<bool>("IsExists")
         };
     }
 }
