@@ -274,14 +274,14 @@
                     contacts.value = res.Contacts;
                     studies.value = res.PreviousStudies;
 
-                    useProgressStore().literacy = { step: form.value.FormStep, status: form.value.Status, organizer: form.value.Organizer, organizerName: form.value.OrganizerName };
+                    useProgressStore().init("literacy", form.value);
                 });
             } else {
                 api.literacy("getEmptyApplication").subscribe((res) => {
                     form.value = Object.assign({ Field: null, FormStep: 1, Status: 1 }, res);
                     contacts.value = [{ Role: "申請人" }];
 
-                    useProgressStore().literacy = { step: form.value.FormStep, status: form.value.Status };
+                    useProgressStore().init("literacy", form.value);
                 });
             }
         });

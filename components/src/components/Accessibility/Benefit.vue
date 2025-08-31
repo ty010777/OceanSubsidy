@@ -126,7 +126,7 @@
                 add();
             }
 
-            useProgressStore().accessibility = { step: project.value.FormStep, status: project.value.Status, organizer: project.value.Organizer, organizerName: project.value.OrganizerName };
+            useProgressStore().init("accessibility", project.value);
         });
     });
 

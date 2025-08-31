@@ -311,7 +311,7 @@
                     field.value = fields.value.find((item) => item.Code === form.value.Field)?.ParentCode || null;
                     form.value.OrgCategory = form.value.OrgCategory || null;
 
-                    useProgressStore().culture = { step: form.value.FormStep, status: form.value.Status, organizer: form.value.Organizer, organizerName: form.value.OrganizerName };
+                    useProgressStore().init("culture", form.value);
                 });
             } else {
                 api.culture("getEmptyApplication").subscribe((res) => {
@@ -319,7 +319,7 @@
                     form.value = Object.assign({ Field: null, OrgCategory: null, FormStep: 1, Status: 1 }, res);
                     contacts.value = [{ Role: "負責人" }, { Role: "聯絡人" }];
 
-                    useProgressStore().culture = { step: form.value.FormStep, status: form.value.Status };
+                    useProgressStore().init("culture", form.value);
                 });
             }
         });

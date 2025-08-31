@@ -232,7 +232,7 @@
                 addPlan();
             }
 
-            useProgressStore().multiple = { step: form.value.FormStep, status: form.value.Status, organizer: form.value.Organizer, organizerName: form.value.OrganizerName };
+            useProgressStore().init("multiple", form.value);
         });
     });
 

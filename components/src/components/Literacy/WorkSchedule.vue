@@ -211,7 +211,7 @@
                 addSchedule();
             }
 
-            useProgressStore().literacy = { step: form.value.FormStep, status: form.value.Status, organizer: form.value.Organizer, organizerName: form.value.OrganizerName };
+            useProgressStore().init("literacy", form.value);
         });
     });
 

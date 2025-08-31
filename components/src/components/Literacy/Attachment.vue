@@ -119,7 +119,7 @@
                 doc.Uploaded = computed(() => doc.Files.filter((file) => !file.Deleted).length);
             });
 
-            useProgressStore().literacy = { step: project.value.FormStep, status: project.value.Status, organizer: project.value.Organizer, organizerName: project.value.OrganizerName };
+            useProgressStore().init("literacy", project.value);
         });
     });
 
