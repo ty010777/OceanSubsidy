@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using GS.OCA_OceanSubsidy.Model.OFS;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -199,6 +201,8 @@ public class LiteracyService : BaseService
         {
             OFS_LitProjectHelper.updateFormStep(data.ProjectID, 6);
             OFS_LitProjectHelper.updateStatus(data.ProjectID, 2);
+
+            snapshot(id);
         }
 
         var attachments = param["Attachments"].ToObject<List<OFS_LitAttachment>>();
@@ -384,5 +388,9 @@ public class LiteracyService : BaseService
         }
 
         return project;
+    }
+
+    private void snapshot(int id)
+    {
     }
 }

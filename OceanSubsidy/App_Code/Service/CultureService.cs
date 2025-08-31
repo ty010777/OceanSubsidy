@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using GS.OCA_OceanSubsidy.Model.OFS;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -244,6 +246,8 @@ public class CultureService : BaseService
                 OFS_CulProjectHelper.updateFormStep(data.ProjectID, 6);
                 OFS_CulProjectHelper.updateStatus(data.ProjectID, 2);
             }
+
+            snapshot(id);
         }
 
         var attachments = param["Attachments"].ToObject<List<OFS_CulAttachment>>();
@@ -483,5 +487,30 @@ public class CultureService : BaseService
         }
 
         return project;
+    }
+
+    private void snapshot(int id)
+    {
+        var project = getProject(id);
+
+        OFSSnapshotHelper.insert(new Snapshot {
+            Type = "CUL",
+            DataID = id,
+            Status = project.Status,
+            Data = JsonConvert.SerializeObject(new
+            {
+                Project = project,
+                Contacts = OFS_CulContactHelper.query(id),
+                ReceivedSubsidies = OFS_CulReceivedSubsidyHelper.query(id),
+                Goals = OFS_CulGoalHelper.query(id),
+                Items = OFS_CulGoalItemHelper.query(id),
+                Steps = OFS_CulGoalStepHelper.query(id),
+                Schedules = OFS_CulGoalScheduleHelper.query(id),
+                OtherSubsidies = OFS_CulOtherSubsidyHelper.query(id),
+                BudgetPlans = OFS_CulBudgetPlanHelper.query(id),
+                Projects = OFS_CulRelatedProjectHelper.query(id),
+                Attachments = OFS_CulAttachmentHelper.query(id)
+            })
+        });
     }
 }
