@@ -258,6 +258,25 @@ public class OFS_EdcProjectHelper
         db.ExecuteNonQuery();
     }
 
+    public static void updateProgressStatus(string projectID, int status)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            UPDATE [OFS_EDC_Project]
+               SET [ProgressStatus] = @ProgressStatus
+                  ,[UpdateTime] = GETDATE()
+                  ,[UpdateUser] = @UpdateUser
+             WHERE [ProjectID] = @ProjectID
+        ";
+
+        db.Parameters.Add("@ProjectID", projectID);
+        db.Parameters.Add("@ProgressStatus", status);
+        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
+
+        db.ExecuteNonQuery();
+    }
+
     public static void updateStatus(string projectID, int status)
     {
         DbHelper db = new DbHelper();

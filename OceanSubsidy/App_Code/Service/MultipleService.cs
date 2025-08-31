@@ -8,6 +8,23 @@ using System.Web;
 
 public class MultipleService : BaseService
 {
+    public object applyChange(JObject param, HttpContext context)
+    {
+        var id = int.Parse(param["ID"].ToString());
+        var data = getProject(id, null, new int[] {1}); //執行中
+
+        OFS_MulProjectHelper.updateProgressStatus(data.ProjectID, 2); //計畫變更
+
+        OFSProjectChangeRecordHelper.insert(new ProjectChangeRecord
+        {
+            Type = "MUL",
+            DataID = id,
+            Reason = param["Reason"].ToString()
+        });
+
+        return new {};
+    }
+
     public object createItem(JObject param, HttpContext context)
     {
         var id = int.Parse(param["ID"].ToString());
@@ -412,7 +429,7 @@ public class MultipleService : BaseService
         return new {};
     }
 
-    private OFS_MulProject getProject(int id, int[] statusList = null)
+    private OFS_MulProject getProject(int id, int[] statusList = null, int[] progressList = null)
     {
         var project = OFS_MulProjectHelper.get(id);
 
@@ -424,6 +441,11 @@ public class MultipleService : BaseService
         if ((statusList != null && !statusList.Contains(project.Status)) || project.IsWithdrawal)
         {
             throw new Exception("狀態錯誤");
+        }
+
+        if (progressList != null && !progressList.Contains(project.ProgressStatus))
+        {
+            throw new Exception("執行狀態錯誤");
         }
 
         return project;

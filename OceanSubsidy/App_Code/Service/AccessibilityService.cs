@@ -8,6 +8,23 @@ using System.Web;
 
 public class AccessibilityService : BaseService
 {
+    public object applyChange(JObject param, HttpContext context)
+    {
+        var id = int.Parse(param["ID"].ToString());
+        var data = getProject(id, null, new int[] {1}); //執行中
+
+        OFS_AccProjectHelper.updateProgressStatus(data.ProjectID, 2); //計畫變更
+
+        OFSProjectChangeRecordHelper.insert(new ProjectChangeRecord
+        {
+            Type = "ACC",
+            DataID = id,
+            Reason = param["Reason"].ToString()
+        });
+
+        return new {};
+    }
+
     public object createItem(JObject param, HttpContext context)
     {
         var id = int.Parse(param["ID"].ToString());
@@ -412,7 +429,7 @@ public class AccessibilityService : BaseService
         return new {};
     }
 
-    private OFS_AccProject getProject(int id, int[] statusList = null)
+    private OFS_AccProject getProject(int id, int[] statusList = null, int[] progressList = null)
     {
         var project = OFS_AccProjectHelper.get(id);
 
@@ -424,6 +441,11 @@ public class AccessibilityService : BaseService
         if ((statusList != null && !statusList.Contains(project.Status)) || project.IsWithdrawal)
         {
             throw new Exception("狀態錯誤");
+        }
+
+        if (progressList != null && !progressList.Contains(project.ProgressStatus))
+        {
+            throw new Exception("執行狀態錯誤");
         }
 
         return project;

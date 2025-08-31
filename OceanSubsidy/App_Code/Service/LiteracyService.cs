@@ -8,6 +8,23 @@ using System.Web;
 
 public class LiteracyService : BaseService
 {
+    public object applyChange(JObject param, HttpContext context)
+    {
+        var id = int.Parse(param["ID"].ToString());
+        var data = getProject(id, null, new int[] {1}); //執行中
+
+        OFS_LitProjectHelper.updateProgressStatus(data.ProjectID, 2); //計畫變更
+
+        OFSProjectChangeRecordHelper.insert(new ProjectChangeRecord
+        {
+            Type = "LIT",
+            DataID = id,
+            Reason = param["Reason"].ToString()
+        });
+
+        return new {};
+    }
+
     public object createItem(JObject param, HttpContext context)
     {
         var id = int.Parse(param["ID"].ToString());
@@ -384,7 +401,7 @@ public class LiteracyService : BaseService
         return new {};
     }
 
-    private OFS_LitProject getProject(int id, int[] statusList = null)
+    private OFS_LitProject getProject(int id, int[] statusList = null, int[] progressList = null)
     {
         var project = OFS_LitProjectHelper.get(id);
 
@@ -396,6 +413,11 @@ public class LiteracyService : BaseService
         if ((statusList != null && !statusList.Contains(project.Status)) || project.IsWithdrawal)
         {
             throw new Exception("狀態錯誤");
+        }
+
+        if (progressList != null && !progressList.Contains(project.ProgressStatus))
+        {
+            throw new Exception("執行狀態錯誤");
         }
 
         return project;

@@ -286,6 +286,25 @@ public class OFS_AccProjectHelper
         db.ExecuteNonQuery();
     }
 
+    public static void updateProgressStatus(string projectID, int status)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            UPDATE [OFS_ACC_Project]
+               SET [ProgressStatus] = @ProgressStatus
+                  ,[UpdateTime] = GETDATE()
+                  ,[UpdateUser] = @UpdateUser
+             WHERE [ProjectID] = @ProjectID
+        ";
+
+        db.Parameters.Add("@ProjectID", projectID);
+        db.Parameters.Add("@ProgressStatus", status);
+        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
+
+        db.ExecuteNonQuery();
+    }
+
     public static void updateSchedule(OFS_AccProject model)
     {
         DbHelper db = new DbHelper();
