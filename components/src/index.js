@@ -37,6 +37,7 @@ import MultipleBenefit from "./components/Multiple/Benefit.vue";
 import MultipleFunding from "./components/Multiple/Funding.vue";
 import MultipleProgressBar from "./components/Multiple/ProgressBar.vue";
 import MultipleWorkSchedule from "./components/Multiple/WorkSchedule.vue";
+import ProjectCorrectionReview from "./components/ProjectCorrectionReview.vue";
 import ProjectOrganizer from "./components/ProjectOrganizer.vue";
 import ProjectReview from "./components/ProjectReview.vue";
 import RequiredLabel from "./components/RequiredLabel.vue";
@@ -83,6 +84,7 @@ const components = {
     MultipleFunding,
     MultipleProgressBar,
     MultipleWorkSchedule,
+    ProjectCorrectionReview,
     ProjectOrganizer,
     ProjectReview,
     RequiredLabel,

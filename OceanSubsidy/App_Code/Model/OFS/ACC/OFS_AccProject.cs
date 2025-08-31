@@ -77,6 +77,7 @@ public class OFS_AccProject
     public int Status { get; set; }
 
     // 執行狀態
+    // 1: 執行中
     public int ProgressStatus { get; set; }
 
     // 承辦

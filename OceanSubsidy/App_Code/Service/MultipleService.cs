@@ -95,25 +95,46 @@ public class MultipleService : BaseService
     {
         var id = int.Parse(param["ID"].ToString());
 
-        var project = getProject(id, new int[] {2}); //資格審查
+        var project = getProject(id, new int[] {2,11}); //資格審查,決審
 
         project.RejectReason = null;
         project.CorrectionDeadline = null;
 
-        switch (int.Parse(param["Result"].ToString()))
+        if (project.Status == 2)
         {
-            case 2:
-                project.Status = 4; //資格審查不通過
-                project.RejectReason = param["Reason"].ToString(); //原因
-                break;
-            case 3:
-                project.Status = 3; //退回補正
-                project.RejectReason = param["Reason"].ToString(); //原因
-                project.CorrectionDeadline = DateTime.Parse(param["CorrectionDeadline"].ToString()); //補正期限
-                break;
-            default:
-                project.Status = 9; //核定補助經費
-                break;
+            switch (int.Parse(param["Result"].ToString()))
+            {
+                case 2:
+                    project.Status = 4; //資格審查不通過
+                    project.RejectReason = param["Reason"].ToString(); //原因
+                    break;
+                case 3:
+                    project.Status = 3; //退回補正
+                    project.RejectReason = param["Reason"].ToString(); //原因
+                    project.CorrectionDeadline = DateTime.Parse(param["CorrectionDeadline"].ToString()); //補正期限
+                    break;
+                default:
+                    project.Status = 9; //核定補助經費
+                    break;
+            }
+        }
+        else
+        {
+            switch (int.Parse(param["Result"].ToString()))
+            {
+                case 2:
+                    project.Status = 12; //決審不通過
+                    project.RejectReason = param["Reason"].ToString(); //原因
+                    break;
+                case 3:
+                    project.Status = 10; //修正計畫書
+                    project.RejectReason = param["Reason"].ToString(); //原因
+                    break;
+                default:
+                    project.Status = 13; //核定通過
+                    project.ProgressStatus = 1; //執行中
+                    break;
+            }
         }
 
         OFS_MulProjectHelper.reviewApplication(project);
@@ -197,8 +218,15 @@ public class MultipleService : BaseService
 
         if (bool.Parse(param["Submit"].ToString()))
         {
-            OFS_MulProjectHelper.updateFormStep(data.ProjectID, 6);
-            OFS_MulProjectHelper.updateStatus(data.ProjectID, 2);
+            if (data.Status == 10)
+            {
+                OFS_MulProjectHelper.updateStatus(data.ProjectID, 11);
+            }
+            else
+            {
+                OFS_MulProjectHelper.updateFormStep(data.ProjectID, 6);
+                OFS_MulProjectHelper.updateStatus(data.ProjectID, 2);
+            }
         }
 
         var attachments = param["Attachments"].ToObject<List<OFS_MulAttachment>>();

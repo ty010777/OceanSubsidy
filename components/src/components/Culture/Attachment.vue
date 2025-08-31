@@ -113,8 +113,9 @@
             project.value = data.Project;
             docs.value = docs.value.filter((doc) => !doc.Excludes?.includes(project.value.OrgCategory));
 
-            // TODO
-            // docs.value.push({ Type: 6, Title: "著作權授權同意書", Template: "", Files: [] });
+            if (project.value.Status >= 10) {
+                docs.value.push({ Type: 6, Title: "著作權授權同意書", Template: true, Files: [] });
+            }
 
             docs.value.forEach((doc) => {
                 doc.Files = data.Attachments.filter((file) => file.Type === doc.Type);
