@@ -465,6 +465,17 @@ public class CultureService : BaseService
         return new {};
     }
 
+    public object terminate(JObject param, HttpContext context)
+    {
+        var id = int.Parse(param["ID"].ToString());
+
+        getProject(id, new int[] {13}); //核定通過
+
+        OFS_CulProjectHelper.terminate(id, param["RejectReason"].ToString(), int.Parse(param["RecoveryAmount"].ToString()));
+
+        return new {};
+    }
+
     private void deleteGoalItem(int id)
     {
         OFS_CulGoalStepHelper.deleteByItemID(id);

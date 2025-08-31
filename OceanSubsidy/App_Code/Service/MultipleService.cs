@@ -401,6 +401,17 @@ public class MultipleService : BaseService
         return new {};
     }
 
+    public object terminate(JObject param, HttpContext context)
+    {
+        var id = int.Parse(param["ID"].ToString());
+
+        getProject(id, new int[] {13}); //核定通過
+
+        OFS_MulProjectHelper.terminate(id, param["RejectReason"].ToString(), int.Parse(param["RecoveryAmount"].ToString()));
+
+        return new {};
+    }
+
     private OFS_MulProject getProject(int id, int[] statusList = null)
     {
         var project = OFS_MulProjectHelper.get(id);

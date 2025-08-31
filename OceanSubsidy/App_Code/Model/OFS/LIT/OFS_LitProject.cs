@@ -58,6 +58,12 @@ public class OFS_LitProject
     // 不可量化成果
     public string Benefit { get; set; }
 
+    // 核定金額
+    public int? ApprovedAmount { get; set; }
+
+    // 追回金額
+    public int? RecoveryAmount { get; set; }
+
     // 申請進度
     public int FormStep { get; set; }
 
@@ -72,6 +78,8 @@ public class OFS_LitProject
 
     // 執行狀態
     // 1: 執行中
+    // 2: 計畫變更
+    // 9: 終止
     public int ProgressStatus { get; set; }
 
     // 承辦

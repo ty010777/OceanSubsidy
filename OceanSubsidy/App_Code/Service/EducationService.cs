@@ -179,6 +179,17 @@ public class EducationService : BaseService
         return new {};
     }
 
+    public object terminate(JObject param, HttpContext context)
+    {
+        var id = int.Parse(param["ID"].ToString());
+
+        getProject(id, new int[] {13}); //核定通過
+
+        OFS_EdcProjectHelper.terminate(id, param["RejectReason"].ToString(), int.Parse(param["RecoveryAmount"].ToString()));
+
+        return new {};
+    }
+
     private OFS_EdcProject getProject(int id, int[] statusList = null)
     {
         var project = OFS_EdcProjectHelper.get(id);

@@ -56,6 +56,8 @@ CREATE TABLE [OFS_CUL_Project] (
     [ApplyAmount]        INT                 NULL, -- 申請海委會補助／合作金額
     [SelfAmount]         INT                 NULL, -- 申請單位自籌款
     [OtherAmount]        INT                 NULL, -- 其他機關補助／合作總金額
+    [ApprovedAmount]     INT                 NULL, -- 核定金額
+    [RecoveryAmount]     INT                 NULL, -- 追回金額
     [FormStep]           INT             NOT NULL, -- 申請進度
     [Status]             INT             NOT NULL, -- 狀態
     [ProgressStatus]     INT             NOT NULL, -- 執行狀態

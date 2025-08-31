@@ -109,6 +109,7 @@ public class OFS_AccProjectHelper
         db.CommandText = @"
             UPDATE [OFS_ACC_Project]
                SET [Status] = @Status
+                  ,[ProgressStatus] = @ProgressStatus
                   ,[RejectReason] = @RejectReason
                   ,[CorrectionDeadline] = @CorrectionDeadline
                   ,[UpdateTime] = GETDATE()
@@ -119,9 +120,31 @@ public class OFS_AccProjectHelper
 
         db.Parameters.Add("@ID", model.ID);
         db.Parameters.Add("@Status", model.Status);
+        db.Parameters.Add("@ProgressStatus", model.ProgressStatus);
         db.Parameters.Add("@RejectReason", model.RejectReason);
         db.Parameters.Add("@CorrectionDeadline", model.CorrectionDeadline);
         db.Parameters.Add("@UpdateUser", CurrentUser.ID);
+
+        db.ExecuteNonQuery();
+    }
+
+    public static void terminate(int id, string reason, int recovery)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            UPDATE [OFS_ACC_Project]
+               SET [ProgressStatus] = 9
+                  ,[RejectReason] = @RejectReason
+                  ,[RecoveryAmount] = @RecoveryAmount
+                  ,[UpdateTime] = GETDATE()
+                  ,[UpdateUser] = @UpdateUser
+             WHERE [ID] = @ID
+        ";
+
+        db.Parameters.Add("@ID", id);
+        db.Parameters.Add("@RejectReason", reason);
+        db.Parameters.Add("@RecoveryAmount", recovery);
 
         db.ExecuteNonQuery();
     }

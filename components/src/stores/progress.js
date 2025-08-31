@@ -7,6 +7,7 @@ export const useProgressStore = defineStore("progress", {
                 name: data.ProjectName,
                 step: data.FormStep,
                 status: data.Status,
+                progress: data.ProgressStatus,
                 organizer: data.Organizer,
                 organizerName: data.OrganizerName
             };

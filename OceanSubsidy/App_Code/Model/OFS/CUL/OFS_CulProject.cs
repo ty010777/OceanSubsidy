@@ -61,6 +61,12 @@ public class OFS_CulProject
     // 其他機關補助／合作總金額
     public int? OtherAmount { get; set; }
 
+    // 核定金額
+    public int? ApprovedAmount { get; set; }
+
+    // 追回金額
+    public int? RecoveryAmount { get; set; }
+
     // 申請進度
     public int FormStep { get; set; }
 
@@ -82,6 +88,8 @@ public class OFS_CulProject
 
     // 執行狀態
     // 1: 執行中
+    // 2: 計畫變更
+    // 9: 終止
     public int ProgressStatus { get; set; }
 
     // 承辦

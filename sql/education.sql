@@ -28,6 +28,8 @@ CREATE TABLE [OFS_EDC_Project] (
     [SelfAmount]         INT                 NULL, -- 申請單位自籌款
     [OtherGovAmount]     INT                 NULL, -- 其他政府機關補助經費
     [OtherUnitAmount]    INT                 NULL, -- 其他單位補助經費（含總收費）
+    [ApprovedAmount]     INT                 NULL, -- 核定金額
+    [RecoveryAmount]     INT                 NULL, -- 追回金額
     [FormStep]           INT             NOT NULL, -- 申請進度
     [Status]             INT             NOT NULL, -- 狀態
     [ProgressStatus]     INT             NOT NULL, -- 執行狀態
