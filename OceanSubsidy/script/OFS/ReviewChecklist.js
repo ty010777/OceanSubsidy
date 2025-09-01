@@ -2868,12 +2868,19 @@ window.PaginationManager = {
      */
     updateTotalCount: function(type) {
         const typeNum = type.replace('type', '');
-        const totalCount = this.data[type] ? this.data[type].length : 0;
-        
+
+        // 檢查是否有真正的數據
+        const hasData = this.data[type] &&
+            this.data[type].length > 0 &&
+            !this.data[type][0].includes('無符合條件的資料');
+
+        const totalCount = hasData ? this.data[type].length : 0;
+
         // 更新對應的總筆數顯示
         $(`#total-count-type${typeNum}`).text(totalCount);
     },
-    
+
+
     /**
      * 渲染頁碼按鈕
      */

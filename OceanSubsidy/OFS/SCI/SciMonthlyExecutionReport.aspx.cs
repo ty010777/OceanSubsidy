@@ -589,6 +589,12 @@ public partial class OFS_SCI_SciMonthlyExecutionReport : System.Web.UI.Page
             }
             InprogressListHelper.UpdateLastOperation(projectID, $"已完成{month}月進度回報");
 
+            // 檢查是否所有月份都已完成，如果是則將 MonthlyReport 任務標記為完成
+            if (!OFS_ScienceTaskHelper.CheckMonthlyReportDeadline(projectID))
+            {
+                OFS_ScienceTaskHelper.CompleteMonthlyReportTask(projectID);
+            }
+
             // TODO: 實作寄信功能
             // 目前暫時跳過寄信，直接回傳成功並附上寄信提示
             

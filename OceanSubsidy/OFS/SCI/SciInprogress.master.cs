@@ -116,7 +116,7 @@ public partial class OFS_SCI_SciInprogress : System.Web.UI.MasterPage
     }
 
     /// <summary>
-    /// 產生代辦事項控制項
+    /// 產生代辦事項控制項 (基於 OFS_TaskQueue 資料表)
     /// </summary>
     /// <param name="projectMain">專案主檔資料</param>
     private void GenerateTodoControls(GS.OCA_OceanSubsidy.Entity.OFS_SCI_Project_Main projectMain)
@@ -128,38 +128,40 @@ public partial class OFS_SCI_SciInprogress : System.Web.UI.MasterPage
         placeholder.Controls.Clear();
 
         List<string> todoItems = new List<string>();
-        bool hasToDoitems = false;
         
-        // 1. 檢查契約資料
-        if ((string.IsNullOrWhiteSpace(projectMain.PubNumber) || projectMain.ContractDate == null) && hasToDoitems == false )
+        try
         {
-            todoItems.Add("待辦事項:填寫契約資料");
-            hasToDoitems = true;
+            // 從 OFS_TaskQueue 取得待辦事項（只顯示第一筆）
+            var dt = OFS_TaskQueueHelper.GetProjectTodoTasks(ProjectID);
+            if (dt.Rows.Count > 0)
+            {
+                var row = dt.Rows[0]; // 只取第一筆
+                string taskNameEn = row["TaskNameEn"]?.ToString();
+                string taskName = row["TaskName"]?.ToString();
+                
+                if (taskNameEn == "MonthlyReport")
+                {
+                    // 每月進度報告需要額外判斷具體月份（取最早的月份）
+                    var monthlyTodoItems = new List<string>();
+                    CheckMonthlyProgressTodo(ProjectID, monthlyTodoItems);
+                    
+                    // 只顯示第一筆月份（最早的）
+                    if (monthlyTodoItems.Count > 0)
+                    {
+                        todoItems.Add(monthlyTodoItems[0]);
+                    }
+                }
+                else
+                {
+                    todoItems.Add($"待辦事項:{taskName}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得待辦事項時發生錯誤: {ex.Message}");
         }
 
-        // 2. 檢查第一期請款
-        if (!OFS_SciApplicationHelper.IsFirstPaymentPending(ProjectID) && hasToDoitems == false)
-        {
-            todoItems.Add("待辦事項:第一期請款");
-            hasToDoitems = true;
-
-        }
-
-        // 3. 檢查預定進度
-        if ((projectMain.MidtermExamDate == null || projectMain.FinalExamDate == null)&& hasToDoitems == false)
-        {
-            todoItems.Add("待辦事項:填寫預定進度");
-            hasToDoitems = true;
-
-        }
-        
-        if(hasToDoitems == false)
-        {
-            // 4. 檢查每月進度 - 如果今天已過當月20號，且當月進度資料的ActProgress沒有值
-            CheckMonthlyProgressTodo(ProjectID, todoItems);
-        }
-
-      
         // 為每個代辦事項建立獨立的 span 控制項
         foreach (string item in todoItems)
         {
@@ -172,7 +174,6 @@ public partial class OFS_SCI_SciInprogress : System.Web.UI.MasterPage
             placeholder.Controls.Add(literal);
             placeholder.Controls.Add(closeSpan);
         }
-        
     }
 
     /// <summary>

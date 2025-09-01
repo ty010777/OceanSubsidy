@@ -29,24 +29,7 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
 
     #endregion
 
-    #region 頁面事件
-
-    protected void Page_Load(object sender, EventArgs e)
-    {
-        try
-        {
-            if (!IsPostBack)
-            {
-                InitializeControl();
-            }
-        }
-        catch (Exception ex)
-        {
-            HandleException(ex, "UserControl 載入時發生錯誤");
-        }
-    }
-
-    #endregion
+    // Page_Load 已移除，所有初始化工作整合到 LoadData 方法中
 
     #region 公開方法
 
@@ -59,14 +42,19 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
     {
         try
         {
+            // 執行基本初始化（原本在 Page_Load 中的工作）
+            InitializeControl();
+            
             this.ProjectID = projectID;
             this.IsViewMode = isViewMode;
 
             if (!string.IsNullOrEmpty(projectID))
             {
+                // 根據OrgCategory決定顯示哪個表單
+                DetermineFormType(projectID);
                 LoadExistingData(projectID);
             }
-
+       
             // 套用檢視模式
             if (isViewMode)
             {
@@ -119,9 +107,7 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
         this.ProjectID = projectID;
         try
         {
-            // 更新隱藏欄位的附件資料
-            var attachmentData = GetAttachmentDataFromForm();
-            hdnAttachmentData.Value = Newtonsoft.Json.JsonConvert.SerializeObject(attachmentData);
+            // 附件資料更新功能暫時移除，待實際需求確認後再實作
             
             
             return true;
@@ -182,44 +168,47 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
 
     protected void btnUpload2_Click(object sender, EventArgs e)
     {
-        HandleFileUpload(fuAttachment2, lblStatus2, pnlFiles2, "FILE_002");
+        HandleFileUpload(fuAttachment2, lblStatus2, pnlFiles2, "FILE_AC_002");
     }
 
     protected void btnUpload3_Click(object sender, EventArgs e)
     {
-        HandleFileUpload(fuAttachment3, lblStatus3, pnlFiles3, "FILE_003");
+        HandleFileUpload(fuAttachment3, lblStatus3, pnlFiles3, "FILE_AC_003");
     }
 
     protected void btnUpload4_Click(object sender, EventArgs e)
     {
-        HandleFileUpload(fuAttachment4, lblStatus4, pnlFiles4, "FILE_004");
+        HandleFileUpload(fuAttachment4, lblStatus4, pnlFiles4, "FILE_AC_004");
     }
 
     protected void btnUpload5_Click(object sender, EventArgs e)
     {
-        HandleFileUpload(fuAttachment5, lblStatus5, pnlFiles5, "FILE_005");
+        HandleFileUpload(fuAttachment5, lblStatus5, pnlFiles5, "FILE_AC_005");
     }
 
     protected void btnUpload6_Click(object sender, EventArgs e)
     {
-        HandleFileUpload(fuAttachment6, lblStatus6, pnlFiles6, "FILE_006");
+        HandleFileUpload(fuAttachment6, lblStatus6, pnlFiles6, "FILE_AC_006");
     }
 
     protected void btnUpload7_Click(object sender, EventArgs e)
     {
-        HandleFileUpload(fuAttachment7, lblStatus7, pnlFiles7, "FILE_007");
+        HandleFileUpload(fuAttachment7, lblStatus7, pnlFiles7, "FILE_AC_007");
     }
 
     protected void btnUpload9_Click(object sender, EventArgs e)
     {
-        HandleFileUpload(fuAttachment9, lblStatus9, pnlFiles9, "FILE_009");
+        HandleFileUpload(fuAttachment9, lblStatus9, pnlFiles9, "FILE_AC_009");
     }
 
     protected void btnUpload11_Click(object sender, EventArgs e)
     {
-        HandleFileUpload(fuAttachment11, lblStatus11, pnlFiles11, "FILE_011");
+        HandleFileUpload(fuAttachment11, lblStatus11, pnlFiles11, "FILE_AC_011");
     }
 
+    // OceanTech 表單上傳事件處理 (重用既有邏輯，但用不同的FileCode)
+    // 這些事件會被 OceanTech 表單的控制項呼叫，但使用不同的 FileCode 字首
+    
     #endregion
 
     #region 私有方法
@@ -231,7 +220,6 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
     {
         // 初始化隱藏欄位
         hdnAttachmentData.Value = "[]";
-        
         // 初始化檔案上傳控制項
         InitializeFileUploadControls();
     }
@@ -241,7 +229,7 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
     /// </summary>
     private void InitializeFileUploadControls()
     {
-        // 設定檔案上傳控制項的屬性
+        // 設定學研表單檔案上傳控制項的屬性
         SetFileUploadAttributes(fuAttachment2, "accept=\".pdf\"");
         SetFileUploadAttributes(fuAttachment3, "accept=\".pdf\"");
         SetFileUploadAttributes(fuAttachment4, "accept=\".pdf\"");
@@ -250,6 +238,22 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
         SetFileUploadAttributes(fuAttachment7, "accept=\".pdf\"");
         SetFileUploadAttributes(fuAttachment9, "accept=\".pdf\"");
         SetFileUploadAttributes(fuAttachment11, "accept=\".pdf\"");
+        
+        // OceanTech 表單的檔案上傳控制項也需設定相同屬性
+        try
+        {
+            SetFileUploadAttributes(fuAttachment2_OT, "accept=\".pdf\"");
+            SetFileUploadAttributes(fuAttachment3_OT, "accept=\".pdf\"");
+            SetFileUploadAttributes(fuAttachment4_OT, "accept=\".pdf\"");
+            SetFileUploadAttributes(fuAttachment5_OT, "accept=\".pdf\"");
+            SetFileUploadAttributes(fuAttachment6_OT, "accept=\".pdf\"");
+            SetFileUploadAttributes(fuAttachment8_OT, "accept=\".pdf\"");
+        }
+        catch (Exception ex)
+        {
+            // 如果控制項不存在，忽略錯誤 (可能是在設計時時間)
+            HandleException(ex, "初始化 OceanTech 表單控制項時發生錯誤");
+        }
     }
 
     /// <summary>
@@ -290,32 +294,60 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
             return;
         }
 
-        // 建立FileCode對應字典
-        var fileCodeMapping = new Dictionary<string, (Label statusLabel, Panel filePanel)>
+        // 建立FileCode對應字典 (根據目前顯示的表單類型)
+        var fileCodeMapping = new Dictionary<string, List<(Label statusLabel, Panel filePanel)>>();
+        
+        // 學研表單對應
+        fileCodeMapping["FILE_AC_002"] = new List<(Label, Panel)> { (lblStatus2, pnlFiles2) };
+        fileCodeMapping["FILE_AC_003"] = new List<(Label, Panel)> { (lblStatus3, pnlFiles3) };
+        fileCodeMapping["FILE_AC_004"] = new List<(Label, Panel)> { (lblStatus4, pnlFiles4) };
+        fileCodeMapping["FILE_AC_005"] = new List<(Label, Panel)> { (lblStatus5, pnlFiles5) };
+        fileCodeMapping["FILE_AC_006"] = new List<(Label, Panel)> { (lblStatus6, pnlFiles6) };
+        fileCodeMapping["FILE_AC_007"] = new List<(Label, Panel)> { (lblStatus7, pnlFiles7) };
+        fileCodeMapping["FILE_AC_009"] = new List<(Label, Panel)> { (lblStatus9, pnlFiles9) };
+        fileCodeMapping["FILE_AC_011"] = new List<(Label, Panel)> { (lblStatus11, pnlFiles11) };
+        
+        // 為 OceanTech 表單新增對應 (使用不同的 FileCode 前綴)
+        try
         {
-            { "FILE_002", (lblStatus2, pnlFiles2) },
-            { "FILE_003", (lblStatus3, pnlFiles3) },
-            { "FILE_004", (lblStatus4, pnlFiles4) },
-            { "FILE_005", (lblStatus5, pnlFiles5) },
-            { "FILE_006", (lblStatus6, pnlFiles6) },
-            { "FILE_007", (lblStatus7, pnlFiles7) },
-            { "FILE_009", (lblStatus9, pnlFiles9) },
-            { "FILE_011", (lblStatus11, pnlFiles11) }
-        };
+            fileCodeMapping["FILE_OT_002"] = new List<(Label, Panel)> { (lblStatus2_OT, pnlFiles2_OT) };
+            fileCodeMapping["FILE_OT_003"] = new List<(Label, Panel)> { (lblStatus3_OT, pnlFiles3_OT) };
+            fileCodeMapping["FILE_OT_004"] = new List<(Label, Panel)> { (lblStatus4_OT, pnlFiles4_OT) };
+            fileCodeMapping["FILE_OT_005"] = new List<(Label, Panel)> { (lblStatus5_OT, pnlFiles5_OT) };
+            fileCodeMapping["FILE_OT_006"] = new List<(Label, Panel)> { (lblStatus6_OT, pnlFiles6_OT) };
+            fileCodeMapping["FILE_OT_008"] = new List<(Label, Panel)> { (lblStatus8_OT, pnlFiles8_OT) };
+        }
+        catch (Exception ex)
+        {
+            // OceanTech 表單控制項不存在時的錯誤處理
+            HandleException(ex, "初始化 OceanTech 表單映射時發生錯誤");
+        }
 
-        // 根據附件記錄更新狀態
+        // 根據附件記錄更新狀態 (更新所有對應的控制項)
         foreach (var attachment in attachmentList)
         {
             if (fileCodeMapping.ContainsKey(attachment.FileCode))
             {
-                var (statusLabel, filePanel) = fileCodeMapping[attachment.FileCode];
+                var controlPairs = fileCodeMapping[attachment.FileCode];
                 
-                // 更新狀態顯示
-                statusLabel.Text = "已上傳";
-                statusLabel.CssClass = "";
-                
-                // 顯示已上傳檔案
-                ShowUploadedFile(filePanel, attachment.FileName);
+                // 更新所有對應的控制項 (學研表單和業者表單)
+                foreach (var (statusLabel, filePanel) in controlPairs)
+                {
+                    try
+                    {
+                        // 更新狀態顯示
+                        statusLabel.Text = "已上傳";
+                        statusLabel.CssClass = "";
+                        
+                        // 顯示已上傳檔案
+                        ShowUploadedFile(filePanel, attachment.FileName);
+                    }
+                    catch (Exception ex)
+                    {
+                        // 如果控制項不存在或無法存取，跳過
+                        HandleException(ex, $"更新附件狀態時發生錯誤: {attachment.FileCode}");
+                    }
+                }
             }
         }
     }
@@ -398,6 +430,7 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
             ShowMessage($"檔案上傳失敗：{ex.Message}");
         }
     }
+
 
     /// <summary>
     /// 檢查檔案格式是否有效
@@ -482,14 +515,6 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
         }
     }
 
-    /// <summary>
-    /// 從表單取得附件資料
-    /// </summary>
-    private object GetAttachmentDataFromForm()
-    {
-        // 簡單傳回空物件，實際功能由檔案上傳事件處理
-        return new { message = "附件上傳功能正常運作" };
-    }
 
     /// <summary>
     /// 套用檢視模式
@@ -535,6 +560,81 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
     {
         System.Diagnostics.Debug.WriteLine($"{context}: {ex.Message}");
         // 可以在這裡加入記錄或通知邏輯
+    }
+
+    /// <summary>
+    /// 根據ProjectID查詢OrgCategory並決定表單類型
+    /// </summary>
+    /// <param name="projectID">計畫ID</param>
+    /// <returns>表單類型："OceanTech" 或 "Academic"</returns>
+    private void DetermineFormType(string projectID)
+    {
+        try
+        {
+            var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
+            
+            if (applicationMain != null && !string.IsNullOrEmpty(applicationMain.OrgCategory))
+            {
+                if (applicationMain.OrgCategory.Equals("OceanTech", StringComparison.OrdinalIgnoreCase))
+                {
+                    ShowOceanTechForm();
+                }
+                else
+                {
+                    ShowAcademicForm();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "查詢機構類別時發生錯誤");
+        }
+    }
+
+    /// <summary>
+    /// 顯示學研表單（Academic/Legal）
+    /// </summary>
+    private void ShowAcademicForm()
+    {
+        // 移除學研表單的隱藏 class
+        string academicCssClass = academicForm.Attributes["class"] ?? "";
+        if (academicCssClass.Contains("d-none"))
+        {
+            academicForm.Attributes["class"] = academicCssClass.Replace("d-none", "").Trim();
+        }
+        
+        // 為業者表單添加隱藏 class
+        string oceanTechCssClass = oceanTechForm.Attributes["class"] ?? "";
+        if (!oceanTechCssClass.Contains("d-none"))
+        {
+            oceanTechForm.Attributes["class"] = (oceanTechCssClass + " d-none").Trim();
+        }
+        
+        // 設定契約書名稱為學研版本
+        lblContractName.Text = "海洋委員會補助科技專案計畫契約書";
+    }
+
+    /// <summary>
+    /// 顯示業者表單（OceanTech）
+    /// </summary>
+    private void ShowOceanTechForm()
+    {
+        // 為學研表單添加隱藏 class
+        string academicCssClass = academicForm.Attributes["class"] ?? "";
+            if (!academicCssClass.Contains("d-none"))
+        {
+            academicForm.Attributes["class"] = (academicCssClass + " d-none").Trim();
+        }
+        
+        // 移除業者表單的隱藏 class
+        string oceanTechCssClass = oceanTechForm.Attributes["class"] ?? "";
+        if (oceanTechCssClass.Contains("d-none"))
+        {
+            oceanTechForm.Attributes["class"] = oceanTechCssClass.Replace("d-none", "").Trim();
+        }
+        
+        // 設定契約書名稱為業者版本（在 OceanTech 表單中已經是固定文字）
+        // 注意：OceanTech 表單中的契約名稱已經直接寫在 HTML 中
     }
 
     #endregion

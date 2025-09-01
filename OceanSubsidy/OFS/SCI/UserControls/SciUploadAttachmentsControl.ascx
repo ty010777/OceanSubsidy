@@ -7,7 +7,8 @@
         請下載附件範本，填寫資料及公文用印後上傳（僅支援PDF格式上傳，每個檔案10MB以內）<br>
         計畫書請自行留存送審版電子檔，待決審核定經費後請提交修正計畫書以供核定。
     </p>
-    <div class="table-responsive mt-3 mb-0">
+    <!-- 學研表單 (預設顯示，Academic/Legal) -->
+    <div class="table-responsive mt-3 mb-0" id="academicForm" runat="server">
         <table class="table align-middle gray-table">
             <thead class="text-center">
                 <tr>
@@ -35,7 +36,8 @@
                         </div>
                         <asp:Button ID="btnDownloadTemplate2" runat="server" 
                             CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
-                            Text="📄 範本下載" OnClick="btnDownloadTemplate2_Click" />
+                            Text="📄 範本下載" 
+                            CommandArgument="FILE_OT_002" />
                     </td>
                     <td class="text-center">
                         <asp:Label ID="lblStatus2" runat="server"  Text="已上傳"></asp:Label>
@@ -64,7 +66,9 @@
                         </div>
                         <asp:Button ID="btnDownloadTemplate3" runat="server" 
                             CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
-                            Text="📄 範本下載" OnClick="btnDownloadTemplate3_Click" />
+                            Text="📄 範本下載" 
+                            CommandArgument="FILE_OT_003" 
+                             />
                     </td>
                     <td class="text-center">
                         <asp:Label ID="lblStatus3" runat="server" Text="已上傳"></asp:Label>
@@ -93,7 +97,9 @@
                         </div>
                         <asp:Button ID="btnDownloadTemplate4" runat="server" 
                             CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
-                            Text="📄 範本下載" OnClick="btnDownloadTemplate4_Click" />
+                            Text="📄 範本下載" 
+                            CommandArgument="FILE_OT_004" 
+                             />
                     </td>
                     <td class="text-center">
                         <asp:Label ID="lblStatus4" runat="server" Text="已上傳"></asp:Label>
@@ -122,7 +128,9 @@
                         </div>
                         <asp:Button ID="btnDownloadTemplate5" runat="server" 
                             CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
-                            Text="📄 範本下載" OnClick="btnDownloadTemplate5_Click" />
+                            Text="📄 範本下載" 
+                            CommandArgument="FILE_OT_005" 
+                             />
                     </td>
                     <td class="text-center">
                         <asp:Label ID="lblStatus5" runat="server" Text="已上傳"></asp:Label>
@@ -151,7 +159,9 @@
                         </div>
                         <asp:Button ID="btnDownloadTemplate6" runat="server" 
                             CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
-                            Text="📄 範本下載" OnClick="btnDownloadTemplate6_Click" />
+                            Text="📄 範本下載" 
+                            CommandArgument="FILE_AC_006" 
+                             />
                     </td>
                     <td class="text-center">
                         <asp:Label ID="lblStatus6" runat="server"  Text="已上傳"></asp:Label>
@@ -180,7 +190,9 @@
                         </div>
                         <asp:Button ID="btnDownloadTemplate7" runat="server" 
                             CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
-                            Text="📄 範本下載" OnClick="btnDownloadTemplate7_Click" />
+                            Text="📄 範本下載" 
+                            CommandArgument="FILE_OT_006" 
+                             />
                     </td>
                     <td class="text-center">
                         <asp:Label ID="lblStatus7" runat="server"  Text="已上傳"></asp:Label>
@@ -213,11 +225,13 @@
                     <td>
                         <div>
                             <span class="text-pink">*</span>
-                            海洋委員會補助科技專案計畫契約書
+                            <asp:Label ID="lblContractName" runat="server" Text="海洋委員會補助科技專案計畫契約書"></asp:Label>
                         </div>
                         <asp:Button ID="btnDownloadTemplate9" runat="server" 
                             CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
-                            Text="📄 範本下載" OnClick="btnDownloadTemplate9_Click" />
+                            Text="📄 範本下載" 
+                            CommandArgument="FILE_OT_008" 
+                             />
                     </td>
                     <td class="text-center">
                         <asp:Label ID="lblStatus9" runat="server"  Text="已上傳"></asp:Label>
@@ -254,7 +268,9 @@
                         </div>
                         <asp:Button ID="btnDownloadTemplate11" runat="server" 
                             CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
-                            Text="📄 範本下載" OnClick="btnDownloadTemplate11_Click" />
+                            Text="📄 範本下載" 
+                            CommandArgument="FILE_AC_011" 
+                             />
                     </td>
                     <td class="text-center">
                         <asp:Label ID="lblStatus11" runat="server"  Text="已上傳"></asp:Label>
@@ -284,6 +300,247 @@
                 </tr>
                 <tr>
                     <td class="text-center">13</td>
+                    <td>
+                        <a href="#" class="link-teal">計畫書書脊（側邊）格式</a>
+                    </td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 業者表單 (OceanTech，缺少項目6及11) -->
+    <div class="table-responsive mt-3 mb-0 d-none" id="oceanTechForm" runat="server">
+        <table class="table align-middle gray-table">
+            <thead class="text-center">
+                <tr>
+                    <th width="60">附件編號</th>
+                    <th>附件名稱</th>
+                    <th width="180">狀態</th>
+                    <th width="350">上傳附件</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="text-center">1</td>
+                    <td>
+                        <a href="#" class="link-teal">海洋委員會海洋科技專案補助作業要點</a>
+                    </td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td class="text-center">2</td>
+                    <td>
+                        <div>
+                            <span class="text-pink">*</span>
+                            海洋科技科專案計畫書
+                        </div>
+                        <asp:Button ID="btnDownloadTemplate2_OT" runat="server" 
+                            CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                            Text="📄 範本下載" 
+                            CommandArgument="FILE_OT_002" />
+                    </td>
+                    <td class="text-center">
+                        <asp:Label ID="lblStatus2_OT" runat="server"  Text="已上傳"></asp:Label>
+                    </td>
+                    <td>
+                        <asp:FileUpload ID="fuAttachment2_OT" runat="server" style="display:none;" />
+                        <asp:Button ID="btnUpload2_OT" runat="server" 
+                            CssClass="btn btn-teal-dark" 
+                            Text="📤 上傳" OnClick="btnUpload2_Click" />
+                        <asp:Panel ID="pnlFiles2_OT" runat="server" CssClass="tag-group mt-2 gap-1" >
+                             <span class="tag tag-green-light">
+                                <a class="tag-link" href="#" target="_blank">1140001_海洋科技科專案計畫書.pdf</a>
+                                <button type="button" class="tag-btn">
+                                    <i class="fa-solid fa-circle-xmark"></i>
+                                </button>
+                            </span>
+                        </asp:Panel>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-center">3</td>
+                    <td>
+                        <div>
+                            <span class="text-pink">*</span>
+                            建議迴避之審查委員清單
+                        </div>
+                        <asp:Button ID="btnDownloadTemplate3_OT" runat="server" 
+                            CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                            Text="📄 範本下載" 
+                            CommandArgument="FILE_OT_003" 
+                             />
+                    </td>
+                    <td class="text-center">
+                        <asp:Label ID="lblStatus3_OT" runat="server" Text="已上傳"></asp:Label>
+                    </td>
+                    <td>
+                        <asp:FileUpload ID="fuAttachment3_OT" runat="server" style="display:none;" />
+                        <asp:Button ID="btnUpload3_OT" runat="server" 
+                            CssClass="btn btn-teal-dark" 
+                            Text="📤 上傳" OnClick="btnUpload3_Click" />
+                        <asp:Panel ID="pnlFiles3_OT" runat="server" CssClass="tag-group mt-2 gap-1">
+                            <span class="tag tag-green-light">
+                                <a class="tag-link" href="#" target="_blank">1140001_建議迴避之審查委員清單.pdf</a>
+                                <button type="button" class="tag-btn">
+                                    <i class="fa-solid fa-circle-xmark"></i>
+                                </button>
+                            </span>
+                        </asp:Panel>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-center">4</td>
+                    <td>
+                        <div>
+                            <span class="text-pink">*</span>
+                            未違反公職人員利益衝突迴避法切結書
+                        </div>
+                        <asp:Button ID="btnDownloadTemplate4_OT" runat="server" 
+                            CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                            Text="📄 範本下載" 
+                            CommandArgument="FILE_OT_004" 
+                             />
+                    </td>
+                    <td class="text-center">
+                        <asp:Label ID="lblStatus4_OT" runat="server" Text="已上傳"></asp:Label>
+                    </td>
+                    <td>
+                        <asp:FileUpload ID="fuAttachment4_OT" runat="server" style="display:none;" />
+                        <asp:Button ID="btnUpload4_OT" runat="server" 
+                            CssClass="btn btn-teal-dark" 
+                            Text="📤 上傳" OnClick="btnUpload4_Click" />
+                        <asp:Panel ID="pnlFiles4_OT" runat="server" CssClass="tag-group mt-2 gap-1">
+                            <span class="tag tag-green-light">
+                                <a class="tag-link" href="#" target="_blank">未違反公職人員利益衝突迴避法切結書.pdf</a>
+                                <button type="button" class="tag-btn">
+                                    <i class="fa-solid fa-circle-xmark"></i>
+                                </button>
+                            </span>
+                        </asp:Panel>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-center">5</td>
+                    <td>
+                        <div>
+                            <span class="text-pink">*</span>
+                            蒐集個人資料告知事項暨個人資料提供同意書
+                        </div>
+                        <asp:Button ID="btnDownloadTemplate5_OT" runat="server" 
+                            CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                            Text="📄 範本下載" 
+                            CommandArgument="FILE_OT_005" 
+                             />
+                    </td>
+                    <td class="text-center">
+                        <asp:Label ID="lblStatus5_OT" runat="server" Text="已上傳"></asp:Label>
+                    </td>
+                    <td>
+                        <asp:FileUpload ID="fuAttachment5_OT" runat="server" style="display:none;" />
+                        <asp:Button ID="btnUpload5_OT" runat="server" 
+                            CssClass="btn btn-teal-dark" 
+                            Text="📤 上傳" OnClick="btnUpload5_Click" />
+                        <asp:Panel ID="pnlFiles5_OT" runat="server" CssClass="tag-group mt-2 gap-1" >
+                             <span class="tag tag-green-light">
+                                    <a class="tag-link" href="#" target="_blank">1140001_蒐集個人資料告知事項暨個人資料提供同意書.pdf</a>
+                                    <button type="button" class="tag-btn">
+                                        <i class="fa-solid fa-circle-xmark"></i>
+                                    </button>
+                                </span>
+                        </asp:Panel>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-center">6</td>
+                    <td>
+                        <div>
+                            <span class="text-pink">*</span>
+                            申請人自我檢查表
+                        </div>
+                        <asp:Button ID="btnDownloadTemplate6_OT" runat="server" 
+                            CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                            Text="📄 範本下載" 
+                            CommandArgument="FILE_OT_006" 
+                             />
+                    </td>
+                    <td class="text-center">
+                        <asp:Label ID="lblStatus6_OT" runat="server"  Text="已上傳"></asp:Label>
+                    </td>
+                    <td>
+                        <asp:FileUpload ID="fuAttachment6_OT" runat="server" style="display:none;" />
+                        <asp:Button ID="btnUpload6_OT" runat="server" 
+                            CssClass="btn btn-teal-dark" 
+                            Text="📤 上傳" OnClick="btnUpload6_Click" />
+                        <asp:Panel ID="pnlFiles6_OT" runat="server" CssClass="tag-group mt-2 gap-1" >
+                             <span class="tag tag-green-light">
+                                <a class="tag-link" href="#" target="_blank">1140001_申請人自我檢查表.pdf</a>
+                                <button type="button" class="tag-btn">
+                                    <i class="fa-solid fa-circle-xmark"></i>
+                                </button>
+                            </span>
+                        </asp:Panel>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-center">7</td>
+                    <td>
+                        <a href="#" class="link-teal">簽約注意事項</a>
+                    </td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td class="text-center">8</td>
+                    <td>
+                        <div>
+                            <span class="text-pink">*</span>
+                            海洋科技業者科專計畫補助契約書
+                        </div>
+                        <asp:Button ID="btnDownloadTemplate8_OT" runat="server" 
+                            CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                            Text="📄 範本下載" 
+                            CommandArgument="FILE_OT_008" 
+                             />
+                    </td>
+                    <td class="text-center">
+                        <asp:Label ID="lblStatus8_OT" runat="server"  Text="已上傳"></asp:Label>
+                    </td>
+                    <td>
+                        <asp:FileUpload ID="fuAttachment8_OT" runat="server" style="display:none;" />
+                        <asp:Button ID="btnUpload8_OT" runat="server" 
+                            CssClass="btn btn-teal-dark" 
+                            Text="📤 上傳"  />
+                        <asp:Panel ID="pnlFiles8_OT" runat="server" CssClass="tag-group mt-2 gap-1" >
+                             <span class="tag tag-green-light">
+                                <a class="tag-link" href="#" target="_blank">1140001_海洋科技業者科專計畫補助契約書.pdf</a>
+                                <button type="button" class="tag-btn">
+                                    <i class="fa-solid fa-circle-xmark"></i>
+                                </button>
+                            </span>
+                        </asp:Panel>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-center">9</td>
+                    <td>
+                        <a href="#" class="link-teal">海洋科技專案計畫會計科目編列與執行原則</a>
+                    </td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td class="text-center">10</td>
+                    <td>
+                        <a href="#" class="link-teal">研究紀錄簿使用原則</a>
+                    </td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td class="text-center">11</td>
                     <td>
                         <a href="#" class="link-teal">計畫書書脊（側邊）格式</a>
                     </td>

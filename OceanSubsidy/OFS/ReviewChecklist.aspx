@@ -39,7 +39,7 @@
             <a href="javascript:void(0)" onclick="ReviewChecklist.switchReviewType(1)">
                 <div class="total-item-title">資格審查/內容審查</div>
                 <div class="total-item-content">
-                    <span class="count">6</span>
+                    <span class="count">0</span>
                     <span class="unit">件</span>
                 </div>
             </a>
@@ -48,7 +48,7 @@
             <a href="javascript:void(0)" onclick="ReviewChecklist.switchReviewType(2)">
                 <div class="total-item-title">領域審查/初審</div>
                 <div class="total-item-content">
-                    <span class="count">9</span>
+                    <span class="count">0</span>
                     <span class="unit">件</span>
                 </div>
             </a>
@@ -57,7 +57,7 @@
             <a href="javascript:void(0)" onclick="ReviewChecklist.switchReviewType(3)">
                 <div class="total-item-title">技術審查/複審</div>
                 <div class="total-item-content">
-                    <span class="count">6</span>
+                    <span class="count">0</span>
                     <span class="unit">件</span>
                 </div>
             </a>
@@ -66,7 +66,7 @@
             <a href="javascript:void(0)" onclick="ReviewChecklist.switchReviewType(4)">
                 <div class="total-item-title">決審核定</div>
                 <div class="total-item-content">
-                    <span class="count">6</span>
+                    <span class="count">0</span>
                     <span class="unit">件</span>
                 </div>
             </a>
@@ -75,7 +75,7 @@
             <a href="javascript:void(0)" onclick="ReviewChecklist.switchReviewType(5)">
                 <div class="total-item-title">計畫變更審核</div>
                 <div class="total-item-content">
-                    <span class="count">6</span>
+                    <span class="count">0</span>
                     <span class="unit">件</span>
                 </div>
             </a>
@@ -84,7 +84,7 @@
             <a href="javascript:void(0)" onclick="ReviewChecklist.switchReviewType(6)">
                 <div class="total-item-title">執行計畫審核</div>
                 <div class="total-item-content">
-                    <span class="count">6</span>
+                    <span class="count">0</span>
                     <span class="unit">件</span>
                 </div>
             </a>
