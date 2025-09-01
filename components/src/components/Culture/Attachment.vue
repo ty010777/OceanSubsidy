@@ -26,7 +26,7 @@
                                 <required-label v-else>{{ item.Title }}</required-label>
                             </div>
                             <div class="mt-3 small" v-html="item.Comment" v-if="editable && item.Comment"></div>
-                            <button class="btn btn-sm btn-teal-dark rounded-pill mt-2" type="button" v-if="editable && item.Template">
+                            <button class="btn btn-sm btn-teal-dark rounded-pill mt-2" @click="downloadTemplate(idx + 1)" type="button" v-if="editable && item.Template">
                                 <i class="fas fa-file-download me-1"></i>範本下載
                             </button>
                         </td>
@@ -86,6 +86,13 @@
     };
 
     const download = api.download;
+
+    const downloadTemplate = (idx) => {
+        const doc = docs.value[idx - 1];
+        if (doc?.Template) {
+            window.open(`/Service/DownloadTemplateCUL.ashx?cate=CUL&type=${doc.Type}&id=${props.id}`);
+        }
+    };
 
     const save = (submit) => {
         const data = {
