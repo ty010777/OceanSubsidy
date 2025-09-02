@@ -17,6 +17,7 @@
             </button>
         </div>
         <div class="d-flex gap-2">
+            <project-organizer :id="id" :type="type"></project-organizer>
             <button class="btn btn-pink" @click="showTerminateModal" type="button">
                 計畫終止
             </button>
