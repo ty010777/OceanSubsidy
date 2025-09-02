@@ -8,6 +8,7 @@ using System.IO;
 using GS.OCA_OceanSubsidy.Entity;
 using GS.OCA_OceanSubsidy.Operation.OFS;
 using GS.App;
+using GS.OCA_OceanSubsidy.Operation.OSI.OpenXml;
 
 /// <summary>
 /// 海洋科技專案計畫申請 - 上傳附件頁面
@@ -500,6 +501,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
             {
                 case "FILE_OTech1":
                     filePath = Server.MapPath("~/Template/SCI/OTech/附件-01海洋委員會海洋科技專案補助作業要點.docx");
+                    ApplyProjectDataToWord_FILE_OTech1();
                     break;
                 case "FILE_OTech2":
                     filePath = Server.MapPath("~/Template/SCI/OTech/附件-02海洋科技科專案計畫書.zip");
@@ -535,6 +537,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
                 // 學研範本檔案對應
                 case "FILE_AC1":
                     filePath = Server.MapPath("~/Template/SCI/Academic/附件-01海洋委員會海洋科技專案補助作業要點.docx");
+                    filePath = ApplyProjectDataToWord_FILE_AC1(filePath);
                     break;
                 case "FILE_AC2":
                     filePath = Server.MapPath("~/Template/SCI/Academic/附件-02海洋科技科專案計畫書.zip");
@@ -638,6 +641,50 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
         }
     }
 
+    private void ApplyProjectDataToWord_FILE_OTech1()
+    {
+        
+    }
+    private string ApplyProjectDataToWord_FILE_AC1(string originalFilePath)
+    {
+        try
+        {
+            if (!File.Exists(originalFilePath))
+            {
+                return originalFilePath; // 如果原檔案不存在，返回原路徑
+            }
+
+            // 建立暫存檔案路徑，保持原檔名
+            string originalFileName = Path.GetFileName(originalFilePath);
+            string tempFilePath = Path.Combine(Path.GetTempPath(), originalFileName);
+            
+            // 複製範本檔案到暫存資料夾
+            File.Copy(originalFilePath, tempFilePath, true);
+            
+            // 使用 OpenXmlHelper 處理 Word 文件
+            using (var openXmlHelper = new OpenXmlHelper(tempFilePath))
+            {
+                // 取得當前年月
+                DateTime currentDate = DateTime.Now;
+                string year = currentDate.Year.ToString();
+                string month = currentDate.Month.ToString();
+                
+                // 替換書籤內容
+                openXmlHelper.ChangeBookmarkValue("year", year);
+                openXmlHelper.ChangeBookmarkValue("month", month);
+            }
+            
+            // 回傳處理後的檔案路徑
+            return tempFilePath;
+        }
+        catch (Exception ex)
+        {
+            // 如果處理失敗，記錄錯誤並返回原檔案路徑
+            System.Diagnostics.Debug.WriteLine($"ApplyProjectDataToWord_FILE_AC1 Error: {ex.Message}");
+            return originalFilePath;
+        }
+    }
+    
     /// <summary>
     /// 處理已上傳檔案的下載
     /// </summary>

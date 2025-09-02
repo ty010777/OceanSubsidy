@@ -148,15 +148,16 @@ $(document).ready(function() {
             const category = item.Category || '';
             const projectNameTw = item.ProjectNameTw || '';
             const projectID = item.ProjectID || '';
-            let href = window.location.origin;
-            // 如果是SCI類別，生成超連結
+            const basePath = window.location.origin + window.AppRootPath; // 從 AppRootPath ,正式區路經 ， web.config 取得
+
             if (category === 'SCI' && projectID) {
-                href += `/OFS/SCI/SciInprogress_Approved.aspx?ProjectID=${encodeURIComponent(projectID)}`;
+                const href = `${basePath}/OFS/SCI/SciInprogress_Approved.aspx?ProjectID=${encodeURIComponent(projectID)}`;
                 return `<a class="link-black" href="${href}">${projectNameTw}</a>`;
             } else if (category === 'CUL' && projectID) {
-                // TODO 正文 其他類別的指向「核定計畫」連結請寫在這裡。
+                const href = `${basePath}/OFS/CUL/SciApprovedPage.aspx?ProjectID=${encodeURIComponent(projectID)}`;
+                return `<a class="link-black" href="${href}">${projectNameTw}</a>`;
             }
-            
+
             return `<a href="#" class="link-black">${projectNameTw}</a>`;
         },
         
@@ -171,10 +172,9 @@ $(document).ready(function() {
             if (!taskName.trim()) {
                 return '';
             }
-            
             // 針對 SCI 類別處理不同的 TaskNameEn
             if (category === 'SCI') {
-                let href = window.location.origin;
+                let href = window.location.origin + window.AppRootPath;
                 let buttonText = '編輯';
                 
                 switch (taskNameEn) {
