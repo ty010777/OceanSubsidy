@@ -383,7 +383,7 @@
             </tbody>
         </table>
     </div>
-    <div class="d-none">
+    <div >
         <h5 class="square-title mt-5" >聲明書</h5>
         <div class="agreement-panel">
 

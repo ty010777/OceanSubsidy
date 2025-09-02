@@ -176,7 +176,7 @@
                   <nav>
                       <ul>
                           <li class="">
-                              <a href="information-system.html">
+                              <a href="#">
                                   <div class="circle">
                                       <img src="<%= ResolveUrl("~/assets/img/information-icon-01.svg") %>" alt="首頁">
                                   </div>
@@ -185,7 +185,7 @@
                               </a>
                           </li>
                           <li class="">
-                              <a href="information-news.html">
+                              <a href="#">
                                   <div class="circle">
                                       <img src="<%= ResolveUrl("~/assets/img/information-icon-02.svg") %>" alt="資訊公告欄">
                                   </div>
@@ -231,7 +231,7 @@
                               <div class="collapse" id="submenu-01">
                                   <ul class="sub-menu">
                                       <li >
-                                          <a href="members-list.html">迴避審查委員名單</a>
+                                          <a href="#">迴避審查委員名單</a>
                                       </li>
                                       <li>
                                           <a href="#">申請計畫報表</a>
@@ -268,7 +268,7 @@
                   </nav>
           
                   <!-- 回入口網 -->
-                  <a href="portal.html" class="btn btn-sm btn-outline-green me-auto d-table ms-3 mb-3 ms-md-1">回入口網</a>
+                  <a href="<%= ResolveUrl("~/default.aspx") %>" class="btn btn-sm btn-outline-green me-auto d-table ms-3 mb-3 ms-md-1">回入口網</a>
               </div>                
           
           </div>        

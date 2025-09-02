@@ -77,25 +77,6 @@ function triggerConfirmedSubmit() {
     }
 }
 
-/**
- * 顯示提送成功訊息並跳轉
- */
-function showSubmitSuccess() {
-    Swal.fire({
-        title: '提送成功！',
-        text: '申請已成功提送！',
-        icon: 'success',
-        confirmButtonColor: '#3085d6',
-        confirmButtonText: '確認',
-        allowOutsideClick: false,
-        allowEscapeKey: false
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // 跳轉到申請列表頁面
-            window.location.href = getApplicationChecklistUrl();
-        }
-    });
-}
 
 /**
  * 顯示錯誤訊息
@@ -197,7 +178,6 @@ function handleFileSelect(fileInput) {
 
 // 公開的函數供 C# 後端調用
 window.SciUploadAttachments = {
-    showSubmitSuccess: showSubmitSuccess,
     showErrorMessage: showErrorMessage,
     showWarningMessage: showWarningMessage,
     showInfoMessage: showInfoMessage,

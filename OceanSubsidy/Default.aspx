@@ -31,7 +31,7 @@
                 <div class="portal-menu-item">
                     <div class="info-wrap">
                         <h2>海洋領域補助計畫管理<span>資訊系統</span></h2>
-                        <a href="#" class="btn btn-ocean-blue rounded-pill">由此進入</a>
+                        <a href="<%= ResolveUrl("~/OFS/ApplicationChecklist.aspx") %>" class="btn btn-ocean-blue rounded-pill">由此進入</a>
                     </div>
                     <div class="img">
                         <img

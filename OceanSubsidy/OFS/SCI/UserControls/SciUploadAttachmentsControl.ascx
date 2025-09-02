@@ -22,7 +22,7 @@
                 <tr>
                     <td class="text-center">1</td>
                     <td>
-                        <a href="#" class="link-teal">海洋委員會海洋科技專案補助作業要點</a>
+                        <a href="javascript:void(0)" class="link-teal" onclick="window.SciUploadAttachments.downloadTemplate('FILE_AC1')">海洋委員會海洋科技專案補助作業要點</a>
                     </td>
                     <td></td>
                     <td></td>
@@ -34,88 +34,70 @@
                             <span class="text-pink">*</span>
                             海洋科技科專案計畫書
                         </div>
-                        <asp:Button ID="btnDownloadTemplate2" runat="server" 
-                            CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
-                            Text="📄 範本下載" 
-                            CommandArgument="FILE_OT_002" />
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                                onclick="window.SciUploadAttachments.downloadTemplate('FILE_AC2')">
+                            <i class="fas fa-file-download me-1"></i> 範本下載
+                        </button>
                     </td>
                     <td class="text-center">
-                        <asp:Label ID="lblStatus2" runat="server"  Text="已上傳"></asp:Label>
+                        <asp:Label ID="lblStatusAcademic2" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
                     </td>
                     <td>
-                        <asp:FileUpload ID="fuAttachment2" runat="server" style="display:none;" />
-                        <asp:Button ID="btnUpload2" runat="server" 
-                            CssClass="btn btn-teal-dark" 
-                            Text="📤 上傳" OnClick="btnUpload2_Click" />
-                        <asp:Panel ID="pnlFiles2" runat="server" CssClass="tag-group mt-2 gap-1" >
-                             <span class="tag tag-green-light">
-                                <a class="tag-link" href="#" target="_blank">1140001_海洋科技科專案計畫書.pdf</a>
-                                <button type="button" class="tag-btn">
-                                    <i class="fa-solid fa-circle-xmark"></i>
-                                </button>
-                            </span>
+                        <input type="file" id="fileInput_FILE_AC2" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_AC2', this)" />
+                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_AC2').click()">
+                            <i class="fas fa-file-upload me-1"></i> 上傳
+                        </button>
+                        <asp:Panel ID="pnlFilesAcademic2" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
                         </asp:Panel>
                     </td>
                 </tr>
                 <tr>
                     <td class="text-center">3</td>
                     <td>
+                     
                         <div>
                             <span class="text-pink">*</span>
                             建議迴避之審查委員清單
                         </div>
-                        <asp:Button ID="btnDownloadTemplate3" runat="server" 
-                            CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
-                            Text="📄 範本下載" 
-                            CommandArgument="FILE_OT_003" 
-                             />
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                                onclick="window.SciUploadAttachments.downloadTemplate('FILE_AC3')">
+                            <i class="fas fa-file-download me-1"></i> 範本下載
+                        </button>
                     </td>
                     <td class="text-center">
-                        <asp:Label ID="lblStatus3" runat="server" Text="已上傳"></asp:Label>
+                        <asp:Label ID="lblStatusAcademic3" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
                     </td>
                     <td>
-                        <asp:FileUpload ID="fuAttachment3" runat="server" style="display:none;" />
-                        <asp:Button ID="btnUpload3" runat="server" 
-                            CssClass="btn btn-teal-dark" 
-                            Text="📤 上傳" OnClick="btnUpload3_Click" />
-                        <asp:Panel ID="pnlFiles3" runat="server" CssClass="tag-group mt-2 gap-1">
-                            <span class="tag tag-green-light">
-                                <a class="tag-link" href="#" target="_blank">1140001_建議迴避之審查委員清單.pdf</a>
-                                <button type="button" class="tag-btn">
-                                    <i class="fa-solid fa-circle-xmark"></i>
-                                </button>
-                            </span>
+                        <input type="file" id="fileInput_FILE_AC3" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_AC3', this)" />
+                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_AC3').click()">
+                            <i class="fas fa-file-upload me-1"></i> 上傳
+                        </button>
+                        <asp:Panel ID="pnlFilesAcademic3" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
                         </asp:Panel>
                     </td>
                 </tr>
                 <tr>
                     <td class="text-center">4</td>
                     <td>
-                        <div>
+
+                         <div>
                             <span class="text-pink">*</span>
                             未違反公職人員利益衝突迴避法切結書
                         </div>
-                        <asp:Button ID="btnDownloadTemplate4" runat="server" 
-                            CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
-                            Text="📄 範本下載" 
-                            CommandArgument="FILE_OT_004" 
-                             />
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                                onclick="window.SciUploadAttachments.downloadTemplate('FILE_AC4')">
+                            <i class="fas fa-file-download me-1"></i> 範本下載
+                        </button>
                     </td>
                     <td class="text-center">
-                        <asp:Label ID="lblStatus4" runat="server" Text="已上傳"></asp:Label>
+                        <asp:Label ID="lblStatusAcademic4" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
                     </td>
                     <td>
-                        <asp:FileUpload ID="fuAttachment4" runat="server" style="display:none;" />
-                        <asp:Button ID="btnUpload4" runat="server" 
-                            CssClass="btn btn-teal-dark" 
-                            Text="📤 上傳" OnClick="btnUpload4_Click" />
-                        <asp:Panel ID="pnlFiles4" runat="server" CssClass="tag-group mt-2 gap-1">
-                            <span class="tag tag-green-light">
-                                <a class="tag-link" href="#" target="_blank">未違反公職人員利益衝突迴避法切結書.pdf</a>
-                                <button type="button" class="tag-btn">
-                                    <i class="fa-solid fa-circle-xmark"></i>
-                                </button>
-                            </span>
+                        <input type="file" id="fileInput_FILE_AC4" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_AC4', this)" />
+                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_AC4').click()">
+                            <i class="fas fa-file-upload me-1"></i> 上傳
+                        </button>
+                        <asp:Panel ID="pnlFilesAcademic4" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
                         </asp:Panel>
                     </td>
                 </tr>
@@ -126,27 +108,21 @@
                             <span class="text-pink">*</span>
                             蒐集個人資料告知事項暨個人資料提供同意書
                         </div>
-                        <asp:Button ID="btnDownloadTemplate5" runat="server" 
-                            CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
-                            Text="📄 範本下載" 
-                            CommandArgument="FILE_OT_005" 
-                             />
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                                onclick="window.SciUploadAttachments.downloadTemplate('FILE_AC5')">
+                            <i class="fas fa-file-download me-1"></i> 範本下載
+                        </button> 
+                             
                     </td>
                     <td class="text-center">
-                        <asp:Label ID="lblStatus5" runat="server" Text="已上傳"></asp:Label>
+                        <asp:Label ID="lblStatusAcademic5" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
                     </td>
                     <td>
-                        <asp:FileUpload ID="fuAttachment5" runat="server" style="display:none;" />
-                        <asp:Button ID="btnUpload5" runat="server" 
-                            CssClass="btn btn-teal-dark" 
-                            Text="📤 上傳" OnClick="btnUpload5_Click" />
-                        <asp:Panel ID="pnlFiles5" runat="server" CssClass="tag-group mt-2 gap-1" >
-                             <span class="tag tag-green-light">
-                                    <a class="tag-link" href="#" target="_blank">1140001_蒐集個人資料告知事項暨個人資料提供同意書.pdf</a>
-                                    <button type="button" class="tag-btn">
-                                        <i class="fa-solid fa-circle-xmark"></i>
-                                    </button>
-                                </span>
+                        <input type="file" id="fileInput_FILE_AC5" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_AC5', this)" />
+                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_AC5').click()">
+                            <i class="fas fa-file-upload me-1"></i> 上傳
+                        </button>
+                        <asp:Panel ID="pnlFilesAcademic5" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
                         </asp:Panel>
                     </td>
                 </tr>
@@ -157,27 +133,21 @@
                             <span class="text-pink">*</span>
                             共同執行單位基本資料表
                         </div>
-                        <asp:Button ID="btnDownloadTemplate6" runat="server" 
-                            CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
-                            Text="📄 範本下載" 
-                            CommandArgument="FILE_AC_006" 
-                             />
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                                onclick="window.SciUploadAttachments.downloadTemplate('FILE_AC6')">
+                            <i class="fas fa-file-download me-1"></i> 範本下載
+                        </button> 
+                             
                     </td>
                     <td class="text-center">
-                        <asp:Label ID="lblStatus6" runat="server"  Text="已上傳"></asp:Label>
+                        <asp:Label ID="lblStatusAcademic6" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
                     </td>
                     <td>
-                        <asp:FileUpload ID="fuAttachment6" runat="server" style="display:none;" />
-                        <asp:Button ID="btnUpload6" runat="server" 
-                            CssClass="btn btn-teal-dark" 
-                            Text="📤 上傳" OnClick="btnUpload6_Click" />
-                        <asp:Panel ID="pnlFiles6" runat="server" CssClass="tag-group mt-2 gap-1" >
-                             <span class="tag tag-green-light">
-                                <a class="tag-link" href="#" target="_blank">1140001_共同執行單位基本資料表.pdf</a>
-                                <button type="button" class="tag-btn">
-                                    <i class="fa-solid fa-circle-xmark"></i>
-                                </button>
-                            </span>
+                        <input type="file" id="fileInput_FILE_AC6" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_AC6', this)" />
+                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_AC6').click()">
+                            <i class="fas fa-file-upload me-1"></i> 上傳
+                        </button>
+                        <asp:Panel ID="pnlFilesAcademic6" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
                         </asp:Panel>
                     </td>
                 </tr>
@@ -188,34 +158,28 @@
                             <span class="text-pink">*</span>
                             申請人自我檢查表
                         </div>
-                        <asp:Button ID="btnDownloadTemplate7" runat="server" 
-                            CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
-                            Text="📄 範本下載" 
-                            CommandArgument="FILE_OT_006" 
-                             />
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                                onclick="window.SciUploadAttachments.downloadTemplate('FILE_AC7')">
+                            <i class="fas fa-file-download me-1"></i> 範本下載
+                        </button> 
+                             
                     </td>
                     <td class="text-center">
-                        <asp:Label ID="lblStatus7" runat="server"  Text="已上傳"></asp:Label>
+                        <asp:Label ID="lblStatusAcademic7" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
                     </td>
                     <td>
-                        <asp:FileUpload ID="fuAttachment7" runat="server" style="display:none;" />
-                        <asp:Button ID="btnUpload7" runat="server" 
-                            CssClass="btn btn-teal-dark" 
-                            Text="📤 上傳" OnClick="btnUpload7_Click" />
-                        <asp:Panel ID="pnlFiles7" runat="server" CssClass="tag-group mt-2 gap-1" >
-                             <span class="tag tag-green-light">
-                                <a class="tag-link" href="#" target="_blank">1140001_申請人自我檢查表.pdf</a>
-                                <button type="button" class="tag-btn">
-                                    <i class="fa-solid fa-circle-xmark"></i>
-                                </button>
-                            </span>
+                        <input type="file" id="fileInput_FILE_AC7" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_AC7', this)" />
+                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_AC7').click()">
+                            <i class="fas fa-file-upload me-1"></i> 上傳
+                        </button>
+                        <asp:Panel ID="pnlFilesAcademic7" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
                         </asp:Panel>
                     </td>
                 </tr>
                 <tr>
                     <td class="text-center">8</td>
                     <td>
-                        <a href="#" class="link-teal">簽約注意事項</a>
+                        <a href="javascript:void(0)" class="link-teal" onclick="window.SciUploadAttachments.downloadTemplate('FILE_AC8')">簽約注意事項</a>
                     </td>
                     <td></td>
                     <td></td>
@@ -227,34 +191,28 @@
                             <span class="text-pink">*</span>
                             <asp:Label ID="lblContractName" runat="server" Text="海洋委員會補助科技專案計畫契約書"></asp:Label>
                         </div>
-                        <asp:Button ID="btnDownloadTemplate9" runat="server" 
-                            CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
-                            Text="📄 範本下載" 
-                            CommandArgument="FILE_OT_008" 
-                             />
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                                onclick="window.SciUploadAttachments.downloadTemplate('FILE_AC9')">
+                            <i class="fas fa-file-download me-1"></i>範本下載
+                        </button> 
+                        
                     </td>
                     <td class="text-center">
-                        <asp:Label ID="lblStatus9" runat="server"  Text="已上傳"></asp:Label>
+                        <asp:Label ID="lblStatus9" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
                     </td>
                     <td>
-                        <asp:FileUpload ID="fuAttachment9" runat="server" style="display:none;" />
-                        <asp:Button ID="btnUpload9" runat="server" 
-                            CssClass="btn btn-teal-dark" 
-                            Text="📤 上傳" OnClick="btnUpload9_Click" />
-                        <asp:Panel ID="pnlFiles9" runat="server" CssClass="tag-group mt-2 gap-1" >
-                             <span class="tag tag-green-light">
-                                <a class="tag-link" href="#" target="_blank">1140001_海洋委員會補助科技專案計畫契約書.pdf</a>
-                                <button type="button" class="tag-btn">
-                                    <i class="fa-solid fa-circle-xmark"></i>
-                                </button>
-                            </span>
+                        <input type="file" id="fileInput_FILE_AC9" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_AC9', this)" />
+                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_AC9').click()">
+                            <i class="fas fa-file-upload me-1"></i> 上傳
+                        </button>
+                        <asp:Panel ID="pnlFilesAcademic9" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
                         </asp:Panel>
                     </td>
                 </tr>
                 <tr>
                     <td class="text-center">10</td>
                     <td>
-                        <a href="#" class="link-teal">海洋科技專案計畫會計科目編列與執行原則</a>
+                        <a href="javascript:void(0)" class="link-teal" onclick="window.SciUploadAttachments.downloadTemplate('FILE_AC10')">海洋科技專案計畫會計科目編列與執行原則</a>
                     </td>
                     <td></td>
                     <td></td>
@@ -266,34 +224,28 @@
                             <span class="text-pink">*</span>
                             海洋科技專案成效追蹤自評表
                         </div>
-                        <asp:Button ID="btnDownloadTemplate11" runat="server" 
-                            CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
-                            Text="📄 範本下載" 
-                            CommandArgument="FILE_AC_011" 
-                             />
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                                onclick="window.SciUploadAttachments.downloadTemplate('FILE_AC11')">
+                            <i class="fas fa-file-download me-1"></i> 範本下載
+                        </button> 
+                        
                     </td>
                     <td class="text-center">
-                        <asp:Label ID="lblStatus11" runat="server"  Text="已上傳"></asp:Label>
+                        <asp:Label ID="lblStatusAcademic11" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
                     </td>
                     <td>
-                        <asp:FileUpload ID="fuAttachment11" runat="server" style="display:none;" />
-                        <asp:Button ID="btnUpload11" runat="server" 
-                            CssClass="btn btn-teal-dark" 
-                            Text="📤 上傳" OnClick="btnUpload11_Click" />
-                        <asp:Panel ID="pnlFiles11" runat="server" CssClass="tag-group mt-2 gap-1" >
-                             <span class="tag tag-green-light">
-                                <a class="tag-link" href="#" target="_blank">1140001_海洋科技專案成效追蹤自評表.pdf</a>
-                                <button type="button" class="tag-btn">
-                                    <i class="fa-solid fa-circle-xmark"></i>
-                                </button>
-                            </span>
+                        <input type="file" id="fileInput_FILE_AC11" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_AC11', this)" />
+                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_AC11').click()">
+                            <i class="fas fa-file-upload me-1"></i> 上傳
+                        </button>
+                        <asp:Panel ID="pnlFilesAcademic11" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
                         </asp:Panel>
                     </td>
                 </tr>
                 <tr>
                     <td class="text-center">12</td>
                     <td>
-                        <a href="#" class="link-teal">研究紀錄簿使用原則</a>
+                        <a href="javascript:void(0)" class="link-teal" onclick="window.SciUploadAttachments.downloadTemplate('FILE_AC12')">研究紀錄簿使用原則</a>
                     </td>
                     <td></td>
                     <td></td>
@@ -301,7 +253,7 @@
                 <tr>
                     <td class="text-center">13</td>
                     <td>
-                        <a href="#" class="link-teal">計畫書書脊（側邊）格式</a>
+                        <a href="javascript:void(0)" class="link-teal" onclick="window.SciUploadAttachments.downloadTemplate('FILE_AC13')">計畫書書脊（側邊）格式</a>
                     </td>
                     <td></td>
                     <td></td>
@@ -325,7 +277,7 @@
                 <tr>
                     <td class="text-center">1</td>
                     <td>
-                        <a href="#" class="link-teal">海洋委員會海洋科技專案補助作業要點</a>
+                        <a href="javascript:void(0)" class="link-teal" onclick="window.SciUploadAttachments.downloadTemplate('FILE_OTech1')">海洋委員會海洋科技專案補助作業要點</a>
                     </td>
                     <td></td>
                     <td></td>
@@ -337,26 +289,20 @@
                             <span class="text-pink">*</span>
                             海洋科技科專案計畫書
                         </div>
-                        <asp:Button ID="btnDownloadTemplate2_OT" runat="server" 
-                            CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
-                            Text="📄 範本下載" 
-                            CommandArgument="FILE_OT_002" />
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                                onclick="window.SciUploadAttachments.downloadTemplate('FILE_OTech2')">
+                            <i class="fas fa-file-download me-1"></i> 範本下載
+                        </button>
                     </td>
                     <td class="text-center">
-                        <asp:Label ID="lblStatus2_OT" runat="server"  Text="已上傳"></asp:Label>
+                        <asp:Label ID="lblStatus_OTech2" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
                     </td>
                     <td>
-                        <asp:FileUpload ID="fuAttachment2_OT" runat="server" style="display:none;" />
-                        <asp:Button ID="btnUpload2_OT" runat="server" 
-                            CssClass="btn btn-teal-dark" 
-                            Text="📤 上傳" OnClick="btnUpload2_Click" />
-                        <asp:Panel ID="pnlFiles2_OT" runat="server" CssClass="tag-group mt-2 gap-1" >
-                             <span class="tag tag-green-light">
-                                <a class="tag-link" href="#" target="_blank">1140001_海洋科技科專案計畫書.pdf</a>
-                                <button type="button" class="tag-btn">
-                                    <i class="fa-solid fa-circle-xmark"></i>
-                                </button>
-                            </span>
+                        <input type="file" id="fileInput_FILE_OTech2" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_OTech2', this)" />
+                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_OTech2').click()">
+                            <i class="fas fa-file-upload me-1"></i> 上傳
+                        </button>
+                        <asp:Panel ID="pnlFiles_OTech2" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
                         </asp:Panel>
                     </td>
                 </tr>
@@ -367,27 +313,20 @@
                             <span class="text-pink">*</span>
                             建議迴避之審查委員清單
                         </div>
-                        <asp:Button ID="btnDownloadTemplate3_OT" runat="server" 
-                            CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
-                            Text="📄 範本下載" 
-                            CommandArgument="FILE_OT_003" 
-                             />
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                                onclick="window.SciUploadAttachments.downloadTemplate('FILE_OTech3')">
+                            <i class="fas fa-file-download me-1"></i> 範本下載
+                        </button>
                     </td>
                     <td class="text-center">
-                        <asp:Label ID="lblStatus3_OT" runat="server" Text="已上傳"></asp:Label>
+                        <asp:Label ID="lblStatus_OTech3" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
                     </td>
                     <td>
-                        <asp:FileUpload ID="fuAttachment3_OT" runat="server" style="display:none;" />
-                        <asp:Button ID="btnUpload3_OT" runat="server" 
-                            CssClass="btn btn-teal-dark" 
-                            Text="📤 上傳" OnClick="btnUpload3_Click" />
-                        <asp:Panel ID="pnlFiles3_OT" runat="server" CssClass="tag-group mt-2 gap-1">
-                            <span class="tag tag-green-light">
-                                <a class="tag-link" href="#" target="_blank">1140001_建議迴避之審查委員清單.pdf</a>
-                                <button type="button" class="tag-btn">
-                                    <i class="fa-solid fa-circle-xmark"></i>
-                                </button>
-                            </span>
+                        <input type="file" id="fileInput_FILE_OTech3" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_OTech3', this)" />
+                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_OTech3').click()">
+                            <i class="fas fa-file-upload me-1"></i> 上傳
+                        </button>
+                        <asp:Panel ID="pnlFiles_OTech3" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
                         </asp:Panel>
                     </td>
                 </tr>
@@ -398,27 +337,20 @@
                             <span class="text-pink">*</span>
                             未違反公職人員利益衝突迴避法切結書
                         </div>
-                        <asp:Button ID="btnDownloadTemplate4_OT" runat="server" 
-                            CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
-                            Text="📄 範本下載" 
-                            CommandArgument="FILE_OT_004" 
-                             />
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                                onclick="window.SciUploadAttachments.downloadTemplate('FILE_OTech4')">
+                            <i class="fas fa-file-download me-1"></i> 範本下載
+                        </button>
                     </td>
                     <td class="text-center">
-                        <asp:Label ID="lblStatus4_OT" runat="server" Text="已上傳"></asp:Label>
+                        <asp:Label ID="lblStatus_OTech4" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
                     </td>
                     <td>
-                        <asp:FileUpload ID="fuAttachment4_OT" runat="server" style="display:none;" />
-                        <asp:Button ID="btnUpload4_OT" runat="server" 
-                            CssClass="btn btn-teal-dark" 
-                            Text="📤 上傳" OnClick="btnUpload4_Click" />
-                        <asp:Panel ID="pnlFiles4_OT" runat="server" CssClass="tag-group mt-2 gap-1">
-                            <span class="tag tag-green-light">
-                                <a class="tag-link" href="#" target="_blank">未違反公職人員利益衝突迴避法切結書.pdf</a>
-                                <button type="button" class="tag-btn">
-                                    <i class="fa-solid fa-circle-xmark"></i>
-                                </button>
-                            </span>
+                        <input type="file" id="fileInput_FILE_OTech4" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_OTech4', this)" />
+                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_OTech4').click()">
+                            <i class="fas fa-file-upload me-1"></i> 上傳
+                        </button>
+                        <asp:Panel ID="pnlFiles_OTech4" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
                         </asp:Panel>
                     </td>
                 </tr>
@@ -429,27 +361,20 @@
                             <span class="text-pink">*</span>
                             蒐集個人資料告知事項暨個人資料提供同意書
                         </div>
-                        <asp:Button ID="btnDownloadTemplate5_OT" runat="server" 
-                            CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
-                            Text="📄 範本下載" 
-                            CommandArgument="FILE_OT_005" 
-                             />
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                                onclick="window.SciUploadAttachments.downloadTemplate('FILE_OTech5')">
+                            <i class="fas fa-file-download me-1"></i> 範本下載
+                        </button>
                     </td>
                     <td class="text-center">
-                        <asp:Label ID="lblStatus5_OT" runat="server" Text="已上傳"></asp:Label>
+                        <asp:Label ID="lblStatus_OTech5" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
                     </td>
                     <td>
-                        <asp:FileUpload ID="fuAttachment5_OT" runat="server" style="display:none;" />
-                        <asp:Button ID="btnUpload5_OT" runat="server" 
-                            CssClass="btn btn-teal-dark" 
-                            Text="📤 上傳" OnClick="btnUpload5_Click" />
-                        <asp:Panel ID="pnlFiles5_OT" runat="server" CssClass="tag-group mt-2 gap-1" >
-                             <span class="tag tag-green-light">
-                                    <a class="tag-link" href="#" target="_blank">1140001_蒐集個人資料告知事項暨個人資料提供同意書.pdf</a>
-                                    <button type="button" class="tag-btn">
-                                        <i class="fa-solid fa-circle-xmark"></i>
-                                    </button>
-                                </span>
+                        <input type="file" id="fileInput_FILE_OTech5" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_OTech5', this)" />
+                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_OTech5').click()">
+                            <i class="fas fa-file-upload me-1"></i> 上傳
+                        </button>
+                        <asp:Panel ID="pnlFiles_OTech5" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
                         </asp:Panel>
                     </td>
                 </tr>
@@ -460,34 +385,28 @@
                             <span class="text-pink">*</span>
                             申請人自我檢查表
                         </div>
-                        <asp:Button ID="btnDownloadTemplate6_OT" runat="server" 
-                            CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
-                            Text="📄 範本下載" 
-                            CommandArgument="FILE_OT_006" 
-                             />
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                                onclick="window.SciUploadAttachments.downloadTemplate('FILE_OTech6')">
+                            <i class="fas fa-file-download me-1"></i> 
+                            範本下載
+                        </button>
                     </td>
                     <td class="text-center">
-                        <asp:Label ID="lblStatus6_OT" runat="server"  Text="已上傳"></asp:Label>
+                        <asp:Label ID="lblStatus6_OT" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
                     </td>
                     <td>
-                        <asp:FileUpload ID="fuAttachment6_OT" runat="server" style="display:none;" />
-                        <asp:Button ID="btnUpload6_OT" runat="server" 
-                            CssClass="btn btn-teal-dark" 
-                            Text="📤 上傳" OnClick="btnUpload6_Click" />
-                        <asp:Panel ID="pnlFiles6_OT" runat="server" CssClass="tag-group mt-2 gap-1" >
-                             <span class="tag tag-green-light">
-                                <a class="tag-link" href="#" target="_blank">1140001_申請人自我檢查表.pdf</a>
-                                <button type="button" class="tag-btn">
-                                    <i class="fa-solid fa-circle-xmark"></i>
-                                </button>
-                            </span>
+                        <input type="file" id="fileInput_FILE_OTech6" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_OTech6', this)" />
+                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_OTech6').click()">
+                            <i class="fas fa-file-upload me-1"></i> 上傳
+                        </button>
+                        <asp:Panel ID="pnlFiles_OTech6" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
                         </asp:Panel>
                     </td>
                 </tr>
                 <tr>
                     <td class="text-center">7</td>
                     <td>
-                        <a href="#" class="link-teal">簽約注意事項</a>
+                        <a href="javascript:void(0)" class="link-teal" onclick="window.SciUploadAttachments.downloadTemplate('FILE_OTech7')">簽約注意事項</a>
                     </td>
                     <td></td>
                     <td></td>
@@ -499,34 +418,29 @@
                             <span class="text-pink">*</span>
                             海洋科技業者科專計畫補助契約書
                         </div>
-                        <asp:Button ID="btnDownloadTemplate8_OT" runat="server" 
-                            CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
-                            Text="📄 範本下載" 
-                            CommandArgument="FILE_OT_008" 
-                             />
+                   
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                                onclick="window.SciUploadAttachments.downloadTemplate('FILE_OTech8')">
+                            <i class="fas fa-file-download me-1"></i>
+                            範本下載
+                        </button>
                     </td>
                     <td class="text-center">
-                        <asp:Label ID="lblStatus8_OT" runat="server"  Text="已上傳"></asp:Label>
+                        <asp:Label ID="lblStatusOTech8" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
                     </td>
                     <td>
-                        <asp:FileUpload ID="fuAttachment8_OT" runat="server" style="display:none;" />
-                        <asp:Button ID="btnUpload8_OT" runat="server" 
-                            CssClass="btn btn-teal-dark" 
-                            Text="📤 上傳"  />
-                        <asp:Panel ID="pnlFiles8_OT" runat="server" CssClass="tag-group mt-2 gap-1" >
-                             <span class="tag tag-green-light">
-                                <a class="tag-link" href="#" target="_blank">1140001_海洋科技業者科專計畫補助契約書.pdf</a>
-                                <button type="button" class="tag-btn">
-                                    <i class="fa-solid fa-circle-xmark"></i>
-                                </button>
-                            </span>
+                        <input type="file" id="fileInput_FILE_OTech8" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_OTech8', this)" />
+                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_OTech8').click()">
+                            <i class="fas fa-file-upload me-1"></i> 上傳
+                        </button>
+                        <asp:Panel ID="pnlFiles_OTech8" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
                         </asp:Panel>
                     </td>
                 </tr>
                 <tr>
                     <td class="text-center">9</td>
                     <td>
-                        <a href="#" class="link-teal">海洋科技專案計畫會計科目編列與執行原則</a>
+                        <a href="javascript:void(0)" class="link-teal" onclick="window.SciUploadAttachments.downloadTemplate('FILE_OTech9')">研究紀錄簿使用原則</a>
                     </td>
                     <td></td>
                     <td></td>
@@ -534,7 +448,7 @@
                 <tr>
                     <td class="text-center">10</td>
                     <td>
-                        <a href="#" class="link-teal">研究紀錄簿使用原則</a>
+                        <a href="javascript:void(0)" class="link-teal" onclick="window.SciUploadAttachments.downloadTemplate('FILE_OTech10')">海洋科技專案計畫會計科目編列與執行原則</a>
                     </td>
                     <td></td>
                     <td></td>
@@ -542,7 +456,7 @@
                 <tr>
                     <td class="text-center">11</td>
                     <td>
-                        <a href="#" class="link-teal">計畫書書脊（側邊）格式</a>
+                        <a href="javascript:void(0)" class="link-teal" onclick="window.SciUploadAttachments.downloadTemplate('FILE_OTech11')">計畫書書脊（側邊）格式</a>
                     </td>
                     <td></td>
                     <td></td>
@@ -554,5 +468,211 @@
 
 <!-- 隱藏欄位用於資料交換 -->
 <asp:HiddenField ID="hdnAttachmentData" runat="server" />
+
+<script type="text/javascript">
+// 上傳附件相關 JavaScript 函數
+window.SciUploadAttachments = {
+    // 處理檔案上傳（參考 SciInterimReport 的做法）
+    handleFileUpload: function(attachmentNumber, fileInput) {
+        const file = fileInput.files[0];
+        if (!file) {
+            return;
+        }
+        
+        // 驗證檔案格式
+        const fileExt = '.' + file.name.split('.').pop().toLowerCase();
+        if (fileExt !== '.pdf') {
+            Swal.fire({
+                icon: 'warning',
+                title: '檔案格式錯誤',
+                text: '僅支援PDF格式檔案上傳',
+                confirmButtonText: '確定'
+            });
+            fileInput.value = '';
+            return;
+        }
+        
+        // 檢查檔案大小 (10MB)
+        const maxSize = 10 * 1024 * 1024;
+        if (file.size > maxSize) {
+            Swal.fire({
+                icon: 'warning',
+                title: '檔案過大',
+                text: '檔案大小不能超過10MB',
+                confirmButtonText: '確定'
+            });
+            fileInput.value = '';
+            return;
+        }
+        
+        
+        // 使用iframe方式上傳
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.name = 'uploadFrame_' + attachmentNumber;
+        document.body.appendChild(iframe);
+        
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.enctype = 'multipart/form-data';
+        form.target = 'uploadFrame_' + attachmentNumber;
+        form.action = 'SciUploadAttachments.aspx?action=upload&attachmentNumber=' + attachmentNumber;
+        
+        // 添加 projectId 參數
+        const projectIdField = document.createElement('input');
+        projectIdField.type = 'hidden';
+        projectIdField.name = 'projectId';
+        projectIdField.value = '<%= GetProjectId() %>';
+        form.appendChild(projectIdField);
+        
+        const fileField = document.createElement('input');
+        fileField.type = 'file';
+        fileField.name = 'file';
+        fileField.files = fileInput.files;
+        form.appendChild(fileField);
+        
+        document.body.appendChild(form);
+        
+        // 監聽上傳完成
+        iframe.onload = function() {
+            try {
+                const response = iframe.contentDocument.body.textContent;
+                if (response.startsWith('SUCCESS:')) {
+                    const fileName = response.substring(8);
+                    Swal.fire({
+                        icon: 'success',
+                        title: '上傳成功',
+                        text: '檔案已成功上傳',
+                        confirmButtonText: '確定'
+                    }).then(() => {
+                        // 重新載入頁面，但不帶 action 參數
+                        window.location.href = window.location.pathname + window.location.search.replace(/[\?&]action=[^&]*/g, '');
+                    });
+                } else if (response.startsWith('ERROR:')) {
+                    const errorMsg = response.substring(6);
+                    Swal.fire({
+                        icon: 'error',
+                        title: '上傳失敗',
+                        text: errorMsg,
+                        confirmButtonText: '確定'
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: '上傳錯誤',
+                        text: '上傳過程發生未知錯誤',
+                        confirmButtonText: '確定'
+                    });
+                }
+            } catch (e) {
+                Swal.fire({
+                    icon: 'error',
+                    title: '上傳錯誤',
+                    text: '上傳過程發生錯誤',
+                    confirmButtonText: '確定'
+                });
+            }
+            
+            // 清理
+            document.body.removeChild(form);
+            document.body.removeChild(iframe);
+            fileInput.value = '';
+        };
+        
+        form.submit();
+    },
+    
+    // 下載已上傳的檔案
+    downloadFile: function(projectId, fileCode, fileName) {
+        console.log('downloadFile called with projectId:', projectId, 'fileCode:', fileCode, 'fileName:', fileName);
+        var url = 'SciUploadAttachments.aspx?action=downloadFile&projectId=' + encodeURIComponent(projectId) + 
+                  '&fileCode=' + encodeURIComponent(fileCode) + 
+                  '&fileName=' + encodeURIComponent(fileName);
+        window.location.href = url;
+    },
+    
+    // 下載範本檔案
+    downloadTemplate: function(fileCode) {
+        console.log('downloadTemplate called with fileCode:', fileCode);
+        var url = 'SciUploadAttachments.aspx?action=downloadTemplate&fileCode=' + encodeURIComponent(fileCode);
+        console.log('Download URL:', url);
+        window.location.href = url;
+    },
+    
+    // 刪除檔案
+    deleteFile: function(projectId, fileCode, btnElement) {
+        Swal.fire({
+            title: '確認刪除',
+            text: '確定要刪除這個檔案嗎？',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: '刪除',
+            cancelButtonText: '取消'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                var url = 'SciUploadAttachments.aspx?action=deleteFile&projectId=' + encodeURIComponent(projectId) + 
+                          '&fileCode=' + encodeURIComponent(fileCode);
+                
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    }
+                })
+                .then(response => response.text())
+                .then(data => {
+                    data = data.replace(/<[^>]*>/g, '').trim(); // 移除 HTML 標籤與空白
+                    if(data === 'SUCCESS') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '刪除成功',
+                            text: '檔案已成功刪除',
+                            confirmButtonText: '確定'
+                        }).then(() => {
+                            // 重新載入頁面，但不帶 action 參數
+                            window.location.href = window.location.pathname + window.location.search.replace(/[\?&]action=[^&]*/g, '');
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: '刪除失敗',
+                            text: data,
+                            confirmButtonText: '確定'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: '刪除錯誤',
+                        text: '刪除檔案時發生錯誤',
+                        confirmButtonText: '確定'
+                    });
+                });
+            }
+        });
+    }
+};
+
+// 為了向後兼容性，保留全域函數
+function handleFileUpload(attachmentNumber, fileInput) {
+    return window.SciUploadAttachments.handleFileUpload(attachmentNumber, fileInput);
+}
+
+function downloadFile(projectId, fileCode, fileName) {
+    return window.SciUploadAttachments.downloadFile(projectId, fileCode, fileName);
+}
+
+function downloadTemplate(fileCode) {
+    return window.SciUploadAttachments.downloadTemplate(fileCode);
+}
+
+function deleteFile(projectId, fileCode, btnElement) {
+    return window.SciUploadAttachments.deleteFile(projectId, fileCode, btnElement);
+}
+</script>
 
 <!-- 變更說明 UserControl -->

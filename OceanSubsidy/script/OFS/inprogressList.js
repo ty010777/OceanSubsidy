@@ -148,10 +148,11 @@ $(document).ready(function() {
             const category = item.Category || '';
             const projectNameTw = item.ProjectNameTw || '';
             const projectID = item.ProjectID || '';
-            
+            let href = window.location.origin;
             // 如果是SCI類別，生成超連結
             if (category === 'SCI' && projectID) {
-                return `<a href="/OFS/SCI/SciInprogress_Approved.aspx?ProjectID=${encodeURIComponent(projectID)}" class="link-black">${projectNameTw}</a>`;
+                href += `/OFS/SCI/SciInprogress_Approved.aspx?ProjectID=${encodeURIComponent(projectID)}`;
+                return `<a class="link-black" href="${href}">${projectNameTw}</a>`;
             } else if (category === 'CUL' && projectID) {
                 // TODO 正文 其他類別的指向「核定計畫」連結請寫在這裡。
             }
@@ -173,30 +174,30 @@ $(document).ready(function() {
             
             // 針對 SCI 類別處理不同的 TaskNameEn
             if (category === 'SCI') {
-                let href = '';
+                let href = window.location.origin;
                 let buttonText = '編輯';
                 
                 switch (taskNameEn) {
                     case 'Contract':
-                        href = `/OFS/SCI/SciInprogress_Contract.aspx?ProjectID=${encodeURIComponent(projectID)}`;
+                        href += `/OFS/SCI/SciInprogress_Contract.aspx?ProjectID=${encodeURIComponent(projectID)}`;
                         break;
                     case 'Payment1':
-                        href = `/OFS/SCI/SciReimbursement.aspx?ProjectID=${encodeURIComponent(projectID)}&stage=1`;
+                        href += `/OFS/SCI/SciReimbursement.aspx?ProjectID=${encodeURIComponent(projectID)}&stage=1`;
                         break;
                     case 'Schedule':
-                        href = `/OFS/SCI/SciInprogress_PreProgress.aspx?ProjectID=${encodeURIComponent(projectID)}`;
+                        href += `/OFS/SCI/SciInprogress_PreProgress.aspx?ProjectID=${encodeURIComponent(projectID)}`;
                         break;
                     case 'MidReport':
-                        href = `/OFS/SCI/SciInterimReport.aspx?ProjectID=${encodeURIComponent(projectID)}&stage=1`;
+                        href += `/OFS/SCI/SciInterimReport.aspx?ProjectID=${encodeURIComponent(projectID)}&stage=1`;
                         break;
                     case 'FinalReport':
-                        href = `/OFS/SCI/SciInterimReport.aspx?ProjectID=${encodeURIComponent(projectID)}&stage=2`;
+                        href += `/OFS/SCI/SciInterimReport.aspx?ProjectID=${encodeURIComponent(projectID)}&stage=2`;
                         break;
                     case 'MonthlyReport':
-                        href = `/OFS/SCI/SciMonthlyExecutionReport.aspx?ProjectID=${encodeURIComponent(projectID)}`;
+                        href += `/OFS/SCI/SciMonthlyExecutionReport.aspx?ProjectID=${encodeURIComponent(projectID)}`;
                         break;
                     case 'Payment2':
-                        href = `/OFS/SCI/SciReimbursement.aspx?ProjectID=${encodeURIComponent(projectID)}&stage=2`;
+                        href += `/OFS/SCI/SciReimbursement.aspx?ProjectID=${encodeURIComponent(projectID)}&stage=2`;
                         break;
                     // Change 暫時不處理，使用預設按鈕
                     default:

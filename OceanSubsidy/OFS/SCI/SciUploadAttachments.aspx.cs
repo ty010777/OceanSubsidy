@@ -27,6 +27,30 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
     /// </summary>
     protected void Page_Load(object sender, EventArgs e)
     {
+        // 處理上傳和下載請求
+        string action = Request.QueryString["action"];
+        if (!string.IsNullOrEmpty(action))
+        {
+            string projectId = Request.Form["projectId"] ?? Session["ProjectID"]?.ToString() ?? CurrentProjectID;
+            string fileCode = Request.QueryString["fileCode"];
+            
+            switch (action)
+            {
+                case "upload":
+                    HandleUpload(projectId);
+                    return;
+                case "downloadTemplate":
+                    DownloadTemplate(projectId, fileCode);
+                    return;
+                case "downloadFile":
+                    DownloadUploadedFile(projectId, fileCode);
+                    return;
+                case "deleteFile":
+                    DeleteUploadedFile(projectId, fileCode);
+                    return;
+            }
+        }
+        
         if (!IsPostBack)
         {
             // 檢查是否有計畫ID
@@ -360,6 +384,376 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
 
     #endregion
 
+    #region 檔案上傳下載處理
+
+    /// <summary>
+    /// 處理檔案上傳
+    /// </summary>
+    private void HandleUpload(string projectId)
+    {
+        try
+        {
+            // 檢查是否有上傳的檔案
+            if (Request.Files.Count == 0)
+            {
+                Response.Write("ERROR:沒有檔案被上傳");
+                return;
+            }
+            
+            var file = Request.Files[0];
+            if (file == null || file.ContentLength == 0)
+            {
+                Response.Write("ERROR:檔案為空");
+                return;
+            }
+            
+            // 取得參數
+            string attachmentNumber = Request.QueryString["attachmentNumber"];
+            
+            if (string.IsNullOrEmpty(attachmentNumber))
+            {
+                Response.Write("ERROR:附件編號不能為空");
+                return;
+            }
+            
+            if (string.IsNullOrEmpty(projectId))
+            {
+                Response.Write("ERROR:計畫編號不能為空");
+                return;
+            }
+            
+            // 驗證檔案格式
+            string fileExt = Path.GetExtension(file.FileName).ToLower();
+            if (fileExt != ".pdf")
+            {
+                Response.Write("ERROR:僅支援PDF格式檔案");
+                return;
+            }
+            
+            // 檢查檔案大小 (10MB)
+            const int maxFileSize = 10 * 1024 * 1024;
+            if (file.ContentLength > maxFileSize)
+            {
+                Response.Write("ERROR:檔案大小不能超過10MB");
+                return;
+            }
+            
+            // 生成檔案代碼和名稱
+            string fileCode = attachmentNumber;
+            string fileName = OFS_SciUploadAttachmentsHelper.GenerateFileName(projectId, fileCode);
+            
+            // 建構檔案路徑
+            string relativePath = $"UploadFiles/OFS/SCI/{projectId}/SciApplication/{fileName}";
+            string fullPath = Server.MapPath($"~/{relativePath}");
+            
+            // 確保目錄存在
+            string directory = Path.GetDirectoryName(fullPath);
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+            
+            // 如果檔案已存在，先刪除舊檔案
+            if (File.Exists(fullPath))
+            {
+                File.Delete(fullPath);
+            }
+            
+            // 儲存檔案到實體路徑
+            file.SaveAs(fullPath);
+            
+            // 更新資料庫記錄 (使用現有的 UpdateAttachmentRecord 方法，該方法會自動處理新增或更新)
+            OFS_SciUploadAttachmentsHelper.UpdateAttachmentRecord(
+                projectId,
+                fileCode,
+                fileName,
+                relativePath
+            );
+            
+            Response.Write($"SUCCESS:{fileName}");
+        }
+        catch (Exception ex)
+        {
+            Response.Write($"ERROR:上傳失敗：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 處理範本檔案下載
+    /// </summary>
+    private void DownloadTemplate(string projectId, string fileCode)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(fileCode))
+            {
+                Response.Clear();
+                Response.Write("ERROR:缺少檔案代碼參數");
+                Response.End();
+                return;
+            }
+
+            string filePath = "";
+            
+            // OTech 業者範本檔案對應
+            switch (fileCode)
+            {
+                case "FILE_OTech1":
+                    filePath = Server.MapPath("~/Template/SCI/OTech/附件-01海洋委員會海洋科技專案補助作業要點.docx");
+                    break;
+                case "FILE_OTech2":
+                    filePath = Server.MapPath("~/Template/SCI/OTech/附件-02海洋科技科專案計畫書.zip");
+                    break;
+                case "FILE_OTech3":
+                    filePath = Server.MapPath("~/Template/SCI/OTech/附件-03建議迴避之審查委員清單.docx");
+                    break;
+                case "FILE_OTech4":
+                    filePath = Server.MapPath("~/Template/SCI/OTech/附件-04未違反公職人員利益衝突迴避法切結書.docx");
+                    break;
+                case "FILE_OTech5":
+                    filePath = Server.MapPath("~/Template/SCI/OTech/附件-05蒐集個人資料告知事項暨個人資料提供同意書.docx");
+                    break;
+                case "FILE_OTech6":
+                    filePath = Server.MapPath("~/Template/SCI/OTech/附件-06申請人自我檢查表.docx");
+                    break;
+                case "FILE_OTech7":
+                    filePath = Server.MapPath("~/Template/SCI/OTech/附件-07簽約注意事項.docx");
+                    break;
+                case "FILE_OTech8":
+                    filePath = Server.MapPath("~/Template/SCI/OTech/附件-08海洋科技業界科專計畫補助契約書.docx");
+                    break;
+                case "FILE_OTech9":
+                    filePath = Server.MapPath("~/Template/SCI/OTech/附件-09研究紀錄簿使用原則.docx");
+                    break;
+                case "FILE_OTech10":
+                    filePath = Server.MapPath("~/Template/SCI/OTech/附件-10海洋科技專案計畫會計科目編列與執行原則.docx");
+                    break;
+                case "FILE_OTech11":
+                    filePath = Server.MapPath("~/Template/SCI/OTech/附件-11計畫書書脊（側邊）格式.docx");
+                    break;
+                    
+                // 學研範本檔案對應
+                case "FILE_AC1":
+                    filePath = Server.MapPath("~/Template/SCI/Academic/附件-01海洋委員會海洋科技專案補助作業要點.docx");
+                    break;
+                case "FILE_AC2":
+                    filePath = Server.MapPath("~/Template/SCI/Academic/附件-02海洋科技科專案計畫書.zip");
+                    break;
+                case "FILE_AC3":
+                    filePath = Server.MapPath("~/Template/SCI/Academic/附件-03建議迴避之審查委員清單.docx");
+                    break;
+                case "FILE_AC4":
+                    filePath = Server.MapPath("~/Template/SCI/Academic/附件-04未違反公職人員利益衝突迴避法切結書.docx");
+                    break;
+                case "FILE_AC5":
+                    filePath = Server.MapPath("~/Template/SCI/Academic/附件-05蒐集個人資料告知事項暨個人資料提供同意書.docx");
+                    break;
+                case "FILE_AC6":
+                    filePath = Server.MapPath("~/Template/SCI/Academic/附件-06共同執行單位基本資料表.docx");
+                    break;
+                case "FILE_AC7":
+                    filePath = Server.MapPath("~/Template/SCI/Academic/附件-07申請人自我檢查表.docx");
+                    break;
+                case "FILE_AC8":
+                    filePath = Server.MapPath("~/Template/SCI/Academic/附件-08簽約注意事項.docx");
+                    break;
+                case "FILE_AC9":
+                    filePath = Server.MapPath("~/Template/SCI/Academic/附件-09海洋委員會補助科技專案計畫契約書.docx");
+                    break;
+                case "FILE_AC10":
+                    filePath = Server.MapPath("~/Template/SCI/Academic/附件-10海洋科技專案計畫會計科目編列與執行原則.docx");
+                    break;
+                case "FILE_AC11":
+                    filePath = Server.MapPath("~/Template/SCI/Academic/附件-11海洋科技專案成效追蹤自評表.docx");
+                    break;
+                case "FILE_AC12":
+                    filePath = Server.MapPath("~/Template/SCI/Academic/附件-12研究紀錄簿使用原則.docx");
+                    break;
+                case "FILE_AC13":
+                    filePath = Server.MapPath("~/Template/SCI/Academic/附件-13計畫書書脊（側邊）格式.docx");
+                    break;
+                    
+                default:
+                    Response.Clear();
+                    Response.Write($"ERROR:不支援的檔案類型：{fileCode}");
+                    Response.End();
+                    return;
+            }
+            
+            // 調試資訊
+            System.Diagnostics.Debug.WriteLine($"Download Template - FileCode: {fileCode}, FilePath: {filePath}");
+            
+            if (File.Exists(filePath))
+            {
+                string fileName = Path.GetFileName(filePath);
+                string fileExt = Path.GetExtension(filePath).ToLower();
+
+                // 設定正確的 Content-Type
+                string contentType = "application/octet-stream";
+                switch (fileExt)
+                {
+                    case ".docx":
+                        contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+                        break;
+                    case ".zip":
+                        contentType = "application/zip";
+                        break;
+                    case ".pdf":
+                        contentType = "application/pdf";
+                        break;
+                    case ".xlsx":
+                        contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                        break;
+                }
+
+                // 處理中文檔名編碼問題
+                string encodedFileName = System.Web.HttpUtility.UrlEncode(fileName, System.Text.Encoding.UTF8);
+                
+                Response.Clear();
+                Response.ContentType = contentType;
+                Response.AddHeader("Content-Disposition", $"attachment; filename*=UTF-8''{encodedFileName}");
+                Response.AddHeader("Content-Length", new FileInfo(filePath).Length.ToString());
+                Response.AddHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+                Response.AddHeader("Pragma", "no-cache");
+                Response.AddHeader("Expires", "0");
+                
+                // 讀取檔案並寫入 Response
+                byte[] fileData = File.ReadAllBytes(filePath);
+                Response.BinaryWrite(fileData);
+                Response.Flush();
+                Response.End();
+            }
+            else
+            {
+                Response.Clear();
+                Response.Write($"ERROR:檔案不存在：{filePath}");
+                Response.End();
+            }
+        }
+        catch (Exception ex)
+        {
+            Response.Clear();
+            Response.Write($"ERROR:下載失敗：{ex.Message}");
+            Response.End();
+        }
+    }
+
+    /// <summary>
+    /// 處理已上傳檔案的下載
+    /// </summary>
+    private void DownloadUploadedFile(string projectId, string fileCode)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(fileCode) || string.IsNullOrEmpty(projectId))
+            {
+                Response.Clear();
+                Response.Write("ERROR:缺少必要參數");
+                Response.End();
+                return;
+            }
+
+            // 從資料庫取得檔案資訊
+            var uploadedFiles = OFS_SciUploadAttachmentsHelper.GetAttachmentsByFileCodeAndProject(projectId, fileCode);
+            if (uploadedFiles == null || uploadedFiles.Count == 0)
+            {
+                Response.Clear();
+                Response.Write("ERROR:找不到檔案記錄");
+                Response.End();
+                return;
+            }
+
+            var uploadedFile = uploadedFiles.First(); // 取第一個記錄
+
+            // 建構檔案完整路徑
+            string fullPath = Server.MapPath($"~/{uploadedFile.TemplatePath}");
+            
+            if (File.Exists(fullPath))
+            {
+                string fileName = uploadedFile.FileName;
+                string fileExt = Path.GetExtension(fileName).ToLower();
+
+                // 設定正確的 Content-Type
+                string contentType = "application/octet-stream";
+                switch (fileExt)
+                {
+                    case ".pdf":
+                        contentType = "application/pdf";
+                        break;
+                    case ".docx":
+                        contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+                        break;
+                    case ".xlsx":
+                        contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                        break;
+                }
+
+                // 處理中文檔名編碼問題
+                string encodedFileName = System.Web.HttpUtility.UrlEncode(fileName, System.Text.Encoding.UTF8);
+                
+                Response.Clear();
+                Response.ContentType = contentType;
+                Response.AddHeader("Content-Disposition", $"attachment; filename*=UTF-8''{encodedFileName}");
+                Response.AddHeader("Content-Length", new FileInfo(fullPath).Length.ToString());
+                Response.AddHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+                Response.AddHeader("Pragma", "no-cache");
+                Response.AddHeader("Expires", "0");
+                
+                // 讀取檔案並寫入 Response
+                byte[] fileData = File.ReadAllBytes(fullPath);
+                Response.BinaryWrite(fileData);
+                Response.Flush();
+                Response.End();
+            }
+            else
+            {
+                Response.Clear();
+                Response.Write($"ERROR:檔案不存在：{fullPath}");
+                Response.End();
+            }
+        }
+        catch (Exception ex)
+        {
+            Response.Clear();
+            Response.Write($"ERROR:下載失敗：{ex.Message}");
+            Response.End();
+        }
+    }
+
+    /// <summary>
+    /// 處理已上傳檔案的刪除
+    /// </summary>
+    private void DeleteUploadedFile(string projectId, string fileCode)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(fileCode) || string.IsNullOrEmpty(projectId))
+            {
+                Response.Clear();
+                Response.Write("ERROR:缺少必要參數");
+                Response.End();
+                return;
+            }
+
+            // 刪除附件檔案（包含實體檔案和資料庫記錄）
+            OFS_SciUploadAttachmentsHelper.DeleteAttachmentFile(projectId, fileCode);
+            Response.Clear();
+            Response.ContentType = "text/plain";  // 設定為純文字
+            Response.Write("SUCCESS");
+            Response.Flush();
+            Response.SuppressContent = true;       // 阻止後續 HTML
+            HttpContext.Current.ApplicationInstance.CompleteRequest(); // 取代 Response.End()
+        }
+        catch (Exception ex)
+        {
+            Response.Clear();
+            Response.Write($"ERROR:刪除失敗：{ex.Message}");
+            Response.End();
+        }
+    }
+
+    #endregion
+
     #region 輔助方法
 
     /// <summary>
@@ -377,8 +771,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
     /// </summary>
     private void ShowSweetAlertSuccess()
     {
-        string script = "window.SciUploadAttachments.showSubmitSuccess();";
-        Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowSweetAlertSuccess", script, true);
+        Response.Redirect("~/OFS/ApplicationChecklist.aspx", false);
     }
     
     /// <summary>

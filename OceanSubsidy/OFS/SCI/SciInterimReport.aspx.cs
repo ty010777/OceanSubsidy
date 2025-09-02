@@ -79,7 +79,7 @@ public partial class OFS_SCI_SciInterimReport : System.Web.UI.Page
         {
             // 下載範本檔案
             fileName = "科專類_報告書_說明及範本.doc";
-            physicalPath = Server.MapPath("~/Template/" + fileName);
+            physicalPath = Server.MapPath("~/Template/SCI/" + fileName);
         }
 
         if (!System.IO.File.Exists(physicalPath))

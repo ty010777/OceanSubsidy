@@ -83,10 +83,10 @@
                 </div>
             </div>
             
-            <div class="form-check-input-group d-flex justify-content-center">
-                <input id="chkPendingReply" class="form-check-input check-teal" type="checkbox" name="type2">
-                <label for="chkPendingReply">待回覆</label>
-            </div>
+            <%-- <div class="form-check-input-group d-flex justify-content-center"> --%>
+            <%--     <input id="chkPendingReply" class="form-check-input check-teal" type="checkbox" name="type2"> --%>
+            <%--     <label for="chkPendingReply">待回覆</label> --%>
+            <%-- </div> --%>
             
             <asp:Button ID="btnSearch" runat="server" Text="查詢" CssClass="btn btn-teal-dark d-table mx-auto" OnClick="btnSearch_Click" />
         </div>

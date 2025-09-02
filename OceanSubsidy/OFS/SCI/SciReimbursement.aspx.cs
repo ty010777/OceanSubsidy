@@ -165,7 +165,7 @@ public partial class OFS_SCI_SciReimbursement : System.Web.UI.Page
                 return;
             }
 
-            physicalPath = Server.MapPath("~/Template/" + fileName);
+            physicalPath = Server.MapPath("~/Template/SCI/" + fileName);
         }
 
         if (!System.IO.File.Exists(physicalPath))

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using System.Linq;
 using System.Web;
 using GS.Data;
@@ -332,6 +333,89 @@ public class OFS_SciUploadAttachmentsHelper
             {
                 throw new Exception($"更新附件記錄時發生錯誤：{ex.Message}", ex);
             }
+        }
+    }
+
+    /// <summary>
+    /// 生成附件檔案名稱（新格式：計畫編號_附件名稱.pdf）
+    /// </summary>
+    /// <param name="projectID">計畫編號</param>
+    /// <param name="fileCode">檔案代碼</param>
+    /// <returns>檔案名稱</returns>
+    public static string GenerateFileName(string projectID, string fileCode)
+    {
+        var attachmentNames = new Dictionary<string, string>
+        {
+            // 學研範本附件名稱對應
+            { "FILE_AC2", "海洋科技科專案計畫書" },
+            { "FILE_AC3", "建議迴避之審查委員清單" },
+            { "FILE_AC4", "未違反公職人員利益衝突迴避法切結書" },
+            { "FILE_AC5", "蒐集個人資料告知事項暨個人資料提供同意書" },
+            { "FILE_AC6", "共同執行單位基本資料表" },
+            { "FILE_AC7", "申請人自我檢查表" },
+            { "FILE_AC9", "海洋委員會補助科技專案計畫契約書" },
+            { "FILE_AC11", "海洋科技專案成效追蹤自評表" },
+            // 業者範本附件名稱對應
+            { "FILE_OTech2", "海洋科技科專案計畫書" },
+            { "FILE_OTech3", "建議迴避之審查委員清單" },
+            { "FILE_OTech4", "未違反公職人員利益衝突迴避法切結書" },
+            { "FILE_OTech5", "蒐集個人資料告知事項暨個人資料提供同意書" },
+            { "FILE_OTech6", "申請人自我檢查表" },
+            { "FILE_OTech8", "海洋科技業者科專計畫補助契約書" },
+       
+        };
+
+        if (attachmentNames.ContainsKey(fileCode))
+        {
+            return $"{projectID}_{attachmentNames[fileCode]}.pdf";
+        }
+
+        return $"{projectID}_{fileCode}.pdf";
+    }
+
+    /// <summary>
+    /// 取得檔案實體路徑
+    /// </summary>
+    /// <param name="templatePath">資料庫儲存的相對路徑</param>
+    /// <returns>實體檔案路徑</returns>
+    public static string GetPhysicalFilePath(string templatePath)
+    {
+        if (string.IsNullOrEmpty(templatePath))
+            return "";
+        string root = AppDomain.CurrentDomain.BaseDirectory;
+
+        return Path.Combine(root, templatePath.TrimStart('~', '/', '\\'));
+    }
+
+    /// <summary>
+    /// 刪除附件檔案（實體檔案和資料庫記錄）
+    /// </summary>
+    /// <param name="projectID">專案ID</param>
+    /// <param name="fileCode">檔案代碼</param>
+    public static void DeleteAttachmentFile(string projectID, string fileCode)
+    {
+        try
+        {
+            // 先取得現有的附件記錄
+            var attachments = GetAttachmentsByFileCodeAndProject(projectID, fileCode);
+            
+            foreach (var attachment in attachments)
+            {
+                // 刪除實體檔案
+                string physicalPath = GetPhysicalFilePath(attachment.TemplatePath);
+                if (System.IO.File.Exists(physicalPath))
+                {
+                    System.IO.File.Delete(physicalPath);
+                    System.Diagnostics.Debug.WriteLine($"實體檔案已刪除：{physicalPath}");
+                }
+
+                // 刪除資料庫記錄
+                DeleteAttachmentRecord(attachment.ID);
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"刪除附件檔案時發生錯誤：{ex.Message}", ex);
         }
     }
 }
