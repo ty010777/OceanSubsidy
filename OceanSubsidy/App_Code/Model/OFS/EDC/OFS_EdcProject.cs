@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GS.OCA_OceanSubsidy.Model.OFS;
+using System;
 
 public class OFS_EdcProject
 {
@@ -101,4 +102,6 @@ public class OFS_EdcProject
 
     // 是否有效
     public bool IsExists { get; set; }
+
+    public ProjectChangeRecord changeApply { get; set; }
 }

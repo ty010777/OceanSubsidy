@@ -6,7 +6,18 @@
 
 <asp:Content ContentPlaceHolderID="MainContent" runat="server">
     <div>
-        <multiple-progress-bar :id="<%= Request.QueryString["ID"] %>" :step="4"></multiple-progress-bar>
-        <multiple-benefit :id="<%= Request.QueryString["ID"] %>"></multiple-benefit>
+        <multiple-progress-bar :id="id" :step="4"></multiple-progress-bar>
+        <multiple-benefit :id="id" v-on:next="next"></multiple-benefit>
     </div>
+    <script>
+        setupVueApp({
+            setup() {
+                const id = "<%= Request.QueryString["ID"] %>";
+
+                const next = () => window.location.href = `Attachment.aspx?ID=${id}`;
+
+                return { id, next };
+            }
+        });
+    </script>
 </asp:Content>

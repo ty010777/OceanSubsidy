@@ -10,7 +10,7 @@ public class MultipleService : BaseService
 {
     public object applyChange(JObject param, HttpContext context)
     {
-        var id = int.Parse(param["ID"].ToString());
+        var id = getID(param["ID"].ToString());
         var data = getProject(id, null, new int[] {1}); //執行中
 
         OFS_MulProjectHelper.updateProgressStatus(data.ProjectID, 2); //計畫變更
@@ -27,7 +27,7 @@ public class MultipleService : BaseService
 
     public object createItem(JObject param, HttpContext context)
     {
-        var id = int.Parse(param["ID"].ToString());
+        var id = getID(param["ID"].ToString());
 
         getProject(id, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
 
@@ -44,11 +44,11 @@ public class MultipleService : BaseService
 
     public object getApplication(JObject param, HttpContext context)
     {
-        var id = int.Parse(param["ID"].ToString());
+        var id = getID(param["ID"].ToString());
 
         return new
         {
-            Project = OFS_MulProjectHelper.get(id),
+            Project = getProject(id),
             Contacts = OFS_MulContactHelper.query(id),
             ReceivedSubsidies = OFS_MulReceivedSubsidyHelper.query(id)
         };
@@ -56,22 +56,22 @@ public class MultipleService : BaseService
 
     public object getAttachment(JObject param, HttpContext context)
     {
-        var id = int.Parse(param["ID"].ToString());
+        var id = getID(param["ID"].ToString());
 
         return new
         {
-            Project = OFS_MulProjectHelper.get(id),
+            Project = getProject(id),
             Attachments = OFS_MulAttachmentHelper.query(id)
         };
     }
 
     public object getBenefit(JObject param, HttpContext context)
     {
-        var id = int.Parse(param["ID"].ToString());
+        var id = getID(param["ID"].ToString());
 
         return new
         {
-            Project = OFS_MulProjectHelper.get(id),
+            Project = getProject(id),
             Benefits = OFS_MulBenefitHelper.query(id)
         };
     }
@@ -85,8 +85,8 @@ public class MultipleService : BaseService
 
     public object getFunding(JObject param, HttpContext context)
     {
-        var id = int.Parse(param["ID"].ToString());
-        var project = OFS_MulProjectHelper.get(id);
+        var id = getID(param["ID"].ToString());
+        var project = getProject(id);
 
         return new
         {
@@ -99,11 +99,11 @@ public class MultipleService : BaseService
 
     public object getWorkSchedule(JObject param, HttpContext context)
     {
-        var id = int.Parse(param["ID"].ToString());
+        var id = getID(param["ID"].ToString());
 
         return new
         {
-            Project = OFS_MulProjectHelper.get(id),
+            Project = getProject(id),
             Items = OFS_MulItemHelper.query(id),
             Schedules = OFS_MulScheduleHelper.query(id),
             GrantType = OFSGrantTypeHelper.getByCode("MUL")
@@ -112,7 +112,7 @@ public class MultipleService : BaseService
 
     public object reviewApplication(JObject param, HttpContext context)
     {
-        var id = int.Parse(param["ID"].ToString());
+        var id = getID(param["ID"].ToString());
 
         var project = getProject(id, new int[] {2,11}); //資格審查,決審
 
@@ -161,6 +161,34 @@ public class MultipleService : BaseService
         return new {};
     }
 
+    public object reviewApplicationChange(JObject param, HttpContext context)
+    {
+        var id = getID(param["ID"].ToString());
+        var data = getProject(id, null, new int[] {2}); //變更申請
+        var apply = data.changeApply;
+
+        if (apply != null && apply.Status == 2) //待審核
+        {
+            apply.RejectReason = null;
+
+            if (int.Parse(param["Result"].ToString()) == 2)
+            {
+                apply.Status = 4; //退回修改
+                apply.RejectReason = param["Reason"].ToString(); //原因
+            }
+            else
+            {
+                apply.Status = 3; //審核通過
+
+                OFS_MulProjectHelper.updateProgressStatus(data.ProjectID, 1); //執行中
+            }
+
+            OFSProjectChangeRecordHelper.update(apply);
+        }
+
+        return new {};
+    }
+
     public object saveApplication(JObject param, HttpContext context)
     {
         var project = param["Project"].ToObject<OFS_MulProject>();
@@ -179,11 +207,24 @@ public class MultipleService : BaseService
         }
         else
         {
-            var data = getProject(project.ID, new int[] {1,3}); //申請中,退回補正
+            var data = getProject(project.ID, new int[] {1,3,13}, new int[] {2}); //申請中,退回補正 | 變更申請
 
             project.ProjectID = data.ProjectID;
 
             OFS_MulProjectHelper.update(project);
+
+            if (data.ProgressStatus == 2)
+            {
+                var apply = OFSProjectChangeRecordHelper.getApplying("MUL", data.ID);
+
+                if (apply != null)
+                {
+                    apply.Form1Before = param["Before"].ToString();
+                    apply.Form1After = param["After"].ToString();
+
+                    OFSProjectChangeRecordHelper.update(apply);
+                }
+            }
         }
 
         if (bool.Parse(param["Submit"].ToString()))
@@ -227,13 +268,31 @@ public class MultipleService : BaseService
             }
         }
 
-        return new { ID = project.ID };
+        return new { ID = project.ProjectID };
     }
 
     public object saveAttachment(JObject param, HttpContext context)
     {
-        var id = int.Parse(param["ID"].ToString());
-        var data = getProject(id, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
+        var id = getID(param["ID"].ToString());
+        var data = getProject(id, new int[] {1,3,10,13}, new int[] {2}); //申請中,退回補正,修正計畫書 | 變更申請
+
+        if (data.ProgressStatus == 2)
+        {
+            var apply = OFSProjectChangeRecordHelper.getApplying("MUL", data.ID);
+
+            if (apply != null)
+            {
+                apply.Form5Before = param["Before"].ToString();
+                apply.Form5After = param["After"].ToString();
+
+                if (bool.Parse(param["Submit"].ToString()))
+                {
+                    apply.Status = 2; //待審核
+                }
+
+                OFSProjectChangeRecordHelper.update(apply);
+            }
+        }
 
         if (bool.Parse(param["Submit"].ToString()))
         {
@@ -241,7 +300,7 @@ public class MultipleService : BaseService
             {
                 OFS_MulProjectHelper.updateStatus(data.ProjectID, 11);
             }
-            else
+            else if (data.Status == 1 || data.Status == 3)
             {
                 OFS_MulProjectHelper.updateFormStep(data.ProjectID, 6);
                 OFS_MulProjectHelper.updateStatus(data.ProjectID, 2);
@@ -272,7 +331,20 @@ public class MultipleService : BaseService
     public object saveBenefit(JObject param, HttpContext context)
     {
         var project = param["Project"].ToObject<OFS_MulProject>();
-        var data = getProject(project.ID, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
+        var data = getProject(project.ID, new int[] {1,3,10,13}, new int[] {2}); //申請中,退回補正,修正計畫書 | 變更申請
+
+        if (data.ProgressStatus == 2)
+        {
+            var apply = OFSProjectChangeRecordHelper.getApplying("MUL", data.ID);
+
+            if (apply != null)
+            {
+                apply.Form4Before = param["Before"].ToString();
+                apply.Form4After = param["After"].ToString();
+
+                OFSProjectChangeRecordHelper.update(apply);
+            }
+        }
 
         OFS_MulProjectHelper.updateBenefit(project);
 
@@ -307,9 +379,22 @@ public class MultipleService : BaseService
     public object saveFunding(JObject param, HttpContext context)
     {
         var project = param["Project"].ToObject<OFS_MulProject>();
-        var data = getProject(project.ID, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
+        var data = getProject(project.ID, new int[] {1,3,10,13}, new int[] {2}); //申請中,退回補正,修正計畫書 | 變更申請
 
         OFS_MulProjectHelper.updateFunding(project);
+
+        if (data.ProgressStatus == 2)
+        {
+            var apply = OFSProjectChangeRecordHelper.getApplying("MUL", data.ID);
+
+            if (apply != null)
+            {
+                apply.Form3Before = param["Before"].ToString();
+                apply.Form3After = param["After"].ToString();
+
+                OFSProjectChangeRecordHelper.update(apply);
+            }
+        }
 
         if (bool.Parse(param["Submit"].ToString()))
         {
@@ -361,7 +446,7 @@ public class MultipleService : BaseService
 
     public object saveOrganizer(JObject param, HttpContext context)
     {
-        var id = int.Parse(param["ID"].ToString());
+        var id = getID(param["ID"].ToString());
         var data = getProject(id, new int[] {2}); //資格審查
 
         OFS_MulProjectHelper.updateOrganizer(data.ID, int.Parse(param["Organizer"].ToString()));
@@ -372,9 +457,22 @@ public class MultipleService : BaseService
     public object saveWorkSchedule(JObject param, HttpContext context)
     {
         var project = param["Project"].ToObject<OFS_MulProject>();
-        var data = getProject(project.ID, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
+        var data = getProject(project.ID, new int[] {1,3,10,13}, new int[] {2}); //申請中,退回補正,修正計畫書 | 變更申請
 
         OFS_MulProjectHelper.updateSchedule(project);
+
+        if (data.ProgressStatus == 2)
+        {
+            var apply = OFSProjectChangeRecordHelper.getApplying("MUL", data.ID);
+
+            if (apply != null)
+            {
+                apply.Form2Before = param["Before"].ToString();
+                apply.Form2After = param["After"].ToString();
+
+                OFSProjectChangeRecordHelper.update(apply);
+            }
+        }
 
         if (bool.Parse(param["Submit"].ToString()))
         {
@@ -420,13 +518,25 @@ public class MultipleService : BaseService
 
     public object terminate(JObject param, HttpContext context)
     {
-        var id = int.Parse(param["ID"].ToString());
+        var id = getID(param["ID"].ToString());
 
         getProject(id, new int[] {13}); //核定通過
 
         OFS_MulProjectHelper.terminate(id, param["RejectReason"].ToString(), int.Parse(param["RecoveryAmount"].ToString()));
 
         return new {};
+    }
+
+    private int getID(string value)
+    {
+        if (int.TryParse(value, out int id))
+        {
+            return id;
+        }
+        else
+        {
+            return OFS_MulProjectHelper.getID(value);
+        }
     }
 
     private OFS_MulProject getProject(int id, int[] statusList = null, int[] progressList = null)
@@ -443,9 +553,14 @@ public class MultipleService : BaseService
             throw new Exception("狀態錯誤");
         }
 
-        if (progressList != null && !progressList.Contains(project.ProgressStatus))
+        if (project.Status == 13 && progressList != null && !progressList.Contains(project.ProgressStatus))
         {
             throw new Exception("執行狀態錯誤");
+        }
+
+        if (project.ProgressStatus == 2)
+        {
+            project.changeApply = OFSProjectChangeRecordHelper.getApplying("MUL", project.ID);
         }
 
         return project;

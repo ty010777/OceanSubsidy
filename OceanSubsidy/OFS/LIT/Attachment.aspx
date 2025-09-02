@@ -6,7 +6,18 @@
 
 <asp:Content ContentPlaceHolderID="MainContent" runat="server">
     <div>
-        <literacy-progress-bar :id="<%= Request.QueryString["ID"] %>" :step="5"></literacy-progress-bar>
-        <literacy-attachment :id="<%= Request.QueryString["ID"] %>"></literacy-attachment>
+        <literacy-progress-bar :id="id" :step="5"></literacy-progress-bar>
+        <literacy-attachment :id="id" v-on:next="next"></literacy-attachment>
     </div>
+    <script>
+        setupVueApp({
+            setup() {
+                const id = "<%= Request.QueryString["ID"] %>";
+
+                const next = () => {};
+
+                return { id, next };
+            }
+        });
+    </script>
 </asp:Content>

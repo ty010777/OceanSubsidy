@@ -6,7 +6,18 @@
 
 <asp:Content ContentPlaceHolderID="MainContent" runat="server">
     <div>
-        <multiple-progress-bar :id="<%= Request.QueryString["ID"] %>" :step="2"></multiple-progress-bar>
-        <multiple-work-schedule :id="<%= Request.QueryString["ID"] %>"></multiple-work-schedule>
+        <multiple-progress-bar :id="id" :step="2"></multiple-progress-bar>
+        <multiple-work-schedule :id="id" v-on:next="next"></multiple-work-schedule>
     </div>
+    <script>
+        setupVueApp({
+            setup() {
+                const id = "<%= Request.QueryString["ID"] %>";
+
+                const next = () => window.location.href = `Funding.aspx?ID=${id}`;
+
+                return { id, next };
+            }
+        });
+    </script>
 </asp:Content>

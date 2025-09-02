@@ -6,7 +6,18 @@
 
 <asp:Content ContentPlaceHolderID="MainContent" runat="server">
     <div>
-        <accessibility-progress-bar :id="<%= Request.QueryString["ID"] %>" :step="5"></accessibility-progress-bar>
-        <accessibility-attachment :id="<%= Request.QueryString["ID"] %>"></accessibility-attachment>
+        <accessibility-progress-bar :id="id" :step="5"></accessibility-progress-bar>
+        <accessibility-attachment :id="id" v-on:next="next"></accessibility-attachment>
     </div>
+    <script>
+        setupVueApp({
+            setup() {
+                const id = "<%= Request.QueryString["ID"] %>";
+
+                const next = () => {};
+
+                return { id, next };
+            }
+        });
+    </script>
 </asp:Content>

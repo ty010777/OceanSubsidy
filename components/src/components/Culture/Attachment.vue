@@ -51,6 +51,27 @@
                 </tbody>
             </table>
         </div>
+        <template v-if="changeForm">
+            <h5 class="square-title mt-5">變更說明</h5>
+            <div class="mt-4">
+                <table class="table align-middle gray-table side-table">
+                    <tbody>
+                        <tr>
+                            <th><required-label>變更前</required-label></th>
+                            <td>
+                                <input-textarea :error="errors.Form5Before" rows="4" v-model.trim="changeForm.Form5Before"></input-textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><required-label>變更後</required-label></th>
+                            <td>
+                                <input-textarea :error="errors.Form5After" rows="4" v-model.trim="changeForm.Form5After"></input-textarea>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </template>
     </div>
     <div class="block-bottom bg-light-teal" v-if="editable">
         <button class="btn btn-outline-teal me-3" @click="save()" type="button">暫存</button>
@@ -60,7 +81,7 @@
 
 <script setup>
     const props = defineProps({
-        id: { type: Number }
+        id: { type: [Number, String] }
     });
 
     const docs = ref([
@@ -71,8 +92,10 @@
         { Type: 5, Title: "附錄", Files: [], Multiple: true }
     ]);
 
+    const changeForm = ref();
     const disabled = computed(() => docs.value.some((doc) => !doc.Optional && !doc.Files.filter((file) => !file.Deleted).length));
     const editable = computed(() => isProjectEditable("culture", project.value.Status, 5));
+    const errors = ref({});
     const project = ref({});
 
     const add = (item, file) => {
@@ -87,24 +110,9 @@
 
     const download = api.download;
 
-    const save = (submit) => {
-        const data = {
-            ID: props.id,
-            Attachments: docs.value.reduce((list, item) => list.concat(item.Files), []),
-            Submit: submit ? "true" : "false"
-        };
+    const emit = defineEmits(["next"]);
 
-        api.culture("saveAttachment", data).subscribe(() => {
-            if (submit) {
-                // TODO
-                // window.location.href = `Attachment.aspx?ID=${props.id}`;
-            } else {
-                window.location.reload();
-            }
-        });
-    }
-
-    onMounted(() => {
+    const load = () => {
         rxjs.forkJoin([
             api.culture("getAttachment", { ID: props.id })
         ]).subscribe((result) => {
@@ -123,8 +131,51 @@
             });
 
             useProgressStore().init("culture", project.value);
+
+            changeForm.value = project.value.changeApply;
+            project.value.changeApply = undefined;
         });
-    });
+    };
+
+    const save = (submit) => {
+        errors.value = {};
+
+        if (submit && !verify()) {
+            nextTick(() => document.querySelector(".invalid")?.scrollIntoView({ behavior: "smooth", block: "center" }));
+            return;
+        }
+
+        const data = {
+            ID: props.id,
+            Attachments: docs.value.reduce((list, item) => list.concat(item.Files), []),
+            Before: changeForm.value?.Form5Before,
+            After: changeForm.value?.Form5After,
+            Submit: submit ? "true" : "false"
+        };
+
+        api.culture("saveAttachment", data).subscribe(() => {
+            if (submit) {
+                emit("next");
+            } else {
+                load();
+            }
+        });
+    };
+
+    const verify = () => {
+        if (changeForm.value) {
+            const rules = {
+                Form5Before: "變更前說明",
+                Form5After: "變更後說明"
+            };
+
+            Object.assign(errors.value, validateData(changeForm.value, rules));
+        }
+
+        return !Object.keys(errors.value).length;
+    };
+
+    onMounted(load);
 
     provide("editable", editable);
 </script>

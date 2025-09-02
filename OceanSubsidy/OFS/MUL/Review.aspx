@@ -26,7 +26,7 @@
 
 <asp:Content ContentPlaceHolderID="FloatContent" runat="server">
     <project-review :id="id" type="multiple" v-if="store.multiple.status === 2"></project-review>
-    <project-correction-review :id="id" type="multiple" v-else></project-correction-review>
+    <project-correction-review :id="id" type="multiple" v-else-if="store.multiple.status === 10"></project-correction-review>
     <script>
         setupVueApp({
             setup() {
@@ -34,7 +34,7 @@
                 const { useProgressStore } = OceanSubsidyComponents;
 
                 const current = ref(1);
-                const id = <%= Request.QueryString["ID"] %>;
+                const id = "<%= Request.QueryString["ID"] %>";
                 const store = useProgressStore();
 
                 const change = (step) => current.value = step;

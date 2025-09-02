@@ -168,6 +168,27 @@
                 </tbody>
             </table>
         </div>
+        <template v-if="changeForm">
+            <h5 class="square-title mt-5">變更說明</h5>
+            <div class="mt-4">
+                <table class="table align-middle gray-table side-table">
+                    <tbody>
+                        <tr>
+                            <th><required-label>變更前</required-label></th>
+                            <td>
+                                <input-textarea :error="errors.Form1Before" rows="4" v-model.trim="changeForm.Form1Before"></input-textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><required-label>變更後</required-label></th>
+                            <td>
+                                <input-textarea :error="errors.Form1After" rows="4" v-model.trim="changeForm.Form1After"></input-textarea>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </template>
     </div>
     <div class="block-bottom bg-light-teal" v-if="editable">
         <button class="btn btn-outline-teal me-3" @click="save()" type="button">暫存</button>
@@ -177,10 +198,11 @@
 
 <script setup>
     const props = defineProps({
-        id: { type: Number }
+        id: { type: [Number, String] }
     });
 
     const contacts = ref();
+    const changeForm = ref();
     const editable = computed(() => isProjectEditable("literacy", form.value.Status, 1));
     const errors = ref({});
     const fields = ref([]);
@@ -201,6 +223,21 @@
 
     const add = () => studies.value.push({});
 
+    const emit = defineEmits(["next"]);
+
+    const load = () => {
+        api.literacy("getApplication", { ID: props.id }).subscribe((res) => {
+            form.value = res.Project;
+            contacts.value = res.Contacts;
+            studies.value = res.PreviousStudies;
+
+            useProgressStore().init("literacy", form.value);
+
+            changeForm.value = form.value.changeApply;
+            form.value.changeApply = undefined;
+        });
+    };
+
     const remove = (target) => target.Deleted = true;
 
     const save = (submit) => {
@@ -215,14 +252,16 @@
             Project: form.value,
             Contacts: contacts.value,
             PreviousStudies: studies.value.filter((item) => item.ID || !item.Deleted),
+            Before: changeForm.value?.Form1Before,
+            After: changeForm.value?.Form1After,
             Submit: submit ? "true" : "false"
         };
 
         api.literacy("saveApplication", data).subscribe((res) => {
             if (submit) {
-                window.location.href = `WorkSchedule.aspx?ID=${res.ID}`;
+                emit("next");
             } else if (form.value.ID) {
-                window.location.reload();
+                load();
             } else {
                 window.location.href = `Application.aspx?ID=${res.ID}`;
             }
@@ -259,6 +298,15 @@
 
         studies.value.forEach((study, index) => Object.assign(errors.value, validateData(study, rules, `study-${index}-`)));
 
+        if (changeForm.value) {
+            rules = {
+                Form1Before: "變更前說明",
+                Form1After: "變更後說明"
+            };
+
+            Object.assign(errors.value, validateData(changeForm.value, rules));
+        }
+
         return !Object.keys(errors.value).length;
     };
 
@@ -269,13 +317,7 @@
             fields.value = result[0];
 
             if (props.id) {
-                api.literacy("getApplication", { ID: props.id }).subscribe((res) => {
-                    form.value = res.Project;
-                    contacts.value = res.Contacts;
-                    studies.value = res.PreviousStudies;
-
-                    useProgressStore().init("literacy", form.value);
-                });
+                load();
             } else {
                 api.literacy("getEmptyApplication").subscribe((res) => {
                     form.value = Object.assign({ Field: null, FormStep: 1, Status: 1 }, res);

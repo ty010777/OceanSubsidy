@@ -6,7 +6,18 @@
 
 <asp:Content ContentPlaceHolderID="MainContent" runat="server">
     <div>
-        <literacy-progress-bar :id="<%= Request.QueryString["ID"] %>" :step="3"></literacy-progress-bar>
-        <literacy-funding :id="<%= Request.QueryString["ID"] %>"></literacy-funding>
+        <literacy-progress-bar :id="id" :step="3"></literacy-progress-bar>
+        <literacy-funding :id="id" v-on:next="next"></literacy-funding>
     </div>
+    <script>
+        setupVueApp({
+            setup() {
+                const id = "<%= Request.QueryString["ID"] %>";
+
+                const next = () => window.location.href = `Benefit.aspx?ID=${id}`;
+
+                return { id, next };
+            }
+        });
+    </script>
 </asp:Content>

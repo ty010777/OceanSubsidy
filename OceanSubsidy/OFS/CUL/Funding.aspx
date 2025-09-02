@@ -6,7 +6,18 @@
 
 <asp:Content ContentPlaceHolderID="MainContent" runat="server">
     <div>
-        <culture-progress-bar :id="<%= Request.QueryString["ID"] %>" :step="3"></culture-progress-bar>
-        <culture-funding :id="<%= Request.QueryString["ID"] %>"></culture-funding>
+        <culture-progress-bar :id="id" :step="3"></culture-progress-bar>
+        <culture-funding :id="id" v-on:next="next"></culture-funding>
     </div>
+    <script>
+        setupVueApp({
+            setup() {
+                const id = "<%= Request.QueryString["ID"] %>";
+
+                const next = () => window.location.href = `Other.aspx?ID=${id}`;
+
+                return { id, next };
+            }
+        });
+    </script>
 </asp:Content>
