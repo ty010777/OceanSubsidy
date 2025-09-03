@@ -40,17 +40,24 @@ public class DownloadTemplateCUL : IHttpHandler
                 else
                 {
                     var service = new CultureService();
-                    var param = new JObject();
-                    param["ID"] = id;
 
-                    var data = service.getApplication(param, context);
+                    // 取得基本資料
+                    var data = service.getApplication(new JObject { ["ID"] = id }, context);
                     var json = JsonConvert.SerializeObject(data);
                     var jobj = JObject.Parse(json);
+
+                    // 取得其他補助項目
+                    data = service.getFunding(new JObject { ["ID"] = id }, context);
+                    json = JsonConvert.SerializeObject(data);
+                    var jothers = JObject.Parse(json);
 
                     var placeholder = new Dictionary<string, string>();
                     placeholder.Add("{{A1}}", jobj["Project"]["ProjectID"]?.ToString() ?? "");
                     placeholder.Add("{{A2}}", jobj["Project"]["ProjectName"]?.ToString() ?? "");
+
+                    // TODO: A3 取三個類別，每個類別還有子項目
                     // placeholder.Add("{{A3}}", jobj["Project"]["OrgName"]?.ToString() ?? "");
+
                     placeholder.Add("{{A4}}", jobj["Project"]["OrgName"]?.ToString() ?? "");
                     placeholder.Add("{{A5}}", jobj["Project"]["RegisteredNum"]?.ToString() ?? "");
                     placeholder.Add("{{A6}}", jobj["Project"]["TaxID"]?.ToString() ?? "");
@@ -69,7 +76,6 @@ public class DownloadTemplateCUL : IHttpHandler
                     placeholder.Add("{{A11}}", jobj["Project"]["Summary"]?.ToString() ?? "");
                     placeholder.Add("{{A12.1}}", jobj["Project"]["Quantified"]?.ToString() ?? "");
                     placeholder.Add("{{A12.2}}", jobj["Project"]["Qualitative"]?.ToString() ?? "");
-                    // placeholder.Add("{{A13}}", jobj["Project"]["Target"]?.ToString() ?? "");
                     // 期程
                     string start = jobj["Project"]["StartTime"]?.ToString();
                     string end = jobj["Project"]["EndTime"]?.ToString();
@@ -86,32 +92,37 @@ public class DownloadTemplateCUL : IHttpHandler
                     int selfAmount = int.TryParse(selfAmountStr, out var a2) ? a2 : 0;
                     placeholder.Add("{{C2.1}}", (selfAmount / 10000).ToString());
                     placeholder.Add("{{C2.2}}", (selfAmount % 10000).ToString());
-                    // 其他
+                    // 其他款
                     var otherAmountStr = jobj["Project"]["OtherAmount"]?.ToString() ?? "0";
                     int otherAmount = int.TryParse(otherAmountStr, out var a3) ? a3 : 0;
                     placeholder.Add("{{C3.1}}", (otherAmount / 10000).ToString());
                     placeholder.Add("{{C3.2}}", (otherAmount % 10000).ToString());
-                    // ReceivedSubsidies
-                    var subsidies = jobj["ReceivedSubsidies"] as JArray;
-                    for (int i = 0; i < 3; i++)
+                    // 其他補助項目
+                    var otherSubsidies = new List<Dictionary<string, string>>();
+                    foreach (var obj in jothers["OtherSubsidies"] as JArray)
                     {
-                        string nameKey = $"{{{{A13.{i * 3 + 1}}}}}";
-                        string unitKey = $"{{{{A13.{i * 3 + 2}}}}}";
-                        string amountKey = $"{{{{A13.{i * 3 + 3}}}}}";
-                        if (subsidies != null && subsidies.Count > i)
+                        otherSubsidies.Add(new Dictionary<string, string>
                         {
-                            var obj = subsidies[i];
-                            placeholder[nameKey] = obj["Name"]?.ToString() ?? "";
-                            placeholder[unitKey] = obj["Unit"]?.ToString() ?? "";
-                            placeholder[amountKey] = obj["Amount"]?.ToString() ?? "";
-                        }
-                        else
-                        {
-                            placeholder[nameKey] = "";
-                            placeholder[unitKey] = "";
-                            placeholder[amountKey] = "";
-                        }
+                            ["{{C4.1}}"] = obj["Unit"]?.ToString() ?? "",
+                            ["{{C4.2}}"] = obj["Amount"]?.ToString() ?? ""
+                        });
                     }
+                    // 總經費
+                    int totalAmount = applyAmount + selfAmount + otherAmount;
+                    placeholder.Add("{{C5.1}}", (totalAmount / 10000).ToString());
+                    placeholder.Add("{{C5.2}}", (totalAmount % 10000).ToString());
+                    // ReceivedSubsidies
+                    var receivedSubsidies = new List<Dictionary<string, string>>();
+                    foreach (var obj in jobj["ReceivedSubsidies"] as JArray)
+                    {
+                        receivedSubsidies.Add(new Dictionary<string, string>
+                        {
+                            ["{{A13.1}}"] = obj["Name"]?.ToString() ?? "",
+                            ["{{A13.2}}"] = obj["Unit"]?.ToString() ?? "",
+                            ["{{A13.3}}"] = obj["Amount"]?.ToString() ?? ""
+                        });
+                    }
+
                     // 年月日
                     var now = DateTime.Now;
                     int Year = now.Year - 1911;
@@ -129,6 +140,8 @@ public class DownloadTemplateCUL : IHttpHandler
                     {
                         var helper = new OpenXmlHelper(fs);
                         helper.GenerateWord(placeholder, repeatData);
+                        helper.InsertSubTableRows(otherSubsidies, new[] { "{{C4.1}}", "{{C4.2}}" });
+                        helper.InsertSubTableRows(receivedSubsidies, new[] { "{{A13.1}}", "{{A13.2}}", "{{A13.3}}" });
                         helper.CloseAsSave();
                     }
                 }
