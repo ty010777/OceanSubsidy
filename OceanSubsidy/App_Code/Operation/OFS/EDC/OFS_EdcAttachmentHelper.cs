@@ -50,7 +50,6 @@ public class OFS_EdcAttachmentHelper
                   ,[Name]
               FROM [OFS_EDC_Attachment]
              WHERE [PID] = @PID
-          ORDER BY [ID]
         ";
 
         db.Parameters.Add("@PID", pid);

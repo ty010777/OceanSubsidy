@@ -50,7 +50,6 @@ public class OFS_AccAttachmentHelper
                   ,[Name]
               FROM [OFS_ACC_Attachment]
              WHERE [PID] = @PID
-          ORDER BY [ID]
         ";
 
         db.Parameters.Add("@PID", pid);

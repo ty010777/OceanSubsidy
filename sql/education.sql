@@ -28,14 +28,19 @@ CREATE TABLE [OFS_EDC_Project] (
     [SelfAmount]         INT                 NULL, -- 申請單位自籌款
     [OtherGovAmount]     INT                 NULL, -- 其他政府機關補助經費
     [OtherUnitAmount]    INT                 NULL, -- 其他單位補助經費（含總收費）
+    [ApprovedAmount]     INT                 NULL, -- 核定金額
+    [RecoveryAmount]     INT                 NULL, -- 追回金額
     [FormStep]           INT             NOT NULL, -- 申請進度
     [Status]             INT             NOT NULL, -- 狀態
+    [ProgressStatus]     INT             NOT NULL, -- 執行狀態
     [Organizer]          INT                 NULL, -- 承辦人員
     [RejectReason]       NVARCHAR(600)       NULL, -- 不通過原因
     [CorrectionDeadline] DATETIME            NULL, -- 補正期限
     [UserAccount]        VARCHAR(30)         NULL,
     [UserName]           NVARCHAR(30)        NULL,
     [UserOrg]            NVARCHAR(30)        NULL,
+    [IsWithdrawal]       BIT             NOT NULL, -- 是否撤銷
+    [IsExists]           BIT             NOT NULL, -- 是否有效
     [CreateTime]         DATETIME        NOT NULL,
     [CreateUser]         VARCHAR(50)     NOT NULL,
     [UpdateTime]         DATETIME            NULL,

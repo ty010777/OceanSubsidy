@@ -6,7 +6,18 @@
 
 <asp:Content ContentPlaceHolderID="MainContent" runat="server">
     <div>
-        <culture-progress-bar :id="<%= Request.QueryString["ID"] %>" :step="5"></culture-progress-bar>
-        <culture-attachment :id="<%= Request.QueryString["ID"] %>"></culture-attachment>
+        <culture-progress-bar :id="id" :step="5"></culture-progress-bar>
+        <culture-attachment :id="id" v-on:next="next"></culture-attachment>
     </div>
+    <script>
+        setupVueApp({
+            setup() {
+                const id = "<%= Request.QueryString["ID"] %>";
+
+                const next = () => {};
+
+                return { id, next };
+            }
+        });
+    </script>
 </asp:Content>

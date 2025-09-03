@@ -178,6 +178,27 @@
                 </tbody>
             </table>
         </div>
+        <template v-if="changeForm">
+            <h5 class="square-title mt-5">變更說明</h5>
+            <div class="mt-4">
+                <table class="table align-middle gray-table side-table">
+                    <tbody>
+                        <tr>
+                            <th><required-label>變更前</required-label></th>
+                            <td>
+                                <input-textarea :error="errors.Form1Before" rows="4" v-model.trim="changeForm.Form1Before"></input-textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><required-label>變更後</required-label></th>
+                            <td>
+                                <input-textarea :error="errors.Form1After" rows="4" v-model.trim="changeForm.Form1After"></input-textarea>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </template>
     </div>
     <div class="block-bottom bg-light-teal" v-if="editable">
         <button class="btn btn-outline-teal me-3" @click="save()" type="button">暫存</button>
@@ -187,10 +208,11 @@
 
 <script setup>
     const props = defineProps({
-        id: { type: Number }
+        id: { type: [Number, String] }
     });
 
     const categories = ref([]);
+    const changeForm = ref();
     const contacts = ref();
     const editable = computed(() => isProjectEditable("multiple", form.value.Status, 1));
     const errors = ref({});
@@ -212,6 +234,23 @@
 
     const add = () => receiveds.value.push({});
 
+    const emit = defineEmits(["next"]);
+
+    const load = () => {
+        api.multiple("getApplication", { ID: props.id }).subscribe((res) => {
+            form.value = res.Project;
+            contacts.value = res.Contacts;
+            receiveds.value = res.ReceivedSubsidies;
+
+            form.value.OrgCategory = form.value.OrgCategory || null;
+
+            useProgressStore().init("multiple", form.value);
+
+            changeForm.value = form.value.changeApply;
+            form.value.changeApply = undefined;
+        });
+    };
+
     const remove = (target) => target.Deleted = true;
 
     const save = (submit) => {
@@ -226,14 +265,16 @@
             Project: form.value,
             Contacts: contacts.value,
             ReceivedSubsidies: receiveds.value.filter((item) => item.ID || !item.Deleted),
+            Before: changeForm.value?.Form1Before,
+            After: changeForm.value?.Form1After,
             Submit: submit ? "true" : "false"
         };
 
         api.multiple("saveApplication", data).subscribe((res) => {
             if (submit) {
-                window.location.href = `WorkSchedule.aspx?ID=${res.ID}`;
+                emit("next");
             } else if (form.value.ID) {
-                window.location.reload();
+                load();
             } else {
                 window.location.href = `Application.aspx?ID=${res.ID}`;
             }
@@ -273,6 +314,15 @@
 
         receiveds.value.forEach((received, index) => Object.assign(errors.value, validateData(received, rules, `received-${index}-`)));
 
+        if (changeForm.value) {
+            rules = {
+                Form1Before: "變更前說明",
+                Form1After: "變更後說明"
+            };
+
+            Object.assign(errors.value, validateData(changeForm.value, rules));
+        }
+
         return !Object.keys(errors.value).length;
     };
 
@@ -285,21 +335,13 @@
             categories.value = result[1];
 
             if (props.id) {
-                api.multiple("getApplication", { ID: props.id }).subscribe((res) => {
-                    form.value = res.Project;
-                    contacts.value = res.Contacts;
-                    receiveds.value = res.ReceivedSubsidies;
-
-                    form.value.OrgCategory = form.value.OrgCategory || null;
-
-                    useProgressStore().multiple = { step: form.value.FormStep, status: form.value.Status, organizer: form.value.Organizer, organizerName: form.value.OrganizerName };
-                });
+                load();
             } else {
                 api.multiple("getEmptyApplication").subscribe((res) => {
                     form.value = Object.assign({ Field: null, OrgCategory: null, FormStep: 1, Status: 1 }, res);
                     contacts.value = [{ Role: "負責人" }, { Role: "聯絡人" }];
 
-                    useProgressStore().multiple = { step: form.value.FormStep, status: form.value.Status };
+                    useProgressStore().init("multiple", form.value);
                 });
             }
         });

@@ -46,6 +46,7 @@ public class OFS_CulProjectHelper
                   ,P.[OtherAmount]
                   ,P.[FormStep]
                   ,P.[Status]
+                  ,P.[ProgressStatus]
                   ,P.[Organizer]
                   ,U.[Name] AS [OrganizerName]
                   ,P.[RejectReason]
@@ -53,6 +54,8 @@ public class OFS_CulProjectHelper
                   ,P.[UserAccount]
                   ,P.[UserName]
                   ,P.[UserOrg]
+                  ,P.[IsWithdrawal]
+                  ,P.[IsExists]
               FROM [OFS_CUL_Project] AS P
          LEFT JOIN [Sys_User] AS U ON (U.UserID = P.Organizer)
              WHERE P.[ID] = @ID
@@ -65,17 +68,34 @@ public class OFS_CulProjectHelper
         return table.Rows.Count == 1 ? toModel(table.Rows[0]) : null;
     }
 
+    public static int getID(string projectID)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            SELECT [ID]
+              FROM [OFS_CUL_Project]
+             WHERE [ProjectID] = @ProjectID
+        ";
+
+        db.Parameters.Add("@ProjectID", projectID);
+
+        var table = db.GetTable();
+
+        return table.Rows.Count == 1 ? table.Rows[0].Field<int>("ID") : 0;
+    }
+
     public static void insert(OFS_CulProject model)
     {
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
             INSERT INTO [OFS_CUL_Project] ([Year],[ProjectID],[SubsidyPlanType],[ProjectName],[Field],[OrgName],[OrgCategory],[RegisteredNum],[TaxID],[Address],
-                                           [Target],[Summary],[Quantified],[Qualitative],[FormStep],[Status],[UserAccount],[UserName],[UserOrg],[CreateTime],
-                                           [CreateUser])
+                                           [Target],[Summary],[Quantified],[Qualitative],[FormStep],[Status],[ProgressStatus],[UserAccount],[UserName],[UserOrg],
+                                           [IsWithdrawal],[IsExists],[CreateTime],[CreateUser])
                 OUTPUT Inserted.ID VALUES (@Year, @ProjectID, @SubsidyPlanType, @ProjectName, @Field, @OrgName, @OrgCategory, @RegisteredNum, @TaxID, @Address,
-                                           @Target, @Summary, @Quantified, @Qualitative, 1,         1,       @UserAccount, @UserName, @UserOrg, GETDATE(),
-                                           @CreateUser)
+                                           @Target, @Summary, @Quantified, @Qualitative, 1,         1,       0,               @UserAccount, @UserName, @UserOrg,
+                                           0,             1,         GETDATE(),   @CreateUser)
         ";
 
         db.Parameters.Add("@Year", model.Year);
@@ -107,6 +127,7 @@ public class OFS_CulProjectHelper
         db.CommandText = @"
             UPDATE [OFS_CUL_Project]
                SET [Status] = @Status
+                  ,[ProgressStatus] = @ProgressStatus
                   ,[RejectReason] = @RejectReason
                   ,[CorrectionDeadline] = @CorrectionDeadline
                   ,[UpdateTime] = GETDATE()
@@ -117,9 +138,31 @@ public class OFS_CulProjectHelper
 
         db.Parameters.Add("@ID", model.ID);
         db.Parameters.Add("@Status", model.Status);
+        db.Parameters.Add("@ProgressStatus", model.ProgressStatus);
         db.Parameters.Add("@RejectReason", model.RejectReason);
         db.Parameters.Add("@CorrectionDeadline", model.CorrectionDeadline);
         db.Parameters.Add("@UpdateUser", CurrentUser.ID);
+
+        db.ExecuteNonQuery();
+    }
+
+    public static void terminate(int id, string reason, int recovery)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            UPDATE [OFS_CUL_Project]
+               SET [ProgressStatus] = 9
+                  ,[RejectReason] = @RejectReason
+                  ,[RecoveryAmount] = @RecoveryAmount
+                  ,[UpdateTime] = GETDATE()
+                  ,[UpdateUser] = @UpdateUser
+             WHERE [ID] = @ID
+        ";
+
+        db.Parameters.Add("@ID", id);
+        db.Parameters.Add("@RejectReason", reason);
+        db.Parameters.Add("@RecoveryAmount", recovery);
 
         db.ExecuteNonQuery();
     }
@@ -182,7 +225,7 @@ public class OFS_CulProjectHelper
         db.ExecuteNonQuery();
     }
 
-    public static void updateFormStep(int id, int step)
+    public static void updateFormStep(string projectID, int step)
     {
         DbHelper db = new DbHelper();
 
@@ -191,11 +234,11 @@ public class OFS_CulProjectHelper
                SET [FormStep] = @FormStep
                   ,[UpdateTime] = GETDATE()
                   ,[UpdateUser] = @UpdateUser
-             WHERE [ID] = @ID
+             WHERE [ProjectID] = @ProjectID
                AND [FormStep] + 1 = @FormStep
         ";
 
-        db.Parameters.Add("@ID", id);
+        db.Parameters.Add("@ProjectID", projectID);
         db.Parameters.Add("@FormStep", step);
         db.Parameters.Add("@UpdateUser", CurrentUser.ID);
 
@@ -244,6 +287,25 @@ public class OFS_CulProjectHelper
         db.ExecuteNonQuery();
     }
 
+    public static void updateProgressStatus(string projectID, int status)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            UPDATE [OFS_CUL_Project]
+               SET [ProgressStatus] = @ProgressStatus
+                  ,[UpdateTime] = GETDATE()
+                  ,[UpdateUser] = @UpdateUser
+             WHERE [ProjectID] = @ProjectID
+        ";
+
+        db.Parameters.Add("@ProjectID", projectID);
+        db.Parameters.Add("@ProgressStatus", status);
+        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
+
+        db.ExecuteNonQuery();
+    }
+
     public static void updateSchedule(OFS_CulProject model)
     {
         DbHelper db = new DbHelper();
@@ -260,25 +322,6 @@ public class OFS_CulProjectHelper
         db.Parameters.Add("@ID", model.ID);
         db.Parameters.Add("@StartTime", model.StartTime);
         db.Parameters.Add("@EndTime", model.EndTime);
-        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
-
-        db.ExecuteNonQuery();
-    }
-
-    public static void updateStatus(int id, int status)
-    {
-        DbHelper db = new DbHelper();
-
-        db.CommandText = @"
-            UPDATE [OFS_CUL_Project]
-               SET [Status] = @Status
-                  ,[UpdateTime] = GETDATE()
-                  ,[UpdateUser] = @UpdateUser
-             WHERE [ID] = @ID
-        ";
-
-        db.Parameters.Add("@ID", id);
-        db.Parameters.Add("@Status", status);
         db.Parameters.Add("@UpdateUser", CurrentUser.ID);
 
         db.ExecuteNonQuery();
@@ -348,13 +391,16 @@ public class OFS_CulProjectHelper
             OtherAmount = row.Field<int?>("OtherAmount"),
             FormStep = row.Field<int>("FormStep"),
             Status = row.Field<int>("Status"),
+            ProgressStatus = row.Field<int>("ProgressStatus"),
             Organizer = row.Field<int?>("Organizer"),
             OrganizerName = row.Field<string>("OrganizerName"),
             RejectReason = row.Field<string>("RejectReason"),
             CorrectionDeadline = row.Field<DateTime?>("CorrectionDeadline"),
             UserAccount = row.Field<string>("UserAccount"),
             UserName = row.Field<string>("UserName"),
-            UserOrg = row.Field<string>("UserOrg")
+            UserOrg = row.Field<string>("UserOrg"),
+            IsWithdrawal = row.Field<bool>("IsWithdrawal"),
+            IsExists = row.Field<bool>("IsExists")
         };
     }
 }

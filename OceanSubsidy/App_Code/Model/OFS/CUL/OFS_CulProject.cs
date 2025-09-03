@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GS.OCA_OceanSubsidy.Model.OFS;
+using System;
 
 public class OFS_CulProject
 {
@@ -61,6 +62,12 @@ public class OFS_CulProject
     // 其他機關補助／合作總金額
     public int? OtherAmount { get; set; }
 
+    // 核定金額
+    public int? ApprovedAmount { get; set; }
+
+    // 追回金額
+    public int? RecoveryAmount { get; set; }
+
     // 申請進度
     public int FormStep { get; set; }
 
@@ -80,6 +87,12 @@ public class OFS_CulProject
     // 13: 核定通過
     public int Status { get; set; }
 
+    // 執行狀態
+    // 1: 執行中
+    // 2: 計畫變更
+    // 9: 終止
+    public int ProgressStatus { get; set; }
+
     // 承辦
     public int? Organizer { get; set; }
     public string OrganizerName { get; set; }
@@ -93,4 +106,12 @@ public class OFS_CulProject
     public string UserAccount { get; set; }
     public string UserName { get; set; }
     public string UserOrg { get; set; }
+
+    // 是否撤銷
+    public bool IsWithdrawal { get; set; }
+
+    // 是否有效
+    public bool IsExists { get; set; }
+
+    public ProjectChangeRecord changeApply { get; set; }
 }

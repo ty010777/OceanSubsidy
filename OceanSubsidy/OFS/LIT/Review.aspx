@@ -25,14 +25,14 @@
 </asp:Content>
 
 <asp:Content ContentPlaceHolderID="FloatContent" runat="server">
-    <project-review :id="id" type="literacy"></project-review>
+    <project-review :id="id" type="literacy" v-if="store.literacy.status === 2"></project-review>
     <script>
         setupVueApp({
             setup() {
                 const { onMounted, ref } = Vue;
 
                 const current = ref(1);
-                const id = <%= Request.QueryString["ID"] %>;
+                const id = "<%= Request.QueryString["ID"] %>";
 
                 const change = (step) => current.value = step;
 
