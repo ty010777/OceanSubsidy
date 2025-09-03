@@ -216,7 +216,7 @@
         <thead>
             <tr>
                 <th width="50">排序</th>
-                <th>項目</th>
+                <th style="text-align: left">項目</th>
                 <th width="80">是</th>
                 <th width="80">否</th>
                 <th width="80">未提供</th>
@@ -226,7 +226,7 @@
             <!-- Q1 -->
             <tr>
                 <td>1</td>
-                <td>本航次是否會在涉敏感/重疊海域作業</td>
+                <td style="text-align: left">本航次是否會在涉敏感/重疊海域作業</td>
                 <td class="text-center">
                     <asp:RadioButton ID="rbQ1Yes" runat="server" GroupName="Q1" Value="1" />
                 </td>
@@ -240,7 +240,7 @@
             <!-- Q2 -->
             <tr>
                 <td>2</td>
-                <td>是否盡可能縮短在此海域停留時間</td>
+                <td style="text-align: left">是否盡可能縮短在此海域停留時間</td>
                 <td class="text-center">
                     <asp:RadioButton ID="rbQ2Yes" runat="server" GroupName="Q2" Value="1" />
                 </td>
@@ -254,7 +254,7 @@
             <!-- Q3 -->
             <tr>
                 <td>3</td>
-                <td>是否已減少/移動作業站位，並盡可能向本國區域靠攏</td>
+                <td style="text-align: left">是否已減少/移動作業站位，並盡可能向本國區域靠攏</td>
                 <td class="text-center">
                     <asp:RadioButton ID="rbQ3Yes" runat="server" GroupName="Q3" Value="1" />
                 </td>
@@ -268,7 +268,7 @@
             <!-- Q4 -->
             <tr>
                 <td>4</td>
-                <td>若遭他國干擾，是否確切知曉通報海巡署及相關救援單位的方式</td>
+                <td style="text-align: left">若遭他國干擾，是否確切知曉通報海巡署及相關救援單位的方式</td>
                 <td class="text-center">
                     <asp:RadioButton ID="rbQ4Yes" runat="server" GroupName="Q4" Value="1" />
                 </td>
@@ -282,7 +282,7 @@
             <!-- Q5 -->
             <tr>
                 <td>5</td>
-                <td>若遭他國強烈干擾(如欲強行登/扣船)，是否有應變措施(如勾選「是」，請於下方或另頁說明詳細應變措施。)</td>
+                <td style="text-align: left">若遭他國強烈干擾(如欲強行登/扣船)，是否有應變措施(如勾選「是」，請於下方或另頁說明詳細應變措施。)</td>
                 <td class="text-center">
                     <asp:RadioButton ID="rbQ5Yes" runat="server" GroupName="Q5" Value="1" />
                 </td>

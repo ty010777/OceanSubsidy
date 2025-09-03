@@ -46,8 +46,7 @@
                                 <option value="Polygon">多邊形</option>
                                 <option value="Circle">圓形</option>
                                 <!--<option value="Text">文字</option>-->
-                            </select>
-                            <button type="button" class="btnS btn_clear" onclick="clearAllMarkInputs();" title="清除所有輸入內容">清除資料</button>
+                            </select>                            
                         </div>
                         <!--各標註屬性-->
                         <!-- 點位設定區塊 ------------------------------>
@@ -168,6 +167,7 @@
                             </div>
                             <div class="btnBoxCenter">
                                 <input type="button" value="建立" class="btn btn_add" id="btnCreatePt" onclick="createPoint();">
+                                <input type="button" value="清除" class="btn btn_clear" style="background-color: #ffaaad" onclick="clearAllMarkInputs();">
                             </div>
 
                         </div>
@@ -376,6 +376,7 @@
                             <div class="btnBoxCenter">
                                 <input type="button" value="新增經緯度" class="btn btn_add" id="btnAddLinePt" onclick="addLinePt();">
                                 <input type="button" value="建立" class="btn btn_add" id="btnCreateLine" onclick="addLineMark();">
+                                <input type="button" value="清除" class="btn btn_clear" style="background-color: #ffaaad" onclick="clearAllMarkInputs();">
                             </div>
                         </div>
                         <!-- 線段設定區塊 end------------------------------>
@@ -641,6 +642,7 @@
                             <div class="btnBoxCenter">
                                 <input type="button" value="新增經緯度" class="btn btn_add" id="btnAddPt" onclick="addPolyPt();">
                                 <input type="button" value="建立" class="btn btn_add" id="btnCreatePoly" onclick="addPolyMark();">
+                                <input type="button" value="清除" class="btn btn_clear" style="background-color: #ffaaad" onclick="clearAllMarkInputs();">
                             </div>
                         </div>
                         <!-- 多邊形設定區塊 end------------------------------>
@@ -724,6 +726,7 @@
                             </div>
                             <div class="btnBoxCenter">
                                 <input type="button" value="建立" class="btn btn_add" id="" onclick="addTxtMark();">
+                                <input type="button" value="清除" class="btn btn_clear" style="background-color: #ffaaad" onclick="clearAllMarkInputs();">
                             </div>
                         </div>
                         <!-- 文字設定區塊 end------------------------------>
@@ -928,6 +931,7 @@
                             </div>
                             <div class="btnBoxCenter">
                                 <input type="button" value="建立" class="btn btn_add" id="btnCreateBox" onclick="addBoxMark();">
+                                <input type="button" value="清除" class="btn btn_clear" style="background-color: #ffaaad" onclick="clearAllMarkInputs();">
                             </div>
                         </div>
                         <!-- 矩形設定區塊 end------------------------------>
@@ -1070,6 +1074,7 @@
                             </div>
                             <div class="btnBoxCenter">
                                 <input type="button" value="建立" class="btn btn_add" id="" onclick="addCirMark();">
+                                <input type="button" value="清除" class="btn btn_clear" style="background-color: #ffaaad" onclick="clearAllMarkInputs();">
                             </div>
                         </div>
                         <!-- 圓形設定區塊 end------------------------------>

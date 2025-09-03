@@ -114,14 +114,15 @@
                             <thead>
                                 <tr>
                                     <th width="50">排序</th>
-                                    <th width="220">填報機關</th>
+                                    <th width="100">填報週期</th>
+                                    <th width="150">填報機關</th>
                                     <th width="300">活動名稱</th>
                                     <th width="200">活動性質</th>
                                     <th>活動執行者</th>
                                     <th width="150">研究調查日期</th>
                                     <th width="150">資料更新日期</th>
                                     <th>活動空間範圍</th>
-                                    <th>功能</th>
+                                    <th width="100">功能</th>
                                 </tr>
                             </thead>
                             <tbody id="itemPlaceholder" runat="server"></tbody>
@@ -130,6 +131,7 @@
                     <ItemTemplate>
                         <tr>
                             <td><%# Container.DisplayIndex + 1 %></td>
+                            <td data-th="填報週期:"><%# Eval("Period") %></td>
                             <td data-th="填報機關:">
                                 <asp:Literal ID="litReportingUnit" runat="server" Text='<%# Eval("ReportingUnit") %>' /></td>
                             <td data-th="活動名稱:" style="text-align: left;"><%# Eval("ActivityName") %></td>

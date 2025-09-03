@@ -738,9 +738,9 @@ function genMarkList(PK, selectedType, typeNum, label, type) {
     if (HasFPK) {
         //QuyParentMarkType(PK, FPK, imgStr, selectedType, typeNum, label, type);
     } else {
-        $("#MarkList").prepend('<div id="' + selectedType + typeNum + '" class="group" name="' + PK + '"><div id="P' + PK + '" class="item align-items-center">'
+        $("#MarkList").prepend('<div id="' + selectedType + typeNum + '" class="group" name="' + PK + '"><div id="P' + PK + '" class="item align-items-center" onmouseover="hoverFeature(' + "'" + PK + "', '" + type + "', true" + ')" onmouseout="hoverFeature(' + "'" + PK + "', '" + type + "', false" + ')">'
             //+ imgStr
-            + '<span id="Label' + type + typeNum + '" onmouseover="hoverFeature(' + "'" + PK + "', '" + type + "', true" + ')" onmouseout="hoverFeature(' + "'" + PK + "', '" + type + "', false" + ')">' + label + '</span>'
+            + '<span id="Label' + type + typeNum + '">' + label + '</span>'
             + '<div class="tools-wrap ms-auto">'
             //+ '<a href="javascript: void(0);" class="layer-tool" title="調整上下層" onclick="setFeatureSort(' + "'" + PK + "'" + '); "><i class="fa-solid fa-arrows-retweet"></i></a>'
             + '<a href="javascript: void(0);" class="layer-tool" title="編輯" onclick="editMarkerName(' + "'" + PK + "', '" + type + "', " + typeNum + '); "><i class="fa-solid fa-pen"></i></a>'
@@ -1708,42 +1708,19 @@ function editMarkerName(PK, type, typeNum) {
     // 設定對應的標註介面
     if (type == "point") {
         getTypeStyle("Point");
-        // 填入名稱
-        $("#txtPtName").val(currentName);
-        // 填入座標
-        var coord = olFeature.getGeometry().getCoordinates();
-        var coord4326 = ol.proj.transform(coord, 'EPSG:3857', 'EPSG:4326');
-        $("#txtPtLatDD").val(coord4326[1].toFixed(6));
-        $("#txtPtLonDD").val(coord4326[0].toFixed(6));
     } else if (type == "line") {
         getTypeStyle("LineString");
-        $("#txtLineName").val(currentName);
-        // 填入線段座標
-        var coords = olFeature.getGeometry().getCoordinates();
-        setLineCoord(coords);
     } else if (type == "poly") {
         getTypeStyle("Polygon");
-        $("#txtPolyName").val(currentName);
-        // 填入多邊形座標
-        var coords = olFeature.getGeometry().getCoordinates();
-        setPolyCoord(coords);
     } else if (type == "box") {
         getTypeStyle("Box");
-        $("#txtBoxName").val(currentName);
-        // 填入矩形座標
-        var coords = olFeature.getGeometry().getCoordinates();
-        setBoxCoord(coords);
     } else if (type == "cir") {
         getTypeStyle("Circle");
-        $("#txtCirName").val(currentName);
-        // 填入圓形座標和半徑
-        var center = olFeature.getGeometry().getCenter();
-        var radius = olFeature.getGeometry().getRadius();
-        var coord4326 = ol.proj.transform(center, 'EPSG:3857', 'EPSG:4326');
-        $("#txtCirLatDD").val(coord4326[1].toFixed(6));
-        $("#txtCirLonDD").val(coord4326[0].toFixed(6));
-        $("#txtCirRadius").val(radius.toFixed(2));
+    } else if (type == "text") {
+        getTypeStyle("Text");
     }
+    var Text = olFeature.getStyle().getText().getText();
+    setMkCtrlStyle(olFeature, type, Text);
     
     // 設定編輯模式相關變數
     IsMarkEdit = true;
@@ -1954,6 +1931,8 @@ function hoverFeature(PK, markType, IsHover) {
     
     var olFeature = drawSource.getFeatureById(PK);
     if (IsHover) {
+        // 設定對應 div 的背景色為 #ffaaad
+        $("#P" + PK).css("background-color", "#ffaaad");
         if (olFeature != null) {
             //設定預設樣式，取消編輯時用來恢復原本的樣式
             if (olFeature.getStyle().length != undefined) {
@@ -1965,26 +1944,32 @@ function hoverFeature(PK, markType, IsHover) {
                 MarkOriStyle = olFeature.getStyle().clone();
             }
             
-            // 設定對應的標註介面
-            if (markType == "point") {
-                getTypeStyle("Point");
-            } else if (markType == "line") {
-                getTypeStyle("LineString");
-            } else if (markType == "poly") {
-                getTypeStyle("Polygon");
-            } else if (markType == "box") {
-                getTypeStyle("Box");
-            } else if (markType == "cir") {
-                getTypeStyle("Circle");
-            } else if (markType == "text") {
-                getTypeStyle("Text");
-            }
+            // 儲存原始 ZIndex 並設定為 999
+            var originalZIndex = olFeature.getStyle().getZIndex ? olFeature.getStyle().getZIndex() : 0;
+            olFeature.set('_originalZIndex', originalZIndex);
+            
+            // 設定 ZIndex 為 999
+            var currentStyle = olFeature.getStyle();
+            if (currentStyle.length != undefined) {
+                // 多個樣式的情況
+                for (var j = 0; j < currentStyle.length; j++) {
+                    if (currentStyle[j].setZIndex) {
+                        currentStyle[j].setZIndex(999);
+                    }
+                }
+            } else {
+                // 單一樣式的情況
+                if (currentStyle.setZIndex) {
+                    currentStyle.setZIndex(999);
+                }
+            }            
 
             var olStyle = olFeature.getStyle();
             if (olStyle.length != undefined) {
                 olStyle = olStyle[0];
             }
             setOriginStyle(olFeature, markType);
+            var color = "#00E3E3";
             if (markType == "point") {
                 var scale = 1;
                 var pointStyle = null;
@@ -1997,29 +1982,46 @@ function hoverFeature(PK, markType, IsHover) {
                     if (olStyle.getImage().getSrc && typeof olStyle.getImage().getSrc === 'function') {
                         // 圖標樣式
                         var src = olStyle.getImage().getSrc();
-                        pointStyle = oltmx.Plugin.prototype.setIconMarkStyle("#00FFFF", scale, olStyle.getText().getText(), src, olStyle.getImage().getOpacity(), olFeature, 35);
+                        pointStyle = oltmx.Plugin.prototype.setIconMarkStyle(color, scale, olStyle.getText().getText(), src, olStyle.getImage().getOpacity(), olFeature, 35);
                     } else {
                         // 一般點樣式
                         scale = olFeature.get('olScale') || scale;
-                        pointStyle = oltmx.Plugin.prototype.setPointMarkStyle("#00FFFF", scale, olStyle.getText().getText(), olFeature);
+                        pointStyle = oltmx.Plugin.prototype.setPointMarkStyle(color, scale, olStyle.getText().getText(), olFeature);
                     }
                 } else {
                     // 沒有圖像樣式，使用預設點樣式
-                    pointStyle = oltmx.Plugin.prototype.setPointMarkStyle("#00FFFF", 1, olStyle.getText().getText(), olFeature);
+                    pointStyle = oltmx.Plugin.prototype.setPointMarkStyle(color, 1, olStyle.getText().getText(), olFeature);
                 }
                 
                 olFeature.setStyle(pointStyle);
+                
+                // 確保點標註的文字顏色和 ZIndex 也正確設定
+                var newPointStyle = olFeature.getStyle();
+                if (newPointStyle) {
+                    // 設定文字顏色
+                    if (newPointStyle.getText && newPointStyle.getText()) {
+                        if (newPointStyle.getText().getFill) {
+                            newPointStyle.getText().getFill().setColor(color);
+                        }
+                    }
+                    
+                    // 重新設定 ZIndex 為 999
+                    if (newPointStyle.setZIndex) {
+                        newPointStyle.setZIndex(999);
+                    }
+                }
             } else if (markType == "text") {
-                olStyle.getText().getStroke().setWidth(5);
-                olStyle.getText().getStroke().setColor("#00FFFF");
+                olStyle.getText().getStroke().setWidth(10);
+                olStyle.getText().getStroke().setColor(color);                
             } else if (markType == "line") {
-                olStyle.getStroke().setWidth(5);
-                olStyle.getStroke().setColor("#00FFFF");
+                olStyle.getStroke().setWidth(10);
+                olStyle.getStroke().setColor(color);
             } else {
-                olStyle.getStroke().setWidth(5);
-                olStyle.getStroke().setColor("#00FFFF");
+                olStyle.getStroke().setWidth(10);
+                olStyle.getStroke().setColor(color);
                 olStyle.getFill().setColor("rgba(255, 255, 255, 0.5)");
             }
+            olStyle.getText().getFill().setColor(color);
             //drawSource.refresh();
             olFeature.changed();
 
@@ -2028,16 +2030,46 @@ function hoverFeature(PK, markType, IsHover) {
         //var Ext = olFeature.getGeometry().getExtent();
         //var Center3857 = ol.extent.getCenter(Ext);
         //map.getView().setCenter(Center3857);
-    } else if (MarkOriStyle != null && olFeature != null) {
-        //恢復原本樣式
-        olFeature.setStyle(MarkOriStyle);
-        MarkOriStyle = null;
+    } else {
+        // 恢復對應 div 的背景色為白色
+        $("#P" + PK).css("background-color", "");
+        
+        if (MarkOriStyle != null && olFeature != null) {
+            //恢復原本樣式
+            olFeature.setStyle(MarkOriStyle);
+            
+            // 恢復原始 ZIndex
+            var originalZIndex = olFeature.get('_originalZIndex');
+            if (originalZIndex !== undefined) {
+                var currentStyle = olFeature.getStyle();
+                if (currentStyle.length != undefined) {
+                    // 多個樣式的情況
+                    for (var k = 0; k < currentStyle.length; k++) {
+                        if (currentStyle[k].setZIndex) {
+                            currentStyle[k].setZIndex(originalZIndex);
+                        }
+                    }
+                } else {
+                    // 單一樣式的情況
+                    if (currentStyle.setZIndex) {
+                        currentStyle.setZIndex(originalZIndex);
+                    }
+                }
+                // 清除儲存的原始 ZIndex
+                olFeature.unset('_originalZIndex');
+            }
+            
+            MarkOriStyle = null;
+        }
     }
 }
 
 //取消編輯
 function CancelUpdateMark() {
     if (CurrentMarkID != "") {
+        // 恢復對應 div 的背景色為白色
+        $("#P" + CurrentMarkID).css("background-color", "");
+
         // 恢復原本樣式
         if (MarkOriStyle != null) {
             var olF = drawSource.getFeatureById(CurrentMarkID);

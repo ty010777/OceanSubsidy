@@ -1693,11 +1693,11 @@ oltmx.Plugin.prototype.setPointMarkStyle = function (pointColor, pointScale, poi
         text: {
             text: pointTxt,
             fill: {
-                color: '#000000'
+                color: '#FFFFFF'
             },
             stroke: {
                 width: 4,
-                color: '#FFFFFF'
+                color: '#000000'
             },
             font: "12pt 微軟正黑體",
             offsetY: 25

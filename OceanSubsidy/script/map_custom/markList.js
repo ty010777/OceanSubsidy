@@ -458,7 +458,7 @@ function setOriginStyle(olFeature, markType) {
             break;
     }
     //圖台標示切到對應的樣式
-    setMkCtrlStyle(olFeature, markType, Text);
+    //setMkCtrlStyle(olFeature, markType, Text);
 }
 
 //設定全域變數

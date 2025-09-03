@@ -412,6 +412,26 @@ function mapInit(_functions) {
     //mapPlugin.setMarkerLayer("test", { MinResolution: 10 });
 
     loadFeaturesFromWKT();
+    
+    // 檢查 functions 是否包含 "08"，如果有就預設開啟標註功能
+    var functions = _functions || enableFunctions || "";
+    if (functions.indexOf("08") !== -1) {
+        // 延遲執行以確保 UI 完全初始化
+        setTimeout(function() {
+            try {
+                // 找到標註功能的 DOM 元素並觸發
+                var markerLink = document.querySelector('a[do="Marker"]');
+                if (markerLink && mapUI && mapUI.getFunctionsUI) {
+                    var functionsUI = mapUI.getFunctionsUI();
+                    if (functionsUI && functionsUI.switchTo) {
+                        functionsUI.switchTo(markerLink);
+                    }
+                }
+            } catch (err) {
+                console.warn('自動開啟標註功能失敗:', err);
+            }
+        }, 500);
+    }
 }
 
 function loadFeaturesFromWKT() {

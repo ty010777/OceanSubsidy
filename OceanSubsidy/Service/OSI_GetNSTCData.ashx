@@ -737,95 +737,96 @@ public class OSI_GetNSTCData : IHttpHandler
             return false;
         }
     }
-}
-
-/// <summary>
-/// 查詢結果
-/// </summary>
-public class SearchResult
-{
-    public bool Success { get; set; }
-    public string Response { get; set; }
-    public string ErrorMessage { get; set; }
-    public object DebugInfo { get; set; }
-}
-
-/// <summary>
-/// 頁面處理結果
-/// </summary>
-public class PageResult
-{
-    public bool Success { get; set; }
-    public List<OSI_NSTCData> ParsedData { get; set; }
-    public List<OSI_NSTCData> NewData { get; set; }
-    public int ParsedCount { get; set; }
-    public int NewDataCount { get; set; }
-    public string ErrorMessage { get; set; }
-}
-
-/// <summary>
-/// Request參數
-/// </summary>
-public class RequestOptions
-{
     /// <summary>
-    /// 請求方式，GET或POST
+    /// 查詢結果
     /// </summary>
-    public string Method { get; set; }
-    /// <summary>
-    /// URL
-    /// </summary>
-    public Uri Uri { get; set; }
-    /// <summary>
-    /// 上一級歷史記錄鏈接
-    /// </summary>
-    public string Referer { get; set; }
-    /// <summary>
-    /// 超時時間（毫秒）
-    /// </summary>
-    public int Timeout = 30000; // 增加到 30 秒
-    /// <summary>
-    /// 啓用長連接
-    /// </summary>
-    public bool KeepAlive = true;
-    /// <summary>
-    /// 禁止自動跳轉
-    /// </summary>
-    public bool AllowAutoRedirect = false;
-    /// <summary>
-    /// 定義最大連接數
-    /// </summary>
-    public int ConnectionLimit = int.MaxValue;
-    /// <summary>
-    /// 請求次數
-    /// </summary>
-    public int RequestNum = 3;
-    /// <summary>
-    /// 可通過文件上傳提交的文件類型
-    /// </summary>
-    public string Accept = "*/*";
-    /// <summary>
-    /// 內容類型
-    /// </summary>
-    public string ContentType = "application/x-www-form-urlencoded";
-    /// <summary>
-    /// 實例化頭部信息
-    /// </summary>
-    private WebHeaderCollection header = new WebHeaderCollection();
-    /// <summary>
-    /// 頭部信息
-    /// </summary>
-    public WebHeaderCollection WebHeader
+    public class SearchResult
     {
-        get { return header; }
-        set { header = value; }
+        public bool Success { get; set; }
+        public string Response { get; set; }
+        public string ErrorMessage { get; set; }
+        public object DebugInfo { get; set; }
     }
+
     /// <summary>
-    /// 定義請求Cookie字符串
+    /// 頁面處理結果
     /// </summary>
-    public string RequestCookies { get; set; }
+    public class PageResult
+    {
+        public bool Success { get; set; }
+        public List<OSI_NSTCData> ParsedData { get; set; }
+        public List<OSI_NSTCData> NewData { get; set; }
+        public int ParsedCount { get; set; }
+        public int NewDataCount { get; set; }
+        public string ErrorMessage { get; set; }
+    }
+
     /// <summary>
-    /// 異步參數數據
+    /// Request參數
     /// </summary>
-    public string XHRParams { get; set; }
+    public class RequestOptions
+    {
+        /// <summary>
+        /// 請求方式，GET或POST
+        /// </summary>
+        public string Method { get; set; }
+        /// <summary>
+        /// URL
+        /// </summary>
+        public Uri Uri { get; set; }
+        /// <summary>
+        /// 上一級歷史記錄鏈接
+        /// </summary>
+        public string Referer { get; set; }
+        /// <summary>
+        /// 超時時間（毫秒）
+        /// </summary>
+        public int Timeout = 30000; // 增加到 30 秒
+        /// <summary>
+        /// 啓用長連接
+        /// </summary>
+        public bool KeepAlive = true;
+        /// <summary>
+        /// 禁止自動跳轉
+        /// </summary>
+        public bool AllowAutoRedirect = false;
+        /// <summary>
+        /// 定義最大連接數
+        /// </summary>
+        public int ConnectionLimit = int.MaxValue;
+        /// <summary>
+        /// 請求次數
+        /// </summary>
+        public int RequestNum = 3;
+        /// <summary>
+        /// 可通過文件上傳提交的文件類型
+        /// </summary>
+        public string Accept = "*/*";
+        /// <summary>
+        /// 內容類型
+        /// </summary>
+        public string ContentType = "application/x-www-form-urlencoded";
+        /// <summary>
+        /// 實例化頭部信息
+        /// </summary>
+        private WebHeaderCollection header = new WebHeaderCollection();
+        /// <summary>
+        /// 頭部信息
+        /// </summary>
+        public WebHeaderCollection WebHeader
+        {
+            get { return header; }
+            set { header = value; }
+        }
+        /// <summary>
+        /// 定義請求Cookie字符串
+        /// </summary>
+        public string RequestCookies { get; set; }
+        /// <summary>
+        /// 異步參數數據
+        /// </summary>
+        public string XHRParams { get; set; }
+    }
+
 }
+

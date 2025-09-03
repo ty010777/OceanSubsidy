@@ -55,6 +55,7 @@ public partial class OSI_ReportManage : System.Web.UI.UserControl
         var dt = OSIDataPeriodsHelper.QueryAllYearsWithFilter();
 
         ddlYear.Items.Clear();
+        ddlYear.Items.Add(new ListItem("全部", "-99"));
         foreach (DataRow row in dt.Rows)
         {
             ddlYear.Items.Add(new ListItem(
@@ -70,7 +71,7 @@ public partial class OSI_ReportManage : System.Web.UI.UserControl
     // 年度改變 → 載入季別
     protected void ddlYear_SelectedIndexChanged(object sender, EventArgs e)
     {
-        if (ddlYear.SelectedValue != null)
+        if (ddlYear.SelectedValue != null && ddlYear.SelectedValue != "-99")
         {
             var dt = OSIDataPeriodsHelper.QueryQuartersByYearWithFilter(ddlYear.SelectedValue);
 
@@ -83,6 +84,13 @@ public partial class OSI_ReportManage : System.Web.UI.UserControl
                 ));
             }
             ddlQuarter.Enabled = true;
+        }
+        else if (ddlYear.SelectedValue == "-99")
+        {
+            ddlQuarter.Items.Clear();
+            ddlQuarter.Items.Add(new ListItem("全部", "-99"));
+            ddlQuarter.SelectedValue = "-99";
+            ddlQuarter.Enabled = false;
         }
         else
         {

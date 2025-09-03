@@ -218,7 +218,15 @@ SELECT
   e.Executors,
   d.StartDate,
   d.EndDate,
-  r.LastUpdated
+  r.LastUpdated,
+  PeriodYear
+  + CASE PeriodQuarter
+        WHEN N'第一季' THEN 'Q1'
+        WHEN N'第二季' THEN 'Q2'
+        WHEN N'第三季' THEN 'Q3'
+        WHEN N'第四季' THEN 'Q4'
+        ELSE PeriodQuarter
+    END AS Period
 FROM OSI_ActivityReports r
 LEFT JOIN Sys_Unit u 
   ON r.ReportingUnitID = u.UnitID
@@ -226,6 +234,8 @@ LEFT JOIN ExecCTE e
   ON e.ReportID = r.ReportID
 LEFT JOIN OSI_ActivityNatures a
   ON a.NatureID = r.NatureID
+LEFT JOIN OSI_DataPeriods dp
+  ON dp.PeriodID = r.PeriodID
 
 CROSS APPLY (
   SELECT 
@@ -235,7 +245,7 @@ CROSS APPLY (
   WHERE rp.ReportID = r.ReportID
 ) AS d
 
-WHERE r.PeriodID  = @PeriodID
+WHERE (@PeriodID = '-99' OR r.PeriodID = @PeriodID)
   AND r.IsValid   = 1
   AND (
     @UnitID = '-99'
@@ -675,7 +685,7 @@ GROUP BY c.CarrierTypeName
     public static string QueryGeoDataByID(string reportID)
     {
         string rtVal = "";
-        
+
         // 優先從 OSI_Geom 表取得資料
         var geomsTable = OSIGeomHelper.QueryByReportID(reportID);
         if (geomsTable != null && geomsTable.Rows.Count > 0)
@@ -1537,14 +1547,14 @@ ORDER BY UnitName, c_name
             AND IsValid = 1";
         db.Parameters.Clear();
         db.Parameters.Add("@UnitID", unitID);
-        
+
         var tbl = db.GetTable();
         if (tbl != null && tbl.Rows.Count > 0)
         {
             int reportCount = Convert.ToInt32(tbl.Rows[0]["ReportCount"]);
             return reportCount > 0;
         }
-        
+
         return false;
     }
 
@@ -1555,7 +1565,7 @@ ORDER BY UnitName, c_name
     {
         bool success = false;
         DbHelper db = new DbHelper();
-        
+
         db.BeginTrans();
         try
         {
@@ -1566,7 +1576,7 @@ ORDER BY UnitName, c_name
 UPDATE OSI_Geom 
 SET IsValid = 0, DeletedAt = GETDATE(), DeletedBy = @DeletedBy
 WHERE ReportID = @ReportID AND IsValid = 1 AND DeletedAt IS NULL";
-                
+
                 db.Parameters.Clear();
                 db.Parameters.Add("@ReportID", reportID);
                 db.Parameters.Add("@DeletedBy", userID);
@@ -1594,10 +1604,10 @@ WHERE ReportID = @ReportID AND IsValid = 1 AND DeletedAt IS NULL";
                                 var existingGeom = existingDict[feature.id];
                                 var newName = feature.name ?? "";
                                 var newWkt = feature.wkt ?? "";
-                                
+
                                 // 判斷 GeomName 或 WKT 是否有變更
                                 bool hasNameChanges = !string.Equals(existingGeom.GeomName, newName, StringComparison.Ordinal);
-                                
+
                                 // 比較 WKT 到小數第4位
                                 bool hasWktChanges = false;
                                 if (!string.IsNullOrEmpty(existingGeom.GeoData) && !string.IsNullOrEmpty(newWkt))
@@ -1612,14 +1622,14 @@ WHERE ReportID = @ReportID AND IsValid = 1 AND DeletedAt IS NULL";
                                     // 一個是空的，另一個不是
                                     hasWktChanges = true;
                                 }
-                                
+
                                 bool hasChanges = hasNameChanges || hasWktChanges;
-                                
+
                                 if (hasChanges)
                                 {
                                     // 有變更：軟刪除舊資料
                                     OSIGeomHelper.DeleteGeom(existingGeom.GeomID, userID);
-                                    
+
                                     // 新增一筆新資料
                                     var newGeom = new OSI_Geom
                                     {
@@ -1631,7 +1641,7 @@ WHERE ReportID = @ReportID AND IsValid = 1 AND DeletedAt IS NULL";
                                     };
                                     OSIGeomHelper.InsertGeom(newGeom);
                                 }
-                                
+
                                 processedIds.Add(feature.id);
                             }
                             else
@@ -1663,7 +1673,7 @@ WHERE ReportID = @ReportID AND IsValid = 1 AND DeletedAt IS NULL";
                 {
                 }
             }
-            
+
             db.Commit();
             success = true;
         }
@@ -1672,7 +1682,7 @@ WHERE ReportID = @ReportID AND IsValid = 1 AND DeletedAt IS NULL";
             db.Rollback();
             throw ex;
         }
-        
+
         return success;
     }
 
@@ -1701,14 +1711,14 @@ WHERE ReportID = @ReportID AND IsValid = 1 AND DeletedAt IS NULL";
         // 標準化 WKT 格式：移除幾何類型和括號之間的空格
         // 例如：POINT (x y) -> POINT(x y)
         result = System.Text.RegularExpressions.Regex.Replace(result, @"(POINT|LINESTRING|POLYGON|MULTIPOINT|MULTILINESTRING|MULTIPOLYGON|GEOMETRYCOLLECTION)\s+\(", "$1(");
-        
+
         // 標準化座標之間的空格：確保只有一個空格
         result = System.Text.RegularExpressions.Regex.Replace(result, @"\s+", " ");
-        
+
         // 移除括號內部開頭和結尾的空格
         result = System.Text.RegularExpressions.Regex.Replace(result, @"\(\s+", "(");
         result = System.Text.RegularExpressions.Regex.Replace(result, @"\s+\)", ")");
-        
+
         // 標準化逗號後的空格：確保逗號後有一個空格
         result = System.Text.RegularExpressions.Regex.Replace(result, @",\s*", ", ");
 

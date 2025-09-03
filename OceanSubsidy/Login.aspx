@@ -13,7 +13,77 @@
             -webkit-flex-direction: column;
             -ms-flex-direction: column;
             flex-direction: column;
-            gap: 16px;
+            gap: 1rem;
+        }
+
+        /* 無障礙修正：覆蓋固定字型大小為相對單位 */
+        .fs-12 {
+            font-size: 0.75rem !important;
+        }
+
+        .fs-14 {
+            font-size: 0.875rem !important;
+        }
+
+        .fs-15 {
+            font-size: 0.9375rem !important;
+        }
+
+        .fs-16 {
+            font-size: 1rem !important;
+        }
+
+        .fs-18 {
+            font-size: 1.125rem !important;
+        }
+
+        .fs-20 {
+            font-size: 1.25rem !important;
+        }
+
+        .fs-21 {
+            font-size: 1.3125rem !important;
+        }
+
+        .fs-22 {
+            font-size: 1.375rem !important;
+        }
+
+        .fs-24 {
+            font-size: 1.5rem !important;
+        }
+
+        .fs-32 {
+            font-size: 2rem !important;
+        }
+
+        .fs-39 {
+            font-size: 2.4375rem !important;
+        }
+
+        .fs-40 {
+            font-size: 2.5rem !important;
+        }
+
+        /* 針對登入頁面特定元素的字型大小修正 */
+        h1 {
+            font-size: 2rem !important;
+        }
+
+        .login-container h1 {
+            font-size: 1.75rem !important;
+        }
+
+        span.fs-12 {
+            font-size: 0.75rem !important;
+        }
+
+        span.fs-18 {
+            font-size: 1.125rem !important;
+        }
+
+        span.fs-20 {
+            font-size: 1.25rem !important;
         }
     </style>
 
@@ -21,9 +91,16 @@
 <asp:Content ID="Content3" ContentPlaceHolderID="MainContent" runat="server">
 
     <div class="login-wrap">
+
+        <a href="#AC" id="AC" accesskey="C" class="a11yBrick position-absolute text-black text-decoration-none fs-18 mt-3 ms-3" title="中央內容區塊[快捷鍵Alt+C]">:::</a>
+
+        <button class="btn btn-blue-deep position-absolute top-0 end-0 mt-3 me-3" style="z-index: 3;" type="button" data-bs-toggle="modal" data-bs-target="#siteNavigationModal">
+            網站導覽
+        </button>
+
         <div class="login-container">
             <div class="logo">
-                <img src="assets/img/login/login-logo.svg" alt="logo">
+                <img src="assets/img/login/login-logo.svg" alt="海洋委員會標誌">
             </div>
             <h1>海洋領域補助案入口網</h1>
 
@@ -43,7 +120,7 @@
                             <div class="icon">
                                 <i class="fas fa-user"></i>
                             </div>
-                            <asp:TextBox ID="txtEmail" runat="server" TextMode="Email" placeholder="請輸入帳號" />
+                            <asp:TextBox ID="txtEmail" runat="server" TextMode="Email" placeholder="請輸入帳號" title="帳號" />
                         </div>
                         <div class="mt-2">
                             <asp:RequiredFieldValidator ID="rfvEmail" runat="server"
@@ -70,13 +147,13 @@
                             <div class="icon">
                                 <i class="fas fa-lock"></i>
                             </div>
-                            <asp:TextBox ID="password" ClientIDMode="Static" runat="server" TextMode="Password" placeholder="請輸入密碼" />
+                            <asp:TextBox ID="password" ClientIDMode="Static" runat="server" TextMode="Password" placeholder="請輸入密碼" title="密碼" />
 
                             <div class="eye-warp">
-                                <button class="eye-open" type="button" style="display: none;" onclick="togglePasswordVisibility()">
+                                <button class="eye-open" type="button" style="display: none;" onclick="togglePasswordVisibility()" aria-label="顯示密碼">
                                     <i class="fas fa-eye"></i>
                                 </button>
-                                <button class="eye-close" type="button" onclick="togglePasswordVisibility()">
+                                <button class="eye-close" type="button" onclick="togglePasswordVisibility()" aria-label="隱藏密碼">
                                     <i class="fas fa-eye-slash"></i>
                                 </button>
                             </div>
@@ -96,12 +173,15 @@
                         </div>
                         <div class="d-flex gap-2 align-items-center">
                             <div class="form-icon-input">
-                                <asp:TextBox ID="txtCaptcha" runat="server" placeholder="請輸入驗證碼" />
+                                <asp:TextBox ID="txtCaptcha" runat="server" placeholder="請輸入驗證碼" title="驗證碼" />
                             </div>
-                            <a href="#" class="d-grid">
-                                <span class="fs-12">點擊圖片可換驗證碼</span>
-                                <img id="imgValidate" onclick="return reloadcode();" alt="驗證碼" />
-                            </a>
+                            <button type="button" onclick="return reloadcode();" class="d-grid p-0 border-0 bg-transparent">
+                                <span class="fs-12 text-gray" style="cursor: pointer;">點擊圖片可換驗證碼</span>
+                                <img id="imgValidate" alt="驗證碼" />
+                            </button>
+                            <button class="btn p-0 mt-auto" type="button" style="min-width: unset;" onclick="playCaptchaAudio()" aria-label="播放驗證碼">
+                                <img src="assets/img/play.svg" aria-hidden="true">
+                            </button>
                         </div>
                         <div class="mt-2">
                             <asp:RequiredFieldValidator ID="rfvCaptcha" runat="server"
@@ -123,7 +203,7 @@
 
                     <!-- 登入按鈕 -->
                     <asp:Button ID="btnLogin" runat="server" Text="登入" ValidationGroup="Login"
-                        CssClass="btn btn-cyan" OnClick="btnLogin_Click" />
+                        CssClass="btn btn-blue-deep" OnClick="btnLogin_Click" />
 
                 </div>
 
@@ -147,6 +227,7 @@
                     <ContentTemplate>
                         <asp:Panel runat="server" ID="pnlRegister">
                             <div class="modal-header">
+                                <h2 class="modal-title fs-5" id="applyAccountModalLabel">申請帳號</h2>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                                     <i class="fa-solid fa-circle-xmark"></i>
                                 </button>
@@ -154,12 +235,14 @@
                             <div class="modal-body">
                                 <!-- 系統選擇 -->
                                 <div class="bg-light-green d-flex align-items-start  align-items-lg-center gap-1 gap-lg-5 p-4 rounded-1 mb-3 flex-column flex-lg-row">
-                                    <span class="fs-20 text-blue-green fw-bold lh-base text-nowrap">欲申請帳號之系統</span>
-                                    <asp:CheckBoxList ID="cblRegSystems" runat="server"
+                                    <span class="fs-20 text-cyan fw-bold lh-base text-nowrap">欲申請帳號之系統</span>
+                                    <asp:CheckBoxList runat="server" ID="cblRegSystems"
                                         CssClass="form-check-input-group"
                                         Style="--grid-columns: 1;"
                                         RepeatDirection="Horizontal"
-                                        RepeatLayout="Flow">
+                                        RepeatLayout="Flow"
+                                        title="欲申請帳號之系統"
+                                        aria-label="欲申請帳號之系統">
                                     </asp:CheckBoxList>
                                 </div>
 
@@ -176,6 +259,8 @@
                                                         RepeatDirection="Horizontal"
                                                         RepeatLayout="Flow"
                                                         CssClass="form-check-input-group"
+                                                        title="單位類別"
+                                                        aria-label="單位類別"
                                                         AutoPostBack="true"
                                                         OnSelectedIndexChanged="rblRegUnitType_SelectedIndexChanged">
                                                     </asp:RadioButtonList>
@@ -188,12 +273,14 @@
                                                     <asp:DropDownList
                                                         ID="ddlRegUnits" runat="server"
                                                         CssClass="form-select"
+                                                        title="單位名稱"
                                                         AutoPostBack="true"
                                                         OnSelectedIndexChanged="ddlRegUnits_SelectedIndexChanged" />
                                                     <asp:TextBox
                                                         ID="txtOtherGovUnit" runat="server"
                                                         CssClass="form-control"
                                                         Placeholder="請輸入其他單位名稱"
+                                                        title="其他單位名稱"
                                                         Visible="false" />
                                                     <asp:RequiredFieldValidator
                                                         ID="rfvOtherGovUnit" runat="server"
@@ -212,7 +299,7 @@
                                                     <asp:TextBox
                                                         ID="txtOtherUnit" runat="server"
                                                         CssClass="form-control"
-                                                        Placeholder="請輸入單位名稱" />
+                                                        Placeholder="請輸入單位名稱" title="單位名稱" />
                                                     <asp:RequiredFieldValidator
                                                         ID="rfvOtherUnit" runat="server"
                                                         ControlToValidate="txtOtherUnit"
@@ -232,7 +319,7 @@
                                                     <div class="verification-code">
                                                         <asp:TextBox ID="txtRegEmail" runat="server"
                                                             CssClass="form-control" TextMode="Email"
-                                                            Placeholder="以電子郵件作為帳號" />
+                                                            Placeholder="以電子郵件作為帳號" title="帳號" />
                                                         <button
                                                             id="btnSendCode"
                                                             runat="server"
@@ -270,7 +357,7 @@
                                                 <td>
                                                     <asp:TextBox ID="txtRegCode" runat="server"
                                                         CssClass="form-control"
-                                                        placeholder="請輸入驗證碼" />
+                                                        placeholder="請輸入驗證碼" title="驗證碼" />
                                                     <asp:RequiredFieldValidator ID="rfvRegCode" runat="server"
                                                         ControlToValidate="txtRegCode"
                                                         ErrorMessage="請輸入驗證碼"
@@ -292,7 +379,7 @@
                                                 </th>
                                                 <td>
                                                     <asp:TextBox ID="txtRegName" runat="server"
-                                                        CssClass="form-control" Placeholder="請輸入中文姓名" />
+                                                        CssClass="form-control" Placeholder="請輸入中文姓名" title="中文姓名" />
                                                     <asp:RequiredFieldValidator runat="server"
                                                         ControlToValidate="txtRegName"
                                                         ErrorMessage="請輸入姓名"
@@ -307,7 +394,7 @@
                                                 </th>
                                                 <td>
                                                     <asp:TextBox ID="txtRegTel" runat="server" TextMode="Phone"
-                                                        CssClass="form-control" Placeholder="請輸入電話號碼或手機" />
+                                                        CssClass="form-control" Placeholder="請輸入電話號碼或手機" title="電話號碼或手機" />
                                                     <asp:RequiredFieldValidator runat="server"
                                                         ControlToValidate="txtRegTel"
                                                         ErrorMessage="請輸入電話"
@@ -334,13 +421,14 @@
     </div>
 
     <!-- ===== 忘記密碼 Modal ===== -->
-    <div class="modal fade" id="forgotModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+    <div class="modal fade" id="forgotModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="forgotPasswordModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <asp:UpdatePanel ID="UpdatePanel2" runat="server" UpdateMode="Always">
                     <ContentTemplate>
                         <asp:Panel runat="server" ID="pnlForgot">
                             <div class="modal-header">
+                                <h2 class="modal-title fs-5" id="forgotPasswordModalLabel">忘記密碼</h2>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                                     <i class="fa-solid fa-circle-xmark"></i>
                                 </button>
@@ -360,7 +448,7 @@
                                                 </th>
                                                 <td>
                                                     <asp:TextBox ID="txtForgotEmail" runat="server"
-                                                        CssClass="form-control" Placeholder="請輸入帳號(電子郵件)" />
+                                                        CssClass="form-control" Placeholder="請輸入帳號(電子郵件)" title="帳號(電子郵件)" />
                                                     <asp:RequiredFieldValidator runat="server"
                                                         ControlToValidate="txtForgotEmail"
                                                         ErrorMessage="請輸入帳號"
@@ -402,13 +490,14 @@
     </div>
 
     <!-- ===== 設定or重設密碼 Modal ===== -->
-    <div class="modal fade" id="resetModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="forgetPasswordModalLabel" aria-hidden="true">
+    <div class="modal fade" id="resetModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <asp:UpdatePanel ID="upResetModal" runat="server" UpdateMode="Always">
                     <ContentTemplate>
                         <asp:Panel runat="server" ID="pnlResetForm">
                             <div class="modal-header">
+                                <h2 class="modal-title fs-5" id="resetPasswordModalLabel">重設密碼</h2>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                                     <i class="fa-solid fa-circle-xmark"></i>
                                 </button>
@@ -431,7 +520,7 @@
                                                 <td>
                                                     <asp:TextBox ID="txtResetPwd" runat="server"
                                                         CssClass="form-control" TextMode="Password"
-                                                        Placeholder="請輸入新密碼" />
+                                                        Placeholder="請輸入新密碼" title="新密碼" />
                                                     <asp:RequiredFieldValidator runat="server"
                                                         ControlToValidate="txtResetPwd"
                                                         ErrorMessage="請輸入新密碼"
@@ -446,7 +535,7 @@
                                                 <td>
                                                     <asp:TextBox ID="txtResetPwdConfirm" runat="server"
                                                         CssClass="form-control" TextMode="Password"
-                                                        Placeholder="請輸入新密碼確認" />
+                                                        Placeholder="請輸入新密碼確認" title="新密碼確認" />
                                                     <asp:RequiredFieldValidator runat="server"
                                                         ControlToValidate="txtResetPwdConfirm"
                                                         ErrorMessage="請再次輸入新密碼"
@@ -478,6 +567,46 @@
                         </asp:Panel>
                     </ContentTemplate>
                 </asp:UpdatePanel>
+            </div>
+        </div>
+    </div>
+
+    <!--  modal 網站導覽 -->
+    <div class="modal fade" id="siteNavigationModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="siteNavigationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+
+                    <h2 class="fs-24 fw-bold mb-4">網站導覽</h2>
+                    <ul>
+                        <li class="mb-4 lh-lg">本網站主要內容分為一大區塊：
+                            <ul>
+                                <li>1. 主要內容區</li>
+                            </ul>
+                        </li>
+                        <li class="mb-5 lh-lg">本網站之快速鍵﹝Accesskey﹞設定如下：
+                            <ul>
+                                <li>1. Alt+C：主要內容區。</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <div class="row row-cols-2">
+                        <div class="col">
+                            <div class="rounded-2 bg-gray text-center p-3">海洋科學調查活動填報系統</div>
+                        </div>
+                        <div class="col">
+                            <div class="rounded-2 bg-gray text-center p-3">海洋領域補助計畫管理資訊系統</div>
+                        </div>
+                    </div>
+
+                </div>
+
             </div>
         </div>
     </div>
@@ -540,6 +669,74 @@
             img.src = url + '?r=' + Math.random();
             img.removeAttribute("disabled");
             btn.removeAttribute("disabled");
+        }
+
+        // 驗證碼語音播放功能 - 使用 Web Speech API
+        function playCaptchaAudio() {
+            // 檢查是否已載入驗證碼圖片
+            var img = document.getElementById("imgValidate");
+            if (!img || !img.src || img.src.indexOf('loading.gif') > -1) {
+                alert('請等待驗證碼圖片載入完成後再播放語音');
+                return;
+            }
+
+            // 檢查瀏覽器是否支援 Web Speech API
+            if ('speechSynthesis' in window) {
+                var url = '<%= ResolveUrl("~/Service/CaptchaAudio.ashx") %>';
+
+                // 發送 AJAX 請求取得驗證碼文字
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data.success && data.text) {
+                            // 使用 Web Speech API 播放語音
+                            var utterance = new SpeechSynthesisUtterance(data.text);
+                            utterance.rate = 0.6; // 較慢的語速
+                            utterance.pitch = 1;
+                            utterance.volume = 1;
+                            utterance.lang = 'zh-TW'; // 設定為繁體中文
+
+                            // 等待聲音清單載入完成
+                            if (speechSynthesis.getVoices().length === 0) {
+                                speechSynthesis.addEventListener('voiceschanged', function () {
+                                    var voices = speechSynthesis.getVoices();
+                                    for (var i = 0; i < voices.length; i++) {
+                                        if (voices[i].lang === 'zh-TW' || voices[i].lang.indexOf('zh') === 0) {
+                                            utterance.voice = voices[i];
+                                            break;
+                                        }
+                                    }
+                                    speechSynthesis.speak(utterance);
+                                }, { once: true });
+                            } else {
+                                // 嘗試使用中文聲音
+                                var voices = speechSynthesis.getVoices();
+                                for (var i = 0; i < voices.length; i++) {
+                                    if (voices[i].lang === 'zh-TW' || voices[i].lang.indexOf('zh') === 0) {
+                                        utterance.voice = voices[i];
+                                        break;
+                                    }
+                                }
+                                speechSynthesis.speak(utterance);
+                            }
+                        } else {
+                            alert('無法取得驗證碼語音：' + (data.error || '未知錯誤'));
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error fetching captcha audio:', error);
+                        if (xhr.status === 404) {
+                            alert('驗證碼尚未生成，請重新整理頁面後再試');
+                        } else {
+                            alert('無法播放驗證碼語音，請確認網路連線正常');
+                        }
+                    }
+                });
+            } else {
+                alert('您的瀏覽器不支援語音播放功能，請使用較新版本的瀏覽器');
+            }
         }
 
     </script>

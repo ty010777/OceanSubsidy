@@ -20,7 +20,7 @@ public partial class OSI_VesselRiskManage : System.Web.UI.UserControl
                 ?? new SessionHelper.UserInfoClass();
         set => SessionHelper.Set(SessionHelper.UserInfo, value);
     }
-    
+
     protected void Page_Load(object sender, EventArgs e)
     {
         if (!IsPostBack)
@@ -38,10 +38,10 @@ public partial class OSI_VesselRiskManage : System.Web.UI.UserControl
 
         // 取得資料庫中的年份範圍
         var yearData = OSIVesselRiskAssessmentsHelper.GetAllYears();
-        
+
         int minYear = DateTime.Now.Year;
         int maxYear = DateTime.Now.Year;
-        
+
         if (yearData != null && yearData.Rows.Count > 0)
         {
             var row = yearData.Rows[0];
@@ -50,11 +50,10 @@ public partial class OSI_VesselRiskManage : System.Web.UI.UserControl
             if (row["MaxYear"] != DBNull.Value)
                 maxYear = Convert.ToInt32(row["MaxYear"]);
         }
-        
+
         // 轉換為民國年
         int minYearROC = DateTimeHelper.GregorianYearToMinguo(minYear);
         int maxYearROC = DateTimeHelper.GregorianYearToMinguo(maxYear);
-        int currentYearROC = DateTimeHelper.GregorianYearToMinguo(DateTime.Now.Year);
 
         // 建立年份選項（兩個下拉選單初始時有相同的選項）
         for (int year = minYearROC; year <= maxYearROC; year++)
@@ -67,18 +66,8 @@ public partial class OSI_VesselRiskManage : System.Web.UI.UserControl
         // 設定預設值
         if (ddlStartYear.Items.Count > 0)
         {
-            // 如果今年在範圍內，預設選擇今年
-            if (ddlStartYear.Items.FindByValue(currentYearROC.ToString()) != null)
-            {
-                ddlStartYear.SelectedValue = currentYearROC.ToString();
-                ddlEndYear.SelectedValue = currentYearROC.ToString();
-            }
-            else
-            {
-                // 否則選擇第一個選項
-                ddlStartYear.SelectedIndex = 0;
-                ddlEndYear.SelectedIndex = 0;
-            }
+            ddlStartYear.SelectedValue = minYearROC.ToString();
+            ddlEndYear.SelectedValue = maxYearROC.ToString();
         }
     }
 
@@ -100,7 +89,7 @@ public partial class OSI_VesselRiskManage : System.Web.UI.UserControl
 
         // 重新綁定結束年度下拉選單，只顯示 >= 起始年度的選項
         ddlEndYear.Items.Clear();
-        
+
         foreach (ListItem item in allItems)
         {
             int year = item.Value.toInt();
@@ -114,7 +103,7 @@ public partial class OSI_VesselRiskManage : System.Web.UI.UserControl
         if (ddlEndYear.Items.Count > 0)
         {
             // 如果原本的選擇仍在範圍內，保持選擇
-            if (!string.IsNullOrEmpty(currentEndValue) && 
+            if (!string.IsNullOrEmpty(currentEndValue) &&
                 ddlEndYear.Items.FindByValue(currentEndValue) != null)
             {
                 ddlEndYear.SelectedValue = currentEndValue;
@@ -140,11 +129,11 @@ public partial class OSI_VesselRiskManage : System.Web.UI.UserControl
     private void BindVesselRiskData()
     {
         var tbl = OSIVesselRiskAssessmentsHelper.QueryWithFilter(
-            ddlStartYear.SelectedValue.toInt(), 
+            ddlStartYear.SelectedValue.toInt(),
             ddlEndYear.SelectedValue.toInt(),
             txtKeySearch.Text.Trim()
         );
-        
+
         lvVesselRisk.DataSource = tbl;
         lvVesselRisk.DataBind();
     }
@@ -156,7 +145,7 @@ public partial class OSI_VesselRiskManage : System.Web.UI.UserControl
         var dataItem = (ListViewDataItem)e.Item;
         var drv = (DataRowView)dataItem.DataItem;
         var litProjectType = (Literal)dataItem.FindControl("litProjectType");
-        
+
         // 設定計畫類別
         if (litProjectType != null && drv["AssessmentId"] != DBNull.Value)
         {
@@ -226,15 +215,15 @@ public partial class OSI_VesselRiskManage : System.Web.UI.UserControl
         {
             // 取得要刪除的 ID
             int assessmentId = hfDeleteID.Value.toInt();
-            
+
             // 取得目前登入使用者的 ID
             int userId = UserInfo.UserID.toInt();
-            
+
             // 執行假刪除
             bool success = OSIVesselRiskAssessmentsHelper.SoftDelete(assessmentId, userId);
-            
+
             string modalId = deleteModal.ClientID;
-            
+
             if (success)
             {
                 // 刪除成功，關閉 Modal 並重新載入資料
@@ -246,7 +235,7 @@ public partial class OSI_VesselRiskManage : System.Web.UI.UserControl
                     script,
                     true
                 );
-                
+
                 // 重新綁定資料
                 BindVesselRiskData();
             }
