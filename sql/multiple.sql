@@ -48,6 +48,7 @@ CREATE TABLE [OFS_MUL_Project] (
     [UserAccount]        VARCHAR(30)         NULL,
     [UserName]           NVARCHAR(30)        NULL,
     [UserOrg]            NVARCHAR(30)        NULL,
+    [IsProjChanged]      BIT             NOT NULL, -- 是否計畫變更中
     [IsWithdrawal]       BIT             NOT NULL, -- 是否撤銷
     [IsExists]           BIT             NOT NULL, -- 是否有效
     [CreateTime]         DATETIME        NOT NULL,

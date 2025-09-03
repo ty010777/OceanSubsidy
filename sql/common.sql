@@ -1,5 +1,16 @@
 
 
+CREATE TABLE [OFS_Base_File] (
+    [ID]         INT PRIMARY KEY IDENTITY,
+    [Name]       NVARCHAR(200)   NOT NULL,
+    [Path]       NVARCHAR(1000)  NOT NULL,
+    [Size]       BIGINT          NOT NULL,
+    [Type]       VARCHAR(100)        NULL,
+    [CreateTime] DATETIME        NOT NULL,
+    [CreateUser] VARCHAR(50)     NOT NULL
+)
+
+
 -- 快照
 
 CREATE TABLE [OFS_Snapshot] (

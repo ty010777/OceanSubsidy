@@ -3,7 +3,7 @@ let current = Date.now();
 export const isProjectEditable = (type, status, step) => {
     const store = useProgressStore();
 
-    if ([1, 3].includes(store[type].status)) { //申請中,退回補正
+    if ([1, 14].includes(store[type].status)) { //編輯中,補正補件
         return true;
     }
 
@@ -11,7 +11,7 @@ export const isProjectEditable = (type, status, step) => {
         return true;
     }
 
-    if (store[type].status === 10) { //修正計畫書
+    if (store[type].status === 42) { //計畫書修正中
         switch (type) {
             case "culture":
                 if ([2, 3, 5].includes(step)) {

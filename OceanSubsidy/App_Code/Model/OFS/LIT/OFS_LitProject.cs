@@ -97,6 +97,9 @@ public class OFS_LitProject
     public string UserName { get; set; }
     public string UserOrg { get; set; }
 
+    // 是否計畫變更中
+    public bool IsProjChanged { get; set; }
+
     // 是否撤銷
     public bool IsWithdrawal { get; set; }
 

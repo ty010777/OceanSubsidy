@@ -1,17 +1,5 @@
 
 
-CREATE TABLE [OFS_Base_File] (
-    [ID]         INT PRIMARY KEY IDENTITY,
-    [Name]       NVARCHAR(200)   NOT NULL,
-    [Path]       NVARCHAR(1000)  NOT NULL,
-    [Size]       BIGINT          NOT NULL,
-    [Type]       VARCHAR(100)        NULL,
-    [CreateTime] DATETIME        NOT NULL,
-    [CreateUser] VARCHAR(50)     NOT NULL
-)
-GO
-
-
 INSERT INTO [Sys_ZgsCode] ([CodeGroup], [Code], [Descname], [OrderNo], [IsValid], [ParentCode])
                    VALUES ('CULField', '10', '薪傳',           1, 1, ''),
                           ('CULField', '11', '航海智慧轉譯類', 1, 1, '10'),
@@ -67,6 +55,7 @@ CREATE TABLE [OFS_CUL_Project] (
     [UserAccount]        VARCHAR(30)         NULL,
     [UserName]           NVARCHAR(30)        NULL,
     [UserOrg]            NVARCHAR(30)        NULL,
+    [IsProjChanged]      BIT             NOT NULL, -- 是否計畫變更中
     [IsWithdrawal]       BIT             NOT NULL, -- 是否撤銷
     [IsExists]           BIT             NOT NULL, -- 是否有效
     [CreateTime]         DATETIME        NOT NULL,
