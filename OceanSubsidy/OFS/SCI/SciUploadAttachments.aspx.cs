@@ -32,7 +32,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
         string action = Request.QueryString["action"];
         if (!string.IsNullOrEmpty(action))
         {
-            string projectId = Request.Form["projectId"] ?? Session["ProjectID"]?.ToString() ?? CurrentProjectID;
+            string projectId = Request.QueryString["ProjectID"] ?? Session["ProjectID"]?.ToString() ?? CurrentProjectID;
             string fileCode = Request.QueryString["fileCode"];
             
             switch (action)
@@ -501,7 +501,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
             {
                 case "FILE_OTech1":
                     filePath = Server.MapPath("~/Template/SCI/OTech/附件-01海洋委員會海洋科技專案補助作業要點.docx");
-                    ApplyProjectDataToWord_FILE_OTech1();
+                    filePath = ApplyProjectDataToWord_FILE_OTech1(filePath, projectId);
                     break;
                 case "FILE_OTech2":
                     filePath = Server.MapPath("~/Template/SCI/OTech/附件-02海洋科技科專案計畫書.zip");
@@ -511,6 +511,8 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
                     break;
                 case "FILE_OTech4":
                     filePath = Server.MapPath("~/Template/SCI/OTech/附件-04未違反公職人員利益衝突迴避法切結書.docx");
+                    filePath = ApplyProjectDataToWord_FILE_OTech4(filePath, projectId);
+                    
                     break;
                 case "FILE_OTech5":
                     filePath = Server.MapPath("~/Template/SCI/OTech/附件-05蒐集個人資料告知事項暨個人資料提供同意書.docx");
@@ -537,7 +539,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
                 // 學研範本檔案對應
                 case "FILE_AC1":
                     filePath = Server.MapPath("~/Template/SCI/Academic/附件-01海洋委員會海洋科技專案補助作業要點.docx");
-                    filePath = ApplyProjectDataToWord_FILE_AC1(filePath);
+                    filePath = ApplyProjectDataToWord_FILE_AC1(filePath, projectId);
                     break;
                 case "FILE_AC2":
                     filePath = Server.MapPath("~/Template/SCI/Academic/附件-02海洋科技科專案計畫書.zip");
@@ -625,6 +627,8 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
                 Response.BinaryWrite(fileData);
                 Response.Flush();
                 Response.End();
+                
+                
             }
             else
             {
@@ -641,11 +645,12 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
         }
     }
 
-    private void ApplyProjectDataToWord_FILE_OTech1()
-    {
-        
-    }
-    private string ApplyProjectDataToWord_FILE_AC1(string originalFilePath)
+    #region  海洋委員會海洋科技專案補助作業要點
+
+    
+
+  
+    private string ApplyProjectDataToWord_FILE_OTech1(string originalFilePath, string projectId)
     {
         try
         {
@@ -662,18 +667,28 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
             File.Copy(originalFilePath, tempFilePath, true);
             
             // 使用 OpenXmlHelper 處理 Word 文件
-            using (var openXmlHelper = new OpenXmlHelper(tempFilePath))
+            using (var fs = new FileStream(tempFilePath, FileMode.Open, FileAccess.ReadWrite))
             {
-                // 取得當前年月
-                DateTime currentDate = DateTime.Now;
-                string year = currentDate.Year.ToString();
-                string month = currentDate.Month.ToString();
                 
-                // 替換書籤內容
-                openXmlHelper.ChangeBookmarkValue("year", year);
-                openXmlHelper.ChangeBookmarkValue("month", month);
+                var helper = new OpenXmlHelper(fs);
+                // 取得當前年月日 (參考 DownloadTemplateCUL 的實作)
+                DateTime currentDate = DateTime.Now;
+                int year = currentDate.Year - 1911;  // 民國年
+                int month = currentDate.Month;
+                    
+                // 建立替換字典
+                var placeholder = new Dictionary<string, string>();
+                placeholder.Add("{{Year}}", year.ToString());
+                placeholder.Add("{{Month}}", month.ToString());
+    
+                    
+                var repeatData = new List<Dictionary<string, string>>();
+                    
+                // 使用 GenerateWord 方法替換佔位符
+                helper.GenerateWord(placeholder, repeatData);
+                helper.CloseAsSave();
+                
             }
-            
             // 回傳處理後的檔案路徑
             return tempFilePath;
         }
@@ -684,7 +699,120 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
             return originalFilePath;
         }
     }
-    
+    private string ApplyProjectDataToWord_FILE_AC1(string originalFilePath, string projectId)
+    {
+        try
+        {
+            if (!File.Exists(originalFilePath))
+            {
+                return originalFilePath; // 如果原檔案不存在，返回原路徑
+            }
+
+            // 建立暫存檔案路徑，保持原檔名
+            string originalFileName = Path.GetFileName(originalFilePath);
+            string tempFilePath = Path.Combine(Path.GetTempPath(), originalFileName);
+            
+            // 複製範本檔案到暫存資料夾
+            File.Copy(originalFilePath, tempFilePath, true);
+            
+            // 使用 OpenXmlHelper 處理 Word 文件
+            using (var fs = new FileStream(tempFilePath, FileMode.Open, FileAccess.ReadWrite))
+            {
+                
+                    var helper = new OpenXmlHelper(fs);
+                    // 取得當前年月日 (參考 DownloadTemplateCUL 的實作)
+                    DateTime currentDate = DateTime.Now;
+                    int year = currentDate.Year - 1911;  // 民國年
+                    int month = currentDate.Month;
+                    
+                    // 建立替換字典
+                    var placeholder = new Dictionary<string, string>();
+                    placeholder.Add("{{Year}}", year.ToString());
+                    placeholder.Add("{{Month}}", month.ToString());
+                    var repeatData = new List<Dictionary<string, string>>();
+                    
+                    // 使用 GenerateWord 方法替換佔位符
+                    helper.GenerateWord(placeholder, repeatData);
+                    helper.CloseAsSave();
+                
+            }
+            // 回傳處理後的檔案路徑
+            return tempFilePath;
+        }
+        catch (Exception ex)
+        {
+            // 如果處理失敗，記錄錯誤並返回原檔案路徑
+            System.Diagnostics.Debug.WriteLine($"ApplyProjectDataToWord_FILE_AC1 Error: {ex.Message}");
+            return originalFilePath;
+        }
+    }
+    #endregion
+
+    #region 未違反公職人員利益衝突迴避法切結書
+
+    private string ApplyProjectDataToWord_FILE_OTech4(string originalFilePath, string projectId)
+    {
+        try
+        {
+            // 除錯：記錄 ProjectID
+            System.Diagnostics.Debug.WriteLine($"ApplyProjectDataToWord_FILE_OTech4 - ProjectID: {projectId}");
+            
+            if (!File.Exists(originalFilePath))
+            {
+                return originalFilePath; // 如果原檔案不存在，返回原路徑
+            }
+
+            // 建立暫存檔案路徑，保持原檔名
+            string originalFileName = Path.GetFileName(originalFilePath);
+            string tempFilePath = Path.Combine(Path.GetTempPath(), originalFileName);
+            
+            // 複製範本檔案到暫存資料夾
+            File.Copy(originalFilePath, tempFilePath, true);
+            
+            // 使用 OpenXmlHelper 處理 Word 文件
+            using (var fs = new FileStream(tempFilePath, FileMode.Open, FileAccess.ReadWrite))
+            {
+                var helper = new OpenXmlHelper(fs);
+                
+                // 取得當前年月日 (參考 DownloadTemplateCUL 的實作)
+                DateTime currentDate = DateTime.Now;
+                int year = currentDate.Year - 1911;  // 民國年
+                int month = currentDate.Month;
+                int day = currentDate.Day;
+                
+                // 從資料庫取得申請主檔資料
+                var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectId);
+                
+                // 建立替換字典
+                var placeholder = new Dictionary<string, string>();
+                placeholder.Add("year", year.ToString());
+                placeholder.Add("month", month.ToString());
+                placeholder.Add("day", day.ToString());
+                
+                // 加入申請資料
+                placeholder.Add("{{A3}}", applicationMain.ProjectNameTw ?? "");
+                placeholder.Add("{{A9}}", applicationMain.OrgName ?? "");
+        
+                
+                var repeatData = new List<Dictionary<string, string>>();
+                    
+                // 使用 GenerateWord 方法替換佔位符
+                helper.GenerateWord(placeholder, repeatData);
+                helper.CloseAsSave();
+            }
+            // 回傳處理後的檔案路徑
+            return tempFilePath;
+        }
+        catch (Exception ex)
+        {
+            // 如果處理失敗，記錄錯誤並返回原檔案路徑
+            System.Diagnostics.Debug.WriteLine($"ApplyProjectDataToWord_FILE_AC1 Error: {ex.Message}");
+            return originalFilePath;
+        }
+        
+    }
+
+    #endregion 
     /// <summary>
     /// 處理已上傳檔案的下載
     /// </summary>

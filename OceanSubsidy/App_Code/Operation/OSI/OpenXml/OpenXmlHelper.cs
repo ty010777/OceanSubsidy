@@ -235,7 +235,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
         public void GenerateWord(Dictionary<string, string> replacements, List<Dictionary<string, string>> repeatData)
         {
             var body = Word.MainDocumentPart.Document.Body;
-
+            
             // 1. 替換單一值
             foreach (var text in body.Descendants<Text>())
             {

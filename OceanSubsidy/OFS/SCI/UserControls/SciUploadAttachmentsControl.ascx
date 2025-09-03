@@ -594,7 +594,7 @@ window.SciUploadAttachments = {
     // 下載範本檔案
     downloadTemplate: function(fileCode) {
         console.log('downloadTemplate called with fileCode:', fileCode);
-        var url = 'SciUploadAttachments.aspx?action=downloadTemplate&fileCode=' + encodeURIComponent(fileCode);
+        var url = 'SciUploadAttachments.aspx?action=downloadTemplate&fileCode=' + encodeURIComponent(fileCode) + '&ProjectID=' + encodeURIComponent('<%= GetProjectId() %>');
         console.log('Download URL:', url);
         window.location.href = url;
     },
