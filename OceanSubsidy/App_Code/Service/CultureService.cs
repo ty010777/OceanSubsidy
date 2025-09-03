@@ -25,11 +25,64 @@ public class CultureService : BaseService
         return new {};
     }
 
+    public object createGoal(JObject param, HttpContext context)
+    {
+        var id = getID(param["ID"].ToString());
+
+        getProject(id, new int[] {1,3,10,13}, new int[] {2}); //申請中,退回補正,修正計畫書 | 變更申請
+
+        var goal = new OFS_CulGoal
+        {
+            PID = id
+        };
+
+        OFS_CulGoalHelper.insert(goal);
+
+        return goal;
+    }
+
+    public object createGoalItem(JObject param, HttpContext context)
+    {
+        var id = getID(param["ID"].ToString());
+
+        getProject(id, new int[] {1,3,10,13}, new int[] {2}); //申請中,退回補正,修正計畫書 | 變更申請
+
+        var item = new OFS_CulGoalItem
+        {
+            PID = id,
+            GoalID = int.Parse(param["GoalID"].ToString())
+        };
+
+        OFS_CulGoalItemHelper.insert(item);
+
+        return item;
+    }
+
+    public object createGoalSchedule(JObject param, HttpContext context)
+    {
+        var id = getID(param["ID"].ToString());
+
+        getProject(id, new int[] {1,3,10,13}, new int[] {2}); //申請中,退回補正,修正計畫書 | 變更申請
+
+        var schedule = new OFS_CulGoalSchedule
+        {
+            PID = id,
+            ItemID = int.Parse(param["ItemID"].ToString()),
+            Type = int.Parse(param["Type"].ToString()),
+            Month = 0,
+            StepID = 0
+        };
+
+        OFS_CulGoalScheduleHelper.insert(schedule);
+
+        return schedule;
+    }
+
     public object createGoalStep(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
 
-        getProject(id, new int[] {1,3,10}); //申請中,退回補正,修正計畫書
+        getProject(id, new int[] {1,3,10,13}, new int[] {2}); //申請中,退回補正,修正計畫書 | 變更申請
 
         var step = new OFS_CulGoalStep
         {

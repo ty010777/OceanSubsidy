@@ -200,26 +200,30 @@
     const info = ref({});
 
     const addGoal = () => {
-        const goal = { Items: [] };
+        api.culture("createGoal", { ID: props.id }).subscribe((result) => {
+            goals.value.push(Object.assign(result, { Items: [] }));
 
-        addItem(goal);
+            const goal = goals.value[goals.value.length - 1];
 
-        goals.value.push(goal);
+            addItem(goal);
+        });
     };
 
     const addItem = (goal) => {
-        const item = { Steps: [], Schedules: [] };
+        api.culture("createGoalItem", { ID: props.id, GoalID: goal.ID }).subscribe((result) => {
+            goal.Items.push(Object.assign(result, { Steps: [], Schedules: [] }));
 
-        addStep(item);
-        addStep(item);
-        addStep(item);
-        addSchedule(item, 1);
-        addSchedule(item, 2);
+            const item = goal.Items[goal.Items.length - 1];
 
-        goal.Items.push(item);
+            addStep(item);
+            addStep(item);
+            addStep(item);
+            addSchedule(item, 1);
+            addSchedule(item, 2);
+        });
     };
 
-    const addSchedule = (item, type) => item.Schedules.push({ Type: type, Month: 0, StepID: 0 });
+    const addSchedule = (item, type) => api.culture("createGoalSchedule", { ID: props.id, ItemID: item.ID, Type: type }).subscribe((result) => item.Schedules.push(result));
 
     const addStep = (item) => api.culture("createGoalStep", { ID: props.id, ItemID: item.ID }).subscribe((result) => item.Steps.push(result));
 
