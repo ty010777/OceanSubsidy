@@ -37,8 +37,13 @@ import MultipleBenefit from "./components/Multiple/Benefit.vue";
 import MultipleFunding from "./components/Multiple/Funding.vue";
 import MultipleProgressBar from "./components/Multiple/ProgressBar.vue";
 import MultipleWorkSchedule from "./components/Multiple/WorkSchedule.vue";
+import ProjectChangeReview from "./components/ProjectChangeReview.vue";
+import ProjectCorrectionReview from "./components/ProjectCorrectionReview.vue";
 import ProjectOrganizer from "./components/ProjectOrganizer.vue";
+import ProjectProgress from "./components/ProjectProgress.vue";
 import ProjectReview from "./components/ProjectReview.vue";
+import ProjectTitle from "./components/ProjectTitle.vue";
+import ProjectToolbar from "./components/ProjectToolbar.vue";
 import RequiredLabel from "./components/RequiredLabel.vue";
 import TwDate from "./components/TwDate.vue";
 import { useProgressStore } from "./stores/progress";
@@ -83,8 +88,13 @@ const components = {
     MultipleFunding,
     MultipleProgressBar,
     MultipleWorkSchedule,
+    ProjectChangeReview,
+    ProjectCorrectionReview,
     ProjectOrganizer,
+    ProjectProgress,
     ProjectReview,
+    ProjectTitle,
+    ProjectToolbar,
     RequiredLabel,
     TwDate
 };

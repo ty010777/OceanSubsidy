@@ -147,6 +147,27 @@
                 <button class="btn btn-teal mt-3" @click="addItem(goal)" type="button" v-if="editable">新增工作項目</button>
             </div>
         </div>
+        <template v-if="changeForm">
+            <h5 class="square-title mt-5">變更說明</h5>
+            <div class="mt-4">
+                <table class="table align-middle gray-table side-table">
+                    <tbody>
+                        <tr>
+                            <th><required-label>變更前</required-label></th>
+                            <td>
+                                <input-textarea :error="errors.Form2Before" rows="4" v-model.trim="changeForm.Form2Before"></input-textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><required-label>變更後</required-label></th>
+                            <td>
+                                <input-textarea :error="errors.Form2After" rows="4" v-model.trim="changeForm.Form2After"></input-textarea>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </template>
     </div>
     <div class="block-bottom bg-light-teal" v-if="editable">
         <button class="btn btn-outline-teal me-3" @click="save()" type="button">暫存</button>
@@ -166,9 +187,10 @@
 
 <script setup>
     const props = defineProps({
-        id: { type: Number }
+        id: { type: [Number, String] }
     });
 
+    const changeForm = ref();
     const editable = computed(() => isProjectEditable("culture", form.value.Status, 2));
     const end = computed(() => info.value.EndDate);
     const errors = ref({});
@@ -201,6 +223,29 @@
 
     const addStep = (item) => api.culture("createGoalStep", { ID: props.id, ItemID: item.ID }).subscribe((result) => item.Steps.push(result));
 
+    const emit = defineEmits(["next"]);
+
+    const load = () => {
+        rxjs.forkJoin([
+            api.culture("getWorkSchedule", { ID: props.id })
+        ]).subscribe((result) => {
+            const data = result[0];
+
+            form.value = data.Project;
+            goals.value = data.Goals;
+            info.value = data.GrantType;
+
+            if (!goals.value.length) {
+                addGoal();
+            }
+
+            useProgressStore().init("culture", form.value);
+
+            changeForm.value = form.value.changeApply;
+            form.value.changeApply = undefined;
+        });
+    };
+
     const removeGoal = (goal) => goal.Deleted = true;
 
     const removeItem = (item) => item.Deleted = true;
@@ -220,20 +265,22 @@
         const data = {
             Project: form.value,
             Goals: goals.value,
+            Before: changeForm.value?.Form2Before,
+            After: changeForm.value?.Form2After,
             Submit: submit ? "true" : "false"
         };
 
         api.culture("saveWorkSchedule", data).subscribe(() => {
             if (submit) {
-                window.location.href = `Funding.aspx?ID=${props.id}`;
+                emit("next");
             } else {
-                window.location.reload();
+                load();
             }
         });
     };
 
     const verify = () => {
-        const rules = {
+        let rules = {
             StartTime: "計畫期程",
             EndTime: "計畫期程"
         };
@@ -273,26 +320,19 @@
             });
         });
 
+        if (changeForm.value) {
+            rules = {
+                Form2Before: "變更前說明",
+                Form2After: "變更後說明"
+            };
+
+            Object.assign(errors.value, validateData(changeForm.value, rules));
+        }
+
         return !Object.keys(errors.value).length;
     };
 
-    onMounted(() => {
-        rxjs.forkJoin([
-            api.culture("getWorkSchedule", { ID: props.id })
-        ]).subscribe((result) => {
-            const data = result[0];
-
-            form.value = data.Project;
-            goals.value = data.Goals;
-            info.value = data.GrantType;
-
-            if (!goals.value.length) {
-                addGoal();
-            }
-
-            useProgressStore().culture = { step: form.value.FormStep, status: form.value.Status, organizer: form.value.Organizer, organizerName: form.value.OrganizerName };
-        });
-    });
+    onMounted(load);
 
     provide("editable", editable);
 </script>

@@ -50,7 +50,6 @@ public class OFS_LitAttachmentHelper
                   ,[Name]
               FROM [OFS_LIT_Attachment]
              WHERE [PID] = @PID
-          ORDER BY [ID]
         ";
 
         db.Parameters.Add("@PID", pid);

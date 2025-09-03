@@ -59,6 +59,27 @@
             </div>
         </div>
         <button class="btn btn-teal-dark mt-3" @click="add" type="button" v-if="editable"><i class="fas fa-plus"></i>新增計畫目標</button>
+        <template v-if="changeForm">
+            <h5 class="square-title mt-5">變更說明</h5>
+            <div class="mt-4">
+                <table class="table align-middle gray-table side-table">
+                    <tbody>
+                        <tr>
+                            <th><required-label>變更前</required-label></th>
+                            <td>
+                                <input-textarea :error="errors.Form4Before" rows="4" v-model.trim="changeForm.Form4Before"></input-textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><required-label>變更後</required-label></th>
+                            <td>
+                                <input-textarea :error="errors.Form4After" rows="4" v-model.trim="changeForm.Form4After"></input-textarea>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </template>
     </div>
     <div class="block-bottom bg-light-teal" v-if="editable">
         <button class="btn btn-outline-teal me-3" @click="save()" type="button">暫存</button>
@@ -68,9 +89,10 @@
 
 <script setup>
     const props = defineProps({
-        id: { type: Number }
+        id: { type: [Number, String] }
     });
 
+    const changeForm = ref();
     const editable = computed(() => isProjectEditable("culture", project.value.Status, 4));
     const errors = ref({});
     const project = ref({});
@@ -79,6 +101,24 @@
     const filteredProjects = computed(() => projects.value.filter((item) => !item.Deleted));
 
     const add = () => projects.value.push({});
+
+    const emit = defineEmits(["next"]);
+
+    const load = () => {
+        rxjs.forkJoin([
+            api.culture("getRelatedProject", { ID: props.id })
+        ]).subscribe((result) => {
+            const data = result[0];
+
+            project.value = data.Project;
+            projects.value = data.Projects;
+
+            useProgressStore().init("culture", project.value);
+
+            changeForm.value = project.value.changeApply;
+            project.value.changeApply = undefined;
+        });
+    };
 
     const remove = (item) => item.Deleted = true;
 
@@ -93,22 +133,22 @@
         const data = {
             ID: props.id,
             Projects: projects.value,
+            Before: changeForm.value?.Form4Before,
+            After: changeForm.value?.Form4After,
             Submit: submit ? "true" : "false"
         };
 
         api.culture("saveRelatedProject", data).subscribe(() => {
             if (submit) {
-                window.location.href = `Attachment.aspx?ID=${props.id}`;
+                emit("next");
             } else {
-                window.location.reload();
+                load();
             }
         });
     };
 
     const verify = () => {
-        errors.value = {};
-
-        const rules = {
+        let rules = {
             Title: "相關計畫名稱",
             Year: "執行年度",
             OrgName: "執行單位",
@@ -119,21 +159,19 @@
 
         filteredProjects.value.forEach((project, index) => Object.assign(errors.value, validateData(project, rules, `project-${index}-`)));
 
+        if (changeForm.value) {
+            rules = {
+                Form4Before: "變更前說明",
+                Form4After: "變更後說明"
+            };
+
+            Object.assign(errors.value, validateData(changeForm.value, rules));
+        }
+
         return !Object.keys(errors.value).length;
     };
 
-    onMounted(() => {
-        rxjs.forkJoin([
-            api.culture("getRelatedProject", { ID: props.id })
-        ]).subscribe((result) => {
-            const data = result[0];
-
-            project.value = data.Project;
-            projects.value = data.Projects;
-
-            useProgressStore().culture = { step: project.value.FormStep, status: project.value.Status, organizer: project.value.Organizer, organizerName: project.value.OrganizerName };
-        });
-    });
+    onMounted(load);
 
     provide("editable", editable);
 </script>

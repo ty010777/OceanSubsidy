@@ -69,6 +69,9 @@
         }
 
         api[props.type]("reviewApplication", form.value).subscribe((res) => {
+            if (res) {
+                // TODO
+            }
         });
     };
 

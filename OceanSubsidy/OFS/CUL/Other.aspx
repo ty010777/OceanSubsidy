@@ -6,7 +6,18 @@
 
 <asp:Content ContentPlaceHolderID="MainContent" runat="server">
     <div>
-        <culture-progress-bar :id="<%= Request.QueryString["ID"] %>" :step="4"></culture-progress-bar>
-        <culture-other :id="<%= Request.QueryString["ID"] %>"></culture-other>
+        <culture-progress-bar :id="id" :step="4"></culture-progress-bar>
+        <culture-other :id="id" v-on:next="next"></culture-other>
     </div>
+    <script>
+        setupVueApp({
+            setup() {
+                const id = "<%= Request.QueryString["ID"] %>";
+
+                const next = () => window.location.href = `Attachment.aspx?ID=${id}`;
+
+                return { id, next };
+            }
+        });
+    </script>
 </asp:Content>

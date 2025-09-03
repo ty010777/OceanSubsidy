@@ -51,6 +51,27 @@
                 </tbody>
             </table>
         </div>
+        <template v-if="changeForm">
+            <h5 class="square-title mt-5">變更說明</h5>
+            <div class="mt-4">
+                <table class="table align-middle gray-table side-table">
+                    <tbody>
+                        <tr>
+                            <th><required-label>變更前</required-label></th>
+                            <td>
+                                <input-textarea :error="errors.Form5Before" rows="4" v-model.trim="changeForm.Form5Before"></input-textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><required-label>變更後</required-label></th>
+                            <td>
+                                <input-textarea :error="errors.Form5After" rows="4" v-model.trim="changeForm.Form5After"></input-textarea>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </template>
     </div>
     <div class="block-bottom bg-light-teal" v-if="editable">
         <button class="btn btn-outline-teal me-3" @click="save()" type="button">暫存</button>
@@ -60,7 +81,7 @@
 
 <script setup>
     const props = defineProps({
-        id: { type: Number }
+        id: { type: [Number, String] }
     });
 
     const docs = ref([
@@ -71,8 +92,10 @@
         { Type: 5, Title: "其他佐證資料", Comment: "提案計畫倘有結合其他合作單位、團體或相關機關(構)，請提供合作意向書或相關參考文件尤佳，無則免附", Files: [], Multiple: true, Optional: true }
     ]);
 
+    const changeForm = ref();
     const disabled = computed(() => docs.value.some((doc) => !doc.Optional && !doc.Files.filter((file) => !file.Deleted).length));
     const editable = computed(() => isProjectEditable("multiple", project.value.Status, 2));
+    const errors = ref({});
     const project = ref({});
 
     const add = (item, file) => {
@@ -87,24 +110,9 @@
 
     const download = api.download;
 
-    const save = (submit) => {
-        const data = {
-            ID: props.id,
-            Attachments: docs.value.reduce((list, item) => list.concat(item.Files), []),
-            Submit: submit ? "true" : "false"
-        };
+    const emit = defineEmits(["next"]);
 
-        api.multiple("saveAttachment", data).subscribe(() => {
-            if (submit) {
-                // TODO
-                // window.location.href = `Attachment.aspx?ID=${props.id}`;
-            } else {
-                window.location.reload();
-            }
-        });
-    }
-
-    onMounted(() => {
+    const load = () => {
         rxjs.forkJoin([
             api.multiple("getAttachment", { ID: props.id })
         ]).subscribe((result) => {
@@ -113,17 +121,61 @@
             project.value = data.Project;
             docs.value = docs.value.filter((doc) => !doc.Excludes?.includes(project.value.OrgCategory));
 
-            // TODO
-            // docs.value.push({ Type: 6, Title: "著作權授權同意書", Template: "", Files: [] });
+            if (project.value.Status >= 10) {
+                docs.value.push({ Type: 6, Title: "著作權授權同意書", Template: true, Files: [] });
+            }
 
             docs.value.forEach((doc) => {
                 doc.Files = data.Attachments.filter((file) => file.Type === doc.Type);
                 doc.Uploaded = computed(() => doc.Files.filter((file) => !file.Deleted).length);
             });
 
-            useProgressStore().multiple = { step: project.value.FormStep, status: project.value.Status, organizer: project.value.Organizer, organizerName: project.value.OrganizerName };
+            useProgressStore().init("multiple", project.value);
+
+            changeForm.value = project.value.changeApply;
+            project.value.changeApply = undefined;
         });
-    });
+    };
+
+    const save = (submit) => {
+        errors.value = {};
+
+        if (submit && !verify()) {
+            nextTick(() => document.querySelector(".invalid")?.scrollIntoView({ behavior: "smooth", block: "center" }));
+            return;
+        }
+
+        const data = {
+            ID: props.id,
+            Attachments: docs.value.reduce((list, item) => list.concat(item.Files), []),
+            Before: changeForm.value?.Form5Before,
+            After: changeForm.value?.Form5After,
+            Submit: submit ? "true" : "false"
+        };
+
+        api.multiple("saveAttachment", data).subscribe(() => {
+            if (submit) {
+                emit("next");
+            } else {
+                load();
+            }
+        });
+    }
+
+    const verify = () => {
+        if (changeForm.value) {
+            const rules = {
+                Form5Before: "變更前說明",
+                Form5After: "變更後說明"
+            };
+
+            Object.assign(errors.value, validateData(changeForm.value, rules));
+        }
+
+        return !Object.keys(errors.value).length;
+    };
+
+    onMounted(load);
 
     provide("editable", editable);
 </script>

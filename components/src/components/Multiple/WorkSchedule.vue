@@ -105,6 +105,27 @@
                 </tbody>
             </table>
         </div>
+        <template v-if="changeForm">
+            <h5 class="square-title mt-5">變更說明</h5>
+            <div class="mt-4">
+                <table class="table align-middle gray-table side-table">
+                    <tbody>
+                        <tr>
+                            <th><required-label>變更前</required-label></th>
+                            <td>
+                                <input-textarea :error="errors.Form2Before" rows="4" v-model.trim="changeForm.Form2Before"></input-textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><required-label>變更後</required-label></th>
+                            <td>
+                                <input-textarea :error="errors.Form2After" rows="4" v-model.trim="changeForm.Form2After"></input-textarea>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </template>
     </div>
     <div class="block-bottom bg-light-teal" v-if="editable">
         <button class="btn btn-outline-teal me-3" @click="save()" type="button">暫存</button>
@@ -114,7 +135,7 @@
 
 <script setup>
     const props = defineProps({
-        id: { type: Number }
+        id: { type: [Number, String] }
     });
 
     const types = [
@@ -122,6 +143,7 @@
         { value: 2, text: "100%" }
     ];
 
+    const changeForm = ref();
     const end = computed(() => info.value.EndDate);
     const editable = computed(() => isProjectEditable("multiple", form.value.Status, 2));
     const errors = ref({});
@@ -135,6 +157,34 @@
     const addItem = () => api.multiple("createItem", { ID: props.id }).subscribe((result) => items.value.push(result));
 
     const addSchedule = () => schedules.value.push({ Type: 0, ItemID: 0 });
+
+    const emit = defineEmits(["next"]);
+
+    const load = () => {
+        rxjs.forkJoin([
+            api.multiple("getWorkSchedule", { ID: props.id })
+        ]).subscribe((result) => {
+            const data = result[0];
+
+            form.value = data.Project;
+            info.value = data.GrantType;
+            items.value = data.Items;
+            schedules.value = data.Schedules;
+
+            if (!items.value.length) {
+                addItem();
+            }
+
+            if (!schedules.value.length) {
+                addSchedule();
+            }
+
+            useProgressStore().init("multiple", form.value);
+
+            changeForm.value = form.value.changeApply;
+            form.value.changeApply = undefined;
+        });
+    };
 
     const remove = (item) => item.Deleted = true;
 
@@ -150,14 +200,16 @@
             Project: form.value,
             Items: items.value,
             Schedules: schedules.value,
+            Before: changeForm.value?.Form2Before,
+            After: changeForm.value?.Form2After,
             Submit: submit ? "true" : "false"
         };
 
         api.multiple("saveWorkSchedule", data).subscribe(() => {
             if (submit) {
-                window.location.href = `Funding.aspx?ID=${props.id}`;
+                emit("next");
             } else {
-                window.location.reload();
+                load();
             }
         });
     };
@@ -189,31 +241,19 @@
 
         filteredSchedules.value.forEach((schedule, idx) => Object.assign(errors.value, validateData(schedule, rules, `schedule-${idx}-`)));
 
+        if (changeForm.value) {
+            rules = {
+                Form2Before: "變更前說明",
+                Form2After: "變更後說明"
+            };
+
+            Object.assign(errors.value, validateData(changeForm.value, rules));
+        }
+
         return !Object.keys(errors.value).length;
     };
 
-    onMounted(() => {
-        rxjs.forkJoin([
-            api.multiple("getWorkSchedule", { ID: props.id })
-        ]).subscribe((result) => {
-            const data = result[0];
-
-            form.value = data.Project;
-            info.value = data.GrantType;
-            items.value = data.Items;
-            schedules.value = data.Schedules;
-
-            if (!items.value.length) {
-                addItem();
-            }
-
-            if (!schedules.value.length) {
-                addSchedule();
-            }
-
-            useProgressStore().multiple = { step: form.value.FormStep, status: form.value.Status, organizer: form.value.Organizer, organizerName: form.value.OrganizerName };
-        });
-    });
+    onMounted(load);
 
     provide("editable", editable);
 </script>

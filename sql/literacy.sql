@@ -28,15 +28,20 @@ CREATE TABLE [OFS_LIT_Project] (
     [ApplyAmount]        INT                 NULL, -- 申請海委會補助／合作金額
     [SelfAmount]         INT                 NULL, -- 申請單位自籌款
     [OtherAmount]        INT                 NULL, -- 其他機關補助／合作總金額
+    [ApprovedAmount]     INT                 NULL, -- 核定金額
+    [RecoveryAmount]     INT                 NULL, -- 追回金額
     [Benefit]            NVARCHAR(600)       NULL, -- 不可量化成果
     [FormStep]           INT             NOT NULL, -- 申請進度
     [Status]             INT             NOT NULL, -- 狀態
+    [ProgressStatus]     INT             NOT NULL, -- 執行狀態
     [Organizer]          INT                 NULL, -- 承辦人員
     [RejectReason]       NVARCHAR(600)       NULL, -- 不通過原因
     [CorrectionDeadline] DATETIME            NULL, -- 補正期限
     [UserAccount]        VARCHAR(30)         NULL,
     [UserName]           NVARCHAR(30)        NULL,
     [UserOrg]            NVARCHAR(30)        NULL,
+    [IsWithdrawal]       BIT             NOT NULL, -- 是否撤銷
+    [IsExists]           BIT             NOT NULL, -- 是否有效
     [CreateTime]         DATETIME        NOT NULL,
     [CreateUser]         VARCHAR(50)     NOT NULL,
     [UpdateTime]         DATETIME            NULL,

@@ -6,7 +6,18 @@
 
 <asp:Content ContentPlaceHolderID="MainContent" runat="server">
     <div>
-        <literacy-progress-bar :id="<%= Request.QueryString["ID"] %>" :step="1"></literacy-progress-bar>
-        <literacy-application :id="<%= Request.QueryString["ID"] %>"></literacy-application>
+        <literacy-progress-bar :id="id" :step="1"></literacy-progress-bar>
+        <literacy-application :id="id" v-on:next="next"></literacy-application>
     </div>
+    <script>
+        setupVueApp({
+            setup() {
+                const id = "<%= Request.QueryString["ID"] %>";
+
+                const next = () => window.location.href = `WorkSchedule.aspx?ID=${id}`;
+
+                return { id, next };
+            }
+        });
+    </script>
 </asp:Content>

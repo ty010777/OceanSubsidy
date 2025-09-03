@@ -119,6 +119,27 @@
                 </table>
             </div>
         </div>
+        <template v-if="changeForm">
+            <h5 class="square-title mt-5">變更說明</h5>
+            <div class="mt-4">
+                <table class="table align-middle gray-table side-table">
+                    <tbody>
+                        <tr>
+                            <th><required-label>變更前</required-label></th>
+                            <td>
+                                <input-textarea :error="errors.Form3Before" rows="4" v-model.trim="changeForm.Form3Before"></input-textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><required-label>變更後</required-label></th>
+                            <td>
+                                <input-textarea :error="errors.Form3After" rows="4" v-model.trim="changeForm.Form3After"></input-textarea>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </template>
     </div>
     <div class="block-bottom bg-light-teal" v-if="editable">
         <button class="btn btn-outline-teal me-3" @click="save()" type="button">暫存</button>
@@ -136,9 +157,10 @@
 
 <script setup>
     const props = defineProps({
-        id: { type: Number }
+        id: { type: [Number, String] }
     });
 
+    const changeForm = ref();
     const editable = computed(() => isProjectEditable("accessibility", form.value.Status, 3));
     const errors = ref({});
     const filteredOthers = computed(() => others.value.filter((item) => !item.Deleted));
@@ -153,6 +175,34 @@
     const addOther = () => others.value.push({});
 
     const addPlan = () => plans.value.push({});
+
+    const emit = defineEmits(["next"]);
+
+    const load = () => {
+        rxjs.forkJoin([
+            api.accessibility("getFunding", { ID: props.id })
+        ]).subscribe((result) => {
+            const data = result[0];
+
+            form.value = data.Project;
+            others.value = data.OtherSubsidies;
+            plans.value = data.BudgetPlans;
+            setting.value = data.GrantTargetSetting;
+
+            if (!others.value.length) {
+                addOther();
+            }
+
+            if (!plans.value.length) {
+                addPlan();
+            }
+
+            useProgressStore().init("accessibility", form.value);
+
+            changeForm.value = form.value.changeApply;
+            form.value.changeApply = undefined;
+        });
+    };
 
     const remove = (item) => item.Deleted = true;
 
@@ -173,14 +223,16 @@
             Project: form.value,
             OtherSubsidies: others.value,
             BudgetPlans: plans.value,
+            Before: changeForm.value?.Form3Before,
+            After: changeForm.value?.Form3After,
             Submit: submit ? "true" : "false"
         };
 
         api.accessibility("saveFunding", data).subscribe(() => {
             if (submit) {
-                window.location.href = `Benefit.aspx?ID=${props.id}`;
+                emit("next");
             } else {
-                window.location.reload();
+                load();
             }
         });
     };
@@ -210,31 +262,19 @@
 
         plans.value.forEach((plan, index) => Object.assign(errors.value, validateData(plan, rules, `plan-${index}-`)));
 
+        if (changeForm.value) {
+            rules = {
+                Form3Before: "變更前說明",
+                Form3After: "變更後說明"
+            };
+
+            Object.assign(errors.value, validateData(changeForm.value, rules));
+        }
+
         return !Object.keys(errors.value).length;
     };
 
-    onMounted(() => {
-        rxjs.forkJoin([
-            api.accessibility("getFunding", { ID: props.id })
-        ]).subscribe((result) => {
-            const data = result[0];
-
-            form.value = data.Project;
-            others.value = data.OtherSubsidies;
-            plans.value = data.BudgetPlans;
-            setting.value = data.GrantTargetSetting;
-
-            if (!others.value.length) {
-                addOther();
-            }
-
-            if (!plans.value.length) {
-                addPlan();
-            }
-
-            useProgressStore().accessibility = { step: form.value.FormStep, status: form.value.Status, organizer: form.value.Organizer, organizerName: form.value.OrganizerName };
-        });
-    });
+    onMounted(load);
 
     provide("editable", editable);
 

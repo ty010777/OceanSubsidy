@@ -6,7 +6,18 @@
 
 <asp:Content ContentPlaceHolderID="MainContent" runat="server">
     <div>
-        <literacy-progress-bar :id="<%= Request.QueryString["ID"] %>" :step="4"></literacy-progress-bar>
-        <literacy-benefit :id="<%= Request.QueryString["ID"] %>"></literacy-benefit>
+        <literacy-progress-bar :id="id" :step="4"></literacy-progress-bar>
+        <literacy-benefit :id="id" v-on:next="next"></literacy-benefit>
     </div>
+    <script>
+        setupVueApp({
+            setup() {
+                const id = "<%= Request.QueryString["ID"] %>";
+
+                const next = () => window.location.href = `Attachment.aspx?ID=${id}`;
+
+                return { id, next };
+            }
+        });
+    </script>
 </asp:Content>
