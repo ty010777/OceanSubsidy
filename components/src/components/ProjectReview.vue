@@ -70,7 +70,7 @@
 
         api[props.type]("reviewApplication", form.value).subscribe((res) => {
             if (res) {
-                // TODO
+                window.location.href = "../ReviewChecklist.aspx?type=1";
             }
         });
     };

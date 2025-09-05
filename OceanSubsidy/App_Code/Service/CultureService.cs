@@ -1,4 +1,5 @@
-﻿using GS.OCA_OceanSubsidy.Model.OFS;
+﻿using GS.OCA_OceanSubsidy.Entity;
+using GS.OCA_OceanSubsidy.Model.OFS;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -11,9 +12,10 @@ public class CultureService : BaseService
     public object applyChange(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
-        var data = getProject(id, null, new int[] {1}); //執行中
 
-        OFS_CulProjectHelper.updateProgressStatus(data.ProjectID, 2); //計畫變更
+        getProject(id, new int[] {51}); //執行階段-審核中
+
+        OFS_CulProjectHelper.setProjectChanged(id, true);
 
         OFSProjectChangeRecordHelper.insert(new ProjectChangeRecord
         {
@@ -29,7 +31,7 @@ public class CultureService : BaseService
     {
         var id = getID(param["ID"].ToString());
 
-        getProject(id, new int[] {1,3,10,13}, new int[] {2}); //申請中,退回補正,修正計畫書 | 變更申請
+        getProject(id, new int[] {1,14,42}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
 
         var goal = new OFS_CulGoal
         {
@@ -45,7 +47,7 @@ public class CultureService : BaseService
     {
         var id = getID(param["ID"].ToString());
 
-        getProject(id, new int[] {1,3,10,13}, new int[] {2}); //申請中,退回補正,修正計畫書 | 變更申請
+        getProject(id, new int[] {1,14,42}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
 
         var item = new OFS_CulGoalItem
         {
@@ -62,7 +64,7 @@ public class CultureService : BaseService
     {
         var id = getID(param["ID"].ToString());
 
-        getProject(id, new int[] {1,3,10,13}, new int[] {2}); //申請中,退回補正,修正計畫書 | 變更申請
+        getProject(id, new int[] {1,14,42}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
 
         var schedule = new OFS_CulGoalSchedule
         {
@@ -82,7 +84,7 @@ public class CultureService : BaseService
     {
         var id = getID(param["ID"].ToString());
 
-        getProject(id, new int[] {1,3,10,13}, new int[] {2}); //申請中,退回補正,修正計畫書 | 變更申請
+        getProject(id, new int[] {1,14,42}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
 
         var step = new OFS_CulGoalStep
         {
@@ -185,44 +187,43 @@ public class CultureService : BaseService
     {
         var id = getID(param["ID"].ToString());
 
-        var project = getProject(id, new int[] {2,11}); //資格審查,決審
+        var project = getProject(id, new int[] {11,43}); //資格審查-審查中, 決審-計畫書審核中
 
         project.RejectReason = null;
         project.CorrectionDeadline = null;
 
-        if (project.Status == 2)
+        if (project.Status == 11)
         {
             switch (int.Parse(param["Result"].ToString()))
             {
                 case 2:
-                    project.Status = 4; //資格審查不通過
-                    project.RejectReason = param["Reason"].ToString(); //原因
+                    project.Status = 13; //不通過
+                    project.RejectReason = param["Reason"].ToString();
                     break;
                 case 3:
-                    project.Status = 3; //退回補正
-                    project.RejectReason = param["Reason"].ToString(); //原因
+                    project.Status = 14; //補正補件
+                    project.RejectReason = param["Reason"].ToString();
                     project.CorrectionDeadline = DateTime.Parse(param["CorrectionDeadline"].ToString()); //補正期限
                     break;
                 default:
-                    project.Status = 5; //初審
+                    project.Status = 12; //通過
                     break;
             }
         }
-        else
+        else if (project.Status == 43)
         {
             switch (int.Parse(param["Result"].ToString()))
             {
                 case 2:
-                    project.Status = 12; //決審不通過
-                    project.RejectReason = param["Reason"].ToString(); //原因
+                    project.Status = 46; //不通過
+                    project.RejectReason = param["Reason"].ToString();
                     break;
                 case 3:
-                    project.Status = 10; //修正計畫書
-                    project.RejectReason = param["Reason"].ToString(); //原因
+                    project.Status = 42; //計畫書修正中
+                    project.RejectReason = param["Reason"].ToString();
                     break;
                 default:
-                    project.Status = 13; //核定通過
-                    project.ProgressStatus = 1; //執行中
+                    project.Status = 44; //計畫書已確認
                     break;
             }
         }
@@ -235,7 +236,7 @@ public class CultureService : BaseService
     public object reviewApplicationChange(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
-        var data = getProject(id, null, new int[] {2}); //變更申請
+        var data = getProject(id);
         var apply = data.changeApply;
 
         if (apply != null && apply.Status == 2) //待審核
@@ -245,13 +246,13 @@ public class CultureService : BaseService
             if (int.Parse(param["Result"].ToString()) == 2)
             {
                 apply.Status = 4; //退回修改
-                apply.RejectReason = param["Reason"].ToString(); //原因
+                apply.RejectReason = param["Reason"].ToString();
             }
             else
             {
                 apply.Status = 3; //審核通過
 
-                OFS_CulProjectHelper.updateProgressStatus(data.ProjectID, 1); //執行中
+                OFS_CulProjectHelper.setProjectChanged(id, false);
             }
 
             OFSProjectChangeRecordHelper.update(apply);
@@ -278,15 +279,15 @@ public class CultureService : BaseService
         }
         else
         {
-            var data = getProject(project.ID, new int[] {1,3,13}, new int[] {2}); //申請中,退回補正 | 變更申請
+            var data = getProject(project.ID, new int[] {1,14}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
 
             project.ProjectID = data.ProjectID;
 
             OFS_CulProjectHelper.update(project);
 
-            if (data.ProgressStatus == 2)
+            if (data.IsProjChanged)
             {
-                var apply = OFSProjectChangeRecordHelper.getApplying("CUL", data.ID);
+                var apply = data.changeApply;
 
                 if (apply != null)
                 {
@@ -345,11 +346,11 @@ public class CultureService : BaseService
     public object saveAttachment(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
-        var data = getProject(id, new int[] {1,3,10,13}, new int[] {2}); //申請中,退回補正,修正計畫書 | 變更申請
+        var data = getProject(id, new int[] {1,14,42}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
 
-        if (data.ProgressStatus == 2)
+        if (data.IsProjChanged)
         {
-            var apply = OFSProjectChangeRecordHelper.getApplying("CUL", data.ID);
+            var apply = data.changeApply;
 
             if (apply != null)
             {
@@ -367,14 +368,28 @@ public class CultureService : BaseService
 
         if (bool.Parse(param["Submit"].ToString()))
         {
-            if (data.Status == 10)
-            {
-                OFS_CulProjectHelper.updateStatus(data.ProjectID, 11);
-            }
-            else if (data.Status == 1 || data.Status == 3)
+            if (data.Status == 1)
             {
                 OFS_CulProjectHelper.updateFormStep(data.ProjectID, 6);
-                OFS_CulProjectHelper.updateStatus(data.ProjectID, 2);
+                OFS_CulProjectHelper.updateProgressStatus(data.ProjectID, 1); //資格審查
+
+                ApplicationChecklistHelper.InsertCaseHistoryLog(new OFS_CaseHistoryLog
+                {
+                    ProjectID = data.ProjectID,
+                    ChangeTime = DateTime.Now,
+                    UserName = CurrentUser.UserName,
+                    StageStatusBefore = "編輯中",
+                    StageStatusAfter = "資格審查-審核中",
+                    Description = "完成附件上傳並提送申請"
+                });
+            }
+            else if (data.Status == 14)
+            {
+                OFS_CulProjectHelper.updateStatus(data.ProjectID, 11); //審查中
+            }
+            else if (data.Status == 42)
+            {
+                OFS_CulProjectHelper.updateStatus(data.ProjectID, 43); //計畫書審核中
             }
 
             snapshot(id);
@@ -402,13 +417,13 @@ public class CultureService : BaseService
     public object saveFunding(JObject param, HttpContext context)
     {
         var project = param["Project"].ToObject<OFS_CulProject>();
-        var data = getProject(project.ID, new int[] {1,3,10,13}, new int[] {2}); //申請中,退回補正,修正計畫書 | 變更申請
+        var data = getProject(project.ID, new int[] {1,14,42}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
 
         OFS_CulProjectHelper.updateFunding(project);
 
-        if (data.ProgressStatus == 2)
+        if (data.IsProjChanged)
         {
-            var apply = OFSProjectChangeRecordHelper.getApplying("CUL", data.ID);
+            var apply = data.changeApply;
 
             if (apply != null)
             {
@@ -470,9 +485,10 @@ public class CultureService : BaseService
     public object saveOrganizer(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
-        var data = getProject(id, new int[] {2}); //資格審查
 
-        OFS_CulProjectHelper.updateOrganizer(data.ID, int.Parse(param["Organizer"].ToString()));
+        getProject(id);
+
+        OFS_CulProjectHelper.updateOrganizer(id, int.Parse(param["Organizer"].ToString()));
 
         return new {};
     }
@@ -480,11 +496,11 @@ public class CultureService : BaseService
     public object saveRelatedProject(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
-        var data = getProject(id, new int[] {1,3,13}, new int[] {2}); //申請中,退回補正 | 變更申請
+        var data = getProject(id, new int[] {1,14}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
 
-        if (data.ProgressStatus == 2)
+        if (data.IsProjChanged)
         {
-            var apply = OFSProjectChangeRecordHelper.getApplying("CUL", data.ID);
+            var apply = data.changeApply;
 
             if (apply != null)
             {
@@ -526,13 +542,13 @@ public class CultureService : BaseService
     public object saveWorkSchedule(JObject param, HttpContext context)
     {
         var project = param["Project"].ToObject<OFS_CulProject>();
-        var data = getProject(project.ID, new int[] {1,3,10,13}, new int[] {2}); //申請中,退回補正,修正計畫書 | 變更申請
+        var data = getProject(project.ID, new int[] {1,14,42}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
 
         OFS_CulProjectHelper.updateSchedule(project);
 
-        if (data.ProgressStatus == 2)
+        if (data.IsProjChanged)
         {
-            var apply = OFSProjectChangeRecordHelper.getApplying("CUL", data.ID);
+            var apply = data.changeApply;
 
             if (apply != null)
             {
@@ -638,7 +654,7 @@ public class CultureService : BaseService
     {
         var id = getID(param["ID"].ToString());
 
-        getProject(id, new int[] {13}); //核定通過
+        getProject(id);
 
         OFS_CulProjectHelper.terminate(id, param["RejectReason"].ToString(), int.Parse(param["RecoveryAmount"].ToString()));
 
@@ -664,7 +680,7 @@ public class CultureService : BaseService
         }
     }
 
-    private OFS_CulProject getProject(int id, int[] statusList = null, int[] progressList = null)
+    private OFS_CulProject getProject(int id, int[] statusList = null, bool changed = false)
     {
         var project = OFS_CulProjectHelper.get(id);
 
@@ -673,22 +689,22 @@ public class CultureService : BaseService
             throw new Exception("查無資料");
         }
 
-        if ((statusList != null && !statusList.Contains(project.Status)) || project.IsWithdrawal)
+        if (project.IsWithdrawal) //已撤銷
         {
             throw new Exception("狀態錯誤");
         }
 
-        if (project.Status == 13 && progressList != null && !progressList.Contains(project.ProgressStatus))
+        if ((changed && project.IsProjChanged) || statusList == null || statusList.Contains(project.Status))
         {
-            throw new Exception("執行狀態錯誤");
+            if (project.IsProjChanged)
+            {
+                project.changeApply = OFSProjectChangeRecordHelper.getApplying("CUL", project.ID);
+            }
+
+            return project;
         }
 
-        if (project.ProgressStatus == 2)
-        {
-            project.changeApply = OFSProjectChangeRecordHelper.getApplying("CUL", project.ID);
-        }
-
-        return project;
+        throw new Exception("狀態錯誤");
     }
 
     private void snapshot(int id)

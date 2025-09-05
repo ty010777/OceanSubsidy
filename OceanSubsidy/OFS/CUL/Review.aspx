@@ -25,8 +25,8 @@
 </asp:Content>
 
 <asp:Content ContentPlaceHolderID="FloatContent" runat="server">
-    <project-review :id="id" type="culture" v-if="store.culture.status === 2"></project-review>
-    <project-correction-review :id="id" type="culture" v-else-if="store.culture.status === 10"></project-correction-review>
+    <project-review :id="id" type="culture" v-if="store.culture.status === 11"></project-review>
+    <project-correction-review :id="id" type="culture" v-else-if="store.culture.status === 43"></project-correction-review>
     <script>
         setupVueApp({
             setup() {

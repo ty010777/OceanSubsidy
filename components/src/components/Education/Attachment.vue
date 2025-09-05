@@ -27,9 +27,9 @@
                                 <required-label v-else>{{ item.Title }}</required-label>
                             </div>
                             <div class="mt-3 small" v-html="item.Comment" v-if="editable && item.Comment"></div>
-                            <button class="btn btn-sm btn-teal-dark rounded-pill mt-2" type="button" v-if="editable && item.Template">
+                            <a class="btn btn-sm btn-teal-dark rounded-pill mt-2" :href="`/${item.Template}`" style="width:140px" type="button" v-if="editable && item.Template">
                                 <i class="fas fa-file-download me-1"></i>範本下載
-                            </button>
+                            </a>
                         </td>
                         <td class="text-center" v-if="editable">
                             <span v-if="item.Uploaded">已上傳</span>
@@ -86,9 +86,9 @@
     });
 
     const docs = ref([
-        { Type: 1, Title: "申請表", Template: true, Files: [] },
-        { Type: 2, Title: "計畫書", Template: true, Files: [] },
-        { Type: 3, Title: "未違反公職人員利益衝突迴避法切結書及事前揭露表", Template: true, Files: [] }
+        { Type: 1, Title: "申請表", Template: "Template/EDC/1-申請表.docx", Files: [] },
+        { Type: 2, Title: "計畫書", Template: "Template/EDC/2-申請計畫書.docx", Files: [] },
+        { Type: 3, Title: "未違反公職人員利益衝突迴避法切結書及事前揭露表", Template: "Template/EDC/3-未違反公職人員利益衝突迴避法切結書及事前揭露表.docx", Files: [] }
     ]);
 
     const changeForm = ref();

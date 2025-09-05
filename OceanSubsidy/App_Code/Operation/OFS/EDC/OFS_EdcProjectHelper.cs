@@ -53,6 +53,7 @@ public class OFS_EdcProjectHelper
                   ,P.[UserAccount]
                   ,P.[UserName]
                   ,P.[UserOrg]
+                  ,P.[IsProjChanged]
                   ,P.[IsWithdrawal]
                   ,P.[IsExists]
               FROM [OFS_EDC_Project] AS P
@@ -91,10 +92,10 @@ public class OFS_EdcProjectHelper
         db.CommandText = @"
             INSERT INTO [OFS_EDC_Project] ([Year],[ProjectID],[SubsidyPlanType],[ProjectName],[OrgCategory],[OrgName],[RegisteredNum],[TaxID],[Address],[StartTime],
                                            [EndTime],[Target],[Summary],[Quantified],[ApplyAmount],[SelfAmount],[OtherGovAmount],[OtherUnitAmount],[FormStep],[Status],
-                                           [ProgressStatus],[UserAccount],[UserName],[UserOrg],[IsWithdrawal],[IsExists],[CreateTime],[CreateUser])
+                                           [ProgressStatus],[UserAccount],[UserName],[UserOrg],[IsProjChanged],[IsWithdrawal],[IsExists],[CreateTime],[CreateUser])
                 OUTPUT Inserted.ID VALUES (@Year, @ProjectID, @SubsidyPlanType, @ProjectName, @OrgCategory, @OrgName, @RegisteredNum, @TaxID, @Address, @StartTime,
                                            @EndTime, @Target, @Summary, @Quantified, @ApplyAmount, @SelfAmount, @OtherGovAmount, @OtherUnitAmount, 1,         1,
-                                           0,               @UserAccount, @UserName, @UserOrg, 0,             1,         GETDATE(),   @CreateUser)
+                                           0,               @UserAccount, @UserName, @UserOrg, 0,              0,             1,         GETDATE(),   @CreateUser)
         ";
 
         db.Parameters.Add("@Year", model.Year);
@@ -130,20 +131,37 @@ public class OFS_EdcProjectHelper
         db.CommandText = @"
             UPDATE [OFS_EDC_Project]
                SET [Status] = @Status
-                  ,[ProgressStatus] = @ProgressStatus
                   ,[RejectReason] = @RejectReason
                   ,[CorrectionDeadline] = @CorrectionDeadline
                   ,[UpdateTime] = GETDATE()
                   ,[UpdateUser] = @UpdateUser
              WHERE [ID] = @ID
-               AND [Status] = 2
+               AND [Status] = 11
         ";
 
         db.Parameters.Add("@ID", model.ID);
         db.Parameters.Add("@Status", model.Status);
-        db.Parameters.Add("@ProgressStatus", model.ProgressStatus);
         db.Parameters.Add("@RejectReason", model.RejectReason);
         db.Parameters.Add("@CorrectionDeadline", model.CorrectionDeadline);
+        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
+
+        db.ExecuteNonQuery();
+    }
+
+    public static void setProjectChanged(int id, bool changed)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            UPDATE [OFS_EDC_Project]
+               SET [IsProjChanged] = @IsProjChanged
+                  ,[UpdateTime] = GETDATE()
+                  ,[UpdateUser] = @UpdateUser
+             WHERE [ID] = @ID
+        ";
+
+        db.Parameters.Add("@ID", id);
+        db.Parameters.Add("@IsProjChanged", changed);
         db.Parameters.Add("@UpdateUser", CurrentUser.ID);
 
         db.ExecuteNonQuery();
@@ -156,6 +174,7 @@ public class OFS_EdcProjectHelper
         db.CommandText = @"
             UPDATE [OFS_EDC_Project]
                SET [ProgressStatus] = 9
+                  ,[Status] = 99
                   ,[RejectReason] = @RejectReason
                   ,[RecoveryAmount] = @RecoveryAmount
                   ,[UpdateTime] = GETDATE()
@@ -166,6 +185,7 @@ public class OFS_EdcProjectHelper
         db.Parameters.Add("@ID", id);
         db.Parameters.Add("@RejectReason", reason);
         db.Parameters.Add("@RecoveryAmount", recovery);
+        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
 
         db.ExecuteNonQuery();
     }
@@ -282,6 +302,7 @@ public class OFS_EdcProjectHelper
         db.CommandText = @"
             UPDATE [OFS_EDC_Project]
                SET [ProgressStatus] = @ProgressStatus
+                  ,[Status] = @Status
                   ,[UpdateTime] = GETDATE()
                   ,[UpdateUser] = @UpdateUser
              WHERE [ProjectID] = @ProjectID
@@ -289,6 +310,7 @@ public class OFS_EdcProjectHelper
 
         db.Parameters.Add("@ProjectID", projectID);
         db.Parameters.Add("@ProgressStatus", status);
+        db.Parameters.Add("@Status", (status * 10) + 1);
         db.Parameters.Add("@UpdateUser", CurrentUser.ID);
 
         db.ExecuteNonQuery();
@@ -365,6 +387,7 @@ public class OFS_EdcProjectHelper
             UserAccount = row.Field<string>("UserAccount"),
             UserName = row.Field<string>("UserName"),
             UserOrg = row.Field<string>("UserOrg"),
+            IsProjChanged = row.Field<bool>("IsProjChanged"),
             IsWithdrawal = row.Field<bool>("IsWithdrawal"),
             IsExists = row.Field<bool>("IsExists")
         };
