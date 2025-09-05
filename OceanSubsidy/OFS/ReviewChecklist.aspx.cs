@@ -1879,18 +1879,14 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
         try
         {
             List<ReviewChecklistItem> results = new List<ReviewChecklistItem>();
+            results = ReviewCheckListHelper.Search_Type1(
+                year,
+                status,
+                orgName,
+                supervisor,
+                keyword
+                );
             
-            // 執行資格審查查詢
-            if (category == "SCI" || string.IsNullOrEmpty(category))
-            {
-                results = ReviewCheckListHelper.Search_Type1(
-                    year,
-                    status,
-                    orgName,
-                    supervisor,
-                    keyword
-                    );
-            }
             
             
             return JsonConvert.SerializeObject(new

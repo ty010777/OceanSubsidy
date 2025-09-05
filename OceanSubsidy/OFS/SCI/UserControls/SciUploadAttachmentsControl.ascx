@@ -516,14 +516,7 @@ window.SciUploadAttachments = {
         form.method = 'POST';
         form.enctype = 'multipart/form-data';
         form.target = 'uploadFrame_' + attachmentNumber;
-        form.action = 'SciUploadAttachments.aspx?action=upload&attachmentNumber=' + attachmentNumber;
-        
-        // 添加 projectId 參數
-        const projectIdField = document.createElement('input');
-        projectIdField.type = 'hidden';
-        projectIdField.name = 'projectId';
-        projectIdField.value = '<%= GetProjectId() %>';
-        form.appendChild(projectIdField);
+        form.action = 'SciUploadAttachments.aspx?action=upload&attachmentNumber=' + attachmentNumber + '&projectId=' + encodeURIComponent('<%= GetProjectId() %>');
         
         const fileField = document.createElement('input');
         fileField.type = 'file';

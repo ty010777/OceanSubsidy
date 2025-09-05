@@ -13,6 +13,26 @@
     <link rel="stylesheet" href="<%= ResolveUrl("~/assets/vendor/daterangepicker.css") %>" />
     
     <script src="<%= ResolveUrl("~/script/OFS/CLB/ClbApplication.js") %>"></script>
+    
+    <style>
+        /* Bootstrap disabled 樣式擴展 */
+        .application-step .step-item.disabled {
+            opacity: 0.65;
+            pointer-events: none;
+            cursor: default;
+        }
+        
+        .application-step .step-item.disabled .step-label,
+        .application-step .step-item.disabled .step-status {
+            color: #6c757d !important;
+        }
+        
+        /* 確保無障礙性 */
+        .application-step .step-item[aria-disabled="true"] {
+            cursor: not-allowed;
+        }
+    </style>
+    
 </asp:Content>
 
 <asp:Content ID="MainContent" ContentPlaceHolderID="MainContent" runat="server">
@@ -36,7 +56,7 @@
     
     <!-- 申請流程進度條 -->
     <div class="application-step">
-        <div class="step-item active" role="button">
+        <div class="step-item active" role="button" onclick="navigateToStep(0)">
             <div class="step-content">
                 <div class="step-label">申請表</div>
                 <div class="step-status edit">編輯中</div>

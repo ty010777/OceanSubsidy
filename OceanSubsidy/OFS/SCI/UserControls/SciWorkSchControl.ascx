@@ -55,7 +55,7 @@
                                     </tr>
                                 </thead>
                                 <!-- A項 -->
-                                <tbody>
+                                <tbody class="table-item">
                                     <tr>
                                         <td>
                                             A
@@ -202,7 +202,7 @@
                                 </tbody>
 
                                 <!-- 新增B項 -->
-                                <tbody>
+                                <tbody class="table-item">
                                     <tr>
                                         <td>
                                             B

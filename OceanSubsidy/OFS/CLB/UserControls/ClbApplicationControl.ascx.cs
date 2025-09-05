@@ -5,6 +5,7 @@ using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Data;
+using System.IO;
 using GS.App;
 using GS.OCA_OceanSubsidy.Entity;
 
@@ -12,6 +13,7 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
 {
     public string ProjectID { get; set; }
     public bool IsReadOnly { get; set; } = false;
+
 
     protected void Page_Load(object sender, EventArgs e)
     {
@@ -175,9 +177,9 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
         
         // 取得選中的申請補助類型
         string subsidyType = "";
-        if (rbSubsidyTypeCreate.Checked) subsidyType = "創社補助";
-        else if (rbSubsidyTypeOperation.Checked) subsidyType = "社務補助";
-        else if (rbSubsidyTypeActivity.Checked) subsidyType = "公共活動費";
+        if (rbSubsidyTypeCreate.Checked) subsidyType = "Startup";
+        else if (rbSubsidyTypeOperation.Checked) subsidyType = "Admin";
+        else if (rbSubsidyTypeActivity.Checked) subsidyType = "Public";
         data["SubsidyType"] = subsidyType;
         
         data["SchoolName"] = txtSchoolName.Text.Trim();
@@ -419,7 +421,7 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
                 UserAccount = userInfo?.Account ?? "",
                 UserName = userInfo?.UserName ?? "",
                 UserOrg = userInfo?.UnitName ?? "",
-                CurrentStep = "1",
+                CurrentStep = isTempSave ? "1" :"2",// 暫存 是 1 和提送 後是2
                 isWithdrawal = false,
                 isExist = true
             };
@@ -484,13 +486,13 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
                 // 設定申請補助類型
                 switch (basicData.SubsidyType)
                 {
-                    case "創社補助":
+                    case "Startup":
                         rbSubsidyTypeCreate.Checked = true;
                         break;
-                    case "社務補助":
+                    case "Admin":
                         rbSubsidyTypeOperation.Checked = true;
                         break;
-                    case "公共活動費":
+                    case "Public":
                         rbSubsidyTypeActivity.Checked = true;
                         break;
                 }
@@ -504,6 +506,8 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
                 if (basicData.CreationDate.HasValue)
                 {
                     txtCreationDate.Text = basicData.CreationDate.Value.ToMinguoDate();
+                    // 設定 data attribute 供 JavaScript 使用
+                    txtCreationDate.Attributes["data-gregorian-date"] = basicData.CreationDate.Value.ToString("yyyy/MM/dd");
                 }
             }
 
@@ -518,6 +522,9 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
             
             // 載入 Project_Main 資訊
             LoadProjectMainDataToForm(projectID);
+            
+            // 載入檔案上傳狀態
+            LoadFileStatus(projectID);
         }
         catch (Exception ex)
         {
@@ -574,10 +581,14 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
                 if (planData.StartDate.HasValue)
                 {
                     txtStartDate.Text = planData.StartDate.Value.ToMinguoDate();
+                    // 設定 data attribute 供 JavaScript 使用
+                    txtStartDate.Attributes["data-gregorian-date"] = planData.StartDate.Value.ToString("yyyy/MM/dd");
                 }
                 if (planData.EndDate.HasValue)
                 {
                     txtEndDate.Text = planData.EndDate.Value.ToMinguoDate();
+                    // 設定 data attribute 供 JavaScript 使用
+                    txtEndDate.Attributes["data-gregorian-date"] = planData.EndDate.Value.ToString("yyyy/MM/dd");
                 }
                 
                 txtPurpose.Text = planData.Purpose;
@@ -620,10 +631,6 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
                 }
                 
                 txtFundingDescription.Text = fundsData.FundingDescription;
-                
-                // 更新總經費顯示（透過 JavaScript 計算）
-                Page.ClientScript.RegisterStartupScript(this.GetType(), "UpdateTotalFunds", 
-                    "setTimeout(function() { calculateTotalFunds(); }, 100);", true);
             }
         }
         catch (Exception ex)
@@ -655,26 +662,325 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
         }
     }
 
-    #region 下載附件相關事件
+ 
+    #region 文件上傳相關方法
 
-    protected void btnDownloadTemplate1_Click(object sender, EventArgs e)
+    /// <summary>
+    /// 處理文件上傳
+    /// </summary>
+    /// <param name="fileCode">文件代碼</param>
+    /// <param name="uploadedFile">上傳的文件</param>
+    public string HandleFileUpload(string projectID,string fileCode, HttpPostedFile uploadedFile)
     {
-        // TODO: 實作下載 - 申請表
+        try
+        {
+            // 驗證文件
+            string validationResult = ValidateUploadedFile(uploadedFile);
+            if (!string.IsNullOrEmpty(validationResult))
+            {
+                return validationResult;
+            }
+
+            // 確保有 ProjectID
+            if (string.IsNullOrEmpty(projectID))
+            {
+                return "請先儲存申請表再上傳附件";
+            }
+
+            // 產生檔案名稱
+            string attachmentName = GetAttachmentNameByFileCode(fileCode);
+            string fileName = $"{projectID}_{attachmentName}.pdf";
+
+            // 上傳檔案到指定路徑
+            string relativePath = SaveUploadedFile(uploadedFile, fileName, fileCode);
+            if (string.IsNullOrEmpty(relativePath))
+            {
+                return "檔案上傳失敗";
+            }
+
+            // 儲存到資料庫
+            SaveFileToDatabase(projectID, fileCode, fileName, relativePath);
+
+            // 更新UI顯示
+            UpdateFileStatusUI(fileCode, fileName, relativePath);
+
+            return ""; // 成功時返回空字符串
+        }
+        catch (Exception ex)
+        {
+            return $"上傳失敗：{ex.Message}";
+        }
     }
 
-    protected void btnDownloadTemplate2_Click(object sender, EventArgs e)
+    /// <summary>
+    /// 驗證上傳的文件
+    /// </summary>
+    private string ValidateUploadedFile(HttpPostedFile file)
     {
-        // TODO: 實作下載 - 計畫書
+        if (file == null || file.ContentLength == 0)
+        {
+            return "請選擇要上傳的檔案";
+        }
+
+        // 檢查檔案類型
+        if (!file.FileName.ToLower().EndsWith(".pdf"))
+        {
+            return "僅支援PDF格式檔案";
+        }
+
+        // 檢查檔案大小 (10MB)
+        int maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.ContentLength > maxSize)
+        {
+            return "檔案大小不能超過10MB";
+        }
+
+        return ""; // 驗證通過返回空字符串
     }
 
-    protected void btnDownloadTemplate3_Click(object sender, EventArgs e)
+    /// <summary>
+    /// 根據 FileCode 取得附件名稱
+    /// </summary>
+    private string GetAttachmentNameByFileCode(string fileCode)
     {
-        // TODO: 實作下載 - 未違反公職人員利益衝突迴避法切結書及事前揭露表
+        switch (fileCode)
+        {
+            case "FILE_CLB1":
+                return "申請表";
+            case "FILE_CLB2":
+                return "計畫書";
+            case "FILE_CLB3":
+                return "未違反公職人員利益衝突迴避法切結書及事前揭露表";
+            case "FILE_CLB4":
+                return "相關佐證資料";
+            default:
+                return "附件";
+        }
     }
 
-    protected void btnDownloadTemplate4_Click(object sender, EventArgs e)
+    /// <summary>
+    /// 儲存上傳的檔案
+    /// </summary>
+    private string SaveUploadedFile(HttpPostedFile file, string fileName, string fileCode)
     {
-        // TODO: 實作下載 - 相關佐證資料
+        try
+        {
+            // 建立上傳目錄路徑
+            string uploadDir = Server.MapPath("~/UploadFiles/CLB/");
+            if (!Directory.Exists(uploadDir))
+            {
+                Directory.CreateDirectory(uploadDir);
+            }
+
+            // 完整檔案路徑
+            string fullPath = Path.Combine(uploadDir, fileName);
+            
+            // 如果檔案已存在，先刪除
+            if (File.Exists(fullPath))
+            {
+                File.Delete(fullPath);
+            }
+
+            // 儲存檔案
+            file.SaveAs(fullPath);
+
+            // 回傳相對路徑
+            return $"~/UploadFiles/CLB/{fileName}";
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"檔案儲存失敗：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 儲存檔案資訊到資料庫
+    /// </summary>
+    private void SaveFileToDatabase(string projectID, string fileCode, string fileName, string relativePath)
+    {
+        try
+        {
+            var uploadFile = new OFS_CLB_UploadFile
+            {
+                ProjectID = projectID,
+                FileCode = fileCode,
+                FileName = fileName,
+                TemplatePath = relativePath
+            };
+
+            // 檢查是否已存在同樣的記錄
+            OFS_ClbApplicationHelper.DeleteUploadFile(projectID, fileCode);
+            
+            // 插入新記錄
+            OFS_ClbApplicationHelper.InsertUploadFile(uploadFile);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"儲存檔案資訊失敗：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 更新檔案狀態UI
+    /// </summary>
+    private void UpdateFileStatusUI(string fileCode, string fileName, string relativePath)
+    {
+        Label statusLabel = null;
+        Panel filesPanel = null;
+
+        // 取得對應的控制項
+        switch (fileCode)
+        {
+            case "FILE_CLB1":
+                statusLabel = (Label)FindControl("lblStatusCLB1");
+                filesPanel = (Panel)FindControl("pnlFilesCLB1");
+                break;
+            case "FILE_CLB2":
+                statusLabel = (Label)FindControl("lblStatusCLB2");
+                filesPanel = (Panel)FindControl("pnlFilesCLB2");
+                break;
+            case "FILE_CLB3":
+                statusLabel = (Label)FindControl("lblStatusCLB3");
+                filesPanel = (Panel)FindControl("pnlFilesCLB3");
+                break;
+            case "FILE_CLB4":
+                statusLabel = (Label)FindControl("lblStatusCLB4");
+                filesPanel = (Panel)FindControl("pnlFilesCLB4");
+                break;
+        }
+
+        if (statusLabel != null && filesPanel != null)
+        {
+            // 更新狀態標籤
+            statusLabel.Text = "已上傳";
+            statusLabel.CssClass = "text-success";
+
+            // 顯示檔案標籤
+            filesPanel.Visible = true;
+            filesPanel.Controls.Clear();
+
+            // 建立主要的檔案標籤容器
+            var fileTag = new System.Web.UI.HtmlControls.HtmlGenericControl("span");
+            fileTag.Attributes["class"] = "tag tag-green-light";
+
+            // 建立下載連結
+            var downloadLink = new System.Web.UI.HtmlControls.HtmlGenericControl("a");
+            downloadLink.Attributes["class"] = "tag-link";
+            downloadLink.Attributes["href"] = "#";
+            downloadLink.Attributes["onclick"] = $"downloadUploadedFile('{fileCode}'); return false;";
+            downloadLink.Attributes["target"] = "_blank";
+            downloadLink.InnerText = fileName;
+
+            // 建立刪除按鈕
+            var deleteButton = new System.Web.UI.HtmlControls.HtmlGenericControl("button");
+            deleteButton.Attributes["type"] = "button";
+            deleteButton.Attributes["class"] = "tag-btn";
+            deleteButton.Attributes["onclick"] = $"deleteFile('{fileCode}')";
+            deleteButton.InnerHtml = "<i class=\"fa-solid fa-circle-xmark\"></i>";
+
+            // 將元素加入到檔案標籤中
+            fileTag.Controls.Add(downloadLink);
+            fileTag.Controls.Add(deleteButton);
+
+            filesPanel.Controls.Add(fileTag);
+        }
+    }
+
+    /// <summary>
+    /// 載入檔案狀態
+    /// </summary>
+    public void LoadFileStatus(string projectID)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(projectID)) return;
+
+            var uploadedFiles = OFS_ClbApplicationHelper.GetUploadedFiles(projectID);
+            
+            foreach (var file in uploadedFiles)
+            {
+                UpdateFileStatusUI(file.FileCode, file.FileName, file.TemplatePath);
+            }
+        }
+        catch (Exception ex)
+        {
+            // 記錄錯誤但不影響頁面載入
+            System.Diagnostics.Debug.WriteLine($"載入檔案狀態失敗：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 刪除上傳的檔案
+    /// </summary>
+    public string DeleteUploadedFile(string fileCode)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(ProjectID))
+            {
+                return "計畫編號不存在";
+            }
+
+            // 從資料庫刪除
+            OFS_ClbApplicationHelper.DeleteUploadFile(ProjectID, fileCode);
+
+            // 刪除實際檔案
+            var fileInfo = OFS_ClbApplicationHelper.GetUploadedFile(ProjectID, fileCode);
+            if (fileInfo != null && !string.IsNullOrEmpty(fileInfo.TemplatePath))
+            {
+                string physicalPath = Server.MapPath(fileInfo.TemplatePath);
+                if (File.Exists(physicalPath))
+                {
+                    File.Delete(physicalPath);
+                }
+            }
+
+            // 更新UI
+            ResetFileStatusUI(fileCode);
+
+            return ""; // 成功
+        }
+        catch (Exception ex)
+        {
+            return $"刪除失敗：{ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// 重置檔案狀態UI
+    /// </summary>
+    private void ResetFileStatusUI(string fileCode)
+    {
+        Label statusLabel = null;
+        Panel filesPanel = null;
+
+        switch (fileCode)
+        {
+            case "FILE_CLB1":
+                statusLabel = (Label)FindControl("lblStatusCLB1");
+                filesPanel = (Panel)FindControl("pnlFilesCLB1");
+                break;
+            case "FILE_CLB2":
+                statusLabel = (Label)FindControl("lblStatusCLB2");
+                filesPanel = (Panel)FindControl("pnlFilesCLB2");
+                break;
+            case "FILE_CLB3":
+                statusLabel = (Label)FindControl("lblStatusCLB3");
+                filesPanel = (Panel)FindControl("pnlFilesCLB3");
+                break;
+            case "FILE_CLB4":
+                statusLabel = (Label)FindControl("lblStatusCLB4");
+                filesPanel = (Panel)FindControl("pnlFilesCLB4");
+                break;
+        }
+
+        if (statusLabel != null && filesPanel != null)
+        {
+            statusLabel.Text = "未上傳";
+            statusLabel.CssClass = "text-muted";
+            filesPanel.Visible = false;
+            filesPanel.Controls.Clear();
+        }
     }
 
     #endregion

@@ -288,7 +288,7 @@ class WorkItemTableManager {
         const tbody = document.createElement('tbody');
         const mainRow = this.createMainItemRow(letter);
         const subRow = this.createSubItemRow(letter, 1, true);
-
+        tbody.classList.add('table-item');
         tbody.appendChild(mainRow);
         tbody.appendChild(subRow);
 
@@ -301,7 +301,7 @@ class WorkItemTableManager {
             <td>${letter}</td>
             <td>
                 <div class="mb-2">工作項目</div>
-                <input type="text" class="form-control" placeholder="請輸入">
+                <input type="text" class="form-control " placeholder="請輸入">
             </td>
             <td></td>
             <td>0%</td>
@@ -460,6 +460,7 @@ class WorkItemTableManager {
 
     updatePlusButtonVisibility() {
         const workItemTable = document.querySelector('.sub-table');
+        workItemTable
         if (workItemTable) {
             const workItemPlusButtons = workItemTable.querySelectorAll('.btn-dark-green2 .fa-plus');
             workItemPlusButtons.forEach(btn => {
@@ -565,6 +566,8 @@ class WorkItemTableManager {
         if (!subTable) return;
 
         const tbodies = subTable.querySelectorAll('tbody');
+        
+
         tbodies.forEach(tbody => tbody.remove());
     }
 
@@ -616,6 +619,7 @@ class WorkItemTableManager {
         Object.keys(letterGroups).sort().forEach(letter => {
             const group = letterGroups[letter];
             const tbody = document.createElement('tbody');
+            tbody.classList.add('table-item');
 
             if (group.main) {
                 const mainRow = this.createMainItemRow(letter);
