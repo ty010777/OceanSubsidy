@@ -26,9 +26,9 @@
                                 <required-label v-else>{{ item.Title }}</required-label>
                             </div>
                             <div class="mt-3 small" v-html="item.Comment" v-if="editable && item.Comment"></div>
-                            <button class="btn btn-sm btn-teal-dark rounded-pill mt-2" type="button" v-if="editable && item.Template">
+                            <a class="btn btn-sm btn-teal-dark rounded-pill mt-2" :href="`/${item.Template}`" style="width:140px" type="button" v-if="editable && item.Template">
                                 <i class="fas fa-file-download me-1"></i>範本下載
-                            </button>
+                            </a>
                         </td>
                         <td class="text-center" v-if="editable">
                             <span v-if="item.Uploaded">已上傳</span>
@@ -85,10 +85,10 @@
     });
 
     const docs = ref([
-        { Type: 1, Title: "申請表", Template: true, Files: [] },
-        { Type: 2, Title: "計畫書", Template: true, Files: [] },
-        { Type: 3, Title: "執行承諾書", Template: true, Files: [] },
-        { Type: 4, Title: "未違反公職人員利益衝突迴避法切結書及事前揭露表", Template: true, Files: [] },
+        { Type: 1, Title: "申請表", Template: "Template/ACC/附件01-申請表.docx", Files: [] },
+        { Type: 2, Title: "計畫書", Template: "Template/ACC/附件02-計畫書.docx", Files: [] },
+        { Type: 3, Title: "執行承諾書", Template: "Template/ACC/附件03-執行承諾書.docx", Files: [] },
+        { Type: 4, Title: "未違反公職人員利益衝突迴避法切結書及事前揭露表", Template: "Template/ACC/aaaaaa", Files: [] },
         { Type: 5, Title: "證明文件影本", Comment: "A.民間團體：申請單位登記、立案文件、現任負責人當選證明文件。<br>B.國(公)立學校免附證明文件。", Files: [], Multiple: true, Optional: true },
         { Type: 6, Title: "其他佐證資料", Comment: "A.本計畫屬民間團體提案者(政府立案之社團法人、財團法人、組織或社區發展協會等)，需檢附3年內任1年曾受相關政府補助完成計畫之實績佐證資料，無則免附。<br>B.提案計畫倘有結合其他合作單位、團體或相關機關(構)，請提供合作意向書或相關參考文件尤佳，無則免附。", Files: [], Multiple: true, Optional: true }
     ]);
