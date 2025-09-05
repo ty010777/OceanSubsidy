@@ -26,9 +26,9 @@
                                 <required-label v-else>{{ item.Title }}</required-label>
                             </div>
                             <div class="mt-3 small" v-html="item.Comment" v-if="editable && item.Comment"></div>
-                            <button class="btn btn-sm btn-teal-dark rounded-pill mt-2" @click="downloadTemplate(idx + 1)" type="button" v-if="editable && item.Template">
+                            <a class="btn btn-sm btn-teal-dark rounded-pill mt-2" :href="`/${item.Template}`" style="width:140px" type="button" v-if="editable && item.Template">
                                 <i class="fas fa-file-download me-1"></i>範本下載
-                            </button>
+                            </a>
                         </td>
                         <td class="text-center" v-if="editable">
                             <span v-if="item.Uploaded">已上傳</span>
@@ -85,10 +85,10 @@
     });
 
     const docs = ref([
-        { Type: 1, Title: "申請表", Template: true, Files: [] },
-        { Type: 2, Title: "申請捐（補）助計畫書", Template: true, Files: [] },
-        { Type: 3, Title: "執行承諾書", Template: true, Files: [], Excludes: ["1"] },
-        { Type: 4, Title: "未違反公職人員利益衝突迴避法切結書及事前揭露表", Comment: "(與本計畫相關之補充資料、如立案證明、配合提案計畫邀集相關合作單位召開討論之會議紀錄等；若有合作對象，請附合作對象同意書)", Template: true, Files: [] },
+        { Type: 1, Title: "申請表", Template: "Template/CUL/1.申請表.docx", Files: [] },
+        { Type: 2, Title: "申請捐（補）助計畫書", Template: "Template/CUL/2.計畫書.docx", Files: [] },
+        { Type: 3, Title: "執行承諾書", Template: "Template/CUL/3.執行承諾書.docx", Files: [], Excludes: ["1"] },
+        { Type: 4, Title: "未違反公職人員利益衝突迴避法切結書及事前揭露表", Comment: "(與本計畫相關之補充資料、如立案證明、配合提案計畫邀集相關合作單位召開討論之會議紀錄等；若有合作對象，請附合作對象同意書)", Template: "Template/CUL/4.未違反公職人員利益衝突迴避法切結書及事前揭露表.docx", Files: [] },
         { Type: 5, Title: "附錄", Files: [], Multiple: true }
     ]);
 
@@ -129,8 +129,8 @@
             project.value = data.Project;
             docs.value = docs.value.filter((doc) => !doc.Excludes?.includes(project.value.OrgCategory));
 
-            if (project.value.Status >= 10) {
-                docs.value.push({ Type: 6, Title: "著作權授權同意書", Template: true, Files: [] });
+            if (project.value.Status >= 42) {
+                docs.value.push({ Type: 6, Title: "著作權授權同意書", Template: "Template/LIT/5-著作權授權同意書.docx", Files: [] });
             }
 
             docs.value.forEach((doc) => {
