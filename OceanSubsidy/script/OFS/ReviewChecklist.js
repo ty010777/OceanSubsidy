@@ -743,7 +743,7 @@ window.ReviewChecklist = (function() {
                 <td data-th="類別:" style="text-align: center;">${projectCategory}</td>
                 <td data-th="計畫編號:" style="text-align: left;" nowrap>${item.ProjectID || ''}</td>
                 <td data-th="計畫名稱:" style="text-align: left;">
-                    <a href="#" class="link-black" target="_blank">${item.ProjectNameTw || ''}</a>
+                    <a href="${getReviewUrl(item.ProjectID)}" class="link-black" target="_blank">${item.ProjectNameTw || ''}</a>
                 </td>
                 <td data-th="申請單位:" style="text-align: left;">${item.UserOrg || ''}</td>
                 <td data-th="審查組別:">${reviewGroup}</td>

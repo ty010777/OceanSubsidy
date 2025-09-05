@@ -106,8 +106,8 @@ public class OFS_CulProject
     // 1: 資格審查
     // 2: 初審
     // 3: 複審
-    // 4: 決審
-    // 5: 執行階段
+    // 4: 決審核定
+    // 5: 計畫執行
     // 9: 結案
     public int ProgressStatus { get; set; }
 

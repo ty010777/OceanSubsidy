@@ -1541,6 +1541,222 @@ WHERE 1=1
 
     #endregion
 
+    #region type-2 Search 文化
+
+    /// <summary>
+    /// 取得文化基本資料
+    /// </summary>
+    public static List<ReviewChecklistItem> GetCulBasicData(string year, string orgName, string supervisor, string keyword, string status)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = $@"
+            SELECT O.ProjectID,
+                   P.Descname AS Statuses,
+                   S.Descname AS StatusesName,
+                   O.EndTime AS ExpirationDate,
+                   U.UnitName AS SupervisoryUnit,
+                   R.Name AS SupervisoryPersonName,
+                   R.Account AS SupervisoryPersonAccount,
+                   O.UserAccount,
+                   O.UserOrg,
+                   O.UserName,
+                   O.CreateTime AS created_at,
+                   O.UpdateTime AS updated_at,
+                   O.ProjectName AS ProjectNameTw,
+                   O.OrgName,
+                   O.Year,
+                   O.SubsidyPlanType,
+                   O.ApplyAmount AS Req_SubsidyAmount
+              FROM OFS_CUL_Project AS O
+         LEFT JOIN Sys_User AS R ON (R.UserID = O.Organizer)
+         LEFT JOIN Sys_Unit AS U ON (U.UnitID = R.UnitID)
+              JOIN Sys_ZgsCode AS S ON (S.CodeGroup = 'ProjectStatus' AND S.Code = O.Status)
+              JOIN Sys_ZgsCode AS P ON (P.CodeGroup = 'ProjectProgressStatus' AND P.Code = O.ProgressStatus)
+            WHERE P.Descname LIKE '%{status}%'
+              AND O.IsExists = 1
+              AND S.Descname != '不通過'
+              AND O.IsWithdrawal != 1
+        ";
+
+        // 添加篩選條件
+        db.Parameters.Clear();
+
+        if (!string.IsNullOrEmpty(year))
+        {
+            db.CommandText += " AND O.Year = @year";
+            db.Parameters.Add("@year", year);
+        }
+
+        if (!string.IsNullOrEmpty(orgName))
+        {
+            db.CommandText += " AND O.UserOrg LIKE @orgName";
+            db.Parameters.Add("@orgName", $"%{orgName}%");
+        }
+
+        if (!string.IsNullOrEmpty(supervisor))
+        {
+            db.CommandText += " AND R.Account = @supervisor";
+            db.Parameters.Add("@supervisor", supervisor);
+        }
+
+        if (!string.IsNullOrEmpty(keyword))
+        {
+            db.CommandText += " AND (O.ProjectID LIKE @keyword OR O.ProjectName LIKE @keyword)";
+            db.Parameters.Add("@keyword", $"%{keyword}%");
+        }
+
+        db.CommandText += " ORDER BY O.UpdateTime DESC, O.ProjectID DESC";
+
+        DataTable dt = db.GetTable();
+
+        var result = new List<ReviewChecklistItem>();
+
+        foreach (DataRow row in dt.Rows)
+        {
+            result.Add(new ReviewChecklistItem
+            {
+                ProjectID = row["ProjectID"]?.ToString(),
+                Statuses = row["Statuses"]?.ToString(),
+                StatusesName = row["StatusesName"]?.ToString(),
+                ExpirationDate = row["ExpirationDate"] != DBNull.Value ? (DateTime?)row["ExpirationDate"] : null,
+                SupervisoryUnit = row["SupervisoryUnit"]?.ToString(),
+                SupervisoryPersonName = row["SupervisoryPersonName"]?.ToString(),
+                SupervisoryPersonAccount = row["SupervisoryPersonAccount"]?.ToString(),
+                UserAccount = row["UserAccount"]?.ToString(),
+                UserOrg = row["UserOrg"]?.ToString(),
+                UserName = row["UserName"]?.ToString(),
+                created_at = row["created_at"] != DBNull.Value ? (DateTime?)row["created_at"] : null,
+                updated_at = row["updated_at"] != DBNull.Value ? (DateTime?)row["updated_at"] : null,
+                ProjectNameTw = row["ProjectNameTw"]?.ToString(),
+                OrgName = row["OrgName"]?.ToString(),
+                Year = row["Year"]?.ToString(),
+                SubsidyPlanType = row["SubsidyPlanType"]?.ToString(),
+                Req_SubsidyAmount = row["Req_SubsidyAmount"]?.ToString() ?? "0"
+            });
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// 取得文化進度資料
+    /// </summary>
+    public static List<ProgressData> GetCulProgressData(List<string> projectIds, string status)
+    {
+        // 建立 IN 子句的參數
+        var projectIdParams = projectIds.Select((id, index) => $"@projectId{index}").ToList();
+        string inClause = "(" + string.Join(",", projectIdParams) + ")";
+
+        DbHelper db = new DbHelper();
+
+        db.CommandText = $@"
+            SELECT ProjectID,
+                   COUNT(ProjectID) AS TotalCount,
+                   COUNT(ReviewComment) AS CommentCount,
+                   COUNT(ReplyComment) AS ReplyCount,
+                   CASE
+                       WHEN COUNT(ProjectID) > 0 AND COUNT(ProjectID) = COUNT(ReviewComment) THEN '完成'
+                       ELSE '未完成'
+                   END AS ReviewProgress,
+                   CASE
+                       WHEN COUNT(ReviewComment) > 0 AND COUNT(ProjectID) = COUNT(ReplyComment) THEN '完成'
+                       ELSE '未完成'
+                   END AS ReplyProgress
+              FROM OFS_ReviewRecords
+             WHERE ReviewStage = @status
+          GROUP BY ProjectID
+        ";
+
+        // 添加 ProjectID 參數
+        db.Parameters.Clear();
+        for (int i = 0; i < projectIds.Count; i++)
+        {
+            db.Parameters.Add($"@projectId{i}", projectIds[i]);
+        }
+
+        // 添加 status 參數
+        db.Parameters.Add("@status", status);
+
+        DataTable dt = db.GetTable();
+        List<ProgressData> result = new List<ProgressData>();
+
+        foreach (DataRow row in dt.Rows)
+        {
+            var totalCount = Convert.ToInt32(row["TotalCount"]);
+            var commentCount = Convert.ToInt32(row["CommentCount"]);
+            var replyCount = Convert.ToInt32(row["ReplyCount"]);
+            var reviewProgressValue = row["ReviewProgress"]?.ToString();
+            var replyProgressValue = row["ReplyProgress"]?.ToString();
+
+            var item = new ProgressData
+            {
+                ProjectID = row["ProjectID"]?.ToString(),
+                TotalCount = totalCount,
+                CommentCount = commentCount,
+                ReplyCount = replyCount,
+                ReviewProgress = reviewProgressValue,
+                ReplyProgress = replyProgressValue,
+                ReviewProgressDisplay = reviewProgressValue == "完成"
+                    ? $"完成({commentCount}/{totalCount})"
+                    : $"未完成({commentCount}/{totalCount})",
+                ReplyProgressDisplay = replyProgressValue == "完成"
+                    ? $"完成({replyCount}/{totalCount})"
+                    : $"未完成({replyCount}/{totalCount})"
+            };
+
+            result.Add(item);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// 取得文化審查組別資料
+    /// </summary>
+    public static List<ReviewGroupData> GetCulReviewGroupData(List<string> projectIds)
+    {
+        DbHelper db = new DbHelper();
+
+        // 建立 IN 子句的參數
+        var projectIdParams = projectIds.Select((id, index) => $"@projectId{index}").ToList();
+        string inClause = "(" + string.Join(",", projectIdParams) + ")";
+
+        db.CommandText = $@"
+            SELECT m.ProjectID,
+                   zg.Descname AS Field_Descname
+              FROM OFS_CUL_Project m
+         LEFT JOIN Sys_ZgsCode zg ON (m.Field = zg.Code AND zg.CodeGroup = 'CULField')
+             WHERE m.ProjectID IN {inClause}
+        ";
+
+        // 添加 ProjectID 參數
+        db.Parameters.Clear();
+        for (int i = 0; i < projectIds.Count; i++)
+        {
+            db.Parameters.Add($"@projectId{i}", projectIds[i]);
+        }
+
+        DataTable dt = db.GetTable();
+
+        var result = new List<ReviewGroupData>();
+
+        foreach (DataRow row in dt.Rows)
+        {
+            var item = new ReviewGroupData
+            {
+                ProjectID = row["ProjectID"]?.ToString(),
+                Field_Descname = row["Field_Descname"]?.ToString()
+            };
+
+            result.Add(item);
+        }
+
+        return result;
+    }
+
+    #endregion
+
     #region type-3 Search 科專
     //TODO 想刪除
     // /// <summary>
@@ -1688,7 +1904,8 @@ WHERE 1=1
     public static BatchApprovalResult BatchRejectProjectStatus(
         List<string> projectIds,
         string userAccount,
-        string actionType)
+        string actionType,
+        string reviewType)
     {
         var result = new BatchApprovalResult
         {
@@ -1709,6 +1926,21 @@ WHERE 1=1
                 {
                     try
                     {
+                        int status = 13;
+
+                        switch (reviewType)
+                        {
+                            case "2": // 初審
+                                status = 23;
+                                break;
+                            case "3": // 複審
+                                status = 33;
+                                break;
+                            case "4": // 決審核定
+                                status = 46;
+                                break;
+                        }
+
                         if (projectId.Contains("SCI"))
                         {
                             // 更新專案狀態為不通過
@@ -1720,14 +1952,14 @@ WHERE 1=1
                         }
                         else if (projectId.Contains("CUL"))
                         {
-                            OFS_CulProjectHelper.updateStatus(projectId, 4);
+                            OFS_CulProjectHelper.updateStatus(projectId, status);
                             InsertRejectHistory(db, projectId, actionType, userAccount);
                             successCount++;
                             successIds.Add(projectId);
                         }
                         else if (projectId.Contains("EDC"))
                         {
-                            OFS_EdcProjectHelper.updateStatus(projectId, 4);
+                            OFS_EdcProjectHelper.updateStatus(projectId, status);
                             InsertRejectHistory(db, projectId, actionType, userAccount);
                             successCount++;
                             successIds.Add(projectId);
@@ -1738,21 +1970,21 @@ WHERE 1=1
                         }
                         else if (projectId.Contains("MUL"))
                         {
-                            OFS_MulProjectHelper.updateStatus(projectId, 4);
+                            OFS_MulProjectHelper.updateStatus(projectId, status);
                             InsertRejectHistory(db, projectId, actionType, userAccount);
                             successCount++;
                             successIds.Add(projectId);
                         }
                         else if (projectId.Contains("LIT"))
                         {
-                            OFS_LitProjectHelper.updateStatus(projectId, 4);
+                            OFS_LitProjectHelper.updateStatus(projectId, status);
                             InsertRejectHistory(db, projectId, actionType, userAccount);
                             successCount++;
                             successIds.Add(projectId);
                         }
                         else if (projectId.Contains("ACC"))
                         {
-                            OFS_AccProjectHelper.updateStatus(projectId, 4);
+                            OFS_AccProjectHelper.updateStatus(projectId, status);
                             InsertRejectHistory(db, projectId, actionType, userAccount);
                             successCount++;
                             successIds.Add(projectId);
@@ -1948,6 +2180,101 @@ WHERE 1=1
 
     #endregion
 
+    /// <summary>
+    /// 處理文化批次審核後的特殊流程
+    /// </summary>
+    public static void ProcessCulPostApproval(List<string> projectIds, string reviewStage, string actionType, string userAccount)
+    {
+        DbHelper db = new DbHelper();
+
+        foreach (string projectId in projectIds)
+        {
+            // 1. 從 OFS_CUL_Project 取得 Field
+            db.CommandText = $"SELECT Field FROM OFS_CUL_Project WHERE ProjectID = '{projectId}'";
+            string field = db.GetTable().Rows[0]["Field"]?.ToString();
+
+            if (!string.IsNullOrEmpty(field))
+            {
+                // 2. 從 OFS_ReviewCommitteeList 取得對應審查組別的所有人員
+                db.CommandText = $@"
+                    SELECT CommitteeUser, Email
+                      FROM OFS_ReviewCommitteeList
+                     WHERE SubjectTypeID = '{field}'
+                ";
+
+                DataTable reviewers = db.GetTable();
+
+                // 3. 取得文化的審查範本
+                db.CommandText = $@"
+                    SELECT TemplateName, TemplateWeight
+                      FROM OFS_ReviewTemplate
+                     WHERE SubsidyProjects = 'CUL'
+                ";
+
+                DataTable templates = db.GetTable();
+
+                // 4. 為每位審查委員建立完整的審核記錄
+                foreach (DataRow reviewer in reviewers.Rows)
+                {
+                    string reviewerEmail = reviewer["Email"]?.ToString();
+                    string reviewerName = reviewer["CommitteeUser"]?.ToString();
+
+                    if (!string.IsNullOrEmpty(reviewerEmail) && !string.IsNullOrEmpty(reviewerName))
+                    {
+                        // 產生隨機 Token
+                        string token = Guid.NewGuid().ToString();
+
+                        // 4.1 新增記錄到 OFS_ReviewRecords
+                        db.CommandText = $@"
+                            INSERT INTO OFS_ReviewRecords (
+                                ProjectID,
+                                ReviewStage,
+                                Email,
+                                ReviewerName,
+                                Token
+                            ) VALUES (
+                                '{projectId}',
+                                '{reviewStage}',
+                                '{reviewerEmail}',
+                                '{reviewerName}',
+                                '{token}'
+                            );
+                            SELECT SCOPE_IDENTITY() AS ReviewID;";
+
+                        int reviewId = Convert.ToInt32(db.GetTable().Rows[0]["ReviewID"]);
+
+                        // 4.2 為此審查委員建立所有評審項目記錄
+                        foreach (DataRow template in templates.Rows)
+                        {
+                            string templateName = template["TemplateName"]?.ToString();
+                            decimal templateWeight = template["TemplateWeight"] != DBNull.Value
+                                ? Convert.ToDecimal(template["TemplateWeight"])
+                                : 0;
+
+                            if (!string.IsNullOrEmpty(templateName))
+                            {
+                                db.CommandText = $@"
+                                    INSERT INTO OFS_ReviewScores (
+                                        ReviewID,
+                                        ItemName,
+                                        Weight,
+                                        Score
+                                    ) VALUES (
+                                        {reviewId},
+                                        '{templateName}',
+                                        {templateWeight},
+                                        NULL
+                                    )";
+
+                                db.ExecuteNonQuery();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     #region 計畫詳情查詢
 
     /// <summary>
@@ -1992,8 +2319,25 @@ WHERE 1=1
     /// <returns>計畫詳細資料</returns>
     public static DataTable GetCulturalPlanDetail(string projectId)
     {
-        // TODO: 文化補助案查詢 - 之後實作
-        return new DataTable();
+        using (var db = new DbHelper())
+        {
+            string sql = @"
+                SELECT [ProjectID],
+                       [Year],
+                       [SubsidyPlanType],
+                       [ProjectName] AS [ProjectNameTw],
+                       M.Descname + '-' + S.Descname AS [TopicField],
+                       [OrgName]
+                  FROM [OFS_CUL_Project] AS P
+             LEFT JOIN [Sys_ZgsCode] AS S ON (S.CodeGroup = 'CULField' AND S.Code = P.Field)
+             LEFT JOIN [Sys_ZgsCode] AS M ON (M.CodeGroup = 'CULField' AND M.Code = S.ParentCode)
+                 WHERE [ProjectID] = '{0}'
+            ";
+
+            db.CommandText = string.Format(sql, projectId);
+
+            return db.GetTable();
+        }
     }
 
     /// <summary>
@@ -2037,8 +2381,31 @@ WHERE 1=1
     /// <returns>評審意見資料</returns>
     public static DataTable GetCulturalReviewComments(string projectId, string reviewStage)
     {
-        // TODO: 文化補助案評審意見查詢 - 之後實作
-        return new DataTable();
+        using (var db = new DbHelper())
+        {
+            string sql = @"
+                SELECT [ReviewID],
+                       [ProjectID],
+                       [ReviewStage],
+                       [Email],
+                       [ReviewerName],
+                       [ReviewComment],
+                       [ReplyComment],
+                       [TotalScore],
+                       [Token],
+                       [CreateTime],
+                       [IsSubmit]
+                  FROM [OFS_ReviewRecords]
+                 WHERE ProjectID = '{0}'
+                   AND ReviewStage = '{1}'
+                   AND IsSubmit = 1
+              ORDER BY ProjectID
+            ";
+
+            db.CommandText = string.Format(sql, projectId, reviewStage);
+
+            return db.GetTable();
+        }
     }
 
     #endregion
@@ -2472,6 +2839,8 @@ WHERE 1=1
                 ("MonthlyReport", "填寫每月進度報告", 7, false, false),
                 ("Payment2", "第二期請款", 8, false, false)
             };
+
+// TODO 正文
 
             // 批次插入待辦事項
             BatchInsertTaskQueue(projectId, taskTemplates);

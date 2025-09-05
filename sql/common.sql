@@ -1,19 +1,23 @@
 
 
+DELETE FROM [Sys_ZgsCode] WHERE [CodeGroup] = 'ProjectProgressStatus'
+GO
 INSERT INTO [Sys_ZgsCode] ([CodeGroup], [Code], [Descname], [OrderNo], [IsValid], [ParentCode])
                    VALUES ('ProjectProgressStatus', '0', '尚未提送', 0, 1, ''),
                           ('ProjectProgressStatus', '1', '資格審查', 1, 1, ''),
                           ('ProjectProgressStatus', '2', '初審',     2, 1, ''),
                           ('ProjectProgressStatus', '3', '複審',     3, 1, ''),
-                          ('ProjectProgressStatus', '4', '決審',     4, 1, ''),
-                          ('ProjectProgressStatus', '5', '執行階段', 5, 1, ''),
+                          ('ProjectProgressStatus', '4', '決審核定', 4, 1, ''),
+                          ('ProjectProgressStatus', '5', '計畫執行', 5, 1, ''),
                           ('ProjectProgressStatus', '9', '結案',     9, 1, '')
 GO
 
 
+DELETE FROM [Sys_ZgsCode] WHERE [CodeGroup] = 'ProjectStatus'
+GO
 INSERT INTO [Sys_ZgsCode] ([CodeGroup], [Code], [Descname], [OrderNo], [IsValid], [ParentCode])
                    VALUES ('ProjectStatus', '1' , '編輯中',        1, 1, ''),
-                          ('ProjectStatus', '11', '審查中',       11, 1, ''),
+                          ('ProjectStatus', '11', '審核中',       11, 1, ''),
                           ('ProjectStatus', '12', '通過',         12, 1, ''),
                           ('ProjectStatus', '13', '不通過',       13, 1, ''),
                           ('ProjectStatus', '14', '補正補件',     14, 1, ''),

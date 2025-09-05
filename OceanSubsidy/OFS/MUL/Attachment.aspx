@@ -14,7 +14,7 @@
             setup() {
                 const id = "<%= Request.QueryString["ID"] %>";
 
-                const next = () => {};
+                const next = () => window.location.href = "../ApplicationChecklist.aspx";
 
                 return { id, next };
             }
