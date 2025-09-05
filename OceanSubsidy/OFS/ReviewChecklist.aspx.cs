@@ -572,15 +572,14 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             List<ReviewChecklistItem> Results = new List<ReviewChecklistItem>();
             
             // 執行決定審核清單查詢
-            if(category == "SCI" || string.IsNullOrEmpty(category)){
-                Results = ReviewCheckListHelper.Search_Type4(
-                    year, 
-                    orgName, 
-                    supervisor, 
-                    keyword,
-                    category,
-                    reviewGroup);     // 審查組別代碼
-            }
+            Results = ReviewCheckListHelper.Search_Type4(
+                year, 
+                orgName, 
+                supervisor, 
+                keyword,
+                category,
+                reviewGroup);     // 審查組別代碼
+            
             
             
             // 將查詢結果轉換為 JSON 並傳遞給前端
