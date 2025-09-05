@@ -909,4 +909,277 @@ public class OFS_ClbApplicationHelper
             throw new Exception($"取得 Project_Main 資訊失敗：{ex.Message}");
         }
     }
+
+    #region 文件上傳相關方法
+
+    /// <summary>
+    /// 插入上傳文件記錄
+    /// </summary>
+    /// <param name="uploadFile">上傳文件物件</param>
+    public static void InsertUploadFile(OFS_CLB_UploadFile uploadFile)
+    {
+        try
+        {
+            DbHelper db = new DbHelper();
+            db.CommandText = @"
+                INSERT INTO [OCA_OceanSubsidy].[dbo].[OFS_CLB_UploadFile]
+                (
+                    [ProjectID],
+                    [FileCode],
+                    [FileName],
+                    [TemplatePath]
+                )
+                VALUES
+                (
+                    @ProjectID,
+                    @FileCode,
+                    @FileName,
+                    @TemplatePath
+                )";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@ProjectID", uploadFile.ProjectID ?? "");
+            db.Parameters.Add("@FileCode", uploadFile.FileCode ?? "");
+            db.Parameters.Add("@FileName", uploadFile.FileName ?? "");
+            db.Parameters.Add("@TemplatePath", uploadFile.TemplatePath ?? "");
+
+            db.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"插入上傳文件記錄失敗：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 刪除上傳文件記錄
+    /// </summary>
+    /// <param name="projectID">計畫編號</param>
+    /// <param name="fileCode">文件代碼</param>
+    public static void DeleteUploadFile(string projectID, string fileCode)
+    {
+        try
+        {
+            DbHelper db = new DbHelper();
+            db.CommandText = @"
+                DELETE FROM [OCA_OceanSubsidy].[dbo].[OFS_CLB_UploadFile]
+                WHERE [ProjectID] = @ProjectID AND [FileCode] = @FileCode";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@ProjectID", projectID);
+            db.Parameters.Add("@FileCode", fileCode);
+
+            db.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"刪除上傳文件記錄失敗：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 取得指定計畫的所有上傳文件
+    /// </summary>
+    /// <param name="projectID">計畫編號</param>
+    /// <returns>上傳文件清單</returns>
+    public static List<OFS_CLB_UploadFile> GetUploadedFiles(string projectID)
+    {
+        try
+        {
+            DbHelper db = new DbHelper();
+            db.CommandText = @"
+                SELECT * 
+                FROM [OCA_OceanSubsidy].[dbo].[OFS_CLB_UploadFile] 
+                WHERE [ProjectID] = @ProjectID
+                ORDER BY [FileCode]";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@ProjectID", projectID);
+
+            DataTable dt = db.GetTable();
+            List<OFS_CLB_UploadFile> uploadFiles = new List<OFS_CLB_UploadFile>();
+
+            foreach (DataRow row in dt.Rows)
+            {
+                uploadFiles.Add(new OFS_CLB_UploadFile
+                {
+                    ID = row["ID"] != DBNull.Value ? Convert.ToInt32(row["ID"]) : 0,
+                    ProjectID = row["ProjectID"]?.ToString(),
+                    FileCode = row["FileCode"]?.ToString(),
+                    FileName = row["FileName"]?.ToString(),
+                    TemplatePath = row["TemplatePath"]?.ToString()
+                });
+            }
+
+            return uploadFiles;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"取得上傳文件清單失敗：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 取得指定計畫和文件代碼的單個上傳文件
+    /// </summary>
+    /// <param name="projectID">計畫編號</param>
+    /// <param name="fileCode">文件代碼</param>
+    /// <returns>上傳文件物件</returns>
+    public static OFS_CLB_UploadFile GetUploadedFile(string projectID, string fileCode)
+    {
+        try
+        {
+            DbHelper db = new DbHelper();
+            db.CommandText = @"
+                SELECT * 
+                FROM [OCA_OceanSubsidy].[dbo].[OFS_CLB_UploadFile] 
+                WHERE [ProjectID] = @ProjectID AND [FileCode] = @FileCode";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@ProjectID", projectID);
+            db.Parameters.Add("@FileCode", fileCode);
+
+            DataTable dt = db.GetTable();
+
+            if (dt.Rows.Count > 0)
+            {
+                DataRow row = dt.Rows[0];
+                return new OFS_CLB_UploadFile
+                {
+                    ID = row["ID"] != DBNull.Value ? Convert.ToInt32(row["ID"]) : 0,
+                    ProjectID = row["ProjectID"]?.ToString(),
+                    FileCode = row["FileCode"]?.ToString(),
+                    FileName = row["FileName"]?.ToString(),
+                    TemplatePath = row["TemplatePath"]?.ToString()
+                };
+            }
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"取得上傳文件失敗：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 檢查上傳文件是否存在
+    /// </summary>
+    /// <param name="projectID">計畫編號</param>
+    /// <param name="fileCode">文件代碼</param>
+    /// <returns>是否存在</returns>
+    public static bool CheckUploadFileExists(string projectID, string fileCode)
+    {
+        try
+        {
+            DbHelper db = new DbHelper();
+            db.CommandText = @"
+                SELECT COUNT(*) 
+                FROM [OCA_OceanSubsidy].[dbo].[OFS_CLB_UploadFile] 
+                WHERE [ProjectID] = @ProjectID AND [FileCode] = @FileCode";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@ProjectID", projectID);
+            db.Parameters.Add("@FileCode", fileCode);
+
+            DataSet ds = db.GetDataSet();
+
+            if (ds.Tables.Count > 0 && ds.Tables[0].Rows.Count > 0)
+            {
+                object result = ds.Tables[0].Rows[0][0];
+                if (result != null && result != DBNull.Value)
+                {
+                    int count = Convert.ToInt32(result);
+                    return count > 0;
+                }
+            }
+
+            return false;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"檢查上傳文件是否存在失敗：{ex.Message}");
+        }
+    }
+
+    #endregion
+
+    #region 計畫狀態更新
+
+    /// <summary>
+    /// 取得計畫的當前步驟
+    /// </summary>
+    /// <param name="projectID">計畫編號</param>
+    /// <returns>當前步驟，如果計畫不存在則返回空字串</returns>
+    public static string GetProjectCurrentStep(string projectID)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(projectID))
+                return "";
+
+            DbHelper db = new DbHelper();
+            db.CommandText = @"
+                SELECT [CurrentStep] 
+                FROM [OCA_OceanSubsidy].[dbo].[OFS_CLB_Project_Main] 
+                WHERE [ProjectID] = @ProjectID";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@ProjectID", projectID);
+
+            DataSet ds = db.GetDataSet();
+
+            if (ds.Tables.Count > 0 && ds.Tables[0].Rows.Count > 0)
+            {
+                object result = ds.Tables[0].Rows[0]["CurrentStep"];
+                if (result != null && result != DBNull.Value)
+                {
+                    return result.ToString();
+                }
+            }
+
+            return "";
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"取得計畫當前步驟失敗：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 更新計畫狀態
+    /// </summary>
+    /// <param name="projectID">計畫編號</param>
+    /// <param name="statuses">狀態代碼</param>
+    /// <param name="statusesName">狀態名稱</param>
+    /// <param name="currentStep">當前步驟</param>
+    /// <returns>是否更新成功</returns>
+    public static void UpdateProjectStatus(string projectID, string statuses, string statusesName, string currentStep)
+    {
+        try
+        {
+            DbHelper db = new DbHelper();
+            db.CommandText = @"
+                UPDATE [OCA_OceanSubsidy].[dbo].[OFS_CLB_Project_Main] 
+                SET [Statuses] = @Statuses,
+                    [StatusesName] = @StatusesName,
+                    [CurrentStep] = @CurrentStep,
+                    [updated_at] = GETDATE()
+                WHERE [ProjectID] = @ProjectID";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@ProjectID", projectID);
+            db.Parameters.Add("@Statuses", statuses);
+            db.Parameters.Add("@StatusesName", statusesName);
+            db.Parameters.Add("@CurrentStep", currentStep);
+
+            db.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"更新計畫狀態失敗：{ex.Message}");
+        }
+    }
+
+    #endregion
 }

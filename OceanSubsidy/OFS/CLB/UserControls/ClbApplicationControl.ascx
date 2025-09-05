@@ -11,13 +11,13 @@
                     <tr>
                         <th style="width: 15%;">年度</th>
                         <td style="width: 35%;">
-                            <asp:Label ID="lblYear" runat="server" /> 
-                            <asp:HiddenField ID="hidYear" runat="server"  />
+                            <asp:Label ID="lblYear" runat="server" Text="114" /> 
+                            <asp:HiddenField ID="hidYear" runat="server" Value="114" />
                         </td>
                         <th style="width: 15%; background-color: #f8f9fa; color: #6c757d; text-align: end; padding-right: 24px; vertical-align: middle;">計畫編號</th>
                         <td style="width: 35%;">
-                            <asp:Label ID="lblProjectID" runat="server" Text=""  />
-                            <asp:HiddenField ID="hidProjectID" runat="server" Value="" />
+                            <asp:Label ID="lblProjectID" runat="server" Text="CLB1140009"  />
+                            <asp:HiddenField ID="hidProjectID" runat="server" Value="CLB1140009" />
                         </td>
                     </tr>
                     <tr>
@@ -31,19 +31,20 @@
                         <th>計畫名稱 <span class="text-danger">*</span></th>
                         <td colspan="3">
                             <asp:TextBox ID="txtProjectNameTw" runat="server" CssClass="form-control" 
-                                       placeholder="請輸入計畫名稱" MaxLength="200" style="width: 500px;" />
+                                       placeholder="請輸入計畫名稱" MaxLength="200" style="width: 500px;" 
+                                       Text="海洋環境保護推廣活動計畫" ReadOnly="true" />
                         </td>
                     </tr>
                     <tr>
                         <th>申請補助類型 <span class="text-danger">*</span></th>
                         <td colspan="3">
-                            <div class="d-flex align-items-center gap-4">
+                            <div class="form-check-input-group d-flex">
                                 <asp:RadioButton ID="rbSubsidyTypeCreate" runat="server" GroupName="SubsidyType" 
-                                               Text="創社補助" Value="創社補助" />
+                                               Text="創社補助" Value="Startup" ClientIDMode="Static" />
                                 <asp:RadioButton ID="rbSubsidyTypeOperation" runat="server" GroupName="SubsidyType" 
-                                               Text="社務補助" Value="社務補助" />
+                                               Text="社務補助" Value="Admin" ClientIDMode="Static"/>
                                 <asp:RadioButton ID="rbSubsidyTypeActivity" runat="server" GroupName="SubsidyType" 
-                                               Text="公共活動費" Value="公共活動費" />
+                                               Text="公共活動費" Value="Public" ClientIDMode="Static"/>
                             </div>
                         </td>
                     </tr>
@@ -147,7 +148,7 @@
                     <tr>
                         <th>目的 <span class="text-danger">*</span></th>
                         <td>
-                            <asp:TextBox ID="txtPurpose" runat="server" CssClass="form-control" 
+                            <asp:TextBox ID="txtPurpose" runat="server" CssClass="form-control textarea-auto-resize" 
                                        TextMode="MultiLine" Rows="4" placeholder="請描述計畫目的" 
                                        MaxLength="1000" style="width: 100%;" />
                         </td>
@@ -155,7 +156,7 @@
                     <tr>
                         <th>計畫內容 <span class="text-danger">*</span></th>
                         <td>
-                            <asp:TextBox ID="txtPlanContent" runat="server" CssClass="form-control" 
+                            <asp:TextBox ID="txtPlanContent" runat="server" CssClass="form-control textarea-auto-resize" 
                                        TextMode="MultiLine" Rows="6" placeholder="請詳細描述計畫內容" 
                                        MaxLength="2000" style="width: 100%;" />
                         </td>
@@ -163,7 +164,7 @@
                     <tr>
                         <th>預期效益 <span class="text-danger">*</span></th>
                         <td>
-                            <asp:TextBox ID="txtPreBenefits" runat="server" CssClass="form-control" 
+                            <asp:TextBox ID="txtPreBenefits" runat="server" CssClass="form-control textarea-auto-resize" 
                                        TextMode="MultiLine" Rows="4" placeholder="請描述預期效益" 
                                        MaxLength="1000" style="width: 100%;" />
                         </td>
@@ -185,7 +186,7 @@
                     <tr>
                         <th>相關緊急應變計畫</th>
                         <td>
-                            <asp:TextBox ID="txtEmergencyPlan" runat="server" CssClass="form-control" 
+                            <asp:TextBox ID="txtEmergencyPlan" runat="server" CssClass="form-control textarea-auto-resize" 
                                        TextMode="MultiLine" Rows="4" placeholder="請描述緊急應變計畫" 
                                        MaxLength="1000" style="width: 100%;" />
                         </td>
@@ -245,18 +246,18 @@
                     <tr>
                         <th>最近兩年曾獲本會補助</th>
                         <td>
-                            <div class="d-flex align-items-center gap-3">
-                                <asp:RadioButton ID="rbPreviouslySubsidizedYes" runat="server" GroupName="PreviouslySubsidized" 
-                                               Text="是" Value="true" />
+                            <div class="form-check-input-group d-flex">
+                                <asp:RadioButton ID="rbPreviouslySubsidizedYes"  runat="server" GroupName="PreviouslySubsidized" 
+                                               Text="是" Value="true" ClientIDMode="Static" />
                                 <asp:RadioButton ID="rbPreviouslySubsidizedNo" runat="server" GroupName="PreviouslySubsidized" 
-                                               Text="否" Value="false" Checked="true" />
+                                               Text="否" Value="false" Checked="true"  ClientIDMode="Static" />
                             </div>
                         </td>
                     </tr>
                     <tr>
                         <th>經費說明</th>
                         <td>
-                            <asp:TextBox ID="txtFundingDescription" runat="server" CssClass="form-control" 
+                            <asp:TextBox ID="txtFundingDescription" runat="server" CssClass="form-control textarea-auto-resize" 
                                        TextMode="MultiLine" Rows="4" placeholder="請說明經費用途規劃" 
                                        MaxLength="1000" style="width: 100%;" />
                         </td>
@@ -293,51 +294,72 @@
                     <td class="text-center">1</td>
                     <td>
                         <div>
+                            <span class="text-pink">*</span>
                             申請表
                         </div>
-                        <asp:Button ID="btnDownloadTemplate1" runat="server" 
-                            CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
-                            Text="📄 下載" OnClick="btnDownloadTemplate1_Click" />
+                           <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                                  onclick="downloadTemplate('1')">
+                              <i class="fas fa-file-download me-1"></i> 範本下載
+                          </button>
                     </td>
                     <td class="text-center">
-                        <span class="text-secondary">下載即可</span>
+                        <asp:Label ID="lblStatusCLB1" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
                     </td>
                     <td>
-                        <span class="text-muted">無需上傳</span>
+                        <input type="file" id="fileInput_FILE_CLB1" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_CLB1', this)" />
+                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_CLB1').click()">
+                            <i class="fas fa-file-upload me-1"></i> 上傳
+                        </button>
+                        <asp:Panel ID="pnlFilesCLB1" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
+                        </asp:Panel>
                     </td>
                 </tr>
                 <tr>
                     <td class="text-center">2</td>
                     <td>
                         <div>
+                            <span class="text-pink">*</span>
                             計畫書
                         </div>
-                        <asp:Button ID="btnDownloadTemplate2" runat="server" 
-                            CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
-                            Text="📄 下載" OnClick="btnDownloadTemplate2_Click" />
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                             onclick="downloadTemplate('2')">
+                         <i class="fas fa-file-download me-1"></i> 範本下載
+                        </button>
                     </td>
                     <td class="text-center">
-                        <span class="text-secondary">下載即可</span>
+                        <asp:Label ID="lblStatusCLB2" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
                     </td>
                     <td>
-                        <span class="text-muted">無需上傳</span>
+                        <input type="file" id="fileInput_FILE_CLB2" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_CLB2', this)" />
+                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_CLB2').click()">
+                            <i class="fas fa-file-upload me-1"></i> 上傳
+                        </button>
+                        <asp:Panel ID="pnlFilesCLB2" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
+                        </asp:Panel>
                     </td>
                 </tr>
                 <tr>
                     <td class="text-center">3</td>
                     <td>
                         <div>
+                            <span class="text-pink">*</span>
                             未違反公職人員利益衝突迴避法切結書及事前揭露表
                         </div>
-                        <asp:Button ID="btnDownloadTemplate3" runat="server" 
-                            CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
-                            Text="📄 下載" OnClick="btnDownloadTemplate3_Click" />
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                              onclick="downloadTemplate('3')">
+                          <i class="fas fa-file-download me-1"></i> 範本下載
+                      </button>
                     </td>
                     <td class="text-center">
-                        <span class="text-secondary">下載即可</span>
+                        <asp:Label ID="lblStatusCLB3" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
                     </td>
                     <td>
-                        <span class="text-muted">無需上傳</span>
+                        <input type="file" id="fileInput_FILE_CLB3" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_CLB3', this)" />
+                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_CLB3').click()">
+                            <i class="fas fa-file-upload me-1"></i> 上傳
+                        </button>
+                        <asp:Panel ID="pnlFilesCLB3" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
+                        </asp:Panel>
                     </td>
                 </tr>
                 <tr>
@@ -346,15 +368,18 @@
                         <div>
                             相關佐證資料
                         </div>
-                        <asp:Button ID="btnDownloadTemplate4" runat="server" 
-                            CssClass="btn btn-sm btn-teal-dark rounded-pill mt-2" 
-                            Text="📄 下載" OnClick="btnDownloadTemplate4_Click" />
+                       
                     </td>
                     <td class="text-center">
-                        <span class="text-secondary">下載即可</span>
+                        <asp:Label ID="lblStatusCLB4" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
                     </td>
                     <td>
-                        <span class="text-muted">無需上傳</span>
+                        <input type="file" id="fileInput_FILE_CLB4" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_CLB4', this)" />
+                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_CLB4').click()">
+                            <i class="fas fa-file-upload me-1"></i> 上傳
+                        </button>
+                        <asp:Panel ID="pnlFilesCLB4" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
+                        </asp:Panel>
                     </td>
                 </tr>
             </tbody>
@@ -368,5 +393,23 @@
 </div>
 <!-- 上傳附件區塊結束 -->
 
+<script type="text/javascript">
+    function downloadTemplate(templateType) {
+        // 取得當前的 ProjectID
+        var projectID = document.getElementById('<%= hidProjectID.ClientID %>').value || '';
+        
+        // 取得網站根路徑
+        var baseUrl = '<%= ResolveUrl("~/") %>';
+        
+        // 構建下載 URL
+        var downloadUrl = baseUrl + 'Service/DownloadTemplateCLB.ashx?type=' + templateType;
+        if (projectID) {
+            downloadUrl += '&projectID=' + encodeURIComponent(projectID);
+        }
+        
+        // 開啟下載
+        window.open(downloadUrl, '_blank');
+    }
+</script>
 
     

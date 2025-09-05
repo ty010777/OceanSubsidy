@@ -10,6 +10,7 @@
     <!-- SortableJS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <script src="<%= ResolveUrl("~/assets/js/planAdmJS.js") %>"></script>
+    <script src="<%= ResolveUrl("~/assets/js/customJS.js") %>"></script>
     <script>
         function toggleMenu() {
             const layout = document.querySelector('.mis-layout');

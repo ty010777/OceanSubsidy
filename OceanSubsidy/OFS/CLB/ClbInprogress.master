@@ -1,0 +1,110 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeFile="ClbInprogress.master.cs" Inherits="OFS_CLB_ClbInprogress" MasterPageFile="~/OFSMaster.master" %>
+
+<asp:Content ID="TitleContent" ContentPlaceHolderID="TitleContent" runat="server">
+    計畫執行 - 海洋領域補助計畫管理資訊系統
+</asp:Content>
+
+<asp:Content ID="HeadContent" ContentPlaceHolderID="HeadExtra" runat="server">
+    
+    <!-- ClbInprogress 頁面特定的樣式或腳本 -->
+    <asp:ContentPlaceHolder ID="HeadExtra" runat="server" />
+</asp:Content>
+
+<asp:Content ID="MainContent" ContentPlaceHolderID="MainContent" runat="server">
+    
+    <!-- 1. 計畫執行 <返回列表 -->
+    <div class="d-flex justify-content-between mb-4">
+        <div class="page-title">
+            <img src="<%= ResolveUrl("~/assets/img/information-system-title-icon05.svg") %>" alt="logo">
+            <div>
+                <span>目前位置</span>
+                <div class="d-flex align-items-end gap-3">
+                    <h2 class="text-teal-dark">計畫執行</h2>
+                    <a class="text-teal-dark text-decoration-none" href="#" >
+                        <i class="fas fa-angle-left"></i>
+                        返回列表
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 2. ［CLB］ 查核紀錄 -->
+    <div class="top-wrapper">
+        <div class="top-block">
+            <div class="d-flex align-items-center gap-3">
+                <span>［CLB］<asp:Literal ID="litProjectInfo" runat="server" Text="" /></span>
+                <asp:PlaceHolder ID="phTodoItems" runat="server"></asp:PlaceHolder>
+            </div>
+            <button class="btn btn-teal-dark" type="button">
+                查核紀錄
+            </button>
+        </div>
+    </div>
+    
+    <!-- 3. 核定計畫、階段報告、請款核銷 -->
+    <div class="step-line-wrapper">
+        <div class="step-line" style="gap:24px">
+            <div id="stepApproved" class="step-line-item" onclick="navigateWithProjectID('<%= ResolveUrl("~/OFS/CLB/ClbApproved.aspx") %>')">
+                <div class="step-line-item-title">核定計畫</div>
+                <div id="statusApproved" class="tag tag-white" style="display: none;">編輯中</div>
+            </div>
+            <div id="stepStageReport" class="step-line-item" onclick="navigateWithProjectID('<%= ResolveUrl("~/OFS/CLB/ClbStageReport.aspx") %>')">
+                <div class="step-line-item-title">階段報告</div>
+                <div id="statusStageReport" class="tag tag-white" style="display: none;">編輯中</div>
+            </div>
+            <div id="stepPayment" class="step-line-item" onclick="navigateWithProjectID('<%= ResolveUrl("~/OFS/CLB/ClbPayment.aspx") %>')">
+                <div class="step-line-item-title">請款核銷</div>
+                <div id="statusPayment" class="tag tag-white" style="display: none;">編輯中</div>
+            </div>
+        </div>
+    </div>
+    
+
+    <!-- 主要內容區域 -->
+    <asp:ContentPlaceHolder ID="MainContent" runat="server"></asp:ContentPlaceHolder>
+    
+    <!-- 導航 JavaScript -->
+    <script>
+        function navigateWithProjectID(baseUrl) {
+            // 從當前 URL 取得 ProjectID 參數
+            var urlParams = new URLSearchParams(window.location.search);
+            var projectID = urlParams.get('ProjectID');
+            
+            if (projectID) {
+                window.location.href = baseUrl + '?ProjectID=' + projectID;
+            } else {
+                window.location.href = baseUrl;
+            }
+        }
+
+        // 頁面載入時設定 active 狀態
+        document.addEventListener('DOMContentLoaded', function() {
+            var currentPage = window.location.pathname;
+            
+            // 移除所有 active class 和編輯中狀態
+            var allSteps = document.querySelectorAll('.step-line-item');
+            allSteps.forEach(function(step) {
+                step.classList.remove('active');
+            });
+            
+            var allStatuses = document.querySelectorAll('.step-line-item .tag');
+            allStatuses.forEach(function(status) {
+                status.style.display = 'none';
+            });
+            
+            // 根據當前頁面設定 active 狀態
+            if (currentPage.indexOf('ClbApproved.aspx') !== -1) {
+                document.getElementById('stepApproved').classList.add('active');
+                document.getElementById('statusApproved').style.display = 'block';
+            } else if (currentPage.indexOf('ClbStageReport.aspx') !== -1) {
+                document.getElementById('stepStageReport').classList.add('active');
+                document.getElementById('statusStageReport').style.display = 'block';
+            } else if (currentPage.indexOf('ClbPayment.aspx') !== -1) {
+                document.getElementById('stepPayment').classList.add('active');
+                document.getElementById('statusPayment').style.display = 'block';
+            }
+        });
+    </script>
+
+</asp:Content>

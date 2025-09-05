@@ -572,15 +572,14 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             List<ReviewChecklistItem> Results = new List<ReviewChecklistItem>();
 
             // 執行決定審核清單查詢
-            if(category == "SCI" || string.IsNullOrEmpty(category)){
-                Results = ReviewCheckListHelper.Search_Type4(
-                    year,
-                    orgName,
-                    supervisor,
-                    keyword,
-                    category,
-                    reviewGroup);     // 審查組別代碼
-            }
+            Results = ReviewCheckListHelper.Search_Type4(
+                year,
+                orgName,
+                supervisor,
+                keyword,
+                category,
+                reviewGroup);     // 審查組別代碼
+
 
 
             // 將查詢結果轉換為 JSON 並傳遞給前端
@@ -1929,18 +1928,14 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
         try
         {
             List<ReviewChecklistItem> results = new List<ReviewChecklistItem>();
+            results = ReviewCheckListHelper.Search_Type1(
+                year,
+                status,
+                orgName,
+                supervisor,
+                keyword
+                );
 
-            // 執行資格審查查詢
-            if (category == "SCI" || string.IsNullOrEmpty(category))
-            {
-                results = ReviewCheckListHelper.Search_Type1(
-                    year,
-                    status,
-                    orgName,
-                    supervisor,
-                    keyword
-                    );
-            }
 
 
             return JsonConvert.SerializeObject(new
