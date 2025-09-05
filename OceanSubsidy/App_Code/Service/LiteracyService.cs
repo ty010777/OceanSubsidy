@@ -1,4 +1,5 @@
-﻿using GS.OCA_OceanSubsidy.Model.OFS;
+﻿using GS.OCA_OceanSubsidy.Entity;
+using GS.OCA_OceanSubsidy.Model.OFS;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -280,6 +281,16 @@ public class LiteracyService : BaseService
             {
                 OFS_LitProjectHelper.updateFormStep(data.ProjectID, 6);
                 OFS_LitProjectHelper.updateProgressStatus(data.ProjectID, 1); //資格審查
+
+                ApplicationChecklistHelper.InsertCaseHistoryLog(new OFS_CaseHistoryLog
+                {
+                    ProjectID = data.ProjectID,
+                    ChangeTime = DateTime.Now,
+                    UserName = CurrentUser.UserName,
+                    StageStatusBefore = "編輯中",
+                    StageStatusAfter = "資格審查-審核中",
+                    Description = "完成附件上傳並提送申請"
+                });
             }
             else if (data.Status == 14)
             {

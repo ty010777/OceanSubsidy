@@ -72,25 +72,43 @@ public class OFS_CulProject
     public int FormStep { get; set; }
 
     // 狀態
-    //  1: 申請中
-    //  2: 資格審查
-    //  3: 退回補正
-    //  4: 資格審查不通過
-    //  5: 初審
-    //  6: 初審不通過
-    //  7: 複審
-    //  8: 複審不通過
-    //  9: 核定補助經費
-    // 10: 修正計畫書
-    // 11: 決審
-    // 12: 決審不通過
-    // 13: 核定通過
+    //  1: 編輯中
+    // 11: 審查中
+    // 12: 通過
+    // 13: 不通過
+    // 14: 補正補件
+    // 15: 逾期未補
+    // 19: 結案(未通過)
+    // 21: 審查中
+    // 22: 通過
+    // 23: 不通過
+    // 29: 結案(未通過)
+    // 31: 審查中
+    // 32: 通過
+    // 33: 不通過
+    // 39: 結案(未通過)
+    // 41: 核定中
+    // 42: 計畫書修正中
+    // 43: 計畫書審核中
+    // 44: 計畫書已確認
+    // 45: 已核定
+    // 46: 不通過
+    // 49: 結案(未通過)
+    // 51: 審核中
+    // 52: 通過
+    // 53: 不通過
+    // 91: 已結案
+    // 99: 已終止
     public int Status { get; set; }
 
-    // 執行狀態
-    // 1: 執行中
-    // 2: 計畫變更
-    // 9: 終止
+    // 階段
+    // 0: 尚未提送申請
+    // 1: 資格審查
+    // 2: 初審
+    // 3: 複審
+    // 4: 決審
+    // 5: 執行階段
+    // 9: 結案
     public int ProgressStatus { get; set; }
 
     // 承辦
@@ -106,6 +124,9 @@ public class OFS_CulProject
     public string UserAccount { get; set; }
     public string UserName { get; set; }
     public string UserOrg { get; set; }
+
+    // 是否計畫變更中
+    public bool IsProjChanged { get; set; }
 
     // 是否撤銷
     public bool IsWithdrawal { get; set; }

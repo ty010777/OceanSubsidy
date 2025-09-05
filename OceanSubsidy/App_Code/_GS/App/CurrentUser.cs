@@ -6,4 +6,11 @@ public class CurrentUser
             return SessionHelper.Get<SessionHelper.UserInfoClass>(SessionHelper.UserInfo).UserID;
         }
     }
+
+    public static string UserName {
+        get
+        {
+            return SessionHelper.Get<SessionHelper.UserInfoClass>(SessionHelper.UserInfo).UserName;
+        }
+    }
 }

@@ -22,7 +22,7 @@
 </asp:Content>
 
 <asp:Content ContentPlaceHolderID="FloatContent" runat="server">
-    <project-review :id="id" type="education" v-if="store.education.status === 2"></project-review>
+    <project-review :id="id" type="education" v-if="store.education.status === 11"></project-review>
     <script>
         setupVueApp({
             setup() {
