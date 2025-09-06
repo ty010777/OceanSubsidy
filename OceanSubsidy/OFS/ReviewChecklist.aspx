@@ -9,9 +9,9 @@
 
 <asp:Content ID="MainContent" ContentPlaceHolderID="MainContent" runat="server">
     <!-- 隱藏欄位和按鈕 -->
-    <asp:HiddenField ID="hdnSelectedProjectIds" runat="server" />
+    <asp:HiddenField ID="hdnSelectedProjectIds" runat="server" ClientIDMode="Static"/>
     <asp:Button ID="btnSendToApplicant" runat="server" Text="提送至申請者" 
-                OnClick="btnSendToApplicant_Click" Style="display: none;" />
+                OnClick="btnSendToApplicant_Click" Style="display: none;" ClientIDMode="Static"/>
     <!-- 頁面標題 -->
     <div class="page-title">
         <img src="<%= ResolveUrl("~/assets/img/information-system-title-icon04.svg") %>" alt="logo">
@@ -716,7 +716,7 @@
                   <!-- 年度 -->
                   <div class="search-item">
                       <div class="fs-16 text-gray mb-2">年度</div>
-                      <asp:DropDownList ID="ddlYear_Type4" runat="server" CssClass="form-select">
+                      <asp:DropDownList ID="ddlYear_Type4" runat="server" CssClass="form-select" ClientIDMode="Static">
                       </asp:DropDownList>
                   </div>
                   
@@ -738,17 +738,19 @@
               <div class="column-2">
                   <div class="search-item">
                       <div class="fs-16 text-gray mb-2">申請單位</div>
-                      <asp:DropDownList ID="ddlOrg_Type4" runat="server" CssClass="form-select">
+                      <asp:DropDownList ID="ddlOrg_Type4" runat="server" CssClass="form-select" ClientIDMode="Static">
                       </asp:DropDownList>
                   </div>
                   <div class="search-item">
                       <div class="fs-16 text-gray mb-2">承辦人員</div>
-                      <asp:DropDownList ID="ddlSupervisor_Type4" runat="server" CssClass="form-select">
+                      <asp:DropDownList ID="ddlSupervisor_Type4" runat="server" CssClass="form-select" ClientIDMode="Static">
                       </asp:DropDownList>
                   </div>
               </div>    
       
-              <asp:Button ID="btnSearch_Type4" runat="server" Text="🔍 查詢" CssClass="btn btn-teal-dark d-table mx-auto" OnClick="btnSearch_Type4_Click" />
+              <button type="button" id="btnSearch_Type4" class="btn btn-teal-dark d-table mx-auto" onclick="performType4Search()">
+                  🔍 查詢
+              </button>
           </div>
         </div>
         <!-- 列表內容 -->
@@ -1275,6 +1277,9 @@
                                         <option value="CUL">文化</option>
                                         <option value="EDC">學校民間</option>
                                         <option value="CLB">學校社團</option>
+                                        <option value="MUL">多元</option>
+                                        <option value="LIT">素養</option>
+                                        <option value="ACC">無障礙</option>
                                     </select>
                                 </div>
                                 <div class="col-12 col-md-3">

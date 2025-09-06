@@ -854,81 +854,43 @@ SELECT TOP (1000) [ProjectID]
     /// <param name="category">計畫類別</param>
     /// <param name="reviewGroupCode">審查組別代碼</param>
     /// <returns>排序模式案件清單</returns>
-    public static List<SortingModeItem> Search_SCI_ForSorting(
+    public static List<SortingModeItem> Search_ForSorting(
         string year = "",
         string category = "",
         string reviewGroupCode = "")
     {
         DbHelper db = new DbHelper();
         db.CommandText = @"
-WITH SubsidySummary AS (
-    SELECT
-        PM.ProjectID,
-        AM.Year,
-        AM.ProjectNameTw,
-        AM.OrgName,
-        AM.Field,
-        PM.SupervisoryPersonName,
-        PM.ApprovedSubsidy,
-        PM.FinalReviewNotes,
-        PM.FinalReviewOrder,
-        SUM(PT.SubsidyAmount) AS TotalSubsidyPrice
-
-    FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main] PM
-    LEFT JOIN OFS_SCI_Application_Main AM ON PM.ProjectID = AM.ProjectID
-    LEFT JOIN OFS_SCI_PersonnelCost_TotalFee PT ON PM.ProjectID = PT.ProjectID
-    WHERE Statuses = '決審核定'
-    GROUP BY PM.ProjectID, AM.Year, AM.ProjectNameTw, AM.OrgName, AM.Field, PM.SupervisoryPersonName, PM.ApprovedSubsidy, PM.FinalReviewNotes, PM.FinalReviewOrder
-),
-ScoreSummary AS (
-    SELECT
-        PM.ProjectID,
-        SUM(ORR.TotalScore) AS TotalScore
-    FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main] PM
-    LEFT JOIN OFS_ReviewRecords ORR ON PM.ProjectID = ORR.ProjectID
-    WHERE Statuses = '決審核定'
-    GROUP BY PM.ProjectID
-),
-FieldData AS (
-    SELECT
-        PM.ProjectID,
-        ZGS.DescName AS Field_Descname
-    FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main] PM
-    LEFT JOIN OFS_SCI_Application_Main AM ON PM.ProjectID = AM.ProjectID
-    LEFT JOIN Sys_ZgsCode ZGS ON AM.Field = ZGS.Code AND ZGS.CodeGroup = 'SCIField'
-    WHERE Statuses = '決審核定'
-)
-SELECT
-    S.ProjectID,
-    S.Year,
-    S.ProjectNameTw,
-    S.OrgName,
-    S.SupervisoryPersonName,
-    S.TotalSubsidyPrice AS Req_SubsidyAmount,
-    S.ApprovedSubsidy,
-    S.FinalReviewNotes,
-    S.FinalReviewOrder,
-    SC.TotalScore,
-    FD.Field_Descname
-FROM SubsidySummary S
-LEFT JOIN ScoreSummary SC ON S.ProjectID = SC.ProjectID
-LEFT JOIN FieldData FD ON S.ProjectID = FD.ProjectID
-WHERE 1=1
+SELECT TOP (1000) [ProjectID]
+      ,[Year]
+      ,[ProjectNameTw]
+      ,[OrgName]
+      ,[FinalReviewNotes]
+      ,[FinalReviewOrder]
+      ,[TotalScore]
+      ,[Field]
+      ,[Category]
+  FROM [OCA_OceanSubsidy].[dbo].[V_OFS_ReviewChecklist_type4_Sort]
+    WHERE 1=1
 ";
 
         // 動態加入篩選條件
         if (!string.IsNullOrEmpty(year))
         {
-            db.CommandText += " AND S.Year = @year";
+            db.CommandText += " AND Year = @year";
         }
 
         if (!string.IsNullOrEmpty(reviewGroupCode))
         {
-            db.CommandText += " AND S.Field = @reviewGroupCode";
+            db.CommandText += " AND Field = @reviewGroupCode";
+        } 
+        if (!string.IsNullOrEmpty(category))
+        {
+            db.CommandText += " AND Category = @category";
         }
 
         // 排序：優先依決審排序，再依總分降序
-        db.CommandText += " ORDER BY S.FinalReviewOrder ASC, SC.TotalScore DESC";
+        db.CommandText += " ORDER BY FinalReviewOrder ASC, TotalScore DESC";
 
         try
         {
@@ -943,6 +905,10 @@ WHERE 1=1
             {
                 db.Parameters.Add("@reviewGroupCode", reviewGroupCode);
             }
+            if (!string.IsNullOrEmpty(category))
+            {
+                db.Parameters.Add("@category", category);
+            }
 
             DataTable dt = db.GetTable();
             List<SortingModeItem> result = new List<SortingModeItem>();
@@ -954,13 +920,11 @@ WHERE 1=1
                     ProjectID = row["ProjectID"].ToString(),
                     ProjectNameTw = row["ProjectNameTw"].ToString(),
                     OrgName = row["OrgName"].ToString(),
-                    SupervisoryPersonName = row["SupervisoryPersonName"].ToString(),
-                    Req_SubsidyAmount = row["Req_SubsidyAmount"] != DBNull.Value ? row["Req_SubsidyAmount"].ToString() : "0",
-                    ApprovedSubsidy = row["ApprovedSubsidy"] != DBNull.Value ? row["ApprovedSubsidy"].ToString() : "0",
+                    // SupervisoryPersonName = row["SupervisoryPersonName"].ToString(),
+                    // ApprovedSubsidy = row["ApprovedSubsidy"] != DBNull.Value ? row["ApprovedSubsidy"].ToString() : "0",
                     FinalReviewNotes = row["FinalReviewNotes"] != DBNull.Value ? row["FinalReviewNotes"].ToString() : "",
                     FinalReviewOrder = row["FinalReviewOrder"] != DBNull.Value ? row["FinalReviewOrder"].ToString() : "999",
                     TotalScore = row["TotalScore"] != DBNull.Value ? row["TotalScore"].ToString() : "0",
-                    Field_Descname = row["Field_Descname"] != DBNull.Value ? row["Field_Descname"].ToString() : "",
                     Category = GetProjectCategoryFromId(row["ProjectID"].ToString())
                 };
 
@@ -992,6 +956,7 @@ WHERE 1=1
 
             foreach (var item in sortingItems)
             {
+                // TODO 正文 根據 Category 決定要更新排序以及備註
                 string tableName = GetTableNameByCategory(item.Category);
 
                 db.CommandText = $@"
@@ -1085,6 +1050,7 @@ WHERE 1=1
     {
         switch (category)
         {
+            // TODO 正文 請更新決審模式下，的 排序 和備註
             case "科專":
                 return "OFS_SCI_Project_Main";
             case "文化":
@@ -1093,6 +1059,12 @@ WHERE 1=1
                 return "OFS_EDC_Project_Main";
             case "學校社團":
                 return "OFS_CLB_Project_Main";
+            case "多元":
+                return "OFS_MUL_Project_Main";
+            case "素養":
+                return "OFS_LIT_Project_Main";
+            case "無障礙":
+                return "OFS_ACC_Project_Main";
             default:
                 return "OFS_SCI_Project_Main";
         }
@@ -1595,7 +1567,6 @@ WHERE 1=1
     /// <summary>
     /// 更新專案狀態到資料庫
     /// </summary>
-    /// <param name="db">資料庫連線</param>
     /// <param name="projectId">專案編號</param>
     /// <param name="newStatus">新狀態</param>
     /// <param name="userAccount">操作者帳號</param>
@@ -1604,36 +1575,70 @@ WHERE 1=1
         string userAccount, string StatusesName)
     {
         string finalStatusesName = string.IsNullOrEmpty(StatusesName) ? "審核中" : StatusesName;
-
+        string LastOperation = newStatus == "計畫執行" ? "計畫已核定" : "";
+        
         using (DbHelper db = new DbHelper())
         {
-            db.CommandText = $@"
+            db.CommandText = @"
                 UPDATE OFS_SCI_Project_Main
-                SET Statuses = '{newStatus}',
-                    StatusesName = N'{finalStatusesName}',
-                    LastOperation = '計畫已核定',
+                SET Statuses = @newStatus,
+                    StatusesName = @finalStatusesName,
+                    LastOperation = @LastOperation,
                     updated_at = GETDATE()
-                WHERE ProjectID = '{projectId}'";
+                WHERE ProjectID = @projectId";
+
+            db.Parameters.Add("@projectId", projectId);
+            db.Parameters.Add("@newStatus", newStatus);
+            db.Parameters.Add("@finalStatusesName", finalStatusesName);
+            db.Parameters.Add("@LastOperation", LastOperation);
 
             db.ExecuteNonQuery();
         }
     }
-
     /// <summary>
-    /// 插入審查歷程記錄
+    /// 更新專案狀態到資料庫
     /// </summary>
-    /// <param name="db">資料庫連線</param>
     /// <param name="projectId">專案編號</param>
-    /// <param name="fromStatus">原始狀態</param>
-    /// <param name="toStatus">目標狀態</param>
-    /// <param name="actionType">操作類型</param>
+    /// <param name="newStatus">新狀態</param>
     /// <param name="userAccount">操作者帳號</param>
-    public static void InsertReviewHistory(string projectId, string fromStatus, string toStatus,
-        string actionType, string userName)
+    /// <returns>是否更新成功</returns>
+    public static void CLB_UpdateProjectStatusInDatabase(string projectId, string newStatus,
+        string userAccount, string StatusesName)
     {
+        string finalStatusesName = string.IsNullOrEmpty(StatusesName) ? "審核中" : StatusesName;
+        string LastOperation = newStatus == "計畫執行" ? "計畫已核定" : "";
+        
         using (DbHelper db = new DbHelper())
         {
-            db.CommandText = $@"
+            db.CommandText = @"
+                UPDATE OFS_CLB_Project_Main
+                SET Statuses = @newStatus,
+                    StatusesName = @finalStatusesName,
+                    LastOperation = @LastOperation,
+                    updated_at = GETDATE()
+                WHERE ProjectID = @projectId";
+
+            db.Parameters.Add("@projectId", projectId);
+            db.Parameters.Add("@newStatus", newStatus);
+            db.Parameters.Add("@finalStatusesName", finalStatusesName);
+            db.Parameters.Add("@LastOperation", LastOperation);
+
+            db.ExecuteNonQuery();
+        }
+    }
+    /// <summary>
+    /// 插入審查歷程記錄 - 新版本支援完整狀態描述
+    /// </summary>
+    /// <param name="projectId">專案編號</param>
+    /// <param name="fromStatusFull">完整的原始狀態描述 (例如: "資格審查審核中")</param>
+    /// <param name="toStatusFull">完整的目標狀態描述 (例如: "資格審查通過")</param>
+    /// <param name="actionDescription">操作描述 (例如: "批次通過，轉入下一階段")</param>
+    /// <param name="userName">操作者帳號</param>
+    public static void InsertReviewHistory(string projectId, string fromStatusFull, string toStatusFull,
+        string actionDescription, string userName) {
+        using (DbHelper db = new DbHelper())
+        {
+            db.CommandText = @"
                 INSERT INTO OFS_CaseHistoryLog (
                     ProjectID,
                     ChangeTime,
@@ -1642,17 +1647,24 @@ WHERE 1=1
                     StageStatusAfter,
                     Description
                 ) VALUES (
-                    '{projectId}',
+                    @projectId,
                     GETDATE(),
-                    '{userName}',
-                    '{fromStatus}通過',
-                    '{toStatus}審核中',
-                    '批次{actionType}: {fromStatus}通過 → {toStatus}審核中'
+                    @userName,
+                    @fromStatusFull,
+                    @toStatusFull,
+                    @actionDescription
                 )";
+
+            db.Parameters.Add("@projectId", projectId);
+            db.Parameters.Add("@userName", userName);
+            db.Parameters.Add("@fromStatusFull", fromStatusFull);
+            db.Parameters.Add("@toStatusFull", toStatusFull);
+            db.Parameters.Add("@actionDescription", actionDescription);
 
             db.ExecuteNonQuery();
         }
     }
+
 
     /// <summary>
     /// 更新專案狀態名稱（只更新StatusesName）
@@ -1660,16 +1672,35 @@ WHERE 1=1
     /// <param name="projectId">專案編號</param>
     /// <param name="statusName">狀態名稱</param>
     /// <param name="userAccount">操作者帳號</param>
-    public static void UpdateProjectStatusName(string projectId, string statusName, string userAccount)
+    public static void SCI_UpdateProjectStatusName(string projectId, string statusName, string userAccount)
     {
         using (DbHelper db = new DbHelper())
         {
-            db.CommandText = $@"
+            db.CommandText = @"
                 UPDATE OFS_SCI_Project_Main
-                SET StatusesName = N'{statusName}',
+                SET StatusesName = @statusName,
                     updated_at = GETDATE()
-                WHERE ProjectID = '{projectId}'";
+                WHERE ProjectID = @projectId";
 
+            db.Parameters.Add("@projectId", projectId);
+            db.Parameters.Add("@statusName", statusName);
+            
+            db.ExecuteNonQuery();
+        }
+    }
+    public static void CLB_UpdateProjectStatusName(string projectId, string statusName, string userAccount)
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            db.CommandText = @"
+                UPDATE OFS_CLB_Project_Main
+                SET StatusesName = @statusName,
+                    updated_at = GETDATE()
+                WHERE ProjectID = @projectId";
+
+            db.Parameters.Add("@projectId", projectId);
+            db.Parameters.Add("@statusName", statusName);
+            
             db.ExecuteNonQuery();
         }
     }

@@ -414,8 +414,12 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
         try
         {
             // 載入年度選項（移除「全部」選項）
-            ddlYear_Type4.Items.Add(new ListItem("113年", "113"));
-            ddlYear_Type4.Items.Add(new ListItem("114年", "114"));            
+            var yearList = new List<object>
+            {
+                new { Text = "113年", Value = "113" },
+                new { Text = "114年", Value = "114" }
+            };
+            ddlYear_Type4.DataSource = yearList;
             ddlYear_Type4.DataTextField = "Text";
             ddlYear_Type4.DataValueField = "Value";
             ddlYear_Type4.DataBind();
@@ -441,11 +445,14 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             ddlCategory_Type4.Items.Add(new ListItem("文化", "CUL"));            
             ddlCategory_Type4.Items.Add(new ListItem("學校/民間", "EDC"));            
             ddlCategory_Type4.Items.Add(new ListItem("學校/社團", "CLB"));            
+            ddlCategory_Type4.Items.Add(new ListItem("多元", "MUL"));            
+            ddlCategory_Type4.Items.Add(new ListItem("素養", "LIT"));            
+            ddlCategory_Type4.Items.Add(new ListItem("無障礙", "ACC"));            
             ddlCategory_Type4.DataTextField = "Text";
             ddlCategory_Type4.DataValueField = "Value";
             ddlCategory_Type4.DataBind();
             
-            // 初始化審查組別選項 (預設載入科專的審查組別)
+            // // 初始化審查組別選項 (預設載入科專的審查組別)
             ddlReviewGroup_Type4.Items.Clear();
             var reviewGroupOptions = ReviewCheckListHelper.GetSciReviewGroupOptions();
             ddlReviewGroup_Type4.DataSource = reviewGroupOptions;
@@ -556,23 +563,15 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
    
 
     /// <summary>
-    /// Type4 決定審核清單查詢按鈕點擊事件
+    /// Type4 AJAX 搜尋方法
     /// </summary>
-    protected void btnSearch_Type4_Click(object sender, EventArgs e)
+    [WebMethod]
+    public static string AjaxSearch_Type4(string year, string category, string reviewGroup, string orgName, string supervisor, string keyword)
     {
         try
         {
-            // 取得查詢條件
-            string year = ddlYear_Type4.SelectedValue;
-            string category = ddlCategory_Type4.SelectedValue;
-            string reviewGroup = ddlReviewGroup_Type4.SelectedValue;
-            string orgName = ddlOrg_Type4.SelectedValue;
-            string supervisor = ddlSupervisor_Type4.SelectedValue;
-            string keyword = Request.Form["txtKeyword_Type4"] ?? "";
-            List<ReviewChecklistItem> Results = new List<ReviewChecklistItem>();
             
-            // 執行決定審核清單查詢
-            Results = ReviewCheckListHelper.Search_Type4(
+            List<ReviewChecklistItem> results = ReviewCheckListHelper.Search_Type4(
                 year, 
                 orgName, 
                 supervisor, 
@@ -580,38 +579,23 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                 category,
                 reviewGroup);     // 審查組別代碼
             
-            
-            
-            // 將查詢結果轉換為 JSON 並傳遞給前端
-            string jsonResults = Newtonsoft.Json.JsonConvert.SerializeObject(Results);
-            
-            string script = $@"
-                $(function() {{
-                    // 將查詢結果傳遞給前端 JavaScript
-                    if (typeof window.ReviewChecklistManager !== 'undefined') {{
-                        window.ReviewChecklistManager.renderSearchResults({jsonResults}, 4);
-                    }} else {{
-                        console.log('Type4 搜尋結果:', {jsonResults});
-                    }}
-                }});
-            ";
-            
-            Page.ClientScript.RegisterStartupScript(this.GetType(), "SearchResults_Type4", script, true);
+            return JsonConvert.SerializeObject(new
+            {
+                success = true,
+                data = results,
+                count = results.Count,
+                message = $"成功搜尋到 {results.Count} 筆資料"
+            });
         }
         catch (Exception ex)
         {
-            HandleException(ex, "執行 Type4 查詢時發生錯誤");
-            
-            // 顯示錯誤訊息給使用者
-            string errorScript = @"
-                Swal.fire({
-                    title: '查詢錯誤',
-                    text: '查詢時發生錯誤，請稍後再試',
-                    icon: 'error',
-                    confirmButtonText: '確定'
-                });
-            ";
-            Page.ClientScript.RegisterStartupScript(this.GetType(), "SearchError_Type4", errorScript, true);
+            return JsonConvert.SerializeObject(new
+            {
+                success = false,
+                message = "搜尋時發生錯誤: " + ex.Message,
+                data = new List<ReviewChecklistItem>(),
+                count = 0
+            });
         }
     }
 
@@ -627,6 +611,9 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             foreach (var item in approvalItems)
             {
                 // 根據計畫類別決定要更新的資料表
+                //TODO 正文 僅確認  核定金費 approvedSubsidy
+                //TODO 正文       決審備註 finalReviewNotes 名稱是否正確
+                //TODO 正文 資料表需要正確的名稱
                 string tableName = GetTableNameByCategory(item.Category);
                 
                 // 準備參數
@@ -668,7 +655,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
     {
         try
         {
-            List<SortingModeItem> results = ReviewCheckListHelper.Search_SCI_ForSorting(
+            List<SortingModeItem> results = ReviewCheckListHelper.Search_ForSorting(
                 year: year,
                 category: category,
                 reviewGroupCode: reviewGroupCode
@@ -729,17 +716,19 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
         switch (category?.ToUpper())
         {
             case "SCI":
-            case "科專":
                 return "OFS_SCI_Project_Main";
             case "CUL":  
-            case "文化":
                 return "OFS_CUL_Project_Main";
             case "EDC":
-            case "學校民間":
                 return "OFS_EDC_Project_Main";
             case "CLB":
-            case "學校社團":
                 return "OFS_CLB_Project_Main";
+            case "MUL":
+                return "OFS_MUL_Project_Main";
+            case "LIT":
+                return "OFS_LIT_Project_Main";
+            case "ACC":
+                return "OFS_ACC_Project_Main";
             default:
                 return "";
         }
@@ -1117,6 +1106,19 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                 case "CUL": // 文化 (尚未實作)
                 case "EDC": // 學校民間 (尚未實作)
                 case "CLB": // 學校社團 (尚未實作)
+                    switch (currentReviewType)
+                    {
+                        case "1": // 資格審查 → 領域審查
+                            fromStatus = "資格審查";
+                            toStatus = "決審核定";
+                            return true;
+                        case "4": // 決審 → 計畫執行
+                            fromStatus = "決審核定";
+                            StatusesName = "";
+                            toStatus = "計畫執行";
+                            return true;
+                    }
+                    break;
                 case "MUL":
                 case "LIT": 
                 case "ACC": 
@@ -1629,8 +1631,15 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                         // 學校民間
                     }
                     else if (projectId.Contains("CLB"))
-                    {
-                        // 學校社團
+                    {     
+                        ReviewCheckListHelper.CLB_UpdateProjectStatusInDatabase(projectId, toStatus, userName, StatusesName);
+                        
+                        // 如果是進入計畫執行階段，建立待辦事項模板
+                        if (toStatus == "計畫執行")
+                        {
+                            //TODO 計畫執行的 社團代辦事項
+                            // ReviewCheckListHelper.CreateTaskQueueTemplate(projectId);
+                        }
                     }else if (projectId.Contains("MUL"))
                     {
                         // 多元
@@ -1760,16 +1769,18 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
 
             int successCount = 0;
             var errorMessages = new List<string>();
-
+            string Reason = "提送至申請者修正計畫書";
+            string fromStatus = "核定中";
+            string toStatus = "計畫書修正中";
             foreach (string projectId in projectIds)
             {
                 try
                 {
                     if(projectId.Contains("SCI")){
                         // 更新專案狀態名稱為「計畫書修正中 」
-                        ReviewCheckListHelper.UpdateProjectStatusName(projectId, "計畫書修正中", currentUser.Account);
+                        ReviewCheckListHelper.SCI_UpdateProjectStatusName(projectId, toStatus, currentUser.UserName);
                         // 記錄歷程：核定中 → 計畫書修正中 
-                        ReviewCheckListHelper.InsertReviewHistory(projectId, "核定中", "計畫書修正中", "提送至申請者", currentUser.Account);
+                        ReviewCheckListHelper.InsertReviewHistory(projectId, fromStatus, toStatus, Reason, currentUser.UserName);
                     }// TODO 正文 將專案狀態改為 計畫書修正中 ，且寄信給申請者，請他來修正計畫書。
                     else if (projectId.Contains("CUL"))
                     {
@@ -1781,7 +1792,9 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                     }
                     else if (projectId.Contains("CLB"))
                     {
-                        // 學校社團
+                        ReviewCheckListHelper.CLB_UpdateProjectStatusName(projectId, toStatus, currentUser.UserName);
+                        ReviewCheckListHelper.InsertReviewHistory(projectId, fromStatus, toStatus, Reason, currentUser.UserName);
+
                     }else if (projectId.Contains("MUL"))
                     {
                         // 多元
@@ -1813,8 +1826,6 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                 }
                 ShowMessage(message, "success");
                 
-                // 重新載入頁面資料
-                RefreshPageData();
             }
             else
             {
@@ -1847,23 +1858,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
         ";
         Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowMessage", script, true);
     }
-
-    /// <summary>
-    /// 重新載入頁面資料
-    /// </summary>
-    private void RefreshPageData()
-    {
-        // 觸發前端重新查詢
-        string script = @"
-            $(function() {
-                // 觸發 Type4 重新查詢
-                if ($('#type4').is(':checked')) {
-                    $('#btnSearch_Type4').click();
-                }
-            });
-        ";
-        Page.ClientScript.RegisterStartupScript(this.GetType(), "RefreshData", script, true);
-    }
+    
 
     #endregion
 

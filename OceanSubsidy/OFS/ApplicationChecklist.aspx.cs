@@ -1058,7 +1058,6 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
         try
         {
             // 載入原始資料
-            // TODO 改 VIEW
             var originalData = ApplicationChecklistHelper.GetLatestApplicationChecklist();
 
 

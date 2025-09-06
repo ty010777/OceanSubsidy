@@ -106,6 +106,7 @@ window.ReviewChecklist = (function() {
      * @param {string} type - 審查類型 (1-4)
      */
     function switchReviewType(type) {
+        console.log('switchReviewType 被呼叫，參數 type:', type);
         try {
             type = type.toString();
             // 直接跳轉到新的 URL，觸發頁面重新載入和後端 LoadReviewContent
@@ -621,6 +622,7 @@ window.ReviewChecklist = (function() {
      * @param {Array} results - 搜尋結果
      */
     function renderType4SearchResults(results) {
+             
         try {
             // 核定模式表格
             const $approvalTableBody = $('#content-type-4 .approval-mode-table tbody');
@@ -1108,6 +1110,9 @@ window.ReviewChecklist = (function() {
                     if (projectId.includes('CUL')) category = 'CUL';
                     else if (projectId.includes('EDC')) category = 'EDC';
                     else if (projectId.includes('CLB')) category = 'CLB';
+                    else if (projectId.includes('MUL')) category = 'MUL';
+                    else if (projectId.includes('LIT')) category = 'LIT';
+                    else if (projectId.includes('ACC')) category = 'ACC';
                 }
 
                 if (projectId) {
@@ -1187,10 +1192,11 @@ window.ReviewChecklist = (function() {
                         icon: 'success',
                         confirmButtonText: '確定'
                     }).then(() => {
-                        // 重新執行查詢
-                        const $button = $('#MainContent_btnSearch_Type4');
-                        if ($button.length > 0) {
-                            $button.trigger('click');
+                        // 重新執行 Type4 AJAX 查詢
+                        if (typeof performType4Search === 'function') {
+                            performType4Search();
+                        } else {
+                            console.warn('performType4Search 函數未找到');
                         }
                     });
                 } else {
@@ -1226,6 +1232,7 @@ window.ReviewChecklist = (function() {
      * 排序模式查詢功能
      */
     function searchSortingMode() {
+        console.log('searchSortingMode 被呼叫');
         const year = $('#sortingYear').val();
         const category = $('#sortingCategory').val();
         const reviewGroup = $('#sortingReviewGroup').val();
@@ -1346,6 +1353,7 @@ window.ReviewChecklist = (function() {
      * 儲存排序結果
      */
     function saveSortingMode() {
+        console.log('saveSortingMode 被呼叫');
         const sortingItems = [];
 
         $('#sortingTableBody tr').each(function(index) {
@@ -1470,11 +1478,10 @@ window.ReviewChecklist = (function() {
      * @param {string} category - 選中的類別代碼
      */
     function updateReviewGroupType4(category) {
+        console.log('updateReviewGroupType4 被呼叫，參數 category:', category);
         try {
             // 顯示載入狀態
             const $reviewGroupSelect = $('#ddlReviewGroup_Type4');
-            $reviewGroupSelect.prop('disabled', true).html('<option>載入中...</option>');
-
             // 調用後端 WebMethod 取得審查組別選項
             $.ajax({
                 type: 'POST',
@@ -1522,6 +1529,7 @@ window.ReviewChecklist = (function() {
      * @param {string} category - 選中的類別代碼
      */
     function updateSortingReviewGroup(category) {
+        console.log('updateSortingReviewGroup 被呼叫，參數 category:', category);
         try {
             // 顯示載入狀態
             const $reviewGroupSelect = $('#sortingReviewGroup');
@@ -1798,14 +1806,13 @@ function submitSendToApplicant(selectedIds) {
     });
 
     // 將選中的ID放入HiddenField (需要從後端取得ClientID)
-    const hiddenField = document.getElementById('MainContent_hdnSelectedProjectIds');
+    const hiddenField = document.getElementById('hdnSelectedProjectIds');
 
     const joinedIds = selectedIds.join(',');
 
     hiddenField.value = joinedIds;
 
-    // 觸發後端的按鈕點擊事件 (需要從後端取得PostBackEventReference)
-    __doPostBack('MainContent$btnSendToApplicant', '');
+    $('#btnSendToApplicant').show().click().hide();
 }
 
 /**
@@ -1972,26 +1979,25 @@ function initializeReviewChecklistPage() {
     if (window.ReviewChecklist) {
         window.ReviewChecklist.init();
     }
-
-    // Type4 初始化審查組別選項
-    if (window.ReviewChecklist && window.ReviewChecklist.updateReviewGroupType4) {
-        // 延遲執行以確保頁面完全載入
-        setTimeout(function() {
-            var initialCategory = $('#ddlCategory_Type4').val() || 'SCI';
-            window.ReviewChecklist.updateReviewGroupType4(initialCategory);
-        }, 100);
-    }
+    //
+    // // Type4 初始化審查組別選項
+    // if (window.ReviewChecklist && window.ReviewChecklist.updateReviewGroupType4) {
+    //     // 延遲執行以確保頁面完全載入
+    //     setTimeout(function() {
+    //         var initialCategory = $('#ddlCategory_Type4').val() ;
+    //     }, 100);
+    // }
 
     // 排序模式 Modal 開啟事件
     $('#sortModeModal').on('shown.bs.modal', function() {
         // 根據主要頁面的選項設定排序模式的預設值
         if (window.ReviewChecklist && window.ReviewChecklist.updateSortingReviewGroup) {
             // 設定預設年度
-            var mainYear = $('#ddlYear_Type4').val() || '114';
+            var mainYear = $('#ddlYear_Type4').val() ;
             $('#sortingYear').val(mainYear);
 
             // 設定預設類別
-            var mainCategory = $('#ddlCategory_Type4').val() || 'SCI';
+            var mainCategory = $('#ddlCategory_Type4').val() ;
             $('#sortingCategory').val(mainCategory);
 
             // 根據類別更新審查組別選項
@@ -3151,4 +3157,100 @@ function handleSearchError(jqXHR, textStatus, errorThrown, searchType) {
         confirmButtonText: '確定'
     });
 }
+
+/**
+ * Type4 專用的 AJAX 搜尋功能
+ */
+function performType4Search() {
+    console.log('performType4Search 被呼叫');
+    
+    try {
+        // 收集搜尋條件
+        const searchData = {
+            year: $('#ddlYear_Type4').val() || '',
+            category: $('#ddlCategory_Type4').val() || '',
+            reviewGroup: $('#ddlReviewGroup_Type4').val() || '',
+            orgName: $('#ddlOrg_Type4').val() || '',
+            supervisor: $('#ddlSupervisor_Type4').val() || '',
+            keyword: $('input[name="txtKeyword_Type4"]').val() || ''
+        };
+        
+        console.log('Type4 搜尋條件:', searchData);
+        
+        // 顯示載入狀態
+        const $searchButton = $('#btnSearch_Type4');
+        const originalText = $searchButton.text();
+        $searchButton.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> 搜尋中...');
+        
+        // 發送 AJAX 請求
+        $.ajax({
+            type: "POST",
+            url: "ReviewChecklist.aspx/AjaxSearch_Type4",
+            data: JSON.stringify(searchData),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            timeout: 30000
+        }).done(function(response) {
+            console.log('Type4 搜尋回應:', response);
+            
+            try {
+                const result = JSON.parse(response.d);
+                if (result.success) {
+                    // 渲染搜尋結果
+                    window.ReviewChecklist.renderSearchResults(result.data, '4');
+                    
+                    // 顯示成功訊息
+                    console.log(`Type4 搜尋成功: ${result.count} 筆資料`);
+                } else {
+                    console.error('Type4 搜尋失敗:', result.message);
+                    Swal.fire({
+                        title: '搜尋失敗',
+                        text: result.message,
+                        icon: 'error',
+                        confirmButtonText: '確定'
+                    });
+                }
+            } catch (parseError) {
+                console.error('解析搜尋結果時發生錯誤:', parseError);
+                Swal.fire({
+                    title: '搜尋錯誤',
+                    text: '解析搜尋結果時發生錯誤',
+                    icon: 'error',
+                    confirmButtonText: '確定'
+                });
+            }
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            console.error('Type4 搜尋 AJAX 請求失敗:', textStatus, errorThrown);
+            
+            let errorMessage = '搜尋時發生錯誤，請稍後再試';
+            if (jqXHR.status === 500) {
+                errorMessage = '伺服器內部錯誤，請聯繫系統管理員';
+            } else if (jqXHR.status === 0) {
+                errorMessage = '網路連線錯誤，請檢查網路連線';
+            } else if (textStatus === 'timeout') {
+                errorMessage = '搜尋請求超時，請稍後再試';
+            }
+            
+            Swal.fire({
+                title: '搜尋失敗',
+                text: errorMessage,
+                icon: 'error',
+                confirmButtonText: '確定'
+            });
+        }).always(function() {
+            // 恢復按鈕狀態
+            $searchButton.prop('disabled', false).html(originalText);
+        });
+        
+    } catch (error) {
+        console.error('Type4 搜尋時發生錯誤:', error);
+        Swal.fire({
+            title: '搜尋錯誤',
+            text: '準備搜尋時發生錯誤，請稍後再試',
+            icon: 'error',
+            confirmButtonText: '確定'
+        });
+    }
+}
+
 

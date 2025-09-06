@@ -615,13 +615,13 @@ function generateActionButtons(record) {
             </a>`;
         }
     }
-
+    if(record.Category == "科專" || record.Category == "文化"){
     // 回覆按鈕（檢視審查意見）
-    buttons += `<button class="btn btn-sm btn-teal-dark" type="button" onclick="showReviewComments('${record.ProjectID}')"
-                data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="檢視審查意見">
-                <i class="fas fa-comment-dots"></i>
-            </button>`;
-
+        buttons += `<button class="btn btn-sm btn-teal-dark" type="button" onclick="showReviewComments('${record.ProjectID}')"
+                    data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="檢視審查意見">
+                    <i class="fas fa-comment-dots"></i>
+                </button>`;
+    }
     // 歷程按鈕
     buttons += `<button class="btn btn-sm btn-teal-dark" type="button" onclick="showHistory('${record.ProjectID}')"
                 data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="歷程">
@@ -692,6 +692,7 @@ function getEditUrl(record) {
         case '文化':
             return `CUL/Application.aspx?ID=${record.ProjectID}`;
         case '學校社團':
+            return `Clb/ClbApplication.aspx?ProjectID=${record.ProjectID}`;
         case '學校民間':
             return `EDC/Application.aspx?ID=${record.ProjectID}`;
         case '多元':
@@ -788,6 +789,8 @@ function generateProjectNameLink(record) {
         return `<a href="../OFS/CUL/Application.aspx?ID=${projectId}" class="link-black" target="_blank">${projectName}</a>`;
     } else if (projectId.includes('EDC'))  {
         return `<a href="../OFS/EDC/Application.aspx?ID=${projectId}" class="link-black" target="_blank">${projectName}</a>`;
+    }else if (projectId.includes('CLB'))  {
+        return `<a href="../OFS/CLB/ClbApplication.aspx?ID=${projectId}" class="link-black" target="_blank">${projectName}</a>`;
     } else if (projectId.includes('MUL'))  {
         return `<a href="../OFS/MUL/Application.aspx?ID=${projectId}" class="link-black" target="_blank">${projectName}</a>`;
     } else if (projectId.includes('LIT'))  {

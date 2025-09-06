@@ -1071,7 +1071,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
         try
         {
             // 使用ReviewCheckListHelper更新StatusesName
-            ReviewCheckListHelper.UpdateProjectStatusName(CurrentProjectID, "計畫書審核中", GetCurrentUserInfo()?.Account ?? "系統");
+            ReviewCheckListHelper.SCI_UpdateProjectStatusName(CurrentProjectID, "計畫書審核中", GetCurrentUserInfo()?.Account ?? "系統");
         }
         catch (Exception ex)
         {
