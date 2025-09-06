@@ -162,3 +162,63 @@ UNION
 GO
 
 
+ALTER VIEW [dbo].[V_OFS_InprogressList]
+AS
+WITH SCI_inprogressList AS (SELECT          AM.Year, 'SCI' AS Category, PM.ProjectID, AM.ProjectNameTw, AM.OrgName,
+                                                                                            PM.SupervisoryUnit, PM.LastOperation, TQ.TaskNameEn, TQ.TaskName,
+                                                                                            CONCAT_WS(' , ', AM.Target, AM.Summary, AM.Innovation) AS ProjectContent,
+                                                                                            KW.KeyWords
+                                                                FROM               dbo.OFS_SCI_Project_Main AS PM LEFT OUTER JOIN
+                                                                                            dbo.OFS_SCI_Application_Main AS AM ON
+                                                                                            PM.ProjectID = AM.ProjectID LEFT OUTER JOIN
+                                                                                            dbo.OFS_TaskQueue AS TQ ON PM.ProjectID = TQ.ProjectID AND
+                                                                                            TQ.PriorityLevel =
+                                                                                                (SELECT          MIN(PriorityLevel) AS Expr1
+                                                                                                  FROM               dbo.OFS_TaskQueue
+                                                                                                  WHERE           (ProjectID = PM.ProjectID) AND (IsTodo = 1) AND (IsCompleted = 0))
+                                                                                            LEFT OUTER JOIN
+                                                                                                (SELECT          KeywordID AS ProjectID, STRING_AGG(KeyWordTw, ', ')
+                                                                                                                              AS KeyWords
+                                                                                                  FROM               dbo.OFS_SCI_Application_KeyWord AS AK
+                                                                                                  GROUP BY    KeywordID) AS KW ON PM.ProjectID = KW.ProjectID
+                                                                WHERE           (PM.Statuses = N'計畫執行'))
+    SELECT          Year, Category, ProjectID, ProjectNameTw, OrgName, SupervisoryUnit, LastOperation, TaskNameEn, TaskName,
+                                 ProjectContent, KeyWords
+     FROM               SCI_inprogressList AS SCI_inprogressList_1
+UNION
+    SELECT O.Year,
+           O.Category,
+           O.ProjectID,
+           O.ProjectName AS ProjectNameTw,
+           O.OrgName,
+           U.UnitName AS SupervisoryUnit,
+           O.LastOperation,
+           Q.TaskNameEn,
+           Q.TaskName,
+           O.ProjectContent,
+           '' AS KeyWords
+      FROM (SELECT Year, 'CUL' AS Category, ProjectID, ProjectName, OrgName, Organizer, LastOperation, CONCAT_WS(' , ', Target, Summary, Quantified, Qualitative) AS ProjectContent
+              FROM OFS_CUL_Project
+             WHERE ProgressStatus = 5
+            UNION
+            SELECT Year, 'EDC' AS Category, ProjectID, ProjectName, OrgName, Organizer, LastOperation, CONCAT_WS(' , ', Target, Summary, Quantified) AS ProjectContent
+              FROM OFS_EDC_Project
+             WHERE ProgressStatus = 5
+            UNION
+            SELECT Year, 'MUL' AS Category, ProjectID, ProjectName, OrgName, Organizer, LastOperation, CONCAT_WS(' , ', Target, Summary, Quantified, Qualitative) AS ProjectContent
+              FROM OFS_MUL_Project
+             WHERE ProgressStatus = 5
+            UNION
+            SELECT Year, 'LIT' AS Category, ProjectID, ProjectName, OrgName, Organizer, LastOperation, CONCAT_WS(' , ', Target, Summary, Quantified, Qualitative) AS ProjectContent
+              FROM OFS_LIT_Project
+             WHERE ProgressStatus = 5
+            UNION
+            SELECT Year, 'ACC' AS Category, ProjectID, ProjectName, OrgName, Organizer, LastOperation, CONCAT_WS(' , ', Target, Summary, Quantified, Qualitative) AS ProjectContent
+              FROM OFS_ACC_Project
+             WHERE ProgressStatus = 5) AS O
+ LEFT JOIN Sys_User AS R ON (R.UserID = O.Organizer)
+ LEFT JOIN Sys_Unit AS U ON (U.UnitID = R.UnitID)
+ LEFT JOIN OFS_TaskQueue AS Q ON (O.ProjectID = Q.ProjectID AND Q.PriorityLevel = (SELECT MIN(PriorityLevel) FROM OFS_TaskQueue WHERE ProjectID = O.ProjectID AND IsTodo = 1 AND IsCompleted = 0))
+GO
+
+
