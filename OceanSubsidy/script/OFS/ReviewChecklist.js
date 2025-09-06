@@ -745,7 +745,7 @@ window.ReviewChecklist = (function() {
                 <td data-th="類別:" style="text-align: center;">${projectCategory}</td>
                 <td data-th="計畫編號:" style="text-align: left;" nowrap>${item.ProjectID || ''}</td>
                 <td data-th="計畫名稱:" style="text-align: left;">
-                    <a href="#" class="link-black" target="_blank">${item.ProjectNameTw || ''}</a>
+                    <a href="${getReviewUrl(item.ProjectID)}" class="link-black" target="_blank">${item.ProjectNameTw || ''}</a>
                 </td>
                 <td data-th="申請單位:" style="text-align: left;">${item.UserOrg || ''}</td>
                 <td data-th="審查組別:">${reviewGroup}</td>
@@ -784,7 +784,7 @@ window.ReviewChecklist = (function() {
         if (statusesName === '計畫書審核中') {
             planRevisionContent = `
                 <div class="d-flex align-items-center justify-content-center gap-1">
-                    <button class="btn btn-sm btn-teal-dark" type="button" onclick="window.location.href='SCI/SciFinalReview.aspx?ProjectID=${item.ProjectID || ''}'">
+                    <button class="btn btn-sm btn-teal-dark" type="button" onclick="window.location.href='${getFinalReviewUrl(item.ProjectID)}'">
                         <i class="fas fa-clipboard-check" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="審查"></i>
                     </button>
                 </div>
@@ -1087,7 +1087,15 @@ window.ReviewChecklist = (function() {
         // 未知的補助案類型
         return null;
     }
-
+    function getFinalReviewUrl(projectId) {
+        if (projectId?.includes('SCI')) {
+            return `SCI/SciFinalReview.aspx?ProjectID=${projectId}`;
+        } else if (projectId?.includes('CLB')) {
+            return null; // TODO
+        } else {
+            return getReviewUrl(projectId);
+        }
+    }
     // 公開API
     /**
      * Type4 核定模式儲存功能
@@ -1649,22 +1657,22 @@ function handlePlanChangeReview(projectId) {
             reviewUrl = `SCI/SciInprogress_Approved.aspx?ProjectID=${projectId}`;
         } else if (projectId.includes('CUL')) {
             // 文化計畫變更審核頁面
-
+            reviewUrl = `CUL/Audit.aspx?ID=${projectId}`;
         } else if (projectId.includes('EDC')) {
             // 學校民間計畫變更審核頁面
-
+            reviewUrl = `EDC/Audit.aspx?ID=${projectId}`;
         } else if (projectId.includes('CLB')) {
             // 學校社團計畫變更審核頁面
 
         } else if (projectId.includes('MUL')) {
             // 多元計畫變更審核頁面
-
+            reviewUrl = `MUL/Audit.aspx?ID=${projectId}`;
         } else if (projectId.includes('LIT')) {
             // 素養計畫變更審核頁面
-
+            reviewUrl = `LIT/Audit.aspx?ID=${projectId}`;
         } else if (projectId.includes('ACC')) {
             // 無障礙計畫變更審核頁面
-
+            reviewUrl = `ACC/Audit.aspx?ID=${projectId}`;
         }
 
         if (reviewUrl) {
@@ -1979,14 +1987,7 @@ function initializeReviewChecklistPage() {
     if (window.ReviewChecklist) {
         window.ReviewChecklist.init();
     }
-    //
-    // // Type4 初始化審查組別選項
-    // if (window.ReviewChecklist && window.ReviewChecklist.updateReviewGroupType4) {
-    //     // 延遲執行以確保頁面完全載入
-    //     setTimeout(function() {
-    //         var initialCategory = $('#ddlCategory_Type4').val() ;
-    //     }, 100);
-    // }
+   
 
     // 排序模式 Modal 開啟事件
     $('#sortModeModal').on('shown.bs.modal', function() {
