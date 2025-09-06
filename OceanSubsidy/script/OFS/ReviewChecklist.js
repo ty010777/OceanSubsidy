@@ -570,7 +570,7 @@ window.ReviewChecklist = (function() {
      */
     function renderSearchResults(results, type) {
         try {
-            if (type === '4') {
+            if (type === 4) {
                 // Type-4 需要渲染到兩個表格中
                 renderType4SearchResults(results);
             } else {
@@ -782,7 +782,7 @@ window.ReviewChecklist = (function() {
         if (statusesName === '計畫書審核中') {
             planRevisionContent = `
                 <div class="d-flex align-items-center justify-content-center gap-1">
-                    <button class="btn btn-sm btn-teal-dark" type="button" onclick="window.location.href='SCI/SciFinalReview.aspx?ProjectID=${item.ProjectID || ''}'">
+                    <button class="btn btn-sm btn-teal-dark" type="button" onclick="window.location.href='${getFinalReviewUrl(item.ProjectID)}'">
                         <i class="fas fa-clipboard-check" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="審查"></i>
                     </button>
                 </div>
@@ -1086,6 +1086,16 @@ window.ReviewChecklist = (function() {
         return null;
     }
 
+    function getFinalReviewUrl(projectId) {
+        if (projectId?.includes('SCI')) {
+            return `SCI/SciFinalReview.aspx?ProjectID=${projectId}`;
+        } else if (projectId?.includes('CLB')) {
+            return null; // TODO
+        } else {
+            return getReviewUrl(projectId);
+        }
+    }
+
     // 公開API
     /**
      * Type4 核定模式儲存功能
@@ -1108,6 +1118,9 @@ window.ReviewChecklist = (function() {
                     if (projectId.includes('CUL')) category = 'CUL';
                     else if (projectId.includes('EDC')) category = 'EDC';
                     else if (projectId.includes('CLB')) category = 'CLB';
+                    else if (projectId.includes('MUL')) category = 'MUL';
+                    else if (projectId.includes('LIT')) category = 'LIT';
+                    else if (projectId.includes('ACC')) category = 'ACC';
                 }
 
                 if (projectId) {
@@ -1798,14 +1811,14 @@ function submitSendToApplicant(selectedIds) {
     });
 
     // 將選中的ID放入HiddenField (需要從後端取得ClientID)
-    const hiddenField = document.getElementById('MainContent_hdnSelectedProjectIds');
+    const hiddenField = document.getElementById('BodyContent_MainContent_hdnSelectedProjectIds');
 
     const joinedIds = selectedIds.join(',');
 
     hiddenField.value = joinedIds;
 
     // 觸發後端的按鈕點擊事件 (需要從後端取得PostBackEventReference)
-    __doPostBack('MainContent$btnSendToApplicant', '');
+    document.getElementById('BodyContent_MainContent_btnSendToApplicant').click();
 }
 
 /**

@@ -626,19 +626,41 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             // 處理每一筆資料
             foreach (var item in approvalItems)
             {
-                // 根據計畫類別決定要更新的資料表
-                string tableName = GetTableNameByCategory(item.Category);
+                int.TryParse(item.ApprovedSubsidy, out int amount);
 
-                // 準備參數
-                var parameters = new Dictionary<string, object>
+                switch (item.Category)
                 {
-                    ["@approvedSubsidy"] = item.ApprovedSubsidy ?? "0",
-                    ["@finalReviewNotes"] = item.FinalReviewNotes ?? "",
-                    ["@projectId"] = item.ProjectID
-                };
+                    case "CUL":
+                        OFS_CulProjectHelper.updateApprovedAmount(item.ProjectID, amount, item.FinalReviewNotes);
+                        break;
+                    case "EDC":
+                        OFS_EdcProjectHelper.updateApprovedAmount(item.ProjectID, amount, item.FinalReviewNotes);
+                        break;
+                    case "MUL":
+                        OFS_MulProjectHelper.updateApprovedAmount(item.ProjectID, amount, item.FinalReviewNotes);
+                        break;
+                    case "LIT":
+                        OFS_LitProjectHelper.updateApprovedAmount(item.ProjectID, amount, item.FinalReviewNotes);
+                        break;
+                    case "ACC":
+                        OFS_AccProjectHelper.updateApprovedAmount(item.ProjectID, amount, item.FinalReviewNotes);
+                        break;
+                    default:
+                        // 根據計畫類別決定要更新的資料表
+                        string tableName = GetTableNameByCategory(item.Category);
 
-                // 調用 Helper 執行資料庫更新
-                ReviewCheckListHelper.UpdateApprovalData(tableName, parameters);
+                        // 準備參數
+                        var parameters = new Dictionary<string, object>
+                        {
+                            ["@approvedSubsidy"] = item.ApprovedSubsidy ?? "0",
+                            ["@finalReviewNotes"] = item.FinalReviewNotes ?? "",
+                            ["@projectId"] = item.ProjectID
+                        };
+
+                        // 調用 Helper 執行資料庫更新
+                        ReviewCheckListHelper.UpdateApprovalData(tableName, parameters);
+                        break;
+                }
             }
 
             return JsonConvert.SerializeObject(new {
@@ -731,12 +753,6 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             case "SCI":
             case "科專":
                 return "OFS_SCI_Project_Main";
-            case "CUL":
-            case "文化":
-                return "OFS_CUL_Project_Main";
-            case "EDC":
-            case "學校民間":
-                return "OFS_EDC_Project_Main";
             case "CLB":
             case "學校社團":
                 return "OFS_CLB_Project_Main";
@@ -1566,7 +1582,10 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             {
                 options = ReviewCheckListHelper.GetSciReviewGroupOptions();
             }
-            //TODO 正文 加入 CUL 的審查組別選項
+            if (category == "CUL")
+            {
+                options = ReviewCheckListHelper.GetCulReviewGroupOptions();
+            }
             else
             {
                 // 其他類別只顯示「全部」
@@ -1820,29 +1839,41 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                         ReviewCheckListHelper.UpdateProjectStatusName(projectId, "計畫書修正中", currentUser.Account);
                         // 記錄歷程：核定中 → 計畫書修正中
                         ReviewCheckListHelper.InsertReviewHistory(projectId, "核定中", "計畫書修正中", "提送至申請者", currentUser.Account);
-                    }// TODO 正文 將專案狀態改為 計畫書修正中 ，且寄信給申請者，請他來修正計畫書。
+                    }
                     else if (projectId.Contains("CUL"))
                     {
                         // 文化
+                        OFS_CulProjectHelper.updateStatus(projectId, 42); //計畫書修正中
+                        ReviewCheckListHelper.InsertReviewHistory(projectId, "核定中", "計畫書修正中", "提送至申請者", currentUser.Account);
                     }
                     else if (projectId.Contains("EDC"))
                     {
                         // 學校民間
+                        continue;
                     }
                     else if (projectId.Contains("CLB"))
                     {
                         // 學校社團
-                    }else if (projectId.Contains("MUL"))
+                    }
+                    else if (projectId.Contains("MUL"))
                     {
                         // 多元
-                    }else if (projectId.Contains("LIT"))
+                        OFS_MulProjectHelper.updateStatus(projectId, 42); //計畫書修正中
+                        ReviewCheckListHelper.InsertReviewHistory(projectId, "核定中", "計畫書修正中", "提送至申請者", currentUser.Account);
+                    }
+                    else if (projectId.Contains("LIT"))
                     {
                         // 素養
-                    }else if (projectId.Contains("ACC"))
+                        continue;
+                    }
+                    else if (projectId.Contains("ACC"))
                     {
                         // 無障礙
+                        OFS_AccProjectHelper.updateStatus(projectId, 42); //計畫書修正中
+                        ReviewCheckListHelper.InsertReviewHistory(projectId, "核定中", "計畫書修正中", "提送至申請者", currentUser.Account);
                     }
-                    // TODO: 寄信 實作寄信給申請者功能
+
+                    // TODO 正文: 寄信 實作寄信給申請者功能
                     // SendNotificationEmail(projectId);
 
                     successCount++;

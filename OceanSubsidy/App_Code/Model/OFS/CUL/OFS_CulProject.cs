@@ -134,5 +134,11 @@ public class OFS_CulProject
     // 是否有效
     public bool IsExists { get; set; }
 
+    // 核定備註
+    public string FinalReviewNotes { get; set; }
+
+    // 核定排序
+    public int? FinalReviewOrder { get; set; }
+
     public ProjectChangeRecord changeApply { get; set; }
 }

@@ -696,6 +696,55 @@ public class ReviewCheckListHelper
         return result;
     }
 
+    /// <summary>
+    /// 取得文化審查組別選項
+    /// </summary>
+    /// <returns>文化審查組別清單</returns>
+    public static List<DropdownItem> GetCulReviewGroupOptions()
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            SELECT S.[Code],
+                   M.[Descname] + '-' + S.[Descname] AS [Descname]
+              FROM [Sys_ZgsCode] AS S
+              JOIN [Sys_ZgsCode] AS M ON (M.CodeGroup = 'CULField' AND S.ParentCode = M.Code)
+             WHERE S.CodeGroup = 'CULField'
+               AND S.IsValid = 1
+          ORDER BY S.Code
+        ";
+
+        List<DropdownItem> result = new List<DropdownItem>();
+
+        try
+        {
+            db.Parameters.Clear();
+            DataTable dt = db.GetTable();
+
+            if (dt != null && dt.Rows.Count > 0)
+            {
+                foreach (DataRow row in dt.Rows)
+                {
+                    result.Add(new DropdownItem
+                    {
+                        Value = row["Code"].ToString(),
+                        Text = row["Descname"].ToString()
+                    });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得文化審查組別選項時發生錯誤: {ex.Message}");
+        }
+        finally
+        {
+            db.Dispose();
+        }
+
+        return result;
+    }
+
     #endregion
 
     #region type-4 Search 決審

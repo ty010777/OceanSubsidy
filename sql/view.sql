@@ -107,3 +107,58 @@ UNION
 GO
 
 
+ALTER VIEW [dbo].[V_OFS_ReviewChecklist_type4]
+AS
+SELECT          PM.ProjectID, AM.Year, AM.ProjectNameTw, AM.OrgName, AM.Field, PM.SupervisoryPersonAccount,
+                            PM.SupervisoryPersonName, SUM(PT.SubsidyAmount) AS TotalSubsidyPrice, PM.StatusesName,
+                            PM.ApprovedSubsidy, PM.FinalReviewNotes, PM.FinalReviewOrder, SUM(ORR.TotalScore) AS TotalScore
+FROM              dbo.OFS_SCI_Project_Main AS PM LEFT OUTER JOIN
+                            dbo.OFS_SCI_Application_Main AS AM ON PM.ProjectID = AM.ProjectID LEFT OUTER JOIN
+                            dbo.OFS_SCI_PersonnelCost_TotalFee AS PT ON PM.ProjectID = PT.ProjectID LEFT OUTER JOIN
+                            dbo.OFS_ReviewRecords AS ORR ON PM.ProjectID = ORR.ProjectID
+WHERE          (PM.Statuses = '決審核定')
+GROUP BY   PM.ProjectID, AM.Year, AM.ProjectNameTw, AM.OrgName, AM.Field, PM.SupervisoryPersonAccount,
+                            PM.SupervisoryPersonName, PM.ApprovedSubsidy, PM.FinalReviewNotes, PM.StatusesName, PM.FinalReviewOrder
+UNION
+    SELECT O.ProjectID,
+           O.Year,
+           O.ProjectName AS ProjectNameTw,
+           O.OrgName,
+           O.Field,
+           R.Account AS SupervisoryPersonAccount,
+           R.Name AS SupervisoryPersonName,
+           O.ApplyAmount AS TotalSubsidyPrice,
+           S.Descname AS StatusesName,
+           O.ApprovedAmount AS ApprovedSubsidy,
+           O.FinalReviewNotes,
+           O.FinalReviewOrder,
+           C.TotalScore
+      FROM (SELECT ProjectID, Year, ProjectName, OrgName, Field, Organizer, ApplyAmount, ApprovedAmount, FinalReviewNotes, Status, FinalReviewOrder
+              FROM OFS_CUL_Project
+             WHERE ProgressStatus = 4
+            UNION
+            SELECT ProjectID, Year, ProjectName, OrgName, '' AS Field, Organizer, ApplyAmount, ApprovedAmount, FinalReviewNotes, Status, FinalReviewOrder
+              FROM OFS_EDC_Project
+             WHERE ProgressStatus = 4
+            UNION
+            SELECT ProjectID, Year, ProjectName, OrgName, '' AS Field, Organizer, ApplyAmount, ApprovedAmount, FinalReviewNotes, Status, FinalReviewOrder
+              FROM OFS_MUL_Project
+             WHERE ProgressStatus = 4
+            UNION
+            SELECT ProjectID, Year, ProjectName, OrgName, '' AS Field, Organizer, ApplyAmount, ApprovedAmount, FinalReviewNotes, Status, FinalReviewOrder
+              FROM OFS_LIT_Project
+             WHERE ProgressStatus = 4
+            UNION
+            SELECT ProjectID, Year, ProjectName, OrgName, '' AS Field, Organizer, ApplyAmount, ApprovedAmount, FinalReviewNotes, Status, FinalReviewOrder
+              FROM OFS_ACC_Project
+             WHERE ProgressStatus = 4) AS O
+ LEFT JOIN Sys_User AS R ON (R.UserID = O.Organizer)
+ LEFT JOIN Sys_Unit AS U ON (U.UnitID = R.UnitID)
+      JOIN Sys_ZgsCode AS S ON (S.CodeGroup = 'ProjectStatus' AND S.Code = O.Status)
+ LEFT JOIN (SELECT ProjectID,
+                   SUM(TotalScore) AS TotalScore
+              FROM OFS_ReviewRecords
+          GROUP BY ProjectID) AS C ON (C.ProjectID = O.ProjectID)
+GO
+
+

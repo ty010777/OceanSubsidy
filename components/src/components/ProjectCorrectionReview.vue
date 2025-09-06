@@ -48,7 +48,9 @@
         }
 
         api[props.type]("reviewApplication", form.value).subscribe((res) => {
-            // TODO
+            if (res) {
+                window.location.href = "../ReviewChecklist.aspx?type=1";
+            }
         });
     };
 
