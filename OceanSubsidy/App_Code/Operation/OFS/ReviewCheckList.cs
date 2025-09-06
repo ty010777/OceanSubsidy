@@ -1839,7 +1839,7 @@ SELECT TOP (1000) [ProjectID]
     public static void UpdateProjectStatusInDatabase(string projectId, string newStatus,
         string userAccount, string StatusesName)
     {
-        string finalStatusesName = string.IsNullOrEmpty(StatusesName) ? "審核中" : StatusesName;
+        string finalStatusesName = string.IsNullOrEmpty(StatusesName) ? "" : StatusesName;
         string LastOperation = newStatus == "計畫執行" ? "計畫已核定" : "";
         
         using (DbHelper db = new DbHelper())

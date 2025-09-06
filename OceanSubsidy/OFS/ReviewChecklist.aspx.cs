@@ -1125,6 +1125,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                     {
                         case "1": // 資格審查 → 領域審查
                             fromStatus = "資格審查";
+                            StatusesName = "核定中";
                             toStatus = "決審核定";
                             return true;
                         case "4": // 決審 → 計畫執行
