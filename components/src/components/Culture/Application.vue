@@ -287,7 +287,7 @@
 
         api.culture("saveApplication", data).subscribe((res) => {
             if (submit) {
-                emit("next");
+                emit("next", res.ID);
             } else if (form.value.ID) {
                 load();
             } else {

@@ -14,7 +14,7 @@
             setup() {
                 const id = "<%= Request.QueryString["ID"] %>";
 
-                const next = () => window.location.href = `WorkSchedule.aspx?ID=${id}`;
+                const next = (projectId) => window.location.href = `WorkSchedule.aspx?ID=${projectId}`;
 
                 return { id, next };
             }
