@@ -72,21 +72,9 @@ public class OFS_AccProject
     public int FormStep { get; set; }
 
     // 狀態
-    //  1: 申請中
-    //  2: 資格審查
-    //  3: 退回補正
-    //  4: 資格審查不通過
-    //  9: 核定補助經費
-    // 10: 修正計畫書
-    // 11: 決審
-    // 12: 決審不通過
-    // 13: 核定通過
     public int Status { get; set; }
 
     // 執行狀態
-    // 1: 執行中
-    // 2: 計畫變更
-    // 9: 終止
     public int ProgressStatus { get; set; }
 
     // 承辦
@@ -111,6 +99,12 @@ public class OFS_AccProject
 
     // 是否有效
     public bool IsExists { get; set; }
+
+    // 核定備註
+    public string FinalReviewNotes { get; set; }
+
+    // 核定排序
+    public int? FinalReviewOrder { get; set; }
 
     public ProjectChangeRecord changeApply { get; set; }
 }

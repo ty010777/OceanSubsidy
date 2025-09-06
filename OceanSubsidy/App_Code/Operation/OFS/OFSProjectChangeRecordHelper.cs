@@ -10,7 +10,7 @@ public class OFSProjectChangeRecordHelper
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
-            SELECT [ID]
+            SELECT TOP (1) [ID]
                   ,[Type]
                   ,[DataID]
                   ,[Reason]
@@ -30,6 +30,7 @@ public class OFSProjectChangeRecordHelper
              WHERE [Type] = @Type
                AND [DataID] = @DataID
                AND [Status] <> 3
+          ORDER BY CreateTime DESC
         ";
 
         db.Parameters.Add("@Type", type);

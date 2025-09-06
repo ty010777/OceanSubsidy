@@ -43,6 +43,8 @@ public class OFS_MulProjectHelper
                   ,P.[ApplyAmount]
                   ,P.[SelfAmount]
                   ,P.[OtherAmount]
+                  ,P.[ApprovedAmount]
+                  ,P.[RecoveryAmount]
                   ,P.[Benefit]
                   ,P.[FormStep]
                   ,P.[Status]
@@ -57,6 +59,8 @@ public class OFS_MulProjectHelper
                   ,P.[IsProjChanged]
                   ,P.[IsWithdrawal]
                   ,P.[IsExists]
+                  ,P.[FinalReviewNotes]
+                  ,P.[FinalReviewOrder]
               FROM [OFS_MUL_Project] AS P
          LEFT JOIN [Sys_User] AS U ON (U.UserID = P.Organizer)
              WHERE P.[ID] = @ID
@@ -218,6 +222,27 @@ public class OFS_MulProjectHelper
         db.Parameters.Add("@Summary", model.Summary);
         db.Parameters.Add("@Quantified", model.Quantified);
         db.Parameters.Add("@Qualitative", model.Qualitative);
+        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
+
+        db.ExecuteNonQuery();
+    }
+
+    public static void updateApprovedAmount(string projectID, int amount, string notes)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            UPDATE [OFS_MUL_Project]
+               SET [ApprovedAmount] = @ApprovedAmount
+                  ,[FinalReviewNotes] = @FinalReviewNotes
+                  ,[UpdateTime] = GETDATE()
+                  ,[UpdateUser] = @UpdateUser
+             WHERE [ProjectID] = @ProjectID
+        ";
+
+        db.Parameters.Add("@ProjectID", projectID);
+        db.Parameters.Add("@ApprovedAmount", amount);
+        db.Parameters.Add("@FinalReviewNotes", notes);
         db.Parameters.Add("@UpdateUser", CurrentUser.ID);
 
         db.ExecuteNonQuery();
@@ -426,6 +451,8 @@ public class OFS_MulProjectHelper
             ApplyAmount = row.Field<int?>("ApplyAmount"),
             SelfAmount = row.Field<int?>("SelfAmount"),
             OtherAmount = row.Field<int?>("OtherAmount"),
+            ApprovedAmount = row.Field<int?>("ApprovedAmount"),
+            RecoveryAmount = row.Field<int?>("RecoveryAmount"),
             Benefit = row.Field<string>("Benefit"),
             FormStep = row.Field<int>("FormStep"),
             Status = row.Field<int>("Status"),
@@ -439,7 +466,9 @@ public class OFS_MulProjectHelper
             UserOrg = row.Field<string>("UserOrg"),
             IsProjChanged = row.Field<bool>("IsProjChanged"),
             IsWithdrawal = row.Field<bool>("IsWithdrawal"),
-            IsExists = row.Field<bool>("IsExists")
+            IsExists = row.Field<bool>("IsExists"),
+            FinalReviewNotes = row.Field<string>("FinalReviewNotes"),
+            FinalReviewOrder = row.Field<int?>("FinalReviewOrder")
         };
     }
 }

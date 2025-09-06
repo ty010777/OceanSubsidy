@@ -106,8 +106,8 @@ public class OFS_CulProject
     // 1: 資格審查
     // 2: 初審
     // 3: 複審
-    // 4: 決審
-    // 5: 執行階段
+    // 4: 決審核定
+    // 5: 計畫執行
     // 9: 結案
     public int ProgressStatus { get; set; }
 
@@ -133,6 +133,12 @@ public class OFS_CulProject
 
     // 是否有效
     public bool IsExists { get; set; }
+
+    // 核定備註
+    public string FinalReviewNotes { get; set; }
+
+    // 核定排序
+    public int? FinalReviewOrder { get; set; }
 
     public ProjectChangeRecord changeApply { get; set; }
 }

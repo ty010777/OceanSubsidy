@@ -32,7 +32,7 @@
 
                 const change = (step) => current.value = step;
 
-                const next = () => {};
+                const next = () => window.location.href = "../ApplicationChecklist.aspx";
 
                 onMounted(initScrollListener);
 

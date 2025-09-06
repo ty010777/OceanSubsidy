@@ -30,15 +30,17 @@
         setupVueApp({
             setup() {
                 const { onMounted, ref } = Vue;
+                const { useProgressStore } = OceanSubsidyComponents;
 
                 const current = ref(1);
                 const id = "<%= Request.QueryString["ID"] %>";
+                const store = useProgressStore();
 
                 const change = (step) => current.value = step;
 
                 onMounted(initScrollListener);
 
-                return { change, current, id };
+                return { change, current, id, store };
             }
         });
     </script>
