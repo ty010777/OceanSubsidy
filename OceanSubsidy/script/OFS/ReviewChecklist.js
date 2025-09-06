@@ -1654,22 +1654,22 @@ function handlePlanChangeReview(projectId) {
             reviewUrl = `SCI/SciInprogress_Approved.aspx?ProjectID=${projectId}`;
         } else if (projectId.includes('CUL')) {
             // 文化計畫變更審核頁面
-
+            reviewUrl = `CUL/Audit.aspx?ID=${projectId}`;
         } else if (projectId.includes('EDC')) {
             // 學校民間計畫變更審核頁面
-
+            reviewUrl = `EDC/Audit.aspx?ID=${projectId}`;
         } else if (projectId.includes('CLB')) {
             // 學校社團計畫變更審核頁面
 
         } else if (projectId.includes('MUL')) {
             // 多元計畫變更審核頁面
-
+            reviewUrl = `MUL/Audit.aspx?ID=${projectId}`;
         } else if (projectId.includes('LIT')) {
             // 素養計畫變更審核頁面
-
+            reviewUrl = `LIT/Audit.aspx?ID=${projectId}`;
         } else if (projectId.includes('ACC')) {
             // 無障礙計畫變更審核頁面
-
+            reviewUrl = `ACC/Audit.aspx?ID=${projectId}`;
         }
 
         if (reviewUrl) {

@@ -1,7 +1,7 @@
 <template>
     <div class="block rounded-top-4 py-4 d-flex justify-content-between" style="position:sticky;top:180px;z-index:15">
         <div class="d-flex gap-2">
-            <button class="btn text-teal-dark" type="button" v-if="store[props.type].progress === 2">
+            <button class="btn text-teal-dark" type="button" v-if="store[props.type].changeStatus">
                 計畫變更申請中
             </button>
             <button class="btn btn-teal-dark" @click="showApplyModal" type="button" v-else>
@@ -154,7 +154,7 @@
 
         api[props.type]("applyChange", applyForm.value).subscribe((res) => {
             if (res) {
-                // TODO
+                location.reload();
             }
         });
     };
@@ -187,7 +187,7 @@
 
         api[props.type]("terminate", terminateForm.value).subscribe((res) => {
             if (res) {
-                // TODO
+                location.href = "../ApplicationChecklist.aspx";
             }
         });
     };

@@ -222,3 +222,43 @@ UNION
 GO
 
 
+ALTER VIEW [dbo].[V_OFS_ReviewChecklist_type5]
+AS
+WITH SCI_Review_Type1 AS (SELECT          AM.Year, AM.ProjectID, 'SCI' AS Category, AM.ProjectNameTw, AM.OrgName,
+                                                                                             PM.SupervisoryUnit
+                                                                 FROM              dbo.OFS_SCI_Project_Main AS PM LEFT OUTER JOIN
+                                                                                             dbo.OFS_SCI_Application_Main AS AM ON AM.ProjectID = PM.ProjectID
+                                                                 WHERE          (PM.IsProjChanged = 1))
+    SELECT          Year, ProjectID, Category, ProjectNameTw, OrgName, SupervisoryUnit
+     FROM               SCI_Review_Type1 AS SCI_Review_Type1_1
+UNION
+    SELECT O.Year,
+           O.ProjectID,
+           O.Category,
+           O.ProjectName AS ProjectNameTw,
+           O.OrgName,
+           U.UnitName AS SupervisoryUnit
+      FROM (SELECT Year, ProjectID, 'CUL' AS Category, ProjectName, OrgName, Organizer, LastOperation, CONCAT_WS(' , ', Target, Summary, Quantified, Qualitative) AS ProjectContent
+              FROM OFS_CUL_Project
+             WHERE IsProjChanged = 1
+            UNION
+            SELECT Year, ProjectID, 'EDC' AS Category, ProjectName, OrgName, Organizer, LastOperation, CONCAT_WS(' , ', Target, Summary, Quantified) AS ProjectContent
+              FROM OFS_EDC_Project
+             WHERE IsProjChanged = 1
+            UNION
+            SELECT Year, ProjectID, 'MUL' AS Category, ProjectName, OrgName, Organizer, LastOperation, CONCAT_WS(' , ', Target, Summary, Quantified, Qualitative) AS ProjectContent
+              FROM OFS_MUL_Project
+             WHERE IsProjChanged = 1
+            UNION
+            SELECT Year, ProjectID, 'LIT' AS Category, ProjectName, OrgName, Organizer, LastOperation, CONCAT_WS(' , ', Target, Summary, Quantified, Qualitative) AS ProjectContent
+              FROM OFS_LIT_Project
+             WHERE IsProjChanged = 1
+            UNION
+            SELECT Year, 'ACC' AS Category, ProjectID, ProjectName, OrgName, Organizer, LastOperation, CONCAT_WS(' , ', Target, Summary, Quantified, Qualitative) AS ProjectContent
+              FROM OFS_ACC_Project
+             WHERE IsProjChanged = 1) AS O
+ LEFT JOIN Sys_User AS R ON (R.UserID = O.Organizer)
+ LEFT JOIN Sys_Unit AS U ON (U.UnitID = R.UnitID)
+GO
+
+
