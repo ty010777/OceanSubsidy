@@ -2,6 +2,8 @@ import AccessibilityApplication from "./components/Accessibility/Application.vue
 import AccessibilityAttachment from "./components/Accessibility/Attachment.vue";
 import AccessibilityBenefit from "./components/Accessibility/Benefit.vue";
 import AccessibilityFunding from "./components/Accessibility/Funding.vue";
+import AccessibilityPayment1 from "./components/Accessibility/Payment1.vue";
+import AccessibilityPayment2 from "./components/Accessibility/Payment2.vue";
 import AccessibilityProgressBar from "./components/Accessibility/ProgressBar.vue";
 import AccessibilityWorkSchedule from "./components/Accessibility/WorkSchedule.vue";
 import ConfirmModal from "./components/ConfirmModal.vue";
@@ -10,10 +12,14 @@ import CultureApplication from "./components/Culture/Application.vue";
 import CultureAttachment from "./components/Culture/Attachment.vue";
 import CultureFunding from "./components/Culture/Funding.vue";
 import CultureOther from "./components/Culture/Other.vue";
+import CulturePayment1 from "./components/Culture/Payment1.vue";
+import CulturePayment2 from "./components/Culture/Payment2.vue";
+import CultureProgress from "./components/Culture/Progress.vue";
 import CultureProgressBar from "./components/Culture/ProgressBar.vue";
 import CultureWorkSchedule from "./components/Culture/WorkSchedule.vue";
 import EducationApplication from "./components/Education/Application.vue";
 import EducationAttachment from "./components/Education/Attachment.vue";
+import EducationPayment from "./components/Education/Payment.vue";
 import EducationProgressBar from "./components/Education/ProgressBar.vue";
 import ErrorModal from "./components/ErrorModal.vue";
 import InputBoolean from "./components/InputBoolean.vue";
@@ -25,27 +31,38 @@ import InputSelect from "./components/InputSelect.vue";
 import InputText from "./components/InputText.vue";
 import InputTextarea from "./components/InputTextarea.vue";
 import InputTwDate from "./components/InputTwDate.vue";
+import ListPager from "./components/ListPager.vue";
 import LiteracyApplication from "./components/Literacy/Application.vue";
 import LiteracyAttachment from "./components/Literacy/Attachment.vue";
 import LiteracyBenefit from "./components/Literacy/Benefit.vue";
 import LiteracyFunding from "./components/Literacy/Funding.vue";
+import LiteracyPayment1 from "./components/Literacy/Payment1.vue";
+import LiteracyPayment2 from "./components/Literacy/Payment2.vue";
 import LiteracyProgressBar from "./components/Literacy/ProgressBar.vue";
 import LiteracyWorkSchedule from "./components/Literacy/WorkSchedule.vue";
 import MultipleApplication from "./components/Multiple/Application.vue";
 import MultipleAttachment from "./components/Multiple/Attachment.vue";
 import MultipleBenefit from "./components/Multiple/Benefit.vue";
 import MultipleFunding from "./components/Multiple/Funding.vue";
+import MultiplePayment1 from "./components/Multiple/Payment1.vue";
+import MultiplePayment2 from "./components/Multiple/Payment2.vue";
+import MultiplePayment3 from "./components/Multiple/Payment3.vue";
 import MultipleProgressBar from "./components/Multiple/ProgressBar.vue";
 import MultipleWorkSchedule from "./components/Multiple/WorkSchedule.vue";
 import ProjectChangeReview from "./components/ProjectChangeReview.vue";
 import ProjectCorrectionReview from "./components/ProjectCorrectionReview.vue";
 import ProjectOrganizer from "./components/ProjectOrganizer.vue";
 import ProjectProgress from "./components/ProjectProgress.vue";
+import ProjectReport from "./components/ProjectReport.vue";
 import ProjectReview from "./components/ProjectReview.vue";
 import ProjectTitle from "./components/ProjectTitle.vue";
 import ProjectToolbar from "./components/ProjectToolbar.vue";
 import RequiredLabel from "./components/RequiredLabel.vue";
+import SystemGrantList from "./components/System/GrantList.vue";
+import SystemNewsList from "./components/System/NewsList.vue";
+import SystemNewsForm from "./components/System/NewsForm.vue";
 import TwDate from "./components/TwDate.vue";
+import { api } from "./composables/api";
 import { useProgressStore } from "./stores/progress";
 
 const components = {
@@ -53,6 +70,8 @@ const components = {
     AccessibilityAttachment,
     AccessibilityBenefit,
     AccessibilityFunding,
+    AccessibilityPayment1,
+    AccessibilityPayment2,
     AccessibilityProgressBar,
     AccessibilityWorkSchedule,
     ConfirmModal,
@@ -61,10 +80,14 @@ const components = {
     CultureAttachment,
     CultureFunding,
     CultureOther,
+    CulturePayment1,
+    CulturePayment2,
+    CultureProgress,
     CultureProgressBar,
     CultureWorkSchedule,
     EducationApplication,
     EducationAttachment,
+    EducationPayment,
     EducationProgressBar,
     ErrorModal,
     InputBoolean,
@@ -76,30 +99,41 @@ const components = {
     InputText,
     InputTextarea,
     InputTwDate,
+    ListPager,
     LiteracyApplication,
     LiteracyAttachment,
     LiteracyBenefit,
     LiteracyFunding,
+    LiteracyPayment1,
+    LiteracyPayment2,
     LiteracyProgressBar,
     LiteracyWorkSchedule,
     MultipleApplication,
     MultipleAttachment,
     MultipleBenefit,
     MultipleFunding,
+    MultiplePayment1,
+    MultiplePayment2,
+    MultiplePayment3,
     MultipleProgressBar,
     MultipleWorkSchedule,
     ProjectChangeReview,
     ProjectCorrectionReview,
     ProjectOrganizer,
     ProjectProgress,
+    ProjectReport,
     ProjectReview,
     ProjectTitle,
     ProjectToolbar,
     RequiredLabel,
+    SystemGrantList,
+    SystemNewsList,
+    SystemNewsForm,
     TwDate
 };
 
 export default {
+    api,
     install: (app) => {
         for (const name in components) {
             app.component(name, components[name]);

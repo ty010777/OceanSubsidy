@@ -7,6 +7,13 @@ public class CurrentUser
         }
     }
 
+    public static string UnitName {
+        get
+        {
+            return SessionHelper.Get<SessionHelper.UserInfoClass>(SessionHelper.UserInfo).UnitName;
+        }
+    }
+
     public static string UserName {
         get
         {
