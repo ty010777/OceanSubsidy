@@ -35,6 +35,7 @@ public class OFSNewsHelper
                   ,[UserName]
                   ,[UserOrg]
               FROM [OFS_News]
+             WHERE [ID] = @ID
         ";
 
         db.Parameters.Add("@ID", id);
@@ -64,7 +65,7 @@ public class OFSNewsHelper
         model.ID = int.Parse(db.GetTable().Rows[0]["ID"].ToString());
     }
 
-    public static List<News> query()
+    public static List<News> query(bool published = false)
     {
         DbHelper db = new DbHelper();
 
@@ -77,8 +78,14 @@ public class OFSNewsHelper
                   ,[UserName]
                   ,[UserOrg]
               FROM [OFS_News]
-          ORDER BY EnableTime DESC
         ";
+
+        if (published)
+        {
+            db.CommandText += " WHERE EnableTime IS NOT NULL AND EnableTime < GETDATE() AND (DisableTime IS NULL OR DisableTime > GETDATE())";
+        }
+
+        db.CommandText += " ORDER BY EnableTime DESC";
 
         return db.GetTable().Rows.Cast<DataRow>().Select(r => toModel(r)).ToList();
     }

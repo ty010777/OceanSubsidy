@@ -63,6 +63,14 @@ public class SystemService : BaseService
         };
     }
 
+    public object getPublishedNewsList(JObject param, HttpContext context)
+    {
+        return new
+        {
+            List = OFSNewsHelper.query(true)
+        };
+    }
+
     public object saveNews(JObject param, HttpContext context)
     {
         var news = param["News"].ToObject<News>();
