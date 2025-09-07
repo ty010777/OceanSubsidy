@@ -99,6 +99,16 @@ public class CultureService : BaseService
         return step;
     }
 
+    public object findApplication(JObject param, HttpContext context)
+    {
+        var id = getID(param["ID"].ToString());
+
+        return new
+        {
+            Project = getProject(id)
+        };
+    }
+
     public object getApplication(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
