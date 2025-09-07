@@ -65,9 +65,10 @@ public class OFS_CulGoalScheduleHelper
                   ,[Type]
                   ,[Month]
                   ,[StepID]
+                  ,[Status]
               FROM [OFS_CUL_Goal_Schedule]
              WHERE [PID] = @PID
-          ORDER BY [ID]
+          ORDER BY [Type], [ID]
         ";
 
         db.Parameters.Add("@PID", pid);
@@ -96,6 +97,25 @@ public class OFS_CulGoalScheduleHelper
         db.ExecuteNonQuery();
     }
 
+    public static void updateStatus(int id, int status)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            UPDATE [OFS_CUL_Goal_Schedule]
+               SET [Status] = @Status
+                  ,[UpdateTime] = GETDATE()
+                  ,[UpdateUser] = @UpdateUser
+             WHERE [ID] = @ID
+        ";
+
+        db.Parameters.Add("@ID", id);
+        db.Parameters.Add("@Status", status);
+        db.Parameters.Add("@UpdateUser", CurrentUser.ID);
+
+        db.ExecuteNonQuery();
+    }
+
     private static OFS_CulGoalSchedule toModel(DataRow row)
     {
         return new OFS_CulGoalSchedule
@@ -105,7 +125,8 @@ public class OFS_CulGoalScheduleHelper
             ItemID = row.Field<int>("ItemID"),
             Type = row.Field<int>("Type"),
             Month = row.Field<int>("Month"),
-            StepID = row.Field<int>("StepID")
+            StepID = row.Field<int>("StepID"),
+            Status = row.Field<int?>("Status")
         };
     }
 }
