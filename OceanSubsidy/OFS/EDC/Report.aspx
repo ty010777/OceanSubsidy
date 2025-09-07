@@ -7,7 +7,7 @@
 <asp:Content ContentPlaceHolderID="MainContent" runat="server">
     <div>
         <project-title :id="id" type="education"></project-title>
-        <project-progress :id="id" :step="5" type="education"></project-progress>
+        <project-progress :excludes="[4]" :id="id" :step="5" type="education"></project-progress>
         <div class="block rounded-top-4 pb-0">
             <ul class="teal-dark-tabs mb-0">
                 <li :class="{ active: item.id === stage }" :key="item" v-for="(item) in stages">
