@@ -13,5 +13,11 @@ public class OFS_CulGoalSchedule
     // 實施步驟
     public int StepID { get; set; }
 
+    // 狀態
+    // 1:未完成
+    // 2:部分完成
+    // 3:完成
+    public int? Status { get; set; }
+
     public bool Deleted { get; set; }
 }
