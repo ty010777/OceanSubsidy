@@ -105,7 +105,7 @@
                         <td class="text-end">{{ approved.toLocaleString() }}</td>
                         <td class="text-end">{{ filterList.reduce((sum, item) => sum + item.OtherAmount, 0).toLocaleString() }}</td>
                         <td class="text-end">{{ spend.toLocaleString() }}</td>
-                        <td class="text-end">{{ (Math.round(spend * 100 / approved * 100) / 100).toLocaleString() }}%</td>
+                        <td class="text-end">{{ toPercent(spend, approved).toLocaleString() }}%</td>
                         <td class="text-end">{{ filterList.reduce((sum, item) => sum + item.PaymentAmount, 0).toLocaleString() }}</td>
                     </tr>
                 </thead>
@@ -120,7 +120,7 @@
                         <td data-th="本會補助金額:" class="text-end">{{ item.ApprovedAmount.toLocaleString() }}</td>
                         <td data-th="配合款:" class="text-end">{{ item.OtherAmount.toLocaleString() }}</td>
                         <td data-th="實支金額:" class="text-end">{{ item.SpendAmount.toLocaleString() }}</td>
-                        <td data-th="累積經費執行率:" class="text-end">{{ (Math.round(item.SpendAmount * 100 / item.ApprovedAmount * 100) / 100).toLocaleString() }}%</td>
+                        <td data-th="累積經費執行率:" class="text-end">{{ toPercent(item.SpendAmount, item.ApprovedAmount).toLocaleString() }}%</td>
                         <td data-th="本會已撥金額:" class="text-end">{{ item.PaymentAmount.toLocaleString() }}</td>
                     </tr>
                 </tbody>
@@ -181,6 +181,14 @@
         } else if (item.ProjectID.includes("ACC")) {
             return `../ACC/Application.aspx?ID=${item.ProjectID}`;
         }
+    };
+
+    const toPercent = (value1, value2) => {
+        if (value2) {
+            return Math.round(value1 * 100 / value2 * 100) / 100;
+        }
+
+        return 0;
     };
 
     onMounted(() => {
