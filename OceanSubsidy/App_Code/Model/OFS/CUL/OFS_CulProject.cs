@@ -102,7 +102,7 @@ public class OFS_CulProject
     public int Status { get; set; }
 
     // 階段
-    // 0: 尚未提送申請
+    // 0: 尚未提送
     // 1: 資格審查
     // 2: 初審
     // 3: 複審

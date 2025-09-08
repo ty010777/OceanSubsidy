@@ -33,6 +33,14 @@ public class SystemService : BaseService
         return new {};
     }
 
+    public object getApplyList(JObject param, HttpContext context)
+    {
+        return new
+        {
+            List = ReportHelper.queryApplyList()
+        };
+    }
+
     public object getEmptyNews(JObject param, HttpContext context)
     {
         return new

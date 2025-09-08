@@ -59,6 +59,7 @@ import ProjectReport from "./components/ProjectReport.vue";
 import ProjectReview from "./components/ProjectReview.vue";
 import ProjectTitle from "./components/ProjectTitle.vue";
 import ProjectToolbar from "./components/ProjectToolbar.vue";
+import ReportApplyList from "./components/Report/ApplyList.vue";
 import RequiredLabel from "./components/RequiredLabel.vue";
 import SystemGrantForm1 from "./components/System/GrantForm1.vue";
 import SystemGrantForm2 from "./components/System/GrantForm2.vue";
@@ -133,6 +134,7 @@ const components = {
     ProjectReview,
     ProjectTitle,
     ProjectToolbar,
+    ReportApplyList,
     RequiredLabel,
     SystemGrantForm1,
     SystemGrantForm2,
