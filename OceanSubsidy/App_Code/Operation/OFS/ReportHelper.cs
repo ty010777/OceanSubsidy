@@ -7,7 +7,7 @@ using System.Linq;
 
 public class ReportHelper
 {
-    public static List<ApplyPlan> queryApplyList()
+    public static List<ApplyPlan> queryApplyList(bool approved = false)
     {
         DbHelper db = new DbHelper();
 
@@ -17,6 +17,7 @@ public class ReportHelper
                   ,O.[Category]
                   ,O.[ProjectName]
                   ,O.[UserOrg]
+                  ,O.[ApprovedAmount]
                   ,O.[ApplyAmount]
                   ,O.[OtherAmount]
                   ,U.UnitName AS [SupervisoryUnit]
@@ -28,7 +29,9 @@ public class ReportHelper
                           ,[ProjectName]
                           ,[UserOrg]
                           ,[Organizer]
-                          ,ISNULL([ApplyAmount], 0) AS [ApplyAmount], ISNULL([SelfAmount],0) + ISNULL([OtherAmount],0) AS [OtherAmount]
+                          ,ISNULL([ApprovedAmount], 0) AS [ApprovedAmount]
+                          ,ISNULL([ApplyAmount], 0) AS [ApplyAmount]
+                          ,ISNULL([SelfAmount],0) + ISNULL([OtherAmount],0) AS [OtherAmount]
                           ,[ProgressStatus]
                           ,[Status]
                       FROM OFS_CUL_Project
@@ -39,7 +42,9 @@ public class ReportHelper
                           ,[ProjectName]
                           ,[UserOrg]
                           ,[Organizer]
-                          ,ISNULL([ApplyAmount], 0) AS [ApplyAmount], ISNULL([SelfAmount],0) + ISNULL([OtherGovAmount],0) + ISNULL([OtherUnitAmount],0) AS [OtherAmount]
+                          ,ISNULL([ApprovedAmount], 0) AS [ApprovedAmount]
+                          ,ISNULL([ApplyAmount], 0) AS [ApplyAmount]
+                          ,ISNULL([SelfAmount],0) + ISNULL([OtherGovAmount],0) + ISNULL([OtherUnitAmount],0) AS [OtherAmount]
                           ,[ProgressStatus]
                           ,[Status]
                       FROM OFS_EDC_Project
@@ -50,7 +55,9 @@ public class ReportHelper
                           ,[ProjectName]
                           ,[UserOrg]
                           ,[Organizer]
-                          ,ISNULL([ApplyAmount], 0) AS [ApplyAmount], ISNULL([SelfAmount],0) + ISNULL([OtherAmount],0) AS [OtherAmount]
+                          ,ISNULL([ApprovedAmount], 0) AS [ApprovedAmount]
+                          ,ISNULL([ApplyAmount], 0) AS [ApplyAmount]
+                          ,ISNULL([SelfAmount],0) + ISNULL([OtherAmount],0) AS [OtherAmount]
                           ,[ProgressStatus]
                           ,[Status]
                       FROM OFS_MUL_Project
@@ -61,7 +68,9 @@ public class ReportHelper
                           ,[ProjectName]
                           ,[UserOrg]
                           ,[Organizer]
-                          ,ISNULL([ApplyAmount], 0) AS [ApplyAmount], ISNULL([SelfAmount],0) + ISNULL([OtherAmount],0) AS [OtherAmount]
+                          ,ISNULL([ApprovedAmount], 0) AS [ApprovedAmount]
+                          ,ISNULL([ApplyAmount], 0) AS [ApplyAmount]
+                          ,ISNULL([SelfAmount],0) + ISNULL([OtherAmount],0) AS [OtherAmount]
                           ,[ProgressStatus]
                           ,[Status]
                       FROM OFS_LIT_Project
@@ -72,7 +81,9 @@ public class ReportHelper
                           ,[ProjectName]
                           ,[UserOrg]
                           ,[Organizer]
-                          ,ISNULL([ApplyAmount], 0) AS [ApplyAmount], ISNULL([SelfAmount],0) + ISNULL([OtherAmount],0) AS [OtherAmount]
+                          ,ISNULL([ApprovedAmount], 0) AS [ApprovedAmount]
+                          ,ISNULL([ApplyAmount], 0) AS [ApplyAmount]
+                          ,ISNULL([SelfAmount],0) + ISNULL([OtherAmount],0) AS [OtherAmount]
                           ,[ProgressStatus]
                           ,[Status]
                       FROM OFS_ACC_Project
@@ -83,6 +94,11 @@ public class ReportHelper
               JOIN Sys_ZgsCode AS P ON (P.CodeGroup = 'ProjectProgressStatus' AND P.Code = O.ProgressStatus)
         ";
 
+        if (approved)
+        {
+            db.CommandText += " WHERE O.[Status] IN (45,51,52,91)";
+        }
+
         db.CommandText += " ORDER BY ProjectID";
 
         return db.GetTable().Rows.Cast<DataRow>().Select(row => new ApplyPlan
@@ -92,6 +108,7 @@ public class ReportHelper
             Category = row.Field<string>("Category"),
             ProjectName = row.Field<string>("ProjectName"),
             UserOrg = row.Field<string>("UserOrg"),
+            ApprovedAmount = row.Field<int>("ApprovedAmount"),
             ApplyAmount = row.Field<int>("ApplyAmount"),
             OtherAmount = row.Field<int>("OtherAmount"),
             SupervisoryUnit = row.Field<string>("SupervisoryUnit"),

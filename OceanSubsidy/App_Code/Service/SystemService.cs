@@ -41,6 +41,14 @@ public class SystemService : BaseService
         };
     }
 
+    public object getApprovedList(JObject param, HttpContext context)
+    {
+        return new
+        {
+            List = ReportHelper.queryApplyList(true)
+        };
+    }
+
     public object getEmptyNews(JObject param, HttpContext context)
     {
         return new

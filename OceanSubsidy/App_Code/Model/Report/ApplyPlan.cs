@@ -7,6 +7,7 @@ namespace GS.OCA_OceanSubsidy.Model.Report
         public string Category { get; set; }
         public string ProjectName { get; set; }
         public string UserOrg { get; set; }
+        public int ApprovedAmount { get; set; }
         public int ApplyAmount { get; set; }
         public int OtherAmount { get; set; }
         public string SupervisoryUnit { get; set; }
