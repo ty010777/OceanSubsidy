@@ -58,6 +58,17 @@ public class SystemService : BaseService
         };
     }
 
+    public object getGrantTargetSettings(JObject param, HttpContext context)
+    {
+        var id = int.Parse(param["ID"].ToString());
+        var data = OFSGrantTypeHelper.get(id);
+
+        return new
+        {
+            List = OFSGrantTargetSettingHelper.query(data.TypeCode)
+        };
+    }
+
     public object getGrantType(JObject param, HttpContext context)
     {
         var id = int.Parse(param["ID"].ToString());
@@ -133,6 +144,44 @@ public class SystemService : BaseService
         {
             List = OFSNewsHelper.query(true)
         };
+    }
+
+    public object getReviewCommitteeList(JObject param, HttpContext context)
+    {
+        var id = param["ID"].ToString();
+
+        return new
+        {
+            List = OFSReviewCommitteeHelper.query(id)
+        };
+    }
+
+    public object getReviewGroups(JObject param, HttpContext context)
+    {
+        var id = int.Parse(param["ID"].ToString());
+        var data = OFSGrantTypeHelper.get(id);
+
+        switch (data.TypeCode)
+        {
+            case "CUL":
+                return new { List = SysZgsCodeHelper.getCulReviewGroups() };
+            case "SCI":
+                return new { List = SysZgsCodeHelper.getSciReviewGroups() };
+            default:
+                return new {};
+        }
+    }
+
+    public object saveGrantTargetSettings(JObject param, HttpContext context)
+    {
+        var settings = param["List"].ToObject<List<GrantTargetSetting>>();
+
+        foreach (var item in settings)
+        {
+            OFSGrantTargetSettingHelper.updateLimit(item.ID, item.MatchingFund, item.GrantLimit);
+        }
+
+        return new {};
     }
 
     public object saveGrantType(JObject param, HttpContext context)
@@ -271,6 +320,32 @@ public class SystemService : BaseService
             else
             {
                 OFSNewsVideoHelper.update(item);
+            }
+        }
+
+        return new {};
+    }
+
+    public object saveReviewCommitteeList(JObject param, HttpContext context)
+    {
+        var id = param["ID"].ToString();
+        var list = param["List"].ToObject<List<ReviewCommittee>>();
+
+        foreach (var item in list)
+        {
+            if (item.Deleted)
+            {
+                OFSReviewCommitteeHelper.delete(item.ID);
+            }
+            else if (item.ID == 0)
+            {
+                item.SubjectTypeID = id;
+
+                OFSReviewCommitteeHelper.insert(item);
+            }
+            else
+            {
+                OFSReviewCommitteeHelper.update(item);
             }
         }
 

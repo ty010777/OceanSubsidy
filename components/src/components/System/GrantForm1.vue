@@ -250,6 +250,8 @@
                 if (!procedures.value.length) {
                     procedures.value.push({});
                 }
+
+                useGrantStore().init(form.value.TypeCode);
             });
         } else {
             procedures.value.push({});

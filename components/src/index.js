@@ -68,10 +68,12 @@ import SystemGrantForm2 from "./components/System/GrantForm2.vue";
 import SystemGrantForm3 from "./components/System/GrantForm3.vue";
 import SystemGrantForm4 from "./components/System/GrantForm4.vue";
 import SystemGrantList from "./components/System/GrantList.vue";
+import SystemHome from "./components/System/Home.vue";
 import SystemNewsList from "./components/System/NewsList.vue";
 import SystemNewsForm from "./components/System/NewsForm.vue";
 import TwDate from "./components/TwDate.vue";
 import { api } from "./composables/api";
+import { useGrantStore } from "./stores/grant";
 import { useProgressStore } from "./stores/progress";
 
 const components = {
@@ -145,6 +147,7 @@ const components = {
     SystemGrantForm3,
     SystemGrantForm4,
     SystemGrantList,
+    SystemHome,
     SystemNewsList,
     SystemNewsForm,
     TwDate
@@ -157,5 +160,6 @@ export default {
             app.component(name, components[name]);
         }
     },
+    useGrantStore,
     useProgressStore
 };
