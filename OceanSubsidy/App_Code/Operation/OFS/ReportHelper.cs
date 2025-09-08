@@ -7,7 +7,7 @@ using System.Linq;
 
 public class ReportHelper
 {
-    public static List<ApplyPlan> queryApplyList(bool approved = false)
+    public static List<ApplyPlan> queryApplyList(int approved = 0)
     {
         DbHelper db = new DbHelper();
 
@@ -20,6 +20,8 @@ public class ReportHelper
                   ,O.[ApprovedAmount]
                   ,O.[ApplyAmount]
                   ,O.[OtherAmount]
+                  ,O.[SpendAmount]
+                  ,O.[PaymentAmount]
                   ,U.UnitName AS [SupervisoryUnit]
                   ,P.Descname AS [StageName]
                   ,O.[Status]
@@ -32,6 +34,8 @@ public class ReportHelper
                           ,ISNULL([ApprovedAmount], 0) AS [ApprovedAmount]
                           ,ISNULL([ApplyAmount], 0) AS [ApplyAmount]
                           ,ISNULL([SelfAmount],0) + ISNULL([OtherAmount],0) AS [OtherAmount]
+                          ,ISNULL([SpendAmount], 0) AS [SpendAmount]
+                          ,ISNULL([PaymentAmount], 0) AS [PaymentAmount]
                           ,[ProgressStatus]
                           ,[Status]
                       FROM OFS_CUL_Project
@@ -45,6 +49,8 @@ public class ReportHelper
                           ,ISNULL([ApprovedAmount], 0) AS [ApprovedAmount]
                           ,ISNULL([ApplyAmount], 0) AS [ApplyAmount]
                           ,ISNULL([SelfAmount],0) + ISNULL([OtherGovAmount],0) + ISNULL([OtherUnitAmount],0) AS [OtherAmount]
+                          ,ISNULL([SpendAmount], 0) AS [SpendAmount]
+                          ,ISNULL([PaymentAmount], 0) AS [PaymentAmount]
                           ,[ProgressStatus]
                           ,[Status]
                       FROM OFS_EDC_Project
@@ -58,6 +64,8 @@ public class ReportHelper
                           ,ISNULL([ApprovedAmount], 0) AS [ApprovedAmount]
                           ,ISNULL([ApplyAmount], 0) AS [ApplyAmount]
                           ,ISNULL([SelfAmount],0) + ISNULL([OtherAmount],0) AS [OtherAmount]
+                          ,ISNULL([SpendAmount], 0) AS [SpendAmount]
+                          ,ISNULL([PaymentAmount], 0) AS [PaymentAmount]
                           ,[ProgressStatus]
                           ,[Status]
                       FROM OFS_MUL_Project
@@ -71,6 +79,8 @@ public class ReportHelper
                           ,ISNULL([ApprovedAmount], 0) AS [ApprovedAmount]
                           ,ISNULL([ApplyAmount], 0) AS [ApplyAmount]
                           ,ISNULL([SelfAmount],0) + ISNULL([OtherAmount],0) AS [OtherAmount]
+                          ,ISNULL([SpendAmount], 0) AS [SpendAmount]
+                          ,ISNULL([PaymentAmount], 0) AS [PaymentAmount]
                           ,[ProgressStatus]
                           ,[Status]
                       FROM OFS_LIT_Project
@@ -84,6 +94,8 @@ public class ReportHelper
                           ,ISNULL([ApprovedAmount], 0) AS [ApprovedAmount]
                           ,ISNULL([ApplyAmount], 0) AS [ApplyAmount]
                           ,ISNULL([SelfAmount],0) + ISNULL([OtherAmount],0) AS [OtherAmount]
+                          ,ISNULL([SpendAmount], 0) AS [SpendAmount]
+                          ,ISNULL([PaymentAmount], 0) AS [PaymentAmount]
                           ,[ProgressStatus]
                           ,[Status]
                       FROM OFS_ACC_Project
@@ -94,9 +106,14 @@ public class ReportHelper
               JOIN Sys_ZgsCode AS P ON (P.CodeGroup = 'ProjectProgressStatus' AND P.Code = O.ProgressStatus)
         ";
 
-        if (approved)
+        switch (approved)
         {
-            db.CommandText += " WHERE O.[Status] IN (45,51,52,91)";
+            case 1:
+                db.CommandText += " WHERE O.[Status] IN (45,51,52,91)";
+                break;
+            case 2:
+                db.CommandText += " WHERE O.[Status] IN (51,52,91)";
+                break;
         }
 
         db.CommandText += " ORDER BY ProjectID";
@@ -111,6 +128,8 @@ public class ReportHelper
             ApprovedAmount = row.Field<int>("ApprovedAmount"),
             ApplyAmount = row.Field<int>("ApplyAmount"),
             OtherAmount = row.Field<int>("OtherAmount"),
+            SpendAmount = row.Field<int>("SpendAmount"),
+            PaymentAmount = row.Field<int>("PaymentAmount"),
             SupervisoryUnit = row.Field<string>("SupervisoryUnit"),
             StageName = row.Field<string>("StageName"),
             Status = row.Field<int>("Status"),

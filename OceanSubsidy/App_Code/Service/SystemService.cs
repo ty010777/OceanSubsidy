@@ -45,7 +45,7 @@ public class SystemService : BaseService
     {
         return new
         {
-            List = ReportHelper.queryApplyList(true)
+            List = ReportHelper.queryApplyList(1)
         };
     }
 
@@ -95,6 +95,14 @@ public class SystemService : BaseService
         return new
         {
             List = OFSGrantTypeHelper.query()
+        };
+    }
+
+    public object getInprogressList(JObject param, HttpContext context)
+    {
+        return new
+        {
+            List = ReportHelper.queryApplyList(2)
         };
     }
 
