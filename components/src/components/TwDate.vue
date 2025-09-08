@@ -1,9 +1,10 @@
 <template>
-    <span>{{ date }}</span>
+    <span>{{ date || defaultValue }}</span>
 </template>
 
 <script setup>
     const props = defineProps({
+        defaultValue: { default: "", type: String },
         value: { default: null, type: String }
     });
 

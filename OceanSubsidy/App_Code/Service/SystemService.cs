@@ -42,6 +42,46 @@ public class SystemService : BaseService
         };
     }
 
+    public object getGrantType(JObject param, HttpContext context)
+    {
+        var id = int.Parse(param["ID"].ToString());
+
+        return new
+        {
+            GrantType = OFSGrantTypeHelper.get(id)
+        };
+    }
+
+    public object getGrantTypeContent(JObject param, HttpContext context)
+    {
+        var id = int.Parse(param["ID"].ToString());
+        var data = OFSGrantTypeHelper.get(id);
+        var content = OFSGrantTypeContentHelper.get(data.TypeID);
+
+        if (content == null)
+        {
+            content = new GrantTypeContent { TypeID = data.TypeID, IsValid = false };
+
+            OFSGrantTypeContentHelper.insert(content);
+        }
+
+        return new
+        {
+            GrantType = data,
+            Content = content,
+            Procedures = OFSGrantTypeProcedureHelper.query(id),
+            Links = OFSGrantTypeOnlineLinkHelper.query(id)
+        };
+    }
+
+    public object getGrantTypeList(JObject param, HttpContext context)
+    {
+        return new
+        {
+            List = OFSGrantTypeHelper.query()
+        };
+    }
+
     public object getNews(JObject param, HttpContext context)
     {
         var id = int.Parse(param["ID"].ToString());
@@ -69,6 +109,77 @@ public class SystemService : BaseService
         {
             List = OFSNewsHelper.query(true)
         };
+    }
+
+    public object saveGrantType(JObject param, HttpContext context)
+    {
+        var data = param["GrantType"].ToObject<GrantType>();
+
+        OFSGrantTypeHelper.update(data);
+
+        return new {};
+    }
+
+    public object saveGrantTypeContent(JObject param, HttpContext context)
+    {
+        var data = param["GrantType"].ToObject<GrantType>();
+
+        if (data.TypeID == 0)
+        {
+            OFSGrantTypeHelper.insert(data);
+        }
+        else
+        {
+            OFSGrantTypeHelper.updateContent(data);
+        }
+
+        var content = param["Content"].ToObject<GrantTypeContent>();
+
+        content.TypeID = data.TypeID;
+
+        OFSGrantTypeContentHelper.update(content);
+
+        var procedures = param["Procedures"].ToObject<List<GrantTypeProcedure>>();
+
+        foreach (var item in procedures)
+        {
+            if (item.Deleted)
+            {
+                OFSGrantTypeProcedureHelper.delete(item.ID);
+            }
+            else if (item.ID == 0)
+            {
+                item.TypeID = data.TypeID;
+
+                OFSGrantTypeProcedureHelper.insert(item);
+            }
+            else
+            {
+                OFSGrantTypeProcedureHelper.update(item);
+            }
+        }
+
+        var links = param["Links"].ToObject<List<GrantTypeOnlineLink>>();
+
+        foreach (var item in links)
+        {
+            if (item.Deleted)
+            {
+                OFSGrantTypeOnlineLinkHelper.delete(item.ID);
+            }
+            else if (item.ID == 0)
+            {
+                item.TypeID = data.TypeID;
+
+                OFSGrantTypeOnlineLinkHelper.insert(item);
+            }
+            else
+            {
+                OFSGrantTypeOnlineLinkHelper.update(item);
+            }
+        }
+
+        return new { ID = data.TypeID };
     }
 
     public object saveNews(JObject param, HttpContext context)

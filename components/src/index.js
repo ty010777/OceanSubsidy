@@ -60,6 +60,10 @@ import ProjectReview from "./components/ProjectReview.vue";
 import ProjectTitle from "./components/ProjectTitle.vue";
 import ProjectToolbar from "./components/ProjectToolbar.vue";
 import RequiredLabel from "./components/RequiredLabel.vue";
+import SystemGrantForm1 from "./components/System/GrantForm1.vue";
+import SystemGrantForm2 from "./components/System/GrantForm2.vue";
+import SystemGrantForm3 from "./components/System/GrantForm3.vue";
+import SystemGrantForm4 from "./components/System/GrantForm4.vue";
 import SystemGrantList from "./components/System/GrantList.vue";
 import SystemNewsList from "./components/System/NewsList.vue";
 import SystemNewsForm from "./components/System/NewsForm.vue";
@@ -130,6 +134,10 @@ const components = {
     ProjectTitle,
     ProjectToolbar,
     RequiredLabel,
+    SystemGrantForm1,
+    SystemGrantForm2,
+    SystemGrantForm3,
+    SystemGrantForm4,
     SystemGrantList,
     SystemNewsList,
     SystemNewsForm,
