@@ -594,5 +594,25 @@ public class MultipleService : BaseService
 
     private void snapshot(int id)
     {
+        var project = getProject(id);
+
+        OFSSnapshotHelper.insert(new Snapshot
+        {
+            Type = "MUL",
+            DataID = id,
+            Status = project.Status,
+            Data = JsonConvert.SerializeObject(new
+            {
+                Project = project,
+                Contacts = OFS_MulContactHelper.query(id),
+                ReceivedSubsidies = OFS_MulReceivedSubsidyHelper.query(id),
+                Items = OFS_MulItemHelper.query(id),
+                Schedules = OFS_MulScheduleHelper.query(id),
+                OtherSubsidies = OFS_MulOtherSubsidyHelper.query(id),
+                BudgetPlans = OFS_MulBudgetPlanHelper.query(id),
+                Benefits = OFS_MulBenefitHelper.query(id),
+                Attachments = OFS_MulAttachmentHelper.query(id)
+            })
+        });
     }
 }

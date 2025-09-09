@@ -570,5 +570,25 @@ public class LiteracyService : BaseService
 
     private void snapshot(int id)
     {
+        var project = getProject(id);
+
+        OFSSnapshotHelper.insert(new Snapshot
+        {
+            Type = "LIT",
+            DataID = id,
+            Status = project.Status,
+            Data = JsonConvert.SerializeObject(new
+            {
+                Project = project,
+                Contacts = OFS_LitContactHelper.query(id),
+                PreviousStudies = OFS_LitPreviousStudyHelper.query(id),
+                Items = OFS_LitItemHelper.query(id),
+                Schedules = OFS_LitScheduleHelper.query(id),
+                OtherSubsidies = OFS_LitOtherSubsidyHelper.query(id),
+                BudgetPlans = OFS_LitBudgetPlanHelper.query(id),
+                Benefits = OFS_LitBenefitHelper.query(id),
+                Attachments = OFS_LitAttachmentHelper.query(id)
+            })
+        });
     }
 }

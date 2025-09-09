@@ -594,5 +594,25 @@ public class AccessibilityService : BaseService
 
     private void snapshot(int id)
     {
+        var project = getProject(id);
+
+        OFSSnapshotHelper.insert(new Snapshot
+        {
+            Type = "ACC",
+            DataID = id,
+            Status = project.Status,
+            Data = JsonConvert.SerializeObject(new
+            {
+                Project = project,
+                Contacts = OFS_AccContactHelper.query(id),
+                ReceivedSubsidies = OFS_AccReceivedSubsidyHelper.query(id),
+                Items = OFS_AccItemHelper.query(id),
+                Schedules = OFS_AccScheduleHelper.query(id),
+                OtherSubsidies = OFS_AccOtherSubsidyHelper.query(id),
+                BudgetPlans = OFS_AccBudgetPlanHelper.query(id),
+                Benefits = OFS_AccBenefitHelper.query(id),
+                Attachments = OFS_AccAttachmentHelper.query(id)
+            })
+        });
     }
 }
