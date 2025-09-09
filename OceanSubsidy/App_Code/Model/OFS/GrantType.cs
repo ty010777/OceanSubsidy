@@ -74,6 +74,9 @@ namespace GS.OCA_OceanSubsidy.Model.OFS
         public DateTime? FinalDeadline { get; set; }
         public bool? FinalOneMonth { get; set; }
 
+        public string Path { get; set; }
+        public string Filename { get; set; }
+
         public string AdminUnit { get; set; }
     }
 }

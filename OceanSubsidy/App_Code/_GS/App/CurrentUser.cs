@@ -1,5 +1,12 @@
 public class CurrentUser
 {
+    public static string Account {
+        get
+        {
+            return SessionHelper.Get<SessionHelper.UserInfoClass>(SessionHelper.UserInfo).Account;
+        }
+    }
+
     public static string ID {
         get
         {

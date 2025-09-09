@@ -27,7 +27,8 @@ public class ReportHelper
                   ,O.[Status]
                   ,S.Descname AS [StatusName]
               FROM (SELECT [Year]
-                          ,[ProjectID], '文化' AS [Category]
+                          ,[ProjectID]
+                          ,'文化' AS [Category]
                           ,[ProjectName]
                           ,[UserOrg]
                           ,[Organizer]
@@ -42,7 +43,8 @@ public class ReportHelper
                      WHERE IsExists = 1 AND IsWithdrawal <> 1
                     UNION
                     SELECT [Year]
-                          ,[ProjectID], '學校／民間' AS [Category]
+                          ,[ProjectID]
+                          ,'學校／民間' AS [Category]
                           ,[ProjectName]
                           ,[UserOrg]
                           ,[Organizer]
@@ -57,7 +59,8 @@ public class ReportHelper
                      WHERE IsExists = 1 AND IsWithdrawal <> 1
                     UNION
                     SELECT [Year]
-                          ,[ProjectID], '多元' AS [Category]
+                          ,[ProjectID]
+                          ,'多元' AS [Category]
                           ,[ProjectName]
                           ,[UserOrg]
                           ,[Organizer]
@@ -72,7 +75,8 @@ public class ReportHelper
                      WHERE IsExists = 1 AND IsWithdrawal <> 1
                     UNION
                     SELECT [Year]
-                          ,[ProjectID], '素養' AS [Category]
+                          ,[ProjectID]
+                          ,'素養' AS [Category]
                           ,[ProjectName]
                           ,[UserOrg]
                           ,[Organizer]
@@ -87,7 +91,8 @@ public class ReportHelper
                      WHERE IsExists = 1 AND IsWithdrawal <> 1
                     UNION
                     SELECT [Year]
-                          ,[ProjectID], '無障礙' AS [Category]
+                          ,[ProjectID]
+                          ,'無障礙' AS [Category]
                           ,[ProjectName]
                           ,[UserOrg]
                           ,[Organizer]
@@ -134,6 +139,112 @@ public class ReportHelper
             StageName = row.Field<string>("StageName"),
             Status = row.Field<int>("Status"),
             StatusName = row.Field<string>("StatusName")
+        }).ToList();
+    }
+
+    public static List<ApplyPlan> queryApplyListByUser(string account)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            SELECT O.[ProjectID], O.[Status], O.[UserAccount]
+              FROM (SELECT [ProjectID], [Status], [UserAccount]
+                      FROM OFS_CUL_Project
+                     WHERE IsExists = 1 AND IsWithdrawal <> 1
+                    UNION
+                    SELECT [ProjectID], [Status], [UserAccount]
+                      FROM OFS_EDC_Project
+                     WHERE IsExists = 1 AND IsWithdrawal <> 1
+                    UNION
+                    SELECT [ProjectID], [Status], [UserAccount]
+                      FROM OFS_MUL_Project
+                     WHERE IsExists = 1 AND IsWithdrawal <> 1
+                    UNION
+                    SELECT [ProjectID], [Status], [UserAccount]
+                      FROM OFS_LIT_Project
+                     WHERE IsExists = 1 AND IsWithdrawal <> 1
+                    UNION
+                    SELECT [ProjectID], [Status], [UserAccount]
+                      FROM OFS_ACC_Project
+                     WHERE IsExists = 1 AND IsWithdrawal <> 1) AS O
+             WHERE O.[UserAccount] = @UserAccount
+        ";
+
+        db.Parameters.Add("@UserAccount", account);
+
+        return db.GetTable().Rows.Cast<DataRow>().Select(row => new ApplyPlan
+        {
+            ProjectID = row.Field<string>("ProjectID"),
+            Status = row.Field<int>("Status")
+        }).ToList();
+    }
+
+    public static List<ApplyPlan> queryApplyStat()
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            SELECT O.[Year]
+                  ,O.[Category]
+                  ,SUM(O.[ApprovedAmount]) AS [ApprovedAmount]
+                  ,SUM(O.[SpendAmount]) AS [SpendAmount]
+                  ,SUM(O.[PaymentAmount]) AS [PaymentAmount]
+                  ,COUNT(*) AS [Count]
+                  ,ISNULL(T.[BudgetFees], 0) AS [BudgetFees]
+              FROM (SELECT [Year]
+                          ,'CUL' AS [Category]
+                          ,ISNULL([ApprovedAmount], 0) AS [ApprovedAmount]
+                          ,ISNULL([SpendAmount], 0) AS [SpendAmount]
+                          ,ISNULL([PaymentAmount], 0) AS [PaymentAmount]
+                      FROM OFS_CUL_Project
+                     WHERE IsExists = 1 AND IsWithdrawal <> 1 AND Status IN (51,52,91)
+                    UNION
+                    SELECT [Year]
+                          ,'EDC' AS [Category]
+                          ,ISNULL([ApprovedAmount], 0) AS [ApprovedAmount]
+                          ,ISNULL([SpendAmount], 0) AS [SpendAmount]
+                          ,ISNULL([PaymentAmount], 0) AS [PaymentAmount]
+                      FROM OFS_EDC_Project
+                     WHERE IsExists = 1 AND IsWithdrawal <> 1 AND Status IN (51,52,91)
+                    UNION
+                    SELECT [Year]
+                          ,'MUL' AS [Category]
+                          ,ISNULL([ApprovedAmount], 0) AS [ApprovedAmount]
+                          ,ISNULL([SpendAmount], 0) AS [SpendAmount]
+                          ,ISNULL([PaymentAmount], 0) AS [PaymentAmount]
+                      FROM OFS_MUL_Project
+                     WHERE IsExists = 1 AND IsWithdrawal <> 1 AND Status IN (51,52,91)
+                    UNION
+                    SELECT [Year]
+                          ,'LIT' AS [Category]
+                          ,ISNULL([ApprovedAmount], 0) AS [ApprovedAmount]
+                          ,ISNULL([SpendAmount], 0) AS [SpendAmount]
+                          ,ISNULL([PaymentAmount], 0) AS [PaymentAmount]
+                      FROM OFS_LIT_Project
+                     WHERE IsExists = 1 AND IsWithdrawal <> 1 AND Status IN (51,52,91)
+                    UNION
+                    SELECT [Year]
+                          ,'ACC' AS [Category]
+                          ,ISNULL([ApprovedAmount], 0) AS [ApprovedAmount]
+                          ,ISNULL([SpendAmount], 0) AS [SpendAmount]
+                          ,ISNULL([PaymentAmount], 0) AS [PaymentAmount]
+                      FROM OFS_ACC_Project
+                     WHERE IsExists = 1 AND IsWithdrawal <> 1 AND Status IN (51,52,91)) AS O
+         LEFT JOIN [OFS_GrantType] AS T ON (T.[TypeCode] = O.[Category] AND T.[Year] = O.[Year])
+             WHERE 1 = 1
+        ";
+
+        db.CommandText += " GROUP BY O.[Year], O.[Category], T.[BudgetFees]";
+
+        return db.GetTable().Rows.Cast<DataRow>().Select(row => new ApplyPlan
+        {
+            Year = row.Field<int>("Year"),
+            Category = row.Field<string>("Category"),
+            ApprovedAmount = row.Field<int>("ApprovedAmount"),
+            SpendAmount = row.Field<int>("SpendAmount"),
+            PaymentAmount = row.Field<int>("PaymentAmount"),
+            Count = row.Field<int>("Count"),
+            BudgetFees = row.Field<int>("BudgetFees")
         }).ToList();
     }
 }

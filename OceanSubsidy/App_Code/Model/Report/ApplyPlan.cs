@@ -16,5 +16,7 @@ namespace GS.OCA_OceanSubsidy.Model.Report
         public string StageName { get; set; }
         public int Status { get; set; }
         public string StatusName { get; set; }
+        public int Count { get; set; }
+        public int BudgetFees { get; set; }
     }
 }

@@ -24,7 +24,7 @@
                 </tr>
                 <tr>
                     <th>身分標籤</th>
-                    <td><input-text v-model.trim="form.TargetTags"></input-text></td>
+                    <td><input-textarea rows="5" v-model.trim="form.TargetTags"></input-textarea></td>
                 </tr>
                 <tr>
                     <th>申請期間</th>

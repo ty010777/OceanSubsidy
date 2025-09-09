@@ -98,21 +98,31 @@ public class OFSGrantTypeHelper
         model.TypeID = int.Parse(db.GetTable().Rows[0]["TypeID"].ToString());
     }
 
-    public static List<GrantType> query()
+    public static List<GrantType> query(bool published = false)
     {
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
-            SELECT [TypeID]
-                  ,[Year]
-                  ,[FullName]
-                  ,[ShortName]
-                  ,[TypeCode]
-                  ,[ApplyStartDate]
-                  ,[ApplyEndDate]
-              FROM [OFS_GrantType]
-          ORDER BY Year DESC, TypeCode
+            SELECT G.[TypeID]
+                  ,G.[Year]
+                  ,G.[FullName]
+                  ,G.[ShortName]
+                  ,G.[TypeCode]
+                  ,G.[ApplyStartDate]
+                  ,G.[ApplyEndDate]
+                  ,G.[TargetTags]
+                  ,C.[Path]
+                  ,C.[Filename]
+              FROM [OFS_GrantType] AS G
+         LEFT JOIN [OFS_GrantTypeContent] AS C ON (C.[TypeID] = G.[TypeID])
         ";
+
+        if (published)
+        {
+            db.CommandText += " WHERE G.[ApplyStartDate] <= GETDATE() AND G.[ApplyEndDate] >= GETDATE()";
+        }
+
+        db.CommandText += " ORDER BY G.[Year] DESC, G.[TypeCode]";
 
         return db.GetTable().Rows.Cast<DataRow>().Select(row => new GrantType
         {
@@ -122,7 +132,10 @@ public class OFSGrantTypeHelper
             ShortName = row.Field<string>("ShortName"),
             TypeCode = row.Field<string>("TypeCode"),
             ApplyStartDate = row.Field<DateTime?>("ApplyStartDate"),
-            ApplyEndDate = row.Field<DateTime?>("ApplyEndDate")
+            ApplyEndDate = row.Field<DateTime?>("ApplyEndDate"),
+            TargetTags = row.Field<string>("TargetTags"),
+            Path = row.Field<string>("Path"),
+            Filename = row.Field<string>("Filename")
         }).ToList();
     }
 

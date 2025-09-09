@@ -22,6 +22,7 @@ import EducationAttachment from "./components/Education/Attachment.vue";
 import EducationPayment from "./components/Education/Payment.vue";
 import EducationProgressBar from "./components/Education/ProgressBar.vue";
 import ErrorModal from "./components/ErrorModal.vue";
+import HomeDashboard from "./components/HomeDashboard.vue";
 import InputBoolean from "./components/InputBoolean.vue";
 import InputFile from "./components/InputFile.vue";
 import InputInteger from "./components/InputInteger.vue";
@@ -62,15 +63,17 @@ import ProjectToolbar from "./components/ProjectToolbar.vue";
 import ReportApplyList from "./components/Report/ApplyList.vue";
 import ReportApprovedList from "./components/Report/ApprovedList.vue";
 import ReportInprogressList from "./components/Report/InprogressList.vue";
+import ReportMixChart from "./components/Report/MixChart.vue";
+import ReportPieChart from "./components/Report/PieChart.vue";
 import RequiredLabel from "./components/RequiredLabel.vue";
 import SystemGrantForm1 from "./components/System/GrantForm1.vue";
 import SystemGrantForm2 from "./components/System/GrantForm2.vue";
 import SystemGrantForm3 from "./components/System/GrantForm3.vue";
 import SystemGrantForm4 from "./components/System/GrantForm4.vue";
 import SystemGrantList from "./components/System/GrantList.vue";
-import SystemHome from "./components/System/Home.vue";
 import SystemNewsList from "./components/System/NewsList.vue";
 import SystemNewsForm from "./components/System/NewsForm.vue";
+import Tooltip from "./components/Tooltip.vue";
 import TwDate from "./components/TwDate.vue";
 import { api } from "./composables/api";
 import { useGrantStore } from "./stores/grant";
@@ -101,6 +104,7 @@ const components = {
     EducationPayment,
     EducationProgressBar,
     ErrorModal,
+    HomeDashboard,
     InputBoolean,
     InputFile,
     InputInteger,
@@ -141,15 +145,17 @@ const components = {
     ReportApplyList,
     ReportApprovedList,
     ReportInprogressList,
+    ReportMixChart,
+    ReportPieChart,
     RequiredLabel,
     SystemGrantForm1,
     SystemGrantForm2,
     SystemGrantForm3,
     SystemGrantForm4,
     SystemGrantList,
-    SystemHome,
     SystemNewsList,
     SystemNewsForm,
+    Tooltip,
     TwDate
 };
 

@@ -9,6 +9,17 @@ using System.Web;
 
 public class SystemService : BaseService
 {
+    public object dashboard(JObject param, HttpContext context)
+    {
+        return new
+        {
+            GrantTypes = OFSGrantTypeHelper.query(true),
+            Settings = OFSGrantTargetSettingHelper.query(),
+            ApplyList = ReportHelper.queryApplyListByUser(CurrentUser.Account),
+            StatList = ReportHelper.queryApplyStat()
+        };
+    }
+
     public object deleteNews(JObject param, HttpContext context)
     {
         var id = int.Parse(param["ID"].ToString());

@@ -141,15 +141,7 @@
         id: { type: [Number, String] }
     });
 
-    const types = [
-        { code: "SCI", title: "科專" },
-        { code: "CUL", title: "文化" },
-        { code: "EDC", title: "學校／民間" },
-        { code: "CLB", title: "學校社團" },
-        { code: "MUL", title: "多元" },
-        { code: "LIT", title: "素養" },
-        { code: "ACC", title: "無障礙" }
-    ];
+    const types = useGrantStore().typeList;
 
     const checked = ref(false);
     const content = ref({});

@@ -177,7 +177,7 @@
                   <nav>
                       <ul>
                           <li class="">
-                              <a href="#">
+                              <a href="<%= ResolveUrl("~/OFS/Home.aspx") %>">
                                   <div class="circle">
                                       <img src="<%= ResolveUrl("~/assets/img/information-icon-01.svg") %>" alt="首頁">
                                   </div>
