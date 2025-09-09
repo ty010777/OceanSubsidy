@@ -834,25 +834,64 @@ public class OFS_ClbApplicationHelper
     /// <param name="projectMainData">Project_Main 資訊物件</param>
     private static void UpdateProjectMainData(OFS_CLB_Project_Main projectMainData)
     {
+        // 先取得目前的狀態
+        var currentProjectData = GetProjectMainData(projectMainData.ProjectID);
+        
+        // 檢查當前狀態是否為不應更新狀態的情況
+        bool shouldNotUpdateStatus = false;
+        if (currentProjectData != null && !string.IsNullOrEmpty(currentProjectData.Statuses))
+        {
+            string currentStatus = currentProjectData.Statuses.Trim();
+            // 如果當前狀態為"內容審查"或"決審核定"，則不更新狀態
+            shouldNotUpdateStatus = currentStatus == "內容審查" || currentStatus == "決審核定";
+        }
+
         DbHelper db = new DbHelper();
-        db.CommandText = @"
-            UPDATE [OCA_OceanSubsidy].[dbo].[OFS_CLB_Project_Main]
-            SET 
-                [Statuses] = @Statuses,
-                [StatusesName] = @StatusesName,
-                [UserAccount] = @UserAccount,
-                [UserName] = @UserName,
-                [UserOrg] = @UserOrg,
-                [CurrentStep] = @CurrentStep,
-                [updated_at] = GETDATE(),
-                [isWithdrawal] = @isWithdrawal,
-                [isExist] = @isExist
-            WHERE [ProjectID] = @ProjectID";
+        
+        // 根據是否應該更新狀態來決定 SQL 語句
+        if (shouldNotUpdateStatus)
+        {
+            // 不更新 Statuses 和 StatusesName
+            db.CommandText = @"
+                UPDATE [OCA_OceanSubsidy].[dbo].[OFS_CLB_Project_Main]
+                SET 
+                    [UserAccount] = @UserAccount,
+                    [UserName] = @UserName,
+                    [UserOrg] = @UserOrg,
+                    [CurrentStep] = @CurrentStep,
+                    [updated_at] = GETDATE(),
+                    [isWithdrawal] = @isWithdrawal,
+                    [isExist] = @isExist
+                WHERE [ProjectID] = @ProjectID";
+        }
+        else
+        {
+            // 正常更新所有欄位，包含 Statuses 和 StatusesName
+            db.CommandText = @"
+                UPDATE [OCA_OceanSubsidy].[dbo].[OFS_CLB_Project_Main]
+                SET 
+                    [Statuses] = @Statuses,
+                    [StatusesName] = @StatusesName,
+                    [UserAccount] = @UserAccount,
+                    [UserName] = @UserName,
+                    [UserOrg] = @UserOrg,
+                    [CurrentStep] = @CurrentStep,
+                    [updated_at] = GETDATE(),
+                    [isWithdrawal] = @isWithdrawal,
+                    [isExist] = @isExist
+                WHERE [ProjectID] = @ProjectID";
+        }
 
         db.Parameters.Clear();
         db.Parameters.Add("@ProjectID", projectMainData.ProjectID ?? "");
-        db.Parameters.Add("@Statuses", projectMainData.Statuses ?? "");
-        db.Parameters.Add("@StatusesName", projectMainData.StatusesName ?? "");
+        
+        // 只有在需要更新狀態時才加入這些參數
+        if (!shouldNotUpdateStatus)
+        {
+            db.Parameters.Add("@Statuses", projectMainData.Statuses ?? "");
+            db.Parameters.Add("@StatusesName", projectMainData.StatusesName ?? "");
+        }
+        
         db.Parameters.Add("@UserAccount", projectMainData.UserAccount ?? "");
         db.Parameters.Add("@UserName", projectMainData.UserName ?? "");
         db.Parameters.Add("@UserOrg", projectMainData.UserOrg ?? "");
@@ -894,6 +933,9 @@ public class OFS_ClbApplicationHelper
                     UserAccount = row["UserAccount"]?.ToString(),
                     UserName = row["UserName"]?.ToString(),
                     UserOrg = row["UserOrg"]?.ToString(),
+                    SupervisoryPersonAccount = row["SupervisoryPersonAccount"]?.ToString(),
+                    SupervisoryPersonName = row["SupervisoryPersonName"]?.ToString(),
+                    SupervisoryUnit = row["SupervisoryUnit"]?.ToString(),
                     CurrentStep = row["CurrentStep"]?.ToString(),
                     created_at = row["created_at"] != DBNull.Value ? Convert.ToDateTime(row["created_at"]) : (DateTime?)null,
                     updated_at = row["updated_at"] != DBNull.Value ? Convert.ToDateTime(row["updated_at"]) : (DateTime?)null,
@@ -1178,6 +1220,89 @@ public class OFS_ClbApplicationHelper
         catch (Exception ex)
         {
             throw new Exception($"更新計畫狀態失敗：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 更新專案承辦人資料（用於案件移轉）
+    /// </summary>
+    /// <param name="projectID">專案編號</param>
+    /// <param name="supervisoryPersonAccount">承辦人員帳號</param>
+    /// <param name="supervisoryPersonName">承辦人員姓名</param>
+    /// <param name="supervisoryUnit">承辦單位</param>
+    public static void UpdateProjectSupervisoryInfo(string projectID, string supervisoryPersonAccount, string supervisoryPersonName, string supervisoryUnit)
+    {
+        try
+        {
+            DbHelper db = new DbHelper();
+            
+            db.CommandText = @"
+                UPDATE [OCA_OceanSubsidy].[dbo].[OFS_CLB_Project_Main] 
+                SET [SupervisoryPersonAccount] = @SupervisoryPersonAccount,
+                    [SupervisoryPersonName] = @SupervisoryPersonName,
+                    [SupervisoryUnit] = @SupervisoryUnit,
+                    [updated_at] = GETDATE()
+                WHERE [ProjectID] = @ProjectID";
+            
+            db.Parameters.Clear();
+            db.Parameters.Add("@ProjectID", projectID);
+            db.Parameters.Add("@SupervisoryPersonAccount", supervisoryPersonAccount ?? "");
+            db.Parameters.Add("@SupervisoryPersonName", supervisoryPersonName ?? "");
+            db.Parameters.Add("@SupervisoryUnit", supervisoryUnit ?? "");
+            
+            db.ExecuteNonQuery();
+            
+         
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"更新專案承辦人資料時發生錯誤: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 更新審查結果（用於內容審查）
+    /// </summary>
+    /// <param name="projectID">專案編號</param>
+    /// <param name="statusesName">審查結果狀態名稱</param>
+    /// <param name="expirationDate">補正期限（可選，用於退回補正補件）</param>
+    public static void UpdateReviewResult(string projectID, string statusesName, DateTime? expirationDate = null)
+    {
+        try
+        {
+            DbHelper db = new DbHelper();
+            
+            string sql = @"
+                UPDATE [OCA_OceanSubsidy].[dbo].[OFS_CLB_Project_Main] 
+                SET [StatusesName] = @StatusesName,
+                    [updated_at] = GETDATE()";
+            
+            // 如果有補正期限，則一併更新
+            if (expirationDate.HasValue)
+            {
+                sql += ", [ExpirationDate] = @ExpirationDate";
+            }
+            
+            sql += " WHERE [ProjectID] = @ProjectID";
+            
+            db.CommandText = sql;
+            
+            db.Parameters.Clear();
+            db.Parameters.Add("@ProjectID", projectID);
+            db.Parameters.Add("@StatusesName", statusesName ?? "");
+            
+            if (expirationDate.HasValue)
+            {
+                db.Parameters.Add("@ExpirationDate", expirationDate.Value);
+            }
+            
+            db.ExecuteNonQuery();
+            
+           
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"更新審查結果時發生錯誤: {ex.Message}");
         }
     }
 

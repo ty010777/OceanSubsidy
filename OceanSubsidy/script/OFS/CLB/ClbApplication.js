@@ -42,31 +42,17 @@ function bindEvents() {
 }
 
 function initializeStepBar() {
-    // 使用 OFSApplicationMaster 的進度條樣式
-    $('.application-step .step-item').first().addClass('active');
-    
+    // 進度條初始化將由後端的 InitializePage 方法處理
+    // 這裡只需要綁定點擊事件
+    bindStepClickEvents();
+}
+
+function bindStepClickEvents() {
     // 綁定進度條點擊事件
     $('.application-step .step-item').on('click', function() {
         let index = $(this).index();
-        switchToStep(index);
+        navigateToStepByUrl(index);
     });
-}
-
-function switchToStep(stepIndex) {
-    // 更新進度條狀態
-    $('.application-step .step-item').removeClass('active');
-    $('.application-step .step-item').eq(stepIndex).addClass('active');
-    
-    // 切換內容區塊
-    if (stepIndex === 0) {
-        // 顯示申請表
-        $('#applicationFormSection').show();
-        $('#uploadAttachmentSection').hide();
-    } else if (stepIndex === 1) {
-        // 顯示上傳附件
-        $('#applicationFormSection').hide();
-        $('#uploadAttachmentSection').show();
-    }
 }
 
 function initializeDatePickers() {
@@ -843,9 +829,9 @@ function resetFileStatusUIFromJS(fileCode) {
 }
 
 /**
- * 導航到指定的步驟
+ * 透過 URL 導航到指定的步驟
  */
-function navigateToStep(stepIndex) {
+function navigateToStepByUrl(stepIndex) {
     // 檢查目標步驟是否被禁用
     const targetStep = $('.application-step .step-item').eq(stepIndex);
     if (targetStep.hasClass('disabled') || targetStep.attr('aria-disabled') === 'true') {
@@ -854,23 +840,31 @@ function navigateToStep(stepIndex) {
     
     const projectID = getProjectID();
     
-    // 如果切換到申請表步驟且沒有 ProjectID，直接重新整理頁面
-    if (stepIndex === 0 && !projectID) {
-        window.location.href = 'ClbApplication.aspx';
-        return;
-    }
-    
     // 建構目標 URL
     let targetUrl = 'ClbApplication.aspx';
     
     if (projectID) {
         targetUrl += '?ProjectID=' + encodeURIComponent(projectID);
-        
-        if (stepIndex === 1) {
-            // 導向上傳附件/提送申請步驟
-            targetUrl += '&step=1';
-        }
     }
+    
+    // 根據步驟添加 step 參數
+    if (stepIndex === 1) {
+        // 上傳附件步驟
+        targetUrl += (targetUrl.includes('?') ? '&' : '?') + 'step=1';
+    } else {
+        // 申請表步驟 (step=0 或不加 step 參數)
+        targetUrl += (targetUrl.includes('?') ? '&' : '?') + 'step=0';
+    }
+    
+    // 重新載入頁面以執行 InitializePage
+    window.location.href = targetUrl;
+}
+
+/**
+ * 導航到指定的步驟（保留舊函數名稱以相容現有代碼）
+ */
+function navigateToStep(stepIndex) {
+    navigateToStepByUrl(stepIndex);
 }
 
 /**

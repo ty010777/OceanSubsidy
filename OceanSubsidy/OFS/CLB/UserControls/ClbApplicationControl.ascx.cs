@@ -63,50 +63,65 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
         lblYear.Text = DateTimeHelper.GregorianYearToMinguo(DateTime.Now.Year).ToString();
         hidYear.Value = DateTimeHelper.GregorianYearToMinguo(DateTime.Now.Year).ToString();
         
-        // 如果是唯讀模式，設定控制項狀態
+        // 如果是檢視模式，設定控制項狀態
         if (IsReadOnly)
         {
             SetReadOnlyMode();
         }
     }
 
-
-
     private void SetReadOnlyMode()
     {
-        // 設定所有控制項為唯讀
-        txtProjectNameTw.ReadOnly = true;
+        // 設定所有控制項為 disabled
+        txtProjectNameTw.Enabled = false;
         rbSubsidyTypeCreate.Enabled = false;
         rbSubsidyTypeOperation.Enabled = false;
         rbSubsidyTypeActivity.Enabled = false;
-        txtSchoolName.ReadOnly = true;
-        txtSchoolIDNumber.ReadOnly = true;
-        txtClubName.ReadOnly = true;
-        txtAddress.ReadOnly = true;
-        txtCreationDate.ReadOnly = true;
-        txtStartDate.ReadOnly = true;
-        txtEndDate.ReadOnly = true;
-        txtPurpose.ReadOnly = true;
-        txtPlanContent.ReadOnly = true;
-        txtPreBenefits.ReadOnly = true;
-        txtPlanLocation.ReadOnly = true;
-        txtEstimatedPeople.ReadOnly = true;
-        txtEmergencyPlan.ReadOnly = true;
-        txtSubsidyFunds.ReadOnly = true;
-        txtSelfFunds.ReadOnly = true;
-        txtOtherGovFunds.ReadOnly = true;
-        txtOtherUnitFunds.ReadOnly = true;
+        txtSchoolName.Enabled = false;
+        txtSchoolIDNumber.Enabled = false;
+        txtClubName.Enabled = false;
+        txtAddress.Enabled = false;
+        txtCreationDate.Enabled = false;
+        txtStartDate.Enabled = false;
+        txtEndDate.Enabled = false;
+        txtPurpose.Enabled = false;
+        txtPlanContent.Enabled = false;
+        txtPreBenefits.Enabled = false;
+        txtPlanLocation.Enabled = false;
+        txtEstimatedPeople.Enabled = false;
+        txtEmergencyPlan.Enabled = false;
+        txtSubsidyFunds.Enabled = false;
+        txtSelfFunds.Enabled = false;
+        txtOtherGovFunds.Enabled = false;
+        txtOtherUnitFunds.Enabled = false;
         rbPreviouslySubsidizedYes.Enabled = false;
         rbPreviouslySubsidizedNo.Enabled = false;
-        txtFundingDescription.ReadOnly = true;
+        txtFundingDescription.Enabled = false;
         
         // 人員欄位
-        txtTeacherName.ReadOnly = true;
-        txtTeacherJobTitle.ReadOnly = true;
-        txtTeacherPhone.ReadOnly = true;
-        txtContactName.ReadOnly = true;
-        txtContactJobTitle.ReadOnly = true;
-        txtContactPhone.ReadOnly = true;
+        txtTeacherName.Enabled = false;
+        txtTeacherJobTitle.Enabled = false;
+        txtTeacherPhone.Enabled = false;
+        txtContactName.Enabled = false;
+        txtContactJobTitle.Enabled = false;
+        txtContactPhone.Enabled = false;
+        
+        // 使用 JavaScript 處理前端樣式
+        string script = @"
+            $(document).ready(function() {
+                // 為所有有 view-mode class 的元素添加 d-none
+                $('.view-mode').addClass('d-none');
+                
+                // 為 FileTable 添加 hide-col-3 class
+                $('#FileTable').addClass('hide-col-3');
+                
+                // 隱藏底部按鈕區塊
+                $('.block-bottom').hide();
+            
+            });
+        ";
+        
+        Page.ClientScript.RegisterStartupScript(this.GetType(), "SetViewModeStyles", script, true);
     }
 
     public bool ValidateData()

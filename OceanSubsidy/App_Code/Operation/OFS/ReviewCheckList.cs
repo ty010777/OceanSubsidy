@@ -1122,53 +1122,13 @@ SELECT TOP (1000) [ProjectID]
     #endregion
 
     #region type-1 Search 科專
-    //TODO 想刪除
-    // /// <summary>
-    // /// 查詢科專資格審查清單（支援分頁）
-    // /// </summary>
-    // /// <param name="year">年度</param>
-    // /// <param name="status">狀態</param>
-    // /// <param name="orgName">申請單位</param>
-    // /// <param name="supervisor">承辦人員</param>
-    // /// <param name="keyword">關鍵字</param>
-    // /// <param name="pageNumber">頁碼</param>
-    // /// <param name="pageSize">每頁筆數</param>
-    // /// <param name="totalRecords">總記錄數（輸出參數）</param>
-    // /// <returns>分頁資料</returns>
-    // public static PaginatedResult<ReviewChecklistItem> Search_SCI_Type1_Paged(out int totalRecords,
-    //     string year = "",
-    //     string status = "",
-    //     string orgName = "",
-    //     string supervisor = "",
-    //     string keyword = "",
-    //     int pageNumber = 1,
-    //     int pageSize = 10
-    //     )
-    // {
-    //     var allData = Search_SCI_Type1(year, status, orgName, supervisor, keyword);
-    //     totalRecords = allData.Count;
-    //
-    //     var pagedData = allData
-    //         .Skip((pageNumber - 1) * pageSize)
-    //         .Take(pageSize)
-    //         .ToList();
-    //
-    //     return new PaginatedResult<ReviewChecklistItem>
-    //     {
-    //         Data = pagedData,
-    //         TotalRecords = totalRecords,
-    //         PageNumber = pageNumber,
-    //         PageSize = pageSize,
-    //         TotalPages = (int)Math.Ceiling((double)totalRecords / pageSize)
-    //     };
-    // }
-
     public static List<ReviewChecklistItem> Search_Type1(
         string year = "",
         string status = "",
         string orgName = "",
         string supervisor = "",
-        string keyword = "")
+        string keyword = "",
+        string category = "")
     {
         DbHelper db = new DbHelper();
         db.CommandText = $@"
@@ -1185,7 +1145,7 @@ SELECT TOP (1000) [ProjectID]
               ,[Year]
               ,[Category]
           FROM [OCA_OceanSubsidy].[dbo].[V_OFS_ReviewChecklist_type1]
-
+          where 1 = 1 
 
 ";
         try
@@ -1193,63 +1153,44 @@ SELECT TOP (1000) [ProjectID]
             List<ReviewChecklistItem> checklist = new List<ReviewChecklistItem>();
             db.Parameters.Clear();
 
-            // 添加篩選條件參數
-            bool hasWhereClause = false;
-
+            // 添加篩選條件參數 
             if (!string.IsNullOrEmpty(year))
             {
-                db.CommandText += " WHERE Year = @year";
+                db.CommandText += " AND Year = @year";
                 db.Parameters.Add("@year", year);
-                hasWhereClause = true;
+            }
+
+            if (!string.IsNullOrEmpty(category))
+            {
+                db.CommandText += " AND Category = @category";
+                db.Parameters.Add("@category", category);
             }
 
             if (!string.IsNullOrEmpty(status))
             {
-                if (hasWhereClause)
-                    db.CommandText += " AND StatusesName LIKE @status";
-                else
-                {
-                    db.CommandText += " WHERE StatusesName LIKE @status";
-                    hasWhereClause = true;
-                }
+                db.CommandText += " AND StatusesName LIKE @status";
                 db.Parameters.Add("@status", $"%{status}%");
             }
 
             if (!string.IsNullOrEmpty(orgName))
             {
-                if (hasWhereClause)
-                    db.CommandText += " AND OrgName LIKE @orgName";
-                else
-                {
-                    db.CommandText += " WHERE OrgName LIKE @orgName";
-                    hasWhereClause = true;
-                }
+                db.CommandText += " AND OrgName LIKE @orgName";
                 db.Parameters.Add("@orgName", $"%{orgName}%");
             }
 
             if (!string.IsNullOrEmpty(supervisor))
             {
-                if (hasWhereClause)
-                    db.CommandText += " AND SupervisoryPersonAccount = @supervisor";
-                else
-                {
-                    db.CommandText += " WHERE SupervisoryPersonAccount = @supervisor";
-                    hasWhereClause = true;
-                }
+                db.CommandText += " AND SupervisoryPersonAccount = @supervisor";
                 db.Parameters.Add("@supervisor", supervisor);
             }
 
             if (!string.IsNullOrEmpty(keyword))
             {
-                if (hasWhereClause)
-                    db.CommandText += " AND (ProjectID LIKE @keyword OR ProjectNameTw LIKE @keyword)";
-                else
-                {
-                    db.CommandText += " WHERE (ProjectID LIKE @keyword OR ProjectNameTw LIKE @keyword)";
-                    hasWhereClause = true;
-                }
+                db.CommandText += " AND (ProjectID LIKE @keyword OR ProjectNameTw LIKE @keyword)";
                 db.Parameters.Add("@keyword", $"%{keyword}%");
             }
+       
+            
 
             // 執行查詢
             DataTable dt = db.GetTable();
@@ -3035,6 +2976,210 @@ SELECT TOP (1000) [ProjectID]
                 System.Diagnostics.Debug.WriteLine($"更新待辦事項狀態時發生錯誤：{ex.Message}");
             }
         }
+    }
+
+    #endregion
+
+    #region 審查排名功能
+
+    /// <summary>
+    /// 取得審查結果排名資料
+    /// </summary>
+    /// <param name="reviewType">審查類型 (2: 領域審查, 3: 技術審查)</param>
+    /// <param name="reviewGroup">審查組別 (如: Information, Environment 等)</param>
+    /// <returns>排名資料清單</returns>
+    public static List<ReviewRankingItem> GetReviewRanking(string reviewType, string reviewGroup = null)
+    {
+        var results = new List<ReviewRankingItem>();
+        
+        try
+        {
+            // 驗證審查類型
+            if (reviewType != "2" && reviewType != "3")
+            {
+                throw new ArgumentException("不支援的審查類型");
+            }
+
+            // 根據審查類型設定審查階段
+            string reviewStage = reviewType == "2" ? "領域審查" : "技術審查";
+
+            using (var db = new DbHelper())
+            {
+                // 執行SQL查詢 - 使用參數化查詢防止SQL注入
+                if (string.IsNullOrEmpty(reviewGroup))
+                {
+                    // 查詢所有審查組別
+                    db.CommandText = @"
+                        -- 先算每個專案的平均分與總分
+                        WITH ProjectScores AS (
+                            SELECT 
+                                PM.ProjectID,
+                                ProjectNameTw,
+                                SUM(TotalScore) AS ProjectTotalScore,
+                                AVG(TotalScore) AS AvgScore
+                            FROM OFS_ReviewRecords RR
+                            LEFT JOIN OFS_SCI_Application_Main AM ON RR.ProjectID = AM.ProjectID
+                            LEFT JOIN OFS_SCI_Project_Main PM ON PM.ProjectID = AM.ProjectID
+                            WHERE PM.Statuses = @ReviewStage 
+                              AND RR.ReviewStage = @ReviewStage
+                              AND IsSubmit = 1 AND PM.StatusesName != '不通過'
+                            GROUP BY PM.ProjectID, ProjectNameTw
+                        ),
+                        -- 每個委員對各專案的分數
+                        ReviewerScores AS (
+                            SELECT 
+                                RR.ProjectID,
+                                RR.ReviewerName,
+                                RR.TotalScore
+                                -- RANK() OVER (PARTITION BY RR.ReviewerName ORDER BY RR.TotalScore DESC) AS ReviewerRank
+                            FROM OFS_ReviewRecords RR
+                            LEFT JOIN OFS_SCI_Application_Main AM ON RR.ProjectID = AM.ProjectID
+                            LEFT JOIN OFS_SCI_Project_Main PM ON PM.ProjectID = AM.ProjectID
+                            WHERE PM.Statuses = @ReviewStage 
+                              AND RR.ReviewStage = @ReviewStage
+                              AND IsSubmit = 1 PM.StatusesName != '不通過'
+                        )
+                        -- 最後組合成一張大表
+                        SELECT 
+                            PS.ProjectID,
+                            PS.ProjectNameTw,
+                            PS.ProjectTotalScore,
+                            PS.AvgScore,
+                            DENSE_RANK() OVER (ORDER BY PS.AvgScore DESC) AS DenseRankNo,
+                            RS.ReviewerName,
+                            RS.TotalScore
+                            -- RS.ReviewerRank
+                        FROM ProjectScores PS
+                        JOIN ReviewerScores RS ON PS.ProjectID = RS.ProjectID
+                        ORDER BY DenseRankNo, PS.ProjectID, RS.ReviewerName;
+                    ";
+
+                    db.Parameters.Add("@ReviewStage", reviewStage);
+                }
+                else
+                {
+                    // 查詢特定審查組別
+                    db.CommandText = @"
+                        -- 先算每個專案的平均分與總分
+                        WITH ProjectScores AS (
+                            SELECT 
+                                PM.ProjectID,
+                                ProjectNameTw,
+                                SUM(TotalScore) AS ProjectTotalScore,
+                                AVG(TotalScore) AS AvgScore
+                            FROM OFS_ReviewRecords RR
+                            LEFT JOIN OFS_SCI_Application_Main AM ON RR.ProjectID = AM.ProjectID
+                            LEFT JOIN OFS_SCI_Project_Main PM ON PM.ProjectID = AM.ProjectID
+                            WHERE PM.Statuses = @ReviewStage 
+                              AND RR.ReviewStage = @ReviewStage
+                              AND IsSubmit = 1 AND PM.StatusesName != '不通過'
+                              AND AM.Field = @ReviewGroup
+                            GROUP BY PM.ProjectID, ProjectNameTw
+                        ),
+                        -- 每個委員對各專案的分數
+                        ReviewerScores AS (
+                            SELECT 
+                                RR.ProjectID,
+                                RR.ReviewerName,
+                                RR.TotalScore
+                                -- RANK() OVER (PARTITION BY RR.ReviewerName ORDER BY RR.TotalScore DESC) AS ReviewerRank
+                            FROM OFS_ReviewRecords RR
+                            LEFT JOIN OFS_SCI_Application_Main AM ON RR.ProjectID = AM.ProjectID
+                            LEFT JOIN OFS_SCI_Project_Main PM ON PM.ProjectID = AM.ProjectID
+                            WHERE PM.Statuses = @ReviewStage 
+                              AND RR.ReviewStage = @ReviewStage
+                              AND IsSubmit = 1 AND PM.StatusesName != '不通過'
+                              AND AM.Field = @ReviewGroup
+                        )
+                        -- 最後組合成一張大表
+                        SELECT 
+                            PS.ProjectID,
+                            PS.ProjectNameTw,
+                            PS.ProjectTotalScore,
+                            PS.AvgScore,
+                            DENSE_RANK() OVER (ORDER BY PS.AvgScore DESC) AS DenseRankNo,
+                            RS.ReviewerName,
+                            RS.TotalScore
+                            -- RS.ReviewerRank
+                        FROM ProjectScores PS
+                        JOIN ReviewerScores RS ON PS.ProjectID = RS.ProjectID
+                        ORDER BY DenseRankNo, PS.ProjectID, RS.ReviewerName;
+                    ";
+
+                    db.Parameters.Add("@ReviewStage", reviewStage);
+                    db.Parameters.Add("@ReviewGroup", reviewGroup);
+                }
+                
+                var dataTable = db.GetTable();
+                
+                // 將查詢結果轉換為排名物件
+                var rankingData = new Dictionary<string, ReviewRankingItem>();
+                
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    string projectId = row["ProjectID"].ToString();
+                    
+                    if (!rankingData.ContainsKey(projectId))
+                    {
+                        rankingData[projectId] = new ReviewRankingItem
+                        {
+                            ProjectID = projectId,
+                            ProjectNameTw = row["ProjectNameTw"].ToString(),
+                            ProjectTotalScore = Convert.ToDecimal(row["ProjectTotalScore"]),
+                            AvgScore = Convert.ToDecimal(row["AvgScore"]),
+                            DenseRankNo = Convert.ToInt32(row["DenseRankNo"]),
+                            ReviewerScores = new List<ReviewerScore>()
+                        };
+                    }
+                    
+                    rankingData[projectId].ReviewerScores.Add(new ReviewerScore
+                    {
+                        ReviewerName = row["ReviewerName"].ToString(),
+                        TotalScore = Convert.ToDecimal(row["TotalScore"])
+                    });
+                }
+                
+                results = rankingData.Values.OrderBy(x => x.DenseRankNo).ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得審查排名時發生錯誤: {ex.Message}");
+            throw new Exception($"載入排名資料時發生錯誤: {ex.Message}");
+        }
+        
+        return results;
+    }
+
+    /// <summary>
+    /// 取得審查組別選項
+    /// </summary>
+    /// <param name="reviewType">審查類型</param>
+    /// <returns>審查組別選項清單</returns>
+    public static List<DropdownItem> GetReviewGroupOptions(string reviewType)
+    {
+        var options = new List<DropdownItem>();
+        
+        try
+        {
+            
+            // 根據審查類型提供不同的組別選項
+            if (reviewType == "2" || reviewType == "3")
+            {
+                // 領域審查和技術審查的組別
+                options.Add(new DropdownItem { Value = "Information", Text = "資通訊" });
+                options.Add(new DropdownItem { Value = "Environment", Text = "環境工程" });
+                options.Add(new DropdownItem { Value = "Material", Text = "材料科技" });
+                options.Add(new DropdownItem { Value = "Mechanical", Text = "機械與機電工程" });
+       
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得審查組別選項時發生錯誤: {ex.Message}");
+        }
+        
+        return options;
     }
 
     #endregion

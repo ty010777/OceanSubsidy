@@ -4,6 +4,7 @@ using System.Linq;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using GS.OCA_OceanSubsidy.Entity;
 
 public partial class OFS_CLB_ClbApplication : System.Web.UI.Page
 {
@@ -36,71 +37,201 @@ public partial class OFS_CLB_ClbApplication : System.Web.UI.Page
 
     private void InitializePage()
     {
-        // 檢查 URL 參數是否有 ProjectID
+        // 檢查 URL 參數
         string projectID = Request.QueryString["ProjectID"];
-        string step = Request.QueryString["step"];
+        string step = Request.QueryString["step"] ?? "0"; // 預設為步驟 0
         
         // 將 ProjectID 傳遞給 UserControl，讓它自己處理載入邏輯
         ucClbApplication.ProjectID = projectID ?? "";
         
-        // 整合查詢 CurrentStep 並控制按鈕顯示和步驟開放
+        // 判斷並設定檢視模式
+        SetViewModeBasedOnStatus(projectID);
+        
+        // 根據 step 參數和 SetButtonVisibilityAndStepAccess 結果來控制顯示
         bool enableUploadStep = false;
         SetButtonVisibilityAndStepAccess(projectID, out enableUploadStep);
         
-        // 根據 step 參數和權限調整頁面顯示
-        if (!string.IsNullOrEmpty(step) && step == "1" && enableUploadStep)
+        // 根據 URL step 參數控制按鈕和區塊顯示
+        int stepNumber = 0;
+        if (int.TryParse(step, out stepNumber))
         {
-            ViewState["CurrentStep"] = step;
-            
-            // 修改按鈕文字
-            btnSubmit.Text = "完成本頁，提送申請";
-            
-            // 添加 JavaScript 來切換到上傳附件介面並更新進度條狀態
-            ClientScript.RegisterStartupScript(this.GetType(), "SwitchToUploadStep", @"
-            $(document).ready(function() { 
-                switchToStep(1); 
-                // 更新第一步的狀態為已完成
-                $('.application-step .step-item:eq(0)').removeClass('active').find('.step-status').text('已完成').removeClass('edit');
-                // 設定第二步為編輯中
-                $('.application-step .step-item:eq(1)').addClass('active').find('.step-content').append('<div class=""step-status edit"">編輯中</div>');
-            });", true);
+            SetUIBasedOnStep(stepNumber, enableUploadStep);
         }
-        else if (!string.IsNullOrEmpty(step) && step == "1" && !enableUploadStep)
+  
+    }
+    
+    /// <summary>
+    /// 根據步驟號碼設置 UI 顯示
+    /// </summary>
+    /// <param name="stepNumber">步驟號碼 (0=申請表, 1=上傳附件)</param>
+    /// <param name="enableUploadStep">是否啟用上傳附件步驟</param>
+    private void SetUIBasedOnStep(int stepNumber, bool enableUploadStep)
+    {
+        // 註冊 JavaScript 來控制前端顯示
+        string script = "";
+        
+        if (stepNumber == 0)
         {
-            // 如果試圖進入上傳附件步驟但沒有權限，重導向回申請表步驟
-            string redirectUrl = "ClbApplication.aspx";
-            if (!string.IsNullOrEmpty(projectID))
-            {
-                redirectUrl += "?ProjectID=" + Server.UrlEncode(projectID);
-            }
-            Response.Redirect(redirectUrl);
+            // 步驟 0: 顯示申請表
+            btnSaveAndNext.Style["display"] = "";  // 顯示「完成本頁，下一步」
+            btnSubmitApplication.Style["display"] = "none";  // 隱藏「完成本頁，提送申請」
+            
+            script = @"
+                $(document).ready(function() {
+                    // 設置進度條狀態
+                    $('.application-step .step-item').removeClass('active');
+                    $('.application-step .step-item').eq(0).addClass('active');
+                    
+                    // 顯示申請表區塊，隱藏上傳附件區塊
+                    $('#applicationFormSection').show();
+                    $('#uploadAttachmentSection').hide();
+                    
+                    // 設置步驟狀態文字
+                    var firstStep = $('.application-step .step-item').eq(0);
+                    var secondStep = $('.application-step .step-item').eq(1);
+                    
+                    // 第一步：當前在編輯，顯示編輯中
+                    firstStep.find('.step-status').remove();
+                    firstStep.find('.step-content').append('<div class=""step-status edit"">編輯中</div>');
+                    
+                    // 第二步：根據是否啟用決定狀態
+                    secondStep.find('.step-status').remove();
+                    if (" + enableUploadStep.ToString().ToLower() + @") {
+                        // 已啟用：顯示已完成狀態，但移除編輯中樣式
+                        secondStep.find('.step-content').append('<div class=""step-status"">已完成</div>');
+                        secondStep.removeClass('disabled').attr('aria-disabled', 'false').attr('tabindex', '0');
+                    } else {
+                        // 未啟用：不顯示任何狀態
+                        secondStep.addClass('disabled').attr('aria-disabled', 'true').removeAttr('tabindex');
+                    }
+                });
+            ";
+        }
+        else if (stepNumber == 1 && enableUploadStep)
+        {
+            // 步驟 1: 顯示上傳附件（只有在啟用時才顯示）
+            btnSaveAndNext.Style["display"] = "none";  // 隱藏「完成本頁，下一步」
+             btnSubmitApplication.Style["display"] = "";  // 顯示「完成本頁，提送申請」
+            
+            script = @"
+                $(document).ready(function() {
+                    // 設置進度條狀態
+                    $('.application-step .step-item').removeClass('active');
+                    $('.application-step .step-item').eq(1).addClass('active');
+                    
+                    // 隱藏申請表區塊，顯示上傳附件區塊
+                    $('#applicationFormSection').hide();
+                    $('#uploadAttachmentSection').show();
+                    
+                    // 設置步驟狀態文字
+                    var firstStep = $('.application-step .step-item').eq(0);
+                    var secondStep = $('.application-step .step-item').eq(1);
+                    
+                    // 第一步：已完成
+                    firstStep.find('.step-status').remove();
+                    firstStep.find('.step-content').append('<div class=""step-status"">已完成</div>');
+                    
+                    // 第二步：當前在編輯，顯示編輯中
+                    secondStep.find('.step-status').remove();
+                    secondStep.find('.step-content').append('<div class=""step-status edit"">編輯中</div>');
+                    
+                    // 確保兩個步驟都是啟用狀態
+                    $('.application-step .step-item').removeClass('disabled')
+                        .attr('aria-disabled', 'false').attr('tabindex', '0');
+                });
+            ";
         }
         else
         {
-            ViewState["CurrentStep"] = "0"; // 預設為申請表步驟
+            // 無效步驟或未啟用的步驟，回到步驟 0
+            btnSaveAndNext.Style["display"] = "";
+            btnSubmitApplication.Style["display"] = "none";
+            
+            script = @"
+                $(document).ready(function() {
+                    // 設置進度條狀態
+                    $('.application-step .step-item').removeClass('active');
+                    $('.application-step .step-item').eq(0).addClass('active');
+                    
+                    // 顯示申請表區塊，隱藏上傳附件區塊
+                    $('#applicationFormSection').show();
+                    $('#uploadAttachmentSection').hide();
+                    
+                    // 設置步驟狀態文字
+                    var firstStep = $('.application-step .step-item').eq(0);
+                    var secondStep = $('.application-step .step-item').eq(1);
+                    
+                    // 第一步：當前在編輯，顯示編輯中
+                    firstStep.find('.step-status').remove();
+                    firstStep.find('.step-content').append('<div class=""step-status edit"">編輯中</div>');
+                    
+                    // 第二步：根據是否啟用決定狀態
+                    secondStep.find('.step-status').remove();
+                    if (" + enableUploadStep.ToString().ToLower() + @") {
+                        secondStep.find('.step-content').append('<div class=""step-status"">已完成</div>');
+                        secondStep.removeClass('disabled').attr('aria-disabled', 'false').attr('tabindex', '0');
+                    } else {
+                        secondStep.addClass('disabled').attr('aria-disabled', 'true').removeAttr('tabindex');
+                    }
+                });
+            ";
         }
         
-        // 設定上傳附件步驟的可用狀態
-        string stepStateScript = $@"
-        $(document).ready(function() {{ 
-            if ({enableUploadStep.ToString().ToLower()}) {{
-                $('.application-step .step-item:eq(1)')
-                    .removeClass('disabled')
-                    .removeAttr('tabindex')
-                    .removeAttr('aria-disabled')
-                    .attr('onclick', 'navigateToStep(1)');
-            }} else {{
-                $('.application-step .step-item:eq(1)')
-                    .addClass('disabled')
-                    .attr('tabindex', '-1')
-                    .attr('aria-disabled', 'true')
-                    .removeAttr('onclick');
-            }}
-        }});";
-        
-        ClientScript.RegisterStartupScript(this.GetType(), "SetStepState", stepStateScript, true);
+        // 註冊 JavaScript
+        ClientScript.RegisterStartupScript(this.GetType(), "InitializePageUI", script, true);
     }
 
+    /// <summary>
+    /// 根據專案狀態設定檢視模式
+    /// </summary>
+    /// <param name="projectID">計畫編號</param>
+    private void SetViewModeBasedOnStatus(string projectID)
+    {
+        try
+        {
+            // 如果 projectID 為空或找不到，顯示編輯模式
+            if (string.IsNullOrEmpty(projectID))
+            {
+                ucClbApplication.IsReadOnly = false;
+            }
+            else
+            {
+                // 從資料庫取得專案狀態資訊
+                var projectMain = OFS_ClbApplicationHelper.GetProjectMainData(projectID);
+                
+                if (projectMain == null)
+                {
+                    // 找不到專案資料，顯示編輯模式
+                    ucClbApplication.IsReadOnly = false;
+                }
+                else
+                {
+                    string statuses = projectMain.Statuses ?? "";
+                    string statusesName = projectMain.StatusesName ?? "";
+
+                    // 判斷狀態是否允許編輯
+                    if ((statuses == "尚未提送" && statusesName == "編輯中") ||
+                        (statuses == "決審核定" && statusesName == "計畫書修正中") ||
+                        (statuses == "內容審查" && statusesName == "補正補件"))
+                    {
+                        // 可編輯狀態
+                        ucClbApplication.IsReadOnly = false;
+                    }
+                    else
+                    {
+                        // 其他狀態都是檢視模式
+                        ucClbApplication.IsReadOnly = true;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // 發生錯誤時，預設為編輯模式
+            ucClbApplication.IsReadOnly = false;
+            System.Diagnostics.Debug.WriteLine($"設定檢視模式時發生錯誤: {ex.Message}");
+        }
+    }
 
     /// <summary>
     /// 整合查詢 CurrentStep，同時控制暫存按鈕顯示和上傳附件步驟開放
@@ -141,22 +272,40 @@ public partial class OFS_CLB_ClbApplication : System.Web.UI.Page
         }
     }
 
-    protected void btnSave_Click(object sender, EventArgs e)
+    protected void btnTempSave_Click(object sender, EventArgs e)
     {
-        Button clickedButton = (Button)sender;
-        
         try
         {
-            if (clickedButton.ID == "btnTempSave")
-            {
-                // 暫存邏輯
-                TempSave();
-            }
-            else if (clickedButton.ID == "btnSubmit")
-            {
-                // 儲存並進入下一步
-                SaveAndNext();
-            }
+            // 暫存邏輯
+            TempSave();
+        }
+        catch (Exception ex)
+        {
+            // 錯誤處理
+            Response.Write($"<script>alert('操作失敗：{ex.Message}');</script>");
+        }
+    }
+    
+    protected void btnSaveAndNext_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            // 儲存並進入下一步
+            SaveAndGoToUploadStep();
+        }
+        catch (Exception ex)
+        {
+            // 錯誤處理
+            Response.Write($"<script>alert('操作失敗：{ex.Message}');</script>");
+        }
+    }
+    
+    protected void btnSubmitApplication_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            // 提送申請
+            SubmitApplication();
         }
         catch (Exception ex)
         {
@@ -211,19 +360,6 @@ public partial class OFS_CLB_ClbApplication : System.Web.UI.Page
         }
     }
 
-    private void SaveAndNext()
-    {
-        string currentStep = ViewState["CurrentStep"]?.ToString() ?? "0";
-        
-        if (currentStep == "0") // 申請表步驟
-        {
-            SaveAndGoToUploadStep();
-        }
-        else if (currentStep == "1") // 上傳附件/提送申請步驟
-        {
-            SubmitApplication();
-        }
-    }
     
     private void SaveAndGoToUploadStep()
     {
@@ -442,10 +578,23 @@ public partial class OFS_CLB_ClbApplication : System.Web.UI.Page
                 Response.Write("{\"success\":false,\"message\":\"計畫編號不能為空\"}");
                 return;
             }
+            // 取得最新歷史記錄的狀態
+            string stageStatusBefore = ApplicationChecklistHelper.GetLatestStageStatus(projectID) ?? "";
 
             // 更新計畫狀態
             OFS_ClbApplicationHelper.UpdateProjectStatus(projectID, "內容審查", "審核中", "3");
-            
+            var currentUser = GetCurrentUserInfo();
+            var projectMain = OFS_ClbApplicationHelper.GetProjectMainData(projectID);
+            var historyLog = new OFS_CaseHistoryLog
+            {
+                ProjectID = projectID,
+                ChangeTime = DateTime.Now,
+                UserName = currentUser?.UserName ?? "系統",
+                StageStatusBefore = stageStatusBefore,
+                StageStatusAfter =  projectMain.Statuses + projectMain.StatusesName,
+                Description = "提送至內容審核" 
+                                 
+            };
            
             Response.Write("{\"success\":true,\"message\":\"申請已成功提送，狀態已更新為審核中\"}");
             
@@ -460,4 +609,18 @@ public partial class OFS_CLB_ClbApplication : System.Web.UI.Page
     }
 
     #endregion
+    /// <summary>
+    /// 取得目前登入使用者資訊
+    /// </summary>
+    private SessionHelper.UserInfoClass GetCurrentUserInfo()
+    {
+        try
+        {
+            return SessionHelper.Get<SessionHelper.UserInfoClass>(SessionHelper.UserInfo);
+        }
+        catch (Exception ex)
+        {
+            return null;
+        }
+    }
 }

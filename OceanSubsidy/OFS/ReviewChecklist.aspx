@@ -115,7 +115,7 @@
 	                       </asp:DropDownList>
 	                   </div>
 	                   <div class="col-12 col-lg-5">
-	                       <div class="fs-16 text-gray mb-2">階段</div>
+	                       <div class="fs-16 text-gray mb-2">狀態</div>
 	                       <asp:DropDownList ID="ddlStage_Type1" runat="server" CssClass="form-select">
 	                       </asp:DropDownList>
 	                   </div>
@@ -1426,6 +1426,62 @@
   
               </div>
   
+          </div>
+      </div>
+  </div>
+  
+  <!-- 審查結果排名 Modal -->
+  <div class="modal fade" id="reviewResultModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="reviewResultModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <h4 class="fs-24 fw-bold text-green-light">審查結果排名</h4>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                      <i class="fa-solid fa-circle-xmark"></i>
+                  </button>
+              </div>
+              <div class="modal-body">
+                  <!-- 載入中顯示 -->
+                  <div id="rankingLoading" class="text-center py-5">
+                      <div class="spinner-border text-teal" role="status">
+                          <span class="visually-hidden">載入中...</span>
+                      </div>
+                      <div class="mt-2">載入審查結果排名中...</div>
+                  </div>
+
+                  <!-- 排名內容 -->
+                  <div id="rankingContent" style="display: none;">
+                      <!-- 審查組別選擇 -->
+                      <div class="d-flex align-items-center gap-3 mb-4">
+                          <span class="text-gray text-nowrap">審查組別</span>
+                          <select class="form-select" id="reviewGroupSelect" style="width: 200px;">
+                              <option value="">全部</option>
+                          </select>
+                      </div>
+
+                      <!-- 排名表格 -->
+                      <div class="table-responsive">
+                          <table class="table align-middle gray-table lh-base" id="reviewRankingTable">
+                              <thead id="rankingTableHead">
+                                  <!-- 動態產生的表頭 -->
+                              </thead>
+                              <tbody id="reviewRankingTableBody">
+                                  <!-- 動態渲染的排名資料 -->
+                              </tbody>
+                          </table>
+                      </div>
+                  </div>
+
+                  <!-- 錯誤訊息 -->
+                  <div id="rankingError" class="alert alert-danger" style="display: none;">
+                      <i class="fas fa-exclamation-triangle me-2"></i>
+                      <span id="rankingErrorMessage">載入排名資料時發生錯誤</span>
+                  </div>
+              </div>
+              <div class="modal-footer">
+                  <button type="button" class="btn btn-gray" data-bs-dismiss="modal">取消</button>
+                  <button type="button" class="btn btn-teal" id="btnExportRanking">匯出審查結果</button>
+              </div>
           </div>
       </div>
   </div>

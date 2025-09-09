@@ -169,7 +169,7 @@
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-md">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="fs-24 text-green-light fw-bold">審查意見及回覆</h4>
+                    <h4 class="fs-24 text-green-light fw-bold">審查意見</h4>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                         <i class="fa-solid fa-circle-xmark"></i>
                     </button>

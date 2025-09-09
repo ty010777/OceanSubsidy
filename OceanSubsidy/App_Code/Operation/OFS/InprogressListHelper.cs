@@ -39,7 +39,7 @@ public class InprogressListHelper
         db.Parameters.Add("@LastOperation", lastOperation ?? "");
         db.Parameters.Add("@UpdatedAt", DateTime.Now);
 
-        db.ExecuteNonQuery() ;
+        db.ExecuteNonQuery();
     }
 
     /// <summary>
@@ -61,7 +61,7 @@ public class InprogressListHelper
         db.Parameters.Add("@TaskNameEn", taskNameEn);
         db.Parameters.Add("@IsCompleted", isCompleted);
 
-         db.ExecuteNonQuery() ;
+         db.ExecuteNonQuery();
     }
 
     /// <summary>

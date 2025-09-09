@@ -1068,8 +1068,8 @@ window.ReviewChecklist = (function() {
         }
         else if (projectId.includes('CLB')) {
             // 學校社團補助案 - 未實作
-            // return `OFS/CLB/ClbApplicationReview.aspx?ProjectID=${projectId}`;
-            return null;
+            return `CLB/ClbApplicationReview.aspx?ProjectID=${projectId}`;
+            
         }
         else if (projectId.includes('MUL')) {
             // 多元補助案
@@ -3254,4 +3254,370 @@ function performType4Search() {
     }
 }
 
+
+
+/**
+ * 審查結果排名功能
+ */
+window.ReviewRanking = (function() {
+    "use strict";
+
+    let rankingData = [];
+    let filteredData = [];
+    let allReviewers = [];
+    let currentSort = {
+        field: 'rank',  // 預設按排名排序
+        direction: 'asc'  // asc: 升序, desc: 降序
+    };
+
+    /**
+     * 初始化審查排名modal
+     */
+    function initRankingModal() {
+        // 綁定modal顯示事件
+        $("#reviewResultModal").on("show.bs.modal", function() {
+            // 根據當前審查類型載入審查組別選項
+            const currentType = getCurrentReviewType();
+            if (currentType === "2" || currentType === "3") {
+                loadReviewGroups(currentType);
+            } else {
+                showRankingError("此審查階段不支援排名功能");
+            }
+        });
+
+        // 綁定審查組別選擇變更事件
+        $("#reviewGroupSelect").on("change", function() {
+            const selectedGroup = $(this).val();
+            if (selectedGroup) {
+                filterDataByGroup(selectedGroup);
+            }
+        });
+
+        // 綁定匯出按鈕（暫時為空）
+        $("#btnExportRanking").on("click", function() {
+            // TODO: 實作匯出功能
+            alert("匯出功能尚未實作");
+        });
+    }
+
+    /**
+     * 取得當前審查類型
+     */
+    function getCurrentReviewType() {
+        // 從URL或全域變數取得當前審查類型
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get("type") || "2";
+    }
+
+    /**
+     * 載入審查排名資料
+     */
+    function loadRankingData(reviewType, reviewGroup = null) {
+        showRankingLoading();
+        
+        const requestData = { reviewType: reviewType };
+        if (reviewGroup) {
+            requestData.reviewGroup = reviewGroup;
+        }
+        
+        $.ajax({
+            url: "ReviewChecklist.aspx/GetReviewRanking",
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            data: JSON.stringify(requestData),
+            success: function(response) {
+                try {
+                    const result = JSON.parse(response.d);
+                    if (result.success) {
+                        rankingData = result.data;
+                        filteredData = [...rankingData];
+                        extractReviewers();
+                        if (!reviewGroup) {
+                            loadReviewGroups(reviewType);
+                        }
+                        generateTableHeader();
+                        renderRankingTable();
+                        showRankingContent();
+                    } else {
+                        showRankingError(result.message || "載入排名資料失敗");
+                    }
+                } catch (error) {
+                    console.error("解析排名資料錯誤:", error);
+                    showRankingError("解析排名資料時發生錯誤");
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("載入排名資料失敗:", error);
+                showRankingError("載入排名資料時發生網路錯誤");
+            }
+        });
+    }
+
+    /**
+     * 提取所有評審委員
+     */
+    function extractReviewers() {
+        const reviewerSet = new Set();
+        rankingData.forEach(project => {
+            project.ReviewerScores.forEach(score => {
+                reviewerSet.add(score.ReviewerName);
+            });
+        });
+        allReviewers = Array.from(reviewerSet).sort();
+    }
+
+    /**
+     * 載入審查組別選項
+     */
+    function loadReviewGroups(reviewType) {
+        const $select = $("#reviewGroupSelect");
+        $select.empty();
+        
+        // 根據審查類型提供不同的組別選項
+        if (reviewType == "2" || reviewType == "3") {
+            const groups = [
+                { value: "Information", text: "資通訊" },
+                { value: "Environment", text: "環境工程" },
+                { value: "Material", text: "材料科技" },
+                { value: "Mechanical", text: "機械與機電工程" },
+                { value: "11", text: "航海智慧轉譯類" },
+                { value: "12", text: "海岸聚落發展類" },
+                { value: "13", text: "圖文繪本創新類" },
+                { value: "21", text: "造舟技藝傳承類" },
+                { value: "22", text: "航海實踐交流類" },
+                { value: "31", text: "海洋主題創作類" },
+                { value: "32", text: "海洋藝文扎根類" }
+            ];
+            
+            groups.forEach(group => {
+                $select.append(`<option value="${group.value}">${group.text}</option>`);
+            });
+            
+            // 預設選擇第一個組別並載入資料
+            if (groups.length > 0) {
+                $select.val(groups[0].value);
+                loadRankingData(reviewType, groups[0].value);
+            }
+        }
+    }
+
+    /**
+     * 依組別篩選資料 - 重新載入後端資料
+     */
+    function filterDataByGroup(selectedGroup) {
+        const currentType = getCurrentReviewType();
+        loadRankingData(currentType, selectedGroup);
+    }
+
+    /**
+     * 產生表格標題
+     */
+    function generateTableHeader() {
+        const reviewerCount = allReviewers.length;
+        
+        let headerHtml = `
+            <tr>
+                <th class="text-center" rowspan="2">排名</th>
+                <th rowspan="2">計畫編號</th>
+                <th rowspan="2">計畫名稱</th>
+                <th class="text-end" rowspan="2">
+                    <div class="hstack align-items-center justify-content-center">
+                        <span>總分</span>
+                        <button type="button" class="sort" onclick="ReviewRanking.sortBy('totalScore')">
+                            <i class="fa-solid fa-sort-up"></i>
+                            <i class="fa-solid fa-sort-down"></i>
+                        </button>
+                    </div>
+                </th>
+                <th class="text-end" rowspan="2">
+                    <div class="hstack align-items-center justify-content-center">
+                        <span>平均分</span>
+                        <button type="button" class="sort" onclick="ReviewRanking.sortBy('avgScore')">
+                            <i class="fa-solid fa-sort-up"></i>
+                            <i class="fa-solid fa-sort-down"></i>
+                        </button>
+                    </div>
+                </th>
+                <th class="text-center" colspan="${reviewerCount}">審查委員評分</th>
+            </tr>
+            <tr>`;
+
+        allReviewers.forEach((reviewer, index) => {
+            headerHtml += `
+                <th class="text-center">
+                    <span>${reviewer}</span>
+                </th>`;
+        });
+
+        headerHtml += "</tr>";
+        
+        $("#rankingTableHead").html(headerHtml);
+    }
+
+    /**
+     * 渲染排名表格
+     */
+    function renderRankingTable() {
+        const $tbody = $("#reviewRankingTableBody");
+        $tbody.empty();
+
+        filteredData.forEach(project => {
+            let rowHtml = `
+                <tr>
+                    <td class="text-center">${project.DenseRankNo}</td>
+                    <td>${project.ProjectID}</td>
+                    <td>
+                        <a href="#" class="link-teal">${project.ProjectNameTw}</a>
+                    </td>
+                    <td class="text-end">${project.ProjectTotalScore}</td>
+                    <td class="text-end">${project.AvgScore.toFixed(1)}</td>`;
+
+            // 為每個評審委員添加分數欄位
+            allReviewers.forEach(reviewerName => {
+                const reviewerScore = project.ReviewerScores.find(rs => rs.ReviewerName === reviewerName);
+                if (reviewerScore) {
+                    rowHtml += `
+                        <td class="text-center">
+                            <span class="text-teal">${reviewerScore.TotalScore}</span>
+                        </td>`;
+                } else {
+                    rowHtml += "<td class=\"text-center\">-</td>";
+                }
+            });
+
+            rowHtml += "</tr>";
+            $tbody.append(rowHtml);
+        });
+    }
+
+    /**
+     * 顯示載入中狀態
+     */
+    function showRankingLoading() {
+        $("#rankingLoading").show();
+        $("#rankingContent").hide();
+        $("#rankingError").hide();
+    }
+
+    /**
+     * 顯示排名內容
+     */
+    function showRankingContent() {
+        $("#rankingLoading").hide();
+        $("#rankingContent").show();
+        $("#rankingError").hide();
+    }
+
+    /**
+     * 顯示錯誤訊息
+     */
+    function showRankingError(message) {
+        $("#rankingLoading").hide();
+        $("#rankingContent").hide();
+        $("#rankingErrorMessage").text(message);
+        $("#rankingError").show();
+    }
+
+    /**
+     * 依欄位排序
+     */
+    function sortBy(field) {
+        try {
+            // 切換排序方向
+            if (currentSort.field === field) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.field = field;
+                currentSort.direction = 'asc';
+            }
+
+            // 執行排序
+            filteredData.sort((a, b) => {
+                let valueA, valueB;
+                
+                switch (field) {
+                    case 'totalScore':
+                        valueA = parseFloat(a.ProjectTotalScore) || 0;
+                        valueB = parseFloat(b.ProjectTotalScore) || 0;
+                        break;
+                    case 'avgScore':
+                        valueA = parseFloat(a.AvgScore) || 0;
+                        valueB = parseFloat(b.AvgScore) || 0;
+                        break;
+                    case 'rank':
+                        valueA = parseInt(a.DenseRankNo) || 0;
+                        valueB = parseInt(b.DenseRankNo) || 0;
+                        break;
+                    case 'projectId':
+                        valueA = a.ProjectID || '';
+                        valueB = b.ProjectID || '';
+                        break;
+                    case 'projectName':
+                        valueA = a.ProjectNameTw || '';
+                        valueB = b.ProjectNameTw || '';
+                        break;
+                    default:
+                        return 0;
+                }
+
+                // 處理字串比較
+                if (typeof valueA === 'string' && typeof valueB === 'string') {
+                    if (currentSort.direction === 'asc') {
+                        return valueA.localeCompare(valueB, 'zh-TW');
+                    } else {
+                        return valueB.localeCompare(valueA, 'zh-TW');
+                    }
+                }
+
+                // 處理數值比較
+                if (currentSort.direction === 'asc') {
+                    return valueA - valueB;
+                } else {
+                    return valueB - valueA;
+                }
+            });
+
+            // 更新排序按鈕的視覺狀態
+            updateSortButtonStyles(field, currentSort.direction);
+            
+            // 重新渲染表格
+            renderRankingTable();
+            
+        } catch (error) {
+            console.error("排序時發生錯誤:", error);
+        }
+    }
+
+    /**
+     * 更新排序按鈕的視覺狀態
+     */
+    function updateSortButtonStyles(activeField, direction) {
+        // 重置所有排序按鈕
+        $("#rankingTableHead .sort").removeClass("active-asc active-desc");
+        
+        // 設定當前活動的排序按鈕
+        $("#rankingTableHead .sort").each(function() {
+            const $button = $(this);
+            const onclick = $button.attr('onclick') || '';
+            
+            if (onclick.includes(`'${activeField}'`)) {
+                $button.addClass(direction === 'asc' ? 'active-asc' : 'active-desc');
+            }
+        });
+    }
+
+    // 公開方法
+    return {
+        initRankingModal: initRankingModal,
+        sortBy: sortBy,
+    };
+})();
+
+// DOM載入完成後初始化
+$(document).ready(function() {
+    if (typeof window.ReviewRanking !== "undefined") {
+        window.ReviewRanking.initRankingModal();
+    }
+});
 

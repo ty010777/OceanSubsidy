@@ -790,7 +790,7 @@ function generateProjectNameLink(record) {
     } else if (projectId.includes('EDC'))  {
         return `<a href="../OFS/EDC/Application.aspx?ID=${projectId}" class="link-black" target="_blank">${projectName}</a>`;
     }else if (projectId.includes('CLB'))  {
-        return `<a href="../OFS/CLB/ClbApplication.aspx?ID=${projectId}" class="link-black" target="_blank">${projectName}</a>`;
+        return `<a href="../OFS/CLB/ClbApplication.aspx?ProjectID=${projectId}" class="link-black" target="_blank">${projectName}</a>`;
     } else if (projectId.includes('MUL'))  {
         return `<a href="../OFS/MUL/Application.aspx?ID=${projectId}" class="link-black" target="_blank">${projectName}</a>`;
     } else if (projectId.includes('LIT'))  {

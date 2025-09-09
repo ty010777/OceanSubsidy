@@ -614,4 +614,75 @@ namespace GS.OCA_OceanSubsidy.Model.OFS
     }
 
     #endregion
+
+    #region 審查排名相關資料模型
+
+    /// <summary>
+    /// 審查結果排名資料模型
+    /// </summary>
+    [Serializable]
+    public class ReviewRankingItem
+    {
+        /// <summary>
+        /// 密集排名
+        /// </summary>
+        public int DenseRankNo { get; set; }
+
+        /// <summary>
+        /// 專案編號
+        /// </summary>
+        public string ProjectID { get; set; }
+
+        /// <summary>
+        /// 專案名稱
+        /// </summary>
+        public string ProjectNameTw { get; set; }
+
+        /// <summary>
+        /// 專案總分
+        /// </summary>
+        public decimal ProjectTotalScore { get; set; }
+
+        /// <summary>
+        /// 平均分數
+        /// </summary>
+        public decimal AvgScore { get; set; }
+
+        /// <summary>
+        /// 評審委員分數清單
+        /// </summary>
+        public List<ReviewerScore> ReviewerScores { get; set; }
+
+        /// <summary>
+        /// 建構子
+        /// </summary>
+        public ReviewRankingItem()
+        {
+            ReviewerScores = new List<ReviewerScore>();
+        }
+    }
+
+    /// <summary>
+    /// 評審分數資料模型
+    /// </summary>
+    [Serializable]
+    public class ReviewerScore
+    {
+        /// <summary>
+        /// 評審委員名稱
+        /// </summary>
+        public string ReviewerName { get; set; }
+
+        /// <summary>
+        /// 該評審給此專案的分數
+        /// </summary>
+        public decimal TotalScore { get; set; }
+
+        /// <summary>
+        /// 該評審給此專案的排名 (暫時不使用)
+        /// </summary>
+        // public int ReviewerRank { get; set; }
+    }
+
+    #endregion
 }

@@ -53,24 +53,26 @@
             </div>
         </div>
     </div>
-    
     <!-- 申請流程進度條 -->
     <div class="application-step">
-        <div class="step-item active" role="button" onclick="navigateToStep(0)">
+        <div class="step-item" role="button" onclick="navigateToStepByUrl(0)">
             <div class="step-content">
                 <div class="step-label">申請表</div>
-                <div class="step-status edit">編輯中</div>
+                <!-- 狀態將由後端動態設定 -->
             </div>
         </div>
-        <div class="step-item" role="button">
+        <div class="step-item" role="button" onclick="navigateToStepByUrl(1)">
             <div class="step-content">
                 <div class="step-label">上傳附件/提送申請</div>
+                <!-- 狀態將由後端動態設定 -->
             </div>
         </div>
     </div>
-    
     <!-- Hidden field to store ProjectID -->
     <asp:HiddenField ID="hdnProjectID" runat="server" />
+    
+    <!-- Hidden field to store current step index -->
+    <asp:HiddenField ID="hdnStepIndex" runat="server" Value="0" />
 
     <!-- 使用 UserControl -->
     <uc:ClbApplicationControl ID="ucClbApplication" runat="server" />
@@ -80,12 +82,18 @@
         <asp:Button ID="btnTempSave" runat="server"  
                     Text="暫存"  
                     CssClass="btn btn-outline-teal"  
-                    OnClick="btnSave_Click" /> 
+                    OnClick="btnTempSave_Click" /> 
         
-        <asp:Button ID="btnSubmit" runat="server" 
+        <asp:Button ID="btnSaveAndNext" runat="server" 
                     Text="完成本頁，下一步"  
                     CssClass="btn btn-teal"  
-                    OnClick="btnSave_Click" /> 
+                    OnClick="btnSaveAndNext_Click" /> 
+                    
+        <asp:Button ID="btnSubmitApplication" runat="server" 
+                    Text="完成本頁，提送申請"  
+                    CssClass="btn btn-teal"
+                    Style="display: none;"
+                    OnClick="btnSubmitApplication_Click" /> 
     </div>
 
 </asp:Content>

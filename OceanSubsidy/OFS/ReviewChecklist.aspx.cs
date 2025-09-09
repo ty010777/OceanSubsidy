@@ -58,6 +58,60 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
     #region 私有方法
 
     /// <summary>
+    /// 載入補助類型選項從 OFS_GrantType 資料表
+    /// </summary>
+    /// <param name="includeAll">是否包含「全部」選項</param>
+    /// <returns>補助類型選項清單</returns>
+    private List<ListItem> LoadGrantTypeOptions(bool includeAll = true)
+    {
+        var options = new List<ListItem>();
+        
+        try
+        {
+            // 如果需要，先加入「全部」選項
+            if (includeAll)
+            {
+                options.Add(new ListItem("全部", ""));
+            }
+
+            // 從資料庫讀取補助類型
+            using (var db = new GS.Data.Sql.DbHelper())
+            {
+                db.CommandText = @"
+                    SELECT [TypeID], [TypeCode], [ShortName]
+                    FROM [OCA_OceanSubsidy].[dbo].[OFS_GrantType]
+                    ORDER BY [TypeID]
+                ";
+
+                var table = db.GetTable();
+                
+                foreach (DataRow row in table.Rows)
+                {
+                    string shortName = row["ShortName"]?.ToString() ?? "";
+                    string typeCode = row["TypeCode"]?.ToString() ?? "";
+                    
+                    if (!string.IsNullOrEmpty(shortName) && !string.IsNullOrEmpty(typeCode))
+                    {
+                        options.Add(new ListItem(shortName, typeCode));
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "載入補助類型選項時發生錯誤");
+            
+            // 發生錯誤時，提供預設選項
+            if (includeAll && options.Count == 0)
+            {
+                options.Add(new ListItem("全部", ""));
+            }
+        }
+        
+        return options;
+    }
+
+    /// <summary>
     /// 初始化頁面
     /// </summary>
     private void InitializePage()
@@ -228,18 +282,14 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
         {
             // 載入年度選項
             ddlYear_Type1.Items.Add(new ListItem("全部", ""));
-            ddlYear_Type1.Items.Add(new ListItem("113年", "113"));
             ddlYear_Type1.Items.Add(new ListItem("114年", "114")); 
             ddlYear_Type1.DataTextField = "Text";
             ddlYear_Type1.DataValueField = "Value";
             ddlYear_Type1.DataBind();
 
             // 載入類別選項
-            ddlCategory_Type1.Items.Add(new ListItem("全部", ""));            
-            ddlCategory_Type1.Items.Add(new ListItem("科專", "SCI"));            
-            ddlCategory_Type1.Items.Add(new ListItem("文化", "CUL"));            
-            ddlCategory_Type1.Items.Add(new ListItem("學校/民間", "EDC"));            
-            ddlCategory_Type1.Items.Add(new ListItem("學校/社團", "CLB"));   
+            var categoryOptions = LoadGrantTypeOptions(true);
+            ddlCategory_Type1.DataSource = categoryOptions;
             ddlCategory_Type1.DataTextField = "Text";
             ddlCategory_Type1.DataValueField = "Value";
             ddlCategory_Type1.DataBind();
@@ -289,11 +339,8 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             ddlYear_Type2.DataBind();
 
             // 載入類別選項
-            ddlCategory_Type2.Items.Add(new ListItem("全部", ""));            
-            ddlCategory_Type2.Items.Add(new ListItem("科專", "SCI"));            
-            ddlCategory_Type2.Items.Add(new ListItem("文化", "CUL"));            
-            ddlCategory_Type2.Items.Add(new ListItem("學校/民間", "EDC"));            
-            ddlCategory_Type2.Items.Add(new ListItem("學校/社團", "CLB"));            
+            var categoryOptions = LoadGrantTypeOptions(true);
+            ddlCategory_Type2.DataSource = categoryOptions;
             ddlCategory_Type2.DataTextField = "Text";
             ddlCategory_Type2.DataValueField = "Value";
             ddlCategory_Type2.DataBind();
@@ -355,11 +402,8 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             ddlYear_Type3.DataBind();
 
             // 載入類別選項
-            ddlCategory_Type3.Items.Add(new ListItem("全部", ""));            
-            ddlCategory_Type3.Items.Add(new ListItem("科專", "SCI"));            
-            ddlCategory_Type3.Items.Add(new ListItem("文化", "CUL"));            
-            ddlCategory_Type3.Items.Add(new ListItem("學校/民間", "EDC"));            
-            ddlCategory_Type3.Items.Add(new ListItem("學校/社團", "CLB"));            
+            var categoryOptions = LoadGrantTypeOptions(true);
+            ddlCategory_Type3.DataSource = categoryOptions;
             ddlCategory_Type3.DataTextField = "Text";
             ddlCategory_Type3.DataValueField = "Value";
             ddlCategory_Type3.DataBind();
@@ -442,13 +486,8 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             ddlSupervisor_Type4.DataBind();
             
             // 載入類別選項（移除「全部」選項）
-            ddlCategory_Type4.Items.Add(new ListItem("科專", "SCI"));            
-            ddlCategory_Type4.Items.Add(new ListItem("文化", "CUL"));            
-            ddlCategory_Type4.Items.Add(new ListItem("學校/民間", "EDC"));            
-            ddlCategory_Type4.Items.Add(new ListItem("學校/社團", "CLB"));            
-            ddlCategory_Type4.Items.Add(new ListItem("多元", "MUL"));            
-            ddlCategory_Type4.Items.Add(new ListItem("素養", "LIT"));            
-            ddlCategory_Type4.Items.Add(new ListItem("無障礙", "ACC"));            
+            var categoryOptions = LoadGrantTypeOptions(false);
+            ddlCategory_Type4.DataSource = categoryOptions;
             ddlCategory_Type4.DataTextField = "Text";
             ddlCategory_Type4.DataValueField = "Value";
             ddlCategory_Type4.DataBind();
@@ -483,14 +522,11 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             ddlYear_Type5.Items.Add(new ListItem("114年", "114"));
 
             // 載入類別選項
-            ddlCategory_Type5.Items.Add(new ListItem("全部", ""));
-            ddlCategory_Type5.Items.Add(new ListItem("科專", "SCI"));
-            ddlCategory_Type5.Items.Add(new ListItem("文化", "CUL"));
-            ddlCategory_Type5.Items.Add(new ListItem("學校民間", "EDC"));
-            ddlCategory_Type5.Items.Add(new ListItem("學校社團", "CLB"));
-            ddlCategory_Type5.Items.Add(new ListItem("多元", "MUL"));
-            ddlCategory_Type5.Items.Add(new ListItem("素養", "LIT"));
-            ddlCategory_Type5.Items.Add(new ListItem("無障礙", "ACC"));
+            var categoryOptions = LoadGrantTypeOptions(true);
+            ddlCategory_Type5.DataSource = categoryOptions;
+            ddlCategory_Type5.DataTextField = "Text";
+            ddlCategory_Type5.DataValueField = "Value";
+            ddlCategory_Type5.DataBind();
 
             // 載入主管單位選項 - 從 V_OFS_ReviewChecklist_type5 動態載入
             var supervisoryOptions = ReviewCheckListHelper.GetType5SupervisoryUnitOptions();
@@ -527,14 +563,11 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             ddlYear_Type6.Items.Add(new ListItem("114年", "114"));
 
             // 載入類別選項
-            ddlCategory_Type6.Items.Add(new ListItem("全部", ""));
-            ddlCategory_Type6.Items.Add(new ListItem("科專", "SCI"));
-            ddlCategory_Type6.Items.Add(new ListItem("文化", "CUL"));
-            ddlCategory_Type6.Items.Add(new ListItem("學校民間", "EDC"));
-            ddlCategory_Type6.Items.Add(new ListItem("學校社團", "CLB"));
-            ddlCategory_Type6.Items.Add(new ListItem("多元", "MUL"));
-            ddlCategory_Type6.Items.Add(new ListItem("素養", "LIT"));
-            ddlCategory_Type6.Items.Add(new ListItem("無障礙", "ACC"));
+            var categoryOptions = LoadGrantTypeOptions(true);
+            ddlCategory_Type6.DataSource = categoryOptions;
+            ddlCategory_Type6.DataTextField = "Text";
+            ddlCategory_Type6.DataValueField = "Value";
+            ddlCategory_Type6.DataBind();
 
             // 載入主管單位選項 - 從 V_OFS_ReviewChecklist_type6 動態載入
             var supervisoryOptions = ReviewCheckListHelper.GetType6SupervisoryUnitOptions();
@@ -1547,48 +1580,6 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
         }
     }
 
-    // GetReviewGroupOptions WebMethod 已移除，改用頁面載入時預載所有選項
-
-    /// <summary>
-    /// 根據類別取得審查組別選項 WebMethod for Type4
-    /// </summary>
-    /// <param name="category">類別代碼</param>
-    /// <returns>JSON格式的審查組別選項清單</returns>
-    [WebMethod]
-    public static string GetReviewGroupOptionsByCategory(string category)
-    {
-        try
-        {
-            List<DropdownItem> options = new List<DropdownItem>();
-            
-            // 如果是科專類別，取得科專審查組別選項
-            if (category == "SCI")
-            {
-                options = ReviewCheckListHelper.GetSciReviewGroupOptions();
-            }if (category == "CUL")
-            {
-                options = ReviewCheckListHelper.GetCulReviewGroupOptions();
-            }
-            else
-            {
-                // 其他類別只顯示「全部」
-                options.Add(new DropdownItem { Text = "全部", Value = "" });
-            }
-
-            return JsonConvert.SerializeObject(new { 
-                Success = true, 
-                Options = options 
-            });
-        }
-        catch (Exception ex)
-        {
-            return JsonConvert.SerializeObject(new { 
-                Success = false, 
-                Message = ex.Message 
-            });
-        }
-    }
-
     #endregion
 
     #region 批次處理邏輯
@@ -1935,7 +1926,8 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                 status,
                 orgName,
                 supervisor,
-                keyword
+                keyword,
+                category
                 );
             
             
@@ -2349,6 +2341,43 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
         }
     }
     
+    #endregion
+
+    #region 審查排名功能
+
+    /// <summary>
+    /// 取得審查結果排名
+    /// </summary>
+    /// <param name="reviewType">審查類型 (2: 領域審查, 3: 技術審查)</param>
+    /// <param name="reviewGroup">審查組別 (如: Information, Environment 等)</param>
+    /// <returns>JSON格式的排名資料</returns>
+    [WebMethod]
+    public static string GetReviewRanking(string reviewType, string reviewGroup = null)
+    {
+        try
+        {
+            // 使用Helper方法取得排名資料
+            var results = ReviewCheckListHelper.GetReviewRanking(reviewType, reviewGroup);
+                
+            return JsonConvert.SerializeObject(new
+            {
+                success = true,
+                data = results,
+                count = results.Count,
+                message = $"成功載入 {results.Count} 個專案的排名資料"
+            });
+        }
+        catch (Exception ex)
+        {
+            return JsonConvert.SerializeObject(new
+            {
+                success = false,
+                message = ex.Message,
+                data = new List<ReviewRankingItem>()
+            });
+        }
+    }
+
     #endregion
 
 }

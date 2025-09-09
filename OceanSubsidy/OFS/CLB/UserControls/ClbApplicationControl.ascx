@@ -1,5 +1,7 @@
 ﻿<%@ Control Language="C#" AutoEventWireup="true" CodeFile="ClbApplicationControl.ascx.cs" Inherits="OFS_CLB_UserControls_ClbApplicationControl" %>
 
+
+
 <!-- 申請表區塊 -->
 <div id="applicationFormSection">
 
@@ -16,27 +18,27 @@
                         </td>
                         <th style="width: 15%; background-color: #f8f9fa; color: #6c757d; text-align: end; padding-right: 24px; vertical-align: middle;">計畫編號</th>
                         <td style="width: 35%;">
-                            <asp:Label ID="lblProjectID" runat="server" Text="CLB1140009"  />
-                            <asp:HiddenField ID="hidProjectID" runat="server" Value="CLB1140009" />
+                            <asp:Label ID="lblProjectID" runat="server"  />
+                            <asp:HiddenField ID="hidProjectID" runat="server" />
                         </td>
                     </tr>
                     <tr>
-                        <th>補助計畫類別 <span class="text-danger">*</span></th>
+                        <th>補助計畫類別 <span class="text-danger view-mode">*</span></th>
                         <td colspan="3">
                             <asp:Label ID="lblSubsidyPlanType" runat="server" Text="學校社團（海洋委員會鼓勵各級學校社團辦理海洋活動補助原則）" />
                             <asp:HiddenField ID="hidSubsidyPlanType" runat="server" Value="學校社團" />
                         </td>
                     </tr>
                     <tr>
-                        <th>計畫名稱 <span class="text-danger">*</span></th>
+                        <th>計畫名稱 <span class="text-danger view-mode">*</span></th>
                         <td colspan="3">
                             <asp:TextBox ID="txtProjectNameTw" runat="server" CssClass="form-control" 
                                        placeholder="請輸入計畫名稱" MaxLength="200" style="width: 500px;" 
-                                       Text="海洋環境保護推廣活動計畫" ReadOnly="true" />
+                                       Text="海洋環境保護推廣活動計畫" />
                         </td>
                     </tr>
                     <tr>
-                        <th>申請補助類型 <span class="text-danger">*</span></th>
+                        <th>申請補助類型 <span class="text-danger view-mode">*</span></th>
                         <td colspan="3">
                             <div class="form-check-input-group d-flex">
                                 <asp:RadioButton ID="rbSubsidyTypeCreate" runat="server" GroupName="SubsidyType" 
@@ -48,8 +50,9 @@
                             </div>
                         </td>
                     </tr>
+                  
                     <tr>
-                        <th>申請單位 <span class="text-danger">*</span></th>
+                        <th>申請單位 <span class="text-danger view-mode">*</span></th>
                         <td colspan="3">
                             <div class="d-flex align-items-center gap-2">
                                 <asp:TextBox ID="txtSchoolName" runat="server" CssClass="form-control" 
@@ -68,14 +71,14 @@
                         </td>
                     </tr>
                     <tr>
-                        <th>學校統一編號 <span class="text-danger">*</span></th>
+                        <th>學校統一編號 <span class="text-danger view-mode">*</span></th>
                         <td colspan="3">
                             <asp:TextBox ID="txtSchoolIDNumber" runat="server" CssClass="form-control" 
                                        placeholder="請輸入學校統一編號" MaxLength="10" style="width: 200px;" />
                         </td>
                     </tr>
                     <tr>
-                        <th>地址 <span class="text-danger">*</span></th>
+                        <th>地址 <span class="text-danger view-mode">*</span></th>
                         <td colspan="3">
                             <asp:TextBox ID="txtAddress" runat="server" CssClass="form-control" 
                                        placeholder="請輸入學校地址" MaxLength="200" style="width: 500px;" />
@@ -86,7 +89,7 @@
             <table class="table align-middle gray-table side-table">
                 <thead>
                     <tr>
-                        <th style="width: 15%;">人員 <span class="text-danger">*</span></th>
+                        <th style="width: 15%;">人員 <span class="text-danger view-mode">*</span></th>
                         <th style="width: 25%;">姓名</th>
                         <th style="width: 25%;">職稱</th>
                         <th style="width: 35%;">手機號碼</th>
@@ -134,7 +137,7 @@
             <table class="table align-middle gray-table side-table">
                 <tbody>
                     <tr>
-                        <th>計畫執行期間 <span class="text-danger">*</span></th>
+                        <th>計畫執行期間 <span class="text-danger view-mode">*</span></th>
                         <td>
                             <div class="d-flex align-items-center gap-2">
                                 <asp:TextBox ID="txtStartDate" runat="server" CssClass="form-control taiwan-date-picker" 
@@ -146,7 +149,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <th>目的 <span class="text-danger">*</span></th>
+                        <th>目的 <span class="text-danger view-mode ">*</span></th>
                         <td>
                             <asp:TextBox ID="txtPurpose" runat="server" CssClass="form-control textarea-auto-resize" 
                                        TextMode="MultiLine" Rows="4" placeholder="請描述計畫目的" 
@@ -154,7 +157,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <th>計畫內容 <span class="text-danger">*</span></th>
+                        <th>計畫內容 <span class="text-danger view-mode">*</span></th>
                         <td>
                             <asp:TextBox ID="txtPlanContent" runat="server" CssClass="form-control textarea-auto-resize" 
                                        TextMode="MultiLine" Rows="6" placeholder="請詳細描述計畫內容" 
@@ -162,7 +165,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <th>預期效益 <span class="text-danger">*</span></th>
+                        <th>預期效益 <span class="text-danger view-mode ">*</span></th>
                         <td>
                             <asp:TextBox ID="txtPreBenefits" runat="server" CssClass="form-control textarea-auto-resize" 
                                        TextMode="MultiLine" Rows="4" placeholder="請描述預期效益" 
@@ -201,7 +204,7 @@
             <table class="table align-middle gray-table side-table">
                 <tbody>
                     <tr>
-                        <th>經費明細 <span class="text-danger">*</span></th>
+                        <th>經費明細 <span class="text-danger view-mode">*</span></th>
                         <td>
                             <div style="font-size: 18px;">
                                 <!-- 第一行：申請海委會補助 + 自籌款 -->
@@ -280,7 +283,7 @@
         申請計畫書請自行留存送審版電子檔，待審核結果公告後請提交修正計畫書以供核定。
     </p>
     <div class="table-responsive mt-3 mb-0">
-        <table class="table align-middle gray-table">
+        <table id="FileTable" class="table align-middle gray-table">
             <thead class="text-center">
                 <tr>
                     <th width="60">附件編號</th>
@@ -294,10 +297,10 @@
                     <td class="text-center">1</td>
                     <td>
                         <div>
-                            <span class="text-pink">*</span>
+                            <span class="text-pink view-mode">*</span>
                             申請表
                         </div>
-                           <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                           <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2 view-mode" 
                                   onclick="downloadTemplate('1')">
                               <i class="fas fa-file-download me-1"></i> 範本下載
                           </button>
@@ -307,7 +310,7 @@
                     </td>
                     <td>
                         <input type="file" id="fileInput_FILE_CLB1" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_CLB1', this)" />
-                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_CLB1').click()">
+                        <button class="btn btn-teal-dark view-mode" type="button" onclick="document.getElementById('fileInput_FILE_CLB1').click()">
                             <i class="fas fa-file-upload me-1"></i> 上傳
                         </button>
                         <asp:Panel ID="pnlFilesCLB1" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
@@ -318,10 +321,10 @@
                     <td class="text-center">2</td>
                     <td>
                         <div>
-                            <span class="text-pink">*</span>
+                            <span class="text-pink view-mode">*</span>
                             計畫書
                         </div>
-                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2 view-mode" 
                              onclick="downloadTemplate('2')">
                          <i class="fas fa-file-download me-1"></i> 範本下載
                         </button>
@@ -331,7 +334,7 @@
                     </td>
                     <td>
                         <input type="file" id="fileInput_FILE_CLB2" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_CLB2', this)" />
-                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_CLB2').click()">
+                        <button class="btn btn-teal-dark view-mode" type="button" onclick="document.getElementById('fileInput_FILE_CLB2').click()">
                             <i class="fas fa-file-upload me-1"></i> 上傳
                         </button>
                         <asp:Panel ID="pnlFilesCLB2" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
@@ -342,10 +345,10 @@
                     <td class="text-center">3</td>
                     <td>
                         <div>
-                            <span class="text-pink">*</span>
+                            <span class="text-pink view-mode">*</span>
                             未違反公職人員利益衝突迴避法切結書及事前揭露表
                         </div>
-                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2 view-mode" 
                               onclick="downloadTemplate('3')">
                           <i class="fas fa-file-download me-1"></i> 範本下載
                       </button>
@@ -355,7 +358,7 @@
                     </td>
                     <td>
                         <input type="file" id="fileInput_FILE_CLB3" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_CLB3', this)" />
-                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_CLB3').click()">
+                        <button class="btn btn-teal-dark view-mode" type="button" onclick="document.getElementById('fileInput_FILE_CLB3').click()">
                             <i class="fas fa-file-upload me-1"></i> 上傳
                         </button>
                         <asp:Panel ID="pnlFilesCLB3" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
@@ -375,7 +378,7 @@
                     </td>
                     <td>
                         <input type="file" id="fileInput_FILE_CLB4" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_CLB4', this)" />
-                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_CLB4').click()">
+                        <button class="btn btn-teal-dark view-mode" type="button" onclick="document.getElementById('fileInput_FILE_CLB4').click()">
                             <i class="fas fa-file-upload me-1"></i> 上傳
                         </button>
                         <asp:Panel ID="pnlFilesCLB4" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
