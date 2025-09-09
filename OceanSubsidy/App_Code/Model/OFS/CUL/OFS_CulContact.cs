@@ -1,4 +1,4 @@
-﻿public class OFS_CulContact
+public class OFS_CulContact
 {
     public int ID { get; set; }
     public int PID { get; set; }
