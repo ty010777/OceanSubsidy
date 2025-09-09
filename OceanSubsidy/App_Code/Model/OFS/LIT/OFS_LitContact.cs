@@ -1,4 +1,4 @@
-﻿public class OFS_LitContact
+public class OFS_LitContact
 {
     public int ID { get; set; }
     public int PID { get; set; }

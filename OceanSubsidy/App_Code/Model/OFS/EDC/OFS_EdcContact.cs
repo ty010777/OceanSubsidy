@@ -1,4 +1,4 @@
-﻿public class OFS_EdcContact
+public class OFS_EdcContact
 {
     public int ID { get; set; }
     public int PID { get; set; }

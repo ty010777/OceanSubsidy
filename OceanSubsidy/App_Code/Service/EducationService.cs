@@ -337,5 +337,20 @@ public class EducationService : BaseService
 
     private void snapshot(int id)
     {
+        var project = getProject(id);
+
+        OFSSnapshotHelper.insert(new Snapshot
+        {
+            Type = "EDC",
+            DataID = id,
+            Status = project.Status,
+            Data = JsonConvert.SerializeObject(new
+            {
+                Project = project,
+                Contacts = OFS_EdcContactHelper.query(id),
+                ReceivedSubsidies = OFS_EdcReceivedSubsidyHelper.query(id),
+                Attachments = OFS_EdcAttachmentHelper.query(id)
+            })
+        });
     }
 }

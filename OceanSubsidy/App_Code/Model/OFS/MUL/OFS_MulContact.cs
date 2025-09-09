@@ -1,4 +1,4 @@
-﻿public class OFS_MulContact
+public class OFS_MulContact
 {
     public int ID { get; set; }
     public int PID { get; set; }
