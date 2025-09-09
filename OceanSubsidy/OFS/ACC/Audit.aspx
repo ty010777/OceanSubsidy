@@ -7,7 +7,7 @@
 <asp:Content ContentPlaceHolderID="MainContent" runat="server">
     <div>
         <project-title :id="id" type="accessibility"></project-title>
-        <project-progress :id="id" :step="1" type="accessibility"></project-progress>
+        <project-progress :excludes="[4]" :id="id" :step="1" type="accessibility"></project-progress>
         <project-toolbar :id="id" type="accessibility"></project-toolbar>
         <accessibility-progress-bar class="scroll-sticky-top rounded-top-0" @click="change" :id="id" review :step="current" style="top:270px"></accessibility-progress-bar>
         <accessibility-application :id="id" @next="current++" v-if="current === 1"></accessibility-application>

@@ -7,7 +7,7 @@
 <asp:Content ContentPlaceHolderID="MainContent" runat="server">
     <div>
         <project-title :id="id" type="multiple"></project-title>
-        <project-progress :id="id" :step="1" type="multiple"></project-progress>
+        <project-progress :excludes="[4]" :id="id" :step="1" type="multiple"></project-progress>
         <project-toolbar :id="id" type="multiple"></project-toolbar>
         <multiple-progress-bar class="scroll-sticky-top rounded-top-0" @click="change" :id="id" review :step="current" style="top:270px"></multiple-progress-bar>
         <multiple-application :id="id" @next="current++" v-if="current === 1"></multiple-application>
