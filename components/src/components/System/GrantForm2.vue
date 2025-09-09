@@ -53,7 +53,7 @@
                     <td>
                         <div style="width:360px">
                             <div class="d-flex align-items-center mb-2">
-                                <input class="form-check-input" id="review-1" type="checkbox" v-model="form.Review1Enabled">
+                                <input class="form-check-input" id="review-1" type="checkbox" style="visibility:hidden" v-model="form.Review1Enabled">
                                 <label class="form-check-label ms-2 me-2" for="review-1">1.</label>
                                 <input-text class="w-auto" aria-label="資格審查" placeholder="資格審查" v-model.trim="form.Review1Title"></input-text>
                             </div>
@@ -68,7 +68,7 @@
                                 <input-text class="w-auto" aria-label="複審" placeholder="複審" v-model.trim="form.Review3Title"></input-text>
                             </div>
                             <div class="d-flex align-items-center mb-2">
-                                <input class="form-check-input" id="review-4" type="checkbox" v-model="form.Review4Enabled">
+                                <input class="form-check-input" id="review-4" type="checkbox" style="visibility:hidden" v-model="form.Review4Enabled">
                                 <label class="form-check-label ms-2 me-2" for="review-4">4.</label>
                                 <input-text class="w-auto" aria-label="決審核定" placeholder="決審核定" v-model.trim="form.Review4Title"></input-text>
                             </div>
