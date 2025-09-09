@@ -4,6 +4,10 @@
 
     window.setupVueApp = (options) => Object.assign(rootOptions, options);
 
-    window.startVueApp = (selector) => setTimeout(() => Vue.createApp(rootOptions).use(Pinia.createPinia()).use(OceanSubsidyComponents).mount(selector));
+    window.startVueApp = (selector) => setTimeout(() => {
+        OceanSubsidyComponents.api.setBaseUrl(window.AppRootPath || "");
+
+        Vue.createApp(rootOptions).use(Pinia.createPinia()).use(OceanSubsidyComponents).mount(selector);
+    });
 
 }());
