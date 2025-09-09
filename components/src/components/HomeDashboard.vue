@@ -95,7 +95,7 @@
                             <tbody>
                                 <tr :key="item" v-for="(item) in statList">
                                     <td class="text-center">{{ types.find((ty) => ty.code === item.Category).title }}</td>
-                                    <td class="text-center">{{ item.Count }}</td>
+                                    <td class="text-center"><a href="Report/ApprovedList.aspx">{{ item.Count }}</a></td>
                                     <td class="text-end">{{ item.ApprovedAmount.toLocaleString() }}</td>
                                     <td class="text-end">{{ toPercent(item.SpendAmount, item.ApprovedAmount) }}%</td>
                                 </tr>
