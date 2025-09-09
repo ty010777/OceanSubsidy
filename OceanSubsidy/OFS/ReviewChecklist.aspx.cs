@@ -1580,6 +1580,46 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
         }
     }
 
+    /// <summary>
+    /// 根據類別取得審查組別選項 WebMethod for Type4
+    /// </summary>
+    /// <param name="category">類別代碼</param>
+    /// <returns>JSON格式的審查組別選項清單</returns>
+    [WebMethod]
+    public static string GetReviewGroupOptionsByCategory(string category)
+    {
+        try
+        {
+            List<DropdownItem> options = new List<DropdownItem>();
+            
+            // 如果是科專類別，取得科專審查組別選項
+            if (category == "SCI")
+            {
+                options = ReviewCheckListHelper.GetSciReviewGroupOptions();
+            }if (category == "CUL")
+            {
+                options = ReviewCheckListHelper.GetCulReviewGroupOptions();
+            }
+            else
+            {
+                // 其他類別只顯示「全部」
+                options.Add(new DropdownItem { Text = "全部", Value = "" });
+            }
+
+            return JsonConvert.SerializeObject(new { 
+                Success = true, 
+                Options = options 
+            });
+        }
+        catch (Exception ex)
+        {
+            return JsonConvert.SerializeObject(new { 
+                Success = false, 
+                Message = ex.Message 
+            });
+        }
+    }
+
     #endregion
 
     #region 批次處理邏輯
