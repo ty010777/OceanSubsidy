@@ -49,6 +49,10 @@ const post = (url, payload = {}) => {
     return ajax(options).pipe(map(parse));
 };
 
+const system = (method, param = {}) => {
+    return post("Service/OFS/System.ashx", { method, param });
+};
+
 const upload = (file) => {
     const payload = new FormData();
 
@@ -57,4 +61,4 @@ const upload = (file) => {
     return post("Service/OFS/Upload.ashx", payload);
 };
 
-export const api = Object.assign(post, { accessibility, culture, download, education, literacy, multiple, upload });
+export const api = Object.assign(post, { accessibility, culture, download, education, literacy, multiple, system, upload });

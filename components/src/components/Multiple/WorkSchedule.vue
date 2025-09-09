@@ -72,7 +72,6 @@
                     <tr>
                         <th><required-label>完成百分比</required-label></th>
                         <th><required-label>對應工項</required-label></th>
-                        <th>編號</th>
                         <th><required-label>預定完成日</required-label></th>
                         <th><required-label>查核內容概述（請具體明確或量化）</required-label></th>
                         <th v-if="editable">功能</th>
@@ -84,10 +83,11 @@
                             <input-select :empty-value="0" :error="errors[`schedule-${idx}-Type`]" :options="types" v-model.trim="schedule.Type"></input-select>
                         </td>
                         <td>
-                            <input-select :empty-value="0" :error="errors[`schedule-${idx}-ItemID`]" :options="filteredItems" text-name="Title" value-name="ID" v-model.trim="schedule.ItemID"></input-select>
-                        </td>
-                        <td>
-                            {{schedule.ItemID ? String.fromCharCode(65 + filteredItems.findIndex((item) => item.ID === schedule.ItemID)) : ""}}
+                            <input-select :empty-value="0" :error="errors[`schedule-${idx}-ItemID`]" :options="filteredItems" v-model.trim="schedule.ItemID">
+                                <template #default="{ index, option }">
+                                    <option :value="option.ID">{{ String.fromCharCode(65 + index) }}.{{ option.Title }}</option>
+                                </template>
+                            </input-select>
                         </td>
                         <td>
                             <input-tw-date :error="errors[`schedule-${idx}-Deadline`]" v-model="schedule.Deadline"></input-tw-date>

@@ -1,7 +1,9 @@
 using GS.Data.Sql;
 using GS.OCA_OceanSubsidy.Model.OFS;
 using System;
+using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 
 public class OFSGrantTargetSettingHelper
 {
@@ -26,6 +28,48 @@ public class OFSGrantTargetSettingHelper
         var table = db.GetTable();
 
         return table.Rows.Count == 1 ? toModel(table.Rows[0]) : null;
+    }
+
+    public static List<GrantTargetSetting> query(string grantTypeID = null)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            SELECT [ID]
+                  ,[GrantTypeID]
+                  ,[TargetTypeID]
+                  ,[TargetName]
+                  ,[MatchingFund]
+                  ,[GrantLimit]
+                  ,[Note]
+              FROM [OFS_GrantTargetSetting]
+        ";
+
+        if (grantTypeID != null)
+        {
+            db.CommandText += " WHERE GrantTypeID = @GrantTypeID";
+            db.Parameters.Add("@GrantTypeID", grantTypeID);
+        }
+
+        return db.GetTable().Rows.Cast<DataRow>().Select(r => toModel(r)).ToList();
+    }
+
+    public static void updateLimit(int id, decimal? fund, decimal? limit)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            UPDATE [OFS_GrantTargetSetting]
+               SET [MatchingFund] = @MatchingFund
+                  ,[GrantLimit] = @GrantLimit
+             WHERE [ID] = @ID
+        ";
+
+        db.Parameters.Add("@ID", id);
+        db.Parameters.Add("@MatchingFund", fund);
+        db.Parameters.Add("@GrantLimit", limit);
+
+        db.ExecuteNonQuery();
     }
 
     private static GrantTargetSetting toModel(DataRow row)

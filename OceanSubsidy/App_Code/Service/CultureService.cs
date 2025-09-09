@@ -99,6 +99,16 @@ public class CultureService : BaseService
         return step;
     }
 
+    public object findApplication(JObject param, HttpContext context)
+    {
+        var id = getID(param["ID"].ToString());
+
+        return new
+        {
+            Project = getProject(id)
+        };
+    }
+
     public object getApplication(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
@@ -141,6 +151,35 @@ public class CultureService : BaseService
             BudgetPlans = OFS_CulBudgetPlanHelper.query(id),
             Items = OFS_CulGoalItemHelper.query(id),
             GrantTargetSetting = OFSGrantTargetSettingHelper.getByTargetTypeID($"CUL{project.OrgCategory}")
+        };
+    }
+
+    public object getMonthlyProgress(JObject param, HttpContext context)
+    {
+        var id = getID(param["ID"].ToString());
+        var year = getID(param["Year"].ToString());
+        var month = getID(param["Month"].ToString());
+
+        var progress = OFS_CulMonthlyProgressHelper.get(id, year, month);
+
+        if (progress == null) {
+            progress = new OFS_CulMonthlyProgress
+            {
+                PID = id,
+                Year = year,
+                Month = month
+            };
+
+            OFS_CulMonthlyProgressHelper.insert(progress);
+        }
+
+        return new
+        {
+            Progress = progress,
+            Logs = OFS_CulMonthlyProgressLogHelper.query(progress.ID),
+            Items = OFS_CulGoalItemHelper.query(id),
+            Steps = OFS_CulGoalStepHelper.query(id),
+            Schedules = OFS_CulGoalScheduleHelper.query(id)
         };
     }
 
@@ -279,7 +318,7 @@ public class CultureService : BaseService
         }
         else
         {
-            var data = getProject(project.ID, new int[] {1,14}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
+            var data = getProject(project.ID, new int[] {1,14}, true); //編輯中,補正補件 | 變更申請
 
             project.ProjectID = data.ProjectID;
 
@@ -482,6 +521,42 @@ public class CultureService : BaseService
         return new {};
     }
 
+    public object saveMonthlyProgress(JObject param, HttpContext context)
+    {
+        var progress = OFS_CulMonthlyProgressHelper.get(int.Parse(param["ID"].ToString()));
+
+        if (progress != null)
+        {
+            progress.Description = param["Description"].ToString();
+            progress.Status = int.Parse(param["Status"].ToString());
+
+            OFS_CulMonthlyProgressHelper.update(progress);
+
+            //--
+
+            foreach (var log in OFS_CulMonthlyProgressLogHelper.query(progress.ID))
+            {
+                OFS_CulMonthlyProgressLogHelper.delete(log.ID);
+            }
+
+            //--
+
+            var logs = param["Logs"].ToObject<List<OFS_CulMonthlyProgressLog>>();
+
+            foreach (var log in logs)
+            {
+                log.ID = 0;
+                log.PID = progress.PID;
+                log.MPID = progress.ID;
+
+                OFS_CulMonthlyProgressLogHelper.insert(log);
+                OFS_CulGoalScheduleHelper.updateStatus(log.ScheduleID, log.Status);
+            }
+        }
+
+        return new {};
+    }
+
     public object saveOrganizer(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
@@ -496,7 +571,7 @@ public class CultureService : BaseService
     public object saveRelatedProject(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
-        var data = getProject(id, new int[] {1,14}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
+        var data = getProject(id, new int[] {1,14}, true); //編輯中,補正補件 | 變更申請
 
         if (data.IsProjChanged)
         {

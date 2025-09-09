@@ -29,13 +29,13 @@
             if (typeof lastActivityTime === 'undefined') {
                 lastActivityTime = new Date().getTime(); // 預設為現在
             }
-            
+
             // 記錄 Session 開始時間（頁面載入時 Session 被重設）
             sessionStartTime = lastActivityTime;
-            
+
             // 啟動倒數計時器
             sessionCountdownInterval = setInterval(updateCountdown, 1000);
-            
+
             // 監聽用戶活動
             document.addEventListener('click', updateLastActivity);
             document.addEventListener('keypress', updateLastActivity);
@@ -63,12 +63,12 @@
             // 計算剩餘時間
             const remainingMinutes = Math.floor(remainingMs / (1000 * 60));
             const remainingSeconds = Math.floor((remainingMs % (1000 * 60)) / 1000);
-            
+
             // 更新顯示
             const countdownElement = document.querySelector('.session-countdown');
             if (countdownElement) {
-                countdownElement.textContent = 
-                    String(remainingMinutes).padStart(2, '0') + ':' + 
+                countdownElement.textContent =
+                    String(remainingMinutes).padStart(2, '0') + ':' +
                     String(remainingSeconds).padStart(2, '0');
             }
 
@@ -129,7 +129,7 @@
             startSessionCountdown();
         });
     </script>
-    
+
     <!-- 子頁面補充 head 內容 -->
     <asp:ContentPlaceHolder ID="HeadExtra" runat="server" />
 </asp:Content>
@@ -137,47 +137,47 @@
 <asp:Content ID="BodyContent" ContentPlaceHolderID="BodyContent" runat="server">
   <form id="form1" runat="server">
   <main>
-  
+
       <div class="mis-layout">
           <div class="mis-header information-system">
-          
+
               <!-- 電腦版收合按鈕 -->
               <button type="button" class="menu-toggle" onclick="toggleMenu()">
                   <i class="fas fa-chevron-left"></i>
               </button>
-          
+
               <!-- 手機板header -->
               <div class="mobile-header">
-          
+
                   <!-- 系統主題圖 -->
                   <img class="mobile-bg" src="<%= ResolveUrl("~/assets/img/information-system-logo.svg") %>" alt="logo" style="width: 150px; opacity: 0.5;">
-          
+
                   <!-- 手機版收合按鈕 -->
                   <button type="button" class="menu-toggle-mobile collapsed" data-bs-toggle="collapse" data-bs-target="#menubar">
                       <i class="fas fa-bars"></i>
                       <i class="fas fa-times"></i>
                   </button>
-          
-          
+
+
                   <div class="logo">
                       <img src="<%= ResolveUrl("~/assets/img/ocean-logo.svg") %>" alt="logo" style="width: 110px;">
                   </div>
-          
+
                   <div class="mobile-logo">
                       <img src="<%= ResolveUrl("~/assets/img/ocean-logo.svg") %>" alt="logo">
                   </div>
-          
+
                   <h1 class="title">海洋領域補助計畫管理<span>資訊系統</span>
                       <img class="ms-auto mt-2" src="<%= ResolveUrl("~/assets/img/information-system-logo.svg") %>" alt="資訊系統" style="width: 150px;">
                   </h1>
               </div>
-          
+
               <!-- 連結選單 -->
               <div class="menu collapse" id="menubar">
                   <nav>
                       <ul>
                           <li class="">
-                              <a href="#">
+                              <a href="<%= ResolveUrl("~/OFS/Home.aspx") %>">
                                   <div class="circle">
                                       <img src="<%= ResolveUrl("~/assets/img/information-icon-01.svg") %>" alt="首頁">
                                   </div>
@@ -186,7 +186,7 @@
                               </a>
                           </li>
                           <li class="">
-                              <a href="#">
+                              <a href="<%= ResolveUrl("~/OFS/Information/NewsList.aspx") %>">
                                   <div class="circle">
                                       <img src="<%= ResolveUrl("~/assets/img/information-icon-02.svg") %>" alt="資訊公告欄">
                                   </div>
@@ -232,16 +232,19 @@
                               <div class="collapse" id="submenu-01">
                                   <ul class="sub-menu">
                                       <li >
-                                          <a href="#">迴避審查委員名單</a>
+                                          <a href="<%= ResolveUrl("~/OFS/Report/RecusedList.aspx") %>">迴避審查委員名單</a>
+                                      </li>
+                                      <li >
+                                          <a href="<%= ResolveUrl("~/OFS/Report/ReviewerList.aspx") %>">審查委員資料</a>
                                       </li>
                                       <li>
-                                          <a href="#">申請計畫報表</a>
+                                          <a href="<%= ResolveUrl("~/OFS/Report/ApplyList.aspx") %>">申請計畫報表</a>
                                       </li>
                                       <li>
-                                          <a href="#">核定計畫報表</a>
+                                          <a href="<%= ResolveUrl("~/OFS/Report/ApprovedList.aspx") %>">核定計畫報表</a>
                                       </li>
                                       <li>
-                                          <a href="#">計畫執行情形報表</a>
+                                          <a href="<%= ResolveUrl("~/OFS/Report/InprogressList.aspx") %>">執行計畫報表</a>
                                       </li>
                                   </ul>
                               </div>
@@ -257,40 +260,40 @@
                               <div class="collapse" id="submenu-02">
                                   <ul class="sub-menu">
                                       <li>
-                                          <a href="#">公告管理</a>
+                                          <a href="<%= ResolveUrl("~/OFS/System/NewsList.aspx") %>">公告管理</a>
                                       </li>
                                       <li>
-                                          <a href="#">補助計畫管理</a>
+                                          <a href="<%= ResolveUrl("~/OFS/System/GrantList.aspx") %>">補助計畫管理</a>
                                       </li>
                                   </ul>
                               </div>
                           </li>
                       </ul>
                   </nav>
-          
+
                   <!-- 回入口網 -->
                   <a href="<%= ResolveUrl("~/default.aspx") %>" class="btn btn-sm btn-outline-green me-auto d-table ms-3 mb-3 ms-md-1">回入口網</a>
-              </div>                
-          
-          </div>        
-  
+              </div>
+
+          </div>
+
           <div class="mis-content">
-              <div class="mis-container">  
-                  
+              <div class="mis-container">
+
                   <!-- 系統標題(選單收合) -->
-                  
-                  
+
+
                   <div class="close-menu-logo">
                       <div class="d-flex align-items-center flex-wrap">
-                          <img class="img-fluid" src="<%= ResolveUrl("~/assets/img/ocean-logo.png") %>" alt="logo" style="width: 180px;"> 
+                          <img class="img-fluid" src="<%= ResolveUrl("~/assets/img/ocean-logo.png") %>" alt="logo" style="width: 180px;">
                           <h2 class="text-dark-green">海洋領域補助計畫管理資訊系統</h2>
                       </div>
                   </div>
-                  
-                  
+
+
                   <!-- 功能按鈕 -->
                   <div class="action-group">
-                      <!-- 公告提醒 --> 
+                      <!-- 公告提醒 -->
                       <div class="dropdown">
                           <button class="btn-tip new" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                               <img src="<%= ResolveUrl("~/assets/img/icon-bell.svg") %>" alt="公告提醒">
@@ -310,8 +313,8 @@
                               </li>
                           </ul>
                       </div>
-                  
-                  
+
+
                       <!-- 聯絡資訊 -->
                       <div class="dropdown">
                           <button class="" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -326,7 +329,7 @@
                               </ul>
                           </div>
                       </div>
-                  
+
                   </div>
                   <!-- 登入資訊 -->
                   <div class="d-flex justify-content-between mb-4">
@@ -360,7 +363,7 @@
                                           </li>
                                       </ul>
                                   </div>
-                                  
+
                                   <!-- 登出倒數 -->
                                   <div class="d-flex align-items-center fs-14">
                                       <span>登出倒數:</span>
@@ -370,12 +373,12 @@
                                       </button>
                                   </div>
                               </div>
-                              
+
                               <div class="user-department">海洋委員會科技文教處海洋科技科</div>
                           </div>
                       </div>
                   </div>
-                  
+
                   <!-- 內容區塊 -->
                   <asp:ContentPlaceHolder ID="MainContent" runat="server"></asp:ContentPlaceHolder>            </div>
               <footer>
@@ -387,8 +390,8 @@
               <asp:ContentPlaceHolder ID="FloatContent" runat="server"></asp:ContentPlaceHolder>
         </div>
     </div>
-  
-  
+
+
   </main>
   </form>
 </asp:Content>

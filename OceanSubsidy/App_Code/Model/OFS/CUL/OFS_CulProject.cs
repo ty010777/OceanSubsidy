@@ -68,6 +68,12 @@ public class OFS_CulProject
     // 追回金額
     public int? RecoveryAmount { get; set; }
 
+    // 實支金額
+    public int? SpendAmount { get; set; }
+
+    // 已撥金額
+    public int? PaymentAmount { get; set; }
+
     // 申請進度
     public int FormStep { get; set; }
 
@@ -102,7 +108,7 @@ public class OFS_CulProject
     public int Status { get; set; }
 
     // 階段
-    // 0: 尚未提送申請
+    // 0: 尚未提送
     // 1: 資格審查
     // 2: 初審
     // 3: 複審

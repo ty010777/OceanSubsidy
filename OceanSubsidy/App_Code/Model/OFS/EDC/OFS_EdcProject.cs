@@ -65,6 +65,12 @@ public class OFS_EdcProject
     // 追回金額
     public int? RecoveryAmount { get; set; }
 
+    // 實支金額
+    public int? SpendAmount { get; set; }
+
+    // 已撥金額
+    public int? PaymentAmount { get; set; }
+
     // 申請進度
     public int FormStep { get; set; }
 
