@@ -254,16 +254,7 @@ public class ApplicationChecklistHelper
             db.Parameters.Add("@ProjectId", projectId);
             
            db.ExecuteNonQuery();
-            
-            // 如果有提供撤案原因，記錄到歷程
-            if (isWithdrawal)
-            {
-                LogCaseHistory(projectId, "撤案", reason);
-            }
-            else if (!isWithdrawal)
-            {
-                LogCaseHistory(projectId, "恢復案件", "恢復已撤案的申請案件");
-            }
+           
             
             
         }
@@ -279,13 +270,50 @@ public class ApplicationChecklistHelper
     }
     
     /// <summary>
+    /// 更新計畫的撤案狀態
+    /// </summary>
+    /// <param name="projectId">計畫ID</param>
+    /// <param name="isWithdrawal">是否撤案</param>
+    /// <param name="reason">撤案原因</param>
+    /// <returns>更新是否成功</returns>
+    public static void CLB_UpdateWithdrawalStatus(string projectId, bool isWithdrawal, string reason = "")
+    {
+        DbHelper db = new DbHelper();
+        
+        try
+        {
+            db.CommandText = @"
+                UPDATE OFS_CLB_Project_Main 
+                SET isWithdrawal = @IsWithdrawal,
+                    updated_at = GETDATE()
+                WHERE ProjectID = @ProjectId";
+            
+            db.Parameters.Add("@IsWithdrawal", isWithdrawal);
+            db.Parameters.Add("@ProjectId", projectId);
+            
+            db.ExecuteNonQuery();
+           
+            
+            
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"更新撤案狀態時發生錯誤：{ex.Message}");
+            
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+    /// <summary>
     /// 更新計畫的存在狀態（軟刪除）
     /// </summary>
     /// <param name="projectId">版本ID</param>
     /// <param name="isExists">是否存在</param>
     /// <param name="reason">刪除原因</param>
     /// <returns>更新是否成功</returns>
-    public static void UpdateExistsStatus(string projectId, bool isExists, string reason = "")
+    public static void UpdateExistsStatus(string projectId, bool isExists)
     {
         DbHelper db = new DbHelper();
         
@@ -302,11 +330,7 @@ public class ApplicationChecklistHelper
             
              db.ExecuteNonQuery();
             
-            // 記錄到歷程
-            if (!string.IsNullOrEmpty(reason) && !isExists)
-            {
-                LogCaseHistory(projectId, "刪除案件", reason);
-            }
+     
             
         }
         catch (Exception ex)
@@ -319,7 +343,35 @@ public class ApplicationChecklistHelper
             db.Dispose();
         }
     }
-    
+    public static void CLB_UpdateExistsStatus(string projectId, bool isExists, string reason = "")
+    {
+        DbHelper db = new DbHelper();
+        
+        try
+        {
+            db.CommandText = @"
+                UPDATE OFS_CLB_Project_Main 
+                SET isExist = @IsExists,
+                    updated_at = GETDATE()
+                WHERE ProjectID = @ProjectId";
+            
+            db.Parameters.Add("@IsExists", isExists);
+            db.Parameters.Add("@ProjectId", projectId);
+            
+            db.ExecuteNonQuery();
+            
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"更新存在狀態時發生錯誤：{ex.Message}");
+            
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
     /// <summary>
     /// 檢查是否有需要回覆的審查記錄
     /// </summary>
@@ -362,6 +414,7 @@ public class ApplicationChecklistHelper
     /// <param name="description">說明</param>
     public static void LogCaseHistory(string projectId, string action, string description)
     {
+        // TODO  正文 此function 是AI亂產的，我沒注意到 不好意思。 在請幫我移除。 並修改有使用到此function的程式 。
         DbHelper db = new DbHelper();
         
         try

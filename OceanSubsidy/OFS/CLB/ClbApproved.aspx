@@ -5,76 +5,8 @@
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
-    <!-- 申請表進度切換 JavaScript -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // 綁定進度條點擊事件
-            const stepItems = document.querySelectorAll('.application-step-container .step-item');
-            const tabPanes = document.querySelectorAll('.tab-pane');
-
-            stepItems.forEach((item, index) => {
-                item.addEventListener('click', function() {
-                    const stepNumber = this.getAttribute('data-application-step');
-                    switchToApplicationStep(stepNumber);
-                });
-            });
-
-            // 切換申請表步驟
-            function switchToApplicationStep(stepNumber) {
-                // 移除所有 active 狀態
-                stepItems.forEach(item => {
-                    item.classList.remove('active');
-                    const statusElement = item.querySelector('.step-status');
-                    if (statusElement) {
-                        statusElement.textContent = '';
-                    }
-                });
-
-                // 設定新的 active 狀態
-                const targetStep = document.querySelector(`[data-application-step="${stepNumber}"]`);
-                if (targetStep) {
-                    targetStep.classList.add('active');
-                    let statusElement = targetStep.querySelector('.step-status');
-                    if (!statusElement) {
-                        statusElement = document.createElement('div');
-                        statusElement.className = 'step-status';
-                        targetStep.querySelector('.step-content').appendChild(statusElement);
-                    }
-                    statusElement.textContent = '檢視中';
-                }
-
-                // 切換對應的分頁內容
-                if (tabPanes.length > 0) {
-                    tabPanes.forEach(pane => {
-                        pane.classList.remove('active');
-                        pane.style.display = 'none';
-                    });
-
-                    const targetTab = document.getElementById(`tab${stepNumber}`);
-                    if (targetTab) {
-                        targetTab.classList.add('active');
-                        targetTab.style.display = 'block';
-                    }
-                }
-            }
-
-            // 初始化第一個步驟
-            switchToApplicationStep('1');
-        });
-        
-        // 模擬功能按鈕
-        function downloadApprovedPlan() {
-            alert('下載核定計畫書功能 (靜態展示)');
-        }
-        
-        function showChangeHistory() {
-            alert('顯示計畫變更紀錄功能 (靜態展示)');
-        }
-        
-        function applyChange() {
-            alert('計畫變更申請功能 (靜態展示)');
-        }
-    </script>
+    <!-- ClbApproved JavaScript 功能 -->
+    <script src="<%= ResolveUrl("~/script/OFS/CLB/ClbApproved.js") %>"></script>
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" Runat="Server">
@@ -91,6 +23,7 @@
                 <i class="fas fa-history"></i>
                 計畫變更紀錄
             </button>
+         
             <button class="btn btn-teal-dark" type="button" onclick="downloadApprovedPlan()">
                 <i class="fa-solid fa-download"></i>
                 下載核定計畫書
@@ -98,9 +31,9 @@
         </div>
         <div class="d-flex gap-3 align-items-center">
             <div class="text-muted small">
-                承辦人員：<span class="fw-bold text-dark">李小華</span>
+                承辦人員：<asp:Label ID="lblReviewerName" runat="server" CssClass="fw-bold text-dark" Text="載入中..." />
             </div>
-            <button type="button" class="btn btn-teal" onclick="alert('移轉案件功能 (靜態展示)')">
+            <button type="button" id="btnTransferProject" class="btn btn-teal" runat="server" data-bs-toggle="modal" data-bs-target="#transferCaseModal" ClientIDMode="Static">
                 移轉案件
             </button>
             <button class="btn btn-pink" type="button" onclick="alert('計畫終止功能 (靜態展示)')">
@@ -137,81 +70,45 @@
             
             <!-- 第二頁：上傳附件 -->
             <div class="tab-pane" id="tab2" style="display: none;">
-                <div class="block">
-                    <h5 class="square-title">上傳附件</h5>
-                    <p class="text-pink lh-base mt-3">
-                        已上傳的申請附件檔案，供檢視下載。
-                    </p>
-                    <div class="table-responsive mt-3 mb-0">
-                        <table class="table align-middle gray-table">
-                            <thead class="text-center">
-                                <tr>
-                                    <th width="60">附件編號</th>
-                                    <th>附件名稱</th>
-                                    <th width="180">狀態</th>
-                                    <th width="350">檔案下載</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="text-center">1</td>
-                                    <td>
-                                        <div>申請表</div>
-                                    </td>
-                                    <td class="text-center">
-                                        <span class="text-success">已上傳</span>
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-sm btn-outline-teal" onclick="alert('下載申請表功能 (靜態展示)')">
-                                            <i class="fas fa-download me-1"></i>
-                                            CLB1140009_申請表.pdf
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="text-center">2</td>
-                                    <td>
-                                        <div>計畫書</div>
-                                    </td>
-                                    <td class="text-center">
-                                        <span class="text-success">已上傳</span>
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-sm btn-outline-teal" onclick="alert('下載計畫書功能 (靜態展示)')">
-                                            <i class="fas fa-download me-1"></i>
-                                            CLB1140009_計畫書.pdf
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="text-center">3</td>
-                                    <td>
-                                        <div>未違反公職人員利益衝突迴避法切結書及事前揭露表</div>
-                                    </td>
-                                    <td class="text-center">
-                                        <span class="text-success">已上傳</span>
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-sm btn-outline-teal" onclick="alert('下載切結書功能 (靜態展示)')">
-                                            <i class="fas fa-download me-1"></i>
-                                            CLB1140009_切結書.pdf
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="text-center">4</td>
-                                    <td>
-                                        <div>相關佐證資料</div>
-                                    </td>
-                                    <td class="text-center">
-                                        <span class="text-muted">未上傳</span>
-                                    </td>
-                                    <td>
-                                        <span class="text-muted">無檔案</span>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                <!-- 使用 UserControl 的上傳附件區塊 -->
+                <div id="uploadAttachmentFromUserControl"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal 移轉案件 -->
+    <div class="modal fade" id="transferCaseModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="transferCaseModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-md">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="fs-24 fw-bold text-green-light" id="h4TranProject" runat="server" >移轉案件</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="">
+                        <div class="fs-16 text-gray mb-3">承辦人員</div>
+                        <asp:UpdatePanel ID="upTransferCase" runat="server" UpdateMode="Conditional">
+                            <ContentTemplate>
+                                <asp:DropDownList ID="ddlDepartment" runat="server" CssClass="form-select" AutoPostBack="true" OnSelectedIndexChanged="ddlDepartment_SelectedIndexChanged">
+                                </asp:DropDownList>
+                                <asp:DropDownList ID="ddlReviewer" runat="server" CssClass="form-select mt-2">
+                                </asp:DropDownList>
+                            </ContentTemplate>
+                            <Triggers>
+                                <asp:AsyncPostBackTrigger ControlID="ddlDepartment" EventName="SelectedIndexChanged" />
+                            </Triggers>
+                        </asp:UpdatePanel>
+                    </div>
+
+                    <div class="d-flex gap-4 flex-wrap justify-content-center mt-5">
+                        <button type="button" class="btn btn-gray" data-bs-dismiss="modal">
+                            取消
+                        </button>
+                        <button type="button" class="btn btn-teal" onclick="confirmTransfer()">
+                            確認移轉
+                        </button>
                     </div>
                 </div>
             </div>

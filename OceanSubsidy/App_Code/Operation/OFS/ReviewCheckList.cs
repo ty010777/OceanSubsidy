@@ -2112,18 +2112,22 @@ SELECT TOP (1000) [ProjectID]
         foreach (string projectId in projectIds)
         {
             // 1. 從 OFS_SCI_Application_Main 取得 Field
-            db.CommandText = $"SELECT Field FROM OFS_SCI_Application_Main WHERE ProjectID = '{projectId}'";
+            db.CommandText = "SELECT Field FROM OFS_SCI_Application_Main WHERE ProjectID = @ProjectID";
+            db.Parameters.Add("@ProjectID", projectId);
             string field = db.GetTable().Rows[0]["Field"]?.ToString();
+            db.Parameters.Clear();
 
             if (!string.IsNullOrEmpty(field))
             {
                 // 2. 從 OFS_ReviewCommitteeList 取得對應審查組別的所有人員
-                db.CommandText = $@"
+                db.CommandText = @"
                         SELECT CommitteeUser, Email
                         FROM OFS_ReviewCommitteeList
-                        WHERE SubjectTypeID = '{field}'";
+                        WHERE SubjectTypeID = @SubjectTypeID";
 
+                db.Parameters.Add("@SubjectTypeID", field);
                 DataTable reviewers = db.GetTable();
+                db.Parameters.Clear();
 
                 // 3. 取得科專的審查範本
                 db.CommandText = $@"
@@ -2211,19 +2215,23 @@ SELECT TOP (1000) [ProjectID]
         foreach (string projectId in projectIds)
         {
             // 1. 從 OFS_CUL_Project 取得 Field
-            db.CommandText = $"SELECT Field FROM OFS_CUL_Project WHERE ProjectID = '{projectId}'";
+            db.CommandText = "SELECT Field FROM OFS_CUL_Project WHERE ProjectID = @ProjectID";
+            db.Parameters.Add("@ProjectID", projectId);
             string field = db.GetTable().Rows[0]["Field"]?.ToString();
+            db.Parameters.Clear();
 
             if (!string.IsNullOrEmpty(field))
             {
                 // 2. 從 OFS_ReviewCommitteeList 取得對應審查組別的所有人員
-                db.CommandText = $@"
+                db.CommandText = @"
                     SELECT CommitteeUser, Email
                       FROM OFS_ReviewCommitteeList
-                     WHERE SubjectTypeID = '{field}'
+                     WHERE SubjectTypeID = @SubjectTypeID
                 ";
 
+                db.Parameters.Add("@SubjectTypeID", field);
                 DataTable reviewers = db.GetTable();
+                db.Parameters.Clear();
 
                 // 3. 取得文化的審查範本
                 db.CommandText = $@"
@@ -2837,7 +2845,7 @@ SELECT TOP (1000) [ProjectID]
     #endregion
 
     #region 待辦事項管理
-
+   
     /// <summary>
     /// 為專案建立預設的待辦事項模板
     /// </summary>
@@ -2847,21 +2855,35 @@ SELECT TOP (1000) [ProjectID]
     {
         try
         {
+            
+            List<TaskTemplate> taskTemplates = new List<TaskTemplate>();
 
-            // 定義待辦事項模板
-            var taskTemplates = new List<(string TaskNameEn, string TaskName, int PriorityLevel, bool IsTodo, bool IsCompleted)>
+            if (projectId.Contains("SCI"))
             {
-                ("Contract", "簽訂契約資料", 1, true, false),
-                ("Payment1", "第一次請款(預撥)", 2, true, false),
-                ("Change", "計畫變更", 3, false, false),
-                ("Schedule", "填寫預定進度", 4, true, false),
-                ("MidReport", "填寫期中報告", 5, false, false),
-                ("FinalReport", "填寫期末報告", 6, false, false),
-                ("MonthlyReport", "填寫每月進度報告", 7, false, false),
-                ("Payment2", "第二期請款", 8, false, false)
-            };
+                taskTemplates = new List<TaskTemplate>
+                {
+                    new TaskTemplate("Contract", "簽訂契約資料", 1, true, false),
+                    new TaskTemplate("Payment1", "第一次請款(預撥)", 2, true, false),
+                    new TaskTemplate("Change", "計畫變更", 3, false, false),
+                    new TaskTemplate("Schedule", "填寫預定進度", 4, true, false),
+                    new TaskTemplate("MidReport", "填寫期中報告", 5, false, false),
+                    new TaskTemplate("FinalReport", "填寫期末報告", 6, false, false),
+                    new TaskTemplate("MonthlyReport", "填寫每月進度報告", 7, false, false),
+                    new TaskTemplate("Payment2", "第二期請款", 8, false, false)
+                };
+            }
+            else if (projectId.Contains("CLB"))
+            {
+                taskTemplates = new List<TaskTemplate>
+                {
+                    new TaskTemplate("Change", "計畫變更", 1, false, false),
+                    new TaskTemplate("Report", "成果報告", 2, false, false),
+                    new TaskTemplate("Payment", "請款", 3, false, false)
+                };
+            }
 
-// TODO 正文
+
+            // TODO 正文 設計待辦的項目
 
             // 批次插入待辦事項
             BatchInsertTaskQueue(projectId, taskTemplates);
@@ -2880,7 +2902,7 @@ SELECT TOP (1000) [ProjectID]
     /// <param name="projectId">專案編號</param>
     /// <param name="taskTemplates">待辦事項模板列表</param>
     /// <returns>是否成功插入</returns>
-    private static bool BatchInsertTaskQueue(string projectId, List<(string TaskNameEn, string TaskName, int PriorityLevel, bool IsTodo, bool IsCompleted)> taskTemplates)
+    private static void BatchInsertTaskQueue(string projectId, List<TaskTemplate> taskTemplates)
     {
         using (DbHelper db = new DbHelper())
         {
@@ -2888,19 +2910,27 @@ SELECT TOP (1000) [ProjectID]
             {
                 foreach (var template in taskTemplates)
                 {
-                    db.CommandText = $@"
-                        INSERT INTO OFS_TaskQueue (ProjectID, TaskNameEn, TaskName, PriorityLevel, IsTodo, IsCompleted)
-                        VALUES ('{projectId}', '{template.TaskNameEn}', '{template.TaskName}', {template.PriorityLevel}, {(template.IsTodo ? 1 : 0)}, {(template.IsCompleted ? 1 : 0)})";
+                    // 使用參數化查詢預防 SQL 注入攻擊
+                    db.Parameters.Clear();
 
+                    db.CommandText = @"
+                        INSERT INTO OFS_TaskQueue (ProjectID, TaskNameEn, TaskName, PriorityLevel, IsTodo, IsCompleted)
+                        VALUES (@ProjectID, @TaskNameEn, @TaskName, @PriorityLevel, @IsTodo, @IsCompleted)";
+                    
+                    // 加入參數並防止 SQL 注入
+                    db.Parameters.Add("@ProjectID", projectId);
+                    db.Parameters.Add("@TaskNameEn", template.TaskNameEn);
+                    db.Parameters.Add("@TaskName", template.TaskName);
+                    db.Parameters.Add("@PriorityLevel", template.PriorityLevel);
+                    db.Parameters.Add("@IsTodo", template.IsTodo ? 1 : 0);
+                    db.Parameters.Add("@IsCompleted", template.IsCompleted ? 1 : 0);
                     db.ExecuteNonQuery();
                 }
 
-                return true;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"批次插入待辦事項時發生錯誤：{ex.Message}");
-                return false;
             }
         }
     }
@@ -2918,11 +2948,14 @@ SELECT TOP (1000) [ProjectID]
         {
             try
             {
-                db.CommandText = $@"
+                // 使用參數化查詢預防 SQL 注入攻擊
+                db.CommandText = @"
                     SELECT ProjectID, TaskName, PriorityLevel, IsTodo, IsCompleted
                     FROM OFS_TaskQueue
-                    WHERE ProjectID = '{projectId}'
+                    WHERE ProjectID = @ProjectID
                     ORDER BY PriorityLevel";
+                
+                db.Parameters.Add("@ProjectID", projectId);
 
                 DataTable dt = db.GetTable();
 

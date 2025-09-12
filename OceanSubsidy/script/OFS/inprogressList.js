@@ -153,7 +153,11 @@ $(document).ready(function() {
             if (category === 'SCI' && projectID) {
                 const href = `${basePath}/OFS/SCI/SciInprogress_Approved.aspx?ProjectID=${encodeURIComponent(projectID)}`;
                 return `<a class="link-black" href="${href}">${projectNameTw}</a>`;
-            } else {
+            }if (category === 'CLB' && projectID) {
+                const href = `${basePath}/OFS/Clb/ClbApproved.aspx?ProjectID=${encodeURIComponent(projectID)}`;
+                return `<a class="link-black" href="${href}">${projectNameTw}</a>`;
+            }
+            else {
                 const href = `${basePath}/OFS/${category}/Audit.aspx?ID=${encodeURIComponent(projectID)}`;
                 return `<a class="link-black" href="${href}">${projectNameTw}</a>`;
             }
@@ -197,20 +201,26 @@ $(document).ready(function() {
                     case 'Payment2':
                         href += `/OFS/SCI/SciReimbursement.aspx?ProjectID=${encodeURIComponent(projectID)}&stage=2`;
                         break;
-                    // Change 暫時不處理，使用預設按鈕
                     default:
-                        return `<button class="btn btn-sm btn-teal-dark" type="button">
-                                    <i class="fa-solid fa-pen" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="編輯"></i>
-                                </button>`;
+                        return ``;
                 }
-
-                // 如果有對應的網址，生成連結按鈕
-                if (href) {
-                    return `<a href="${href}" class="btn btn-sm btn-teal-dark" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="${buttonText}">
-                                <i class="fa-solid fa-pen"></i>
-                            </a>`;
+                
+            }else if (category == 'CLB'){
+                switch (taskNameEn) {
+                    case 'Change' :
+                        href += `/OFS/CLB/ClbApproved.aspx?ProjectID=${encodeURIComponent(projectID)}`;
+                        break;
+                    case 'Report' :
+                        href += `/OFS/CLB/ClbStageReport.aspx?ProjectID=${encodeURIComponent(projectID)}`;
+                        break;
+                    case 'Payment' :
+                        href += `/OFS/CLB/ClbPayment.aspx?ProjectID=${encodeURIComponent(projectID)}`;
+                        break;
+                    default:
+                        return ``;
                 }
-            } else {
+            } 
+            else {
                 switch (taskNameEn) {
                     case 'MonthlyReport':
                         href += `/OFS/${category}/Progress.aspx?ID=${encodeURIComponent(projectID)}`;
@@ -231,13 +241,12 @@ $(document).ready(function() {
                         href += `/OFS/${category}/Audit.aspx?ID=${encodeURIComponent(projectID)}`;
                 }
 
-                return `<a href="${href}" class="btn btn-sm btn-teal-dark" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="編輯"><i class="fa-solid fa-pen"></i></a>`;
             }
-
+            return `<a href="${href}" class="btn btn-sm btn-teal-dark" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="編輯"><i class="fa-solid fa-pen"></i></a>`;
             // 預設按鈕（非 SCI 或無對應 TaskNameEn）
-            return `<button class="btn btn-sm btn-teal-dark" type="button">
-                        <i class="fa-solid fa-pen" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="編輯"></i>
-                    </button>`;
+            // return `<button class="btn btn-sm btn-teal-dark" type="button">
+            //             <i class="fa-solid fa-pen" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="編輯"></i>
+            //         </button>`;
         },
 
         // 更新分頁控制項

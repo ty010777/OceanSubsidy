@@ -455,6 +455,47 @@
         </div>
     </div>
     
+    <!-- Modal 上傳技術審查/初審檔案 -->
+    <div class="modal fade" id="techReviewUploadModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="techReviewUploadModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="fs-24 fw-bold text-green-light">上傳 技術審查/初審 檔案</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <asp:HiddenField ID="hdnUploadProjectId" runat="server" />
+                    
+                    <div class="mb-3">
+                        <div class="fs-16 text-gray mb-2">選擇檔案 (支援 PPT, PPTX 格式)</div>
+                        <asp:FileUpload ID="fileUploadTechReview" runat="server" CssClass="form-control" accept=".ppt,.pptx" />
+                        <small class="text-muted">檔案大小限制：50MB</small>
+                    </div>
+                    
+                    <div id="currentFileDisplay" class="mb-3" style="display: none;">
+                        <div class="fs-16 text-gray mb-2">目前檔案</div>
+                        <div class="d-flex align-items-center gap-2 p-3 bg-light rounded">
+                            <i class="fas fa-file-powerpoint text-orange"></i>
+                            <span id="currentFileName" class="flex-grow-1"></span>
+                            <button type="button" class="btn btn-sm btn-teal" onclick="downloadCurrentFile()">
+                                <i class="fas fa-download"></i> 下載
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-4 flex-wrap justify-content-center mt-4">
+                        <button type="button" class="btn btn-gray" data-bs-dismiss="modal">
+                            取消
+                        </button>
+                        <asp:Button ID="btnUploadTechReview" runat="server" Text="上傳" CssClass="btn btn-teal" OnClick="btnUploadTechReview_Click" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <script type="text/javascript">
         // 處理撤案操作
         function handleWithdraw(projectId) {
@@ -521,6 +562,59 @@
         function setDeleteProjectId(projectId) {
             document.getElementById('<%= hdnDeleteProjectId.ClientID %>').value = projectId;
         }
+        
+        // 處理上傳技術審查檔案操作
+        function showUploadModal(projectId) {
+            // 設定要上傳檔案的 ProjectID
+            document.getElementById('<%= hdnUploadProjectId.ClientID %>').value = projectId;
+            
+            // 檢查是否已有現有檔案並顯示
+            checkExistingFile(projectId);
+            
+            // 顯示上傳模態框
+            const modal = new bootstrap.Modal(document.getElementById('techReviewUploadModal'));
+            modal.show();
+        }
+        
+        // 檢查現有檔案
+        function checkExistingFile(projectId) {
+            // 透過 AJAX 檢查是否已有檔案
+            $.ajax({
+                type: "POST",
+                url: "ApplicationChecklist.aspx/CheckTechReviewFile",
+                data: JSON.stringify({ projectId: projectId }),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function(response) {
+                    if (response.d && response.d.success) {
+                        if (response.d.hasFile) {
+                            // 顯示現有檔案區塊
+                            document.getElementById('currentFileDisplay').style.display = 'block';
+                            document.getElementById('currentFileName').textContent = response.d.fileName;
+                        } else {
+                            // 隱藏現有檔案區塊
+                            document.getElementById('currentFileDisplay').style.display = 'none';
+                        }
+                    } else {
+                        console.log('檢查檔案時發生錯誤：' + (response.d ? response.d.message : '未知錯誤'));
+                        document.getElementById('currentFileDisplay').style.display = 'none';
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.log('AJAX 請求失敗：' + error);
+                    document.getElementById('currentFileDisplay').style.display = 'none';
+                }
+            });
+        }
+        
+        // 下載目前檔案
+        function downloadCurrentFile() {
+            const projectId = document.getElementById('<%= hdnUploadProjectId.ClientID %>').value;
+            if (projectId) {
+                // 建立下載連結
+                window.open('../Service/DownloadApplicationChecklistFile.ashx?action=downloadTechReview&projectId=' + encodeURIComponent(projectId), '_blank');
+            }
+        }
     </script>
     
     <!-- Modal 刪除計畫 -->
@@ -545,7 +639,7 @@
                         <button type="button" class="btn btn-gray" data-bs-dismiss="modal">
                             取消
                         </button>
-                        <asp:Button ID="btnConfirmDelete" runat="server" Text="確認刪除" 
+                        <asp:Button ID="btnConfirmDelete" runat="server" Text="確認刪除" 1
                                    CssClass="btn btn-teal" OnClick="btnConfirmDelete_Click" 
                                    OnClientClick="return validateDeleteReason();" />
                     </div>

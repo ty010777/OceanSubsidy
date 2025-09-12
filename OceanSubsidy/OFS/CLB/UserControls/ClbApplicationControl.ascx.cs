@@ -107,17 +107,20 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
         txtContactPhone.Enabled = false;
         
         // 使用 JavaScript 處理前端樣式
+        
         string script = @"
             $(document).ready(function() {
-                // 為所有有 view-mode class 的元素添加 d-none
-                $('.view-mode').addClass('d-none');
+                // 為 body 添加 app-mode-view class
+                $('body').addClass('app-mode-view');
                 
                 // 為 FileTable 添加 hide-col-3 class
                 $('#FileTable').addClass('hide-col-3');
                 
+                // 為所有有 view-mode class 的元素添加 d-none
+                $('.view-mode').addClass('d-none');
+ 
                 // 隱藏底部按鈕區塊
                 $('.block-bottom').hide();
-            
             });
         ";
         
@@ -638,6 +641,9 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
                 txtOtherGovFunds.Text = fundsData.OtherGovFunds?.ToString("0");
                 txtOtherUnitFunds.Text = fundsData.OtherUnitFunds?.ToString("0");
                 
+                // 設定計畫總經費
+                lblTotalFunds.Text = fundsData.TotalFunds?.ToString("0") ?? "0";
+                
                 // 設定曾申請政府補助
                 if (fundsData.PreviouslySubsidized.HasValue)
                 {
@@ -679,109 +685,15 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
 
  
     #region 文件上傳相關方法
-
-    /// <summary>
-    /// 處理文件上傳
-    /// </summary>
-    /// <param name="fileCode">文件代碼</param>
-    /// <param name="uploadedFile">上傳的文件</param>
-    public string HandleFileUpload(string projectID,string fileCode, HttpPostedFile uploadedFile)
-    {
-        try
-        {
-            // 驗證文件
-            string validationResult = ValidateUploadedFile(uploadedFile);
-            if (!string.IsNullOrEmpty(validationResult))
-            {
-                return validationResult;
-            }
-
-            // 確保有 ProjectID
-            if (string.IsNullOrEmpty(projectID))
-            {
-                return "請先儲存申請表再上傳附件";
-            }
-
-            // 產生檔案名稱
-            string attachmentName = GetAttachmentNameByFileCode(fileCode);
-            string fileName = $"{projectID}_{attachmentName}.pdf";
-
-            // 上傳檔案到指定路徑
-            string relativePath = SaveUploadedFile(uploadedFile, fileName, fileCode);
-            if (string.IsNullOrEmpty(relativePath))
-            {
-                return "檔案上傳失敗";
-            }
-
-            // 儲存到資料庫
-            SaveFileToDatabase(projectID, fileCode, fileName, relativePath);
-
-            // 更新UI顯示
-            UpdateFileStatusUI(fileCode, fileName, relativePath);
-
-            return ""; // 成功時返回空字符串
-        }
-        catch (Exception ex)
-        {
-            return $"上傳失敗：{ex.Message}";
-        }
-    }
-
-    /// <summary>
-    /// 驗證上傳的文件
-    /// </summary>
-    private string ValidateUploadedFile(HttpPostedFile file)
-    {
-        if (file == null || file.ContentLength == 0)
-        {
-            return "請選擇要上傳的檔案";
-        }
-
-        // 檢查檔案類型
-        if (!file.FileName.ToLower().EndsWith(".pdf"))
-        {
-            return "僅支援PDF格式檔案";
-        }
-
-        // 檢查檔案大小 (10MB)
-        int maxSize = 10 * 1024 * 1024; // 10MB
-        if (file.ContentLength > maxSize)
-        {
-            return "檔案大小不能超過10MB";
-        }
-
-        return ""; // 驗證通過返回空字符串
-    }
-
-    /// <summary>
-    /// 根據 FileCode 取得附件名稱
-    /// </summary>
-    private string GetAttachmentNameByFileCode(string fileCode)
-    {
-        switch (fileCode)
-        {
-            case "FILE_CLB1":
-                return "申請表";
-            case "FILE_CLB2":
-                return "計畫書";
-            case "FILE_CLB3":
-                return "未違反公職人員利益衝突迴避法切結書及事前揭露表";
-            case "FILE_CLB4":
-                return "相關佐證資料";
-            default:
-                return "附件";
-        }
-    }
-
     /// <summary>
     /// 儲存上傳的檔案
     /// </summary>
-    private string SaveUploadedFile(HttpPostedFile file, string fileName, string fileCode)
+    private string SaveUploadedFile(HttpPostedFile file, string fileName, string fileCode, string projectID)
     {
         try
         {
-            // 建立上傳目錄路徑
-            string uploadDir = Server.MapPath("~/UploadFiles/CLB/");
+            // 建立上傳目錄路徑 (使用正確的 OFS/CLB/{projectID} 格式)
+            string uploadDir = Server.MapPath($"~/UploadFiles/OFS/CLB/{projectID}");
             if (!Directory.Exists(uploadDir))
             {
                 Directory.CreateDirectory(uploadDir);
@@ -800,7 +712,7 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
             file.SaveAs(fullPath);
 
             // 回傳相對路徑
-            return $"~/UploadFiles/CLB/{fileName}";
+            return $"~/UploadFiles/OFS/CLB/{projectID}/{fileName}";
         }
         catch (Exception ex)
         {

@@ -488,8 +488,7 @@ function handleFileUpload(fileCode, fileInput) {
     const formData = new FormData();
     formData.append('uploadedFile', file);
     formData.append('fileCode', fileCode);
-    formData.append('action', 'upload');
-    formData.append('fileType', 'Application');  // 表示這是申請表的檔案上傳
+    formData.append('action', 'uploadFile');
     
     // 取得 ProjectID
     const projectID = getProjectID();
@@ -497,36 +496,46 @@ function handleFileUpload(fileCode, fileInput) {
         formData.append('projectID', projectID);
     }
 
-    // 發送 AJAX 請求到 CLB_Upload.ashx
-    fetch('../../../Service/CLB_Upload.ashx', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data && data.success) {
-            // 直接更新 UI，不重新載入頁面
-            updateFileStatusUIFromJS(fileCode, data.fileName, data.relativePath);
-            
-            Swal.fire({
-                icon: 'success',
-                title: '上傳成功',
-                text: '檔案已成功上傳！',
-                timer: 1500,
-                showConfirmButton: false
-            });
-            
-            // 清空檔案輸入
-            fileInput.value = '';
-        } else {
-            showErrorMessage(data?.message || '檔案上傳失敗');
+    // 發送 AJAX 請求上傳檔案
+    $.ajax({
+        url: window.location.href,
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            try {
+                let result = typeof response === 'string' ? JSON.parse(response) : response;
+                
+                if (result.success) {
+                    // 直接更新 UI，不重新載入頁面
+                    updateFileStatusUIFromJS(fileCode, result.fileName, result.relativePath);
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: '上傳成功',
+                        text: '檔案已成功上傳！',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    
+                    // 清空檔案輸入
+                    fileInput.value = '';
+                } else {
+                    showErrorMessage(result.message || '檔案上傳失敗');
+                    fileInput.value = '';
+                }
+            } catch (e) {
+                console.error('Response parsing error:', e);
+                showErrorMessage('檔案上傳失敗，請稍後再試。');
+                fileInput.value = '';
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Upload error:', error);
+            showErrorMessage('檔案上傳失敗，請稍後再試。');
             fileInput.value = '';
         }
-    })
-    .catch(error => {
-        console.error('Upload error:', error);
-        showErrorMessage('檔案上傳失敗，請稍後再試。');
-        fileInput.value = '';
     });
 }
 
@@ -573,38 +582,42 @@ function performFileDelete(fileCode) {
         }
     });
 
-    // 建立 FormData
-    const formData = new FormData();
-    formData.append('action', 'delete');
-    formData.append('fileType', 'Application');
-    formData.append('fileCode', fileCode);
-    formData.append('projectID', projectID);
-
-    // 發送 AJAX 請求到 CLB_Upload.ashx
-    fetch('../../../Service/CLB_Upload.ashx', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data && data.success) {
-            // 直接更新 UI，不重新載入頁面
-            resetFileStatusUIFromJS(fileCode);
-            
-            Swal.fire({
-                icon: 'success',
-                title: '刪除成功',
-                text: '檔案已成功刪除！',
-                timer: 1500,
-                showConfirmButton: false
-            });
-        } else {
-            showErrorMessage(data?.message || '檔案刪除失敗');
+    // 發送刪除請求
+    $.ajax({
+        url: window.location.href,
+        type: 'POST',
+        data: {
+            action: 'deleteFile',
+            projectID: projectID,
+            fileCode: fileCode
+        },
+        success: function(response) {
+            try {
+                let result = typeof response === 'string' ? JSON.parse(response) : response;
+                
+                if (result.success) {
+                    // 直接更新 UI，不重新載入頁面
+                    resetFileStatusUIFromJS(fileCode);
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: '刪除成功',
+                        text: '檔案已成功刪除！',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                } else {
+                    showErrorMessage(result.message || '檔案刪除失敗');
+                }
+            } catch (e) {
+                console.error('Response parsing error:', e);
+                showErrorMessage('檔案刪除失敗，請稍後再試。');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Delete error:', error);
+            showErrorMessage('檔案刪除失敗，請稍後再試。');
         }
-    })
-    .catch(error => {
-        console.error('Delete error:', error);
-        showErrorMessage('檔案刪除失敗，請稍後再試。');
     });
 }
 
@@ -828,7 +841,7 @@ function navigateToStepByUrl(stepIndex) {
     const projectID = getProjectID();
     
     // 建構目標 URL
-    let targetUrl = 'ClbApplication.aspx';
+    let targetUrl = 'ClbFinalReview.aspx';
     
     if (projectID) {
         targetUrl += '?ProjectID=' + encodeURIComponent(projectID);

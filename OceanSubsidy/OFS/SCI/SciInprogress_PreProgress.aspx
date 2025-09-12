@@ -54,6 +54,18 @@
             margin-right: 5px;
         }
     </style>
+    
+    <!-- 引用獨立的JavaScript文件 -->
+    <script src="../../script/OFS/SCI/SciInprogressPreProgress.js"></script>
+    
+    <!-- 頁面初始化腳本 -->
+    <script>
+        // 設定全域變數供JS文件使用
+        window.projectID = '<%= ProjectID %>';
+        window.txtCoExecutingUnitID = '<%= txtCoExecutingUnit.ClientID %>';
+        window.txtMidReviewDateID = '<%= txtMidReviewDate.ClientID %>';
+        window.txtFinalReviewDateID = '<%= txtFinalReviewDate.ClientID %>';
+    </script>
 </asp:Content>
 
 <asp:Content ID="MainContent" ContentPlaceHolderID="MainContent" runat="server">
@@ -153,6 +165,6 @@
     <!-- 底部區塊 -->
     <div class="block-bottom bg-light-teal">
         <%-- <asp:Button ID="btnTempSave" runat="server" Text="暫存" CssClass="btn btn-outline-teal" OnClick="btnTempSave_Click" /> --%>
-        <asp:Button ID="btnSubmit" runat="server" Text="提送" CssClass="btn btn-teal btn-submit-icon" OnClick="btnSubmit_Click" />
+        <button type="button" id="btnSubmit" class="btn btn-teal btn-submit-icon" onclick="handleSubmit()">提送</button>
     </div>
 </asp:Content>

@@ -1,6 +1,9 @@
 ﻿<%@ Page Title="" Language="C#" MasterPageFile="~/OFS/CLB/ClbInprogress.master" AutoEventWireup="true" CodeFile="ClbStageReport.aspx.cs" Inherits="OFS_CLB_ClbStageReport" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="HeadExtra" Runat="Server">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="<%= ResolveUrl("~/script/OFS/CLB/ClbStageReport.js") %>"></script>
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" Runat="Server">
@@ -13,14 +16,13 @@
         </p>
         
         <div class="table-responsive mt-3">
-            <table class="table align-middle gray-table">
+            <table id="StageTable" class="table align-middle gray-table">
                 <thead>
                     <tr>
                         <th width="70" class="text-center">附件編號</th>
                         <th>附件名稱</th>
                         <th class="text-center">狀態</th>
                         <th>上傳附件</th>
-                        <th width="100">審查意見</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -44,50 +46,19 @@
                                     <i class="fas fa-file-upload me-1"></i>
                                     上傳
                                 </button>
-                                <div id="uploadedFile1" style="display: none;" class="d-flex align-items-center gap-2">
-                                    <a href="#" id="downloadLink1" class="btn btn-sm btn-outline-teal" onclick="downloadUploadedFile(1)">
-                                        <i class="fas fa-download me-1"></i>
-                                        <span id="fileName1"></span>
-                                    </a>
+                                <div id="uploadedFile1" style="display: none;" class="align-items-center gap-2">
+                                    <span class="tag tag-green-light">
+                                        <a class="tag-link" href="#" id="downloadLink1" onclick="downloadUploadedFile(1)">
+                                            <span id="fileName1"></span>
+                                        </a>
+                                        <button type="button" class="tag-btn" onclick="deleteUploadedFile(1)">
+                                            <i class="fa-solid fa-circle-xmark"></i>
+                                        </button>
+                                    </span>
                                 </div>
                             </div>
                         </td>
-                        <td>
-                            <button class="btn btn-sm btn-teal-dark mx-auto" type="button" data-bs-toggle="modal" data-bs-target="#reportDetailModal">
-                                <i class="fas fa-file-alt" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="詳情"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    
-                    <!-- 修正版 -->
-                    <tr> 
-                        <td class="text-center">2</td>
-                        <td>
-                            <input type="text" class="form-control" id="reportName2" value="成果報告書_修訂版">
-                        </td>
-                        <td class="text-center">
-                            <span id="uploadStatus2" class="text-pink">尚未上傳</span>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center gap-2">
-                                <input type="file" id="fileInput2" accept=".zip" style="display: none;" onchange="handleFileUpload(2, this)">
-                                <button class="btn btn-sm btn-teal-dark" type="button" onclick="document.getElementById('fileInput2').click()">
-                                    <i class="fas fa-file-upload me-1"></i>
-                                    上傳
-                                </button>
-                                <div id="uploadedFile2" style="display: none;" class="d-flex align-items-center gap-2">
-                                    <a href="#" id="downloadLink2" class="btn btn-sm btn-outline-teal" onclick="downloadUploadedFile(2)">
-                                        <i class="fas fa-download me-1"></i>
-                                        <span id="fileName2"></span>
-                                    </a>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <button class="btn btn-sm btn-teal-dark mx-auto" type="button" disabled>
-                                <i class="fas fa-file-alt" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="詳情"></i>
-                            </button>
-                        </td>
+                 
                     </tr>
                 </tbody>
             </table>
@@ -199,181 +170,5 @@
         </div>
     </div>
 
-    <script>
-        // 下載範本 (靜態功能)
-        function downloadTemplate() {
-            alert('下載範本功能 (靜態展示)');
-        }
-        
-        // 處理檔案上傳 (靜態功能)
-        function handleFileUpload(fileType, fileInput) {
-            const file = fileInput.files[0];
-            if (!file) {
-                return;
-            }
-            
-            // 模擬上傳成功
-            document.getElementById('uploadStatus' + fileType).textContent = '已上傳';
-            document.getElementById('uploadStatus' + fileType).className = 'text-success';
-            document.getElementById('fileName' + fileType).textContent = file.name;
-            document.getElementById('uploadedFile' + fileType).style.display = 'flex';
-            
-            alert('檔案上傳成功 (靜態展示)');
-        }
-        
-        // 下載已上傳檔案 (靜態功能)
-        function downloadUploadedFile(fileType) {
-            alert('下載已上傳檔案功能 (靜態展示)');
-        }
-        
-        // 提送報告 (靜態功能)
-        function submitReport(isDraft = false) {
-            let actionText = isDraft ? '暫存' : '提送';
-            if (confirm(`確定${actionText}成果報告？`)) {
-                alert(`${actionText}成功 (靜態展示)`);
-            }
-        }
-        
-        // 切換審查委員名單顯示
-        function toggleReviewerList() {
-            var needMemberCheckbox = document.getElementById('needmember');
-            var reviewerListSection = document.getElementById('reviewerListSection');
-            var reviewResultSection = document.getElementById('reviewResultSection');
-            var submitReviewButton = document.getElementById('submitReviewButton');
-                
-            if (needMemberCheckbox.checked) {
-                // 顯示審查委員名單
-                reviewerListSection.style.display = 'block';
-                // 隱藏審查結果
-                reviewResultSection.style.display = 'none';
-                // 隱藏確定按鈕
-                if (submitReviewButton) {
-                    submitReviewButton.style.display = 'none';
-                }
-                // 預設選擇批次輸入
-                document.getElementById('radio-batch').checked = true;
-                toggleInputMode();
-            } else {
-                // 隱藏審查委員名單
-                reviewerListSection.style.display = 'none';
-                // 顯示審查結果
-                reviewResultSection.style.display = 'flex';
-                // 顯示確定按鈕
-                if (submitReviewButton) {
-                    submitReviewButton.style.display = 'block';
-                }
-            }
-        }
-        
-        // 切換輸入模式（逐筆輸入 vs 批次輸入）
-        function toggleInputMode() {
-            var singleInput = document.getElementById('radio-single');
-            var batchInput = document.getElementById('radio-batch');
-            var singleSection = document.getElementById('singleInputSection');
-            var batchSection = document.getElementById('batchInputSection');
-            
-            if (singleInput.checked) {
-                // 顯示逐筆輸入，隱藏批次輸入
-                singleSection.style.display = 'block';
-                batchSection.style.display = 'none';
-                // 添加預設的一行
-                addReviewerRow();
-            } else if (batchInput.checked) {
-                // 顯示批次輸入，隱藏逐筆輸入
-                singleSection.style.display = 'none';
-                batchSection.style.display = 'block';
-                // 清空逐筆輸入的所有行
-                clearAllReviewerRows();
-            }
-        }
-        
-        // 添加審查委員行
-        function addReviewerRow() {
-            var tbody = document.getElementById('reviewerTableBody');
-            var rowCount = tbody.rows.length + 1;
-            
-            var newRow = document.createElement('tr');
-            newRow.innerHTML = `
-                <td>${rowCount}</td>
-                <td><input type="text" class="form-control" placeholder="姓名"></td>
-                <td><input type="text" class="form-control" placeholder="Email"></td>
-                <td>    
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-sm btn-teal" onclick="removeReviewerRow(this)">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-teal" onclick="addReviewerRow()">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                    </div>
-                </td>
-            `;
-            
-            tbody.appendChild(newRow);
-            updateRowNumbers();
-        }
-        
-        // 刪除審查委員行
-        function removeReviewerRow(button) {
-            var tbody = document.getElementById('reviewerTableBody');
-            // 至少保留一行
-            if (tbody.rows.length > 1) {
-                var row = button.closest('tr');
-                row.remove();
-                updateRowNumbers();
-            }
-        }
-        
-        // 更新行號
-        function updateRowNumbers() {
-            var tbody = document.getElementById('reviewerTableBody');
-            var rows = tbody.getElementsByTagName('tr');
-            
-            for (var i = 0; i < rows.length; i++) {
-                rows[i].cells[0].textContent = i + 1;
-            }
-        }
-        
-        // 清空所有審查委員行
-        function clearAllReviewerRows() {
-            var tbody = document.getElementById('reviewerTableBody');
-            tbody.innerHTML = '';
-        }
-        
-        // 提送審查委員 (靜態功能)
-        function submitReviewers() {
-            alert('提送審查委員功能 (靜態展示)');
-        }
-        
-        // 提交審核 (靜態功能)
-        function submitReview() {
-            // 取得審查方式
-            var reviewMethod = document.querySelector('input[name="reviewType"]:checked')?.value;
-            if (!reviewMethod) {
-                alert('請選擇審查方式');
-                return;
-            }
-            
-            // 取得審查結果
-            var reviewResult = document.querySelector('input[name="reviewResult"]:checked')?.value;
-            if (!reviewResult) {
-                alert('請選擇審查結果');
-                return;
-            }
-            
-            var resultText = reviewResult === 'pass' ? '通過' : '不通過';
-            
-            if (confirm(`確定提交審核結果？\n審查方式：${reviewMethod}\n審查結果：${resultText}`)) {
-                alert('審核結果提交成功 (靜態展示)');
-            }
-        }
-        
-        // 初始化頁面
-        document.addEventListener('DOMContentLoaded', function() {
-            // 預設隱藏審查委員名單，顯示審查結果
-            document.getElementById('reviewerListSection').style.display = 'none';
-            document.getElementById('reviewResultSection').style.display = 'flex';
-        });
-    </script>
     
 </asp:Content>

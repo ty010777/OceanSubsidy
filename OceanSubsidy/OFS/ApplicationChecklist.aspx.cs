@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using System.Linq;
 using System.Web;
 using System.Web.Script.Serialization;
@@ -123,9 +124,7 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
         string script = $"alert('{message}');";
         Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowMessage", script, true);
     }
-
-    // 已移除 FilterData() 方法，篩選邏輯已移至 FilterDataStatic() 靜態方法供 WebMethod 使用
-
+    
     // 標籤篩選事件處理 - 觸發前端載入篩選資料
     protected void btnStageFilter_Click(object sender, EventArgs e)
     {
@@ -140,9 +139,7 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             ShowMessage($"篩選時發生錯誤：{ex.Message}", false);
         }
     }
-
-    // 已移除 UpdateTabStatistics() 包裝方法，直接使用 UpdateTabStatisticsAndActiveState()
-
+    
     // 更新標籤統計和選中狀態
     private void UpdateTabStatisticsAndActiveState(string selectedCategory)
     {
@@ -194,109 +191,6 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             System.Diagnostics.Debug.WriteLine($"更新標籤統計時發生錯誤：{ex.Message}");
         }
     }
-
-    // 格式化金額顯示
-    // TODO 想刪除
-    // private string FormatAmount(string amount)
-    // {
-    //     if (string.IsNullOrEmpty(amount) || amount == "0")
-    //         return "0";
-    //
-    //     if (decimal.TryParse(amount, out decimal value))
-    //     {
-    //         return value.ToString("#,##0");
-    //     }
-    //
-    //     return amount;
-    // }
-
-    // 取得狀態顏色樣式
-    // TODO 想刪除
-    // private string GetStatusColorClass(string status)
-    // {
-    //     if (string.IsNullOrEmpty(status)) return "";
-    //
-    //     switch (status.Trim())
-    //     {
-    //         case "補正補件":
-    //         case "待回覆":
-    //         case "待修正":
-    //             return "text-royal-blue";
-    //         case "逾期未補":
-    //         case "未通過":
-    //         case "已撤案":
-    //             return "text-pink";
-    //         case "已核定":
-    //             return "text-teal";
-    //         case "尚未提送":
-    //             return "text-royal-blue";
-    //         default:
-    //             return "";
-    //     }
-    // }
-
-    // 產生操作按鈕
-    private string GenerateActionButtons(ReviewChecklistItem item)
-    {
-        StringBuilder buttons = new StringBuilder();
-
-        // 根據狀態顯示不同的按鈕
-        string StatusesName = item.StatusesName ?? "";
-        string status = item.Statuses ?? "";
-        bool isWithdrawn = item.isWithdrawal ?? false;
-
-        // 編輯按鈕（只有「編輯中、補正補件」狀態可編輯）
-        if (CanEdit(status, StatusesName))
-        {
-            string editUrl = GetEditUrl(item);
-            string projectCategory = item.GetProjectCategory();
-
-            if (editUrl != "#")
-            {
-                // 有對應的編輯頁面
-                buttons.Append(
-                    $"<a href=\"{ResolveUrl(editUrl)}\" class=\"btn btn-sm btn-teal-dark\" data-bs-toggle=\"tooltip\" data-bs-placement=\"top\" data-bs-title=\"編輯\"><i class=\"fa-solid fa-pen\"></i></a>");
-            }
-        }
-
-        // 回覆按鈕（一直顯示）
-        buttons.Append(
-            $"<button class=\"btn btn-sm btn-teal-dark\" type=\"button\" onclick=\"showReviewComments('{item.ProjectID}')\" data-bs-toggle=\"tooltip\" data-bs-placement=\"top\" data-bs-title=\"檢視審查意見\"><i class=\"fas fa-comment-dots\"></i></button>");
-
-        // 歷程按鈕（所有項目都有）
-        buttons.Append(
-            $"<button class=\"btn btn-sm btn-teal-dark\" type=\"button\" onclick=\"showHistory('{item.ProjectID}')\" data-bs-toggle=\"tooltip\" data-bs-placement=\"top\" data-bs-title=\"歷程\"><i class=\"fas fa-history\"></i></button>");
-
-        // 更多操作選單
-        buttons.Append(
-            "<div class=\"dropdown\"><button class=\"btn btn-sm btn-outline-teal\" type=\"button\" data-bs-toggle=\"dropdown\" aria-expanded=\"false\"><i class=\"fas fa-ellipsis-h\"></i></button>");
-        buttons.Append("<ul class=\"dropdown-menu\" style=\"min-width: 120px;\">");
-
-        // 撤案按鈕（只有在指定狀態下且未撤案時顯示）
-        if (CanWithdraw(status) && !isWithdrawn)
-        {
-            buttons.Append(
-                $"<li><a class=\"dropdown-menu-item gap-1\" href=\"#\" onclick=\"handleWithdraw('{item.ProjectID}'); return false;\"><i class=\"fas fa-redo text-teal-dark\"></i>撤案</a></li>");
-        }
-
-        // 刪除按鈕（只有「尚未提送」狀態可刪除）
-
-        buttons.Append(
-            $"<li><a class=\"dropdown-menu-item gap-1\" href=\"#\" onclick=\"handleDelete('{item.ProjectID}'); return false;\" data-bs-toggle=\"modal\" data-bs-target=\"#planDeleteModal\"><i class=\"fas fa-times text-teal-dark\"></i>刪除</a></li>");
-
-
-        // 恢復案件按鈕（只有已撤案的案件顯示）
-        if (isWithdrawn)
-        {
-            buttons.Append(
-                $"<li><a class=\"dropdown-menu-item gap-1\" href=\"#\" onclick=\"handleRestore('{item.ProjectID}')\"><i class=\"fas fa-undo text-teal-dark\"></i>恢復案件</a></li>");
-        }
-
-        buttons.Append("</ul></div>");
-
-        return buttons.ToString();
-    }
-
     // 檢查是否可編輯
     private bool CanEdit(string status, string statusName)
     {
@@ -320,33 +214,33 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
 
 
     // 取得編輯頁面的網址
-    private string GetEditUrl(ReviewChecklistItem item)
-    {
-        if (item == null || string.IsNullOrEmpty(item.ProjectID)) return "#";
-
-        // 根據計畫類型決定編輯頁面
-        string projectCategory = item.GetProjectCategory();
-        switch (projectCategory)
-        {
-            case "科專":
-                return $"~/OFS/SCI/SciApplication.aspx?ProjectID={item.ProjectID}";
-            case "文化":
-                return $"~/OFS/CUL/Application.aspx?ID={item.ProjectID}";
-            case "學校社團":
-                // 尚未有這個網址，暫時返回空值
-                return "#";
-            case "學校民間":
-                return $"~/OFS/EDC/Application.aspx?ID={item.ProjectID}";
-            case "多元":
-                return $"~/OFS/MUL/Application.aspx?ID={item.ProjectID}";
-            case "素養":
-                return $"~/OFS/LIT/Application.aspx?ID={item.ProjectID}";
-            case "無障礙":
-                return $"~/OFS/ACC/Application.aspx?ID={item.ProjectID}";
-            default:
-                return "#";
-        }
-    }
+    // private string GetEditUrl(ReviewChecklistItem item)
+    // {
+    //     if (item == null || string.IsNullOrEmpty(item.ProjectID)) return "#";
+    //
+    //     // 根據計畫類型決定編輯頁面
+    //     string projectCategory = item.GetProjectCategory();
+    //     switch (projectCategory)
+    //     {
+    //         case "科專":
+    //             return $"~/OFS/SCI/SciApplication.aspx?ProjectID={item.ProjectID}";
+    //         case "文化":
+    //             return $"~/OFS/CUL/Application.aspx?ID={item.ProjectID}";
+    //         case "學校社團":
+    //             // 尚未有這個網址，暫時返回空值
+    //             return "#";
+    //         case "學校民間":
+    //             return $"~/OFS/EDC/Application.aspx?ID={item.ProjectID}";
+    //         case "多元":
+    //             return $"~/OFS/MUL/Application.aspx?ID={item.ProjectID}";
+    //         case "素養":
+    //             return $"~/OFS/LIT/Application.aspx?ID={item.ProjectID}";
+    //         case "無障礙":
+    //             return $"~/OFS/ACC/Application.aspx?ID={item.ProjectID}";
+    //         default:
+    //             return "#";
+    //     }
+    // }
 
     // 已改為純前端分頁架構，移除舊的分頁相關方法
 
@@ -578,7 +472,14 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             }
             else if (projectId.Contains("CLB"))
             {
-                // CLB 的處理邏輯
+                // 取得操作前的狀態
+                string beforeStatus = GetProjectCurrentStatus(projectId);
+
+                ApplicationChecklistHelper.CLB_UpdateWithdrawalStatus(projectId, true, reason);
+
+                // 記錄操作到案件歷程
+                LogCaseOperation(projectId, "撤案", reason, beforeStatus, "已撤案");
+
             }
             else if (projectId.Contains("MUL"))
             {
@@ -623,19 +524,19 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
     }
 
     // 處理撤案操作的 AJAX 方法 (保留以防其他地方使用)
-    [System.Web.Services.WebMethod]
-    public static string HandleWithdraw(string projectId, string reason)
-    {
-        try
-        {
-            ApplicationChecklistHelper.UpdateWithdrawalStatus(projectId, true, reason);
-            return "success";
-        }
-        catch (Exception ex)
-        {
-            return $"撤案時發生錯誤：{ex.Message}";
-        }
-    }
+    // [System.Web.Services.WebMethod]
+    // public static string HandleWithdraw(string projectId, string reason)
+    // {
+    //     try
+    //     {
+    //         ApplicationChecklistHelper.UpdateWithdrawalStatus(projectId, true, reason);
+    //         return "success";
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         return $"撤案時發生錯誤：{ex.Message}";
+    //     }
+    // }
 
     // 處理刪除操作的 WebForm 方法
     protected void btnConfirmDelete_Click(object sender, EventArgs e)
@@ -659,7 +560,7 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             {
                 // 取得操作前的狀態
                 string beforeStatus = GetProjectCurrentStatus(projectId);
-                ApplicationChecklistHelper.UpdateExistsStatus(projectId, false, reason);
+                ApplicationChecklistHelper.UpdateExistsStatus(projectId, false);
                 // 記錄操作到案件歷程
                 LogCaseOperation(projectId, "刪除", reason, beforeStatus, "已刪除");
             }
@@ -679,8 +580,13 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             }
             else if (projectId.Contains("CLB"))
             {
-                // CLB 的處理邏輯
-            }
+                // 取得操作前的狀態
+                string beforeStatus = GetProjectCurrentStatus(projectId);
+                ApplicationChecklistHelper.CLB_UpdateExistsStatus(projectId, false, reason);
+                LogCaseOperation(projectId, "刪除", reason, beforeStatus, "已刪除");
+
+                // 記錄操作到案件歷程
+                LogCaseOperation(projectId, "刪除", reason, beforeStatus, "已刪除");            }
             else if (projectId.Contains("MUL"))
             {
                 string beforeStatus = GetProjectCurrentStatus(projectId);
@@ -781,7 +687,13 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             }
             else if (projectId.Contains("CLB"))
             {
-                // CLB 的處理邏輯
+                // 取得操作前的狀態
+                string beforeStatus = GetProjectCurrentStatus(projectId);
+                ApplicationChecklistHelper.CLB_UpdateWithdrawalStatus(projectId, false);
+                // 取得操作後的狀態（從重新載入的資料中取得）
+                string afterStatus = GetProjectCurrentStatus(projectId);
+                // 記錄操作到案件歷程
+                LogCaseOperation(projectId, "恢復案件", "恢復已撤案的案件", beforeStatus, afterStatus);
             }
             else if (projectId.Contains("MUL"))
             {
@@ -827,20 +739,20 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
     }
 
     // 處理恢復案件操作的 AJAX 方法 (保留以防其他地方使用)
-    [System.Web.Services.WebMethod]
-    public static string HandleRestore(string projectId)
-    {
-        try
-        {
-            ApplicationChecklistHelper.UpdateWithdrawalStatus(projectId, false);
-
-            return "success";
-        }
-        catch (Exception ex)
-        {
-            return $"恢復案件時發生錯誤：{ex.Message}";
-        }
-    }
+    // [System.Web.Services.WebMethod]
+    // public static string HandleRestore(string projectId)
+    // {
+    //     try
+    //     {
+    //         ApplicationChecklistHelper.UpdateWithdrawalStatus(projectId, false);
+    //
+    //         return "success";
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         return $"恢復案件時發生錯誤：{ex.Message}";
+    //     }
+    // }
 
     /// <summary>
     /// 取得案件歷程資料
@@ -1222,6 +1134,195 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
         }
 
         return amount;
+    }
+
+    /// <summary>
+    /// 處理技術審查檔案上傳
+    /// </summary>
+    protected void btnUploadTechReview_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            string projectId = hdnUploadProjectId.Value;
+            
+            if (string.IsNullOrEmpty(projectId))
+            {
+                ShowMessage("系統錯誤：未找到專案資訊", false);
+                return;
+            }
+
+            if (!fileUploadTechReview.HasFile)
+            {
+                ShowMessage("請選擇要上傳的檔案", false);
+                return;
+            }
+
+            var uploadedFile = fileUploadTechReview.PostedFile;
+            
+            // 檢查檔案類型
+            string fileExtension = Path.GetExtension(uploadedFile.FileName).ToLower();
+            if (fileExtension != ".ppt" && fileExtension != ".pptx")
+            {
+                ShowMessage("僅支援 PPT 或 PPTX 格式的檔案", false);
+                return;
+            }
+
+            // 檢查檔案大小 (50MB = 52,428,800 bytes)
+            if (uploadedFile.ContentLength > 52428800)
+            {
+                ShowMessage("檔案大小不能超過 50MB", false);
+                return;
+            }
+
+            // 判斷專案類型
+            string projectType = GetProjectTypeFromId(projectId);
+            if (string.IsNullOrEmpty(projectType))
+            {
+                ShowMessage("無法識別專案類型", false);
+                return;
+            }
+
+            // 建立上傳目錄：UploadFiles\OFS\{SCI或CUL}\{ProjectID}\TechReviewFiles
+            string uploadFolder = Server.MapPath($"~/UploadFiles/OFS/{projectType}/{projectId}/TechReviewFiles/");
+            if (!Directory.Exists(uploadFolder))
+            {
+                Directory.CreateDirectory(uploadFolder);
+            }
+
+            // 產生新的檔案名稱 (使用專案ID + 時間戳記 + 原始副檔名)
+            string timeStamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+            string newFileName = $"{projectId}_TechReview_{timeStamp}{fileExtension}";
+            string filePath = Path.Combine(uploadFolder, newFileName);
+
+            // 如果已存在舊檔案，先刪除
+            string[] existingFiles = Directory.GetFiles(uploadFolder, $"{projectId}_TechReview_*");
+            foreach (string existingFile in existingFiles)
+            {
+                try
+                {
+                    File.Delete(existingFile);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"刪除舊檔案失敗：{ex.Message}");
+                }
+            }
+
+            // 儲存新檔案
+            uploadedFile.SaveAs(filePath);
+
+            // 記錄到資料庫 (可選，如果需要的話)
+            LogTechReviewFileUpload(projectId, uploadedFile.FileName, newFileName);
+
+            // 清空上傳控制項和隱藏欄位
+            hdnUploadProjectId.Value = "";
+            
+            ShowMessage("檔案上傳成功", true);
+
+            // 觸發前端重新載入資料
+            ClientScript.RegisterStartupScript(this.GetType(), "CloseUploadModal",
+                "bootstrap.Modal.getInstance(document.getElementById('techReviewUploadModal')).hide();", true);
+        }
+        catch (Exception ex)
+        {
+            ShowMessage($"上傳檔案時發生錯誤：{ex.Message}", false);
+        }
+    }
+
+    /// <summary>
+    /// 記錄技術審查檔案上傳到案件歷程
+    /// </summary>
+    private void LogTechReviewFileUpload(string projectId, string originalFileName, string savedFileName)
+    {
+        try
+        {
+            string description = $"上傳技術審查檔案：{originalFileName}";
+            LogCaseOperation(projectId, "上傳檔案", description);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"記錄檔案上傳失敗：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 檢查專案是否已有技術審查檔案
+    /// </summary>
+    [System.Web.Services.WebMethod]
+    public static object CheckTechReviewFile(string projectId)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(projectId))
+            {
+                return new { success = false, message = "ProjectID 不能為空" };
+            }
+
+            // 判斷專案類型
+            string projectType = GetProjectTypeFromId(projectId);
+            if (string.IsNullOrEmpty(projectType))
+            {
+                return new { success = false, message = "無法識別專案類型" };
+            }
+
+            string uploadFolder = HttpContext.Current.Server.MapPath($"~/UploadFiles/OFS/{projectType}/{projectId}/TechReviewFiles/");
+            
+            if (Directory.Exists(uploadFolder))
+            {
+                string[] files = Directory.GetFiles(uploadFolder, $"{projectId}_TechReview_*");
+                
+                if (files.Length > 0)
+                {
+                    string filePath = files[0]; // 取最新的檔案
+                    string fileName = Path.GetFileName(filePath);
+                    
+                    // 從檔案名稱中提取原始檔案資訊
+                    string displayName = ExtractOriginalFileName(fileName);
+                    
+                    return new { 
+                        success = true, 
+                        hasFile = true,
+                        fileName = displayName,
+                        savedFileName = fileName
+                    };
+                }
+            }
+
+            return new { success = true, hasFile = false };
+        }
+        catch (Exception ex)
+        {
+            return new { success = false, message = ex.Message };
+        }
+    }
+
+    /// <summary>
+    /// 從儲存的檔案名稱中提取顯示用的檔案名稱
+    /// </summary>
+    private static string ExtractOriginalFileName(string savedFileName)
+    {
+        // 儲存格式: {projectId}_TechReview_{timeStamp}{extension}
+        // 這裡簡化處理，只返回副檔名資訊
+        string extension = Path.GetExtension(savedFileName);
+        return $"技術審查檔案{extension}";
+    }
+
+
+
+    /// <summary>
+    /// 從專案ID判斷專案類型
+    /// </summary>
+    private static string GetProjectTypeFromId(string projectId)
+    {
+        if (string.IsNullOrEmpty(projectId))
+            return null;
+
+        if (projectId.Contains("SCI"))
+            return "SCI";
+        else if (projectId.Contains("CUL"))
+            return "CUL";
+        
+        return null; // 目前只支援 SCI 和 CUL
     }
 
 }

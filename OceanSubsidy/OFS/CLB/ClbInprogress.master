@@ -36,7 +36,7 @@
                 <span>［CLB］<asp:Literal ID="litProjectInfo" runat="server" Text="" /></span>
                 <asp:PlaceHolder ID="phTodoItems" runat="server"></asp:PlaceHolder>
             </div>
-            <button class="btn btn-teal-dark" type="button">
+            <button class="btn btn-teal-dark" type="button" onclick="showAuditRecords()">
                 查核紀錄
             </button>
         </div>

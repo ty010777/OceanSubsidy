@@ -405,7 +405,7 @@
         var baseUrl = '<%= ResolveUrl("~/") %>';
         
         // 構建下載 URL
-        var downloadUrl = baseUrl + 'Service/DownloadTemplateCLB.ashx?type=' + templateType;
+        var downloadUrl = baseUrl + 'Service/CLB_download.ashx?action=template&type=' + templateType;
         if (projectID) {
             downloadUrl += '&projectID=' + encodeURIComponent(projectID);
         }

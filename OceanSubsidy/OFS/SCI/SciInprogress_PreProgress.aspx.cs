@@ -4,7 +4,9 @@ using System.Linq;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using System.Web.Services;
 using GS.App;
+using Newtonsoft.Json;
 
 public partial class OFS_SCI_SciInprogress_PreProgress : System.Web.UI.Page
 {
@@ -532,70 +534,6 @@ public partial class OFS_SCI_SciInprogress_PreProgress : System.Web.UI.Page
     //     }
     // }
     
-    /// <summary>
-    /// 提送按鈕事件
-    /// </summary>
-    protected void btnSubmit_Click(object sender, EventArgs e)
-    {
-        try
-        {
-            // 收集表單資料
-            var progressData = CollectMonthlyProgressData();
-            
-            // 驗證資料
-            var validationResult = OFS_PreMonthProgressHelper.ValidatePreMonthProgress(progressData);
-            
-            if (!validationResult.IsValid)
-            {
-                string errorMessages = string.Join("\\n", validationResult.Errors);
-                ScriptManager.RegisterStartupScript(this, GetType(), "ValidationError",
-                    $"Swal.fire({{title: '資料驗證失敗', text: '{errorMessages}', icon: 'warning'}});", true);
-                InitializePage();
-                return;
-            }
-            
-            // 驗證其他必填欄位
-            if (!ValidateOtherRequiredFields())
-            {
-                InitializePage();
-                return; // 驗證失敗的訊息已在方法內處理
-            }
-            
-            // 儲存資料
-            bool success = OFS_PreMonthProgressHelper.SavePreMonthProgress(ProjectID, progressData);
-            
-            if (success)
-            {
-                // 儲存其他欄位資料
-                SaveOtherFields();
-                InprogressListHelper.UpdateLastOperation(ProjectID, "已完成預定進度規劃");
-                InprogressListHelper.UpdateTaskCompleted(ProjectID, "Schedule", true);
-                
-                // TODO: 更新計畫狀態或發送通知
-                // 顯示成功訊息並跳轉
-                ScriptManager.RegisterStartupScript(this, GetType(), "SubmitSuccess",
-                    @"Swal.fire({
-                        title: '提送成功',
-                        text: '預定分月進度已提送',
-                        icon: 'success'
-                    }).then(function() {
-                    });", true);
-                InitializePage();
-
-            }
-            else
-            {
-                ScriptManager.RegisterStartupScript(this, GetType(), "SubmitError",
-                    "Swal.fire({title: '提送失敗', text: '系統發生錯誤，請稍後再試', icon: 'error'});", true);
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"提送時發生錯誤: {ex.Message}");
-            ScriptManager.RegisterStartupScript(this, GetType(), "SubmitException",
-                $"Swal.fire({{title: '系統錯誤', text: '提送時發生錯誤：{ex.Message}', icon: 'error'}});", true);
-        }
-    }
     
     /// <summary>
     /// 收集預定分月進度資料
@@ -808,6 +746,135 @@ public partial class OFS_SCI_SciInprogress_PreProgress : System.Web.UI.Page
         {
             System.Diagnostics.Debug.WriteLine($"載入審查日期時發生錯誤: {ex.Message}");
             // 不拋出例外，讓頁面可以正常載入，日期欄位保持空白
+        }
+    }
+    
+    /// <summary>
+    /// AJAX 提送預定分月進度方法
+    /// </summary>
+    [WebMethod]
+    public static object SubmitPreProgress(string jsonData)
+    {
+        try
+        {
+            var data = JsonConvert.DeserializeObject<dynamic>(jsonData);
+            
+            string projectID = data.projectID?.ToString();
+            string coExecutingUnit = data.coExecutingUnit?.ToString();
+            string midReviewDate = data.midReviewDate?.ToString();
+            string finalReviewDate = data.finalReviewDate?.ToString();
+            var monthlyProgressArray = data.monthlyProgress;
+            
+            if (string.IsNullOrEmpty(projectID))
+            {
+                return new { success = false, message = "計畫ID不能為空" };
+            }
+            
+            // 收集預定分月進度資料
+            var progressList = new List<GS.OCA_OceanSubsidy.Entity.OFS_SCI_PreMonthProgress>();
+            
+            if (monthlyProgressArray != null)
+            {
+                foreach (var item in monthlyProgressArray)
+                {
+                    string month = item.month?.ToString();
+                    string workAbstract = item.workAbstract?.ToString();
+                    string preProgressStr = item.preProgress?.ToString();
+                    
+                    if (!string.IsNullOrEmpty(month))
+                    {
+                        // 取得查核標準資料
+                        var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
+                        string checkDescription = "";
+                        
+                        if (applicationMain != null)
+                        {
+                            var checkStandardByMonth = OFS_SciApplicationHelper.GetCheckStandardByMonth(applicationMain.ProjectID);
+                            if (checkStandardByMonth.ContainsKey(month) && checkStandardByMonth[month].Count > 0)
+                            {
+                                checkDescription = string.Join("\n", checkStandardByMonth[month]);
+                            }
+                        }
+                        
+                        var progress = new GS.OCA_OceanSubsidy.Entity.OFS_SCI_PreMonthProgress
+                        {
+                            ProjectID = projectID,
+                            Month = month,
+                            PreWorkAbstract = workAbstract,
+                            CheckDescription = checkDescription,
+                            PreProgress = null
+                        };
+                        
+                        // 解析預定進度
+                        if (!string.IsNullOrEmpty(preProgressStr) && decimal.TryParse(preProgressStr, out decimal preProgress))
+                        {
+                            progress.PreProgress = preProgress;
+                        }
+                        
+                        progressList.Add(progress);
+                    }
+                }
+            }
+            
+            // 驗證資料
+            var validationResult = OFS_PreMonthProgressHelper.ValidatePreMonthProgress(progressList);
+            
+            if (!validationResult.IsValid)
+            {
+                string errorMessages = string.Join(", ", validationResult.Errors);
+                return new { success = false, message = errorMessages };
+            }
+            
+            // 驗證日期欄位
+            if (string.IsNullOrEmpty(midReviewDate))
+            {
+                return new { success = false, message = "期中審查預定日期為必填項目" };
+            }
+            
+            if (string.IsNullOrEmpty(finalReviewDate))
+            {
+                return new { success = false, message = "期末審查預定日期為必填項目" };
+            }
+            
+            // 驗證日期邏輯
+            if (DateTime.TryParse(midReviewDate, out DateTime midDate) && 
+                DateTime.TryParse(finalReviewDate, out DateTime finalDate))
+            {
+                if (finalDate <= midDate)
+                {
+                    return new { success = false, message = "期末審查預定日期必須晚於期中審查預定日期" };
+                }
+            }
+            
+            // 儲存資料
+            bool success = OFS_PreMonthProgressHelper.SavePreMonthProgress(projectID, progressList);
+            
+            if (success)
+            {
+                // 儲存其他欄位資料
+                // 更新共同執行單位
+                OFS_SciApplicationHelper.UpdateCoExecutingUnit(projectID, coExecutingUnit ?? "");
+                
+                // 更新期中期末審查日期
+                DateTime? midtermDate = DateTime.TryParse(midReviewDate, out DateTime mid) ? mid : (DateTime?)null;
+                DateTime? finalDateParsed = DateTime.TryParse(finalReviewDate, out DateTime final) ? final : (DateTime?)null;
+                OFS_SciApplicationHelper.UpdateExamDates(projectID, midtermDate, finalDateParsed);
+                
+                // 更新任務狀態
+                InprogressListHelper.UpdateLastOperation(projectID, "已完成預定進度規劃");
+                InprogressListHelper.UpdateTaskCompleted(projectID, "Schedule", true);
+                
+                return new { success = true, message = "預定分月進度已成功提送" };
+            }
+            else
+            {
+                return new { success = false, message = "系統發生錯誤，請稍後再試" };
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"SubmitPreProgress 發生錯誤: {ex.Message}");
+            return new { success = false, message = $"系統錯誤：{ex.Message}" };
         }
     }
 }

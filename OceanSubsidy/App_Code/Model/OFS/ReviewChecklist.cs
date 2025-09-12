@@ -685,4 +685,21 @@ namespace GS.OCA_OceanSubsidy.Model.OFS
     }
 
     #endregion
+    public class TaskTemplate
+    {
+        public string TaskNameEn { get; set; }
+        public string TaskName { get; set; }
+        public int PriorityLevel { get; set; }
+        public bool IsTodo { get; set; }
+        public bool IsCompleted { get; set; }
+
+        public TaskTemplate(string taskNameEn, string taskName, int priorityLevel, bool isTodo, bool isCompleted)
+        {
+            TaskNameEn = taskNameEn;
+            TaskName = taskName;
+            PriorityLevel = priorityLevel;
+            IsTodo = isTodo;
+            IsCompleted = isCompleted;
+        }
+    }
 }

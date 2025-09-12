@@ -614,6 +614,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
                 // 處理中文檔名編碼問題
                 string encodedFileName = System.Web.HttpUtility.UrlEncode(fileName, System.Text.Encoding.UTF8);
                 
+                // 參考 CLB 的下載處理方式
                 Response.Clear();
                 Response.ContentType = contentType;
                 Response.AddHeader("Content-Disposition", $"attachment; filename*=UTF-8''{encodedFileName}");
@@ -622,13 +623,16 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
                 Response.AddHeader("Pragma", "no-cache");
                 Response.AddHeader("Expires", "0");
                 
-                // 讀取檔案並寫入 Response
+                // 讀取檔案並寫入 Response - 使用 CLB 相同的方法
                 byte[] fileData = File.ReadAllBytes(filePath);
                 Response.BinaryWrite(fileData);
                 Response.Flush();
-                Response.End();
+                Response.SuppressContent = true;
                 
+                // 如果是暫存檔案，下載完成後立即清理
+                CleanupTempFile(filePath);
                 
+                HttpContext.Current.ApplicationInstance.CompleteRequest();
             }
             else
             {
@@ -639,6 +643,10 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
         }
         catch (Exception ex)
         {
+            // 記錄詳細錯誤資訊
+            System.Diagnostics.Debug.WriteLine($"DownloadTemplate Exception: {ex.ToString()}");
+            System.Diagnostics.Debug.WriteLine($"FileCode: {fileCode}, ProjectId: {projectId}");
+            
             Response.Clear();
             Response.Write($"ERROR:下載失敗：{ex.Message}");
             Response.End();
@@ -924,6 +932,30 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
             Response.Clear();
             Response.Write($"ERROR:刪除失敗：{ex.Message}");
             Response.End();
+        }
+    }
+
+    /// <summary>
+    /// 清理暫存檔案
+    /// </summary>
+    /// <param name="filePath">檔案路徑</param>
+    private void CleanupTempFile(string filePath)
+    {
+        try
+        {
+            // 判斷是否為暫存檔案（在 Temp 目錄中的檔案）
+            if (!string.IsNullOrEmpty(filePath) && 
+                filePath.Contains(Path.GetTempPath()) && 
+                File.Exists(filePath))
+            {
+                File.Delete(filePath);
+                System.Diagnostics.Debug.WriteLine($"已清理暫存檔案：{filePath}");
+            }
+        }
+        catch (Exception ex)
+        {
+            // 清理失敗不影響主要功能，只記錄錯誤
+            System.Diagnostics.Debug.WriteLine($"清理暫存檔案失敗：{ex.Message}");
         }
     }
 

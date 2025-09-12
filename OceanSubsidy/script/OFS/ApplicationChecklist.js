@@ -268,35 +268,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // 初始化下拉選單切換功能
 function initDropdownToggle() {
-    // 使用事件委派監聽下拉按鈕點擊
-    document.addEventListener('click', function(e) {
-        const dropdownButton = e.target.closest('[data-bs-toggle="dropdown"]');
-
-        if (dropdownButton) {
-            e.preventDefault();
-            const dropdown = dropdownButton.closest('.dropdown');
-            const dropdownMenu = dropdown.querySelector('.dropdown-menu');
-
-            if (dropdownMenu.classList.contains('show')) {
-                // 關閉下拉選單
-                dropdownButton.classList.remove('show');
-                dropdownButton.setAttribute('aria-expanded', 'false');
-                dropdownMenu.classList.remove('show');
-            } else {
-                // 先關閉其他所有下拉選單
-                document.querySelectorAll('.dropdown .show').forEach(el => el.classList.remove('show'));
-                document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach(btn => btn.setAttribute('aria-expanded', 'false'));
-
-                // 打開當前下拉選單
-                dropdownButton.classList.add('show');
-                dropdownButton.setAttribute('aria-expanded', 'true');
-                dropdownMenu.classList.add('show');
-            }
-        } else {
-            // 點擊其他地方時關閉所有下拉選單
-            document.querySelectorAll('.dropdown .show').forEach(el => el.classList.remove('show'));
-            document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach(btn => btn.setAttribute('aria-expanded', 'false'));
-        }
+    // 讓 Bootstrap 處理下拉式選單，移除自定義邏輯
+    // Bootstrap 5 會自動處理 data-bs-toggle="dropdown" 的行為
+    
+    // 如果需要額外的事件處理，可以監聽 Bootstrap 事件
+    document.addEventListener('shown.bs.dropdown', function (event) {
+        // 下拉選單顯示時的額外處理
+        console.log('Dropdown shown:', event.target);
+    });
+    
+    document.addEventListener('hidden.bs.dropdown', function (event) {
+        // 下拉選單隱藏時的額外處理
+        console.log('Dropdown hidden:', event.target);
     });
 }
 
@@ -615,6 +598,15 @@ function generateActionButtons(record) {
             </a>`;
         }
     }
+
+    // 上傳技術審查/初審檔案按鈕（只有在複審或技術審查階段顯示）
+    if (status === '複審' || status === '技術審查') {
+        buttons += `<button class="btn btn-sm btn-teal-dark" type="button" onclick="showUploadModal('${record.ProjectID}')"
+                    data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="上傳 技術審查/初審 檔案">
+                    <i class="fas fa-file-upload"></i>
+                </button>`;
+    }
+
     if(record.Category == "科專" || record.Category == "文化"){
     // 回覆按鈕（檢視審查意見）
         buttons += `<button class="btn btn-sm btn-teal-dark" type="button" onclick="showReviewComments('${record.ProjectID}')"

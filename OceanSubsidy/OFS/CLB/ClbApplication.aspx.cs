@@ -16,12 +16,6 @@ public partial class OFS_CLB_ClbApplication : System.Web.UI.Page
         {
             switch (action)
             {
-                case "uploadFile":
-                    HandleFileUpload();
-                    return;
-                case "deleteFile":
-                    HandleFileDelete();
-                    return;
                 case "submitApplication":
                     HandleApplicationSubmission();
                     return;
@@ -455,108 +449,6 @@ public partial class OFS_CLB_ClbApplication : System.Web.UI.Page
     #region 檔案上傳處理方法
 
     /// <summary>
-    /// 處理檔案上傳請求
-    /// </summary>
-    private void HandleFileUpload()
-    {
-        Response.ContentType = "application/json";
-        
-        try
-        {
-            string fileCode = Request.Form["fileCode"];
-            string projectID = Request.Form["projectID"];
-            
-            if (string.IsNullOrEmpty(fileCode))
-            {
-                Response.Write("{\"success\":false,\"message\":\"檔案代碼不能為空\"}");
-                return;
-            }
-
-            if (Request.Files.Count == 0 || Request.Files["uploadedFile"] == null)
-            {
-                Response.Write("{\"success\":false,\"message\":\"請選擇要上傳的檔案\"}");
-                return;
-            }
-
-            HttpPostedFile uploadedFile = Request.Files["uploadedFile"];
-            
-            // 呼叫 UserControl 的檔案上傳方法
-            string result = ucClbApplication.HandleFileUpload(projectID,fileCode, uploadedFile);
-            
-            if (string.IsNullOrEmpty(result))
-            {
-                // 取得檔案資訊並回傳
-                var uploadedFileInfo = OFS_ClbApplicationHelper.GetUploadedFile(projectID ?? ucClbApplication.ProjectID, fileCode);
-                if (uploadedFileInfo != null)
-                {
-                    Response.Write($"{{\"success\":true,\"message\":\"檔案上傳成功\",\"fileName\":\"{uploadedFileInfo.FileName}\",\"relativePath\":\"{uploadedFileInfo.TemplatePath}\"}}");
-                }
-                else
-                {
-                    Response.Write("{\"success\":true,\"message\":\"檔案上傳成功\"}");
-                }
-            }
-            else
-            {
-                Response.Write($"{{\"success\":false,\"message\":\"{result}\"}}");
-            }
-        }
-        catch (Exception ex)
-        {
-            Response.Write($"{{\"success\":false,\"message\":\"檔案上傳失敗：{ex.Message}\"}}");
-        }
-        
-        Response.End();
-    }
-
-    /// <summary>
-    /// 處理檔案刪除請求
-    /// </summary>
-    private void HandleFileDelete()
-    {
-        Response.ContentType = "application/json";
-        
-        try
-        {
-            string fileCode = Request.Form["fileCode"];
-            string projectID = Request.Form["projectID"];
-            
-            if (string.IsNullOrEmpty(fileCode))
-            {
-                Response.Write("{\"success\":false,\"message\":\"檔案代碼不能為空\"}");
-                return;
-            }
-
-            if (string.IsNullOrEmpty(projectID))
-            {
-                Response.Write("{\"success\":false,\"message\":\"計畫編號不能為空\"}");
-                return;
-            }
-
-            // 設定 UserControl 的 ProjectID
-            ucClbApplication.ProjectID = projectID;
-            
-            // 呼叫 UserControl 的檔案刪除方法
-            string result = ucClbApplication.DeleteUploadedFile(fileCode);
-            
-            if (string.IsNullOrEmpty(result))
-            {
-                Response.Write("{\"success\":true,\"message\":\"檔案刪除成功\"}");
-            }
-            else
-            {
-                Response.Write($"{{\"success\":false,\"message\":\"{result}\"}}");
-            }
-        }
-        catch (Exception ex)
-        {
-            Response.Write($"{{\"success\":false,\"message\":\"檔案刪除失敗：{ex.Message}\"}}");
-        }
-        
-        Response.End();
-    }
-
-    /// <summary>
     /// 處理申請提送請求
     /// </summary>
     private void HandleApplicationSubmission()
@@ -580,9 +472,15 @@ public partial class OFS_CLB_ClbApplication : System.Web.UI.Page
             }
             // 取得最新歷史記錄的狀態
             string stageStatusBefore = ApplicationChecklistHelper.GetLatestStageStatus(projectID) ?? "";
-
+            var lastProjectMain = OFS_ClbApplicationHelper.GetProjectMainData(projectID);
+            
             // 更新計畫狀態
-            OFS_ClbApplicationHelper.UpdateProjectStatus(projectID, "內容審查", "審核中", "3");
+            if (lastProjectMain.StatusesName == "計畫書修正中")
+            {
+                OFS_ClbApplicationHelper.UpdateProjectStatus(projectID, "決審核定", "計畫書審核中", "3");
+            }else{
+                OFS_ClbApplicationHelper.UpdateProjectStatus(projectID, "內容審查", "審核中", "3");
+            }
             var currentUser = GetCurrentUserInfo();
             var projectMain = OFS_ClbApplicationHelper.GetProjectMainData(projectID);
             var historyLog = new OFS_CaseHistoryLog
@@ -592,9 +490,10 @@ public partial class OFS_CLB_ClbApplication : System.Web.UI.Page
                 UserName = currentUser?.UserName ?? "系統",
                 StageStatusBefore = stageStatusBefore,
                 StageStatusAfter =  projectMain.Statuses + projectMain.StatusesName,
-                Description = "提送至內容審核" 
+                Description = $"提送至{projectMain.Statuses + projectMain.StatusesName}" 
                                  
             };
+            ApplicationChecklistHelper.InsertCaseHistoryLog(historyLog);
            
             Response.Write("{\"success\":true,\"message\":\"申請已成功提送，狀態已更新為審核中\"}");
             

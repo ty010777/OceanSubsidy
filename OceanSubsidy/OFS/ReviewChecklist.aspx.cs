@@ -1715,7 +1715,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                         if (toStatus == "計畫執行")
                         {
                             //TODO 計畫執行的 社團代辦事項
-                            // ReviewCheckListHelper.CreateTaskQueueTemplate(projectId);
+                             ReviewCheckListHelper.CreateTaskQueueTemplate(projectId);
                         }
                     }else if (projectId.Contains("MUL"))
                     {
