@@ -494,24 +494,13 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
     {
         if (IsViewMode)
         {
-            // 停用所有輸入控制項
             string script = @"
-                setTimeout(function() {
-                    // 停用所有輸入欄位
-                    $('#committeeTable input, #techTable input, #techTable select, #techTable textarea').prop('disabled', true);
-                    
-                    // 停用檔案上傳
-                    $('#fileUploadTechDiagram, #btnUploadTechDiagram, #btnDeleteTechDiagram').prop('disabled', true);
-                    
-                    // 停用新增和刪除按鈕
-                    $('.add-row, .delete-row').prop('disabled', true).hide();
-                    
-                    // 停用 checkbox
-                    $('#" + chkNoAvoidance.ClientID + @"').prop('disabled', true);
-                }, 100);
-            ";
-
-            Page.ClientScript.RegisterStartupScript(this.GetType(), "ApplyViewMode", script, true);
+            <script>
+             $(document).ready(function () {
+                 $(""#techTable, #committeeTable"").addClass(""hide-col-last"");
+                });
+            </script>";
+            Page.ClientScript.RegisterStartupScript(this.GetType(), "AddClassToTable", script);
         }
     }
 

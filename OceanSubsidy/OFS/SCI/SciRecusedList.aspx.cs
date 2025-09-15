@@ -28,14 +28,14 @@ public partial class OFS_SciAvoidList : System.Web.UI.Page
             {
                 // 載入 UserControl 資料
                 string projectId = Request.QueryString["ProjectID"];
-                string isViewMode = Request.QueryString["IsViewMode"];
+                var isViewMode = !ShouldShowInEditMode();
                 
                 if (!string.IsNullOrEmpty(projectId))
                 {
-                    sciRecusedListControl.LoadData(projectId, isViewMode == "true");
+                    sciRecusedListControl.LoadData(projectId, isViewMode );
                     
                     // 載入變更說明控制項
-                    ucChangeDescription.LoadData(projectId, isViewMode == "true");
+                    ucChangeDescription.LoadData(projectId, isViewMode);
                 }
                 
                 // 檢查表單狀態並控制暫存按鈕顯示

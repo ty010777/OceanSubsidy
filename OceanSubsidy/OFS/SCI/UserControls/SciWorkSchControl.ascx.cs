@@ -599,32 +599,22 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
     {
         if (IsViewMode)
         {
-            DisableAllControls(this);
-        }
-    }
-
-    /// <summary>
-    /// 禁用所有控制項
-    /// </summary>
-    private void DisableAllControls(Control parent)
-    {
-        foreach (Control control in parent.Controls)
-        {
-            if (control is TextBox textBox)
-                textBox.ReadOnly = true;
-            else if (control is DropDownList dropDown)
-                dropDown.Enabled = false;
-            else if (control is CheckBox checkBox)
-                checkBox.Enabled = false;
-            else if (control is Button button)
-                button.Enabled = false;
-            else if (control is FileUpload fileUpload)
-                fileUpload.Enabled = false;
-            else if (control is HtmlInputGenericControl htmlInput)
-                htmlInput.Disabled = true;
-
-            if (control.HasControls())
-                DisableAllControls(control);
+            string script = @"
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    var table = document.getElementById('checkStandards');
+                    var table2 = document.getElementById('workItemsTable');
+                    
+                    if (table) {
+                        table.classList.add('hide-col-last');
+                    }
+                    if (table) {
+                        table2.classList.add('hide-col-last');
+                    }
+                });
+            </script>";
+            Page.ClientScript.RegisterStartupScript(this.GetType(), "AddClassToTable", script);
+            
         }
     }
 

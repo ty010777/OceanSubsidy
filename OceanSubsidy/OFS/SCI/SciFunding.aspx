@@ -15,7 +15,7 @@
 
 <asp:Content ID="ApplicationContent" ContentPlaceHolderID="ApplicationContent" runat="server">
     <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePageMethods="true" />
-    f
+    
     <!-- 使用 UserControl -->
     <uc:SciFundingControl ID="sciFundingControl" runat="server" />
     
@@ -23,7 +23,7 @@
     <uc:ChangeDescriptionControl ID="ucChangeDescription" runat="server" SourcePage="SciFunding" />
 
     <!-- 底部區塊 -->
-    <div class="block-bottom bg-light-teal">
+    <div class="block-bottom bg-light-teal view-mode">
         <asp:Button ID="btnTempSave" runat="server" 
             Text="暫存" 
             CssClass="btn btn-outline-teal" 

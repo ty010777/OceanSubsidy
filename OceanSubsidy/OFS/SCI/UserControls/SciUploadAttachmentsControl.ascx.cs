@@ -150,15 +150,13 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
     /// </summary>
     private void DisableAllControls(Control parent)
     {
-        foreach (Control control in parent.Controls)
-        {
-            if (control is Button button)
-                button.Enabled = false;
-            // FileUpload 控制項已移除，不需要處理
-
-            if (control.HasControls())
-                DisableAllControls(control);
-        }
+        string script = @"
+            <script>
+             $(document).ready(function () {
+                 $(""#academicTable, #oceanTechTable"").addClass(""hide-col-3"");
+                });
+            </script>";
+        Page.ClientScript.RegisterStartupScript(this.GetType(), "AddClassToTable", script);
     }
 
     /// <summary>

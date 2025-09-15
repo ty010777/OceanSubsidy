@@ -61,13 +61,13 @@
                 </tr>
                 <tr>
                     <th>
-                        <span class="text-pink">*</span>
+                        <span class="text-pink view-mode">*</span>
                         計畫名稱
                     </th>
                     <td>
                         <div class="input-group">
                             <span class="input-group-text" style="width: 70px;">
-                                <span class="text-pink">*</span>
+                                <span class="text-pink view-mode">*</span>
                                 中文
                             </span>
                             <asp:TextBox ID="txtProjectNameCh"  CssClass="form-control" runat="server" /> 
@@ -82,7 +82,7 @@
                 </tr>
                 <tr>
                     <th>
-                        <span class="text-pink">*</span>
+                        <span class="text-pink view-mode">*</span>
                         申請類別
                     </th>
                     <td>
@@ -91,7 +91,7 @@
                 </tr>
                 <tr>
                     <th>
-                        <span class="text-pink">*</span>
+                        <span class="text-pink view-mode">*</span>
                         主題、領域
                     </th>
                     <td>
@@ -113,7 +113,7 @@
                 </tr>
                 <tr>
                     <th>
-                        <span class="text-pink">*</span>
+                        <span class="text-pink view-mode">*</span>
                         是否屬於國家核心科技
                     </th>
                     <td>
@@ -150,7 +150,7 @@
                 </tr>
                 <tr>
                     <th>
-                        <span class="text-pink">*</span>
+                        <span class="text-pink view-mode">*</span>
                         申請單位<br>(含系所名稱)
                     </th>
                     <td>
@@ -159,7 +159,7 @@
                 </tr>
                 <tr>
                     <th>
-                        <span class="text-pink">*</span>
+                        <span class="text-pink view-mode">*</span>
                         登記地址
                     </th>
                     <td>
@@ -168,7 +168,7 @@
                 </tr>
                 <tr>
                     <th>
-                        <span class="text-pink">*</span>
+                        <span class="text-pink view-mode">*</span>
                         通訊地址<br>
                         (公文寄送地址)
                     </th>
@@ -188,7 +188,7 @@
             <tbody>
                 <tr>
                     <th>
-                        <span class="text-pink">*</span>
+                        <span class="text-pink view-mode">*</span>
                         計畫主持人
                     </th>
                     <td style="display:none;"><asp:Label ID="txtPIIdx" runat="server" Text="0" /></td>
@@ -197,7 +197,7 @@
                         <div class="row g-3">
                             <div class="col-12 col-xl-2">
                                 <div class="mb-2">
-                                    <span class="text-pink">*</span>
+                                    <span class="text-pink view-mode">*</span>
                                     姓名
                                 </div>
                                 <asp:TextBox ID="txtPIName" runat="server" CssClass="form-control" placeholder="請輸入姓名" />
@@ -205,7 +205,7 @@
                             </div>
                             <div class="col-12 col-xl-3">
                                 <div class="mb-2">
-                                    <span class="text-pink">*</span>
+                                    <span class="text-pink view-mode">*</span>
                                     職稱
                                 </div>
                                 <asp:TextBox ID="txtPIJobTitle" runat="server" CssClass="form-control" placeholder="請輸入職稱"/>
@@ -222,7 +222,7 @@
                             </div>
                             <div class="col-12 col-xl-3">
                                 <div class="mb-2">
-                                    <span class="text-pink">*</span>
+                                    <span class="text-pink view-mode">*</span>
                                     手機號碼
                                 </div>
                                 <asp:TextBox ID="txtPIMobile" runat="server" CssClass="form-control" placeholder="請輸入手機號碼"/>
@@ -232,7 +232,7 @@
                 </tr>
                 <tr>
                     <th>
-                        <span class="text-pink">*</span>
+                        <span class="text-pink view-mode">*</span>
                         計畫聯絡人
                     </th>
                     <td style="display:none;"><asp:Label ID="txtContactIdx" runat="server" Text="0" /></td>
@@ -240,14 +240,14 @@
                         <div class="row g-3">
                             <div class="col-12 col-xl-2">
                                 <div class="mb-2">
-                                    <span class="text-pink">*</span>
+                                    <span class="text-pink view-mode">*</span>
                                     姓名
                                 </div>
                                 <asp:TextBox ID="txtContactName" runat="server" CssClass="form-control" placeholder="請輸入姓名"/>
                             </div>
                             <div class="col-12 col-xl-3">
                                 <div class="mb-2">
-                                    <span class="text-pink">*</span>
+                                    <span class="text-pink view-mode">*</span>
                                     職稱
                                 </div>
                                 <asp:TextBox ID="txtContactJobTitle" runat="server" CssClass="form-control" placeholder="請輸入職稱"/>
@@ -264,7 +264,7 @@
                             </div>
                             <div class="col-12 col-xl-3">
                                 <div class="mb-2">
-                                    <span class="text-pink">*</span>
+                                    <span class="text-pink view-mode">*</span>
                                     手機號碼
                                 </div>
                                 <asp:TextBox ID="txtContactMobile" runat="server" CssClass="form-control" placeholder="請輸入手機號碼"/>
@@ -323,59 +323,59 @@
             <tbody>
                 <tr>
                     <th>
-                        <span class="text-pink">*</span>
+                        <span class="text-pink view-mode">*</span>
                         計畫目標
                     </th>
                     <td>
-                        <asp:TextBox  ID="txtTarget" runat="server"  CssClass="form-control textarea" 
+                        <asp:TextBox  ID="txtTarget" runat="server"  CssClass="form-control textarea textarea-auto-resize " 
                             TextMode="MultiLine"  
                             Rows="6"  
                             placeholder="請輸入計畫目標"
                             data-max-length="500" />
-                        <div class="fs-14 text-gray mt-2"> <span class="text-pink char-count">0</span> </div>
+                        <div class="fs-14 text-gray mt-2 view-mode"> <span class="text-pink char-count ">0</span> </div>
                     </td>
                 </tr>
                 <tr>
                     <th>
-                        <span class="text-pink">*</span>
+                        <span class="text-pink view-mode">*</span>
                         計畫內容摘要
                     </th>
                     <td>
                         <asp:TextBox ID="txtSummary" runat="server"  
                             TextMode="MultiLine"  
                             Rows="6"  
-                            CssClass="form-control textarea"  
+                            CssClass="form-control textarea textarea-auto-resize"  
                             placeholder="請輸入計畫內容摘要，說明主要研究內容與方法..."  
                             data-max-length="500" />
-                        <div class="fs-14 text-gray mt-2"><span class="text-pink char-count">0</span> </div>
+                        <div class="fs-14 text-gray mt-2 view-mode"><span class="text-pink char-count">0</span> </div>
                     </td>
                 </tr>
                 <tr>
                     <th>
-                        <span class="text-pink">*</span>
+                        <span class="text-pink view-mode">*</span>
                         計畫創新重點
                     </th>
                     <td>
                         
-                         <asp:TextBox ID="txtInnovation" runat="server"  
+                         <asp:TextBox ID="txtInnovation" runat="server" 
                                     TextMode="MultiLine"  
                                     Rows="5"  
-                                    CssClass="form-control textarea"  
+                                    CssClass="form-control textarea textarea-auto-resize"  
                                     placeholder="請輸入計畫的創新特色與技術突破點..."  
                                     data-max-length="250" /> 
-                         <div class="fs-14 text-gray mt-2"> <span class="text-pink char-count">0</span> </div>
+                         <div class="fs-14 text-gray mt-2 view-mode"> <span class="text-pink char-count">0</span> </div>
                     </td>
                 </tr>
                 <tr>
                     <th>
-                        <span class="text-pink">*</span>
+                        <span class="text-pink view-mode">*</span>
                         關鍵字<br>(至少3組)
                     </th>
                     <td>
                         <div id="keywordsContainer" class="d-flex flex-column gap-3">
                             <!-- 動態關鍵字容器 -->
                         </div>
-                        <button type="button" id="btnAddKeyword" class="btn btn-blue-green2 mt-3 ms-auto d-table">新增</button>
+                        <button type="button" id="btnAddKeyword" class="btn btn-blue-green2 mt-3 ms-auto  view-mode">新增</button>
                         <!-- 隱藏欄位儲存關鍵字資料 -->
                         <asp:HiddenField ID="hiddenKeywordsData" runat="server" />
                     </td>
@@ -383,8 +383,8 @@
             </tbody>
         </table>
     </div>
-    <div >
-        <h5 class="square-title mt-5" >聲明書</h5>
+    <div class="view-mode">
+        <h5 class="square-title mt-5 " >聲明書</h5>
         <div class="agreement-panel">
 
             <div class="agreement-content" id="agreementContent">

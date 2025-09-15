@@ -33,9 +33,83 @@
                 }
             });
         });
-        $('form').on('submit', function () {
-            const reviewNotes = $('[name="reviewNotes"]').text().trim();
-            $('#reviewNotesHidden').val(reviewNotes);
+    
+        // AJAX 送出審查結果
+        document.addEventListener('DOMContentLoaded', function() {
+            var btnConfirmReview = document.getElementById('btnConfirmReview');
+            if (btnConfirmReview) {
+                btnConfirmReview.addEventListener('click', function() {
+
+                    // 取得表單資料
+                    var reviewResult = document.querySelector('input[name="reviewResult"]:checked');
+                    var returnDate = document.querySelector('input[name="returnDate"]');
+                    var reviewNotes = document.querySelector('[name="reviewNotes"]');
+                    var projectId = '<%= ProjectID %>';
+
+                    var reviewResultValue = reviewResult ? reviewResult.value : '';
+                    var returnDateValue = returnDate ? returnDate.value : '';
+                    var reviewNotesValue = reviewNotes ? reviewNotes.textContent.trim() : '';
+                    // 驗證必填欄位
+                    if (!reviewResultValue) {
+                        Swal.fire({
+                            title: '錯誤',
+                            text: '請選擇審查結果',
+                            icon: 'error',
+                            confirmButtonText: '確定'
+                        });
+                        return;
+                    }
+
+                    // 準備要送出的資料
+                    var postData = {
+                        reviewResult: reviewResultValue,
+                        returnDate: returnDateValue,
+                        reviewNotes: reviewNotesValue,
+                        projectId: projectId
+                    };
+
+                    // 送出 AJAX 請求
+                    fetch('SciApplicationReview.aspx/ConfirmReview', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json; charset=utf-8'
+                        },
+                        body: JSON.stringify(postData)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('伺服器回應:', data);
+                        if (data.d.success) {
+                            Swal.fire({
+                                title: '成功',
+                                text: data.d.message,
+                                icon: 'success',
+                                confirmButtonText: '確定'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.location.href = '<%= ResolveUrl("~/OFS/ReviewChecklist.aspx") %>';
+                                }
+                            });
+                        } else {
+                            Swal.fire({
+                                title: '錯誤',
+                                text: data.d.message,
+                                icon: 'error',
+                                confirmButtonText: '確定'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('AJAX 錯誤:', error);
+                        Swal.fire({
+                            title: '錯誤',
+                            text: '提交審查結果時發生錯誤，請稍後再試',
+                            icon: 'error',
+                            confirmButtonText: '確定'
+                        });
+                    });
+                });
+            }
         });
     </script>
     
@@ -165,7 +239,7 @@
                 </div>
             </li>
         </ul>
-        <asp:Button ID="btnConfirmReview" runat="server" Text="確定" CssClass="btn btn-teal d-table mx-auto" OnClick="btnConfirmReview_Click"/>
+        <button type="button" id="btnConfirmReview" clientidmode="Static" class="btn btn-teal d-table mx-auto">確定</button>
         <asp:HiddenField ID="hdnAssignedReviewerAccount" runat="server" />
     </div>
 

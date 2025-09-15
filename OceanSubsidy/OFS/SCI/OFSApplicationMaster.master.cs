@@ -29,67 +29,127 @@ public partial class OFSApplicationMaster : System.Web.UI.MasterPage
             case "編輯":
                 DisplayMode = DisplayModeEnum.Edit;
                 break;
-                
+
             case "檢視":
                 DisplayMode = DisplayModeEnum.View;
                 break;
-                
+
             default:
                 DisplayMode = DisplayModeEnum.View; // 預設為檢視模式（安全考量）
                 break;
         }
-        
+
         // 立即套用模式
         ApplyModeToPage();
     }
-    
+
     private void ApplyModeToPage()
     {
-        // 簡單的控制邏輯：禁用所有表單元素
+        // 在檢視模式時禁用所有輸入控制項
         if (IsViewMode)
         {
-            DisableAllControls(this.Page);
+            // DisableAllControls(this.Page);
             AddViewModeStyles();
         }
     }
-    
-    private void DisableAllControls(Control parent)
-    {
-        foreach (Control control in parent.Controls)
-        {
-            // 只禁用按鈕類型的控制項
-            if (control is System.Web.UI.WebControls.Button btn)
-                btn.Enabled = false;
-            else if (control is System.Web.UI.WebControls.LinkButton linkBtn)
-                linkBtn.Enabled = false;
-            else if (control is System.Web.UI.WebControls.ImageButton imgBtn)
-                imgBtn.Enabled = false;
-            else if (control is System.Web.UI.HtmlControls.HtmlInputButton htmlButton)
-                htmlButton.Disabled = true;
-            
-            // 遞迴處理子控制項
-            if (control.HasControls())
-                DisableAllControls(control);
-        }
-    }
-    
+
+    // private void DisableAllControls(Control parent)
+    // {
+    //     foreach (Control control in parent.Controls)
+    //     {
+    //         // 禁用按鈕類型的控制項
+    //         if (control is System.Web.UI.WebControls.Button btn)
+    //             btn.Enabled = false;
+    //         else if (control is System.Web.UI.WebControls.LinkButton linkBtn)
+    //             linkBtn.Enabled = false;
+    //         else if (control is System.Web.UI.WebControls.ImageButton imgBtn)
+    //             imgBtn.Enabled = false;
+    //         else if (control is System.Web.UI.HtmlControls.HtmlInputButton htmlButton)
+    //             htmlButton.Disabled = true;
+    //
+    //         // 禁用輸入類型的控制項
+    //         else if (control is System.Web.UI.WebControls.TextBox textBox)
+    //             textBox.Enabled = false;
+    //         else if (control is System.Web.UI.WebControls.DropDownList dropDown)
+    //             dropDown.Enabled = false;
+    //         else if (control is System.Web.UI.WebControls.CheckBox checkBox)
+    //             checkBox.Enabled = false;
+    //         else if (control is System.Web.UI.WebControls.RadioButton radioButton)
+    //             radioButton.Enabled = false;
+    //         else if (control is System.Web.UI.WebControls.RadioButtonList radioButtonList)
+    //             radioButtonList.Enabled = false;
+    //         else if (control is System.Web.UI.WebControls.CheckBoxList checkBoxList)
+    //             checkBoxList.Enabled = false;
+    //         else if (control is System.Web.UI.WebControls.ListBox listBox)
+    //             listBox.Enabled = false;
+    //         else if (control is System.Web.UI.WebControls.FileUpload fileUpload)
+    //             fileUpload.Enabled = false;
+    //         else if (control is System.Web.UI.HtmlControls.HtmlInputText htmlInputText)
+    //             htmlInputText.Disabled = true;
+    //         else if (control is System.Web.UI.HtmlControls.HtmlInputFile htmlInputFile)
+    //             htmlInputFile.Disabled = true;
+    //         else if (control is System.Web.UI.HtmlControls.HtmlInputCheckBox htmlInputCheckBox)
+    //             htmlInputCheckBox.Disabled = true;
+    //         else if (control is System.Web.UI.HtmlControls.HtmlInputRadioButton htmlInputRadioButton)
+    //             htmlInputRadioButton.Disabled = true;
+    //         else if (control is System.Web.UI.HtmlControls.HtmlSelect htmlSelect)
+    //             htmlSelect.Disabled = true;
+    //         else if (control is System.Web.UI.HtmlControls.HtmlTextArea htmlTextArea)
+    //             htmlTextArea.Disabled = true;
+    //
+    //         // 遞迴處理子控制項
+    //         if (control.HasControls())
+    //             DisableAllControls(control);
+    //     }
+    // }
+
     private void AddViewModeStyles()
     {
-        // 使用 JavaScript 添加檢視模式的 CSS 類別並禁用按鈕
+        // 使用 JavaScript 添加檢視模式的 CSS 類別並禁用輸入控制項
         string script = @"
             document.addEventListener('DOMContentLoaded', function() {
                 document.body.classList.add('app-mode-view');
-                
-                // 只禁用純 HTML 按鈕
-                var buttons = document.querySelectorAll('button, input[type=""button""], input[type=""submit""], input[type=""reset""]');
-                buttons.forEach(function(button) {
-                    button.disabled = true;
+
+                // 禁用所有表單元素，但跳過 UserInfo div 內的元素
+                var formElements = document.querySelectorAll('input, textarea, select, button');
+                formElements.forEach(function(element) {
+                    // 檢查元素是否在 UserInfo div 內
+                    if (!element.closest('#UserInfo, #FuncBtn')) {
+                        element.disabled = true;
+                        element.readOnly = true;
+                    }
                 });
+
+                // 將所有有 view-mode class 的元件加上 d-none class
+                var viewModeElements = document.querySelectorAll('.view-mode');
+                viewModeElements.forEach(function(element) {
+                    element.classList.add('d-none');
+                });
+
+                // 特別處理一些可能動態生成的元素
+                setTimeout(function() {
+                    var dynamicElements = document.querySelectorAll('input, textarea, select, button');
+                    dynamicElements.forEach(function(element) {
+                        // 檢查元素是否在 UserInfo div 內且尚未被禁用
+                        if (!element.disabled && !element.closest('#UserInfo, #FuncBtn')) {
+                            element.disabled = true;
+                            element.readOnly = true;
+                        }
+                    });
+
+                    // 再次處理可能動態生成的 view-mode 元素
+                    var dynamicViewModeElements = document.querySelectorAll('.view-mode');
+                    dynamicViewModeElements.forEach(function(element) {
+                        if (!element.classList.contains('d-none')) {
+                            element.classList.add('d-none');
+                        }
+                    });
+                }, 1000);
             });
         ";
-        
         Page.ClientScript.RegisterStartupScript(this.GetType(), "AddViewModeStyles", script, true);
     }
+    
     
     protected void Page_Load(object sender, EventArgs e)
     {

@@ -19,7 +19,7 @@
     <uc:ChangeDescriptionControl ID="ucChangeDescription" runat="server" SourcePage="SciRecusedList" />
     
     <!-- 底部區塊 -->
-    <div class="block-bottom bg-light-teal">
+    <div class="block-bottom bg-light-teal view-mode">
         <asp:Button ID="btnTempSave" runat="server" Text="暫存" CssClass="btn btn-outline-teal" OnClick="btnSave_Click" />
         <asp:Button ID="btnNext" runat="server" Text="完成本頁，下一步" CssClass="btn btn-teal" OnClick="btnNext_Click" />
     </div>

@@ -92,5 +92,5 @@
     <asp:HiddenField ID="hdnProjectID" runat="server" />
     
     <!-- 子頁面內容 -->
-    <asp:ContentPlaceHolder ID="ApplicationContent" runat="server" />
+    <asp:ContentPlaceHolder ID="ApplicationContent" runat="server"  />
 </asp:Content>

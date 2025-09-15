@@ -21,7 +21,7 @@
     <uc:ChangeDescriptionControl ID="ucChangeDescription" runat="server" SourcePage="SciUploadAttachments" />
     
     <!-- 底部區塊 -->
-    <div class="block-bottom bg-light-teal">
+    <div class="block-bottom bg-light-teal view-mode">
         <asp:Button ID="btnSave" runat="server" 
             CssClass="btn btn-outline-teal" 
             Text="暫存" OnClick="btnSave_Click" />

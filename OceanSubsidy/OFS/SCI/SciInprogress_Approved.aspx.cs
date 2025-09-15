@@ -144,6 +144,7 @@ public partial class OFS_SCI_SciInprogress_Approved : System.Web.UI.Page
                 document.getElementById('transferCaseModal').querySelector('.btn-close').click();
             ";
             Page.ClientScript.RegisterStartupScript(this.GetType(), "closeModal", script, true);
+            LoadAllUserControlData();
         }
         catch (Exception ex)
         {
@@ -244,44 +245,43 @@ public partial class OFS_SCI_SciInprogress_Approved : System.Web.UI.Page
     private void RegisterViewModeScript()
     {
         string script = @"
-            setTimeout(function() {
-                // 將所有輸入元素設為唯讀，但排除移轉案件 Modal 中的元素
-                $('input, textarea, select').not('#transferCaseModal input, #transferCaseModal textarea, #transferCaseModal select').each(function() {
-                    var $element = $(this);
-                    
-                    // 統一設為 readOnly 或 disabled
-                    if ($element.is('input[type=text], input[type=number], input[type=email], input[type=tel], textarea')) {
-                        $element.prop('readOnly', true);
-                    } else if ($element.is('select')) {
-                        $element.prop('disabled', true); 
-                    } else if ($element.is('input[type=checkbox], input[type=radio]')) {
-                        $element.prop('disabled', true); 
+           document.addEventListener('DOMContentLoaded', function() {
+                document.body.classList.add('app-mode-view');
+
+                // 禁用所有表單元素，但跳過 UserInfo div 內的元素
+                var formElements = document.querySelectorAll('input, textarea, select');
+                formElements.forEach(function(element) {
+                    // 檢查元素是否在 UserInfo div 內
+                    if (!element.closest('#UserInfo, #FuncBtn,#transferCaseModal')) {
+                        element.disabled = true;
                     }
                 });
-                
-                // 隱藏操作按鈕，但保留重要的按鈕
-                $('button').not('.btn-close, [data-bs-dismiss=modal], [data-bs-toggle=modal], .btn-teal-dark, .btn-pink, .btn-teal, #transferCaseModal button').each(function() {
-                    var $element = $(this);
-                    var buttonText = $element.text().trim();
-                    
-                    // 保留重要按鈕
-                    if (buttonText.indexOf('計畫變更申請') === -1 && 
-                        buttonText.indexOf('計畫變更紀錄') === -1 && 
-                        buttonText.indexOf('下載核定計畫書') === -1 && 
-                        buttonText.indexOf('計畫終止') === -1 &&
-                        buttonText.indexOf('移轉案件') === -1 &&
-                        buttonText.indexOf('確認移轉') === -1 &&
-                        buttonText.indexOf('查核紀錄') === -1) {
-                        $element.hide();
-                    }
+
+                // 將所有有 view-mode class 的元件加上 d-none class
+                var viewModeElements = document.querySelectorAll('.view-mode');
+                viewModeElements.forEach(function(element) {
+                    element.classList.add('d-none');
                 });
-             
-                // 特別處理動態生成的關鍵字欄位
-                $('.keyword-ch, .keyword-en').prop('readOnly', true);
-                
-                // 隱藏所有新增/刪除按鈕
-                $('.delete-keyword, .add-keyword, .add-row, .delete-row, .btn-add, .btn-delete').hide();
-            }, 1500);
+
+                // 特別處理一些可能動態生成的元素
+                setTimeout(function() {
+                    var dynamicElements = document.querySelectorAll('input ,textarea, select');
+                    dynamicElements.forEach(function(element) {
+                        // 檢查元素是否在 UserInfo div 內且尚未被禁用
+                        if (!element.disabled && !element.closest('#UserInfo, #FuncBtn,#transferCaseModal')) {
+                            element.disabled = true;
+                        }
+                    });
+
+                    // 再次處理可能動態生成的 view-mode 元素
+                    var dynamicViewModeElements = document.querySelectorAll('.view-mode');
+                    dynamicViewModeElements.forEach(function(element) {
+                        if (!element.classList.contains('d-none')) {
+                            element.classList.add('d-none');
+                        }
+                    });
+                }, 1000);
+            });
         ";
         
         Page.ClientScript.RegisterStartupScript(this.GetType(), "ApplyViewMode", script, true);

@@ -137,7 +137,7 @@ const KeywordManager = {
         keywordRow.dataset.keywordId = keywordId;
 
         const isRequired = this.keywordCounter <= this.minKeywords;
-        const requiredStar = isRequired ? '<span class="text-pink">*</span>' : '';
+        const requiredStar = isRequired ? '<span class="text-pink view-mode">*</span>' : '';
 
         keywordRow.innerHTML = `
     <div class="col-12 col-md-5">

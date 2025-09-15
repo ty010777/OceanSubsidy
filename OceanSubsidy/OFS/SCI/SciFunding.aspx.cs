@@ -25,14 +25,14 @@ public partial class OFS_SciFunding : System.Web.UI.Page
             {
                 // 載入 UserControl 資料
                 string projectId = Request.QueryString["ProjectID"];
-                string isViewMode = Request.QueryString["IsViewMode"];
+                var isViewMode = !ShouldShowInEditMode();
                 
                 if (!string.IsNullOrEmpty(projectId))
                 {
-                    sciFundingControl.LoadData(projectId, isViewMode == "true");
+                    sciFundingControl.LoadData(projectId, isViewMode );
                     
                     // 載入變更說明控制項
-                    ucChangeDescription.LoadData(projectId, isViewMode == "true");
+                    ucChangeDescription.LoadData(projectId, isViewMode );
                 }
                 
                 CheckFormStatusAndHideTempSaveButton();

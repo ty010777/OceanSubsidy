@@ -26,20 +26,20 @@
     <div id="point1">
         <h5 class="square-title">1.海洋科技研發人員人事費明細表</h5>
         <div class="table-responsive mt-3 mb-0">
-            <table class="table align-middle gray-table person">
+            <table class="table align-middle gray-table person" id ="point1Table">
                 <thead>
                 <tr>
-                    <th width="150"><span class="text-pink">*</span>姓名</th>
+                    <th width="150"><span class="text-pink view-mode">*</span>姓名</th>
                     <th class="text-center">待聘</th>
                     <th width="350">
-                        <span class="text-pink">*</span>職稱
+                        <span class="text-pink view-mode">*</span>職稱
                         <button type="button" class="btn-tooltip" data-bs-toggle="modal" data-bs-target="#jobDetailModal">
                             <i class="fas fa-info-circle"></i>
                         </button>
                     </th>
-                    <th class="text-end"><span class="text-pink">*</span>平均月薪</th>
-                    <th class="text-end"><span class="text-pink">*</span>參與人月</th>
-                    <th class="text-end"><span class="text-pink">*</span>人事費小計</th>
+                    <th class="text-end"><span class="text-pink view-mode">*</span>平均月薪</th>
+                    <th class="text-end"><span class="text-pink view-mode">*</span>參與人月</th>
+                    <th class="text-end"><span class="text-pink view-mode">*</span>人事費小計</th>
                     <th width="130">功能</th>
                 </tr>
                 </thead>
@@ -91,7 +91,7 @@
     <div id="point2">
         <h5 class="square-title mt-5">2.消耗性器材及原材料費</h5>
         <div class="table-responsive mt-3 mb-0">
-            <table class="table align-middle gray-table Material">
+            <table class="table align-middle gray-table Material" id = "point2Table">
                 <thead>
                 <tr>
                     <th>品名</th>
@@ -152,7 +152,7 @@
     <div id="point3">
         <h5 class="square-title mt-5">3.技術移轉、委託研究或驗證費</h5>
         <div class="table-responsive mt-3 mb-0">
-            <table class="table align-middle gray-table ResearchFees">
+            <table class="table align-middle gray-table ResearchFees" id="point3Table">
                 <thead>
                 <tr>
                     <th></th>
@@ -289,15 +289,15 @@
                 <thead>
                 <tr>
                     <th width="350">
-                        <span class="text-pink">*</span>職稱
+                        <span class="text-pink view-mode">*</span>職稱
                         <button type="button" class="btn-tooltip" data-bs-toggle="modal" data-bs-target="#jobDetailModal">
                             <i class="fas fa-info-circle"></i>
                         </button>
                     </th>
-                    <th class="text-end"><span class="text-pink">*</span>平均月薪</th>
-                    <th class="text-end"><span class="text-pink">*</span>參與人月</th>
-                    <th class="text-end"><span class="text-pink">*</span>人數</th>
-                    <th class="text-end"><span class="text-pink">*</span>人事費小計</th>
+                    <th class="text-end"><span class="text-pink view-mode">*</span>平均月薪</th>
+                    <th class="text-end"><span class="text-pink view-mode">*</span>參與人月</th>
+                    <th class="text-end"><span class="text-pink view-mode">*</span>人數</th>
+                    <th class="text-end"><span class="text-pink view-mode">*</span>人事費小計</th>
                     <th width="150">功能</th>
                 </tr>
                 </thead>
@@ -383,10 +383,10 @@
                 <tr>
                     <th></th>
                     <th width="130" class="text-end">
-                        <span class="text-pink">*</span>補助款(A)
+                        <span class="text-pink view-mode">*</span>補助款(A)
                     </th>
                     <th width="130" class="text-end">
-                        <span class="text-pink">*</span>配合款(B)
+                        <span class="text-pink view-mode">*</span>配合款(B)
                     </th>
                     <th width="130" class="text-end">合計(C)</th>
                     <th width="130" class="text-end">佔總經費比率<br>

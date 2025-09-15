@@ -3,13 +3,13 @@
 <!-- 內容區塊 -->
 <div class="block">
     <h5 class="square-title">上傳附件</h5>
-    <p class="text-pink lh-base mt-3">
+    <p class="text-pink view-mode lh-base mt-3">
         請下載附件範本，填寫資料及公文用印後上傳（僅支援PDF格式上傳，每個檔案10MB以內）<br>
         計畫書請自行留存送審版電子檔，待決審核定經費後請提交修正計畫書以供核定。
     </p>
     <!-- 學研表單 (預設顯示，Academic/Legal) -->
     <div class="table-responsive mt-3 mb-0" id="academicForm" runat="server">
-        <table class="table align-middle gray-table">
+        <table class="table align-middle gray-table" id="academicTable">
             <thead class="text-center">
                 <tr>
                     <th width="60">附件編號</th>
@@ -31,10 +31,10 @@
                     <td class="text-center">2</td>
                     <td>
                         <div>
-                            <span class="text-pink">*</span>
+                            <span class="text-pink view-mode">*</span>
                             海洋科技科專案計畫書
                         </div>
-                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2 view-mode" 
                                 onclick="window.SciUploadAttachments.downloadTemplate('FILE_AC2')">
                             <i class="fas fa-file-download me-1"></i> 範本下載
                         </button>
@@ -44,7 +44,7 @@
                     </td>
                     <td>
                         <input type="file" id="fileInput_FILE_AC2" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_AC2', this)" />
-                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_AC2').click()">
+                        <button class="btn btn-teal-dark view-mode" type="button" onclick="document.getElementById('fileInput_FILE_AC2').click()">
                             <i class="fas fa-file-upload me-1"></i> 上傳
                         </button>
                         <asp:Panel ID="pnlFilesAcademic2" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
@@ -56,10 +56,10 @@
                     <td>
                      
                         <div>
-                            <span class="text-pink">*</span>
+                            <span class="text-pink view-mode">*</span>
                             建議迴避之審查委員清單
                         </div>
-                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2 view-mode" 
                                 onclick="window.SciUploadAttachments.downloadTemplate('FILE_AC3')">
                             <i class="fas fa-file-download me-1"></i> 範本下載
                         </button>
@@ -69,7 +69,7 @@
                     </td>
                     <td>
                         <input type="file" id="fileInput_FILE_AC3" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_AC3', this)" />
-                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_AC3').click()">
+                        <button class="btn btn-teal-dark view-mode" type="button" onclick="document.getElementById('fileInput_FILE_AC3').click()">
                             <i class="fas fa-file-upload me-1"></i> 上傳
                         </button>
                         <asp:Panel ID="pnlFilesAcademic3" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
@@ -81,10 +81,10 @@
                     <td>
 
                          <div>
-                            <span class="text-pink">*</span>
+                            <span class="text-pink view-mode">*</span>
                             未違反公職人員利益衝突迴避法切結書
                         </div>
-                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2 view-mode" 
                                 onclick="window.SciUploadAttachments.downloadTemplate('FILE_AC4')">
                             <i class="fas fa-file-download me-1"></i> 範本下載
                         </button>
@@ -94,7 +94,7 @@
                     </td>
                     <td>
                         <input type="file" id="fileInput_FILE_AC4" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_AC4', this)" />
-                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_AC4').click()">
+                        <button class="btn btn-teal-dark view-mode" type="button" onclick="document.getElementById('fileInput_FILE_AC4').click()">
                             <i class="fas fa-file-upload me-1"></i> 上傳
                         </button>
                         <asp:Panel ID="pnlFilesAcademic4" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
@@ -105,10 +105,10 @@
                     <td class="text-center">5</td>
                     <td>
                         <div>
-                            <span class="text-pink">*</span>
+                            <span class="text-pink view-mode">*</span>
                             蒐集個人資料告知事項暨個人資料提供同意書
                         </div>
-                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2 view-mode" 
                                 onclick="window.SciUploadAttachments.downloadTemplate('FILE_AC5')">
                             <i class="fas fa-file-download me-1"></i> 範本下載
                         </button> 
@@ -119,7 +119,7 @@
                     </td>
                     <td>
                         <input type="file" id="fileInput_FILE_AC5" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_AC5', this)" />
-                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_AC5').click()">
+                        <button class="btn btn-teal-dark view-mode" type="button" onclick="document.getElementById('fileInput_FILE_AC5').click()">
                             <i class="fas fa-file-upload me-1"></i> 上傳
                         </button>
                         <asp:Panel ID="pnlFilesAcademic5" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
@@ -130,10 +130,10 @@
                     <td class="text-center">6</td>
                     <td>
                         <div>
-                            <span class="text-pink">*</span>
+                            <span class="text-pink view-mode">*</span>
                             共同執行單位基本資料表
                         </div>
-                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2 view-mode" 
                                 onclick="window.SciUploadAttachments.downloadTemplate('FILE_AC6')">
                             <i class="fas fa-file-download me-1"></i> 範本下載
                         </button> 
@@ -144,7 +144,7 @@
                     </td>
                     <td>
                         <input type="file" id="fileInput_FILE_AC6" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_AC6', this)" />
-                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_AC6').click()">
+                        <button class="btn btn-teal-dark view-mode" type="button" onclick="document.getElementById('fileInput_FILE_AC6').click()">
                             <i class="fas fa-file-upload me-1"></i> 上傳
                         </button>
                         <asp:Panel ID="pnlFilesAcademic6" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
@@ -155,10 +155,10 @@
                     <td class="text-center">7</td>
                     <td>
                         <div>
-                            <span class="text-pink">*</span>
+                            <span class="text-pink view-mode">*</span>
                             申請人自我檢查表
                         </div>
-                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2 view-mode" 
                                 onclick="window.SciUploadAttachments.downloadTemplate('FILE_AC7')">
                             <i class="fas fa-file-download me-1"></i> 範本下載
                         </button> 
@@ -169,7 +169,7 @@
                     </td>
                     <td>
                         <input type="file" id="fileInput_FILE_AC7" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_AC7', this)" />
-                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_AC7').click()">
+                        <button class="btn btn-teal-dark view-mode" type="button" onclick="document.getElementById('fileInput_FILE_AC7').click()">
                             <i class="fas fa-file-upload me-1"></i> 上傳
                         </button>
                         <asp:Panel ID="pnlFilesAcademic7" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
@@ -188,10 +188,10 @@
                     <td class="text-center">9</td>
                     <td>
                         <div>
-                            <span class="text-pink">*</span>
+                            <span class="text-pink view-mode">*</span>
                             <asp:Label ID="lblContractName" runat="server" Text="海洋委員會補助科技專案計畫契約書"></asp:Label>
                         </div>
-                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2 view-mode" 
                                 onclick="window.SciUploadAttachments.downloadTemplate('FILE_AC9')">
                             <i class="fas fa-file-download me-1"></i>範本下載
                         </button> 
@@ -202,7 +202,7 @@
                     </td>
                     <td>
                         <input type="file" id="fileInput_FILE_AC9" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_AC9', this)" />
-                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_AC9').click()">
+                        <button class="btn btn-teal-dark view-mode" type="button" onclick="document.getElementById('fileInput_FILE_AC9').click()">
                             <i class="fas fa-file-upload me-1"></i> 上傳
                         </button>
                         <asp:Panel ID="pnlFilesAcademic9" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
@@ -221,10 +221,10 @@
                     <td class="text-center">11</td>
                     <td>
                         <div>
-                            <span class="text-pink">*</span>
+                            <span class="text-pink view-mode">*</span>
                             海洋科技專案成效追蹤自評表
                         </div>
-                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2 view-mode"  
                                 onclick="window.SciUploadAttachments.downloadTemplate('FILE_AC11')">
                             <i class="fas fa-file-download me-1"></i> 範本下載
                         </button> 
@@ -235,7 +235,7 @@
                     </td>
                     <td>
                         <input type="file" id="fileInput_FILE_AC11" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_AC11', this)" />
-                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_AC11').click()">
+                        <button class="btn btn-teal-dark view-mode" type="button" onclick="document.getElementById('fileInput_FILE_AC11').click()">
                             <i class="fas fa-file-upload me-1"></i> 上傳
                         </button>
                         <asp:Panel ID="pnlFilesAcademic11" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
@@ -262,9 +262,9 @@
         </table>
     </div>
 
-    <!-- 業者表單 (OceanTech，缺少項目6及11) -->
+    <!-- 業者表單 (OceanTech) -->
     <div class="table-responsive mt-3 mb-0 d-none" id="oceanTechForm" runat="server">
-        <table class="table align-middle gray-table">
+        <table class="table align-middle gray-table" id="oceanTechTable">
             <thead class="text-center">
                 <tr>
                     <th width="60">附件編號</th>
@@ -286,10 +286,10 @@
                     <td class="text-center">2</td>
                     <td>
                         <div>
-                            <span class="text-pink">*</span>
+                            <span class="text-pink view-mode">*</span>
                             海洋科技科專案計畫書
                         </div>
-                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2 view-mode" 
                                 onclick="window.SciUploadAttachments.downloadTemplate('FILE_OTech2')">
                             <i class="fas fa-file-download me-1"></i> 範本下載
                         </button>
@@ -299,7 +299,7 @@
                     </td>
                     <td>
                         <input type="file" id="fileInput_FILE_OTech2" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_OTech2', this)" />
-                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_OTech2').click()">
+                        <button class="btn btn-teal-dark view-mode" type="button" onclick="document.getElementById('fileInput_FILE_OTech2').click()">
                             <i class="fas fa-file-upload me-1"></i> 上傳
                         </button>
                         <asp:Panel ID="pnlFiles_OTech2" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
@@ -310,10 +310,10 @@
                     <td class="text-center">3</td>
                     <td>
                         <div>
-                            <span class="text-pink">*</span>
+                            <span class="text-pink view-mode">*</span>
                             建議迴避之審查委員清單
                         </div>
-                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2 view-mode" 
                                 onclick="window.SciUploadAttachments.downloadTemplate('FILE_OTech3')">
                             <i class="fas fa-file-download me-1"></i> 範本下載
                         </button>
@@ -323,7 +323,7 @@
                     </td>
                     <td>
                         <input type="file" id="fileInput_FILE_OTech3" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_OTech3', this)" />
-                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_OTech3').click()">
+                        <button class="btn btn-teal-dark view-mode" type="button" onclick="document.getElementById('fileInput_FILE_OTech3').click()">
                             <i class="fas fa-file-upload me-1"></i> 上傳
                         </button>
                         <asp:Panel ID="pnlFiles_OTech3" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
@@ -334,10 +334,10 @@
                     <td class="text-center">4</td>
                     <td>
                         <div>
-                            <span class="text-pink">*</span>
+                            <span class="text-pink view-mode">*</span>
                             未違反公職人員利益衝突迴避法切結書
                         </div>
-                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2 view-mode" 
                                 onclick="window.SciUploadAttachments.downloadTemplate('FILE_OTech4')">
                             <i class="fas fa-file-download me-1"></i> 範本下載
                         </button>
@@ -347,7 +347,7 @@
                     </td>
                     <td>
                         <input type="file" id="fileInput_FILE_OTech4" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_OTech4', this)" />
-                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_OTech4').click()">
+                        <button class="btn btn-teal-dark view-mode" type="button" onclick="document.getElementById('fileInput_FILE_OTech4').click()">
                             <i class="fas fa-file-upload me-1"></i> 上傳
                         </button>
                         <asp:Panel ID="pnlFiles_OTech4" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
@@ -358,10 +358,10 @@
                     <td class="text-center">5</td>
                     <td>
                         <div>
-                            <span class="text-pink">*</span>
+                            <span class="text-pink view-mode">*</span>
                             蒐集個人資料告知事項暨個人資料提供同意書
                         </div>
-                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2 view-mode" 
                                 onclick="window.SciUploadAttachments.downloadTemplate('FILE_OTech5')">
                             <i class="fas fa-file-download me-1"></i> 範本下載
                         </button>
@@ -371,7 +371,7 @@
                     </td>
                     <td>
                         <input type="file" id="fileInput_FILE_OTech5" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_OTech5', this)" />
-                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_OTech5').click()">
+                        <button class="btn btn-teal-dark view-mode"  type="button" onclick="document.getElementById('fileInput_FILE_OTech5').click()">
                             <i class="fas fa-file-upload me-1"></i> 上傳
                         </button>
                         <asp:Panel ID="pnlFiles_OTech5" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
@@ -382,10 +382,10 @@
                     <td class="text-center">6</td>
                     <td>
                         <div>
-                            <span class="text-pink">*</span>
+                            <span class="text-pink view-mode">*</span>
                             申請人自我檢查表
                         </div>
-                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2 view-mode"  
                                 onclick="window.SciUploadAttachments.downloadTemplate('FILE_OTech6')">
                             <i class="fas fa-file-download me-1"></i> 
                             範本下載
@@ -396,7 +396,7 @@
                     </td>
                     <td>
                         <input type="file" id="fileInput_FILE_OTech6" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_OTech6', this)" />
-                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_OTech6').click()">
+                        <button class="btn btn-teal-dark view-mode" type="button" onclick="document.getElementById('fileInput_FILE_OTech6').click()">
                             <i class="fas fa-file-upload me-1"></i> 上傳
                         </button>
                         <asp:Panel ID="pnlFiles_OTech6" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
@@ -415,11 +415,11 @@
                     <td class="text-center">8</td>
                     <td>
                         <div>
-                            <span class="text-pink">*</span>
+                            <span class="text-pink view-mode">*</span>
                             海洋科技業者科專計畫補助契約書
                         </div>
                    
-                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2" 
+                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2 view-mode" 
                                 onclick="window.SciUploadAttachments.downloadTemplate('FILE_OTech8')">
                             <i class="fas fa-file-download me-1"></i>
                             範本下載
@@ -430,7 +430,7 @@
                     </td>
                     <td>
                         <input type="file" id="fileInput_FILE_OTech8" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_OTech8', this)" />
-                        <button class="btn btn-teal-dark" type="button" onclick="document.getElementById('fileInput_FILE_OTech8').click()">
+                        <button class="btn btn-teal-dark view-mode" type="button" onclick="document.getElementById('fileInput_FILE_OTech8').click()">
                             <i class="fas fa-file-upload me-1"></i> 上傳
                         </button>
                         <asp:Panel ID="pnlFiles_OTech8" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">

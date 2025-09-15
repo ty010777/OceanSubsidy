@@ -858,14 +858,14 @@ class CheckStandardManager {
 
         EventBindingHelper.bindButtonsInContainer(checkpointTable, buttonConfigs);
 
-        // 綁定內容編輯事件
-        const editableSpans = checkpointTable.querySelectorAll('span[contenteditable]');
-        editableSpans.forEach(span => {
-            if (!span.hasAttribute('data-checkpoint-content-bound')) {
-                ['input', 'blur'].forEach(eventType => {
-                    span.addEventListener(eventType, () => this.updateHiddenFieldsNow());
+        // 綁定 textarea 編輯事件
+        const textareas = checkpointTable.querySelectorAll('textarea');
+        textareas.forEach(textarea => {
+            if (!textarea.hasAttribute('data-checkpoint-content-bound')) {
+                ['input', 'blur', 'change'].forEach(eventType => {
+                    textarea.addEventListener(eventType, () => this.updateHiddenFieldsNow());
                 });
-                span.setAttribute('data-checkpoint-content-bound', 'true');
+                textarea.setAttribute('data-checkpoint-content-bound', 'true');
             }
         });
     }
@@ -895,7 +895,7 @@ class CheckStandardManager {
                 <input type="date" name="" class="form-control">
             </td>
             <td class="align-middle" width="500">
-                <span class="form-control textarea" role="textbox" contenteditable="" data-placeholder="請輸入" aria-label="文本輸入區域"></span>
+                <textarea class="form-control" rows="3" placeholder="請輸入"></textarea>
             </td>
             <td class="align-middle">
                 <button class="btn btn-sm btn-dark-green2" type="button"><i class="fas fa-trash-alt"></i></button>
@@ -1011,10 +1011,9 @@ class CheckStandardManager {
                     dateInput.value = checkStandard.plannedFinishDate;
                 }
 
-                const descriptionSpan = row.querySelector('span[contenteditable]');
-                if (descriptionSpan && checkStandard.description) {
-                    descriptionSpan.textContent = checkStandard.description;
-                    descriptionSpan.removeAttribute('data-placeholder');
+                const descriptionTextarea = row.querySelector('textarea');
+                if (descriptionTextarea && checkStandard.description) {
+                    descriptionTextarea.value = checkStandard.description;
                 }
 
                 tbody.appendChild(row);
@@ -1351,8 +1350,8 @@ class DataManager {
                 const dateInput = row.cells[2] ? row.cells[2].querySelector('input[type="date"]') : null;
                 const plannedFinishDate = dateInput ? dateInput.value : '';
 
-                const descriptionSpan = row.cells[3] ? row.cells[3].querySelector('span[contenteditable]') : null;
-                const description = descriptionSpan ? descriptionSpan.textContent.trim() : '';
+                const descriptionTextarea = row.cells[3] ? row.cells[3].querySelector('textarea') : null;
+                const description = descriptionTextarea ? descriptionTextarea.value.trim() : '';
 
                 // 修改條件：只要有任何一個欄位不是空的就收集
                 if (workItem || description || plannedFinishDate) {

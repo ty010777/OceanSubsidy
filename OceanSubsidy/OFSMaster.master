@@ -292,7 +292,7 @@
 
 
                   <!-- 功能按鈕 -->
-                  <div class="action-group">
+                  <div class="action-group" id="FuncBtn">
                       <!-- 公告提醒 -->
                       <div class="dropdown">
                           <button class="btn-tip new" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -316,7 +316,7 @@
 
 
                       <!-- 聯絡資訊 -->
-                      <div class="dropdown">
+                      <div class="dropdown" >
                           <button class="" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                               <img src="<%= ResolveUrl("~/assets/img/icon-info.svg") %>" alt="聯絡資訊">
                           </button>
@@ -332,7 +332,7 @@
 
                   </div>
                   <!-- 登入資訊 -->
-                  <div class="d-flex justify-content-between mb-4">
+                  <div class="d-flex justify-content-between mb-4" id="UserInfo">
                       <asp:ContentPlaceHolder ID="Breadcrumbs" runat="server"><div></div></asp:ContentPlaceHolder>
                       <div class="login-user">
                           <div class="user-icon">

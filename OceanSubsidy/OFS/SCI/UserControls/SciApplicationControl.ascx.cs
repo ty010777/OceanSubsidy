@@ -827,36 +827,9 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
     {
         if (IsViewMode)
         {
-            DisableAllControls(this);
         }
     }
-
-    /// <summary>
-    /// 禁用所有控制項
-    /// </summary>
-    private void DisableAllControls(Control parent)
-    {
-        foreach (Control control in parent.Controls)
-        {
-            if (control is TextBox textBox)
-                textBox.ReadOnly = true;
-            else if (control is DropDownList dropDown)
-                dropDown.Enabled = false;
-            else if (control is CheckBox checkBox)
-                checkBox.Enabled = false;
-            else if (control is Button button)
-                button.Enabled = false;
-            else if (control is RadioButton radioButton)
-                radioButton.Enabled = false;
-            else if (control is HtmlInputGenericControl htmlInput)
-                htmlInput.Disabled = true;
-       
-
-            if (control.HasControls())
-                DisableAllControls(control);
-        }
-    }
-
+    
     /// <summary>
     /// 例外處理
     /// </summary>

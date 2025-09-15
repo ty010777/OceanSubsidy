@@ -14,7 +14,7 @@
     <uc:ChangeDescriptionControl ID="ucChangeDescription" runat="server" SourcePage="SciApplication" />
                   
                   <!-- 底部區塊 -->
-                  <div class="block-bottom bg-light-teal">
+                  <div class="block-bottom bg-light-teal view-mode">
                       
                        <asp:Button ID="btnTempSave" runat="server"  
                                  Text="暫存"  

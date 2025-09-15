@@ -8,7 +8,7 @@
             <tbody>
                 <tr>
                     <th>
-                        <span class="text-pink">*</span>
+                        <span class="text-pink view-mode">*</span>
                         計畫期程
                     </th>
                     <td>
@@ -30,24 +30,24 @@
                     <td>
                         <!-- 次表格 -->
                         <div class="table-responsive sub-table">
-                            <table class="table align-middle gray-table">
+                            <table class="table align-middle gray-table" id="workItemsTable">
                                 <thead>
                                     <tr>
                                         <th>編號</th>
                                         <th>
-                                            <span class="text-pink">*</span>
+                                            <span class="text-pink view-mode">*</span>
                                             工作項目／工作子項
                                         </th>
                                         <th>
-                                            <span class="text-pink">*</span>
+                                            <span class="text-pink view-mode">*</span>
                                             起訖月份
                                         </th>
                                         <th width="110">
-                                            <span class="text-pink">*</span>
+                                            <span class="text-pink view-mode">*</span>
                                             權重
                                         </th>
                                         <th width="110">
-                                            <span class="text-pink">*</span>
+                                            <span class="text-pink view-mode">*</span>
                                             投入<br>人月數
                                         </th>
                                         <th width="90">委外</th>
@@ -296,14 +296,15 @@
                                         <td colspan="3">合計</td>
                                         <td>0%</td>
                                         <td>0</td>
-                                        <td colspan="2"></td>
+                                        <td ></td>
+                                        <td ></td>
                                     </tr>
                                 </tfoot>
                             </table>
                         </div>
 
                         <!-- 新增按鈕 -->
-                        <button class="btn btn-blue-green2" type="button">新增工作項目</button>
+                        <button class="btn btn-blue-green2 view-mode" type="button">新增工作項目</button>
                     </td>
                 </tr>
             </tbody>
@@ -313,24 +314,24 @@
 
 
     <h5 class="square-title mt-4 gap-2 flex-wrap">查核標準
-        <span class="text-pink fw-normal fs-16">＊每一完整季度（Q1-Q4）需至少兩項查核點</span>
+        <span class="text-pink view-mode fw-normal fs-16">＊每一完整季度（Q1-Q4）需至少兩項查核點</span>
     </h5>
 
     <div class="table-responsive mt-3">
-        <table class="table align-middle gray-table" id="checkStandards">
+        <table class="table align-middle gray-table " id="checkStandards">
             <thead>
                 <tr>
                     <th>
-                        <span class="text-pink">*</span>
+                        <span class="text-pink view-mode">*</span>
                         對應工項
                     </th>
                     <th>編號</th>
                     <th>
-                        <span class="text-pink">*</span>
+                        <span class="text-pink view-mode">*</span>
                         預定完成日
                     </th>
                     <th>
-                        <span class="text-pink">*</span>
+                        <span class="text-pink view-mode">*</span>
                         查核內容概述（請具體明確或量化）
                     </th>
                     <th width="120">功能</th>
@@ -350,7 +351,7 @@
                         <input type="date" name="" class="form-control">
                     </td>
                     <td class="align-middle" width="500">
-                        <span class="form-control textarea" role="textbox" contenteditable="" data-placeholder="請輸入" aria-label="文本輸入區域"></span>
+                        <textarea class="form-control " rows="3" placeholder="請輸入"></textarea>
                     </td>
                     <td class="align-middle">
                         <button class="btn btn-sm btn-dark-green2" type="button"><i class="fas fa-trash-alt"></i></button>
@@ -364,7 +365,7 @@
 
 
     <h5 class="square-title mt-4 gap-2 flex-wrap">計畫架構
-        <span class="text-pink fw-normal fs-16">＊務必說明</span><br>
+        <span class="text-pink view-mode fw-normal fs-16">＊務必說明</span><br>
     </h5>
 
     <div class="mt-3">
@@ -372,23 +373,23 @@
             <tbody>
                 <tr>
                     <th>
-                        <span class="text-pink">*</span>
+                        <span class="text-pink view-mode">*</span>
                         計畫架構
                     </th>
                     <td>
-                        <a href="<%= ResolveUrl("~/assets/img/project-structure-example.png") %>" class="link-teal" target="_blank">範例圖下載<i class="fas fa-file-download ms-1"></i></a>
+                        <a href="<%= ResolveUrl("~/assets/img/project-structure-example.png") %>" class="link-teal view-mode" target="_blank">範例圖下載<i class="fas fa-file-download ms-1"></i></a>
                         <div class="input-group mt-3">
-                            <asp:FileUpload ID="fileUploadDiagram" runat="server" CssClass="form-control"  ClientIDMode="Static" />
-                            <button type="button" id="btnUploadDiagram" class="btn btn-blue-green2">上傳</button>
+                            <asp:FileUpload ID="fileUploadDiagram" runat="server" CssClass="form-control view-mode"  ClientIDMode="Static" />
+                            <button type="button" id="btnUploadDiagram" class="btn btn-blue-green2 view-mode">上傳</button>
                         </div>
 
                      <div id="diagramPreviewContainer" class="mt-3" style="display: none;" runat="server" ClientIDMode="Static">
-                         <button type="button" id="btnDeleteDiagram" class="btn btn-outline-danger ms-auto d-table mb-2">刪除</button>
+                         <button type="button" id="btnDeleteDiagram" class="btn btn-outline-danger ms-auto d-table mb-2 view-mode">刪除</button>
                          <asp:Image ID="diagramPreview" runat="server" CssClass="img-fluid" AlternateText="計畫架構圖" ClientIDMode="Static" />
                      </div>
 
 
-                        <ul class="list-unstyled text-gray lh-base">
+                        <ul class="list-unstyled text-gray lh-base view-mode">
                             <li>請以樹狀圖撰寫（如有海洋科技技術移轉、委託研究等項目，亦請註明)</li>
                             <li>請註明下列資料：</li>
                             <li>1.執行該工作項目/開發技術之單位。</li>

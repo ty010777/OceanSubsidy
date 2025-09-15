@@ -12,19 +12,19 @@
             <thead class="text-center">
                 <tr>
                     <th width="180">
-                        <span class="text-pink">*</span>
+                        <span class="text-pink view-mode">*</span>
                         姓名
                     </th>
                     <th>
-                        <span class="text-pink">*</span>
+                        <span class="text-pink view-mode">*</span>
                         任職單位
                     </th>
                     <th width="180">
-                        <span class="text-pink">*</span>
+                        <span class="text-pink view-mode">*</span>
                         職稱
                     </th>
                     <th>
-                        <span class="text-pink">*</span>
+                        <span class="text-pink view-mode">*</span>
                         應迴避之具體理由及事證
                     </th>
                     <th>功能</th>
@@ -59,18 +59,18 @@
             <thead class="text-center">
                 <tr>
                     <th>
-                        <span class="text-pink">*</span>
+                        <span class="text-pink view-mode">*</span>
                         研發技術項目
                     </th>
                     <th>
-                        <span class="text-pink">*</span>
+                        <span class="text-pink view-mode">*</span>
                         TRL層級
                         <button type="button" class="btn-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="本計畫執行前後技術成熟度(Technology Readiness Level)階段">
                             <i class="fas fa-question-circle"></i>
                         </button>
                     </th>
                     <th width="360">
-                        <span class="text-pink">*</span>
+                        <span class="text-pink view-mode">*</span>
                         技術進程概述
                     </th>
                     <th>功能</th>
@@ -129,30 +129,30 @@
             <tbody>
                 <tr>
                     <th>
-                        <span class="text-pink">*</span>
+                        <span class="text-pink view-mode">*</span>
                         技術能力與技術關聯圖
                     </th>
                     <td>
-                        <a href="<%=ResolveUrl("~/assets/img/technology-related-examples.png")%>" class="link-teal" target="_blank">範例圖下載<i class="fas fa-file-download ms-1"></i></a>
+                        <a href="<%=ResolveUrl("~/assets/img/technology-related-examples.png")%>" class="link-teal view-mode" target="_blank">範例圖下載<i class="fas fa-file-download ms-1"></i></a>
                         <div class="input-group mt-3">
                             <input type="file" id="fileUploadTechDiagram" 
-                                   class="form-control" 
+                                   class="form-control view-mode" 
                                    accept="image/*" />
                             <button type="button" id="btnUploadTechDiagram" 
-                                    class="btn btn-teal">
+                                    class="btn btn-teal view-mode">
                                 上傳
                             </button>
                         </div>
 
                         <div id="techDiagramPreviewContainer" class="mt-3" style="display: none;">
                             <button type="button" id="btnDeleteTechDiagram" 
-                                    class="btn btn-outline-danger ms-auto d-table mb-2">
+                                    class="btn btn-outline-danger ms-auto d-table mb-2 view-mode" >
                                 刪除
                             </button>
                             <img id="techDiagramPreview" class="img-fluid" src="" alt="技術能力與技術關聯圖" />
                         </div>
 
-                        <ul class="list-unstyled text-gray lh-base mt-2">
+                        <ul class="list-unstyled text-gray lh-base mt-2 view-mode">
                             <li>標記說明：『＊』表示我國已有之技術或產品（並註明公司名稱）</li>
                             <li>『＋』表示我國正在發展之技術或產品（並註明公司名稱</li>
                             <li>『－』表示我國尚未發展之技術或產品（並註明公司名稱）</li>
