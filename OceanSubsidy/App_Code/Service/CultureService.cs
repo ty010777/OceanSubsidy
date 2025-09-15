@@ -1,5 +1,6 @@
 ﻿using GS.OCA_OceanSubsidy.Entity;
 using GS.OCA_OceanSubsidy.Model.OFS;
+using GS.OCA_OceanSubsidy.Operation.OFS;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -194,6 +195,19 @@ public class CultureService : BaseService
         };
     }
 
+    public object getReport(JObject param, HttpContext context)
+    {
+        var id = getID(param["ID"].ToString());
+        var data = getProject(id);
+        var stage = int.Parse(param["Stage"].ToString());
+
+        return new {
+            Project = data,
+            Report = OFS_SciInterimReportHelper.GetStageExamStatus(data.ProjectID, stage),
+            Attachments = OFS_CulAttachmentHelper.query(id, 1)
+        };
+    }
+
     public object getWorkSchedule(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
@@ -296,6 +310,32 @@ public class CultureService : BaseService
 
             OFSProjectChangeRecordHelper.update(apply);
         }
+
+        return new {};
+    }
+
+    public object reviewReport(JObject param, HttpContext context)
+    {
+        var id = getID(param["ID"].ToString());
+        var data = getProject(id, new int[] {51}); //執行階段-審核中
+        var stage = int.Parse(param["Stage"].ToString());
+        var report = OFS_SciInterimReportHelper.GetStageExamStatus(data.ProjectID, stage);
+
+        if (report.Status != "審核中")
+        {
+            throw new Exception("審核狀態錯誤");
+        }
+
+        var comment = "";
+        var status = "通過";
+
+        if (int.Parse(param["Result"].ToString()) == 2)
+        {
+            comment = param["Reason"].ToString();
+            status = "退回修正";
+        }
+
+        OFS_SciInterimReportHelper.ReviewStageExam(data.ProjectID, stage, stage == 1 ? "期中報告" : "期末報告", status, comment, CurrentUser.UserName, CurrentUser.Account);
 
         return new {};
     }
@@ -608,6 +648,33 @@ public class CultureService : BaseService
             else
             {
                 OFS_CulRelatedProjectHelper.update(item);
+            }
+        }
+
+        return new {};
+    }
+
+    public object saveReport(JObject param, HttpContext context)
+    {
+        var id = getID(param["ID"].ToString());
+        var data = getProject(id, new int[] {51}); //執行階段-審核中
+
+        OFS_SciInterimReportHelper.SubmitStageExam(data.ProjectID, int.Parse(param["Stage"].ToString()), bool.Parse(param["Submit"].ToString()) ? "審核中" : "暫存");
+
+        var attachments = param["Attachments"].ToObject<List<OFS_CulAttachment>>();
+
+        foreach (var item in attachments)
+        {
+            if (item.Deleted)
+            {
+                OFS_CulAttachmentHelper.delete(item.ID);
+            }
+            else if (item.ID == 0)
+            {
+                item.PID = id;
+                item.Stage = 1; //報告
+
+                OFS_CulAttachmentHelper.insert(item);
             }
         }
 

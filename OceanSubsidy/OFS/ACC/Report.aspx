@@ -16,12 +16,13 @@
             </ul>
         </div>
         <template :key="item" v-for="(item) in stages">
-            <project-report :data="item" :id="id" @next="next" v-if="item.id === stage"></project-report>
+            <project-report :data="item" :id="id" @next="next" type="accessibility" v-if="item.id === stage"></project-report>
         </template>
     </div>
 </asp:Content>
 
 <asp:Content ContentPlaceHolderID="FloatContent" runat="server">
+    <project-report-review :id="id" :stage="stage" type="accessibility" v-if="store.accessibility.reportStatus === '審核中'"></project-report-review>
     <script>
         setupVueApp({
             setup() {
@@ -39,7 +40,7 @@
                     subtitle: "期中報告審查",
                     description: "請下載報告書範本，填寫資料及公文用印後上傳。<br>期中報告書及相關檔案，請壓縮ZIP上傳（檔案100MB以內）。",
                     docs: [
-                        { Title: "期中報告書", Template: "../../Template/ACC/期中成果報告書.docx" }
+                        { Type: 1, Title: "期中報告書", Template: "../../Template/ACC/期中成果報告書.docx" }
                     ]
                 }, {
                     id: 2,
@@ -47,7 +48,7 @@
                     subtitle: "期末報告審查",
                     description: "請下載報告書範本，填寫資料及公文用印後上傳。<br>期末報告書及相關檔案（成果照片、影像等），請壓縮ZIP上傳（檔案100MB以內）。",
                     docs: [
-                        { Title: "期末報告書" }
+                        { Type: 2, Title: "期末報告書" }
                     ]
                 }];
 

@@ -57,6 +57,7 @@ import ProjectCorrectionReview from "./components/ProjectCorrectionReview.vue";
 import ProjectOrganizer from "./components/ProjectOrganizer.vue";
 import ProjectProgress from "./components/ProjectProgress.vue";
 import ProjectReport from "./components/ProjectReport.vue";
+import ProjectReportReview from "./components/ProjectReportReview.vue";
 import ProjectReview from "./components/ProjectReview.vue";
 import ProjectTitle from "./components/ProjectTitle.vue";
 import ProjectToolbar from "./components/ProjectToolbar.vue";
@@ -139,6 +140,7 @@ const components = {
     ProjectOrganizer,
     ProjectProgress,
     ProjectReport,
+    ProjectReportReview,
     ProjectReview,
     ProjectTitle,
     ProjectToolbar,

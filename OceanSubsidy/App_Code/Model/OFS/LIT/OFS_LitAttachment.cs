@@ -2,6 +2,7 @@ public class OFS_LitAttachment
 {
     public int ID { get; set; }
     public int PID { get; set; }
+    public int Stage { get; set; }
 
     // 類型
     public int Type { get; set; }
