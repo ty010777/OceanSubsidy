@@ -333,186 +333,186 @@ window.ReviewChecklist = (function() {
             return [];
         }
     }
+    //
+    // /**
+    //  * 批次通過確認功能
+    //  * @param {string} actionText - 動作文字 (如: "轉入下一階段", "進入決審")
+    //  * @param {string} targetType - 指定審查類型，如果不指定則使用當前類型
+    //  * @returns {Promise} 返回 Promise，resolve 時包含選中的專案編號
+    //  */
+    // function confirmBatchApproval(actionText, targetType) {
+    //     return new Promise((resolve, reject) => {
+    //         try {
+    //             const selectedIds = getSelectedProjectIds(targetType);
+    //
+    //             // 檢查是否有選中項目
+    //             if (selectedIds.length === 0) {
+    //                 Swal.fire({
+    //                     title: '提醒',
+    //                     text: '請先選擇要處理的計畫項目',
+    //                     icon: 'warning',
+    //                     confirmButtonText: '確定',
+    //                     confirmButtonColor: '#26A69A'
+    //                 });
+    //                 reject(new Error('沒有選中項目'));
+    //                 return;
+    //             }
+    //
+    //             // 顯示確認對話框
+    //             Swal.fire({
+    //                 title: `共 ${selectedIds.length} 件計畫`,
+    //                 text: `確定批次通過，${actionText}？`,
+    //                 icon: 'question',
+    //                 showCancelButton: true,
+    //                 confirmButtonText: '確定',
+    //                 cancelButtonText: '取消',
+    //                 confirmButtonColor: '#26A69A',
+    //                 cancelButtonColor: '#d33',
+    //                 reverseButtons: true
+    //             }).then((result) => {
+    //                 if (result.isConfirmed) {
+    //                     resolve(selectedIds);
+    //                 } else {
+    //                     reject(new Error('用戶取消操作'));
+    //                 }
+    //             });
+    //
+    //         } catch (error) {
+    //             console.error('批次通過確認時發生錯誤:', error);
+    //             Swal.fire({
+    //                 title: '錯誤',
+    //                 text: '處理批次操作時發生錯誤',
+    //                 icon: 'error',
+    //                 confirmButtonText: '確定',
+    //                 confirmButtonColor: '#26A69A'
+    //             });
+    //             reject(error);
+    //         }
+    //     });
+    // }
 
-    /**
-     * 批次通過確認功能
-     * @param {string} actionText - 動作文字 (如: "轉入下一階段", "進入決審")
-     * @param {string} targetType - 指定審查類型，如果不指定則使用當前類型
-     * @returns {Promise} 返回 Promise，resolve 時包含選中的專案編號
-     */
-    function confirmBatchApproval(actionText, targetType) {
-        return new Promise((resolve, reject) => {
-            try {
-                const selectedIds = getSelectedProjectIds(targetType);
+    // /**
+    //  * 呼叫批次審核 API
+    //  * @param {Array<string>} selectedIds - 選中的專案編號陣列
+    //  * @param {string} actionType - 動作類型
+    //  * @returns {Promise} 返回 AJAX Promise
+    //  */
+    // function callBatchApprovalAPI(selectedIds, actionType) {
+    //     return new Promise((resolve, reject) => {
+    //         const requestData = {
+    //             projectIds: selectedIds,
+    //             actionType: actionType,
+    //             reviewType: currentType
+    //         };
+    //
+    //
+    //         $.ajax({
+    //             type: "POST",
+    //             url: "ReviewChecklist.aspx/BatchApproveType",
+    //             data: JSON.stringify(requestData),
+    //             contentType: "application/json; charset=utf-8",
+    //             dataType: "json",
+    //             timeout: 30000, // 30秒超時
+    //             beforeSend: function() {
+    //                 // 顯示載入中
+    //                 Swal.fire({
+    //                     title: '處理中...',
+    //                     text: '正在執行批次操作，請稍候',
+    //                     icon: 'info',
+    //                     allowOutsideClick: false,
+    //                     allowEscapeKey: false,
+    //                     showConfirmButton: false,
+    //                     didOpen: () => {
+    //                         Swal.showLoading();
+    //                     }
+    //                 });
+    //             }
+    //         }).done(function(response) {
+    //             Swal.close(); // 關閉載入中對話框
+    //             resolve(response);
+    //         }).fail(function(jqXHR, textStatus, errorThrown) {
+    //             console.error('AJAX 請求失敗:', textStatus, errorThrown);
+    //             Swal.close(); // 關閉載入中對話框
+    //             reject({
+    //                 status: jqXHR.status,
+    //                 statusText: textStatus,
+    //                 error: errorThrown,
+    //                 responseText: jqXHR.responseText
+    //             });
+    //         });
+    //     });
+    // }
 
-                // 檢查是否有選中項目
-                if (selectedIds.length === 0) {
-                    Swal.fire({
-                        title: '提醒',
-                        text: '請先選擇要處理的計畫項目',
-                        icon: 'warning',
-                        confirmButtonText: '確定',
-                        confirmButtonColor: '#26A69A'
-                    });
-                    reject(new Error('沒有選中項目'));
-                    return;
-                }
-
-                // 顯示確認對話框
-                Swal.fire({
-                    title: `共 ${selectedIds.length} 件計畫`,
-                    text: `確定批次通過，${actionText}？`,
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonText: '確定',
-                    cancelButtonText: '取消',
-                    confirmButtonColor: '#26A69A',
-                    cancelButtonColor: '#d33',
-                    reverseButtons: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        resolve(selectedIds);
-                    } else {
-                        reject(new Error('用戶取消操作'));
-                    }
-                });
-
-            } catch (error) {
-                console.error('批次通過確認時發生錯誤:', error);
-                Swal.fire({
-                    title: '錯誤',
-                    text: '處理批次操作時發生錯誤',
-                    icon: 'error',
-                    confirmButtonText: '確定',
-                    confirmButtonColor: '#26A69A'
-                });
-                reject(error);
-            }
-        });
-    }
-
-    /**
-     * 呼叫批次審核 API
-     * @param {Array<string>} selectedIds - 選中的專案編號陣列
-     * @param {string} actionType - 動作類型
-     * @returns {Promise} 返回 AJAX Promise
-     */
-    function callBatchApprovalAPI(selectedIds, actionType) {
-        return new Promise((resolve, reject) => {
-            const requestData = {
-                projectIds: selectedIds,
-                actionType: actionType,
-                reviewType: currentType
-            };
-
-
-            $.ajax({
-                type: "POST",
-                url: "ReviewChecklist.aspx/BatchApproveType",
-                data: JSON.stringify(requestData),
-                contentType: "application/json; charset=utf-8",
-                dataType: "json",
-                timeout: 30000, // 30秒超時
-                beforeSend: function() {
-                    // 顯示載入中
-                    Swal.fire({
-                        title: '處理中...',
-                        text: '正在執行批次操作，請稍候',
-                        icon: 'info',
-                        allowOutsideClick: false,
-                        allowEscapeKey: false,
-                        showConfirmButton: false,
-                        didOpen: () => {
-                            Swal.showLoading();
-                        }
-                    });
-                }
-            }).done(function(response) {
-                Swal.close(); // 關閉載入中對話框
-                resolve(response);
-            }).fail(function(jqXHR, textStatus, errorThrown) {
-                console.error('AJAX 請求失敗:', textStatus, errorThrown);
-                Swal.close(); // 關閉載入中對話框
-                reject({
-                    status: jqXHR.status,
-                    statusText: textStatus,
-                    error: errorThrown,
-                    responseText: jqXHR.responseText
-                });
-            });
-        });
-    }
-
-    /**
-     * 處理批次審核成功回應
-     * @param {Object} response - 後端回應資料
-     */
-    function handleBatchResponse(response) {
-        try {
-            let result;
-            if (typeof response.d === 'string') {
-                result = JSON.parse(response.d);
-            } else {
-                result = response.d || response;
-            }
-
-
-            if (result.Success) {
-                // 成功處理
-                Swal.fire({
-                    title: '已完成',
-                    text: result.Message || `成功處理 ${result.SuccessCount || 0} 件計畫`,
-                    icon: 'success',
-                    confirmButtonText: '確定',
-                    confirmButtonColor: '#26A69A'
-                }).then(() => {
-                    // 重新執行當前頁面的查詢
-                    executeCurrentPageSearch();
-                });
-            } else {
-                // 處理失敗
-                handleBatchError({
-                    message: result.Message || '批次處理失敗',
-                    details: result.ErrorMessages || []
-                });
-            }
-        } catch (error) {
-            console.error('解析回應資料時發生錯誤:', error);
-            handleBatchError({
-                message: '回應資料格式錯誤',
-                details: [error.message]
-            });
-        }
-    }
+    // /**
+    //  * 處理批次審核成功回應
+    //  * @param {Object} response - 後端回應資料
+    //  */
+    // function handleBatchResponse(response) {
+    //     try {
+    //         let result;
+    //         if (typeof response.d === 'string') {
+    //             result = JSON.parse(response.d);
+    //         } else {
+    //             result = response.d || response;
+    //         }
+    //
+    //
+    //         if (result.Success) {
+    //             // 成功處理
+    //             Swal.fire({
+    //                 title: '已完成',
+    //                 text: result.Message || `成功處理 ${result.SuccessCount || 0} 件計畫`,
+    //                 icon: 'success',
+    //                 confirmButtonText: '確定',
+    //                 confirmButtonColor: '#26A69A'
+    //             }).then(() => {
+    //                 // 重新執行當前頁面的查詢
+    //                 executeCurrentPageSearch();
+    //             });
+    //         } else {
+    //             // 處理失敗
+    //             handleBatchError({
+    //                 message: result.Message || '批次處理失敗',
+    //                 details: result.ErrorMessages || []
+    //             });
+    //         }
+    //     } catch (error) {
+    //         console.error('解析回應資料時發生錯誤:', error);
+    //         handleBatchError({
+    //             message: '回應資料格式錯誤',
+    //             details: [error.message]
+    //         });
+    //     }
+    // }
 
     /**
      * 處理批次審核錯誤回應
      * @param {Object} error - 錯誤資訊
      */
-    function handleBatchError(error) {
-        console.error('批次處理錯誤:', error);
-
-        let errorMessage = '批次處理時發生錯誤';
-        let errorDetails = '';
-
-        if (error.message) {
-            errorMessage = error.message;
-        }
-
-        if (error.details && Array.isArray(error.details) && error.details.length > 0) {
-            errorDetails = '\n\n詳細錯誤:\n' + error.details.join('\n');
-        } else if (error.responseText) {
-            errorDetails = '\n\n系統錯誤: ' + error.statusText;
-        }
-
-        Swal.fire({
-            title: '操作失敗',
-            text: errorMessage + errorDetails,
-            icon: 'error',
-            confirmButtonText: '確定',
-            confirmButtonColor: '#26A69A'
-        });
-    }
+    // function handleBatchError(error) {
+    //     console.error('批次處理錯誤:', error);
+    //
+    //     let errorMessage = '批次處理時發生錯誤';
+    //     let errorDetails = '';
+    //
+    //     if (error.message) {
+    //         errorMessage = error.message;
+    //     }
+    //
+    //     if (error.details && Array.isArray(error.details) && error.details.length > 0) {
+    //         errorDetails = '\n\n詳細錯誤:\n' + error.details.join('\n');
+    //     } else if (error.responseText) {
+    //         errorDetails = '\n\n系統錯誤: ' + error.statusText;
+    //     }
+    //
+    //     Swal.fire({
+    //         title: '操作失敗',
+    //         text: errorMessage + errorDetails,
+    //         icon: 'error',
+    //         confirmButtonText: '確定',
+    //         confirmButtonColor: '#26A69A'
+    //     });
+    // }
 
     /**
      * 重新載入當前審查類型的內容
@@ -564,6 +564,7 @@ window.ReviewChecklist = (function() {
         }
     }
 
+//#region 表格渲染功能
     /**
      * 渲染搜尋結果到表格
      * @param {Array} results - 搜尋結果陣列
@@ -571,116 +572,69 @@ window.ReviewChecklist = (function() {
      */
     function renderSearchResults(results, type) {
         try {
-            if (type === '4') {
-                // Type-4 需要渲染到兩個表格中
-                renderType4SearchResults(results);
-            } else {
-                // 其他類型的正常渲染
-                const tableBodySelector = '#content-type-' + type + ' tbody';
-                const $tableBody = $(tableBodySelector);
+            const tableBodySelector = '#content-type-' + type + ' tbody';
+            const $tableBody = $(tableBodySelector);
 
-                if (!$tableBody.length) {
-                    console.error('找不到表格 tbody 元素:', tableBodySelector);
-                    return;
-                }
-
-                // 清空現有內容
-                $tableBody.empty();
-
-                if (!results || results.length === 0) {
-                    // 顯示無資料訊息
-                    $tableBody.append(`
-                        <tr>
-                            <td colspan="11" class="text-center">無符合條件的資料</td>
-                        </tr>
-                    `);
-                    return;
-                }
-
-                // 渲染每一行資料
-                results.forEach(function(item, index) {
-                    const row = createTableRow(item, index + 1);
-                    $tableBody.append(row);
-                });
-
-                // Type6 特殊處理：控制審查委員進度欄位的顯示
-                if (type === '6') {
-                    handleType6ReviewProgressDisplay(results);
-                }
-
-                // 重新初始化 checkbox 功能
-                updateCheckboxTargets();
-
-            }
-        } catch (error) {
-            console.error('渲染搜尋結果時發生錯誤:', error);
-        }
-    }
-
-    /**
-     * 渲染 Type-4 搜尋結果到表格中
-     * @param {Array} results - 搜尋結果
-     */
-    function renderType4SearchResults(results) {
-             
-        try {
-            // 核定模式表格
-            const $approvalTableBody = $('#content-type-4 .approval-mode-table tbody');
-
-            if (!$approvalTableBody.length) {
-                console.error('找不到 Type-4 表格 tbody 元素');
+            if (!$tableBody.length) {
+                console.error('找不到表格 tbody 元素:', tableBodySelector);
                 return;
             }
 
             // 清空現有內容
-            $approvalTableBody.empty();
+            $tableBody.empty();
 
             if (!results || results.length === 0) {
-                // 顯示無資料訊息
-                const noDataRow = `<tr><td colspan="10" class="text-center">無符合條件的資料</td></tr>`;
-                $approvalTableBody.append(noDataRow);
+                $tableBody.append(`
+                <tr>
+                    <td colspan="11" class="text-center">無符合條件的資料</td>
+                </tr>
+            `);
                 return;
             }
 
-            // 渲染每一行資料
+            // 針對不同 type 處理
             results.forEach(function(item, index) {
-                const approvalRow = createType4TableRow(item, index + 1);
-                $approvalTableBody.append(approvalRow);
+                let rowHtml = '';
+
+                switch (type) {
+                    case 1:
+                        rowHtml = createType1TableRow(item, index + 1);
+                        break;
+                    case 2:
+                    case 3:
+                        rowHtml =createType2TableRow(item, index + 1);
+                        break;
+                    case 4:
+                        rowHtml = createType4TableRow(item, index + 1);
+                        break;
+                    case 5:
+                        rowHtml = createType5TableRow(item, index + 1);
+                        break;
+                    case 6:
+                        rowHtml = createType6TableRow(item, index + 1);
+                        break;
+                    default:
+                        rowHtml = `<tr><td colspan="11">未知的類型: ${type}</td></tr>`;
+                }
+
+              
+                $tableBody.append(rowHtml);
+                
             });
+
+            // Type6 特殊處理
+            if (type === '6') {
+                handleType6ReviewProgressDisplay(results);
+            }
 
             // 重新初始化 checkbox 功能
             updateCheckboxTargets();
+
         } catch (error) {
-            console.error('渲染 Type-4 搜尋結果時發生錯誤:', error);
+            console.error('渲染搜尋結果時發生錯誤:', error);
         }
     }
-
-    /**
-     * 建立表格行
-     * @param {Object} item - 資料項目
-     * @param {number} index - 序號
-     * @returns {string} HTML 字串
-     */
-    function createTableRow(item, index) {
-        try {
-            // 根據當前類型決定使用哪種表格格式
-            if (currentType === '4') {
-                return createType4TableRow(item, index);
-            } else if (currentType === '2' || currentType === '3') {
-                return createType2TableRow(item, index);
-            } else if (currentType === '5') {
-                return createType5TableRow(item, index);
-            } else if (currentType === '6') {
-                return createType6TableRow(item, index);
-            } else {
-                return createType1TableRow(item, index);
-            }
-        } catch (error) {
-            console.error('建立表格行時發生錯誤:', error);
-            return '<tr><td colspan="11">資料格式錯誤</td></tr>';
-        }
-    }
-
+    
     /**
      * 建立 Type1 表格行 (資格審查/內容審查)
      * @param {Object} item - 資料項目
@@ -896,7 +850,7 @@ window.ReviewChecklist = (function() {
             </tr>
         `;
     }
-
+//#endregion
     /**
      * 處理 Type6 審查委員進度欄位的顯示/隱藏
      * @param {Array} results - 搜尋結果數組
@@ -1102,58 +1056,18 @@ window.ReviewChecklist = (function() {
      */
     function saveApprovalMode_Type4() {
         try {
-            // 收集表格中的資料
-            const approvalItems = [];
-            const $table = $('#content-type-4 .approval-mode-table table tbody');
-
-            $table.find('tr').each(function() {
-                const $row = $(this);
-                const projectId = $row.find('.checkPlan').val();
-                const approvedSubsidy = $row.find('input[data-field="ApprovedSubsidy"]').val() || '0';
-                const finalReviewNotes = $row.find('input[data-field="FinalReviewNotes"]').val() || '';
-
-                // 從專案ID判斷類別
-                let category = 'SCI'; // 預設科專
-                if (projectId) {
-                    if (projectId.includes('CUL')) category = 'CUL';
-                    else if (projectId.includes('EDC')) category = 'EDC';
-                    else if (projectId.includes('CLB')) category = 'CLB';
-                    else if (projectId.includes('MUL')) category = 'MUL';
-                    else if (projectId.includes('LIT')) category = 'LIT';
-                    else if (projectId.includes('ACC')) category = 'ACC';
-                }
-
-                if (projectId) {
-                    approvalItems.push({
-                        ProjectID: projectId,
-                        ApprovedSubsidy: approvedSubsidy,
-                        FinalReviewNotes: finalReviewNotes,
-                        Category: category
-                    });
-                }
-            });
-
-            if (approvalItems.length === 0) {
-                Swal.fire({
-                    title: '沒有資料',
-                    text: '找不到可儲存的資料',
-                    icon: 'warning',
-                    confirmButtonText: '確定'
-                });
-                return;
-            }
-
+           
             // 顯示確認對話框
             Swal.fire({
                 title: '確認儲存',
-                text: `即將儲存 ${approvalItems.length} 筆核定資料，是否繼續？`,
+                text: `即將儲存已勾選的核定資料，是否繼續？`,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonText: '儲存',
                 cancelButtonText: '取消'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    callSaveApprovalAPI(approvalItems);
+                    callSaveApprovalAPI();
                 }
             });
 
@@ -1171,8 +1085,57 @@ window.ReviewChecklist = (function() {
     /**
      * 調用儲存 API
      */
-    function callSaveApprovalAPI(approvalItems) {
-            $.ajax({
+    function callSaveApprovalAPI(successCallback) {
+        // 收集表格中的資料
+        const approvalItems = [];
+        const $table = $('#content-type-4 .approval-mode-table table tbody');
+
+        $table.find('tr').each(function() {
+            const $row = $(this);
+            const $checkbox = $row.find('.checkPlan');
+            const isChecked = $checkbox.is(':checked');
+
+            // 只處理被勾選的項目
+            if (!isChecked) {
+                return; // 跳過未勾選的項目
+            }
+
+            const projectId = $checkbox.val();
+            const approvedSubsidy = $row.find('input[data-field="ApprovedSubsidy"]').val() || '0';
+            const finalReviewNotes = $row.find('input[data-field="FinalReviewNotes"]').val() || '';
+
+            // 從專案ID判斷類別
+            let category = 'SCI'; // 預設科專
+            if (projectId) {
+                if (projectId.includes('CUL')) category = 'CUL';
+                else if (projectId.includes('EDC')) category = 'EDC';
+                else if (projectId.includes('CLB')) category = 'CLB';
+                else if (projectId.includes('MUL')) category = 'MUL';
+                else if (projectId.includes('LIT')) category = 'LIT';
+                else if (projectId.includes('ACC')) category = 'ACC';
+            }
+
+            if (projectId) {
+                approvalItems.push({
+                    ProjectID: projectId,
+                    ApprovedSubsidy: approvedSubsidy,
+                    FinalReviewNotes: finalReviewNotes,
+                    Category: category
+                });
+            }
+        });
+
+        if (approvalItems.length === 0) {
+            Swal.fire({
+                title: '沒有選取項目',
+                text: '請先勾選要儲存的項目',
+                icon: 'warning',
+                confirmButtonText: '確定'
+            });
+            return;
+        }
+
+        $.ajax({
             type: 'POST',
             url: 'ReviewChecklist.aspx/SaveApprovalMode_Type4',
             data: JSON.stringify({ approvalItems: approvalItems }),
@@ -1194,19 +1157,25 @@ window.ReviewChecklist = (function() {
                 const result = typeof response.d === 'string' ? JSON.parse(response.d) : response.d;
 
                 if (result.success) {
-                    Swal.fire({
-                        title: '儲存成功',
-                        text: result.message || `成功儲存 ${result.count || 0} 筆資料`,
-                        icon: 'success',
-                        confirmButtonText: '確定'
-                    }).then(() => {
-                        // 重新執行 Type4 AJAX 查詢
-                        if (typeof performType4Search === 'function') {
-                            performType4Search();
-                        } else {
-                            console.warn('performType4Search 函數未找到');
-                        }
-                    });
+                    // 如果有傳入成功回調函數，則調用它；否則執行預設行為
+                    if (typeof successCallback === 'function') {
+                        successCallback(result);
+                    } else {
+                        // 預設行為：顯示成功訊息並重新查詢
+                        Swal.fire({
+                            title: '儲存成功',
+                            text: result.message || `成功儲存 ${result.count || 0} 筆資料`,
+                            icon: 'success',
+                            confirmButtonText: '確定'
+                        }).then(() => {
+                            // 重新執行 Type4 AJAX 查詢
+                            if (typeof performType4Search === 'function') {
+                                performType4Search();
+                            } else {
+                                console.warn('performType4Search 函數未找到');
+                            }
+                        });
+                    }
                 } else {
                     Swal.fire({
                         title: '儲存失敗',
@@ -1592,11 +1561,12 @@ window.ReviewChecklist = (function() {
         reloadCurrentContent: reloadCurrentContent,
         renderSearchResults: renderSearchResults,
         getSelectedProjectIds: getSelectedProjectIds,
-        confirmBatchApproval: confirmBatchApproval,
-        callBatchApprovalAPI: callBatchApprovalAPI,
-        handleBatchResponse: handleBatchResponse,
-        handleBatchError: handleBatchError,
+        // confirmBatchApproval: confirmBatchApproval,
+        // callBatchApprovalAPI: callBatchApprovalAPI,
+        // handleBatchResponse: handleBatchResponse,
+        // handleBatchError: handleBatchError,
         saveApprovalMode_Type4: saveApprovalMode_Type4,
+        callSaveApprovalAPI: callSaveApprovalAPI,
         searchSortingMode: searchSortingMode,
         saveSortingMode: saveSortingMode,
 
@@ -2362,9 +2332,29 @@ function handleBatchReject(actionText) {
  * 執行批次處理 - 簡化版本
  */
 function batchProcess(selectedIds, actionText, currentType) {
-    // 顯示處理中
+    // 如果是 Type4 且有勾選項目，先執行儲存核定金額
+    const hasCheckedItems = $('#content-type-4 .approval-mode-table table tbody .checkPlan:checked').length > 0;
+    
+    if (currentType == 4 && hasCheckedItems) {
+        // 調用儲存 API，傳入成功後執行批次處理的回調
+        window.ReviewChecklist.callSaveApprovalAPI(function(result) {
+            console.log(`成功儲存 ${result.count || 0} 筆核定金額資料，繼續執行批次處理`);
+            // 儲存成功後執行批次處理
+            executeBatchProcess(selectedIds, actionText, currentType);
+        });
+    } else {
+        // 直接執行批次處理
+        executeBatchProcess(selectedIds, actionText, currentType);
+    }
+}
+
+/**
+ * 執行批次處理
+ */
+function executeBatchProcess(selectedIds, actionText, currentType) {
+    // 顯示批次處理中
     Swal.fire({
-        title: '處理中...',
+        title: '批次處理中...',
         text: '正在執行批次操作，請稍候...',
         allowOutsideClick: false,
         showConfirmButton: false,
@@ -2372,14 +2362,14 @@ function batchProcess(selectedIds, actionText, currentType) {
             Swal.showLoading();
         }
     });
-
     $.ajax({
         type: "POST",
         url: "ReviewChecklist.aspx/BatchApproveType", // 註：此方法實際支援所有審查類型（Type1-4）
         data: JSON.stringify({
             projectIds: selectedIds,
             actionType: actionText,
-            reviewType: currentType        }),
+            reviewType: currentType
+        }),
         contentType: "application/json; charset=utf-8",
         dataType: "json",
         timeout: 30000
@@ -3159,9 +3149,9 @@ function handleSearchError(jqXHR, textStatus, errorThrown, searchType) {
     });
 }
 
-/**
- * Type4 專用的 AJAX 搜尋功能
- */
+
+//#region Type4 專用的 AJAX 搜尋功能
+
 function performType4Search() {
     console.log('performType4Search 被呼叫');
     
@@ -3198,7 +3188,7 @@ function performType4Search() {
                 const result = JSON.parse(response.d);
                 if (result.success) {
                     // 渲染搜尋結果
-                    window.ReviewChecklist.renderSearchResults(result.data, '4');
+                    window.ReviewChecklist.renderSearchResults(result.data, 4);
                     
                     // 顯示成功訊息
                     console.log(`Type4 搜尋成功: ${result.count} 筆資料`);
@@ -3253,12 +3243,10 @@ function performType4Search() {
         });
     }
 }
+//endregion
 
 
-
-/**
- * 審查結果排名功能
- */
+//#region 審查結果排名功能
 window.ReviewRanking = (function() {
     "use strict";
 
@@ -3308,10 +3296,7 @@ window.ReviewRanking = (function() {
         const urlParams = new URLSearchParams(window.location.search);
         return urlParams.get("type") || "2";
     }
-
-    /**
-     * 載入審查排名資料
-     */
+// 載入審查排名資料
     function loadRankingData(reviewType, reviewGroup = null) {
         showRankingLoading();
         
@@ -3353,7 +3338,8 @@ window.ReviewRanking = (function() {
             }
         });
     }
-
+//#endregion
+    
     /**
      * 提取所有評審委員
      */
@@ -3613,7 +3599,7 @@ window.ReviewRanking = (function() {
         sortBy: sortBy,
     };
 })();
-
+//#endregion
 // DOM載入完成後初始化
 $(document).ready(function() {
     if (typeof window.ReviewRanking !== "undefined") {

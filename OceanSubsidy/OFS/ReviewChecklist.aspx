@@ -777,10 +777,6 @@
         
           <!-- 核定模式列表 -->
           <div class="approval-mode-table">
-        	  
-        	  
-        	  
-        	  
         	  <div class="table-responsive mb-0">
         		  <table class="table teal-table">
         			  <thead>
@@ -1285,7 +1281,6 @@
                                 <div class="col-12 col-md-3">
                                     <div class="fs-16 text-gray mb-2">審查組別</div>
                                     <select id="sortingReviewGroup" class="form-select">
-                                        <option value="">全部</option>
                                     </select>
                                 </div>
                                 <div class="col-12 col-md-3 d-flex align-items-end">
@@ -1455,7 +1450,6 @@
                       <div class="d-flex align-items-center gap-3 mb-4">
                           <span class="text-gray text-nowrap">審查組別</span>
                           <select class="form-select" id="reviewGroupSelect" style="width: 200px;">
-                              <option value="">全部</option>
                           </select>
                       </div>
 

@@ -140,7 +140,7 @@ const KeywordManager = {
         const requiredStar = isRequired ? '<span class="text-pink">*</span>' : '';
 
         keywordRow.innerHTML = `
-    <div class="col-12 col-md-6">
+    <div class="col-12 col-md-5">
         <div class="input-group">
             <span class="input-group-text" style="width: 70px;">
                 ${requiredStar}中文
@@ -152,7 +152,7 @@ const KeywordManager = {
                    data-keyword-id="${keywordId}">
         </div>
     </div>
-    <div class="col-12 col-md-6">
+    <div class="col-12 col-md-5">
         <div class="input-group">
             <span class="input-group-text" style="width: 70px;">
                 ${requiredStar}英文
@@ -162,15 +162,18 @@ const KeywordManager = {
                    placeholder="請輸入" 
                    value="${englishValue}"
                    data-keyword-id="${keywordId}">
-            ${!isRequired ? `
-            <button type="button" 
-                    class="btn btn-outline-danger btn-sm delete-keyword" 
-                    data-keyword-id="${keywordId}"
-                    title="刪除此關鍵字">
-                <i class="fas fa-trash"></i>
-            </button>` : ''}
         </div>
     </div>
+    ${!isRequired ? `
+    <div class="col-12 col-md-2 d-flex align-items-center">
+        <button class="btn btn-sm btn-dark-green2 delete-keyword" 
+                type="button" 
+                data-keyword-id="${keywordId}"
+                data-delete-bound="true"
+                title="刪除此關鍵字">
+            <i class="fas fa-trash"></i>
+        </button>
+    </div>` : ''}
 `;
 
         container.appendChild(keywordRow);

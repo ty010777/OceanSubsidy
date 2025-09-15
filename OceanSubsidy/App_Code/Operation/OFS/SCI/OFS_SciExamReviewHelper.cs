@@ -89,7 +89,14 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
             }
 
             DbHelper db = new DbHelper();
-            string fileCodeList = "'" + string.Join("','", fileCodes) + "'";
+            
+            // 建立參數化的 FileCode 參數
+            var fileCodeParams = new List<string>();
+            for (int i = 0; i < fileCodes.Length; i++)
+            {
+                fileCodeParams.Add("@fileCode" + i);
+            }
+            string fileCodeList = string.Join(",", fileCodeParams);
             
             db.CommandText = $@"
                 SELECT 
@@ -103,6 +110,12 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
             
             db.Parameters.Clear();
             db.Parameters.Add("@projectID", projectID);
+            
+            // 新增每個 FileCode 參數
+            for (int i = 0; i < fileCodes.Length; i++)
+            {
+                db.Parameters.Add("@fileCode" + i, fileCodes[i]);
+            }
             
             try
             {

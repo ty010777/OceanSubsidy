@@ -15,10 +15,10 @@
                     </td>
                 </tr>
                 <tr>
-                    <th>
+                    <th style="display: none">
                         延續性計畫
                     </th>
-                    <td>
+                    <td style="display: none">
                         
                         <div class="d-flex align-items-center gap-2">
                             <div class="input-group" style="width: 350px;">

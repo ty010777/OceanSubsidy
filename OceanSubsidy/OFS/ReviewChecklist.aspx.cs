@@ -507,7 +507,6 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
         }
     }
     #endregion
-    
     #region type-5 的下拉式選單
     /// <summary>
     /// 載入計畫變更審核的下拉選單資料
@@ -548,7 +547,6 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
         }
     }
     #endregion
-    
     #region type-6 的下拉式選單
     /// <summary>
     /// 載入執行計畫審核的下拉選單資料
@@ -1596,7 +1594,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             if (category == "SCI")
             {
                 options = ReviewCheckListHelper.GetSciReviewGroupOptions();
-            }if (category == "CUL")
+            }else if (category == "CUL")
             {
                 options = ReviewCheckListHelper.GetCulReviewGroupOptions();
             }
@@ -1992,7 +1990,6 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
         }
     }
     #endregion
-    
     #region Type2 搜尋方法
 
     
@@ -2242,7 +2239,6 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
         return result.OrderByDescending(r => r.updated_at).ThenByDescending(r => r.ProjectID).ToList();
     }
     #endregion
-    
     #region Type3 搜尋方法
     /// <summary>
     /// AJAX Type3 搜尋方法
@@ -2298,7 +2294,6 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
     }
 
     #endregion
-    
     #region Type5 搜尋方法
 
     /// <summary>

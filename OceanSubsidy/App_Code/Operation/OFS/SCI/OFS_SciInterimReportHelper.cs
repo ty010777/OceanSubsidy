@@ -128,24 +128,38 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                 try
                 {
                     // 根據報告類型決定要查詢的 FileCode
-                    string fileCodeCondition;
+                    string[] fileCodes;
                     if (reportType == 1)
                     {
-                        fileCodeCondition = "('MidExamFile', 'MidExamFile_revise')";
+                        fileCodes = new[] { "MidExamFile", "MidExamFile_revise" };
                     }
                     else
                     {
-                        fileCodeCondition = "('FinalExamFile', 'FinalExamFile_revise')";
+                        fileCodes = new[] { "FinalExamFile", "FinalExamFile_revise" };
                     }
+                    
+                    // 建立參數化的 FileCode 參數
+                    var fileCodeParams = new List<string>();
+                    for (int i = 0; i < fileCodes.Length; i++)
+                    {
+                        fileCodeParams.Add("@fileCode" + i);
+                    }
+                    string fileCodeList = string.Join(",", fileCodeParams);
                     
                     db.CommandText = $@"
                         SELECT [FileCode], [FileName], [TemplatePath]
                         FROM [OFS_SCI_UploadFile] 
                         WHERE [ProjectID] = @ProjectID
-                        AND [FileCode] IN {fileCodeCondition}
+                        AND [FileCode] IN ({fileCodeList})
                         ORDER BY [FileCode]";
                     db.Parameters.Clear();
                     db.Parameters.Add("@ProjectID", projectID);
+                    
+                    // 新增每個 FileCode 參數
+                    for (int i = 0; i < fileCodes.Length; i++)
+                    {
+                        db.Parameters.Add("@fileCode" + i, fileCodes[i]);
+                    }
                     
                     DataTable dt = db.GetTable();
                     foreach (DataRow row in dt.Rows)
