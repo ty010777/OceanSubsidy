@@ -154,7 +154,14 @@
                     <span>共 <span class="text-teal" id="total-count-type1">0</span> 筆資料</span>
                 </div>
           
-                <button class="btn btn-teal-dark" type="button"><i class="fas fa-download"></i>匯出審查結果</button>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-teal-dark" type="button" onclick="exportType1ReviewingData()">
+                        <i class="fas fa-download"></i>匯出審查中資料
+                    </button>
+                    <button class="btn btn-teal-dark" type="button" onclick="exportType1ReviewResults()">
+                        <i class="fas fa-download"></i>匯出審查結果
+                    </button>
+                </div>
             </div>
           
             <div class="table-responsive mb-0">

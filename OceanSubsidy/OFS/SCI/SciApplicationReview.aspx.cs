@@ -780,12 +780,15 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
             {
                 case "pass":
                     updateProjectMain.StatusesName = "通過";
+                    updateProjectMain.QualReviewNotes = "";
                     break;
                 case "fail":
                     updateProjectMain.StatusesName = "不通過";
+                    updateProjectMain.QualReviewNotes = reviewNotes;
                     break;
                 case "return":
                     updateProjectMain.StatusesName = "補正補件";
+                    updateProjectMain.QualReviewNotes = reviewNotes;
                     // 使用使用者設定的日期
                     if (!string.IsNullOrEmpty(returnDate))
                     {
@@ -821,7 +824,7 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
 
             // 儲存歷史記錄
             ApplicationChecklistHelper.InsertCaseHistoryLog(historyLog);
-
+            //TODO 寄信通知
             return new { success = true, message = $"審查結果已設定為：{updateProjectMain.StatusesName}" };
         }
         catch (Exception ex)

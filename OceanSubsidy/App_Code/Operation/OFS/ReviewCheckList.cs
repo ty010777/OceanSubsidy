@@ -3216,4 +3216,228 @@ SELECT TOP (1000) [ProjectID]
     }
 
     #endregion
+
+    #region 匯出資料查詢方法
+
+    /// <summary>
+    /// 取得Type1審查中資料 (匯出用)
+    /// </summary>
+    /// <param name="year">年度</param>
+    /// <param name="category">類別</param>
+    /// <param name="status">狀態</param>
+    /// <param name="orgName">申請單位</param>
+    /// <param name="supervisor">承辦人員</param>
+    /// <param name="keyword">關鍵字</param>
+    /// <returns>審查中資料DataTable</returns>
+    public static DataTable GetType1ReviewingData(string year, string category, string status, string orgName, string supervisor, string keyword)
+    {
+        try
+        {
+            using (var db = new DbHelper())
+            {
+                // 使用原始的SQL語句並加入篩選條件
+                db.CommandText = @"
+                    SELECT Year as '年度'
+                          ,RC1.[ProjectID] as '計畫編號'
+                          ,CASE
+                               WHEN [Category] = 'SCI' THEN '科專'
+                               WHEN [Category] = 'CUL' THEN '文化'
+                               WHEN [Category] = 'EDC' THEN '學校/民間'
+                               WHEN [Category] = 'CLB' THEN '學校社團'
+                               WHEN [Category] = 'MUL' THEN '多元'
+                               WHEN [Category] = 'LIT' THEN '素養'
+                               WHEN [Category] = 'ACC' THEN '無障礙'
+                               ELSE [Category]
+                           END as '類別'
+                          ,[ProjectNameTw] as '計畫名稱'
+                          ,[OrgName] as '申請單位'
+                          ,[Req_SubsidyAmount] as '申請經費'
+                          ,[Req_TotalAmount] as '總經費'
+                          ,[StatusesName] as '狀態'
+                          ,EW.WorkNames as '工作項目(大項)'
+                    FROM [OCA_OceanSubsidy].[dbo].[V_OFS_ReviewChecklist_type1] RC1
+                    LEFT JOIN V_Excel_Worksch EW ON RC1.ProjectID = EW.ProjectID
+                    WHERE 1=1";
+
+                // 加入篩選條件
+                if (!string.IsNullOrEmpty(year))
+                {
+                    db.CommandText += " AND Year = @Year";
+                    db.Parameters.Add("@Year", year);
+                }
+
+                if (!string.IsNullOrEmpty(category))
+                {
+                    db.CommandText += " AND Category = @Category";
+                    db.Parameters.Add("@Category", category);
+                }
+
+                if (!string.IsNullOrEmpty(status))
+                {
+                    db.CommandText += " AND StatusesName = @StatusesName";
+                    db.Parameters.Add("@StatusesName", status);
+                }
+
+                if (!string.IsNullOrEmpty(orgName))
+                {
+                    db.CommandText += " AND OrgName = @OrgName";
+                    db.Parameters.Add("@OrgName", orgName);
+                }
+
+                if (!string.IsNullOrEmpty(supervisor))
+                {
+                    db.CommandText += " AND SupervisoryPersonAccount = @SupervisoryPersonAccount";
+                    db.Parameters.Add("@SupervisoryPersonAccount", supervisor);
+                }
+
+                if (!string.IsNullOrEmpty(keyword))
+                {
+                    db.CommandText += " AND (RC1.ProjectID LIKE @Keyword OR ProjectNameTw LIKE @Keyword)";
+                    db.Parameters.Add("@Keyword", "%" + keyword + "%");
+                }
+
+                db.CommandText += " ORDER BY Year DESC, RC1.ProjectID";
+
+                var dataTable = db.GetTable();
+                db.Parameters.Clear();
+
+                return dataTable;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得Type1審查中資料時發生錯誤: {ex.Message}");
+            throw new Exception($"取得匯出資料時發生錯誤: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 取得Type1審查結果資料 (匯出用) - 僅查詢通過和不通過的資料
+    /// </summary>
+    public static DataTable GetType1ReviewResultsData(string year, string category, string status, string orgName, string supervisor, string keyword)
+    {
+        try
+        {
+            using (var db = new DbHelper())
+            {
+                // 基於提供的SQL語句，查詢審查結果（通過和不通過）
+                db.CommandText = @"
+                    SELECT Year as '年度'
+                          ,RC1.[ProjectID] as '計畫編號'
+                          ,CASE
+                               WHEN [Category] = 'SCI' THEN '科專'
+                               WHEN [Category] = 'CUL' THEN '文化'
+                               WHEN [Category] = 'EDC' THEN '學校/民間'
+                               WHEN [Category] = 'CLB' THEN '學校社團'
+                               WHEN [Category] = 'MUL' THEN '多元'
+                               WHEN [Category] = 'LIT' THEN '素養'
+                               WHEN [Category] = 'ACC' THEN '無障礙'
+                               ELSE [Category]
+                           END as '類別'
+                          ,[ProjectNameTw] as '計畫名稱'
+                          ,[OrgName] as '申請單位'
+                          ,[Req_SubsidyAmount] as '申請經費'
+                          ,[Req_TotalAmount] as '總經費'
+                          ,[StatusesName] as '狀態'
+                          ,QualReviewNotes as '審查意見'
+                    FROM [OCA_OceanSubsidy].[dbo].[V_OFS_ReviewChecklist_type1] RC1
+                    WHERE 1=1
+                    AND (StatusesName LIKE @PassStatus OR StatusesName LIKE @FailStatus)";
+
+                // 固定查詢通過和不通過的資料
+                db.Parameters.Add("@PassStatus", "通過");
+                db.Parameters.Add("@FailStatus", "不通過");
+
+                // 加入其他篩選條件
+                if (!string.IsNullOrEmpty(year))
+                {
+                    db.CommandText += " AND Year = @Year";
+                    db.Parameters.Add("@Year", year);
+                }
+
+                if (!string.IsNullOrEmpty(category))
+                {
+                    db.CommandText += " AND Category = @Category";
+                    db.Parameters.Add("@Category", category);
+                }
+
+                if (!string.IsNullOrEmpty(orgName))
+                {
+                    db.CommandText += " AND OrgName = @OrgName";
+                    db.Parameters.Add("@OrgName", orgName);
+                }
+
+                if (!string.IsNullOrEmpty(supervisor))
+                {
+                    db.CommandText += " AND SupervisoryPersonAccount = @SupervisoryPersonAccount";
+                    db.Parameters.Add("@SupervisoryPersonAccount", supervisor);
+                }
+
+                if (!string.IsNullOrEmpty(keyword))
+                {
+                    db.CommandText += " AND (RC1.ProjectID LIKE @Keyword OR ProjectNameTw LIKE @Keyword)";
+                    db.Parameters.Add("@Keyword", "%" + keyword + "%");
+                }
+
+                db.CommandText += " ORDER BY Year DESC, RC1.ProjectID";
+
+                var dataTable = db.GetTable();
+                db.Parameters.Clear();
+
+                return dataTable;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得Type1審查結果資料時發生錯誤: {ex.Message}");
+            throw new Exception($"取得審查結果資料時發生錯誤: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 取得Type2申請資料 (匯出用) - 預留給未來使用
+    /// </summary>
+    public static DataTable GetType2ApplicationData(string year, string category, string status, string orgName, string supervisor, string keyword)
+    {
+        // TODO: 實作Type2申請資料查詢
+        throw new NotImplementedException("Type2 申請資料匯出功能尚未實作");
+    }
+
+    /// <summary>
+    /// 取得Type2審查結果資料 (匯出用) - 預留給未來使用
+    /// </summary>
+    public static DataTable GetType2ReviewResultsData(string year, string category, string status, string orgName, string supervisor, string keyword)
+    {
+        // TODO: 實作Type2審查結果資料查詢
+        throw new NotImplementedException("Type2 審查結果匯出功能尚未實作");
+    }
+
+    /// <summary>
+    /// 取得Type3申請資料 (匯出用) - 預留給未來使用
+    /// </summary>
+    public static DataTable GetType3ApplicationData(string year, string category, string status, string orgName, string supervisor, string keyword)
+    {
+        // TODO: 實作Type3申請資料查詢
+        throw new NotImplementedException("Type3 申請資料匯出功能尚未實作");
+    }
+
+    /// <summary>
+    /// 取得Type3審查結果資料 (匯出用) - 預留給未來使用
+    /// </summary>
+    public static DataTable GetType3ReviewResultsData(string year, string category, string status, string orgName, string supervisor, string keyword)
+    {
+        // TODO: 實作Type3審查結果資料查詢
+        throw new NotImplementedException("Type3 審查結果匯出功能尚未實作");
+    }
+
+    /// <summary>
+    /// 取得Type4列表資料 (匯出用) - 預留給未來使用
+    /// </summary>
+    public static DataTable GetType4ListData(string year, string category, string status, string orgName, string supervisor, string keyword)
+    {
+        // TODO: 實作Type4列表資料查詢
+        throw new NotImplementedException("Type4 列表資料匯出功能尚未實作");
+    }
+
+    #endregion
 }

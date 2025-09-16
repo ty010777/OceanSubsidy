@@ -818,6 +818,7 @@ VALUES
             AddIfNotNull("Statuses", version.Statuses);
             AddIfNotNull("StatusesName", version.StatusesName);
             AddIfNotNull("ExpirationDate", version.ExpirationDate);
+            AddIfNotNull("QualReviewNotes", version.QualReviewNotes);
             AddIfNotNull("SeqPoint", version.SeqPoint);
             AddIfNotNull("SupervisoryUnit", version.SupervisoryUnit);
             AddIfNotNull("SupervisoryPersonName", version.SupervisoryPersonName);

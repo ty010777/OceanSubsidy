@@ -3600,6 +3600,145 @@ window.ReviewRanking = (function() {
     };
 })();
 //#endregion
+/**
+ * 匯出Type1審查中資料
+ */
+function exportType1ReviewingData() {
+    try {
+        // 取得當前的篩選條件
+        const year = $('select[name$="ddlYear_Type1"]').val() || '';
+        const category = $('select[name$="ddlCategory_Type1"]').val() || '';
+        const status = $('select[name$="ddlStage_Type1"]').val() || '';
+        const orgName = $('select[name$="ddlOrg_Type1"]').val() || '';
+        const supervisor = $('select[name$="ddlSupervisor_Type1"]').val() || '';
+        const keyword = $('input[name="txtKeyword_Type1"]').val() || '';
+
+        // 建構下載URL
+        const params = new URLSearchParams({
+            type: '1',
+            exportType: 'reviewing',
+            year: year,
+            category: category,
+            status: status,
+            orgName: orgName,
+            supervisor: supervisor,
+            keyword: keyword
+        });
+
+        const downloadUrl = '../Service/DownloadReviewChecklistFile.ashx?' + params.toString();
+
+        // 顯示載入中訊息
+        Swal.fire({
+            title: '正在準備匯出檔案...',
+            text: '請稍候',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // 建立隱藏的 a 標籤來觸發下載
+        const downloadLink = document.createElement('a');
+        downloadLink.href = downloadUrl;
+        downloadLink.style.display = 'none';
+        downloadLink.download = ''; // 讓瀏覽器自動決定檔名
+
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+
+        // 簡單的延遲後關閉載入訊息
+        setTimeout(() => {
+            Swal.close();
+            Swal.fire({
+                title: '匯出完成',
+                text: '檔案下載已開始，請檢查下載資料夾',
+                icon: 'success',
+                timer: 3000,
+                showConfirmButton: false
+            });
+        }, 1500);
+
+    } catch (error) {
+        console.error('匯出時發生錯誤:', error);
+        Swal.fire({
+            title: '匯出失敗',
+            text: '系統發生錯誤，請稍後再試',
+            icon: 'error',
+            confirmButtonText: '確定'
+        });
+    }
+}
+
+/**
+ * 匯出Type1審查結果資料
+ */
+function exportType1ReviewResults() {
+    try {
+        // 取得當前的篩選條件
+        const year = $('select[name$="ddlYear_Type1"]').val() || '';
+        const category = $('select[name$="ddlCategory_Type1"]').val() || '';
+        const orgName = $('select[name$="ddlOrg_Type1"]').val() || '';
+        const supervisor = $('select[name$="ddlSupervisor_Type1"]').val() || '';
+        const keyword = $('input[name="txtKeyword_Type1"]').val() || '';
+
+        // 建構下載URL (固定查詢通過和不通過的資料，所以不傳遞status參數)
+        const params = new URLSearchParams({
+            type: '1',
+            exportType: 'results',
+            year: year,
+            category: category,
+            status: '', // 在後端固定查詢通過和不通過
+            orgName: orgName,
+            supervisor: supervisor,
+            keyword: keyword
+        });
+
+        const downloadUrl = '../Service/DownloadReviewChecklistFile.ashx?' + params.toString();
+
+        // 顯示載入中訊息
+        Swal.fire({
+            title: '正在準備匯出審查結果...',
+            text: '請稍候',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // 建立隱藏的 a 標籤來觸發下載
+        const downloadLink = document.createElement('a');
+        downloadLink.href = downloadUrl;
+        downloadLink.style.display = 'none';
+        downloadLink.download = ''; // 讓瀏覽器自動決定檔名
+
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+
+        // 簡單的延遲後關閉載入訊息
+        setTimeout(() => {
+            Swal.close();
+            Swal.fire({
+                title: '匯出完成',
+                text: '檔案下載已開始，請檢查下載資料夾',
+                icon: 'success',
+                timer: 3000,
+                showConfirmButton: false
+            });
+        }, 1500);
+
+    } catch (error) {
+        console.error('匯出審查結果時發生錯誤:', error);
+        Swal.fire({
+            title: '匯出失敗',
+            text: '系統發生錯誤，請稍後再試',
+            icon: 'error',
+            confirmButtonText: '確定'
+        });
+    }
+}
+
 // DOM載入完成後初始化
 $(document).ready(function() {
     if (typeof window.ReviewRanking !== "undefined") {
