@@ -140,7 +140,7 @@ public partial class OFS_CLB_Review_ClbApplicationReview : System.Web.UI.Page
             string stageStatusBefore = ApplicationChecklistHelper.GetLatestStageStatus(ProjectID) ?? "";
             
             // 更新審查結果
-            OFS_ClbApplicationHelper.UpdateReviewResult(ProjectID, statusesName, expirationDate);
+            OFS_ClbApplicationHelper.UpdateReviewResult(ProjectID, statusesName, reviewNotes,expirationDate);
             
             // 新增案件歷史記錄
             var currentUser = GetCurrentUserInfo();
@@ -159,6 +159,7 @@ public partial class OFS_CLB_Review_ClbApplicationReview : System.Web.UI.Page
             
             // 儲存歷史記錄
             ApplicationChecklistHelper.InsertCaseHistoryLog(historyLog);
+            //TODO 寄信
             
             // 送出成功後直接跳轉，避免 PostBack 問題
             string script = $@"
@@ -174,6 +175,7 @@ public partial class OFS_CLB_Review_ClbApplicationReview : System.Web.UI.Page
                 }});
             ";
             Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowSuccessAndRedirect", script, true);
+            
         }
         catch (Exception ex)
         {

@@ -1265,24 +1265,31 @@ public class OFS_ClbApplicationHelper
     /// </summary>
     /// <param name="projectID">專案編號</param>
     /// <param name="statusesName">審查結果狀態名稱</param>
+    /// <param name="reviewNotes">審查備註</param>
     /// <param name="expirationDate">補正期限（可選，用於退回補正補件）</param>
-    public static void UpdateReviewResult(string projectID, string statusesName, DateTime? expirationDate = null)
+    public static void UpdateReviewResult(string projectID, string statusesName, string reviewNotes = null, DateTime? expirationDate = null)
     {
         try
         {
             DbHelper db = new DbHelper();
             
             string sql = @"
-                UPDATE [OCA_OceanSubsidy].[dbo].[OFS_CLB_Project_Main] 
+                UPDATE [OCA_OceanSubsidy].[dbo].[OFS_CLB_Project_Main]
                 SET [StatusesName] = @StatusesName,
                     [updated_at] = GETDATE()";
-            
+
+            // 如果有審查備註，則一併更新
+            if (!string.IsNullOrEmpty(reviewNotes))
+            {
+                sql += ", [QualReviewNotes] = @ReviewNotes";
+            }
+
             // 如果有補正期限，則一併更新
             if (expirationDate.HasValue)
             {
                 sql += ", [ExpirationDate] = @ExpirationDate";
             }
-            
+
             sql += " WHERE [ProjectID] = @ProjectID";
             
             db.CommandText = sql;
@@ -1290,7 +1297,12 @@ public class OFS_ClbApplicationHelper
             db.Parameters.Clear();
             db.Parameters.Add("@ProjectID", projectID);
             db.Parameters.Add("@StatusesName", statusesName ?? "");
-            
+
+            if (!string.IsNullOrEmpty(reviewNotes))
+            {
+                db.Parameters.Add("@ReviewNotes", reviewNotes);
+            }
+
             if (expirationDate.HasValue)
             {
                 db.Parameters.Add("@ExpirationDate", expirationDate.Value);

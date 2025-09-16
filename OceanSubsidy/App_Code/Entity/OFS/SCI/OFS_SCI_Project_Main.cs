@@ -719,6 +719,41 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
         
+        protected string _QualReviewNotes = "";
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("QualReviewNotes", "QualReviewNotes", DataSource.TABLE, "", false)]
+        public virtual string QualReviewNotes
+        {
+            get
+            {
+                return _QualReviewNotes;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_QualReviewNotes == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_QualReviewNotes.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("QualReviewNotes") == -1)
+                    {
+                        UPDATE_COLUMN.Add("QualReviewNotes");
+                    }
+                    _QualReviewNotes = value;
+                }
+            }
+        }
+        
         protected string _FinalReviewNotes = "";
         ///<summary>
         /// 決審備註 (決審備註)
@@ -931,10 +966,10 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
         
         protected string _LastOperation = "";
         ///<summary>
-        ///  ()
+        /// 最後操作動作 (最後操作動作)
         ///</summary>
         [DataMember]
-        [GisFieldAttribute("LastOperation", "LastOperation", DataSource.TABLE, "", false)]
+        [GisFieldAttribute("LastOperation", "LastOperation", DataSource.TABLE, "最後操作動作", false)]
         public virtual string LastOperation
         {
             get
@@ -966,10 +1001,10 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
         
         protected int? _IsProjChanged = 0;
         ///<summary>
-        ///  ()
+        /// 計畫變更 (計畫變更)
         ///</summary>
         [DataMember]
-        [GisFieldAttribute("IsProjChanged", "IsProjChanged", DataSource.TABLE, "", false)]
+        [GisFieldAttribute("IsProjChanged", "IsProjChanged", DataSource.TABLE, "計畫變更", false)]
         public virtual int? IsProjChanged
         {
             get
