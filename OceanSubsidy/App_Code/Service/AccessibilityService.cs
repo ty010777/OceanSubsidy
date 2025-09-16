@@ -110,6 +110,19 @@ public class AccessibilityService : BaseService
         };
     }
 
+    public object getPayment(JObject param, HttpContext context)
+    {
+        var id = getID(param["ID"].ToString());
+        var data = getProject(id);
+
+        return new
+        {
+            Project = data,
+            Payments = OFSPaymentHelper.query(data.ProjectID),
+            Attachments = OFS_AccAttachmentHelper.query(id, 2)
+        };
+    }
+
     public object getReport(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
@@ -210,6 +223,43 @@ public class AccessibilityService : BaseService
 
             OFSProjectChangeRecordHelper.update(apply);
         }
+
+        return new {};
+    }
+
+    public object reviewPayment(JObject param, HttpContext context)
+    {
+        var id = getID(param["ID"].ToString());
+        var data = getProject(id, new int[] {51}); //執行階段-審核中
+        var stage = int.Parse(param["Stage"].ToString());
+
+        var payment = OFSPaymentHelper.query(data.ProjectID).FirstOrDefault(d => d.Stage == stage && d.Status == "審核中");
+
+        if (payment == null)
+        {
+            throw new Exception("查無資料");
+        }
+
+        if (int.Parse(param["Result"].ToString()) == 1)
+        {
+            payment.Status = "通過";
+            payment.CurrentActualPaidAmount = int.Parse(param["Amount"].ToString());
+
+            if (payment.Stage == 2)
+            {
+                OFS_CulProjectHelper.updateProgressStatus(data.ProjectID, 9); //結案
+            }
+        }
+        else
+        {
+            payment.Status = "請款中";
+        }
+
+        payment.ReviewerComment = param["Reason"].ToString();
+        payment.ReviewUser = CurrentUser.Account;
+        payment.ReviewTime = DateTime.Now;
+
+        OFSPaymentHelper.review(payment);
 
         return new {};
     }
@@ -516,6 +566,60 @@ public class AccessibilityService : BaseService
         getProject(id);
 
         OFS_AccProjectHelper.updateOrganizer(id, int.Parse(param["Organizer"].ToString()));
+
+        return new {};
+    }
+
+    public object savePayment(JObject param, HttpContext context)
+    {
+        var payment = param["Payment"].ToObject<OFS_SCI_Payment>();
+        var id = getID(payment.ProjectID);
+        var data = getProject(id, new int[] {51}); //執行階段-審核中
+
+        //--
+
+        var list = OFSPaymentHelper.query(data.ProjectID);
+        var prev = list.Where(d => d.Stage < payment.Stage).Sum(d => d.CurrentRequestAmount);
+
+        if (prev >= payment.TotalSpentAmount)
+        {
+            throw new Exception("金額錯誤");
+        }
+
+        var model = list.FirstOrDefault(d => d.Stage == payment.Stage);
+
+        if (model == null)
+        {
+            model = new OFS_SCI_Payment();
+            model.ProjectID = payment.ProjectID;
+            model.Stage = payment.Stage;
+        }
+
+        model.ActDisbursementRatioPct = payment.ActDisbursementRatioPct;
+        model.TotalSpentAmount = payment.TotalSpentAmount;
+        model.CurrentRequestAmount = payment.TotalSpentAmount - prev;
+        model.Status = bool.Parse(param["Submit"].ToString()) ? "審核中" : "請款中";
+
+        OFSPaymentHelper.submit(model);
+
+        //--
+
+        var attachments = param["Attachments"].ToObject<List<OFS_AccAttachment>>();
+
+        foreach (var item in attachments)
+        {
+            if (item.Deleted)
+            {
+                OFS_AccAttachmentHelper.delete(item.ID);
+            }
+            else if (item.ID == 0)
+            {
+                item.PID = id;
+                item.Stage = 2; //請款
+
+                OFS_AccAttachmentHelper.insert(item);
+            }
+        }
 
         return new {};
     }

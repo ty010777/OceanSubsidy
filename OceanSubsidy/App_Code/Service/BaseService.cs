@@ -59,6 +59,11 @@ public class BaseService : IHttpHandler, IRequiresSessionState
         return OFSGrantTargetSettingHelper.getByTargetTypeID(param["TargetTypeID"].ToString());
     }
 
+    public object getPaymentPhaseSettings(JObject param, HttpContext context)
+    {
+        return OFS_SciReimbursementHelper.GetPaymentPhaseSettings(param["TypeCode"].ToString());
+    }
+
     public object getZgsCodes(JObject param, HttpContext context)
     {
         return SysZgsCodeHelper.getZgsCodes(param["CodeGroup"].ToString());
