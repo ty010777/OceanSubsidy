@@ -685,6 +685,48 @@ namespace GS.OCA_OceanSubsidy.Model.OFS
     }
 
     #endregion
+
+    #region 批次匯出簡報相關類別
+
+    /// <summary>
+    /// 批次簡報匯出結果類別
+    /// </summary>
+    [Serializable]
+    public class BatchPresentationExportResult
+    {
+        /// <summary>
+        /// ZIP檔案路徑
+        /// </summary>
+        public string ZipFilePath { get; set; }
+
+        /// <summary>
+        /// 暫時目錄路徑
+        /// </summary>
+        public string TempDirectory { get; set; }
+
+        /// <summary>
+        /// 找到的檔案數量
+        /// </summary>
+        public int FoundFileCount { get; set; }
+
+        /// <summary>
+        /// 缺少檔案的數量
+        /// </summary>
+        public int MissingFileCount { get; set; }
+
+        /// <summary>
+        /// 缺少檔案的專案清單
+        /// </summary>
+        public List<string> MissingFiles { get; set; } = new List<string>();
+
+        /// <summary>
+        /// 找到的檔案清單
+        /// </summary>
+        public List<string> FoundFiles { get; set; } = new List<string>();
+    }
+
+    #endregion
+
     public class TaskTemplate
     {
         public string TaskNameEn { get; set; }
@@ -701,5 +743,51 @@ namespace GS.OCA_OceanSubsidy.Model.OFS
             IsTodo = isTodo;
             IsCompleted = isCompleted;
         }
+    }
+
+    /// <summary>
+    /// Type4 (決審核定) 匯出資料項目類別
+    /// </summary>
+    public class Type4ExportItem
+    {
+        /// <summary>
+        /// 排序
+        /// </summary>
+        public string 排序 { get; set; } = string.Empty;
+
+        /// <summary>
+        /// 年度
+        /// </summary>
+        public string 年度 { get; set; } = string.Empty;
+
+        /// <summary>
+        /// 計畫名稱
+        /// </summary>
+        public string 計畫名稱 { get; set; } = string.Empty;
+
+        /// <summary>
+        /// 申請單位
+        /// </summary>
+        public string 申請單位 { get; set; } = string.Empty;
+
+        /// <summary>
+        /// 總分
+        /// </summary>
+        public string 總分 { get; set; } = string.Empty;
+
+        /// <summary>
+        /// 申請經費
+        /// </summary>
+        public string 申請經費 { get; set; } = string.Empty;
+
+        /// <summary>
+        /// 核定經費
+        /// </summary>
+        public string 核定經費 { get; set; } = string.Empty;
+
+        /// <summary>
+        /// 備註
+        /// </summary>
+        public string 備註 { get; set; } = string.Empty;
     }
 }

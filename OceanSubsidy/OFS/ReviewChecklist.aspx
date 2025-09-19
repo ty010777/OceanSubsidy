@@ -588,7 +588,7 @@
                          <i class="fas fa-list-ol"></i>
                          審查結果排名
                      </button>
-                     <button class="btn btn-teal-dark" type="button"><i class="fas fa-download"></i>批次匯出簡報</button>
+                     <button class="btn btn-teal-dark" type="button" onclick="exportBatchPresentations()"><i class="fas fa-download"></i>批次匯出簡報</button>
                  </div>
          
              </div>
@@ -779,7 +779,7 @@
         			  排序模式
         		  </button>
         	  </div>
-        	  <button class="btn btn-teal-dark" type="button"><i class="fas fa-download"></i>匯出列表資料</button>
+        	  <button class="btn btn-teal-dark" type="button" onclick="exportType4ListData()"><i class="fas fa-download"></i>匯出列表資料</button>
           </div>
         
           <!-- 核定模式列表 -->

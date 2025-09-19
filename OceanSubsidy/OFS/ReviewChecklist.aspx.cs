@@ -924,6 +924,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                                 ReviewCheckListHelper.ProcessSciPostApproval(groupResult.SuccessProjectIds, toStatus, actionType, currentUser.Account);
                                 break;
                             case "CUL":
+                                ReviewCheckListHelper.ProcessCulPostApproval(groupResult.SuccessProjectIds, toStatus, actionType, currentUser.Account);
                                 // TODO 正文 如果是要進入初審、複審，請新增審核委員的基本審核資訊，並產生隨機token。
                                 // 文化補助案的特殊處理（未來實作）
                                 break;
@@ -1021,7 +1022,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                 currentUser.Account,
                 actionType ,reviewType
             );
-
+            
             if (batchResult != null)
             {
                 result.Success = batchResult.Success;
@@ -1112,10 +1113,12 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                         case "1": // 資格審查 → 領域審查
                             fromStatus = "資格審查";
                             toStatus = "領域審查";
+                            StatusesName = "審核中";
                             return true;
                         case "2": // 領域審查 → 技術審查
                             fromStatus = "領域審查";
                             toStatus = "技術審查";
+                            StatusesName = "審核中";
                             return true;
                         case "3": // 技術審查 → 決審
                             fromStatus = "技術審查";
@@ -1521,17 +1524,8 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             }
             else if (projectId.Contains("CUL"))
             {
-                // TODO 正文 : 實作文化類別的計畫詳細資料和審查意見 
-                if (reviewType == "2")
-                {
-                    reviewStage = "初審"; //自行設定
-                }
-                else if (reviewType == "3")
-                {
-                    reviewStage = "複審"; //自行設定
-                }
                 planData = ReviewCheckListHelper.GetCulturalPlanDetail(projectId); //基本資訊
-                reviewData = ReviewCheckListHelper.GetCulturalReviewComments(projectId, reviewStage); //審查意見
+                reviewData = ReviewCheckListHelper.GetCulturalReviewComments(projectId, reviewType); //審查意見
             }
 
             if (planData != null && planData.Rows.Count > 0)
@@ -2254,24 +2248,24 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             // 執行技術審查查詢
             if (category == "SCI" || string.IsNullOrEmpty(category))
             {
-                results = GetSciProjectData(
+                results.AddRange( GetSciProjectData(
                     year,
                     orgName,
                     supervisor,
                     keyword,
                     progress,
-                    replyStatus,"技術審查");
+                    replyStatus,"技術審查"));
             }
-            else if (category == "CUL")
+            if (category == "CUL"|| string.IsNullOrEmpty(category))
             {
-                results = GetCulProjectData(
+                results.AddRange( GetCulProjectData(
                     year,
                     orgName,
                     supervisor,
                     keyword,
                     progress,
                     replyStatus,
-                    "複審");
+                    "複審"));
             }
 
             return JsonConvert.SerializeObject(new
@@ -2429,12 +2423,12 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             if (exportType == "Type3")
             {
                 sciType = "技術審查";
-                culType = "複審";
+                culType = "3";//複審
             }
             else // Type2 或預設值
             {
                 sciType = "領域審查";
-                culType = "初審";
+                culType = "2";//初審
             }
 
             // 匯出所有審查資料的請求列表
@@ -2500,6 +2494,81 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             {
                 success = false,
                 message = $"匯出審查結果時發生錯誤: {ex.Message}"
+            });
+        }
+    }
+
+    #endregion
+
+    #region Type4 匯出功能
+
+    /// <summary>
+    /// 匯出Type4列表資料到Excel
+    /// </summary>
+    /// <param name="year">年度</param>
+    /// <param name="category">類別</param>
+    /// <param name="reviewGroup">審查組別</param>
+    /// <param name="orgName">申請單位</param>
+    /// <param name="supervisor">承辦人員</param>
+    /// <param name="keyword">關鍵字</param>
+    /// <returns>包含檔案資料的 JSON 回應</returns>
+    [WebMethod]
+    public static string ExportType4ListData(string year, string category, string reviewGroup, string orgName, string supervisor, string keyword)
+    {
+        try
+        {
+            // 執行資料查詢 - 使用與搜尋相同的邏輯但查詢所有欄位
+            var results = ReviewCheckListHelper.SearchForExport_Type4(
+                year,
+                orgName,
+                supervisor,
+                keyword,
+                category,
+                reviewGroup);
+
+            if (results == null || results.Count == 0)
+            {
+                return JsonConvert.SerializeObject(new
+                {
+                    success = false,
+                    message = "查無符合條件的資料可供匯出"
+                });
+            }
+
+            // 生成Excel檔案
+            byte[] fileBytes = ReviewCheckListHelper.GenerateType4ExcelFile(results);
+
+            if (fileBytes == null || fileBytes.Length == 0)
+            {
+                return JsonConvert.SerializeObject(new
+                {
+                    success = false,
+                    message = "Excel檔案生成失敗"
+                });
+            }
+
+            // 生成檔案名稱
+            string fileName = $"決審核定列表_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+
+            // 將檔案轉為 Base64 字符串以便傳輸
+            string base64File = Convert.ToBase64String(fileBytes);
+
+            return JsonConvert.SerializeObject(new
+            {
+                success = true,
+                message = $"成功匯出 {results.Count} 筆資料",
+                fileName = fileName,
+                fileData = base64File,
+                fileSize = fileBytes.Length,
+                recordCount = results.Count
+            });
+        }
+        catch (Exception ex)
+        {
+            return JsonConvert.SerializeObject(new
+            {
+                success = false,
+                message = $"匯出時發生錯誤: {ex.Message}"
             });
         }
     }

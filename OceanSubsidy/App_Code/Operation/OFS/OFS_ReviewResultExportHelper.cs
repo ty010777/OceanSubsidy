@@ -41,7 +41,7 @@ public class OFS_ReviewResultExportHelper
                         sheetName = field; // 如果找不到描述名稱，使用原始 field 值
                     }
 
-                    DataTable reviewerData = BuildReviewResultQuery(field, request.ReviewStage);
+                    DataTable reviewerData = SCI_BuildReviewResultQuery(field, request.ReviewStage);
 
                     if (reviewerData != null && reviewerData.Rows.Count > 0)
                     {
@@ -51,8 +51,21 @@ public class OFS_ReviewResultExportHelper
             }
             else
             {
-                //TODO 文化做啥
-            }
+                foreach (var field in request.Fields)
+                {
+                    string sheetName = GetZgsCodeDescname("CULField", field);
+                    if (string.IsNullOrEmpty(sheetName))
+                    {
+                        sheetName = field; // 如果找不到描述名稱，使用原始 field 值
+                    }
+
+                    DataTable reviewerData = CUL_BuildReviewResultQuery(field, request.ReviewStage);
+
+                    if (reviewerData != null && reviewerData.Rows.Count > 0)
+                    {
+                        worksheetData.Add((sheetName, reviewerData));
+                    }
+                }            }
         }
 
         if (!worksheetData.Any())
@@ -116,7 +129,7 @@ public class OFS_ReviewResultExportHelper
     /// <summary>
     /// 建構審查結果查詢 SQL
     /// </summary>
-    private static DataTable BuildReviewResultQuery(string field, string reviewStage)
+    private static DataTable SCI_BuildReviewResultQuery(string field, string reviewStage)
     {
         DbHelper db = new DbHelper();
         string sql = @"
@@ -189,7 +202,82 @@ public class OFS_ReviewResultExportHelper
 
         return dt;
     }
+  /// <summary>
+    /// 建構審查結果查詢 SQL
+    /// </summary>
+    private static DataTable CUL_BuildReviewResultQuery(string field, string reviewStage)
+    {
+        DbHelper db = new DbHelper();
+        string sql = @"
+            -- 建立臨時表存 Pivoted 資料
+            IF OBJECT_ID('tempdb..#Pivoted') IS NOT NULL DROP TABLE #Pivoted;
 
+            SELECT 
+                RR.ProjectID,
+                PM.ProjectName as ProjectNameTw,
+                RR.ReviewerName,
+                RR.TotalScore
+            INTO #Pivoted
+            FROM [OCA_OceanSubsidy].[dbo].[OFS_ReviewRecords] RR
+            INNER JOIN [OFS_CUL_Project] PM ON RR.ProjectID = PM.ProjectID
+            WHERE RR.ReviewStage = @ReviewStage 
+              AND RR.IsSubmit = 1
+              AND PM.Field = @Field
+              AND RR.TotalScore IS NOT NULL
+              AND PM.ProgressStatus = @ReviewStage;
+
+            -- 取得有分數的 ReviewerName
+            DECLARE @cols NVARCHAR(MAX);
+            DECLARE @countCols NVARCHAR(MAX);
+            DECLARE @sumCols NVARCHAR(MAX);
+            DECLARE @query NVARCHAR(MAX);
+
+            SELECT 
+                @cols = STRING_AGG(QUOTENAME(ReviewerName), ','),
+                @countCols = STRING_AGG('CASE WHEN ' + QUOTENAME(ReviewerName) + ' IS NOT NULL THEN 1 ELSE 0 END', ' + '),
+                @sumCols = STRING_AGG('ISNULL(' + QUOTENAME(ReviewerName) + ',0)', ' + ')
+            FROM (SELECT DISTINCT ReviewerName FROM #Pivoted) AS ReviewerList;
+
+            -- 動態 PIVOT
+            SET @query = N'
+            WITH PivotTable AS (
+                SELECT ProjectID, ProjectNameTw, ' + @cols + '
+                FROM #Pivoted
+                PIVOT
+                (
+                    MAX(TotalScore)
+                    FOR ReviewerName IN (' + @cols + ')
+                ) AS P
+            )
+            SELECT 
+                PT.ProjectID AS ''計畫編號'',
+                PT.ProjectNameTw AS ''計畫名稱'',
+                
+                (' + @sumCols + ') AS ''總分'',
+                CAST((' + @sumCols + ') * 1.0 / NULLIF((' + @countCols + '),0) AS DECIMAL(10,2)) AS ''平均分數'',
+                ' + @cols + '
+            FROM PivotTable PT
+            ORDER BY PT.ProjectID;
+            ';
+
+            EXEC sp_executesql @query;
+
+            -- 刪除臨時表
+            DROP TABLE #Pivoted;
+
+
+        ";
+
+        db.CommandText = sql;
+        db.Parameters.Clear();
+        db.Parameters.Add("@Field", field);
+        db.Parameters.Add("@ReviewStage", reviewStage);
+        DataTable dt = db.GetTable();
+        int a = dt.Rows.Count;
+        db.Dispose();
+
+        return dt;
+    }
     /// <summary>
     /// 查詢 Sys_ZgsCode 資料
     /// </summary>
