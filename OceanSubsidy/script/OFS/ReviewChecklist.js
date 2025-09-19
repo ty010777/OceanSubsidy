@@ -699,7 +699,7 @@ window.ReviewChecklist = (function() {
                 <td data-th="類別:" style="text-align: center;">${projectCategory}</td>
                 <td data-th="計畫編號:" style="text-align: left;" nowrap>${item.ProjectID || ''}</td>
                 <td data-th="計畫名稱:" style="text-align: left;">
-                    <a href="${getReviewUrl(item.ProjectID)}" class="link-black" target="_blank">${item.ProjectNameTw || ''}</a>
+                    <a href="${getViewUrl(item.ProjectID)}" class="link-black" target="_blank">${item.ProjectNameTw || ''}</a>
                 </td>
                 <td data-th="申請單位:" style="text-align: left;">${item.UserOrg || ''}</td>
                 <td data-th="審查組別:">${reviewGroup}</td>
@@ -1036,6 +1036,44 @@ window.ReviewChecklist = (function() {
         else if (projectId.includes('ACC')) {
             // 無障礙補助案
             return `ACC/Review.aspx?ID=${projectId}`;
+        }
+
+        // 未知的補助案類型
+        return null;
+    }
+    function getViewUrl(projectId) {
+        if (!projectId) return null;
+
+        // 根據不同補助案類型返回對應的審查頁面
+        if (projectId.includes('SCI')) {
+            // 科專補助案
+            return `SCI/SciApplication.aspx?ProjectID=${projectId}`;
+        }
+        // 預留其他補助案類型的空間
+        else if (projectId.includes('CUL')) {
+            // 文化補助案
+            return `CUL/Application.aspx?ID=${projectId}`;
+        }
+        else if (projectId.includes('EDC')) {
+            // 學校民間補助案
+            return `EDC/Application.aspx?ID=${projectId}`;
+        }
+        else if (projectId.includes('CLB')) {
+            // 學校社團補助案 - 未實作
+            return `CLB/ClbApplication.aspx?ProjectID=${projectId}`;
+
+        }
+        else if (projectId.includes('MUL')) {
+            // 多元補助案
+            return `MUL/Application.aspx?ID=${projectId}`;
+        }
+        else if (projectId.includes('LIT')) {
+            // 素養補助案
+            return `LIT/Application.aspx?ID=${projectId}`;
+        }
+        else if (projectId.includes('ACC')) {
+            // 無障礙補助案
+            return `ACC/Application.aspx?ID=${projectId}`;
         }
 
         // 未知的補助案類型
@@ -2335,7 +2373,7 @@ function handleBatchReject(actionText) {
                 const result = response.d || response;
                 if (result.Success) {
                     Swal.fire('已完成', result.Message, 'success').then(() => {
-                        // $(`#MainContent_btnSearch_Type${currentType}`).trigger('click');
+                        performAjaxSearch(currentType)
                     });
                 } else {
                     Swal.fire('操作失敗', result.Message, 'error');
@@ -2973,6 +3011,8 @@ window.ReviewChecklistManager = window.ReviewChecklist;
  * @param {number} searchType - 搜尋類型 (1, 2, 3, 5, 6)
  */
 function performAjaxSearch(searchType) {
+    if (typeof searchType === "string") searchType = Number(searchType);
+
     try {
         // 顯示載入狀態
         showSearchLoading(searchType, true);
@@ -3023,7 +3063,6 @@ function performAjaxSearch(searchType) {
  */
 function collectSearchConditions(searchType) {
     const data = {};
-
     try {
         switch (searchType) {
             case 1:
@@ -3934,6 +3973,253 @@ function exportReviewRanking(exportType = 'Type2') {
 
     } catch (error) {
         console.error('匯出審查結果時發生錯誤:', error);
+        Swal.fire({
+            title: '匯出失敗',
+            text: '系統發生錯誤，請稍後再試',
+            icon: 'error',
+            confirmButtonText: '確定'
+        });
+    }
+}
+
+/**
+ * 批次匯出簡報檔案
+ */
+function exportBatchPresentations() {
+    try {
+        // 檢查是否為 Type3 (技術審查/複審)
+        const currentType = window.ReviewChecklist ? window.ReviewChecklist.getCurrentType() : null;
+        if (currentType !== '3') {
+            Swal.fire({
+                title: '功能限制',
+                text: '批次匯出簡報功能僅適用於技術審查/複審',
+                icon: 'warning',
+                confirmButtonText: '確定'
+            });
+            return;
+        }
+
+        // 取得當前列表中所有顯示的專案ID
+        const projectIds = getAllVisibleProjectIds();
+
+        if (projectIds.length === 0) {
+            Swal.fire({
+                title: '沒有資料',
+                text: '當前列表中沒有可匯出的專案',
+                icon: 'warning',
+                confirmButtonText: '確定'
+            });
+            return;
+        }
+
+        // 確認匯出
+        Swal.fire({
+            title: '確認匯出',
+            text: `即將匯出 ${projectIds.length} 個專案的簡報檔案 (僅限 SCI 和 CUL 補助案)，是否繼續？`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: '確定匯出',
+            cancelButtonText: '取消'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                performBatchExport(projectIds);
+            }
+        });
+
+    } catch (error) {
+        console.error('批次匯出簡報時發生錯誤:', error);
+        Swal.fire({
+            title: '匯出失敗',
+            text: '系統發生錯誤，請稍後再試',
+            icon: 'error',
+            confirmButtonText: '確定'
+        });
+    }
+}
+
+/**
+ * 取得當前列表中所有顯示的專案ID (僅限 SCI 和 CUL)
+ */
+function getAllVisibleProjectIds() {
+    const projectIds = [];
+
+    // 從 Type3 的表格中取得所有專案ID
+    $('#content-type-3 .table tbody tr').each(function() {
+        const checkbox = $(this).find('input[type="checkbox"]');
+        if (checkbox.length > 0) {
+            const projectId = checkbox.val() || checkbox.data('project-id');
+            if (projectId && projectId.trim() !== '') {
+                const cleanProjectId = projectId.trim().toUpperCase();
+                // 只處理 SCI 和 CUL 類型的專案
+                if (cleanProjectId.includes('SCI') || cleanProjectId.includes('CUL')) {
+                    projectIds.push(projectId.trim());
+                }
+            }
+        }
+    });
+
+    return projectIds;
+}
+
+/**
+ * 執行批次匯出
+ */
+function performBatchExport(projectIds) {
+    // 顯示載入中對話框
+    Swal.fire({
+        title: '正在匯出...',
+        text: '請稍候，正在彙整簡報檔案',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        willOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    try {
+        // 建構下載URL
+        const projectIdsParam = projectIds.join(',');
+        const downloadUrl = `../Service/DownloadApplicationChecklistFile.ashx?action=batchExportPresentations&projectIds=${encodeURIComponent(projectIdsParam)}`;
+
+        // 建立隱藏的下載連結
+        const downloadLink = document.createElement('a');
+        downloadLink.href = downloadUrl;
+        downloadLink.style.display = 'none';
+        document.body.appendChild(downloadLink);
+
+        // 觸發下載
+        downloadLink.click();
+
+        // 清理
+        document.body.removeChild(downloadLink);
+
+        // 顯示成功訊息
+        setTimeout(() => {
+            Swal.fire({
+                title: '匯出完成',
+                text: `已開始下載 ${projectIds.length} 個專案的簡報檔案`,
+                icon: 'success',
+                confirmButtonText: '確定'
+            });
+        }, 1000);
+
+    } catch (error) {
+        console.error('執行批次匯出時發生錯誤:', error);
+        Swal.fire({
+            title: '匯出失敗',
+            text: '檔案下載時發生錯誤，請稍後再試',
+            icon: 'error',
+            confirmButtonText: '確定'
+        });
+    }
+}
+
+/**
+ * 匯出Type4列表資料 (決審核定)
+ */
+function exportType4ListData() {
+    try {
+        // 收集篩選條件
+        const exportData = {
+            year: $('#ddlYear_Type4').val() || '',
+            category: $('#ddlCategory_Type4').val() || '',
+            reviewGroup: $('#ddlReviewGroup_Type4').val() || '',
+            orgName: $('#ddlOrg_Type4').val() || '',
+            supervisor: $('#ddlSupervisor_Type4').val() || '',
+            keyword: $('input[name="txtKeyword_Type4"]').val() || ''
+        };
+
+        console.log('匯出Type4資料，篩選條件:', exportData);
+
+        // 顯示載入中訊息
+        Swal.fire({
+            title: '正在匯出...',
+            text: '請稍候，正在產生Excel檔案',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            willOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // 呼叫後端方法
+        $.ajax({
+            type: "POST",
+            url: "ReviewChecklist.aspx/ExportType4ListData",
+            data: JSON.stringify(exportData),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function(response) {
+                try {
+                    const result = response.d ? JSON.parse(response.d) : response;
+
+                    if (result.success) {
+                        // 成功時觸發檔案下載
+                        const base64Data = result.fileData;
+                        const fileName = result.fileName || `Type4列表資料_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+                        // 將 base64 轉換為 blob 並下載
+                        const byteCharacters = atob(base64Data);
+                        const byteNumbers = new Array(byteCharacters.length);
+                        for (let i = 0; i < byteCharacters.length; i++) {
+                            byteNumbers[i] = byteCharacters.charCodeAt(i);
+                        }
+                        const byteArray = new Uint8Array(byteNumbers);
+                        const blob = new Blob([byteArray], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+                        // 建立下載連結
+                        const link = document.createElement('a');
+                        const url = URL.createObjectURL(blob);
+                        link.href = url;
+                        link.download = fileName;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(url);
+
+                        // 顯示成功訊息
+                        Swal.fire({
+                            title: '匯出成功',
+                            text: result.message || '檔案已成功下載',
+                            icon: 'success',
+                            confirmButtonText: '確定'
+                        });
+
+                    } else {
+                        // 匯出失敗
+                        Swal.fire({
+                            title: '匯出失敗',
+                            text: result.message || '系統發生錯誤，請稍後再試',
+                            icon: 'error',
+                            confirmButtonText: '確定'
+                        });
+                    }
+
+                } catch (parseError) {
+                    console.error('解析回應時發生錯誤:', parseError);
+                    Swal.fire({
+                        title: '匯出失敗',
+                        text: '系統回應格式錯誤，請稍後再試',
+                        icon: 'error',
+                        confirmButtonText: '確定'
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX請求失敗:', error);
+                Swal.fire({
+                    title: '匯出失敗',
+                    text: '網路錯誤或伺服器無回應，請稍後再試',
+                    icon: 'error',
+                    confirmButtonText: '確定'
+                });
+            }
+        });
+
+    } catch (error) {
+        console.error('匯出Type4列表資料時發生錯誤:', error);
         Swal.fire({
             title: '匯出失敗',
             text: '系統發生錯誤，請稍後再試',

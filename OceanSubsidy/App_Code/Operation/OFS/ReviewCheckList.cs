@@ -1,12 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using System.Linq;
 using System.Web;
 using GS.Data;
 using GS.Data.Sql;
 using GS.OCA_OceanSubsidy.Entity;
 using GS.OCA_OceanSubsidy.Model.OFS;
+using GS.OCA_OceanSubsidy.Operation.OSI.OpenXml;
+using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Spreadsheet;
 
 /// <summary>
 /// OFSRoleHelper 的摘要描述
@@ -19,6 +24,242 @@ public class ReviewCheckListHelper
         // TODO: 在這裡新增建構函式邏輯
         //
     }
+
+    #region 批次匯出簡報功能
+
+    /// <summary>
+    /// 批次匯出簡報檔案，產生臨時ZIP檔案
+    /// </summary>
+    /// <param name="projectIds">專案編號列表</param>
+    /// <returns>包含ZIP檔案路徑和統計資訊的結果物件</returns>
+    public static BatchPresentationExportResult ExportBatchPresentations(List<string> projectIds)
+    {
+        if (projectIds == null || projectIds.Count == 0)
+        {
+            throw new ArgumentException("專案編號列表不能為空");
+        }
+
+        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDir);
+
+        try
+        {
+            var foundFiles = new List<string>();
+            var missingFiles = new List<string>();
+
+            foreach (string projectId in projectIds)
+            {
+                if (string.IsNullOrEmpty(projectId)) continue;
+
+                // 根據專案編號推斷補助類型
+                string projectType = GetProjectTypeFromId(projectId);
+                if (string.IsNullOrEmpty(projectType))
+                {
+                    missingFiles.Add($"{projectId} (無法識別專案類型)");
+                    continue;
+                }
+
+                // 建構檔案路徑
+                string baseDir = HttpContext.Current.Server.MapPath("~/UploadFiles/OFS");
+                string projectDir = Path.Combine(baseDir, projectType, projectId, "TechReviewFiles");
+
+                if (Directory.Exists(projectDir))
+                {
+                    // 搜尋 PPT 檔案 (支援 .ppt, .pptx)
+                    var pptFiles = Directory.GetFiles(projectDir, "*.ppt*", SearchOption.AllDirectories);
+
+                    foreach (string pptFile in pptFiles)
+                    {
+                        string fileName = Path.GetFileName(pptFile);
+                        string destFileName = $"{projectId}_{fileName}";
+                        string destPath = Path.Combine(tempDir, destFileName);
+
+                        File.Copy(pptFile, destPath);
+                        foundFiles.Add(destFileName);
+                    }
+                }
+
+                if (!foundFiles.Any(f => f.StartsWith(projectId)))
+                {
+                    missingFiles.Add(projectId);
+                }
+            }
+
+            // 如果沒有找到任何檔案，拋出例外
+            if (foundFiles.Count == 0)
+            {
+                throw new FileNotFoundException($"未找到任何簡報檔案。缺少檔案的專案: {string.Join(", ", missingFiles)}");
+            }
+
+            // 建立 ZIP 檔案
+            string zipPath = Path.Combine(Path.GetTempPath(), $"簡報匯出_{DateTime.Now:yyyyMMddHHmmss}.zip");
+
+            // 如果有缺少的檔案，建立說明文件
+            if (missingFiles.Count > 0)
+            {
+                string readmePath = Path.Combine(tempDir, "缺少檔案清單.txt");
+                using (var writer = new StreamWriter(readmePath, false, System.Text.Encoding.UTF8))
+                {
+                    writer.WriteLine("以下專案未找到簡報檔案：");
+                    writer.WriteLine();
+                    foreach (string missing in missingFiles)
+                    {
+                        writer.WriteLine($"- {missing}");
+                    }
+                    writer.WriteLine();
+                    writer.WriteLine($"成功匯出 {foundFiles.Count} 個檔案");
+                    writer.WriteLine($"匯出時間：{DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+                }
+            }
+
+            // 使用 7-Zip 或 .NET 4.5+ 的方式創建 ZIP
+            CreateZipFile(tempDir, zipPath);
+
+            return new BatchPresentationExportResult
+            {
+                ZipFilePath = zipPath,
+                TempDirectory = tempDir,
+                FoundFileCount = foundFiles.Count,
+                MissingFileCount = missingFiles.Count,
+                MissingFiles = missingFiles,
+                FoundFiles = foundFiles
+            };
+        }
+        catch
+        {
+            // 發生例外時清理暫時目錄
+            if (Directory.Exists(tempDir))
+            {
+                Directory.Delete(tempDir, true);
+            }
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// 創建 ZIP 檔案 (.NET Framework 4.0 兼容版本)
+    /// </summary>
+    /// <param name="sourceDir">來源目錄</param>
+    /// <param name="zipPath">ZIP 檔案路徑</param>
+    private static void CreateZipFile(string sourceDir, string zipPath)
+    {
+        try
+        {
+            // 使用 Ionic.Zip 或其他第三方庫，如果不可用則使用 Shell 方式
+            CreateZipUsingShell(sourceDir, zipPath);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"創建 ZIP 檔案失敗: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// 使用 Shell 介面創建 ZIP 檔案
+    /// </summary>
+    /// <param name="sourceDir">來源目錄</param>
+    /// <param name="zipPath">ZIP 檔案路徑</param>
+    private static void CreateZipUsingShell(string sourceDir, string zipPath)
+    {
+        try
+        {
+            // 使用 Windows Shell 創建 ZIP 檔案
+            var shell = new object();
+            var shellType = Type.GetTypeFromProgID("Shell.Application");
+            shell = Activator.CreateInstance(shellType);
+
+            // 建立空的 ZIP 檔案
+            byte[] emptyZip = new byte[] { 80, 75, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+            File.WriteAllBytes(zipPath, emptyZip);
+
+            // 等待檔案建立完成
+            System.Threading.Thread.Sleep(100);
+
+            // 取得 ZIP 資料夾物件
+            var zipFolder = shellType.InvokeMember("NameSpace",
+                System.Reflection.BindingFlags.InvokeMethod,
+                null, shell, new object[] { zipPath });
+
+            // 複製檔案到 ZIP
+            var sourceFiles = Directory.GetFiles(sourceDir);
+            foreach (string file in sourceFiles)
+            {
+                zipFolder.GetType().InvokeMember("CopyHere",
+                    System.Reflection.BindingFlags.InvokeMethod,
+                    null, zipFolder, new object[] { file, 4 });
+
+                // 等待複製完成
+                System.Threading.Thread.Sleep(100);
+            }
+
+            // 等待所有操作完成
+            System.Threading.Thread.Sleep(500);
+        }
+        catch (Exception ex)
+        {
+            // 如果 Shell 方式失敗，嘗試使用 PowerShell
+            CreateZipUsingPowerShell(sourceDir, zipPath);
+        }
+    }
+
+    /// <summary>
+    /// 使用 PowerShell 創建 ZIP 檔案
+    /// </summary>
+    /// <param name="sourceDir">來源目錄</param>
+    /// <param name="zipPath">ZIP 檔案路徑</param>
+    private static void CreateZipUsingPowerShell(string sourceDir, string zipPath)
+    {
+        try
+        {
+            var startInfo = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "powershell.exe",
+                Arguments = $"-Command \"Compress-Archive -Path '{sourceDir}\\*' -DestinationPath '{zipPath}' -Force\"",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+
+            using (var process = System.Diagnostics.Process.Start(startInfo))
+            {
+                process.WaitForExit(30000); // 等待最多30秒
+                if (process.ExitCode != 0)
+                {
+                    string error = process.StandardError.ReadToEnd();
+                    throw new InvalidOperationException($"PowerShell 創建 ZIP 失敗: {error}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"PowerShell 創建 ZIP 檔案失敗: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// 從專案編號取得專案類型
+    /// </summary>
+    /// <param name="projectId">專案編號</param>
+    /// <returns>專案類型代碼 (僅支援 SCI 和 CUL)</returns>
+    private static string GetProjectTypeFromId(string projectId)
+    {
+        if (string.IsNullOrEmpty(projectId)) return string.Empty;
+
+        // 技術審查階段僅支援 SCI 和 CUL 兩種補助案
+        if (projectId.ToUpper().Contains("SCI"))
+        {
+            return "SCI";
+        }
+        else if (projectId.ToUpper().Contains("CUL"))
+        {
+            return "CUL";
+        }
+
+        return string.Empty;
+    }
+
+    #endregion
 
     #region 資料轉換方法
 
@@ -821,7 +1062,7 @@ SELECT TOP (1000) [ProjectID]
             db.Parameters.Clear();
 
             // 添加篩選條件參數
-            db.CommandText += "Where StatusesName != '不通過'";
+            db.CommandText += "Where 1=1";
             if (!string.IsNullOrEmpty(year))
             {
                 db.CommandText += " AND Year = @year";
@@ -1296,7 +1537,7 @@ SELECT TOP (1000) [ProjectID]
     {
         DbHelper db = new DbHelper();
 
-        db.CommandText = $@"
+        db.CommandText = @"
             SELECT p.*,
                    m.ProjectNameTw,
                    m.OrgName,
@@ -1308,12 +1549,12 @@ SELECT TOP (1000) [ProjectID]
                            WHERE tf.ProjectID = p.ProjectID), 0) AS 'Req_SubsidyAmount'
             FROM OFS_SCI_Project_Main p
             LEFT JOIN OFS_SCI_Application_Main m ON p.ProjectID = m.ProjectID
-            WHERE p.Statuses LIKE '%{status}%'
+            WHERE p.Statuses LIKE @status
               AND (p.isExist = 1 OR p.isExist IS NULL)  AND isWithdrawal != 1
         ";
 
         // 添加篩選條件
-        db.Parameters.Clear();
+        db.Parameters.Add("@status", $"%{status}%");
 
         if (!string.IsNullOrEmpty(year))
         {
@@ -1511,7 +1752,7 @@ SELECT TOP (1000) [ProjectID]
     {
         DbHelper db = new DbHelper();
 
-        db.CommandText = $@"
+        db.CommandText = @"
             SELECT O.ProjectID,
                    P.Descname AS Statuses,
                    S.Descname AS StatusesName,
@@ -1534,14 +1775,14 @@ SELECT TOP (1000) [ProjectID]
          LEFT JOIN Sys_Unit AS U ON (U.UnitID = R.UnitID)
               JOIN Sys_ZgsCode AS S ON (S.CodeGroup = 'ProjectStatus' AND S.Code = O.Status)
               JOIN Sys_ZgsCode AS P ON (P.CodeGroup = 'ProjectProgressStatus' AND P.Code = O.ProgressStatus)
-            WHERE P.Descname LIKE '%{status}%'
+            WHERE P.Descname LIKE @status
               AND O.IsExists = 1
-          
+
               AND O.IsWithdrawal != 1
         ";
 
         // 添加篩選條件
-        db.Parameters.Clear();
+        db.Parameters.Add("@status", $"%{status}%");
 
         if (!string.IsNullOrEmpty(year))
         {
@@ -1608,7 +1849,9 @@ SELECT TOP (1000) [ProjectID]
         // 建立 IN 子句的參數
         var projectIdParams = projectIds.Select((id, index) => $"@projectId{index}").ToList();
         string inClause = "(" + string.Join(",", projectIdParams) + ")";
+      
 
+        status = status == "初審" ? "2" : "3";
         DbHelper db = new DbHelper();
 
         db.CommandText = $@"
@@ -1946,18 +2189,18 @@ SELECT TOP (1000) [ProjectID]
                 {
                     try
                     {
-                        int status = 13;
+                        int status = 19; 
 
                         switch (reviewType)
                         {
                             case "2": // 初審
-                                status = 23;
+                                status = 29;
                                 break;
                             case "3": // 複審
-                                status = 33;
+                                status = 39;
                                 break;
                             case "4": // 決審核定
-                                status = 46;
+                                status = 49;
                                 break;
                         }
 
@@ -1986,7 +2229,12 @@ SELECT TOP (1000) [ProjectID]
                         }
                         else if (projectId.Contains("CLB"))
                         {
-                            // 學校社團
+                            // 更新專案狀態為不通過
+                            CLB_UpdateProjectRejectStatus(db, projectId);
+                            // 記錄審查歷程
+                            InsertRejectHistory(db, projectId, actionType, userAccount);
+                            successCount++;
+                            successIds.Add(projectId);
                         }
                         else if (projectId.Contains("MUL"))
                         {
@@ -2055,15 +2303,30 @@ SELECT TOP (1000) [ProjectID]
     /// <param name="userAccount">操作者帳號</param>
     private static void UpdateProjectRejectStatus(DbHelper db, string projectId)
     {
-        db.CommandText = $@"
+        db.CommandText = @"
             UPDATE OFS_SCI_Project_Main
-            SET StatusesName = '不通過',
+            SET StatusesName = '結案(未通過)',
+                isExist = 0,
                 updated_at = GETDATE()
-            WHERE ProjectID = '{projectId}'";
+            WHERE ProjectID = @projectId";
 
+        db.Parameters.Clear();
+        db.Parameters.Add("@projectId", projectId);
         db.ExecuteNonQuery();
     }
+    private static void CLB_UpdateProjectRejectStatus(DbHelper db, string projectId)
+    {
+        db.CommandText = @"
+            UPDATE OFS_CLB_Project_Main
+            SET StatusesName = '結案(未通過)',
+                isExist = 0,
+                updated_at = GETDATE()
+            WHERE ProjectID = @projectId";
 
+        db.Parameters.Clear();
+        db.Parameters.Add("@projectId", projectId);
+        db.ExecuteNonQuery();
+    }
     /// <summary>
     /// 插入不通過審查歷程記錄
     /// </summary>
@@ -2073,7 +2336,7 @@ SELECT TOP (1000) [ProjectID]
     /// <param name="userAccount">操作者帳號</param>
     private static void InsertRejectHistory(DbHelper db, string projectId, string actionType, string userAccount)
     {
-        db.CommandText = $@"
+        db.CommandText = @"
             INSERT INTO OFS_CaseHistoryLog (
                 ProjectID,
                 ChangeTime,
@@ -2082,14 +2345,18 @@ SELECT TOP (1000) [ProjectID]
                 StageStatusAfter,
                 Description
             ) VALUES (
-                '{projectId}',
+                @projectId,
                 GETDATE(),
-                '{userAccount}',
+                @userAccount,
                 '審核中',
-                '不通過',
-                '批次{actionType}: 審核中 → 不通過'
+                '結案(未通過)',
+                @description
             )";
 
+        db.Parameters.Clear();
+        db.Parameters.Add("@projectId", projectId);
+        db.Parameters.Add("@userAccount", userAccount);
+        db.Parameters.Add("@description", $"批次{actionType}: 審核中 → 結案(未通過)");
         db.ExecuteNonQuery();
     }
 
@@ -2129,7 +2396,7 @@ SELECT TOP (1000) [ProjectID]
                 db.Parameters.Clear();
 
                 // 3. 取得科專的審查範本
-                db.CommandText = $@"
+                db.CommandText = @"
                     SELECT TemplateName, TemplateWeight
                     FROM OFS_ReviewTemplate
                     WHERE SubsidyProjects = 'SCI'";
@@ -2148,7 +2415,7 @@ SELECT TOP (1000) [ProjectID]
                         string token = Guid.NewGuid().ToString();
 
                         // 4.1 新增記錄到 OFS_ReviewRecords
-                        db.CommandText = $@"
+                        db.CommandText = @"
                             INSERT INTO OFS_ReviewRecords (
                                 ProjectID,
                                 ReviewStage,
@@ -2156,13 +2423,20 @@ SELECT TOP (1000) [ProjectID]
                                 ReviewerName,
                                 Token
                             ) VALUES (
-                                '{projectId}',
-                                '{reviewStage}',
-                                '{reviewerEmail}',
-                                '{reviewerName}',
-                                '{token}'
+                                @projectId,
+                                @reviewStage,
+                                @reviewerEmail,
+                                @reviewerName,
+                                @token
                             );
                             SELECT SCOPE_IDENTITY() AS ReviewID;";
+
+                        db.Parameters.Clear();
+                        db.Parameters.Add("@projectId", projectId);
+                        db.Parameters.Add("@reviewStage", reviewStage);
+                        db.Parameters.Add("@reviewerEmail", reviewerEmail);
+                        db.Parameters.Add("@reviewerName", reviewerName);
+                        db.Parameters.Add("@token", token);
 
                         int reviewId = Convert.ToInt32(db.GetTable().Rows[0]["ReviewID"]);
 
@@ -2176,19 +2450,23 @@ SELECT TOP (1000) [ProjectID]
 
                             if (!string.IsNullOrEmpty(templateName))
                             {
-                                db.CommandText = $@"
+                                db.CommandText = @"
                                     INSERT INTO OFS_ReviewScores (
                                         ReviewID,
                                         ItemName,
                                         Weight,
                                         Score
                                     ) VALUES (
-                                        {reviewId},
-                                        '{templateName}',
-                                        {templateWeight},
+                                        @reviewId,
+                                        @templateName,
+                                        @templateWeight,
                                         NULL
                                     )";
 
+                                db.Parameters.Clear();
+                                db.Parameters.Add("@reviewId", reviewId);
+                                db.Parameters.Add("@templateName", templateName);
+                                db.Parameters.Add("@templateWeight", templateWeight);
                                 db.ExecuteNonQuery();
                             }
                         }
@@ -2218,7 +2496,17 @@ SELECT TOP (1000) [ProjectID]
             db.Parameters.Add("@ProjectID", projectId);
             string field = db.GetTable().Rows[0]["Field"]?.ToString();
             db.Parameters.Clear();
-
+            int status = 5;
+            switch (reviewStage)
+            {
+                case "初審":
+                    reviewStage = "2";
+                    break;
+                case "複審":
+                    reviewStage = "3";
+                    break;
+                
+            }
             if (!string.IsNullOrEmpty(field))
             {
                 // 2. 從 OFS_ReviewCommitteeList 取得對應審查組別的所有人員
@@ -2246,14 +2534,14 @@ SELECT TOP (1000) [ProjectID]
                 {
                     string reviewerEmail = reviewer["Email"]?.ToString();
                     string reviewerName = reviewer["CommitteeUser"]?.ToString();
-
+                    
                     if (!string.IsNullOrEmpty(reviewerEmail) && !string.IsNullOrEmpty(reviewerName))
                     {
                         // 產生隨機 Token
                         string token = Guid.NewGuid().ToString();
 
                         // 4.1 新增記錄到 OFS_ReviewRecords
-                        db.CommandText = $@"
+                        db.CommandText = @"
                             INSERT INTO OFS_ReviewRecords (
                                 ProjectID,
                                 ReviewStage,
@@ -2261,13 +2549,20 @@ SELECT TOP (1000) [ProjectID]
                                 ReviewerName,
                                 Token
                             ) VALUES (
-                                '{projectId}',
-                                '{reviewStage}',
-                                '{reviewerEmail}',
-                                '{reviewerName}',
-                                '{token}'
+                                @projectId,
+                                @reviewStage,
+                                @reviewerEmail,
+                                @reviewerName,
+                                @token
                             );
                             SELECT SCOPE_IDENTITY() AS ReviewID;";
+
+                        db.Parameters.Clear();
+                        db.Parameters.Add("@projectId", projectId);
+                        db.Parameters.Add("@reviewStage", reviewStage);
+                        db.Parameters.Add("@reviewerEmail", reviewerEmail);
+                        db.Parameters.Add("@reviewerName", reviewerName);
+                        db.Parameters.Add("@token", token);
 
                         int reviewId = Convert.ToInt32(db.GetTable().Rows[0]["ReviewID"]);
 
@@ -2281,19 +2576,23 @@ SELECT TOP (1000) [ProjectID]
 
                             if (!string.IsNullOrEmpty(templateName))
                             {
-                                db.CommandText = $@"
+                                db.CommandText = @"
                                     INSERT INTO OFS_ReviewScores (
                                         ReviewID,
                                         ItemName,
                                         Weight,
                                         Score
                                     ) VALUES (
-                                        {reviewId},
-                                        '{templateName}',
-                                        {templateWeight},
+                                        @reviewId,
+                                        @templateName,
+                                        @templateWeight,
                                         NULL
                                     )";
 
+                                db.Parameters.Clear();
+                                db.Parameters.Add("@reviewId", reviewId);
+                                db.Parameters.Add("@templateName", templateName);
+                                db.Parameters.Add("@templateWeight", templateWeight);
                                 db.ExecuteNonQuery();
                             }
                         }
@@ -2314,7 +2613,7 @@ SELECT TOP (1000) [ProjectID]
     {
         using (var db = new DbHelper())
         {
-            string sql = @"
+            db.CommandText = @"
                 SELECT TOP 1
                     [ProjectID],
                     [Year],
@@ -2332,10 +2631,11 @@ SELECT TOP (1000) [ProjectID]
                     ) AS [TopicField],
                     [OrgName]
                 FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Application_Main] AM
-                WHERE [ProjectID] = '{0}'
+                WHERE [ProjectID] = @projectId
             ";
 
-            db.CommandText = string.Format(sql, projectId);
+            db.Parameters.Clear();
+            db.Parameters.Add("@projectId", projectId);
             return db.GetTable();
         }
     }
@@ -2349,7 +2649,7 @@ SELECT TOP (1000) [ProjectID]
     {
         using (var db = new DbHelper())
         {
-            string sql = @"
+            db.CommandText = @"
                 SELECT [ProjectID],
                        [Year],
                        [SubsidyPlanType],
@@ -2359,11 +2659,11 @@ SELECT TOP (1000) [ProjectID]
                   FROM [OFS_CUL_Project] AS P
              LEFT JOIN [Sys_ZgsCode] AS S ON (S.CodeGroup = 'CULField' AND S.Code = P.Field)
              LEFT JOIN [Sys_ZgsCode] AS M ON (M.CodeGroup = 'CULField' AND M.Code = S.ParentCode)
-                 WHERE [ProjectID] = '{0}'
+                 WHERE [ProjectID] = @projectId
             ";
 
-            db.CommandText = string.Format(sql, projectId);
-
+            db.Parameters.Clear();
+            db.Parameters.Add("@projectId", projectId);
             return db.GetTable();
         }
     }
@@ -2378,7 +2678,7 @@ SELECT TOP (1000) [ProjectID]
     {
         using (var db = new DbHelper())
         {
-            string sql = @"
+            db.CommandText = @"
                 SELECT TOP (1000)
                     [ReviewID],
                     [ProjectID],
@@ -2392,11 +2692,13 @@ SELECT TOP (1000) [ProjectID]
                     [CreateTime],
                     [IsSubmit]
                 FROM [OCA_OceanSubsidy].[dbo].[OFS_ReviewRecords]
-                WHERE ProjectID = '{0}' AND ReviewStage = '{1}' AND IsSubmit = 1
+                WHERE ProjectID = @projectId AND ReviewStage = @reviewStage AND IsSubmit = 1
                 ORDER BY ProjectID
             ";
 
-            db.CommandText = string.Format(sql, projectId, reviewStage);
+            db.Parameters.Clear();
+            db.Parameters.Add("@projectId", projectId);
+            db.Parameters.Add("@reviewStage", reviewStage);
             return db.GetTable();
         }
     }
@@ -2411,7 +2713,7 @@ SELECT TOP (1000) [ProjectID]
     {
         using (var db = new DbHelper())
         {
-            string sql = @"
+            db.CommandText = @"
                 SELECT [ReviewID],
                        [ProjectID],
                        [ReviewStage],
@@ -2424,14 +2726,15 @@ SELECT TOP (1000) [ProjectID]
                        [CreateTime],
                        [IsSubmit]
                   FROM [OFS_ReviewRecords]
-                 WHERE ProjectID = '{0}'
-                   AND ReviewStage = '{1}'
+                 WHERE ProjectID = @projectId
+                   AND ReviewStage = @reviewStage
                    AND IsSubmit = 1
               ORDER BY ProjectID
             ";
 
-            db.CommandText = string.Format(sql, projectId, reviewStage);
-
+            db.Parameters.Clear();
+            db.Parameters.Add("@projectId", projectId);
+            db.Parameters.Add("@reviewStage", reviewStage);
             return db.GetTable();
         }
     }
@@ -2996,12 +3299,16 @@ SELECT TOP (1000) [ProjectID]
         {
             try
             {
-                db.CommandText = $@"
+                db.CommandText = @"
                     UPDATE OFS_TaskQueue
-                    SET IsCompleted = {(isCompleted ? 1 : 0)}
-                    WHERE ProjectID = '{projectId}' AND TaskName = '{taskName}'";
+                    SET IsCompleted = @isCompleted
+                    WHERE ProjectID = @projectId AND TaskName = @taskName";
 
-               db.ExecuteNonQuery();
+                db.Parameters.Clear();
+                db.Parameters.Add("@isCompleted", isCompleted ? 1 : 0);
+                db.Parameters.Add("@projectId", projectId);
+                db.Parameters.Add("@taskName", taskName);
+                db.ExecuteNonQuery();
             }
             catch (Exception ex)
             {
@@ -3098,7 +3405,7 @@ SELECT TOP (1000) [ProjectID]
                 ";
                   
                 }
-                else
+                else//初審、複審
                 {
                     db.CommandText = @"
                 WITH ProjectScores AS (
@@ -3110,7 +3417,7 @@ SELECT TOP (1000) [ProjectID]
                             AVG(TotalScore) AS AvgScore
                         FROM OFS_ReviewRecords RR
                         LEFT JOIN OFS_CUL_Project PM ON PM.ProjectID = RR.ProjectID
-                        WHERE PM.ProgressStatus =  2
+                        WHERE PM.ProgressStatus = @ReviewStage
                           AND RR.ReviewStage = @ReviewStage
                           AND IsSubmit = 1 AND PM.IsExists != 0 
                           AND PM.Field =@ReviewGroup
@@ -3587,6 +3894,258 @@ SELECT TOP (1000) [ProjectID]
     {
         // TODO: 實作Type3審查結果資料查詢
         throw new NotImplementedException("Type3 審查結果匯出功能尚未實作");
+    }
+
+    /// <summary>
+    /// Type4匯出專用查詢方法 - 根據提供的SQL查詢所需欄位
+    /// </summary>
+    /// <param name="year">年度</param>
+    /// <param name="orgName">申請單位</param>
+    /// <param name="supervisor">承辦人員</param>
+    /// <param name="keyword">關鍵字</param>
+    /// <param name="category">類別</param>
+    /// <param name="reviewGroupCode">審查組別代碼</param>
+    /// <returns>Type4匯出資料清單</returns>
+    public static List<Type4ExportItem> SearchForExport_Type4(
+        string year = "",
+        string orgName = "",
+        string supervisor = "",
+        string keyword = "",
+        string category = "",
+        string reviewGroupCode = "")
+    {
+        DbHelper db = new DbHelper();
+
+        // 根據用戶提供的SQL查詢
+        db.CommandText = @"
+SELECT [FinalReviewOrder] AS '排序'
+      ,[Year] AS '年度'
+      ,[ProjectNameTw] AS '計畫名稱'
+      ,[OrgName] AS '申請單位'
+      ,[TotalScore] AS '總分'
+      ,[TotalSubsidyPrice] AS '申請經費'
+      ,[ApprovedSubsidy] AS '核定經費'
+      ,[FinalReviewNotes] AS '備註'
+  FROM [OCA_OceanSubsidy].[dbo].[V_OFS_ReviewChecklist_type4]
+  WHERE 1 = 1";
+
+        try
+        {
+            db.Parameters.Clear();
+
+            // 添加篩選條件
+            if (!string.IsNullOrEmpty(year))
+            {
+                db.CommandText += " AND Year = @year";
+                db.Parameters.Add("@year", year);
+            }
+
+            if (!string.IsNullOrEmpty(orgName))
+            {
+                db.CommandText += " AND OrgName = @orgName";
+                db.Parameters.Add("@orgName", orgName);
+            }
+
+            if (!string.IsNullOrEmpty(supervisor))
+            {
+                db.CommandText += " AND SupervisoryPersonAccount = @supervisor";
+                db.Parameters.Add("@supervisor", supervisor);
+            }
+
+            if (!string.IsNullOrEmpty(category))
+            {
+                db.CommandText += " AND ProjectID LIKE @category";
+                db.Parameters.Add("@category", $"%{category}%");
+            }
+
+            if (!string.IsNullOrEmpty(reviewGroupCode))
+            {
+                db.CommandText += " AND Field = @reviewGroupCode";
+                db.Parameters.Add("@reviewGroupCode", reviewGroupCode);
+            }
+
+            if (!string.IsNullOrEmpty(keyword))
+            {
+                db.CommandText += " AND (ProjectID LIKE @keyword OR ProjectNameTw LIKE @keyword)";
+                db.Parameters.Add("@keyword", $"%{keyword}%");
+            }
+
+            db.CommandText += " ORDER BY [FinalReviewOrder] ASC";
+
+            DataTable dt = db.GetTable();
+            List<Type4ExportItem> results = new List<Type4ExportItem>();
+
+            foreach (DataRow row in dt.Rows)
+            {
+                var item = new Type4ExportItem
+                {
+                    排序 = row["排序"]?.ToString() ?? "",
+                    年度 = row["年度"]?.ToString() ?? "",
+                    計畫名稱 = row["計畫名稱"]?.ToString() ?? "",
+                    申請單位 = row["申請單位"]?.ToString() ?? "",
+                    總分 = row["總分"]?.ToString() ?? "",
+                    申請經費 = row["申請經費"]?.ToString() ?? "",
+                    核定經費 = row["核定經費"]?.ToString() ?? "",
+                    備註 = row["備註"]?.ToString() ?? ""
+                };
+
+                results.Add(item);
+            }
+
+            return results;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"SearchForExport_Type4 查詢時發生錯誤：{ex.Message}", ex);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 生成Type4 Excel匯出檔案
+    /// </summary>
+    /// <param name="data">要匯出的資料</param>
+    /// <returns>Excel檔案的byte陣列</returns>
+    public static byte[] GenerateType4ExcelFile(List<Type4ExportItem> data)
+    {
+        try
+        {
+            // 創建臨時檔案
+            string tempFile = Path.GetTempFileName() + ".xlsx";
+
+            try
+            {
+                using (var excelHelper = ExcelHelper.CreateNew(tempFile))
+                {
+                    // 準備標題列和資料
+                    string[] headers = { "排序", "年度", "計畫名稱", "申請單位", "總分", "申請經費", "核定經費", "備註" };
+                    string sheetName = "決審核定列表";
+
+                    // 重命名預設工作表
+                    excelHelper.RenameWorksheet("工作表1", sheetName);
+
+                    // 準備匯出資料
+                    var exportData = new List<List<object>>();
+
+                    // 加入標題列
+                    exportData.Add(headers.Cast<object>().ToList());
+
+                    // 加入資料列
+                    foreach (var item in data)
+                    {
+                        var rowData = new List<object>
+                        {
+                            item.排序,
+                            item.年度,
+                            item.計畫名稱,
+                            item.申請單位,
+                            item.總分,
+                            item.申請經費,
+                            item.核定經費,
+                            item.備註
+                        };
+                        exportData.Add(rowData);
+                    }
+
+                    // 寫入資料
+                    excelHelper.WriteRange(sheetName, exportData, 1, 1);
+
+                    // 自動調整欄寬
+                    excelHelper.AutoSizeColumns(sheetName, headers.Length, minWidth: 8, maxWidth: 50);
+                }
+
+                // 讀取檔案內容
+                return File.ReadAllBytes(tempFile);
+            }
+            finally
+            {
+                // 清理臨時檔案
+                if (File.Exists(tempFile))
+                {
+                    File.Delete(tempFile);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"生成Type4 Excel檔案時發生錯誤：{ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// 根據欄位索引取得 Excel 欄位名稱 (A, B, C, ...)
+    /// </summary>
+    /// <param name="columnIndex">欄位索引 (0-based)</param>
+    /// <returns>Excel 欄位名稱</returns>
+    private static string GetColumnName(int columnIndex)
+    {
+        string columnName = "";
+        while (columnIndex >= 0)
+        {
+            columnName = (char)('A' + (columnIndex % 26)) + columnName;
+            columnIndex = (columnIndex / 26) - 1;
+        }
+        return columnName;
+    }
+
+    /// <summary>
+    /// 設定 Excel 欄位寬度
+    /// </summary>
+    /// <param name="worksheetPart">工作表部分</param>
+    /// <param name="headers">標題陣列</param>
+    /// <param name="data">資料清單</param>
+    private static void SetColumnWidths(WorksheetPart worksheetPart, string[] headers, List<Type4ExportItem> data)
+    {
+        // 建立欄位設定
+        var columns = new Columns();
+
+        // 計算每個欄位所需的寬度
+        for (int i = 0; i < headers.Length; i++)
+        {
+            double maxWidth = headers[i].Length; // 從標題開始計算
+
+            // 檢查該欄位中所有資料的最大長度
+            foreach (var item in data)
+            {
+                string cellValue = "";
+                switch (i)
+                {
+                    case 0: cellValue = item.排序; break;
+                    case 1: cellValue = item.年度; break;
+                    case 2: cellValue = item.計畫名稱; break;
+                    case 3: cellValue = item.申請單位; break;
+                    case 4: cellValue = item.總分; break;
+                    case 5: cellValue = item.申請經費; break;
+                    case 6: cellValue = item.核定經費; break;
+                    case 7: cellValue = item.備註; break;
+                }
+
+                if (!string.IsNullOrEmpty(cellValue) && cellValue.Length > maxWidth)
+                {
+                    maxWidth = cellValue.Length;
+                }
+            }
+
+            // 設定寬度限制：最小寬度8，最大寬度50
+            // 中文字符需要較寬的空間，所以乘以1.2倍
+            maxWidth = Math.Max(8, Math.Min(50, maxWidth * 1.2));
+
+            var column = new Column()
+            {
+                Min = (uint)(i + 1),
+                Max = (uint)(i + 1),
+                Width = maxWidth,
+                CustomWidth = true
+            };
+
+            columns.Append(column);
+        }
+
+        // 將欄位設定插入到工作表中
+        worksheetPart.Worksheet.InsertBefore(columns, worksheetPart.Worksheet.GetFirstChild<SheetData>());
     }
 
     /// <summary>

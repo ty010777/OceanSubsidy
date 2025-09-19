@@ -394,6 +394,7 @@ public class OFS_LitProjectHelper
             UPDATE [OFS_LIT_Project]
                SET [Status] = @Status
                   ,[UpdateTime] = GETDATE()
+                  ,[IsExists] = 0
                   ,[UpdateUser] = @UpdateUser
              WHERE [ProjectID] = @ProjectID
         ";

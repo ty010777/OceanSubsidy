@@ -685,5 +685,10 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
         }
 
         #endregion
+
+        public void CreateWorksheet(string sheetName)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

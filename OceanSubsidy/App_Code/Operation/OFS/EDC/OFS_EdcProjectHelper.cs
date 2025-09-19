@@ -349,6 +349,7 @@ public class OFS_EdcProjectHelper
             UPDATE [OFS_EDC_Project]
                SET [Status] = @Status
                   ,[UpdateTime] = GETDATE()
+                  ,[IsExists] = 0
                   ,[UpdateUser] = @UpdateUser
              WHERE [ProjectID] = @ProjectID
         ";
