@@ -34,7 +34,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
         {
             string projectId = Request.QueryString["ProjectID"] ?? Session["ProjectID"]?.ToString() ?? CurrentProjectID;
             string fileCode = Request.QueryString["fileCode"];
-            
+
             switch (action)
             {
                 case "upload":
@@ -51,7 +51,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
                     return;
             }
         }
-        
+
         if (!IsPostBack)
         {
             // 檢查是否有計畫ID
@@ -63,16 +63,16 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
 
             // 初始化頁面
             InitializePage();
-            
+
             // 載入 UserControl 資料
             ucSciUploadAttachments.LoadData(CurrentProjectID, !ShouldShowInEditMode());
-            
+
             // 載入變更說明控制項
             ucChangeDescription.LoadData(CurrentProjectID, !ShouldShowInEditMode());
-            
+
             // 檢查表單狀態並控制暫存按鈕顯示
             CheckFormStatusAndHideTempSaveButton();
-            
+
             // 載入變更說明資料到輸入框
             LoadChangeDescriptionData();
         }
@@ -103,7 +103,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
     private void SetPageDisplayMode()
     {
         var master = (OFSApplicationMaster)this.Master;
-        
+
         try
         {
             // 根據申請狀態決定模式
@@ -123,7 +123,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
             System.Diagnostics.Debug.WriteLine($"設定顯示模式時發生錯誤：{ex.Message}");
         }
     }
-    
+
     /// <summary>
     /// 判斷是否應該顯示為編輯模式
     /// </summary>
@@ -135,7 +135,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
         {
             return true;
         }
-        
+
         try
         {
             // 取得最新版本的狀態
@@ -144,13 +144,13 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
             {
                 return true; // 沒有資料時允許編輯
             }
-            
+
             // 只有這些狀態可以編輯
             string statuses = projectData.Statuses ?? "";
             string statusesName = projectData.StatusesName ?? "";
-            
-            return statuses == "尚未提送" || 
-                   statusesName == "補正補件" || 
+
+            return statuses == "尚未提送" ||
+                   statusesName == "補正補件" ||
                    statusesName == "計畫書修正中";
         }
         catch (Exception ex)
@@ -179,29 +179,16 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
                 return;
             }
 
-            // 使用 UserControl 儲存資料
-            bool saveSuccess = ucSciUploadAttachments.SaveData(CurrentProjectID);
-            
-            if (saveSuccess)
-            {
-                // 儲存變更說明
-                ucChangeDescription.SaveChangeDescription(CurrentProjectID);
-            }
-            
-            if (saveSuccess)
-            {
-                // 更新專案狀態為暫存
-                UpdateProjectSaveStatus();
-                
-                // 記錄操作歷程
-                LogSaveHistory();
 
-                ShowMessage("資料已暫存", true);
-            }
-            else
-            {
-                ShowMessage("暫存失敗", false);
-            }
+            // 儲存變更說明
+            ucChangeDescription.SaveChangeDescription(CurrentProjectID);
+            // 更新專案狀態為暫存
+            UpdateProjectSaveStatus();
+
+            // 記錄操作歷程
+            LogSaveHistory();
+
+            ShowMessage("資料已暫存", true);
         }
         catch (Exception ex)
         {
@@ -232,34 +219,46 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
             // }
 
             // 儲存資料
-            bool saveSuccess = ucSciUploadAttachments.SaveData(CurrentProjectID);
-            if (saveSuccess)
-            {
-                // 儲存變更說明
-                ucChangeDescription.SaveChangeDescription(CurrentProjectID);
-            }
-            
-            if (!saveSuccess)
-            {
-                ShowSweetAlertError("資料儲存失敗，無法提送申請");
-                return;
-            }
-            
+            // bool saveSuccess = ucSciUploadAttachments.SaveData(CurrentProjectID);
+
+            // 儲存變更說明
+            ucChangeDescription.SaveChangeDescription(CurrentProjectID);
+
             // 檢查目前狀態
             var projectData = OFS_SciApplicationHelper.getVersionByProjectID(CurrentProjectID);
             string currentStatusesName = projectData?.StatusesName ?? "";
-            
-            if (currentStatusesName == "計畫書修正中")
+
+            // 新增 PDF 合併邏輯
+            try
             {
-                // 計畫書修正中 -> 計畫書審核中
-                UpdateProjectStatusForPlanRevision();
-                LogPlanRevisionSubmissionHistory();
+                var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(CurrentProjectID);
+                string ProjectName = applicationMain.ProjectNameTw ?? "";
+                string orgCategory = applicationMain?.OrgCategory ?? "";
+                
+                if (currentStatusesName == "計畫書修正中")
+                {
+                    // 計畫書修正中 -> 計畫書審核中
+                    UpdateProjectStatusForPlanRevision();
+                    LogPlanRevisionSubmissionHistory();
+
+                    // 產生核定版 PDF
+                    MergePdfFiles(CurrentProjectID, orgCategory,ProjectName, "核定版");
+                }
+                else
+                {
+                    // 其他狀態的正常流程
+                    UpdateProjectStatus();
+                    LogSubmissionHistory();
+
+                    // 產生送審版與核定版 PDF
+                    MergePdfFiles(CurrentProjectID, orgCategory,ProjectName, "送審版");
+                    MergePdfFiles(CurrentProjectID, orgCategory,ProjectName, "核定版");
+                }
             }
-            else
+            catch (Exception pdfEx)
             {
-                // 其他狀態的正常流程
-                UpdateProjectStatus();
-                LogSubmissionHistory();
+                // PDF 合併錯誤不影響主要流程，但會記錄錯誤
+                System.Diagnostics.Debug.WriteLine($"PDF 合併錯誤：{pdfEx.Message}");
             }
 
             // 顯示成功訊息並跳轉
@@ -400,29 +399,29 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
                 Response.Write("ERROR:沒有檔案被上傳");
                 return;
             }
-            
+
             var file = Request.Files[0];
             if (file == null || file.ContentLength == 0)
             {
                 Response.Write("ERROR:檔案為空");
                 return;
             }
-            
+
             // 取得參數
             string attachmentNumber = Request.QueryString["attachmentNumber"];
-            
+
             if (string.IsNullOrEmpty(attachmentNumber))
             {
                 Response.Write("ERROR:附件編號不能為空");
                 return;
             }
-            
+
             if (string.IsNullOrEmpty(projectId))
             {
                 Response.Write("ERROR:計畫編號不能為空");
                 return;
             }
-            
+
             // 驗證檔案格式
             string fileExt = Path.GetExtension(file.FileName).ToLower();
             if (fileExt != ".pdf")
@@ -430,7 +429,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
                 Response.Write("ERROR:僅支援PDF格式檔案");
                 return;
             }
-            
+
             // 檢查檔案大小 (10MB)
             const int maxFileSize = 10 * 1024 * 1024;
             if (file.ContentLength > maxFileSize)
@@ -438,31 +437,31 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
                 Response.Write("ERROR:檔案大小不能超過10MB");
                 return;
             }
-            
+
             // 生成檔案代碼和名稱
             string fileCode = attachmentNumber;
             string fileName = OFS_SciUploadAttachmentsHelper.GenerateFileName(projectId, fileCode);
-            
+
             // 建構檔案路徑
             string relativePath = $"UploadFiles/OFS/SCI/{projectId}/SciApplication/{fileName}";
             string fullPath = Server.MapPath($"~/{relativePath}");
-            
+
             // 確保目錄存在
             string directory = Path.GetDirectoryName(fullPath);
             if (!Directory.Exists(directory))
             {
                 Directory.CreateDirectory(directory);
             }
-            
+
             // 如果檔案已存在，先刪除舊檔案
             if (File.Exists(fullPath))
             {
                 File.Delete(fullPath);
             }
-            
+
             // 儲存檔案到實體路徑
             file.SaveAs(fullPath);
-            
+
             // 更新資料庫記錄 (使用現有的 UpdateAttachmentRecord 方法，該方法會自動處理新增或更新)
             OFS_SciUploadAttachmentsHelper.UpdateAttachmentRecord(
                 projectId,
@@ -470,7 +469,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
                 fileName,
                 relativePath
             );
-            
+
             Response.Write($"SUCCESS:{fileName}");
         }
         catch (Exception ex)
@@ -495,7 +494,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
             }
 
             string filePath = "";
-            
+
             // OTech 業者範本檔案對應
             switch (fileCode)
             {
@@ -512,7 +511,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
                 case "FILE_OTech4":
                     filePath = Server.MapPath("~/Template/SCI/OTech/附件-04未違反公職人員利益衝突迴避法切結書.docx");
                     filePath = ApplyProjectDataToWord_FILE_OTech4(filePath, projectId);
-                    
+
                     break;
                 case "FILE_OTech5":
                     filePath = Server.MapPath("~/Template/SCI/OTech/附件-05蒐集個人資料告知事項暨個人資料提供同意書.docx");
@@ -535,7 +534,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
                 case "FILE_OTech11":
                     filePath = Server.MapPath("~/Template/SCI/OTech/附件-11計畫書書脊（側邊）格式.docx");
                     break;
-                    
+
                 // 學研範本檔案對應
                 case "FILE_AC1":
                     filePath = Server.MapPath("~/Template/SCI/Academic/附件-01海洋委員會海洋科技專案補助作業要點.docx");
@@ -577,17 +576,17 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
                 case "FILE_AC13":
                     filePath = Server.MapPath("~/Template/SCI/Academic/附件-13計畫書書脊（側邊）格式.docx");
                     break;
-                    
+
                 default:
                     Response.Clear();
                     Response.Write($"ERROR:不支援的檔案類型：{fileCode}");
                     Response.End();
                     return;
             }
-            
+
             // 調試資訊
             System.Diagnostics.Debug.WriteLine($"Download Template - FileCode: {fileCode}, FilePath: {filePath}");
-            
+
             if (File.Exists(filePath))
             {
                 string fileName = Path.GetFileName(filePath);
@@ -613,7 +612,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
 
                 // 處理中文檔名編碼問題
                 string encodedFileName = System.Web.HttpUtility.UrlEncode(fileName, System.Text.Encoding.UTF8);
-                
+
                 // 參考 CLB 的下載處理方式
                 Response.Clear();
                 Response.ContentType = contentType;
@@ -622,16 +621,16 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
                 Response.AddHeader("Cache-Control", "no-cache, no-store, must-revalidate");
                 Response.AddHeader("Pragma", "no-cache");
                 Response.AddHeader("Expires", "0");
-                
+
                 // 讀取檔案並寫入 Response - 使用 CLB 相同的方法
                 byte[] fileData = File.ReadAllBytes(filePath);
                 Response.BinaryWrite(fileData);
                 Response.Flush();
                 Response.SuppressContent = true;
-                
+
                 // 如果是暫存檔案，下載完成後立即清理
                 CleanupTempFile(filePath);
-                
+
                 HttpContext.Current.ApplicationInstance.CompleteRequest();
             }
             else
@@ -646,18 +645,15 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
             // 記錄詳細錯誤資訊
             System.Diagnostics.Debug.WriteLine($"DownloadTemplate Exception: {ex.ToString()}");
             System.Diagnostics.Debug.WriteLine($"FileCode: {fileCode}, ProjectId: {projectId}");
-            
+
             Response.Clear();
             Response.Write($"ERROR:下載失敗：{ex.Message}");
             Response.End();
         }
     }
 
-    #region  海洋委員會海洋科技專案補助作業要點
+    #region 海洋委員會海洋科技專案補助作業要點
 
-    
-
-  
     private string ApplyProjectDataToWord_FILE_OTech1(string originalFilePath, string projectId)
     {
         try
@@ -670,33 +666,32 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
             // 建立暫存檔案路徑，保持原檔名
             string originalFileName = Path.GetFileName(originalFilePath);
             string tempFilePath = Path.Combine(Path.GetTempPath(), originalFileName);
-            
+
             // 複製範本檔案到暫存資料夾
             File.Copy(originalFilePath, tempFilePath, true);
-            
+
             // 使用 OpenXmlHelper 處理 Word 文件
             using (var fs = new FileStream(tempFilePath, FileMode.Open, FileAccess.ReadWrite))
             {
-                
                 var helper = new OpenXmlHelper(fs);
                 // 取得當前年月日 (參考 DownloadTemplateCUL 的實作)
                 DateTime currentDate = DateTime.Now;
-                int year = currentDate.Year - 1911;  // 民國年
+                int year = currentDate.Year - 1911; // 民國年
                 int month = currentDate.Month;
-                    
+
                 // 建立替換字典
                 var placeholder = new Dictionary<string, string>();
                 placeholder.Add("{{Year}}", year.ToString());
                 placeholder.Add("{{Month}}", month.ToString());
-    
-                    
+
+
                 var repeatData = new List<Dictionary<string, string>>();
-                    
+
                 // 使用 GenerateWord 方法替換佔位符
                 helper.GenerateWord(placeholder, repeatData);
                 helper.CloseAsSave();
-                
             }
+
             // 回傳處理後的檔案路徑
             return tempFilePath;
         }
@@ -707,6 +702,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
             return originalFilePath;
         }
     }
+
     private string ApplyProjectDataToWord_FILE_AC1(string originalFilePath, string projectId)
     {
         try
@@ -719,31 +715,30 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
             // 建立暫存檔案路徑，保持原檔名
             string originalFileName = Path.GetFileName(originalFilePath);
             string tempFilePath = Path.Combine(Path.GetTempPath(), originalFileName);
-            
+
             // 複製範本檔案到暫存資料夾
             File.Copy(originalFilePath, tempFilePath, true);
-            
+
             // 使用 OpenXmlHelper 處理 Word 文件
             using (var fs = new FileStream(tempFilePath, FileMode.Open, FileAccess.ReadWrite))
             {
-                
-                    var helper = new OpenXmlHelper(fs);
-                    // 取得當前年月日 (參考 DownloadTemplateCUL 的實作)
-                    DateTime currentDate = DateTime.Now;
-                    int year = currentDate.Year - 1911;  // 民國年
-                    int month = currentDate.Month;
-                    
-                    // 建立替換字典
-                    var placeholder = new Dictionary<string, string>();
-                    placeholder.Add("{{Year}}", year.ToString());
-                    placeholder.Add("{{Month}}", month.ToString());
-                    var repeatData = new List<Dictionary<string, string>>();
-                    
-                    // 使用 GenerateWord 方法替換佔位符
-                    helper.GenerateWord(placeholder, repeatData);
-                    helper.CloseAsSave();
-                
+                var helper = new OpenXmlHelper(fs);
+                // 取得當前年月日 (參考 DownloadTemplateCUL 的實作)
+                DateTime currentDate = DateTime.Now;
+                int year = currentDate.Year - 1911; // 民國年
+                int month = currentDate.Month;
+
+                // 建立替換字典
+                var placeholder = new Dictionary<string, string>();
+                placeholder.Add("{{Year}}", year.ToString());
+                placeholder.Add("{{Month}}", month.ToString());
+                var repeatData = new List<Dictionary<string, string>>();
+
+                // 使用 GenerateWord 方法替換佔位符
+                helper.GenerateWord(placeholder, repeatData);
+                helper.CloseAsSave();
             }
+
             // 回傳處理後的檔案路徑
             return tempFilePath;
         }
@@ -754,6 +749,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
             return originalFilePath;
         }
     }
+
     #endregion
 
     #region 未違反公職人員利益衝突迴避法切結書
@@ -764,7 +760,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
         {
             // 除錯：記錄 ProjectID
             System.Diagnostics.Debug.WriteLine($"ApplyProjectDataToWord_FILE_OTech4 - ProjectID: {projectId}");
-            
+
             if (!File.Exists(originalFilePath))
             {
                 return originalFilePath; // 如果原檔案不存在，返回原路徑
@@ -773,41 +769,42 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
             // 建立暫存檔案路徑，保持原檔名
             string originalFileName = Path.GetFileName(originalFilePath);
             string tempFilePath = Path.Combine(Path.GetTempPath(), originalFileName);
-            
+
             // 複製範本檔案到暫存資料夾
             File.Copy(originalFilePath, tempFilePath, true);
-            
+
             // 使用 OpenXmlHelper 處理 Word 文件
             using (var fs = new FileStream(tempFilePath, FileMode.Open, FileAccess.ReadWrite))
             {
                 var helper = new OpenXmlHelper(fs);
-                
+
                 // 取得當前年月日 (參考 DownloadTemplateCUL 的實作)
                 DateTime currentDate = DateTime.Now;
-                int year = currentDate.Year - 1911;  // 民國年
+                int year = currentDate.Year - 1911; // 民國年
                 int month = currentDate.Month;
                 int day = currentDate.Day;
-                
+
                 // 從資料庫取得申請主檔資料
                 var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectId);
-                
+
                 // 建立替換字典
                 var placeholder = new Dictionary<string, string>();
                 placeholder.Add("year", year.ToString());
                 placeholder.Add("month", month.ToString());
                 placeholder.Add("day", day.ToString());
-                
+
                 // 加入申請資料
                 placeholder.Add("{{A3}}", applicationMain.ProjectNameTw ?? "");
                 placeholder.Add("{{A9}}", applicationMain.OrgName ?? "");
-        
-                
+
+
                 var repeatData = new List<Dictionary<string, string>>();
-                    
+
                 // 使用 GenerateWord 方法替換佔位符
                 helper.GenerateWord(placeholder, repeatData);
                 helper.CloseAsSave();
             }
+
             // 回傳處理後的檔案路徑
             return tempFilePath;
         }
@@ -817,10 +814,10 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
             System.Diagnostics.Debug.WriteLine($"ApplyProjectDataToWord_FILE_AC1 Error: {ex.Message}");
             return originalFilePath;
         }
-        
     }
 
-    #endregion 
+    #endregion
+
     /// <summary>
     /// 處理已上傳檔案的下載
     /// </summary>
@@ -850,7 +847,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
 
             // 建構檔案完整路徑
             string fullPath = Server.MapPath($"~/{uploadedFile.TemplatePath}");
-            
+
             if (File.Exists(fullPath))
             {
                 string fileName = uploadedFile.FileName;
@@ -873,7 +870,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
 
                 // 處理中文檔名編碼問題
                 string encodedFileName = System.Web.HttpUtility.UrlEncode(fileName, System.Text.Encoding.UTF8);
-                
+
                 Response.Clear();
                 Response.ContentType = contentType;
                 Response.AddHeader("Content-Disposition", $"attachment; filename*=UTF-8''{encodedFileName}");
@@ -881,7 +878,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
                 Response.AddHeader("Cache-Control", "no-cache, no-store, must-revalidate");
                 Response.AddHeader("Pragma", "no-cache");
                 Response.AddHeader("Expires", "0");
-                
+
                 // 讀取檔案並寫入 Response
                 byte[] fileData = File.ReadAllBytes(fullPath);
                 Response.BinaryWrite(fileData);
@@ -921,10 +918,10 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
             // 刪除附件檔案（包含實體檔案和資料庫記錄）
             OFS_SciUploadAttachmentsHelper.DeleteAttachmentFile(projectId, fileCode);
             Response.Clear();
-            Response.ContentType = "text/plain";  // 設定為純文字
+            Response.ContentType = "text/plain"; // 設定為純文字
             Response.Write("SUCCESS");
             Response.Flush();
-            Response.SuppressContent = true;       // 阻止後續 HTML
+            Response.SuppressContent = true; // 阻止後續 HTML
             HttpContext.Current.ApplicationInstance.CompleteRequest(); // 取代 Response.End()
         }
         catch (Exception ex)
@@ -944,8 +941,8 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
         try
         {
             // 判斷是否為暫存檔案（在 Temp 目錄中的檔案）
-            if (!string.IsNullOrEmpty(filePath) && 
-                filePath.Contains(Path.GetTempPath()) && 
+            if (!string.IsNullOrEmpty(filePath) &&
+                filePath.Contains(Path.GetTempPath()) &&
                 File.Exists(filePath))
             {
                 File.Delete(filePath);
@@ -972,7 +969,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
         string script = $"alert('{message}');";
         Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowMessage", script, true);
     }
-    
+
     /// <summary>
     /// 顯示 SweetAlert 成功訊息並跳轉
     /// </summary>
@@ -980,7 +977,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
     {
         Response.Redirect("~/OFS/ApplicationChecklist.aspx", false);
     }
-    
+
     /// <summary>
     /// 顯示 SweetAlert 錯誤訊息
     /// </summary>
@@ -1021,10 +1018,10 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
             {
                 return false;
             }
-            
+
             string statuses = projectData.Statuses ?? "";
             string statusesName = projectData.StatusesName ?? "";
-            
+
             return statusesName == "計畫書修正中";
         }
         catch (Exception ex)
@@ -1044,7 +1041,7 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
             if (!string.IsNullOrEmpty(CurrentProjectID))
             {
                 var formStatus = OFS_SciWorkSchHelper.GetFormStatusByProjectID(CurrentProjectID, "Form5Status");
-                
+
                 if (formStatus == "完成")
                 {
                     // 隱藏暫存按鈕
@@ -1069,7 +1066,8 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
             if (!string.IsNullOrEmpty(CurrentProjectID))
             {
                 // 從資料庫取得變更說明並設定到頁面元素
-                var changeDescription = OFS_SciApplicationHelper.GetPageModifyNote(CurrentProjectID, "SciUploadAttachments");
+                var changeDescription =
+                    OFS_SciApplicationHelper.GetPageModifyNote(CurrentProjectID, "SciUploadAttachments");
                 if (changeDescription != null)
                 {
                     string script = $@"
@@ -1103,7 +1101,8 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
         try
         {
             // 使用ReviewCheckListHelper更新StatusesName
-            ReviewCheckListHelper.SCI_UpdateProjectStatusName(CurrentProjectID, "計畫書審核中", GetCurrentUserInfo()?.Account ?? "系統");
+            ReviewCheckListHelper.SCI_UpdateProjectStatusName(CurrentProjectID, "計畫書審核中",
+                GetCurrentUserInfo()?.Account ?? "系統");
         }
         catch (Exception ex)
         {
@@ -1149,6 +1148,113 @@ public partial class OFS_SCI_SciUploadAttachments : System.Web.UI.Page
             // 歷程記錄失敗不影響主要流程，只記錄錯誤
             System.Diagnostics.Debug.WriteLine($"記錄計畫書修正提送歷程失敗：{ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// 合併 PDF 檔案
+    /// </summary>
+    /// <param name="projectId">專案ID</param>
+    /// <param name="orgCategory">機構類別</param>
+    /// <param name="version">版本（送審版或核定版）</param>
+    private void MergePdfFiles(string projectId, string orgCategory,string ProjectName, string version)
+    {
+        try
+        {
+            // 建立檔案路徑清單
+            var pdfFilePaths = new List<string>();
+
+            // 根據 OrgCategory 決定要合併的檔案 Code
+            var fileCodesToMerge = GetFileCodesToMerge(orgCategory);
+
+            // 從資料庫取得檔案路徑並檢查檔案是否存在
+            foreach (string fileCode in fileCodesToMerge)
+            {
+                var uploadedFiles = OFS_SciUploadAttachmentsHelper.GetAttachmentsByFileCodeAndProject(projectId, fileCode);
+
+                if (uploadedFiles != null && uploadedFiles.Count > 0)
+                {
+                    var uploadedFile = uploadedFiles.First();
+                    string fullPath = Server.MapPath($"~/{uploadedFile.TemplatePath}");
+
+                    if (File.Exists(fullPath))
+                    {
+                        pdfFilePaths.Add(fullPath);
+                        System.Diagnostics.Debug.WriteLine($"找到檔案 {fileCode}：{fullPath}");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"檔案 {fileCode} 不存在：{fullPath}");
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"資料庫中找不到檔案記錄，FileCode：{fileCode}");
+                }
+            }
+
+            // 如果沒有檔案可以合併，直接返回
+            if (pdfFilePaths.Count == 0)
+            {
+                System.Diagnostics.Debug.WriteLine("沒有找到任何可合併的 PDF 檔案");
+                return;
+            }
+
+            // 建立合併後的檔案名稱和路徑
+            string mergedFileName = $"{projectId}_科專_{ProjectName}_{version}.pdf";
+            string uploadFolderPath = Server.MapPath($"~/UploadFiles/OFS/SCI/{projectId}/SciApplication");
+            string mergedFilePath = Path.Combine(uploadFolderPath, mergedFileName);
+
+            // 確保目錄存在
+            if (!Directory.Exists(uploadFolderPath))
+            {
+                Directory.CreateDirectory(uploadFolderPath);
+            }
+
+            // 使用 PdfHelper 合併 PDF
+            byte[] mergedPdfBytes = PdfHelper.MergePdfs(pdfFilePaths, mergedFilePath);
+
+            System.Diagnostics.Debug.WriteLine($"PDF 合併完成：{mergedFilePath}，合併了 {pdfFilePaths.Count} 個檔案");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"合併 PDF 檔案時發生錯誤：{ex.Message}");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// 根據機構類別取得要合併的檔案 Code 清單
+    /// </summary>
+    /// <param name="orgCategory">機構類別</param>
+    /// <returns>檔案 Code 清單（依指定順序）</returns>
+    private List<string> GetFileCodesToMerge(string orgCategory)
+    {
+        var fileCodes = new List<string>();
+
+        if (orgCategory == "OceanTech")
+        {
+            // 海洋科技業者（OceanTech）- 6 個檔案（依順序）
+            fileCodes.Add("FILE_OTech2");  // 海洋科技科專案計畫書
+            fileCodes.Add("FILE_OTech3");  // 建議迴避之審查委員清單
+            fileCodes.Add("FILE_OTech4");  // 未違反公職人員利益衝突迴避法切結書
+            fileCodes.Add("FILE_OTech5");  // 蒐集個人資料告知事項暨個人資料提供同意書
+            fileCodes.Add("FILE_OTech6");  // 申請人自我檢查表
+            fileCodes.Add("FILE_OTech8");  // 海洋科技業者科專計畫補助契約書
+        }
+        else
+        {
+            // 學術機構/法人機構 - 8 個檔案（依順序）
+            fileCodes.Add("FILE_AC2");     // 海洋科技科專案計畫書
+            fileCodes.Add("FILE_AC3");     // 建議迴避之審查委員清單
+            fileCodes.Add("FILE_AC4");     // 未違反公職人員利益衝突迴避法切結書
+            fileCodes.Add("FILE_AC5");     // 蒐集個人資料告知事項暨個人資料提供同意書
+            fileCodes.Add("FILE_AC6");     // 共同執行單位基本資料表
+            fileCodes.Add("FILE_AC7");     // 申請人自我檢查表
+            fileCodes.Add("FILE_AC9");     // 海洋委員會補助科技專案計畫契約書
+            fileCodes.Add("FILE_AC11");    // 海洋科技專案成效追蹤自評表
+        }
+
+        return fileCodes;
     }
 
     #endregion

@@ -996,6 +996,29 @@ $(document).ready(function() {
     setTimeout(initializeStepKeyboardEvents, 100);
 });
 
+/**
+ * 下載核定計畫書功能（與 ClbApproved 相同）
+ */
+function downloadApprovedPlan() {
+    const projectID = getProjectID();
+
+    if (!projectID) {
+        Swal.fire({
+            title: '錯誤',
+            text: '找不到計畫ID',
+            icon: 'error',
+            confirmButtonText: '確定'
+        });
+        return;
+    }
+
+    // 構建下載 URL
+    const downloadUrl = '../../../Service/CLB_download.ashx?action=downloadApprovedPlan&projectID=' + encodeURIComponent(projectID);
+
+    // 直接開啟新視窗下載檔案
+    window.open(downloadUrl, '_blank');
+}
+
 // 將函數公開給全域範圍以供 HTML 中的 onclick 事件使用
 window.handleFileUpload = handleFileUpload;
 window.deleteFile = deleteFile;
@@ -1005,3 +1028,4 @@ window.updateFileStatusUIFromJS = updateFileStatusUIFromJS;
 window.resetFileStatusUIFromJS = resetFileStatusUIFromJS;
 window.submitApplicationFinal = submitApplicationFinal;
 window.navigateToStep = navigateToStep;
+window.downloadApprovedPlan = downloadApprovedPlan;

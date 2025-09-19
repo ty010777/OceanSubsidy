@@ -65,13 +65,6 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
 
     #region 按鈕事件
 
-    /// <summary>
-    /// 下載計畫書
-    /// </summary>
-    protected void btnDownloadPlan_Click(object sender, EventArgs e)
-    {
-        // TODO: 實作下載計畫書功能
-    }
 
     /// <summary>
     /// 確認審查結果

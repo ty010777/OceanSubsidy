@@ -4,7 +4,9 @@ using System.Linq;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using System.IO;
 using GS.OCA_OceanSubsidy.Entity;
+using GS.OCA_OceanSubsidy.Operation.OSI.OpenXml;
 
 public partial class OFS_CLB_ClbApplication : System.Web.UI.Page
 {
@@ -470,34 +472,39 @@ public partial class OFS_CLB_ClbApplication : System.Web.UI.Page
                 Response.Write("{\"success\":false,\"message\":\"計畫編號不能為空\"}");
                 return;
             }
-            // 取得最新歷史記錄的狀態
-            string stageStatusBefore = ApplicationChecklistHelper.GetLatestStageStatus(projectID) ?? "";
             var lastProjectMain = OFS_ClbApplicationHelper.GetProjectMainData(projectID);
-            
-            // 更新計畫狀態
-            if (lastProjectMain.StatusesName == "計畫書修正中")
+            var basicData = OFS_ClbApplicationHelper.GetBasicData(projectID);
+            string ProjectName = basicData.ProjectNameTw; 
+            // 新增 PDF 合併邏輯
+            try
             {
-                OFS_ClbApplicationHelper.UpdateProjectStatus(projectID, "決審核定", "計畫書審核中", "3");
-            }else{
-                OFS_ClbApplicationHelper.UpdateProjectStatus(projectID, "內容審查", "審核中", "3");
+                if (lastProjectMain.StatusesName == "計畫書修正中")
+                {
+                    // 更新狀態
+                    OFS_ClbApplicationHelper.UpdateProjectStatus(projectID, "決審核定", "計畫書審核中", "3");
+
+                    // 產生核定版 PDF
+                    MergePdfFiles(projectID, ProjectName,"核定版");
+                }
+                else
+                {
+                    // 更新狀態
+                    OFS_ClbApplicationHelper.UpdateProjectStatus(projectID, "內容審查", "審核中", "3");
+
+                    // 產生送審版與核定版 PDF    
+                    MergePdfFiles(projectID, ProjectName,"送審版");
+                    MergePdfFiles(projectID, ProjectName,"核定版");
+                }
             }
-            var currentUser = GetCurrentUserInfo();
-            var projectMain = OFS_ClbApplicationHelper.GetProjectMainData(projectID);
-            var historyLog = new OFS_CaseHistoryLog
+            catch (Exception pdfEx)
             {
-                ProjectID = projectID,
-                ChangeTime = DateTime.Now,
-                UserName = currentUser?.UserName ?? "系統",
-                StageStatusBefore = stageStatusBefore,
-                StageStatusAfter =  projectMain.Statuses + projectMain.StatusesName,
-                Description = $"提送至{projectMain.Statuses + projectMain.StatusesName}" 
-                                 
-            };
-            ApplicationChecklistHelper.InsertCaseHistoryLog(historyLog);
-           
-            Response.Write("{\"success\":true,\"message\":\"申請已成功提送，狀態已更新為審核中\"}");
-            
-       
+                // PDF 合併錯誤不影響主要流程，但會記錄錯誤
+                System.Diagnostics.Debug.WriteLine($"PDF 合併錯誤：{pdfEx.Message}");
+            }
+
+            //提送歷史紀錄
+            InsertClbHistory(projectID);
+
         }
         catch (Exception ex)
         {
@@ -507,6 +514,28 @@ public partial class OFS_CLB_ClbApplication : System.Web.UI.Page
         Response.End();
     }
 
+    private void InsertClbHistory(string projectID )
+    {
+        // 取得最新歷史記錄的狀態
+        string stageStatusBefore = ApplicationChecklistHelper.GetLatestStageStatus(projectID) ?? "";
+
+        var currentUser = GetCurrentUserInfo();
+        var projectMain = OFS_ClbApplicationHelper.GetProjectMainData(projectID);
+        var historyLog = new OFS_CaseHistoryLog
+        {
+            ProjectID = projectID,
+            ChangeTime = DateTime.Now,
+            UserName = currentUser?.UserName ?? "系統",
+            StageStatusBefore = stageStatusBefore,
+            StageStatusAfter =  projectMain.Statuses + projectMain.StatusesName,
+            Description = $"提送至{projectMain.Statuses + projectMain.StatusesName}" 
+                                 
+        };
+        ApplicationChecklistHelper.InsertCaseHistoryLog(historyLog);
+           
+        Response.Write("{\"success\":true,\"message\":\"申請已成功提送，狀態已更新為審核中\"}");
+
+    }
     #endregion
     /// <summary>
     /// 取得目前登入使用者資訊
@@ -520,6 +549,82 @@ public partial class OFS_CLB_ClbApplication : System.Web.UI.Page
         catch (Exception ex)
         {
             return null;
+        }
+    }
+
+    /// <summary>
+    /// 合併 CLB PDF 檔案
+    /// </summary>
+    /// <param name="projectId">專案ID</param>
+    /// <param name="version">版本（送審版或核定版）</param>
+    private void MergePdfFiles(string projectId,string ProjectName, string version)
+    {
+        try
+        {
+            // 建立檔案路徑清單
+            var pdfFilePaths = new List<string>();
+
+            // CLB 固定要合併的檔案 Code（依順序）
+            var fileCodesToMerge = new List<string>
+            {
+                "FILE_CLB1",  // 申請表
+                "FILE_CLB2",  // 計畫書
+                "FILE_CLB3",  // 切結書
+                "FILE_CLB4"   // 其他附件
+            };
+
+            // 從資料庫取得檔案路徑並檢查檔案是否存在
+            foreach (string fileCode in fileCodesToMerge)
+            {
+                var uploadedFile = OFS_ClbApplicationHelper.GetUploadedFile(projectId, fileCode);
+
+                if (uploadedFile != null)
+                {
+                    string fullPath = Server.MapPath($"~/{uploadedFile.TemplatePath}");
+
+                    if (File.Exists(fullPath))
+                    {
+                        pdfFilePaths.Add(fullPath);
+                        System.Diagnostics.Debug.WriteLine($"找到檔案 {fileCode}：{fullPath}");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"檔案 {fileCode} 不存在：{fullPath}");
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"資料庫中找不到檔案記錄，FileCode：{fileCode}");
+                }
+            }
+
+            // 如果沒有檔案可以合併，直接返回
+            if (pdfFilePaths.Count == 0)
+            {
+                System.Diagnostics.Debug.WriteLine("沒有找到任何可合併的 PDF 檔案");
+                return;
+            }
+
+            // 建立合併後的檔案名稱和路徑
+            string mergedFileName = $"{projectId}_社團_{ProjectName}_{version}.pdf";
+            string uploadFolderPath = Server.MapPath($"~/UploadFiles/OFS/CLB/{projectId}");
+            string mergedFilePath = Path.Combine(uploadFolderPath, mergedFileName);
+
+            // 確保目錄存在
+            if (!Directory.Exists(uploadFolderPath))
+            {
+                Directory.CreateDirectory(uploadFolderPath);
+            }
+
+            // 使用 PdfHelper 合併 PDF
+            byte[] mergedPdfBytes = PdfHelper.MergePdfs(pdfFilePaths, mergedFilePath);
+
+            System.Diagnostics.Debug.WriteLine($"PDF 合併完成：{mergedFilePath}，合併了 {pdfFilePaths.Count} 個檔案");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"合併 PDF 檔案時發生錯誤：{ex.Message}");
+            throw;
         }
     }
 }

@@ -27,9 +27,15 @@ public class CLB_download : IHttpHandler
                 case "file":
                     DownloadUploadedFile(context);
                     break;
+                case "downloadplan":
+                    DownloadApplicationPlan(context);
+                    break;
+                case "downloadapprovedplan":
+                    DownloadApprovedPlan(context);
+                    break;
                 default:
                     context.Response.StatusCode = 400;
-                    context.Response.Write("Invalid action. Use 'template' or 'file'.");
+                    context.Response.Write("Invalid action. Use 'template', 'file', 'downloadPlan' or 'downloadApprovedPlan'.");
                     break;
             }
         }
@@ -118,6 +124,80 @@ public class CLB_download : IHttpHandler
 
         DownloadFile(context, filePath, uploadedFile.FileName, GetContentType(uploadedFile.FileName));
     }
+
+    /// <summary>
+    /// 下載申請資料
+    /// 路徑格式：~\UploadFiles\OFS\CLB\{ProjectID}\{ProjectID}_社團_{ProjectName}_送審版.pdf
+    /// </summary>
+    private void DownloadApplicationPlan(HttpContext context)
+    {
+        var projectID = context.Request.QueryString["projectID"];
+
+        // 驗證參數
+        if (string.IsNullOrEmpty(projectID))
+        {
+            context.Response.StatusCode = 400;
+            context.Response.Write("Missing projectID parameter.");
+            return;
+        }
+        var basicData = OFS_ClbApplicationHelper.GetBasicData(projectID);
+        string ProjectName = basicData.ProjectNameTw; 
+
+
+        // 構建檔案路徑
+        string fileName = $"{projectID}_社團_{ProjectName}_送審版.pdf";
+        string relativePath = $"~/UploadFiles/OFS/CLB/{projectID}/{fileName}";
+        string filePath = context.Server.MapPath(relativePath);
+
+        // 檢查檔案是否存在
+        if (!File.Exists(filePath))
+        {
+            context.Response.StatusCode = 404;
+            context.Response.Write($"Application plan file not found: {fileName}");
+            return;
+        }
+
+        // 下載檔案
+        DownloadFile(context, filePath, fileName, "application/pdf");
+    }
+
+    /// <summary>
+    /// 下載核定計畫書
+    /// 路徑格式：~\UploadFiles\OFS\CLB\{ProjectID}\{ProjectID}_社團_{ProjectName}_核定版.pdf
+    /// </summary>
+    private void DownloadApprovedPlan(HttpContext context)
+    {
+        var projectID = context.Request.QueryString["projectID"];
+        var basicData = OFS_ClbApplicationHelper.GetBasicData(projectID);
+        string ProjectName = basicData.ProjectNameTw; 
+
+        // 驗證參數
+        if (string.IsNullOrEmpty(projectID))
+        {
+            context.Response.StatusCode = 400;
+            context.Response.Write("Missing projectID parameter.");
+            return;
+        }
+
+      
+
+        // 構建檔案路徑
+        string fileName = $"{projectID}_社團_{ProjectName}_核定版.pdf";
+        string relativePath = $"~/UploadFiles/OFS/CLB/{projectID}/{fileName}";
+        string filePath = context.Server.MapPath(relativePath);
+
+        // 檢查檔案是否存在
+        if (!File.Exists(filePath))
+        {
+            context.Response.StatusCode = 404;
+            context.Response.Write($"Approved plan file not found: {fileName}");
+            return;
+        }
+
+        // 下載檔案
+        DownloadFile(context, filePath, fileName, "application/pdf");
+    }
+    
 
     /// <summary>
     /// 執行檔案下載

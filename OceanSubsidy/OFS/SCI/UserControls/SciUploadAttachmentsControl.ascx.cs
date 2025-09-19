@@ -72,21 +72,21 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
     /// 儲存表單資料
     /// </summary>
     /// <returns>儲存是否成功</returns>
-    public bool SaveData(string projectID)
-    {
-        this.ProjectID = projectID;
-        try
-        {
-            // 附件資料更新功能暫時移除，待實際需求確認後再實作
-            
-            
-            return true;
-        }
-        catch (Exception ex)
-        {
-            throw new Exception($"儲存資料時發生錯誤：{ex.Message}", ex);
-        }
-    }
+    // public bool SaveData(string projectID)
+    // {
+    //     this.ProjectID = projectID;
+    //     try
+    //     {
+    //         // 附件資料更新功能暫時移除，待實際需求確認後再實作
+    //         
+    //         
+    //         return true;
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         throw new Exception($"儲存資料時發生錯誤：{ex.Message}", ex);
+    //     }
+    // }
 
     #endregion
 

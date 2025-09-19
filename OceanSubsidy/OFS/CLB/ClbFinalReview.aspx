@@ -101,12 +101,10 @@
                     移轉案件
                 </button>
             </div>
-           <asp:LinkButton ID="btnDownloadPlan" runat="server"
-               CssClass="btn btn-teal-dark"
-               OnClick="btnDownloadPlan_Click"
-               CausesValidation="false">
-               <i class="fa-solid fa-download"></i> 下載申請資料
-           </asp:LinkButton>
+           <button class="btn btn-teal-dark" type="button" onclick="downloadApprovedPlan()">
+               <i class="fa-solid fa-download"></i>
+               下載申請資料
+           </button>
         </div>
     </div>
     

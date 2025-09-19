@@ -396,7 +396,7 @@
         			  <i class="fas fa-list-ol"></i>
         			  審查結果排名
         		  </button>
-        		  <button class="btn btn-teal-dark" type="button"><i class="fas fa-download"></i>匯出申請資料</button>
+        		  <button class="btn btn-teal-dark" type="button" onclick="exportApplicationPdfData()"><i class="fas fa-download"></i>匯出申請資料</button>
         	  </div>
         
           </div>

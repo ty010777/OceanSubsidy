@@ -133,8 +133,32 @@
                 $('#rejectReason').val(rejectReason);
             });
         });
+
+        // 下載核定版計畫書
+        document.addEventListener('DOMContentLoaded', function() {
+            var btnDownloadPlan = document.getElementById('btnDownloadPlan');
+            if (btnDownloadPlan) {
+                btnDownloadPlan.addEventListener('click', function() {
+                    var projectId = '<%= ProjectID %>';
+
+                    if (!projectId) {
+                        Swal.fire({
+                            title: '錯誤',
+                            text: '找不到計畫ID',
+                            icon: 'error',
+                            confirmButtonText: '確定'
+                        });
+                        return;
+                    }
+
+                    // 直接開啟下載 URL
+                    var downloadUrl = '<%= ResolveUrl("~/Service/SCI_Download.ashx") %>?action=downloadApprovedPlan&projectID=' + projectId;
+                    window.open(downloadUrl, '_blank');
+                });
+            }
+        });
     </script>
-    
+
 </asp:Content>
 
 <asp:Content ID="ApplicationContent" ContentPlaceHolderID="ApplicationContent" runat="server">
@@ -149,12 +173,9 @@
                     移轉案件
                 </button>
             </div>
-           <asp:LinkButton ID="btnDownloadPlan" runat="server"
-               CssClass="btn btn-teal-dark"
-               OnClick="btnDownloadPlan_Click"
-               CausesValidation="false">
+           <button type="button" id="btnDownloadPlan" class="btn btn-teal-dark">
                <i class="fa-solid fa-download"></i> 下載計畫書
-           </asp:LinkButton>
+           </button>
         </div>
     </div>
     

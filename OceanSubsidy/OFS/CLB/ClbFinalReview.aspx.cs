@@ -63,14 +63,6 @@ public partial class OFS_CLB_Review_ClbFinalReview : System.Web.UI.Page
 
     #region 按鈕事件
 
-    /// <summary>
-    /// 下載申請資料
-    /// </summary>
-    protected void btnDownloadPlan_Click(object sender, EventArgs e)
-    {
-        // TODO: 實作下載社團申請資料功能
-        ShowSweetAlert("功能開發中", "下載申請資料功能正在開發中", "info");
-    }
 
     /// <summary>
     /// 確認決審核定結果

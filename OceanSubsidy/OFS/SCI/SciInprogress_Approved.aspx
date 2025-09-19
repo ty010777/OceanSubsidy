@@ -96,6 +96,30 @@
             const urlParams = new URLSearchParams(window.location.search);
             return urlParams.get('ProjectID');
         }
+
+        // 下載核定版計畫書
+        document.addEventListener('DOMContentLoaded', function() {
+            var btnDownloadPlan = document.getElementById('btnDownloadPlan');
+            if (btnDownloadPlan) {
+                btnDownloadPlan.addEventListener('click', function() {
+                    var projectId = getProjectIDFromUrl();
+
+                    if (!projectId) {
+                        Swal.fire({
+                            title: '錯誤',
+                            text: '找不到計畫ID',
+                            icon: 'error',
+                            confirmButtonText: '確定'
+                        });
+                        return;
+                    }
+
+                    // 直接開啟下載 URL
+                    var downloadUrl = '<%= ResolveUrl("~/Service/SCI_Download.ashx") %>?action=downloadApprovedPlan&projectID=' + projectId;
+                    window.open(downloadUrl, '_blank');
+                });
+            }
+        });
     </script>
 </asp:Content>
 
@@ -112,10 +136,10 @@
                     <i class="fas fa-history"></i>
                     計畫變更紀錄
                 </button>
-                <a href="#" class="btn btn-teal-dark" target="_blank">
+                <button type="button" id="btnDownloadPlan" class="btn btn-teal-dark">
                     <i class="fa-solid fa-download"></i>
                     下載核定計畫書
-                </a>
+                </button>
             </div>
             <div class="d-flex gap-3 align-items-center">
                 <div class="text-muted small">
