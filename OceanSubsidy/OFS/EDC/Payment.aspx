@@ -5,28 +5,34 @@
 <asp:Content ContentPlaceHolderID="MainTitle" runat="server">計畫執行</asp:Content>
 
 <asp:Content ContentPlaceHolderID="MainContent" runat="server">
-    <div>
+    <div v-if="settings">
         <project-title :id="id" type="education"></project-title>
         <project-progress :excludes="[4]" :id="id" :step="6" type="education"></project-progress>
-        <education-payment :id="id" v-on:next="next"></education-payment>
+        <education-payment :id="id" :setting="settings[0]" v-on:next="next"></education-payment>
     </div>
 </asp:Content>
 
 <asp:Content ContentPlaceHolderID="FloatContent" runat="server">
+    <project-payment-review type="education"></project-payment-review>
     <script>
         setupVueApp({
             setup() {
                 const { onMounted, ref } = Vue;
-                const { useProgressStore } = OceanSubsidyComponents;
+                const { api, useProgressStore } = OceanSubsidyComponents;
 
                 const id = "<%= Request.QueryString["ID"] %>";
+                const settings = ref();
                 const store = useProgressStore();
 
                 const next = () => {};
 
-                onMounted(initScrollListener);
+                onMounted(() => {
+                    api.education("getPaymentPhaseSettings", { TypeCode: "EDC" }).subscribe((res) => settings.value = res);
 
-                return { id, next, store };
+                    initScrollListener();
+                });
+
+                return { id, next, settings, store };
             }
         });
     </script>

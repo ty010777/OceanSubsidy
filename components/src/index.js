@@ -55,8 +55,10 @@ import NewsList from "./components/NewsList.vue";
 import ProjectChangeReview from "./components/ProjectChangeReview.vue";
 import ProjectCorrectionReview from "./components/ProjectCorrectionReview.vue";
 import ProjectOrganizer from "./components/ProjectOrganizer.vue";
+import ProjectPaymentReview from "./components/ProjectPaymentReview.vue";
 import ProjectProgress from "./components/ProjectProgress.vue";
 import ProjectReport from "./components/ProjectReport.vue";
+import ProjectReportReview from "./components/ProjectReportReview.vue";
 import ProjectReview from "./components/ProjectReview.vue";
 import ProjectTitle from "./components/ProjectTitle.vue";
 import ProjectToolbar from "./components/ProjectToolbar.vue";
@@ -137,8 +139,10 @@ const components = {
     ProjectChangeReview,
     ProjectCorrectionReview,
     ProjectOrganizer,
+    ProjectPaymentReview,
     ProjectProgress,
     ProjectReport,
+    ProjectReportReview,
     ProjectReview,
     ProjectTitle,
     ProjectToolbar,

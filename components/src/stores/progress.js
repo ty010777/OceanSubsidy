@@ -1,6 +1,6 @@
 export const useProgressStore = defineStore("progress", {
     actions: {
-        init(type, data) {
+        init(type, data, report) {
             this[type] = {
                 id: data.ProjectID,
                 type: data.SubsidyPlanType?.split(" ")[0],
@@ -9,6 +9,7 @@ export const useProgressStore = defineStore("progress", {
                 status: data.Status,
                 progress: data.ProgressStatus,
                 changeStatus: data.changeApply?.Status,
+                reportStatus: report?.Status,
                 organizer: data.Organizer,
                 organizerName: data.OrganizerName
             };

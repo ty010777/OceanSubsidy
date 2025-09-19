@@ -25,11 +25,12 @@ public class OFS_LitAttachmentHelper
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
-            INSERT INTO [OFS_LIT_Attachment] ([PID],[Type],[Path],[Name],[CreateTime],[CreateUser])
-                   OUTPUT Inserted.ID VALUES (@PID ,@Type ,@Path ,@Name, GETDATE(),   @CreateUser)
+            INSERT INTO [OFS_LIT_Attachment] ([PID],[Stage],[Type],[Path],[Name],[CreateTime],[CreateUser])
+                   OUTPUT Inserted.ID VALUES (@PID, @Stage, @Type, @Path, @Name, GETDATE(),   @CreateUser)
         ";
 
         db.Parameters.Add("@PID", model.PID);
+        db.Parameters.Add("@Stage", model.Stage);
         db.Parameters.Add("@Type", model.Type);
         db.Parameters.Add("@Path", model.Path);
         db.Parameters.Add("@Name", model.Name);
@@ -38,21 +39,24 @@ public class OFS_LitAttachmentHelper
         model.ID = int.Parse(db.GetTable().Rows[0]["ID"].ToString());
     }
 
-    public static List<OFS_LitAttachment> query(int pid)
+    public static List<OFS_LitAttachment> query(int pid, int stage = 0)
     {
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
             SELECT [ID]
                   ,[PID]
+                  ,[Stage]
                   ,[Type]
                   ,[Path]
                   ,[Name]
               FROM [OFS_LIT_Attachment]
              WHERE [PID] = @PID
+               AND [Stage] = @Stage
         ";
 
         db.Parameters.Add("@PID", pid);
+        db.Parameters.Add("@Stage", stage);
 
         return db.GetTable().Rows.Cast<DataRow>().Select(r => toModel(r)).ToList();
     }
@@ -63,6 +67,7 @@ public class OFS_LitAttachmentHelper
         {
             ID = row.Field<int>("ID"),
             PID = row.Field<int>("PID"),
+            Stage = row.Field<int>("Stage"),
             Type = row.Field<int>("Type"),
             Path = row.Field<string>("Path"),
             Name = row.Field<string>("Name")

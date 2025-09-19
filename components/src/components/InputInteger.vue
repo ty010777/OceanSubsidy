@@ -15,13 +15,14 @@
     const editable = inject("editable", true);
     const model = defineModel();
 
-    defineOptions({ inheritAttrs: false });
-
-    defineProps({
+    const props = defineProps({
         error: { type: String },
+        max: { type: Number },
         placeholder: { default: "請輸入", type: String },
         type: { default: "text", type: String }
     });
+
+    defineOptions({ inheritAttrs: false });
 
     watch(model, (value) => {
         if (value) {
@@ -29,6 +30,8 @@
 
             if (value.toString() !== num) {
                 model.value = num;
+            } else if (props.max && Number(num) > props.max) {
+                model.value = props.max;
             }
         }
     });
