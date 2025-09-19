@@ -330,7 +330,7 @@ public class CLB_Upload : IHttpHandler
             file.SaveAs(fullPath);
 
             // 回傳相對路徑
-            return $"~/UploadFiles/OFS/CLB/{projectID}/{fileName}";
+            return $"UploadFiles/OFS/CLB/{projectID}/{fileName}";
         }
         catch (Exception ex)
         {

@@ -1309,7 +1309,7 @@ SELECT TOP (1000) [ProjectID]
             FROM OFS_SCI_Project_Main p
             LEFT JOIN OFS_SCI_Application_Main m ON p.ProjectID = m.ProjectID
             WHERE p.Statuses LIKE '%{status}%'
-              AND (p.isExist = 1 OR p.isExist IS NULL) AND p.StatusesName != '不通過' AND isWithdrawal != 1
+              AND (p.isExist = 1 OR p.isExist IS NULL)  AND isWithdrawal != 1
         ";
 
         // 添加篩選條件
@@ -1385,7 +1385,7 @@ SELECT TOP (1000) [ProjectID]
     /// <summary>
     /// 取得科專進度資料
     /// </summary>
-    public static List<ProgressData> GetSciProgressData(List<string> projectIds, string status)
+    public static List<ProgressData> GetSciProgressData(List<string> projectIds , string status)
     {
         if (projectIds.Count == 0) return new List<ProgressData>();
 
@@ -1409,7 +1409,7 @@ SELECT TOP (1000) [ProjectID]
                     ELSE '未完成'
                 END AS ReplyProgress
             FROM OFS_ReviewRecords RR
-            WHERE RR.ReviewStage = '領域審查'
+            WHERE RR.ReviewStage = @status
             GROUP BY RR.ProjectID
         ";
 
@@ -1419,9 +1419,8 @@ SELECT TOP (1000) [ProjectID]
         {
             db.Parameters.Add($"@projectId{i}", projectIds[i]);
         }
-
-        // 添加 status 參數
-        db.Parameters.Add("@status", status);
+        db.Parameters.Add($"@status", status);
+      
 
         DataTable dt = db.GetTable();
         List<ProgressData> result = new List<ProgressData>();
@@ -1537,7 +1536,7 @@ SELECT TOP (1000) [ProjectID]
               JOIN Sys_ZgsCode AS P ON (P.CodeGroup = 'ProjectProgressStatus' AND P.Code = O.ProgressStatus)
             WHERE P.Descname LIKE '%{status}%'
               AND O.IsExists = 1
-              AND S.Descname != '不通過'
+          
               AND O.IsWithdrawal != 1
         ";
 
@@ -3032,116 +3031,123 @@ SELECT TOP (1000) [ProjectID]
             {
                 throw new ArgumentException("不支援的審查類型");
             }
+            List<string> SciList = new List<string> { "Information", "Environment", "Material", "Mechanical" };
+            string reviewStage = "";
 
+            if (SciList.Contains(reviewGroup))
+            {
+                reviewStage = reviewType == "2" ? "領域審查" : "技術審查";
+
+            }
+            else
+            {
+                reviewStage = reviewType == "2" ? "2" : "3"; //初審、複審
+            }
             // 根據審查類型設定審查階段
-            string reviewStage = reviewType == "2" ? "領域審查" : "技術審查";
-
             using (var db = new DbHelper())
             {
                 // 執行SQL查詢 - 使用參數化查詢防止SQL注入
-                if (string.IsNullOrEmpty(reviewGroup))
+                // 查詢特定審查組別
+                if(reviewStage == "領域審查" || reviewStage == "技術審查")
                 {
-                    // 查詢所有審查組別
                     db.CommandText = @"
-                        -- 先算每個專案的平均分與總分
-                        WITH ProjectScores AS (
-                            SELECT 
-                                PM.ProjectID,
-                                ProjectNameTw,
-                                SUM(TotalScore) AS ProjectTotalScore,
-                                AVG(TotalScore) AS AvgScore
-                            FROM OFS_ReviewRecords RR
-                            LEFT JOIN OFS_SCI_Application_Main AM ON RR.ProjectID = AM.ProjectID
-                            LEFT JOIN OFS_SCI_Project_Main PM ON PM.ProjectID = AM.ProjectID
-                            WHERE PM.Statuses = @ReviewStage 
-                              AND RR.ReviewStage = @ReviewStage
-                              AND IsSubmit = 1 AND PM.StatusesName != '不通過'
-                            GROUP BY PM.ProjectID, ProjectNameTw
-                        ),
-                        -- 每個委員對各專案的分數
-                        ReviewerScores AS (
-                            SELECT 
-                                RR.ProjectID,
-                                RR.ReviewerName,
-                                RR.TotalScore
-                                -- RANK() OVER (PARTITION BY RR.ReviewerName ORDER BY RR.TotalScore DESC) AS ReviewerRank
-                            FROM OFS_ReviewRecords RR
-                            LEFT JOIN OFS_SCI_Application_Main AM ON RR.ProjectID = AM.ProjectID
-                            LEFT JOIN OFS_SCI_Project_Main PM ON PM.ProjectID = AM.ProjectID
-                            WHERE PM.Statuses = @ReviewStage 
-                              AND RR.ReviewStage = @ReviewStage
-                              AND IsSubmit = 1 PM.StatusesName != '不通過'
-                        )
-                        -- 最後組合成一張大表
+                    -- 先算每個專案的平均分與總分
+                    WITH ProjectScores AS (
                         SELECT 
-                            PS.ProjectID,
-                            PS.ProjectNameTw,
-                            PS.ProjectTotalScore,
-                            PS.AvgScore,
-                            DENSE_RANK() OVER (ORDER BY PS.AvgScore DESC) AS DenseRankNo,
-                            RS.ReviewerName,
-                            RS.TotalScore
-                            -- RS.ReviewerRank
-                        FROM ProjectScores PS
-                        JOIN ReviewerScores RS ON PS.ProjectID = RS.ProjectID
-                        ORDER BY DenseRankNo, PS.ProjectID, RS.ReviewerName;
-                    ";
-
-                    db.Parameters.Add("@ReviewStage", reviewStage);
+                            PM.ProjectID,
+                            ProjectNameTw,
+                            SUM(TotalScore) AS ProjectTotalScore,
+                            AVG(TotalScore) AS AvgScore
+                        FROM OFS_ReviewRecords RR
+                        LEFT JOIN OFS_SCI_Application_Main AM ON RR.ProjectID = AM.ProjectID
+                        LEFT JOIN OFS_SCI_Project_Main PM ON PM.ProjectID = AM.ProjectID
+                        WHERE PM.Statuses = @ReviewStage 
+                          AND RR.ReviewStage = @ReviewStage
+                          AND IsSubmit = 1 AND PM.isExist != 0 
+                          AND AM.Field = @ReviewGroup
+                        GROUP BY PM.ProjectID, ProjectNameTw
+                    ),
+                    -- 每個委員對各專案的分數
+                    ReviewerScores AS (
+                        SELECT 
+                            RR.ProjectID,
+                            RR.ReviewerName,
+                            RR.TotalScore
+                            -- RANK() OVER (PARTITION BY RR.ReviewerName ORDER BY RR.TotalScore DESC) AS ReviewerRank
+                        FROM OFS_ReviewRecords RR
+                        LEFT JOIN OFS_SCI_Application_Main AM ON RR.ProjectID = AM.ProjectID
+                        LEFT JOIN OFS_SCI_Project_Main PM ON PM.ProjectID = AM.ProjectID
+                        WHERE PM.Statuses = @ReviewStage 
+                          AND RR.ReviewStage = @ReviewStage
+                          AND IsSubmit = 1 AND PM.isExist != 0 
+                          AND AM.Field = @ReviewGroup
+                    )
+                    -- 最後組合成一張大表
+                    SELECT 
+                        PS.ProjectID,
+                        PS.ProjectNameTw,
+                        PS.ProjectTotalScore,
+                        PS.AvgScore,
+                        DENSE_RANK() OVER (ORDER BY PS.AvgScore DESC) AS DenseRankNo,
+                        RS.ReviewerName,
+                        RS.TotalScore
+                        -- RS.ReviewerRank
+                    FROM ProjectScores PS
+                    JOIN ReviewerScores RS ON PS.ProjectID = RS.ProjectID
+                    ORDER BY DenseRankNo, PS.ProjectID, RS.ReviewerName;
+                ";
+                  
                 }
                 else
                 {
-                    // 查詢特定審查組別
                     db.CommandText = @"
-                        -- 先算每個專案的平均分與總分
-                        WITH ProjectScores AS (
-                            SELECT 
-                                PM.ProjectID,
-                                ProjectNameTw,
-                                SUM(TotalScore) AS ProjectTotalScore,
-                                AVG(TotalScore) AS AvgScore
-                            FROM OFS_ReviewRecords RR
-                            LEFT JOIN OFS_SCI_Application_Main AM ON RR.ProjectID = AM.ProjectID
-                            LEFT JOIN OFS_SCI_Project_Main PM ON PM.ProjectID = AM.ProjectID
-                            WHERE PM.Statuses = @ReviewStage 
-                              AND RR.ReviewStage = @ReviewStage
-                              AND IsSubmit = 1 AND PM.StatusesName != '不通過'
-                              AND AM.Field = @ReviewGroup
-                            GROUP BY PM.ProjectID, ProjectNameTw
-                        ),
-                        -- 每個委員對各專案的分數
-                        ReviewerScores AS (
-                            SELECT 
-                                RR.ProjectID,
-                                RR.ReviewerName,
-                                RR.TotalScore
-                                -- RANK() OVER (PARTITION BY RR.ReviewerName ORDER BY RR.TotalScore DESC) AS ReviewerRank
-                            FROM OFS_ReviewRecords RR
-                            LEFT JOIN OFS_SCI_Application_Main AM ON RR.ProjectID = AM.ProjectID
-                            LEFT JOIN OFS_SCI_Project_Main PM ON PM.ProjectID = AM.ProjectID
-                            WHERE PM.Statuses = @ReviewStage 
-                              AND RR.ReviewStage = @ReviewStage
-                              AND IsSubmit = 1 AND PM.StatusesName != '不通過'
-                              AND AM.Field = @ReviewGroup
-                        )
-                        -- 最後組合成一張大表
-                        SELECT 
-                            PS.ProjectID,
-                            PS.ProjectNameTw,
-                            PS.ProjectTotalScore,
-                            PS.AvgScore,
-                            DENSE_RANK() OVER (ORDER BY PS.AvgScore DESC) AS DenseRankNo,
-                            RS.ReviewerName,
-                            RS.TotalScore
-                            -- RS.ReviewerRank
-                        FROM ProjectScores PS
-                        JOIN ReviewerScores RS ON PS.ProjectID = RS.ProjectID
-                        ORDER BY DenseRankNo, PS.ProjectID, RS.ReviewerName;
-                    ";
+                WITH ProjectScores AS (
 
-                    db.Parameters.Add("@ReviewStage", reviewStage);
-                    db.Parameters.Add("@ReviewGroup", reviewGroup);
+		            SELECT 
+                            PM.ProjectID,
+                            ProjectName ,
+                            SUM(TotalScore) AS ProjectTotalScore,
+                            AVG(TotalScore) AS AvgScore
+                        FROM OFS_ReviewRecords RR
+                        LEFT JOIN OFS_CUL_Project PM ON PM.ProjectID = RR.ProjectID
+                        WHERE PM.ProgressStatus =  2
+                          AND RR.ReviewStage = @ReviewStage
+                          AND IsSubmit = 1 AND PM.IsExists != 0 
+                          AND PM.Field =@ReviewGroup
+                        GROUP BY PM.ProjectID, ProjectName
+                    ),
+                    -- 每個委員對各專案的分數
+                    ReviewerScores AS (
+                        SELECT 
+                            RR.ProjectID,
+                            RR.ReviewerName,
+                            RR.TotalScore
+                        FROM OFS_ReviewRecords RR
+                        LEFT JOIN OFS_CUL_Project PM ON PM.ProjectID = RR.ProjectID
+                        WHERE PM.ProgressStatus = @ReviewStage 
+                          AND RR.ReviewStage = @ReviewStage
+                          AND IsSubmit = 1 AND PM.IsExists != 0 
+                          AND PM.Field = @ReviewGroup
+                    )
+                    -- 最後組合成一張大表
+                    SELECT 
+                        PS.ProjectID,
+                        PS.ProjectName as ProjectNameTw,
+                        PS.ProjectTotalScore,
+                        PS.AvgScore,
+                        DENSE_RANK() OVER (ORDER BY PS.AvgScore DESC) AS DenseRankNo,
+                        RS.ReviewerName,
+                        RS.TotalScore
+                        -- RS.ReviewerRank
+                    FROM ProjectScores PS
+                    JOIN ReviewerScores RS ON PS.ProjectID = RS.ProjectID
+                    ORDER BY DenseRankNo, PS.ProjectID, RS.ReviewerName;";
                 }
+                
+
+                db.Parameters.Add("@ReviewStage", reviewStage);
+                db.Parameters.Add("@ReviewGroup", reviewGroup);
+            
                 
                 var dataTable = db.GetTable();
                 
@@ -3395,12 +3401,165 @@ SELECT TOP (1000) [ProjectID]
     }
 
     /// <summary>
-    /// 取得Type2申請資料 (匯出用) - 預留給未來使用
+    /// 取得Type2申請資料 (匯出用) - 回傳 ProjectID 和 PDF 路徑供 ZIP 匯出使用
     /// </summary>
-    public static DataTable GetType2ApplicationData(string year, string category, string status, string orgName, string supervisor, string keyword)
+    public static DataTable GetType2ApplicationData(string year, string category, string status, string orgName, string supervisor, string keyword, string progress = "", string replyStatus = "")
     {
-        // TODO: 實作Type2申請資料查詢
-        throw new NotImplementedException("Type2 申請資料匯出功能尚未實作");
+        try
+        {
+            DataTable result = new DataTable();
+            result.Columns.Add("ProjectID", typeof(string));
+            result.Columns.Add("PdfPath", typeof(string));
+            result.Columns.Add("Category", typeof(string));
+            result.Columns.Add("ProjectName", typeof(string));
+
+            // 根據類別執行不同的查詢
+            if (category == "SCI" || string.IsNullOrEmpty(category))
+            {
+                // 取得 SCI 科專資料
+                var sciResults = GetSciBasicData(year, orgName, supervisor, keyword, "領域審查");
+
+                // 篩選符合進度和回覆狀態的 ProjectID
+                var filteredSciResults = FilterByProgressAndReplyStatus(sciResults, progress, replyStatus, "SCI");
+
+                foreach (var item in filteredSciResults)
+                {
+                    string projectId = item.ProjectID ?? "";
+                    var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectId);
+                    string ProjectName = applicationMain.ProjectNameTw ?? "";
+
+                    if (!string.IsNullOrEmpty(projectId))
+                    {
+                        // 建構 SCI PDF 路徑
+                        string pdfPath = HttpContext.Current.Server.MapPath($"~/UploadFiles/OFS/SCI/{projectId}/SciApplication/{projectId}_科專_{ProjectName}_送審版.pdf");
+
+                        DataRow row = result.NewRow();
+                        row["ProjectID"] = projectId;
+                        row["PdfPath"] = pdfPath;
+                        row["Category"] = "SCI";
+                        row["ProjectName"] = item.ProjectNameTw ?? "";
+                        result.Rows.Add(row);
+                    }
+                }
+            }
+
+            if (category == "CUL" || string.IsNullOrEmpty(category))
+            {
+                // 取得 CUL 文化資料
+                var culResults = GetCulBasicData(year, orgName, supervisor, keyword, "初審");
+                
+                // 篩選符合進度和回覆狀態的 ProjectID
+                var filteredCulResults = FilterByProgressAndReplyStatus(culResults, progress, replyStatus, "CUL");
+            
+                foreach (var item in filteredCulResults)
+                {
+                    string projectId = item.ProjectID ?? "";
+                    string ProjectName = item.ProjectNameTw;
+                    if (!string.IsNullOrEmpty(projectId))
+                    {
+                        string pdfPath = HttpContext.Current.Server.MapPath($"~/UploadFiles/OFS/CUL/{projectId}/TechReviewFiles/{projectId}_文化_{ProjectName}_送審版.pdf");
+
+            
+                        DataRow row = result.NewRow();
+                        row["ProjectID"] = projectId;
+                        row["PdfPath"] = pdfPath;
+                        row["Category"] = "CUL";
+                        row["ProjectName"] = item.ProjectNameTw ?? "";
+                        result.Rows.Add(row);
+                    }
+                }
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"GetType2ApplicationData 查詢時發生錯誤：{ex.Message}");
+            throw new Exception($"GetType2ApplicationData 查詢時發生錯誤：{ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// 根據審查進度和回覆狀態篩選專案
+    /// </summary>
+    private static List<ReviewChecklistItem> FilterByProgressAndReplyStatus(List<ReviewChecklistItem> items, string progress, string replyStatus, string category)
+    {
+        // 如果沒有指定篩選條件，直接回傳原始資料
+        if (string.IsNullOrEmpty(progress) && string.IsNullOrEmpty(replyStatus))
+        {
+            return items;
+        }
+
+        // 取得所有 ProjectID
+        var projectIds = items.Select(x => x.ProjectID).Where(x => !string.IsNullOrEmpty(x)).ToList();
+        if (projectIds.Count == 0) return new List<ReviewChecklistItem>();
+
+        // 取得進度資料
+        List<ProgressData> progressDataList;
+        if (category == "SCI")
+        {
+            progressDataList = GetSciProgressData(projectIds,"領域審查");
+        }
+        else if (category == "CUL")
+        {
+            progressDataList = GetCulProgressData(projectIds, "初審");
+        }
+        else
+        {
+            return items; // 其他類別暫不支援
+        }
+
+        // 建立 ProjectID 到進度資料的映射
+        var progressDict = progressDataList.ToDictionary(x => x.ProjectID, x => x);
+
+        // 篩選符合條件的專案
+        var filteredItems = new List<ReviewChecklistItem>();
+
+        foreach (var item in items)
+        {
+            bool shouldInclude = true;
+
+            if (progressDict.TryGetValue(item.ProjectID, out var progressData))
+            {
+                // 篩選審查進度
+                if (!string.IsNullOrEmpty(progress))
+                {
+                    if (progress == "完成" && progressData.ReviewProgress != "完成")
+                    {
+                        shouldInclude = false;
+                    }
+                    else if (progress == "未完成" && progressData.ReviewProgress != "未完成")
+                    {
+                        shouldInclude = false;
+                    }
+                }
+
+                // 篩選回覆狀態
+                if (!string.IsNullOrEmpty(replyStatus) && shouldInclude)
+                {
+                    if (replyStatus == "完成" && progressData.ReplyProgress != "完成")
+                    {
+                        shouldInclude = false;
+                    }
+                    else if (replyStatus == "未完成" && progressData.ReplyProgress != "未完成")
+                    {
+                        shouldInclude = false;
+                    }
+                }
+            }
+            else
+            {
+                // 如果找不到進度資料則不進入
+                shouldInclude = false;
+            }
+
+            if (shouldInclude)
+            {
+                filteredItems.Add(item);
+            }
+        }
+
+        return filteredItems;
     }
 
     /// <summary>

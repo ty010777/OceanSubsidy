@@ -684,68 +684,68 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
     }
 
  
-    #region 文件上傳相關方法
-    /// <summary>
-    /// 儲存上傳的檔案
-    /// </summary>
-    private string SaveUploadedFile(HttpPostedFile file, string fileName, string fileCode, string projectID)
-    {
-        try
-        {
-            // 建立上傳目錄路徑 (使用正確的 OFS/CLB/{projectID} 格式)
-            string uploadDir = Server.MapPath($"~/UploadFiles/OFS/CLB/{projectID}");
-            if (!Directory.Exists(uploadDir))
-            {
-                Directory.CreateDirectory(uploadDir);
-            }
+    // #region 文件上傳相關方法
+    // /// <summary>
+    // /// 儲存上傳的檔案
+    // /// </summary>
+    // private string SaveUploadedFile(HttpPostedFile file, string fileName, string fileCode, string projectID)
+    // {
+    //     try
+    //     {
+    //         // 建立上傳目錄路徑 (使用正確的 OFS/CLB/{projectID} 格式)
+    //         string uploadDir = Server.MapPath($"~/UploadFiles/OFS/CLB/{projectID}");
+    //         if (!Directory.Exists(uploadDir))
+    //         {
+    //             Directory.CreateDirectory(uploadDir);
+    //         }
+    //
+    //         // 完整檔案路徑
+    //         string fullPath = Path.Combine(uploadDir, fileName);
+    //         
+    //         // 如果檔案已存在，先刪除
+    //         if (File.Exists(fullPath))
+    //         {
+    //             File.Delete(fullPath);
+    //         }
+    //
+    //         // 儲存檔案
+    //         file.SaveAs(fullPath);
+    //
+    //         // 回傳相對路徑
+    //         return $"~/UploadFiles/OFS/CLB/{projectID}/{fileName}";
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         throw new Exception($"檔案儲存失敗：{ex.Message}");
+    //     }
+    // }
 
-            // 完整檔案路徑
-            string fullPath = Path.Combine(uploadDir, fileName);
-            
-            // 如果檔案已存在，先刪除
-            if (File.Exists(fullPath))
-            {
-                File.Delete(fullPath);
-            }
-
-            // 儲存檔案
-            file.SaveAs(fullPath);
-
-            // 回傳相對路徑
-            return $"~/UploadFiles/OFS/CLB/{projectID}/{fileName}";
-        }
-        catch (Exception ex)
-        {
-            throw new Exception($"檔案儲存失敗：{ex.Message}");
-        }
-    }
-
-    /// <summary>
-    /// 儲存檔案資訊到資料庫
-    /// </summary>
-    private void SaveFileToDatabase(string projectID, string fileCode, string fileName, string relativePath)
-    {
-        try
-        {
-            var uploadFile = new OFS_CLB_UploadFile
-            {
-                ProjectID = projectID,
-                FileCode = fileCode,
-                FileName = fileName,
-                TemplatePath = relativePath
-            };
-
-            // 檢查是否已存在同樣的記錄
-            OFS_ClbApplicationHelper.DeleteUploadFile(projectID, fileCode);
-            
-            // 插入新記錄
-            OFS_ClbApplicationHelper.InsertUploadFile(uploadFile);
-        }
-        catch (Exception ex)
-        {
-            throw new Exception($"儲存檔案資訊失敗：{ex.Message}");
-        }
-    }
+    // /// <summary>
+    // /// 儲存檔案資訊到資料庫
+    // /// </summary>
+    // private void SaveFileToDatabase(string projectID, string fileCode, string fileName, string relativePath)
+    // {
+    //     try
+    //     {
+    //         var uploadFile = new OFS_CLB_UploadFile
+    //         {
+    //             ProjectID = projectID,
+    //             FileCode = fileCode,
+    //             FileName = fileName,
+    //             TemplatePath = relativePath
+    //         };
+    //
+    //         // 檢查是否已存在同樣的記錄
+    //         OFS_ClbApplicationHelper.DeleteUploadFile(projectID, fileCode);
+    //         
+    //         // 插入新記錄
+    //         OFS_ClbApplicationHelper.InsertUploadFile(uploadFile);
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         throw new Exception($"儲存檔案資訊失敗：{ex.Message}");
+    //     }
+    // }
 
     /// <summary>
     /// 更新檔案狀態UI
@@ -836,79 +836,78 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
         }
     }
 
-    /// <summary>
-    /// 刪除上傳的檔案
-    /// </summary>
-    public string DeleteUploadedFile(string fileCode)
-    {
-        try
-        {
-            if (string.IsNullOrEmpty(ProjectID))
-            {
-                return "計畫編號不存在";
-            }
+    // /// <summary>
+    // /// 刪除上傳的檔案
+    // /// </summary>
+    // public string DeleteUploadedFile(string fileCode)
+    // {
+    //     try
+    //     {
+    //         if (string.IsNullOrEmpty(ProjectID))
+    //         {
+    //             return "計畫編號不存在";
+    //         }
+    //
+    //         // 從資料庫刪除
+    //         OFS_ClbApplicationHelper.DeleteUploadFile(ProjectID, fileCode);
+    //
+    //         // 刪除實際檔案
+    //         var fileInfo = OFS_ClbApplicationHelper.GetUploadedFile(ProjectID, fileCode);
+    //         if (fileInfo != null && !string.IsNullOrEmpty(fileInfo.TemplatePath))
+    //         {
+    //             string physicalPath = Server.MapPath(fileInfo.TemplatePath);
+    //             if (File.Exists(physicalPath))
+    //             {
+    //                 File.Delete(physicalPath);
+    //             }
+    //         }
+    //
+    //         // 更新UI
+    //         ResetFileStatusUI(fileCode);
+    //
+    //         return ""; // 成功
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         return $"刪除失敗：{ex.Message}";
+    //     }
+    // }
+    //
+    // /// <summary>
+    // /// 重置檔案狀態UI
+    // /// </summary>
+    // private void ResetFileStatusUI(string fileCode)
+    // {
+    //     Label statusLabel = null;
+    //     Panel filesPanel = null;
+    //
+    //     switch (fileCode)
+    //     {
+    //         case "FILE_CLB1":
+    //             statusLabel = (Label)FindControl("lblStatusCLB1");
+    //             filesPanel = (Panel)FindControl("pnlFilesCLB1");
+    //             break;
+    //         case "FILE_CLB2":
+    //             statusLabel = (Label)FindControl("lblStatusCLB2");
+    //             filesPanel = (Panel)FindControl("pnlFilesCLB2");
+    //             break;
+    //         case "FILE_CLB3":
+    //             statusLabel = (Label)FindControl("lblStatusCLB3");
+    //             filesPanel = (Panel)FindControl("pnlFilesCLB3");
+    //             break;
+    //         case "FILE_CLB4":
+    //             statusLabel = (Label)FindControl("lblStatusCLB4");
+    //             filesPanel = (Panel)FindControl("pnlFilesCLB4");
+    //             break;
+    //     }
+    //
+    //     if (statusLabel != null && filesPanel != null)
+    //     {
+    //         statusLabel.Text = "未上傳";
+    //         statusLabel.CssClass = "text-muted";
+    //         filesPanel.Visible = false;
+    //         filesPanel.Controls.Clear();
+    //     }
+    // }
 
-            // 從資料庫刪除
-            OFS_ClbApplicationHelper.DeleteUploadFile(ProjectID, fileCode);
-
-            // 刪除實際檔案
-            var fileInfo = OFS_ClbApplicationHelper.GetUploadedFile(ProjectID, fileCode);
-            if (fileInfo != null && !string.IsNullOrEmpty(fileInfo.TemplatePath))
-            {
-                string physicalPath = Server.MapPath(fileInfo.TemplatePath);
-                if (File.Exists(physicalPath))
-                {
-                    File.Delete(physicalPath);
-                }
-            }
-
-            // 更新UI
-            ResetFileStatusUI(fileCode);
-
-            return ""; // 成功
-        }
-        catch (Exception ex)
-        {
-            return $"刪除失敗：{ex.Message}";
-        }
-    }
-
-    /// <summary>
-    /// 重置檔案狀態UI
-    /// </summary>
-    private void ResetFileStatusUI(string fileCode)
-    {
-        Label statusLabel = null;
-        Panel filesPanel = null;
-
-        switch (fileCode)
-        {
-            case "FILE_CLB1":
-                statusLabel = (Label)FindControl("lblStatusCLB1");
-                filesPanel = (Panel)FindControl("pnlFilesCLB1");
-                break;
-            case "FILE_CLB2":
-                statusLabel = (Label)FindControl("lblStatusCLB2");
-                filesPanel = (Panel)FindControl("pnlFilesCLB2");
-                break;
-            case "FILE_CLB3":
-                statusLabel = (Label)FindControl("lblStatusCLB3");
-                filesPanel = (Panel)FindControl("pnlFilesCLB3");
-                break;
-            case "FILE_CLB4":
-                statusLabel = (Label)FindControl("lblStatusCLB4");
-                filesPanel = (Panel)FindControl("pnlFilesCLB4");
-                break;
-        }
-
-        if (statusLabel != null && filesPanel != null)
-        {
-            statusLabel.Text = "未上傳";
-            statusLabel.CssClass = "text-muted";
-            filesPanel.Visible = false;
-            filesPanel.Controls.Clear();
-        }
-    }
-
-    #endregion
 }

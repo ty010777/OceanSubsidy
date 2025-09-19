@@ -77,7 +77,23 @@ document.addEventListener('DOMContentLoaded', function() {
  * 下載核定計畫書功能
  */
 function downloadApprovedPlan() {
-    alert('下載核定計畫書功能 (靜態展示)');
+    const projectID = getProjectIDFromUrl();
+
+    if (!projectID) {
+        Swal.fire({
+            title: '錯誤',
+            text: '找不到計畫ID',
+            icon: 'error',
+            confirmButtonText: '確定'
+        });
+        return;
+    }
+
+    // 構建下載 URL
+    const downloadUrl = '../../../Service/CLB_download.ashx?action=downloadApprovedPlan&projectID=' + encodeURIComponent(projectID);
+
+    // 直接開啟新視窗下載檔案
+    window.open(downloadUrl, '_blank');
 }
 
 /**

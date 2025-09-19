@@ -517,52 +517,52 @@ window.ReviewChecklist = (function() {
     /**
      * 重新載入當前審查類型的內容
      */
-    function reloadCurrentContent() {
-        try {
-            // 重新載入頁面以觸發後端 LoadReviewContent
-            window.location.reload();
-        } catch (error) {
-            console.error('重新載入內容時發生錯誤:', error);
-        }
-    }
+    // function reloadCurrentContent() {
+    //     try {
+    //         // 重新載入頁面以觸發後端 LoadReviewContent
+    //         window.location.reload();
+    //     } catch (error) {
+    //         console.error('重新載入內容時發生錯誤:', error);
+    //     }
+    // }
 
     /**
      * 執行當前頁面的查詢
      */
-    function executeCurrentPageSearch() {
-        try {
-
-            // 根據當前類型觸發對應的搜尋按鈕
-            let buttonId;
-            switch (currentType) {
-                case '1':
-                    buttonId = 'MainContent_btnSearch_Type1';
-                    break;
-                case '2':
-                    buttonId = 'MainContent_btnSearch_Type2';
-                    break;
-                case '3':
-                    buttonId = 'MainContent_btnSearch_Type3';
-                    break;
-                default:
-                    console.warn(`不支援的審查類型: ${currentType}`);
-                    return;
-            }
-
-
-            // 使用 jQuery 來觸發點擊
-            const $button = $(`#${buttonId}`);
-            if ($button.length > 0) {
-                $button.trigger('click');
-            } else {
-                reloadCurrentContent();
-            }
-        } catch (error) {
-            console.error('執行當前頁面查詢時發生錯誤:', error);
-            // 發生錯誤時回到重新載入頁面
-            reloadCurrentContent();
-        }
-    }
+    // function executeCurrentPageSearch() {
+    //     try {
+    //
+    //         // 根據當前類型觸發對應的搜尋按鈕
+    //         let buttonId;
+    //         switch (currentType) {
+    //             case '1':
+    //                 buttonId = 'MainContent_btnSearch_Type1';
+    //                 break;
+    //             case '2':
+    //                 buttonId = 'MainContent_btnSearch_Type2';
+    //                 break;
+    //             case '3':
+    //                 buttonId = 'MainContent_btnSearch_Type3';
+    //                 break;
+    //             default:
+    //                 console.warn(`不支援的審查類型: ${currentType}`);
+    //                 return;
+    //         }
+    //
+    //
+    //         // 使用 jQuery 來觸發點擊
+    //         const $button = $(`#${buttonId}`);
+    //         if ($button.length > 0) {
+    //             $button.trigger('click');
+    //         } else {
+    //             reloadCurrentContent();
+    //         }
+    //     } catch (error) {
+    //         console.error('執行當前頁面查詢時發生錯誤:', error);
+    //         // 發生錯誤時回到重新載入頁面
+    //         reloadCurrentContent();
+    //     }
+    // }
 
 //#region 表格渲染功能
     /**
@@ -1044,10 +1044,29 @@ window.ReviewChecklist = (function() {
     function getFinalReviewUrl(projectId) {
         if (projectId?.includes('SCI')) {
             return `SCI/SciFinalReview.aspx?ProjectID=${projectId}`;
-        } else if (projectId?.includes('CLB')) {
-            return null; // TODO
-        } else {
-            return getReviewUrl(projectId);
+        }
+        else if (projectId.includes('CUL')) {
+            // 文化補助案
+            return `CUL/Review.aspx?ID=${projectId}`;
+        }
+        else if (projectId.includes('EDC')) {
+            // 學校民間補助案
+            return `EDC/Review.aspx?ID=${projectId}`;
+        }
+        else if (projectId?.includes('CLB')) {
+            return `CLB/ClbFinalReview.aspx?ProjectID=${projectId}`;
+        }
+        else if (projectId.includes('MUL')) {
+            // 多元補助案
+            return `MUL/Review.aspx?ID=${projectId}`;
+        }
+        else if (projectId.includes('LIT')) {
+            // 素養補助案
+            return `LIT/Review.aspx?ID=${projectId}`;
+        }
+        else if (projectId.includes('ACC')) {
+            // 無障礙補助案
+            return `ACC/Review.aspx?ID=${projectId}`;
         }
     }
     // 公開API
@@ -1558,7 +1577,7 @@ window.ReviewChecklist = (function() {
         init: init,
         switchReviewType: switchReviewType,
         getCurrentType: getCurrentType,
-        reloadCurrentContent: reloadCurrentContent,
+        // reloadCurrentContent: reloadCurrentContent,
         renderSearchResults: renderSearchResults,
         getSelectedProjectIds: getSelectedProjectIds,
         // confirmBatchApproval: confirmBatchApproval,
@@ -2316,7 +2335,7 @@ function handleBatchReject(actionText) {
                 const result = response.d || response;
                 if (result.Success) {
                     Swal.fire('已完成', result.Message, 'success').then(() => {
-                        $(`#MainContent_btnSearch_Type${currentType}`).trigger('click');
+                        // $(`#MainContent_btnSearch_Type${currentType}`).trigger('click');
                     });
                 } else {
                     Swal.fire('操作失敗', result.Message, 'error');
@@ -2350,7 +2369,7 @@ function batchProcess(selectedIds, actionText, currentType) {
 
 /**
  * 執行批次處理
- */
+//  */
 function executeBatchProcess(selectedIds, actionText, currentType) {
     // 顯示批次處理中
     Swal.fire({
@@ -3281,11 +3300,6 @@ window.ReviewRanking = (function() {
             }
         });
 
-        // 綁定匯出按鈕（暫時為空）
-        $("#btnExportRanking").on("click", function() {
-            // TODO: 實作匯出功能
-            alert("匯出功能尚未實作");
-        });
     }
 
     /**
@@ -3739,10 +3753,214 @@ function exportType1ReviewResults() {
     }
 }
 
+/**
+ * 匯出Type2申請資料PDF (ZIP格式)
+ */
+function exportApplicationPdfData() {
+    try {
+        // 取得當前搜尋條件 (使用ID選擇器，因為是ASP.NET服務器控制項)
+        const searchParams = {
+            year: $('select[name$="ddlYear_Type2"]').val() || '',
+            category: $('select[name$="ddlCategory_Type2"]').val() || '',
+            progress: $(`select[name$="ddlProgress_Type2"]`).val() || '',
+            replyStatus: $(`select[name$="ddlReplyStatus_Type2"]`).val() || '',
+            orgName: $('select[name$="ddlOrg_Type2"]').val() || '',
+            supervisor: $('select[name$="ddlSupervisor_Type2"]').val() || '',
+            keyword:  $('input[name="txtKeyword_Type2"]').val() || ''
+        };
+
+        // 建立下載參數
+        const params = new URLSearchParams({
+            type: '2',
+            exportType: 'applicationPdf',
+            year: searchParams.year,
+            category: searchParams.category,
+            progress: searchParams.progress,
+            replyStatus: searchParams.replyStatus,
+            orgName: searchParams.orgName,
+            supervisor: searchParams.supervisor,
+            keyword: searchParams.keyword
+        });
+
+        // 建立下載 URL
+        const downloadUrl = '../Service/DownloadReviewChecklistFile.ashx?' + params.toString();
+
+        // 顯示載入訊息
+        Swal.fire({
+            title: '正在準備匯出申請資料...',
+            html: '系統正在搜尋並打包PDF檔案，請稍候',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // 建立隱藏的下載連結
+        const downloadLink = document.createElement('a');
+        downloadLink.href = downloadUrl;
+        downloadLink.style.display = 'none';
+        downloadLink.download = ''; // 讓瀏覽器自動決定檔名
+
+        // 執行下載
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+
+        // 延遲關閉載入訊息（給系統一些時間處理）
+        setTimeout(() => {
+            Swal.fire({
+                title: '匯出完成',
+                text: '申請資料PDF已開始下載',
+                icon: 'success',
+                confirmButtonText: '確定'
+            });
+        }, 2000);
+
+    } catch (error) {
+        console.error('匯出申請資料時發生錯誤:', error);
+        Swal.fire({
+            title: '匯出失敗',
+            text: '系統發生錯誤，請稍後再試',
+            icon: 'error',
+            confirmButtonText: '確定'
+        });
+    }
+}
+
+/**
+ * 匯出審查結果排名到Excel
+ * @param {string} exportType - 匯出類型 (Type2 或 Type3)
+ */
+function exportReviewRanking(exportType = 'Type2') {
+    try {
+        // 根據匯出類型設定標題
+        const titleText = exportType === 'Type3' ? '正在匯出Type3審查結果排名...' : '正在匯出SCI審查結果排名...';
+
+        // 顯示載入中訊息
+        Swal.fire({
+            title: titleText,
+            text: '請稍候',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // 呼叫WebMethod匯出所有審查資料，傳遞匯出類型
+        $.ajax({
+            type: "POST",
+            url: "ReviewChecklist.aspx/ExportAllReviewResults",
+            data: JSON.stringify({ exportType: exportType }), // 傳遞匯出類型參數
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function(response) {
+                try {
+                    const result = JSON.parse(response.d);
+
+                    if (result.success) {
+                        // 關閉載入訊息
+                        Swal.close();
+
+                        // 將Base64字符串轉換為Blob並下載
+                        const fileData = result.fileData;
+                        const fileName = result.fileName;
+
+                        // 解碼Base64
+                        const byteCharacters = atob(fileData);
+                        const byteNumbers = new Array(byteCharacters.length);
+                        for (let i = 0; i < byteCharacters.length; i++) {
+                            byteNumbers[i] = byteCharacters.charCodeAt(i);
+                        }
+                        const byteArray = new Uint8Array(byteNumbers);
+
+                        // 建立Blob
+                        const blob = new Blob([byteArray], {
+                            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                        });
+
+                        // 建立下載連結
+                        const downloadUrl = window.URL.createObjectURL(blob);
+                        const downloadLink = document.createElement('a');
+                        downloadLink.href = downloadUrl;
+                        downloadLink.download = fileName;
+                        downloadLink.style.display = 'none';
+
+                        // 執行下載
+                        document.body.appendChild(downloadLink);
+                        downloadLink.click();
+                        document.body.removeChild(downloadLink);
+
+                        // 清理URL
+                        window.URL.revokeObjectURL(downloadUrl);
+
+                        // 顯示成功訊息
+                        Swal.fire({
+                            title: '匯出成功',
+                            text: `審查結果排名已匯出至 ${fileName}`,
+                            icon: 'success',
+                            confirmButtonText: '確定'
+                        });
+
+                    } else {
+                        // 匯出失敗
+                        Swal.fire({
+                            title: '匯出失敗',
+                            text: result.message || '系統發生錯誤，請稍後再試',
+                            icon: 'error',
+                            confirmButtonText: '確定'
+                        });
+                    }
+
+                } catch (parseError) {
+                    console.error('解析回應時發生錯誤:', parseError);
+                    Swal.fire({
+                        title: '匯出失敗',
+                        text: '系統回應格式錯誤，請稍後再試',
+                        icon: 'error',
+                        confirmButtonText: '確定'
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX請求失敗:', error);
+                Swal.fire({
+                    title: '匯出失敗',
+                    text: '網路錯誤或伺服器無回應，請稍後再試',
+                    icon: 'error',
+                    confirmButtonText: '確定'
+                });
+            }
+        });
+
+    } catch (error) {
+        console.error('匯出審查結果時發生錯誤:', error);
+        Swal.fire({
+            title: '匯出失敗',
+            text: '系統發生錯誤，請稍後再試',
+            icon: 'error',
+            confirmButtonText: '確定'
+        });
+    }
+}
+
+
 // DOM載入完成後初始化
 $(document).ready(function() {
     if (typeof window.ReviewRanking !== "undefined") {
         window.ReviewRanking.initRankingModal();
     }
+
+    // 綁定匯出審查結果按鈕事件
+    $(document).on('click', '#btnExportRanking', function() {
+        // 取得當前審查類型
+        const currentReviewType = window.ReviewChecklist ? window.ReviewChecklist.getCurrentType() : '2';
+
+        // 根據當前類型決定匯出類型
+        if (currentReviewType === '3') {
+            exportReviewRanking('Type3');
+        } else {
+            exportReviewRanking('Type2'); // 預設為 Type2
+        }
+    });
 });
 

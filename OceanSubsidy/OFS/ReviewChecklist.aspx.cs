@@ -2007,27 +2007,28 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             // 執行領域審查查詢
             if (category == "SCI" || string.IsNullOrEmpty(category))
             {
-                results = GetSciProjectData(
-                    year,
-                    orgName,
-                    supervisor,
-                    keyword,
-                    progress,
-                    replyStatus,"領域審查"
-                    );
-            }
-            else if (category == "CUL")
-            {
-                results = GetCulProjectData(
+                results.AddRange(GetSciProjectData(
                     year,
                     orgName,
                     supervisor,
                     keyword,
                     progress,
                     replyStatus,
-                    "初審");
+                    "領域審查"
+                ));
             }
-            
+            if (category == "CUL" || string.IsNullOrEmpty(category))
+            {
+                results.AddRange(GetCulProjectData(
+                    year,
+                    orgName,
+                    supervisor,
+                    keyword,
+                    progress,
+                    replyStatus,
+                    "初審"
+                ));
+            }
             return JsonConvert.SerializeObject(new
             {
                 success = true,
@@ -2409,6 +2410,96 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                 success = false,
                 message = ex.Message,
                 data = new List<ReviewRankingItem>()
+            });
+        }
+    }
+
+    /// <summary>
+    /// 匯出所有審查結果到 XLSX 檔案
+    /// </summary>
+    /// <param name="exportType">匯出類型 (Type2 或 Type3)</param>
+    /// <returns>包含檔案資料的 JSON 回應</returns>
+    [WebMethod]
+    public static string ExportAllReviewResults(string exportType = "Type2")
+    {
+        try
+        {
+            // 根據 exportType 設定審查階段
+            string sciType, culType;
+            if (exportType == "Type3")
+            {
+                sciType = "技術審查";
+                culType = "複審";
+            }
+            else // Type2 或預設值
+            {
+                sciType = "領域審查";
+                culType = "初審";
+            }
+
+            // 匯出所有審查資料的請求列表
+            var exportRequests = new List<ReviewExportRequest>();
+
+            // 科專 (SCI)
+            exportRequests.Add(new ReviewExportRequest
+            {
+                GrantType = "SCI",
+                ReviewStage = sciType,
+                Fields = new List<string>
+                {
+                    "Information",
+                    "Environment",
+                    "Material",
+                    "Mechanical"
+                }
+            });
+
+            // 文化 (CUL)
+            exportRequests.Add(new ReviewExportRequest
+            {
+                GrantType = "CUL",
+                ReviewStage = culType,
+                Fields = new List<string>
+                {
+                    "11", "12", "13",
+                    "21","22",
+                    "31","32"
+                }
+            });
+
+            // 執行匯出 - 合併所有類型的資料
+            byte[] fileBytes = OFS_ReviewResultExportHelper.ExportAllReviewResultsToXlsx(exportRequests);
+
+            if (fileBytes == null || fileBytes.Length == 0)
+            {
+                return JsonConvert.SerializeObject(new
+                {
+                    success = false,
+                    message = "匯出檔案為空或產生失敗"
+                });
+            }
+
+            // 生成檔案名稱
+            string fileName = $"審查結果排名_{DateTime.Now:yyyyMMdd}.xlsx";
+
+            // 將檔案轉為 Base64 字符串以便傳輸
+            string base64File = Convert.ToBase64String(fileBytes);
+
+            return JsonConvert.SerializeObject(new
+            {
+                success = true,
+                message = "審查結果匯出成功",
+                fileName = fileName,
+                fileData = base64File,
+                fileSize = fileBytes.Length
+            });
+        }
+        catch (Exception ex)
+        {
+            return JsonConvert.SerializeObject(new
+            {
+                success = false,
+                message = $"匯出審查結果時發生錯誤: {ex.Message}"
             });
         }
     }

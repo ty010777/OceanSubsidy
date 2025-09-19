@@ -100,6 +100,30 @@
                 $('.application-step .step-item').eq(1).addClass('active');
             }
         }
+
+        // 下載申請資料
+        document.addEventListener('DOMContentLoaded', function() {
+            var btnDownloadPlan = document.getElementById('btnDownloadPlan');
+            if (btnDownloadPlan) {
+                btnDownloadPlan.addEventListener('click', function() {
+                    var projectId = '<%= ProjectID %>';
+
+                    if (!projectId) {
+                        Swal.fire({
+                            title: '錯誤',
+                            text: '找不到計畫ID',
+                            icon: 'error',
+                            confirmButtonText: '確定'
+                        });
+                        return;
+                    }
+
+                    // 直接開啟下載 URL
+                    var downloadUrl = '<%= ResolveUrl("~/Service/CLB_download.ashx") %>?action=downloadPlan&projectID=' + projectId;
+                    window.open(downloadUrl, '_blank');
+                });
+            }
+        });
     </script>
     
 </asp:Content>
@@ -116,12 +140,9 @@
                     移轉案件
                 </button>
             </div>
-           <asp:LinkButton ID="btnDownloadPlan" runat="server"
-               CssClass="btn btn-teal-dark"
-               OnClick="btnDownloadPlan_Click"
-               CausesValidation="false">
+           <button type="button" id="btnDownloadPlan" class="btn btn-teal-dark">
                <i class="fa-solid fa-download"></i> 下載申請資料
-           </asp:LinkButton>
+           </button>
         </div>
     </div>
     
