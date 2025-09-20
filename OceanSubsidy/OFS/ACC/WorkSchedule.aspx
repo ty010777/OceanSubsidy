@@ -7,7 +7,7 @@
 <asp:Content ContentPlaceHolderID="MainContent" runat="server">
     <div>
         <accessibility-progress-bar :id="id" :step="2"></accessibility-progress-bar>
-        <accessibility-work-schedule :id="id" v-on:next="next"></accessibility-work-schedule>
+        <accessibility-work-schedule apply :id="id" v-on:next="next"></accessibility-work-schedule>
     </div>
     <script>
         setupVueApp({

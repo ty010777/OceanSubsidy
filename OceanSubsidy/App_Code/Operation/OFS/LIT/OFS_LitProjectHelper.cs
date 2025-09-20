@@ -72,6 +72,23 @@ public class OFS_LitProjectHelper
         return table.Rows.Count == 1 ? toModel(table.Rows[0]) : null;
     }
 
+    public static string getUserAccount(string projectID)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            SELECT [UserAccount]
+              FROM [OFS_LIT_Project]
+             WHERE [ProjectID] = @ProjectID
+        ";
+
+        db.Parameters.Add("@ProjectID", projectID);
+
+        var table = db.GetTable();
+
+        return table.Rows.Count == 1 ? table.Rows[0].Field<string>("UserAccount") : "";
+    }
+
     public static int getID(string projectID)
     {
         DbHelper db = new DbHelper();

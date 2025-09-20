@@ -7,7 +7,7 @@
 <asp:Content ContentPlaceHolderID="MainContent" runat="server">
     <div>
         <multiple-progress-bar :id="id" :step="3"></multiple-progress-bar>
-        <multiple-funding :id="id" v-on:next="next"></multiple-funding>
+        <multiple-funding apply :id="id" v-on:next="next"></multiple-funding>
     </div>
     <script>
         setupVueApp({

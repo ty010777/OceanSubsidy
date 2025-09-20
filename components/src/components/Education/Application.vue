@@ -252,6 +252,7 @@
 
 <script setup>
     const props = defineProps({
+        apply: { default: false, type: Boolean },
         id: { type: [Number, String] }
     });
 
@@ -283,7 +284,7 @@
     const emit = defineEmits(["next"]);
 
     const load = () => {
-        api.education("getApplication", { ID: props.id }).subscribe((res) => {
+        api.education("getApplication", { Apply: props.apply ? "true" : "false", ID: props.id }).subscribe((res) => {
             form.value = res.Project;
             contacts.value = res.Contacts;
             receiveds.value = res.ReceivedSubsidies;

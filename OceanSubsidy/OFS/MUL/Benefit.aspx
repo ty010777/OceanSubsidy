@@ -7,7 +7,7 @@
 <asp:Content ContentPlaceHolderID="MainContent" runat="server">
     <div>
         <multiple-progress-bar :id="id" :step="4"></multiple-progress-bar>
-        <multiple-benefit :id="id" v-on:next="next"></multiple-benefit>
+        <multiple-benefit apply :id="id" v-on:next="next"></multiple-benefit>
     </div>
     <script>
         setupVueApp({

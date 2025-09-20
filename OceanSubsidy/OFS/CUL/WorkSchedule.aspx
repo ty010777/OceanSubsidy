@@ -7,7 +7,7 @@
 <asp:Content ContentPlaceHolderID="MainContent" runat="server">
     <div>
         <culture-progress-bar :id="id" :step="2"></culture-progress-bar>
-        <culture-work-schedule :id="id" v-on:next="next"></culture-work-schedule>
+        <culture-work-schedule apply :id="id" v-on:next="next"></culture-work-schedule>
     </div>
     <script>
         setupVueApp({

@@ -7,7 +7,7 @@
 <asp:Content ContentPlaceHolderID="MainContent" runat="server">
     <div>
         <multiple-progress-bar :id="id" :step="5"></multiple-progress-bar>
-        <multiple-attachment :id="id" v-on:next="next"></multiple-attachment>
+        <multiple-attachment apply :id="id" v-on:next="next"></multiple-attachment>
     </div>
     <script>
         setupVueApp({

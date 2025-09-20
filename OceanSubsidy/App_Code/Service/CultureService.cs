@@ -112,24 +112,43 @@ public class CultureService : BaseService
 
     public object getApplication(JObject param, HttpContext context)
     {
-        var id = getID(param["ID"].ToString());
+        var data = getProject(param, out JObject snapshot);
+
+        if (snapshot != null)
+        {
+            return new
+            {
+                Project = snapshot["Project"],
+                Contacts = snapshot["Contacts"],
+                ReceivedSubsidies = snapshot["ReceivedSubsidies"]
+            };
+        }
 
         return new
         {
-            Project = getProject(id),
-            Contacts = OFS_CulContactHelper.query(id),
-            ReceivedSubsidies = OFS_CulReceivedSubsidyHelper.query(id)
+            Project = data,
+            Contacts = OFS_CulContactHelper.query(data.ID),
+            ReceivedSubsidies = OFS_CulReceivedSubsidyHelper.query(data.ID)
         };
     }
 
     public object getAttachment(JObject param, HttpContext context)
     {
-        var id = getID(param["ID"].ToString());
+        var data = getProject(param, out JObject snapshot);
+
+        if (snapshot != null)
+        {
+            return new
+            {
+                Project = snapshot["Project"],
+                Attachments = snapshot["Attachments"]
+            };
+        }
 
         return new
         {
-            Project = getProject(id),
-            Attachments = OFS_CulAttachmentHelper.query(id)
+            Project = data,
+            Attachments = OFS_CulAttachmentHelper.query(data.ID)
         };
     }
 
@@ -142,16 +161,29 @@ public class CultureService : BaseService
 
     public object getFunding(JObject param, HttpContext context)
     {
-        var id = getID(param["ID"].ToString());
-        var project = getProject(id);
+        var data = getProject(param, out JObject snapshot);
+
+        if (snapshot != null)
+        {
+            data = snapshot["Project"].ToObject<OFS_CulProject>();
+
+            return new
+            {
+                Project = data,
+                OtherSubsidies = snapshot["OtherSubsidies"],
+                BudgetPlans = snapshot["BudgetPlans"],
+                Items = snapshot["Items"],
+                GrantTargetSetting = OFSGrantTargetSettingHelper.getByTargetTypeID($"CUL{data.OrgCategory}")
+            };
+        }
 
         return new
         {
-            Project = project,
-            OtherSubsidies = OFS_CulOtherSubsidyHelper.query(id),
-            BudgetPlans = OFS_CulBudgetPlanHelper.query(id),
-            Items = OFS_CulGoalItemHelper.query(id),
-            GrantTargetSetting = OFSGrantTargetSettingHelper.getByTargetTypeID($"CUL{project.OrgCategory}")
+            Project = data,
+            OtherSubsidies = OFS_CulOtherSubsidyHelper.query(data.ID),
+            BudgetPlans = OFS_CulBudgetPlanHelper.query(data.ID),
+            Items = OFS_CulGoalItemHelper.query(data.ID),
+            GrantTargetSetting = OFSGrantTargetSettingHelper.getByTargetTypeID($"CUL{data.OrgCategory}")
         };
     }
 
@@ -199,12 +231,21 @@ public class CultureService : BaseService
 
     public object getRelatedProject(JObject param, HttpContext context)
     {
-        var id = getID(param["ID"].ToString());
+        var data = getProject(param, out JObject snapshot);
+
+        if (snapshot != null)
+        {
+            return new
+            {
+                Project = snapshot["Project"],
+                Projects = snapshot["Projects"]
+            };
+        }
 
         return new
         {
-            Project = getProject(id),
-            Projects = OFS_CulRelatedProjectHelper.query(id)
+            Project = data,
+            Projects = OFS_CulRelatedProjectHelper.query(data.ID)
         };
     }
 
@@ -223,12 +264,28 @@ public class CultureService : BaseService
 
     public object getWorkSchedule(JObject param, HttpContext context)
     {
-        var id = getID(param["ID"].ToString());
+        List<OFS_CulGoal> goals;
+        List<OFS_CulGoalItem> items;
+        List<OFS_CulGoalStep> steps;
+        List<OFS_CulGoalSchedule> schedules;
 
-        var goals = OFS_CulGoalHelper.query(id);
-        var items = OFS_CulGoalItemHelper.query(id);
-        var steps = OFS_CulGoalStepHelper.query(id);
-        var schedules = OFS_CulGoalScheduleHelper.query(id);
+        var data = getProject(param, out JObject snapshot);
+
+        if (snapshot == null)
+        {
+            goals = OFS_CulGoalHelper.query(data.ID);
+            items = OFS_CulGoalItemHelper.query(data.ID);
+            steps = OFS_CulGoalStepHelper.query(data.ID);
+            schedules = OFS_CulGoalScheduleHelper.query(data.ID);
+        }
+        else
+        {
+            data = snapshot["Project"].ToObject<OFS_CulProject>();
+            goals = snapshot["Goals"].ToObject<List<OFS_CulGoal>>();
+            items = snapshot["Items"].ToObject<List<OFS_CulGoalItem>>();
+            steps = snapshot["Steps"].ToObject<List<OFS_CulGoalStep>>();
+            schedules = snapshot["Schedules"].ToObject<List<OFS_CulGoalSchedule>>();
+        }
 
         foreach (var item in items)
         {
@@ -243,7 +300,7 @@ public class CultureService : BaseService
 
         return new
         {
-            Project = getProject(id),
+            Project = data,
             Goals = goals,
             GrantType = OFSGrantTypeHelper.getByCode("CUL")
         };
@@ -265,14 +322,17 @@ public class CultureService : BaseService
                 case 2:
                     project.Status = 13; //不通過
                     project.RejectReason = param["Reason"].ToString();
+                    saveApplyReviewLog(project.ProjectID, "資格審查-不通過", project.RejectReason);
                     break;
                 case 3:
                     project.Status = 14; //補正補件
                     project.RejectReason = param["Reason"].ToString();
                     project.CorrectionDeadline = DateTime.Parse(param["CorrectionDeadline"].ToString()); //補正期限
+                    saveApplyReviewLog(project.ProjectID, "資格審查-補正補件", project.RejectReason, project.CorrectionDeadline);
                     break;
                 default:
                     project.Status = 12; //通過
+                    saveApplyReviewLog(project.ProjectID, "資格審查-通過");
                     break;
             }
         }
@@ -283,13 +343,16 @@ public class CultureService : BaseService
                 case 2:
                     project.Status = 46; //不通過
                     project.RejectReason = param["Reason"].ToString();
+                    saveRevisionReviewLog(project.ProjectID, "決審核定-不通過", project.RejectReason);
                     break;
                 case 3:
                     project.Status = 42; //計畫書修正中
                     project.RejectReason = param["Reason"].ToString();
+                    saveRevisionReviewLog(project.ProjectID, "決審核定-計畫書修正中", project.RejectReason);
                     break;
                 default:
                     project.Status = 44; //計畫書已確認
+                    saveRevisionReviewLog(project.ProjectID, "決審核定-計畫書已確認");
                     break;
             }
         }
@@ -502,23 +565,19 @@ public class CultureService : BaseService
                 OFS_CulProjectHelper.updateFormStep(data.ProjectID, 6);
                 OFS_CulProjectHelper.updateProgressStatus(data.ProjectID, 1); //資格審查
 
-                ApplicationChecklistHelper.InsertCaseHistoryLog(new OFS_CaseHistoryLog
-                {
-                    ProjectID = data.ProjectID,
-                    ChangeTime = DateTime.Now,
-                    UserName = CurrentUser.UserName,
-                    StageStatusBefore = "編輯中",
-                    StageStatusAfter = "資格審查-審核中",
-                    Description = "完成附件上傳並提送申請"
-                });
+                saveApplyLog(data.ProjectID, "編輯中");
             }
             else if (data.Status == 14)
             {
                 OFS_CulProjectHelper.updateStatus(data.ProjectID, 11); //審查中
+
+                saveApplyLog(data.ProjectID, "資格審查-補正補件");
             }
             else if (data.Status == 42)
             {
                 OFS_CulProjectHelper.updateStatus(data.ProjectID, 43); //計畫書審核中
+
+                saveRevisionLog(data.ProjectID);
             }
 
             snapshot(id);
@@ -951,6 +1010,15 @@ public class CultureService : BaseService
         }
 
         throw new Exception("狀態錯誤");
+    }
+
+    private OFS_CulProject getProject(JObject param, out JObject snapshot)
+    {
+        var project = OFS_CulProjectHelper.get(getID(param["ID"].ToString()));
+
+        snapshot = project.ProgressStatus >= 5 && bool.Parse(param["Apply"].ToString()) ? getSnapshot("CUL", project.ID) : null;
+
+        return project;
     }
 
     private void snapshot(int id)

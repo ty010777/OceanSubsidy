@@ -81,6 +81,7 @@
 
 <script setup>
     const props = defineProps({
+        apply: { default: false, type: Boolean },
         id: { type: [Number, String] }
     });
 
@@ -115,7 +116,7 @@
 
     const load = () => {
         rxjs.forkJoin([
-            api.literacy("getAttachment", { ID: props.id })
+            api.literacy("getAttachment", { Apply: props.apply ? "true" : "false", ID: props.id })
         ]).subscribe((result) => {
             const data = result[0];
 

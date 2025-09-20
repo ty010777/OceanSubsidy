@@ -7,7 +7,7 @@
 <asp:Content ContentPlaceHolderID="MainContent" runat="server">
     <div>
         <literacy-progress-bar :id="id" :step="1"></literacy-progress-bar>
-        <literacy-application :id="id" v-on:next="next"></literacy-application>
+        <literacy-application apply :id="id" v-on:next="next"></literacy-application>
     </div>
     <script>
         setupVueApp({

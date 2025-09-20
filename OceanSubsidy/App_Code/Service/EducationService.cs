@@ -40,24 +40,43 @@ public class EducationService : BaseService
 
     public object getApplication(JObject param, HttpContext context)
     {
-        var id = getID(param["ID"].ToString());
+        var data = getProject(param, out JObject snapshot);
+
+        if (snapshot != null)
+        {
+            return new
+            {
+                Project = snapshot["Project"],
+                Contacts = snapshot["Contacts"],
+                ReceivedSubsidies = snapshot["ReceivedSubsidies"]
+            };
+        }
 
         return new
         {
-            Project = getProject(id),
-            Contacts = OFS_EdcContactHelper.query(id),
-            ReceivedSubsidies = OFS_EdcReceivedSubsidyHelper.query(id)
+            Project = data,
+            Contacts = OFS_EdcContactHelper.query(data.ID),
+            ReceivedSubsidies = OFS_EdcReceivedSubsidyHelper.query(data.ID)
         };
     }
 
     public object getAttachment(JObject param, HttpContext context)
     {
-        var id = getID(param["ID"].ToString());
+        var data = getProject(param, out JObject snapshot);
+
+        if (snapshot != null)
+        {
+            return new
+            {
+                Project = snapshot["Project"],
+                Attachments = snapshot["Attachments"]
+            };
+        }
 
         return new
         {
-            Project = getProject(id),
-            Attachments = OFS_EdcAttachmentHelper.query(id)
+            Project = data,
+            Attachments = OFS_EdcAttachmentHelper.query(data.ID)
         };
     }
 
@@ -108,14 +127,17 @@ public class EducationService : BaseService
             case 2:
                 project.Status = 13; //不通過
                 project.RejectReason = param["Reason"].ToString();
+                saveApplyReviewLog(project.ProjectID, "資格審查-不通過", project.RejectReason);
                 break;
             case 3:
                 project.Status = 14; //補正補件
                 project.RejectReason = param["Reason"].ToString();
                 project.CorrectionDeadline = DateTime.Parse(param["CorrectionDeadline"].ToString()); //補正期限
+                saveApplyReviewLog(project.ProjectID, "資格審查-補正補件", project.RejectReason, project.CorrectionDeadline);
                 break;
             default:
                 project.Status = 12; //通過
+                saveApplyReviewLog(project.ProjectID, "資格審查-通過");
                 break;
         }
 
@@ -324,19 +346,13 @@ public class EducationService : BaseService
                 OFS_EdcProjectHelper.updateFormStep(data.ProjectID, 3);
                 OFS_EdcProjectHelper.updateProgressStatus(data.ProjectID, 1); //資格審查
 
-                ApplicationChecklistHelper.InsertCaseHistoryLog(new OFS_CaseHistoryLog
-                {
-                    ProjectID = data.ProjectID,
-                    ChangeTime = DateTime.Now,
-                    UserName = CurrentUser.UserName,
-                    StageStatusBefore = "編輯中",
-                    StageStatusAfter = "資格審查-審核中",
-                    Description = "完成附件上傳並提送申請"
-                });
+                saveApplyLog(data.ProjectID, "編輯中");
             }
             else if (data.Status == 14)
             {
                 OFS_EdcProjectHelper.updateStatus(data.ProjectID, 11); //審查中
+
+                saveApplyLog(data.ProjectID, "資格審查-補正補件");
             }
 
             snapshot(id);
@@ -500,6 +516,15 @@ public class EducationService : BaseService
         }
 
         throw new Exception("狀態錯誤");
+    }
+
+    private OFS_CulProject getProject(JObject param, out JObject snapshot)
+    {
+        var project = OFS_CulProjectHelper.get(getID(param["ID"].ToString()));
+
+        snapshot = project.ProgressStatus >= 5 && bool.Parse(param["Apply"].ToString()) ? getSnapshot("EDC", project.ID) : null;
+
+        return project;
     }
 
     private void snapshot(int id)
