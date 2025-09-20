@@ -439,31 +439,28 @@ public class ReviewCheckListHelper
     /// </summary>
     /// <param name="status">審查階段狀態</param>
     /// <returns>申請單位清單</returns>
-    public static List<DropdownItem> GetReviewOrgOptions(string status = "")
+    public static List<DropdownItem> GetReviewOrgOptions(string sciStatus, int culStatus)
     {
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
-         SELECT DISTINCT OrgName
-            FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main] PM
-	        LEFT JOIN OFS_SCI_Application_Main AM
-	        on AM.ProjectID = PM.ProjectID
-            WHERE OrgName != '' AND OrgName IS NOT NULL
+            SELECT DISTINCT [OrgName]
+              FROM [OFS_SCI_Project_Main] PM
+	     LEFT JOIN [OFS_SCI_Application_Main] AM ON (AM.[ProjectID] = PM.[ProjectID])
+             WHERE [OrgName] != ''
+               AND [OrgName] IS NOT NULL
+               AND [Statuses] LIKE @status
+            UNION
+            SELECT DISTINCT [OrgName]
+              FROM [OFS_CUL_Project]
+             WHERE [Status] = @culStatus
          ";
-
-        // 如果有指定審查階段，加入篩選條件
-        if (!string.IsNullOrEmpty(status))
-        {
-            db.CommandText += " AND Statuses LIKE @status";
-        }
 
         try
         {
             db.Parameters.Clear();
-            if (!string.IsNullOrEmpty(status))
-            {
-                db.Parameters.Add("@status", $"%{status}%");
-            }
+            db.Parameters.Add("@status", $"%{sciStatus}%");
+            db.Parameters.Add("@culStatus", culStatus);
 
             DataTable dt = db.GetTable();
             List<DropdownItem> result = new List<DropdownItem>();
@@ -800,30 +797,30 @@ public class ReviewCheckListHelper
     /// </summary>
     /// <param name="status">審查階段狀態</param>
     /// <returns>承辦人員清單</returns>
-    public static List<DropdownItem> GetReviewSupervisorOptions(string status = "")
+    public static List<DropdownItem> GetReviewSupervisorOptions(string sciStatus, int culStatus)
     {
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
             SELECT DISTINCT SupervisoryPersonAccount, SupervisoryPersonName
-            FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main]
-            WHERE SupervisoryPersonAccount != '' AND SupervisoryPersonAccount IS NOT NULL
-              AND SupervisoryPersonName != '' AND SupervisoryPersonName IS NOT NULL
+              FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main]
+             WHERE SupervisoryPersonAccount != ''
+               AND SupervisoryPersonAccount IS NOT NULL
+               AND SupervisoryPersonName != ''
+               AND SupervisoryPersonName IS NOT NULL
+               AND Statuses LIKE @status
+            UNION
+            SELECT DISTINCT R.Account AS SupervisoryPersonAccount, R.Name AS SupervisoryPersonName
+              FROM [OFS_CUL_Project] AS O
+         LEFT JOIN [Sys_User] AS R ON (R.UserID = O.Organizer)
+             WHERE O.[Status] = @culStatus
         ";
-
-        // 如果有指定審查階段，加入篩選條件
-        if (!string.IsNullOrEmpty(status))
-        {
-            db.CommandText += " AND Statuses LIKE @status";
-        }
 
         try
         {
             db.Parameters.Clear();
-            if (!string.IsNullOrEmpty(status))
-            {
-                db.Parameters.Add("@status", $"%{status}%");
-            }
+            db.Parameters.Add("@status", $"%{sciStatus}%");
+            db.Parameters.Add("@culStatus", culStatus);
 
             DataTable dt = db.GetTable();
             List<DropdownItem> result = new List<DropdownItem>();
@@ -1246,14 +1243,12 @@ SELECT TOP (1000) [ProjectID]
 
             foreach (var item in sortingItems)
             {
-                // TODO 正文 根據 Category 決定要更新排序以及備註
                 string tableName = GetTableNameByCategory(item.Category);
 
                 db.CommandText = $@"
                     UPDATE {tableName}
                     SET FinalReviewOrder = @finalReviewOrder,
                         FinalReviewNotes = @finalReviewNotes,
-                        updated_at = GETDATE()
                     WHERE ProjectID = @projectId
                 ";
 
@@ -1340,21 +1335,20 @@ SELECT TOP (1000) [ProjectID]
     {
         switch (category)
         {
-            // TODO 正文 請更新決審模式下，的 排序 和備註
             case "科專":
                 return "OFS_SCI_Project_Main";
             case "文化":
-                return "OFS_CUL_Project_Main";
+                return "OFS_CUL_Project";
             case "學校民間":
-                return "OFS_EDC_Project_Main";
+                return "OFS_EDC_Project";
             case "學校社團":
                 return "OFS_CLB_Project_Main";
             case "多元":
-                return "OFS_MUL_Project_Main";
+                return "OFS_MUL_Project";
             case "素養":
-                return "OFS_LIT_Project_Main";
+                return "OFS_LIT_Project";
             case "無障礙":
-                return "OFS_ACC_Project_Main";
+                return "OFS_ACC_Project";
             default:
                 return "OFS_SCI_Project_Main";
         }
@@ -3188,9 +3182,59 @@ SELECT TOP (1000) [ProjectID]
                     new TaskTemplate("Payment", "請款", 3, false, false)
                 };
             }
-
-
-            // TODO 正文 設計待辦的項目
+            else if (projectId.Contains("CUL"))
+            {
+                taskTemplates = new List<TaskTemplate>
+                {
+                    new TaskTemplate("Change", "計畫變更", 1, true, false),
+                    new TaskTemplate("MonthlyReport", "填寫每月進度報告", 2, true, false),
+                    new TaskTemplate("MidReport", "填寫期中報告", 3, true, false),
+                    new TaskTemplate("Payment1", "第一次請款", 4, false, false),
+                    new TaskTemplate("FinalReport", "填寫期末報告", 5, false, false),
+                    new TaskTemplate("Payment2", "第二期請款", 6, false, false)
+                };
+            }
+            else if (projectId.Contains("EDC"))
+            {
+                taskTemplates = new List<TaskTemplate>
+                {
+                    new TaskTemplate("Change", "計畫變更", 1, true, false),
+                    new TaskTemplate("Report", "上傳成果報告", 2, true, false),
+                    new TaskTemplate("Payment", "請款", 3, false, false)
+                };
+            }
+            else if (projectId.Contains("MUL"))
+            {
+                taskTemplates = new List<TaskTemplate>
+                {
+                    new TaskTemplate("Change", "計畫變更", 1, true, false),
+                    new TaskTemplate("Payment1", "請款", 2, true, false),
+                    new TaskTemplate("Payment2", "核銷轉正/請款", 3, false, false),
+                    new TaskTemplate("Report", "上傳成果報告", 4, false, false),
+                    new TaskTemplate("Payment3", "結案核銷轉正", 5, false, false)
+                };
+            }
+            else if (projectId.Contains("LIT"))
+            {
+                taskTemplates = new List<TaskTemplate>
+                {
+                    new TaskTemplate("Change", "計畫變更", 1, true, false),
+                    new TaskTemplate("Payment1", "第一次請款", 2, true, false),
+                    new TaskTemplate("Report", "上傳成果報告", 3, false, false),
+                    new TaskTemplate("Payment2", "第二期請款", 4, false, false)
+                };
+            }
+            else if (projectId.Contains("ACC"))
+            {
+                taskTemplates = new List<TaskTemplate>
+                {
+                    new TaskTemplate("Change", "計畫變更", 1, true, false),
+                    new TaskTemplate("MidReport", "填寫期中報告", 2, true, false),
+                    new TaskTemplate("Payment1", "第一次請款", 3, false, false),
+                    new TaskTemplate("FinalReport", "上傳成果報告", 4, false, false),
+                    new TaskTemplate("Payment2", "第二期請款", 5, false, false)
+                };
+            }
 
             // 批次插入待辦事項
             BatchInsertTaskQueue(projectId, taskTemplates);

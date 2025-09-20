@@ -617,9 +617,9 @@ window.ReviewChecklist = (function() {
                         rowHtml = `<tr><td colspan="11">未知的類型: ${type}</td></tr>`;
                 }
 
-              
+
                 $tableBody.append(rowHtml);
-                
+
             });
 
             // Type6 特殊處理
@@ -634,7 +634,7 @@ window.ReviewChecklist = (function() {
             console.error('渲染搜尋結果時發生錯誤:', error);
         }
     }
-    
+
     /**
      * 建立 Type1 表格行 (資格審查/內容審查)
      * @param {Object} item - 資料項目
@@ -1023,7 +1023,7 @@ window.ReviewChecklist = (function() {
         else if (projectId.includes('CLB')) {
             // 學校社團補助案 - 未實作
             return `CLB/ClbApplicationReview.aspx?ProjectID=${projectId}`;
-            
+
         }
         else if (projectId.includes('MUL')) {
             // 多元補助案
@@ -1113,7 +1113,7 @@ window.ReviewChecklist = (function() {
      */
     function saveApprovalMode_Type4() {
         try {
-           
+
             // 顯示確認對話框
             Swal.fire({
                 title: '確認儲存',
@@ -1676,7 +1676,6 @@ function handlePlanChangeReview(projectId) {
 
         // TODO: 導向到計畫變更審核頁面
         // 根據計畫編號的類型決定跳轉到對應的審核頁面
-        // TODO 正文 請提供 變更計畫時 所需跳轉的各類型計畫變更審核頁面 URL
         let reviewUrl = '';
 
         if (projectId.includes('SCI')) {
@@ -1741,7 +1740,6 @@ function handleExecutionPlanReview(projectId,reviewItem) {
             return;
         }
 
-        // TODO: 正文 導向到執行計畫審核頁面 的網址
         // 根據計畫編號的類型決定跳轉到對應的審核頁面
         let reviewUrl = '';
 
@@ -1755,17 +1753,46 @@ function handleExecutionPlanReview(projectId,reviewItem) {
             }
         } else if (projectId.includes('CUL')) {
             // 文化執行計畫審核頁面
-
+            if(reviewItem.includes('檢核')) {
+                reviewUrl = `CUL/Report.aspx?ID=${projectId}`;
+            }
+            else if (reviewItem.includes('請款')){
+                reviewUrl = `CUL/Payment.aspx?ID=${projectId}`;
+            }
         } else if (projectId.includes('EDC')) {
             // 學校民間執行計畫審核頁面
+            if(reviewItem.includes('檢核')) {
+                reviewUrl = `EDC/Report.aspx?ID=${projectId}`;
+            }
+            else if (reviewItem.includes('請款')){
+                reviewUrl = `EDC/Payment.aspx?ID=${projectId}`;
+            }
         } else if (projectId.includes('CLB')) {
             // 學校社團執行計畫審核頁面
         } else if (projectId.includes('MUL')) {
             // 多元執行計畫審核頁面
+            if(reviewItem.includes('檢核')) {
+                reviewUrl = `MUL/Report.aspx?ID=${projectId}`;
+            }
+            else if (reviewItem.includes('請款')){
+                reviewUrl = `MUL/Payment.aspx?ID=${projectId}`;
+            }
         } else if (projectId.includes('LIT')) {
             // 素養執行計畫審核頁面
+            if(reviewItem.includes('檢核')) {
+                reviewUrl = `LIT/Report.aspx?ID=${projectId}`;
+            }
+            else if (reviewItem.includes('請款')){
+                reviewUrl = `LIT/Payment.aspx?ID=${projectId}`;
+            }
         } else if (projectId.includes('ACC')) {
             // 無障礙執行計畫審核頁面
+            if(reviewItem.includes('檢核')) {
+                reviewUrl = `ACC/Report.aspx?ID=${projectId}`;
+            }
+            else if (reviewItem.includes('請款')){
+                reviewUrl = `ACC/Payment.aspx?ID=${projectId}`;
+            }
         }
 
         if (reviewUrl) {
@@ -2014,7 +2041,7 @@ function initializeReviewChecklistPage() {
     if (window.ReviewChecklist) {
         window.ReviewChecklist.init();
     }
-   
+
 
     // 排序模式 Modal 開啟事件
     $('#sortModeModal').on('shown.bs.modal', function() {
@@ -2391,7 +2418,7 @@ function handleBatchReject(actionText) {
 function batchProcess(selectedIds, actionText, currentType) {
     // 如果是 Type4 且有勾選項目，先執行儲存核定金額
     const hasCheckedItems = $('#content-type-4 .approval-mode-table table tbody .checkPlan:checked').length > 0;
-    
+
     if (currentType == 4 && hasCheckedItems) {
         // 調用儲存 API，傳入成功後執行批次處理的回調
         window.ReviewChecklist.callSaveApprovalAPI(function(result) {
@@ -3212,7 +3239,7 @@ function handleSearchError(jqXHR, textStatus, errorThrown, searchType) {
 
 function performType4Search() {
     console.log('performType4Search 被呼叫');
-    
+
     try {
         // 收集搜尋條件
         const searchData = {
@@ -3223,14 +3250,14 @@ function performType4Search() {
             supervisor: $('#ddlSupervisor_Type4').val() || '',
             keyword: $('input[name="txtKeyword_Type4"]').val() || ''
         };
-        
+
         console.log('Type4 搜尋條件:', searchData);
-        
+
         // 顯示載入狀態
         const $searchButton = $('#btnSearch_Type4');
         const originalText = $searchButton.text();
         $searchButton.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> 搜尋中...');
-        
+
         // 發送 AJAX 請求
         $.ajax({
             type: "POST",
@@ -3241,13 +3268,13 @@ function performType4Search() {
             timeout: 30000
         }).done(function(response) {
             console.log('Type4 搜尋回應:', response);
-            
+
             try {
                 const result = JSON.parse(response.d);
                 if (result.success) {
                     // 渲染搜尋結果
                     window.ReviewChecklist.renderSearchResults(result.data, 4);
-                    
+
                     // 顯示成功訊息
                     console.log(`Type4 搜尋成功: ${result.count} 筆資料`);
                 } else {
@@ -3270,7 +3297,7 @@ function performType4Search() {
             }
         }).fail(function(jqXHR, textStatus, errorThrown) {
             console.error('Type4 搜尋 AJAX 請求失敗:', textStatus, errorThrown);
-            
+
             let errorMessage = '搜尋時發生錯誤，請稍後再試';
             if (jqXHR.status === 500) {
                 errorMessage = '伺服器內部錯誤，請聯繫系統管理員';
@@ -3279,7 +3306,7 @@ function performType4Search() {
             } else if (textStatus === 'timeout') {
                 errorMessage = '搜尋請求超時，請稍後再試';
             }
-            
+
             Swal.fire({
                 title: '搜尋失敗',
                 text: errorMessage,
@@ -3290,7 +3317,7 @@ function performType4Search() {
             // 恢復按鈕狀態
             $searchButton.prop('disabled', false).html(originalText);
         });
-        
+
     } catch (error) {
         console.error('Type4 搜尋時發生錯誤:', error);
         Swal.fire({
@@ -3352,12 +3379,12 @@ window.ReviewRanking = (function() {
 // 載入審查排名資料
     function loadRankingData(reviewType, reviewGroup = null) {
         showRankingLoading();
-        
+
         const requestData = { reviewType: reviewType };
         if (reviewGroup) {
             requestData.reviewGroup = reviewGroup;
         }
-        
+
         $.ajax({
             url: "ReviewChecklist.aspx/GetReviewRanking",
             type: "POST",
@@ -3392,7 +3419,7 @@ window.ReviewRanking = (function() {
         });
     }
 //#endregion
-    
+
     /**
      * 提取所有評審委員
      */
@@ -3412,7 +3439,7 @@ window.ReviewRanking = (function() {
     function loadReviewGroups(reviewType) {
         const $select = $("#reviewGroupSelect");
         $select.empty();
-        
+
         // 根據審查類型提供不同的組別選項
         if (reviewType == "2" || reviewType == "3") {
             const groups = [
@@ -3428,11 +3455,11 @@ window.ReviewRanking = (function() {
                 { value: "31", text: "海洋主題創作類" },
                 { value: "32", text: "海洋藝文扎根類" }
             ];
-            
+
             groups.forEach(group => {
                 $select.append(`<option value="${group.value}">${group.text}</option>`);
             });
-            
+
             // 預設選擇第一個組別並載入資料
             if (groups.length > 0) {
                 $select.val(groups[0].value);
@@ -3454,7 +3481,7 @@ window.ReviewRanking = (function() {
      */
     function generateTableHeader() {
         const reviewerCount = allReviewers.length;
-        
+
         let headerHtml = `
             <tr>
                 <th class="text-center" rowspan="2">排名</th>
@@ -3490,7 +3517,7 @@ window.ReviewRanking = (function() {
         });
 
         headerHtml += "</tr>";
-        
+
         $("#rankingTableHead").html(headerHtml);
     }
 
@@ -3574,7 +3601,7 @@ window.ReviewRanking = (function() {
             // 執行排序
             filteredData.sort((a, b) => {
                 let valueA, valueB;
-                
+
                 switch (field) {
                     case 'totalScore':
                         valueA = parseFloat(a.ProjectTotalScore) || 0;
@@ -3619,10 +3646,10 @@ window.ReviewRanking = (function() {
 
             // 更新排序按鈕的視覺狀態
             updateSortButtonStyles(field, currentSort.direction);
-            
+
             // 重新渲染表格
             renderRankingTable();
-            
+
         } catch (error) {
             console.error("排序時發生錯誤:", error);
         }
@@ -3634,12 +3661,12 @@ window.ReviewRanking = (function() {
     function updateSortButtonStyles(activeField, direction) {
         // 重置所有排序按鈕
         $("#rankingTableHead .sort").removeClass("active-asc active-desc");
-        
+
         // 設定當前活動的排序按鈕
         $("#rankingTableHead .sort").each(function() {
             const $button = $(this);
             const onclick = $button.attr('onclick') || '';
-            
+
             if (onclick.includes(`'${activeField}'`)) {
                 $button.addClass(direction === 'asc' ? 'active-asc' : 'active-desc');
             }

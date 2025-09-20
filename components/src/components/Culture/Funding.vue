@@ -156,6 +156,7 @@
 
 <script setup>
     const props = defineProps({
+        apply: { default: false, type: Boolean },
         id: { type: [Number, String] }
     });
 
@@ -180,7 +181,7 @@
 
     const load = () => {
         rxjs.forkJoin([
-            api.culture("getFunding", { ID: props.id })
+            api.culture("getFunding", { Apply: props.apply ? "true" : "false", ID: props.id })
         ]).subscribe((result) => {
             const data = result[0];
 

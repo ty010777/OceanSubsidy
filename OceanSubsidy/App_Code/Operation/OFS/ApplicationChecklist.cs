@@ -51,7 +51,7 @@ public class ApplicationChecklistHelper
             db.CommandText += "WHERE isExist = 1 ";
             DataTable dt = db.GetTable();
             List<ReviewChecklistItem> resultList = new List<ReviewChecklistItem>();
-            
+
             foreach (DataRow row in dt.Rows)
             {
                 var item = new ReviewChecklistItem
@@ -62,14 +62,14 @@ public class ApplicationChecklistHelper
                     Year = row["Year"]?.ToString(),
                     ProjectNameTw = row["ProjectNameTw"]?.ToString(),
                     OrgName = row["OrgName"]?.ToString(),
-                    Req_SubsidyAmount = row["TotalSubsidyAmount"] != DBNull.Value ? 
+                    Req_SubsidyAmount = row["TotalSubsidyAmount"] != DBNull.Value ?
                         Convert.ToDecimal(row["TotalSubsidyAmount"]).ToString("N0") : "0",
-                    
+
                     // 狀態相關
                     Statuses = row["Statuses"]?.ToString(),
                     StatusesName = row["StatusesName"]?.ToString(),
                     ExpirationDate = row["ExpirationDate"] != DBNull.Value ? (DateTime?)row["ExpirationDate"] : null,
-                    
+
                     // 審查相關
                     SupervisoryUnit = row["SupervisoryUnit"]?.ToString(),
                     SupervisoryPersonName = row["SupervisoryPersonName"]?.ToString(),
@@ -78,7 +78,7 @@ public class ApplicationChecklistHelper
                     UserOrg = row["UserOrg"]?.ToString(),
                     UserName = row["UserName"]?.ToString(),
                     SubsidyPlanType = row["SubsidyPlanType"]?.ToString(),
-                    
+
                     // 操作狀態相關
                     isWithdrawal = row["isWithdrawal"] != DBNull.Value ? (bool?)row["isWithdrawal"] : false,
                     isExists = row["isExist"] != DBNull.Value ? (bool?)row["isExist"] : true
@@ -98,7 +98,7 @@ public class ApplicationChecklistHelper
             db.Dispose();
         }
     }
-    
+
     /// <summary>
     /// 取得可申請的計畫類別清單
     /// </summary>
@@ -107,21 +107,21 @@ public class ApplicationChecklistHelper
     {
         List<ListItem> result = new List<ListItem>();
         DbHelper db = new DbHelper();
-        
+
         try
         {
             db.CommandText = @"
                 SELECT*
-                FROM OFS_GrantType 
+                FROM OFS_GrantType
                 ORDER BY TypeID";
-            
+
             DataTable dt = db.GetTable();
-            
+
             foreach (DataRow row in dt.Rows)
             {
                 string grantTypeId = row["TypeCode"]?.ToString();
                 string fullName = row["FullName"]?.ToString();
-                
+
                 if (!string.IsNullOrEmpty(grantTypeId) && !string.IsNullOrEmpty(fullName))
                 {
                     result.Add(new ListItem(fullName, grantTypeId));
@@ -136,10 +136,10 @@ public class ApplicationChecklistHelper
         {
             db.Dispose();
         }
-        
+
         return result;
     }
-    
+
     /// <summary>
     /// 根據計畫類別ID取得計畫詳細資訊
     /// </summary>
@@ -148,11 +148,11 @@ public class ApplicationChecklistHelper
     public static GrantTypeInfo GetGrantTypeInfo(string grantTypeId)
     {
         DbHelper db = new DbHelper();
-        
+
         try
         {
             db.CommandText = @"
-                SELECT 
+                SELECT
                     GrantTypeID,
                     FullName,
                     ShortName,
@@ -160,13 +160,13 @@ public class ApplicationChecklistHelper
                     IsActive,
                     StartDate,
                     EndDate
-                FROM OFS_GrantType 
+                FROM OFS_GrantType
                 WHERE GrantTypeID = @GrantTypeID AND IsActive = 1";
-            
+
             db.Parameters.Add("@GrantTypeID", grantTypeId);
-            
+
             DataTable dt = db.GetTable();
-            
+
             if (dt.Rows.Count > 0)
             {
                 DataRow row = dt.Rows[0];
@@ -190,10 +190,10 @@ public class ApplicationChecklistHelper
         {
             db.Dispose();
         }
-        
+
         return null;
     }
-    
+
     /// <summary>
     /// 驗證使用者是否可以申請指定的計畫類別
     /// </summary>
@@ -203,19 +203,19 @@ public class ApplicationChecklistHelper
     public static bool CanUserApplyGrantType(string userId, string grantTypeId)
     {
         DbHelper db = new DbHelper();
-        
+
         try
         {
             db.CommandText = @"
                 SELECT COUNT(1)
                 FROM OFS_GrantType gt
-                WHERE gt.GrantTypeID = @GrantTypeID 
+                WHERE gt.GrantTypeID = @GrantTypeID
                   AND gt.IsActive = 1
                   AND (gt.StartDate IS NULL OR gt.StartDate <= GETDATE())
                   AND (gt.EndDate IS NULL OR gt.EndDate >= GETDATE())";
-            
+
             db.Parameters.Add("@GrantTypeID", grantTypeId);
-            
+
             object result = db.GetTable();
             int count = result != null ? Convert.ToInt32(result) : 0;
             return count > 0;
@@ -230,7 +230,7 @@ public class ApplicationChecklistHelper
             db.Dispose();
         }
     }
-    
+
     /// <summary>
     /// 更新計畫的撤案狀態
     /// </summary>
@@ -241,34 +241,34 @@ public class ApplicationChecklistHelper
     public static void UpdateWithdrawalStatus(string projectId, bool isWithdrawal, string reason = "")
     {
         DbHelper db = new DbHelper();
-        
+
         try
         {
             db.CommandText = @"
-                UPDATE OFS_SCI_Project_Main 
+                UPDATE OFS_SCI_Project_Main
                 SET isWithdrawal = @IsWithdrawal,
                     updated_at = GETDATE()
                 WHERE ProjectID = @ProjectId";
-            
+
             db.Parameters.Add("@IsWithdrawal", isWithdrawal);
             db.Parameters.Add("@ProjectId", projectId);
-            
+
            db.ExecuteNonQuery();
-           
-            
-            
+
+
+
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"更新撤案狀態時發生錯誤：{ex.Message}");
-            
+
         }
         finally
         {
             db.Dispose();
         }
     }
-    
+
     /// <summary>
     /// 更新計畫的撤案狀態
     /// </summary>
@@ -279,27 +279,27 @@ public class ApplicationChecklistHelper
     public static void CLB_UpdateWithdrawalStatus(string projectId, bool isWithdrawal, string reason = "")
     {
         DbHelper db = new DbHelper();
-        
+
         try
         {
             db.CommandText = @"
-                UPDATE OFS_CLB_Project_Main 
+                UPDATE OFS_CLB_Project_Main
                 SET isWithdrawal = @IsWithdrawal,
                     updated_at = GETDATE()
                 WHERE ProjectID = @ProjectId";
-            
+
             db.Parameters.Add("@IsWithdrawal", isWithdrawal);
             db.Parameters.Add("@ProjectId", projectId);
-            
+
             db.ExecuteNonQuery();
-           
-            
-            
+
+
+
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"更新撤案狀態時發生錯誤：{ex.Message}");
-            
+
         }
         finally
         {
@@ -316,27 +316,27 @@ public class ApplicationChecklistHelper
     public static void UpdateExistsStatus(string projectId, bool isExists)
     {
         DbHelper db = new DbHelper();
-        
+
         try
         {
             db.CommandText = @"
-                UPDATE OFS_SCI_Project_Main 
+                UPDATE OFS_SCI_Project_Main
                 SET isExist = @IsExists,
                     updated_at = GETDATE()
                 WHERE ProjectID = @ProjectId";
-            
+
             db.Parameters.Add("@IsExists", isExists);
             db.Parameters.Add("@ProjectId", projectId);
-            
+
              db.ExecuteNonQuery();
-            
-     
-            
+
+
+
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"更新存在狀態時發生錯誤：{ex.Message}");
-            
+
         }
         finally
         {
@@ -346,25 +346,25 @@ public class ApplicationChecklistHelper
     public static void CLB_UpdateExistsStatus(string projectId, bool isExists, string reason = "")
     {
         DbHelper db = new DbHelper();
-        
+
         try
         {
             db.CommandText = @"
-                UPDATE OFS_CLB_Project_Main 
+                UPDATE OFS_CLB_Project_Main
                 SET isExist = @IsExists,
                     updated_at = GETDATE()
                 WHERE ProjectID = @ProjectId";
-            
+
             db.Parameters.Add("@IsExists", isExists);
             db.Parameters.Add("@ProjectId", projectId);
-            
+
             db.ExecuteNonQuery();
-            
+
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"更新存在狀態時發生錯誤：{ex.Message}");
-            
+
         }
         finally
         {
@@ -380,17 +380,17 @@ public class ApplicationChecklistHelper
     public static bool HasPendingReply(string projectId)
     {
         DbHelper db = new DbHelper();
-        
+
         try
         {
             db.CommandText = @"
                 SELECT COUNT(1)
-                FROM OFS_ReviewRecords 
-                WHERE ProjectID = @ProjectId 
+                FROM OFS_ReviewRecords
+                WHERE ProjectID = @ProjectId
                   AND (ReplyComment IS NULL OR ReplyComment = '')";
-            
+
             db.Parameters.Add("@ProjectId", projectId);
-            
+
             object result = db.GetTable();
             int count = result != null ? Convert.ToInt32(result) : 0;
             return count > 0;
@@ -405,43 +405,7 @@ public class ApplicationChecklistHelper
             db.Dispose();
         }
     }
-    
-    /// <summary>
-    /// 記錄案件歷程
-    /// </summary>
-    /// <param name="projectId">版本ID</param>
-    /// <param name="action">動作</param>
-    /// <param name="description">說明</param>
-    public static void LogCaseHistory(string projectId, string action, string description)
-    {
-        // TODO  正文 此function 是AI亂產的，我沒注意到 不好意思。 在請幫我移除。 並修改有使用到此function的程式 。
-        DbHelper db = new DbHelper();
-        
-        try
-        {
-            db.CommandText = @"
-                INSERT INTO OFS_CaseHistoryLog 
-                (ProjectID, Action, Description, CreatedBy, CreatedAt)
-                VALUES 
-                (@ProjectId, @Action, @Description, @CreatedBy, GETDATE())";
-            
-            db.Parameters.Add("@ProjectId", projectId);
-            db.Parameters.Add("@Action", action);
-            db.Parameters.Add("@Description", description);
-            db.Parameters.Add("@CreatedBy", HttpContext.Current?.Session["UserAccount"]?.ToString() ?? "System");
-            
-            db.ExecuteNonQuery();
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"記錄案件歷程時發生錯誤：{ex.Message}");
-        }
-        finally
-        {
-            db.Dispose();
-        }
-        
-    }
+
     /// <summary>
     /// 新增案件歷程記錄到資料庫
     /// </summary>
@@ -451,17 +415,17 @@ public class ApplicationChecklistHelper
     {
         bool rtVal = true;
         DbHelper db = new DbHelper();
-            
+
         db.BeginTrans();
-            
+
         try
         {
             db.CommandText = @"
         INSERT INTO [dbo].[OFS_CaseHistoryLog]
     ([ProjectID],[ChangeTime],[UserName],[StageStatusBefore],[StageStatusAfter],[Description])
-        VALUES 
+        VALUES
     (@ProjectID,@ChangeTime,@UserName,@StageStatusBefore,@StageStatusAfter,@Description)";
-                
+
             db.Parameters.Clear();
             db.Parameters.Add("@ProjectID", caseHistoryLog.ProjectID);
             db.Parameters.Add("@ChangeTime", caseHistoryLog.ChangeTime);
@@ -469,7 +433,7 @@ public class ApplicationChecklistHelper
             db.Parameters.Add("@StageStatusBefore", caseHistoryLog.StageStatusBefore);
             db.Parameters.Add("@StageStatusAfter", caseHistoryLog.StageStatusAfter);
             db.Parameters.Add("@Description", caseHistoryLog.Description);
-                
+
             GisTable Dt1 = db.GetTable();
             db.Commit();
         }
@@ -478,7 +442,7 @@ public class ApplicationChecklistHelper
             db.Rollback();
             rtVal = false;
         }
-            
+
         return rtVal;
     }
 
@@ -495,9 +459,9 @@ public class ApplicationChecklistHelper
         try
         {
             db.CommandText = @"
-                SELECT TOP 1 StageStatusAfter 
-                FROM OFS_CaseHistoryLog 
-                WHERE ProjectID = @ProjectID 
+                SELECT TOP 1 StageStatusAfter
+                FROM OFS_CaseHistoryLog
+                WHERE ProjectID = @ProjectID
                 ORDER BY ChangeTime DESC, Id DESC";
 
             db.Parameters.Add("@ProjectID", projectId);
@@ -533,7 +497,7 @@ public class ApplicationChecklistHelper
         try
         {
             db.CommandText = @"
-                SELECT [Id], [ProjectID], [ChangeTime], [UserName], 
+                SELECT [Id], [ProjectID], [ChangeTime], [UserName],
                        [StageStatusBefore], [StageStatusAfter], [Description]
                 FROM [OCA_OceanSubsidy].[dbo].[OFS_CaseHistoryLog]
                 WHERE [ProjectID] = @ProjectID
@@ -542,7 +506,7 @@ public class ApplicationChecklistHelper
             db.Parameters.Add("@ProjectID", projectId);
 
             DataTable dt = db.GetTable();
-            
+
             foreach (DataRow row in dt.Rows)
             {
                 var historyLog = new OFS_CaseHistoryLog
@@ -555,7 +519,7 @@ public class ApplicationChecklistHelper
                     StageStatusAfter = row["StageStatusAfter"]?.ToString(),
                     Description = row["Description"]?.ToString()
                 };
-                
+
                 result.Add(historyLog);
             }
         }
@@ -570,7 +534,7 @@ public class ApplicationChecklistHelper
 
         return result;
     }
-    
+
     /// <summary>
     /// 取得計畫資料用於審查意見回覆 (參考 SciDomainReview 的 GetProjectData)
     /// </summary>
@@ -582,20 +546,20 @@ public class ApplicationChecklistHelper
             return null;
 
         DbHelper db = new DbHelper();
-        
+
         try
         {
             // 根據 ProjectID 判斷計畫類型並查詢對應的表格
             if (projectId.Contains("SCI"))
             {
                 // 科專計畫
-                db.CommandText = @"SELECT TOP (1) 
+                db.CommandText = @"SELECT TOP (1)
                     [ProjectID],
                     [Year],
                     [SubsidyPlanType],
                     [ProjectNameTw] as ProjectName,
-                    (SELECT Descname 
-                     FROM Sys_ZgsCode 
+                    (SELECT Descname
+                     FROM Sys_ZgsCode
                      WHERE Code = AM.[Field]
                     ) as ReviewGroup,
                     [OrgName] as ApplicantUnit,
@@ -642,7 +606,7 @@ public class ApplicationChecklistHelper
             db.Dispose();
         }
     }
-    
+
     /// <summary>
     /// 取得當前的審查階段
     /// </summary>
@@ -651,14 +615,14 @@ public class ApplicationChecklistHelper
     public static string GetCurrentReviewStage(string projectId)
     {
         DbHelper db = new DbHelper();
-        
+
         try
         {
             // 根據 ProjectID 判斷計畫類型並查詢對應的表格
             if (projectId.Contains("SCI"))
             {
-                db.CommandText = @"SELECT [Statuses] 
-                                  FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main] 
+                db.CommandText = @"SELECT [Statuses]
+                                  FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main]
                                   WHERE ProjectID = @ProjectID";
             }
             else if (projectId.Contains("CUL"))
@@ -674,12 +638,12 @@ public class ApplicationChecklistHelper
 
             db.Parameters.Clear();
             db.Parameters.Add("@ProjectID", projectId);
-            
+
             DataTable dt = db.GetTable();
             if (dt != null && dt.Rows.Count > 0)
             {
                 string statuses = dt.Rows[0]["Statuses"]?.ToString();
-                
+
                 // 根據 Statuses 決定 ReviewStage
                 if (!string.IsNullOrEmpty(statuses))
                 {
@@ -687,7 +651,7 @@ public class ApplicationChecklistHelper
                     if (statuses.Contains("技術審查")) return "技術審查";
                 }
             }
-            
+
             return "領域審查"; // 預設
         }
         catch (Exception ex)
@@ -700,11 +664,11 @@ public class ApplicationChecklistHelper
             db.Dispose();
         }
     }
-    
+
     public static void UpdateReplyContent(string ReviewID, string ReplyComment)
     {
         DbHelper db = new DbHelper();
-        
+
         try
         {
             db.CommandText = @"
@@ -715,22 +679,22 @@ public class ApplicationChecklistHelper
             ";
             db.Parameters.Add("@ReviewID", ReviewID);
             db.Parameters.Add("@ReplyComment", ReplyComment);
-            
+
             db.ExecuteNonQuery();
-            
-            
+
+
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"更新使用者回覆時發生錯誤：{ex.Message}");
-            
+
         }
         finally
         {
             db.Dispose();
         }
     }
-    
+
     /// <summary>
     /// 根據關鍵字搜尋專案ID
     /// </summary>
@@ -739,12 +703,12 @@ public class ApplicationChecklistHelper
     public static List<string> SearchProjectIDsByKeyword(string keyword)
     {
         List<string> projectIDs = new List<string>();
-        
+
         if (string.IsNullOrWhiteSpace(keyword))
             return projectIDs;
 
         DbHelper db = new DbHelper();
-        
+
         try
         {
             db.CommandText = @"
@@ -752,11 +716,11 @@ public class ApplicationChecklistHelper
                 FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Application_KeyWord]
                 WHERE KeyWordTw LIKE @Keyword
                    OR KeyWordEn LIKE @Keyword";
-            
+
             db.Parameters.Add("@Keyword", "%" + keyword.Trim() + "%");
-            
+
             DataTable dt = db.GetTable();
-            
+
             foreach (DataRow row in dt.Rows)
             {
                 string keywordID = row["KeywordID"]?.ToString();
@@ -774,10 +738,10 @@ public class ApplicationChecklistHelper
         {
             db.Dispose();
         }
-        
+
         return projectIDs;
     }
-    
+
     /// <summary>
     /// 取得需要回覆的 ProjectID 清單
     /// 條件：OFS_ReviewRecords.isSubmit = 1 但 ReplyComment 是 null 或空值
@@ -787,18 +751,18 @@ public class ApplicationChecklistHelper
     {
         List<string> projectIds = new List<string>();
         DbHelper db = new DbHelper();
-        
+
         try
         {
             db.CommandText = @"
                 SELECT DISTINCT ProjectID
                 FROM [OCA_OceanSubsidy].[dbo].[OFS_ReviewRecords]
-                WHERE isSubmit = 1 
+                WHERE isSubmit = 1
                   AND (ReplyComment IS NULL OR ReplyComment = '' OR LTRIM(RTRIM(ReplyComment)) = '')
                   AND ProjectID IS NOT NULL";
-            
+
             DataTable dt = db.GetTable();
-            
+
             foreach (DataRow row in dt.Rows)
             {
                 string projectId = row["ProjectID"]?.ToString();
@@ -816,7 +780,7 @@ public class ApplicationChecklistHelper
         {
             db.Dispose();
         }
-        
+
         return projectIds;
     }
 }

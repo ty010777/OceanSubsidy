@@ -270,13 +270,13 @@ document.addEventListener('DOMContentLoaded', function() {
 function initDropdownToggle() {
     // 讓 Bootstrap 處理下拉式選單，移除自定義邏輯
     // Bootstrap 5 會自動處理 data-bs-toggle="dropdown" 的行為
-    
+
     // 如果需要額外的事件處理，可以監聽 Bootstrap 事件
     document.addEventListener('shown.bs.dropdown', function (event) {
         // 下拉選單顯示時的額外處理
         console.log('Dropdown shown:', event.target);
     });
-    
+
     document.addEventListener('hidden.bs.dropdown', function (event) {
         // 下拉選單隱藏時的額外處理
         console.log('Dropdown hidden:', event.target);
@@ -777,7 +777,6 @@ function generateProjectNameLink(record) {
     if (projectId.includes('SCI')) {
         return `<a href="../OFS/SCI/SciApplication.aspx?ProjectID=${projectId}" class="link-black" target="_blank">${projectName}</a>`;
     } else if (projectId.includes('CUL'))  {
-        //TODO 正文 根據討論，如果該計畫正在，計畫執行 之後應該要修正成 從快照中讀取資料。會指向不同連結 (待做)。
         return `<a href="../OFS/CUL/Application.aspx?ID=${projectId}" class="link-black" target="_blank">${projectName}</a>`;
     } else if (projectId.includes('EDC'))  {
         return `<a href="../OFS/EDC/Application.aspx?ID=${projectId}" class="link-black" target="_blank">${projectName}</a>`;

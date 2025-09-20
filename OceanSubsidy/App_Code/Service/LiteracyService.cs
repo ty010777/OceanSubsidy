@@ -57,35 +57,63 @@ public class LiteracyService : BaseService
 
     public object getApplication(JObject param, HttpContext context)
     {
-        var id = getID(param["ID"].ToString());
+        var data = getProject(param, out JObject snapshot);
+
+        if (snapshot != null)
+        {
+            return new
+            {
+                Project = snapshot["Project"],
+                Contacts = snapshot["Contacts"],
+                PreviousStudies = snapshot["PreviousStudies"]
+            };
+        }
 
         return new
         {
-            Project = getProject(id),
-            Contacts = OFS_LitContactHelper.query(id),
-            PreviousStudies = OFS_LitPreviousStudyHelper.query(id)
+            Project = data,
+            Contacts = OFS_LitContactHelper.query(data.ID),
+            PreviousStudies = OFS_LitPreviousStudyHelper.query(data.ID)
         };
     }
 
     public object getAttachment(JObject param, HttpContext context)
     {
-        var id = getID(param["ID"].ToString());
+        var data = getProject(param, out JObject snapshot);
+
+        if (snapshot != null)
+        {
+            return new
+            {
+                Project = snapshot["Project"],
+                Attachments = snapshot["Attachments"]
+            };
+        }
 
         return new
         {
-            Project = getProject(id),
-            Attachments = OFS_LitAttachmentHelper.query(id)
+            Project = data,
+            Attachments = OFS_LitAttachmentHelper.query(data.ID)
         };
     }
 
     public object getBenefit(JObject param, HttpContext context)
     {
-        var id = getID(param["ID"].ToString());
+        var data = getProject(param, out JObject snapshot);
+
+        if (snapshot != null)
+        {
+            return new
+            {
+                Project = snapshot["Project"],
+                Benefits = snapshot["Benefits"]
+            };
+        }
 
         return new
         {
-            Project = getProject(id),
-            Benefits = OFS_LitBenefitHelper.query(id)
+            Project = data,
+            Benefits = OFS_LitBenefitHelper.query(data.ID)
         };
     }
 
@@ -98,15 +126,27 @@ public class LiteracyService : BaseService
 
     public object getFunding(JObject param, HttpContext context)
     {
-        var id = getID(param["ID"].ToString());
-        var project = getProject(id);
+        var data = getProject(param, out JObject snapshot);
+
+        if (snapshot != null)
+        {
+            data = snapshot["Project"].ToObject<OFS_CulProject>();
+
+            return new
+            {
+                Project = data,
+                OtherSubsidies = snapshot["OtherSubsidies"],
+                BudgetPlans = snapshot["BudgetPlans"],
+                GrantTargetSetting = OFSGrantTargetSettingHelper.getByTargetTypeID($"LIT{data.Field}")
+            };
+        }
 
         return new
         {
-            Project = project,
-            OtherSubsidies = OFS_LitOtherSubsidyHelper.query(id),
-            BudgetPlans = OFS_LitBudgetPlanHelper.query(id),
-            GrantTargetSetting = OFSGrantTargetSettingHelper.getByTargetTypeID($"LIT{project.Field}")
+            Project = data,
+            OtherSubsidies = OFS_LitOtherSubsidyHelper.query(data.ID),
+            BudgetPlans = OFS_LitBudgetPlanHelper.query(data.ID),
+            GrantTargetSetting = OFSGrantTargetSettingHelper.getByTargetTypeID($"LIT{data.Field}")
         };
     }
 
@@ -138,13 +178,24 @@ public class LiteracyService : BaseService
 
     public object getWorkSchedule(JObject param, HttpContext context)
     {
-        var id = getID(param["ID"].ToString());
+        var data = getProject(param, out JObject snapshot);
+
+        if (snapshot != null)
+        {
+            return new
+            {
+                Project = snapshot["Project"],
+                Items = snapshot["Items"],
+                Schedules = snapshot["Schedules"],
+                GrantType = OFSGrantTypeHelper.getByCode("LIT")
+            };
+        }
 
         return new
         {
-            Project = getProject(id),
-            Items = OFS_LitItemHelper.query(id),
-            Schedules = OFS_LitScheduleHelper.query(id),
+            Project = data,
+            Items = OFS_LitItemHelper.query(data.ID),
+            Schedules = OFS_LitScheduleHelper.query(data.ID),
             GrantType = OFSGrantTypeHelper.getByCode("LIT")
         };
     }
@@ -163,14 +214,17 @@ public class LiteracyService : BaseService
             case 2:
                 project.Status = 13; //不通過
                 project.RejectReason = param["Reason"].ToString();
+                saveApplyReviewLog(project.ProjectID, "資格審查-不通過", project.RejectReason);
                 break;
             case 3:
                 project.Status = 14; //補正補件
                 project.RejectReason = param["Reason"].ToString();
                 project.CorrectionDeadline = DateTime.Parse(param["CorrectionDeadline"].ToString()); //補正期限
+                saveApplyReviewLog(project.ProjectID, "資格審查-補正補件", project.RejectReason, project.CorrectionDeadline);
                 break;
             default:
                 project.Status = 12; //通過
+                saveApplyReviewLog(project.ProjectID, "資格審查-通過");
                 break;
         }
 
@@ -382,19 +436,13 @@ public class LiteracyService : BaseService
                 OFS_LitProjectHelper.updateFormStep(data.ProjectID, 6);
                 OFS_LitProjectHelper.updateProgressStatus(data.ProjectID, 1); //資格審查
 
-                ApplicationChecklistHelper.InsertCaseHistoryLog(new OFS_CaseHistoryLog
-                {
-                    ProjectID = data.ProjectID,
-                    ChangeTime = DateTime.Now,
-                    UserName = CurrentUser.UserName,
-                    StageStatusBefore = "編輯中",
-                    StageStatusAfter = "資格審查-審核中",
-                    Description = "完成附件上傳並提送申請"
-                });
+                saveApplyLog(data.ProjectID, "編輯中");
             }
             else if (data.Status == 14)
             {
                 OFS_LitProjectHelper.updateStatus(data.ProjectID, 11); //審查中
+
+                saveApplyLog(data.ProjectID, "資格審查-補正補件");
             }
 
             snapshot(id);
@@ -730,6 +778,15 @@ public class LiteracyService : BaseService
         }
 
         throw new Exception("狀態錯誤");
+    }
+
+    private OFS_CulProject getProject(JObject param, out JObject snapshot)
+    {
+        var project = OFS_CulProjectHelper.get(getID(param["ID"].ToString()));
+
+        snapshot = project.ProgressStatus >= 5 && bool.Parse(param["Apply"].ToString()) ? getSnapshot("LIT", project.ID) : null;
+
+        return project;
     }
 
     private void snapshot(int id)

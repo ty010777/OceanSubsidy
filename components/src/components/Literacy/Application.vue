@@ -198,6 +198,7 @@
 
 <script setup>
     const props = defineProps({
+        apply: { default: false, type: Boolean },
         id: { type: [Number, String] }
     });
 
@@ -226,7 +227,7 @@
     const emit = defineEmits(["next"]);
 
     const load = () => {
-        api.literacy("getApplication", { ID: props.id }).subscribe((res) => {
+        api.literacy("getApplication", { Apply: props.apply ? "true" : "false", ID: props.id }).subscribe((res) => {
             form.value = res.Project;
             contacts.value = res.Contacts;
             studies.value = res.PreviousStudies;

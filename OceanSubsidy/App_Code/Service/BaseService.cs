@@ -1,3 +1,4 @@
+﻿using GS.OCA_OceanSubsidy.Entity;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -77,6 +78,52 @@ public class BaseService : IHttpHandler, IRequiresSessionState
     public object queryReviewersByUnit(JObject param, HttpContext context)
     {
         return SysUserHelper.QueryReviewersByUnitID(param["ID"].ToString());
+    }
+
+    protected JObject getSnapshot(string type, int id)
+    {
+        var prev = OFSSnapshotHelper.get(type, id);
+
+        return prev == null ? null : JObject.Parse(prev.Data);
+    }
+
+    protected void saveApplyLog(string pID, string before)
+    {
+        saveLog(pID, before, "資格審查-審核中", "完成附件上傳並提送申請");
+    }
+
+    protected void saveApplyReviewLog(string pID, string after, string note = null, DateTime? deadline = null)
+    {
+        var desc = string.IsNullOrWhiteSpace(note) ? "" : $"因{note}原因「{after}」";
+
+        desc = (deadline == null) ? desc : $"{desc}，補正期限：{deadline}";
+
+        saveLog(pID, "資格審查-審查中", after, desc);
+    }
+
+    protected void saveRevisionLog(string pID)
+    {
+        saveLog(pID, "決審核定-計畫書修正中", "決審核定-計畫書審核中", "完成計畫書修正並重新提送審核");
+    }
+
+    protected void saveRevisionReviewLog(string pID, string after, string note = null)
+    {
+        var desc = string.IsNullOrWhiteSpace(note) ? "" : $"因{note}原因「{after}」";
+
+        saveLog(pID, "決審核定-計畫書審核中", after, desc);
+    }
+
+    private void saveLog(string pID, string before, string after, string desc)
+    {
+        ApplicationChecklistHelper.InsertCaseHistoryLog(new OFS_CaseHistoryLog
+        {
+            ProjectID = pID,
+            ChangeTime = DateTime.Now,
+            UserName = CurrentUser.UserName,
+            StageStatusBefore = before,
+            StageStatusAfter = after,
+            Description = desc
+        });
     }
 
     private void WriteJson(HttpContext context, object obj)
