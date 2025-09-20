@@ -398,7 +398,6 @@ public class OFS_AccProjectHelper
             UPDATE [OFS_ACC_Project]
                SET [Status] = @Status
                   ,[UpdateTime] = GETDATE()
-                  ,[IsExists] = 0
                   ,[UpdateUser] = @UpdateUser
              WHERE [ProjectID] = @ProjectID
         ";

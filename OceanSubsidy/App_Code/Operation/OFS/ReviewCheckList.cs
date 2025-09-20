@@ -1173,7 +1173,7 @@ SELECT TOP (1000) [ProjectID]
         if (!string.IsNullOrEmpty(reviewGroupCode))
         {
             db.CommandText += " AND Field = @reviewGroupCode";
-        } 
+        }
         if (!string.IsNullOrEmpty(category))
         {
             db.CommandText += " AND Category = @category";
@@ -1386,7 +1386,7 @@ SELECT TOP (1000) [ProjectID]
               ,[Year]
               ,[Category]
           FROM [OCA_OceanSubsidy].[dbo].[V_OFS_ReviewChecklist_type1]
-          where 1 = 1 
+          where 1 = 1
 
 ";
         try
@@ -1394,7 +1394,7 @@ SELECT TOP (1000) [ProjectID]
             List<ReviewChecklistItem> checklist = new List<ReviewChecklistItem>();
             db.Parameters.Clear();
 
-            // 添加篩選條件參數 
+            // 添加篩選條件參數
             if (!string.IsNullOrEmpty(year))
             {
                 db.CommandText += " AND Year = @year";
@@ -1430,8 +1430,8 @@ SELECT TOP (1000) [ProjectID]
                 db.CommandText += " AND (ProjectID LIKE @keyword OR ProjectNameTw LIKE @keyword)";
                 db.Parameters.Add("@keyword", $"%{keyword}%");
             }
-       
-            
+
+
 
             // 執行查詢
             DataTable dt = db.GetTable();
@@ -1661,7 +1661,7 @@ SELECT TOP (1000) [ProjectID]
             db.Parameters.Add($"@projectId{i}", projectIds[i]);
         }
         db.Parameters.Add($"@status", status);
-      
+
 
         DataTable dt = db.GetTable();
         List<ProgressData> result = new List<ProgressData>();
@@ -1849,7 +1849,7 @@ SELECT TOP (1000) [ProjectID]
         // 建立 IN 子句的參數
         var projectIdParams = projectIds.Select((id, index) => $"@projectId{index}").ToList();
         string inClause = "(" + string.Join(",", projectIdParams) + ")";
-      
+
 
         status = status == "初審" ? "2" : "3";
         DbHelper db = new DbHelper();
@@ -2024,7 +2024,7 @@ SELECT TOP (1000) [ProjectID]
     {
         string finalStatusesName = string.IsNullOrEmpty(StatusesName) ? "" : StatusesName;
         string LastOperation = newStatus == "計畫執行" ? "計畫已核定" : "";
-        
+
         using (DbHelper db = new DbHelper())
         {
             db.CommandText = @"
@@ -2055,7 +2055,7 @@ SELECT TOP (1000) [ProjectID]
     {
         string finalStatusesName = string.IsNullOrEmpty(StatusesName) ? "審核中" : StatusesName;
         string LastOperation = newStatus == "計畫執行" ? "計畫已核定" : "";
-        
+
         using (DbHelper db = new DbHelper())
         {
             db.CommandText = @"
@@ -2132,7 +2132,7 @@ SELECT TOP (1000) [ProjectID]
 
             db.Parameters.Add("@projectId", projectId);
             db.Parameters.Add("@statusName", statusName);
-            
+
             db.ExecuteNonQuery();
         }
     }
@@ -2148,7 +2148,7 @@ SELECT TOP (1000) [ProjectID]
 
             db.Parameters.Add("@projectId", projectId);
             db.Parameters.Add("@statusName", statusName);
-            
+
             db.ExecuteNonQuery();
         }
     }
@@ -2189,7 +2189,7 @@ SELECT TOP (1000) [ProjectID]
                 {
                     try
                     {
-                        int status = 19; 
+                        int status = 19;
 
                         switch (reviewType)
                         {
@@ -2216,6 +2216,7 @@ SELECT TOP (1000) [ProjectID]
                         else if (projectId.Contains("CUL"))
                         {
                             OFS_CulProjectHelper.updateStatus(projectId, status);
+                            OFS_CulProjectHelper.updateExistsStatus(projectId, false);
                             InsertRejectHistory(db, projectId, actionType, userAccount);
                             successCount++;
                             successIds.Add(projectId);
@@ -2223,6 +2224,7 @@ SELECT TOP (1000) [ProjectID]
                         else if (projectId.Contains("EDC"))
                         {
                             OFS_EdcProjectHelper.updateStatus(projectId, status);
+                            OFS_EdcProjectHelper.updateExistsStatus(projectId, false);
                             InsertRejectHistory(db, projectId, actionType, userAccount);
                             successCount++;
                             successIds.Add(projectId);
@@ -2239,6 +2241,7 @@ SELECT TOP (1000) [ProjectID]
                         else if (projectId.Contains("MUL"))
                         {
                             OFS_MulProjectHelper.updateStatus(projectId, status);
+                            OFS_MulProjectHelper.updateExistsStatus(projectId, false);
                             InsertRejectHistory(db, projectId, actionType, userAccount);
                             successCount++;
                             successIds.Add(projectId);
@@ -2246,6 +2249,7 @@ SELECT TOP (1000) [ProjectID]
                         else if (projectId.Contains("LIT"))
                         {
                             OFS_LitProjectHelper.updateStatus(projectId, status);
+                            OFS_LitProjectHelper.updateExistsStatus(projectId, false);
                             InsertRejectHistory(db, projectId, actionType, userAccount);
                             successCount++;
                             successIds.Add(projectId);
@@ -2253,6 +2257,7 @@ SELECT TOP (1000) [ProjectID]
                         else if (projectId.Contains("ACC"))
                         {
                             OFS_AccProjectHelper.updateStatus(projectId, status);
+                            OFS_AccProjectHelper.updateExistsStatus(projectId, false);
                             InsertRejectHistory(db, projectId, actionType, userAccount);
                             successCount++;
                             successIds.Add(projectId);
@@ -2505,7 +2510,7 @@ SELECT TOP (1000) [ProjectID]
                 case "複審":
                     reviewStage = "3";
                     break;
-                
+
             }
             if (!string.IsNullOrEmpty(field))
             {
@@ -2534,7 +2539,7 @@ SELECT TOP (1000) [ProjectID]
                 {
                     string reviewerEmail = reviewer["Email"]?.ToString();
                     string reviewerName = reviewer["CommitteeUser"]?.ToString();
-                    
+
                     if (!string.IsNullOrEmpty(reviewerEmail) && !string.IsNullOrEmpty(reviewerName))
                     {
                         // 產生隨機 Token
@@ -3147,7 +3152,7 @@ SELECT TOP (1000) [ProjectID]
     #endregion
 
     #region 待辦事項管理
-   
+
     /// <summary>
     /// 為專案建立預設的待辦事項模板
     /// </summary>
@@ -3157,7 +3162,7 @@ SELECT TOP (1000) [ProjectID]
     {
         try
         {
-            
+
             List<TaskTemplate> taskTemplates = new List<TaskTemplate>();
 
             if (projectId.Contains("SCI"))
@@ -3218,7 +3223,7 @@ SELECT TOP (1000) [ProjectID]
                     db.CommandText = @"
                         INSERT INTO OFS_TaskQueue (ProjectID, TaskNameEn, TaskName, PriorityLevel, IsTodo, IsCompleted)
                         VALUES (@ProjectID, @TaskNameEn, @TaskName, @PriorityLevel, @IsTodo, @IsCompleted)";
-                    
+
                     // 加入參數並防止 SQL 注入
                     db.Parameters.Add("@ProjectID", projectId);
                     db.Parameters.Add("@TaskNameEn", template.TaskNameEn);
@@ -3256,7 +3261,7 @@ SELECT TOP (1000) [ProjectID]
                     FROM OFS_TaskQueue
                     WHERE ProjectID = @ProjectID
                     ORDER BY PriorityLevel";
-                
+
                 db.Parameters.Add("@ProjectID", projectId);
 
                 DataTable dt = db.GetTable();
@@ -3330,7 +3335,7 @@ SELECT TOP (1000) [ProjectID]
     public static List<ReviewRankingItem> GetReviewRanking(string reviewType, string reviewGroup = null)
     {
         var results = new List<ReviewRankingItem>();
-        
+
         try
         {
             // 驗證審查類型
@@ -3360,7 +3365,7 @@ SELECT TOP (1000) [ProjectID]
                     db.CommandText = @"
                     -- 先算每個專案的平均分與總分
                     WITH ProjectScores AS (
-                        SELECT 
+                        SELECT
                             PM.ProjectID,
                             ProjectNameTw,
                             SUM(TotalScore) AS ProjectTotalScore,
@@ -3368,15 +3373,15 @@ SELECT TOP (1000) [ProjectID]
                         FROM OFS_ReviewRecords RR
                         LEFT JOIN OFS_SCI_Application_Main AM ON RR.ProjectID = AM.ProjectID
                         LEFT JOIN OFS_SCI_Project_Main PM ON PM.ProjectID = AM.ProjectID
-                        WHERE PM.Statuses = @ReviewStage 
+                        WHERE PM.Statuses = @ReviewStage
                           AND RR.ReviewStage = @ReviewStage
-                          AND IsSubmit = 1 AND PM.isExist != 0 
+                          AND IsSubmit = 1 AND PM.isExist != 0
                           AND AM.Field = @ReviewGroup
                         GROUP BY PM.ProjectID, ProjectNameTw
                     ),
                     -- 每個委員對各專案的分數
                     ReviewerScores AS (
-                        SELECT 
+                        SELECT
                             RR.ProjectID,
                             RR.ReviewerName,
                             RR.TotalScore
@@ -3384,13 +3389,13 @@ SELECT TOP (1000) [ProjectID]
                         FROM OFS_ReviewRecords RR
                         LEFT JOIN OFS_SCI_Application_Main AM ON RR.ProjectID = AM.ProjectID
                         LEFT JOIN OFS_SCI_Project_Main PM ON PM.ProjectID = AM.ProjectID
-                        WHERE PM.Statuses = @ReviewStage 
+                        WHERE PM.Statuses = @ReviewStage
                           AND RR.ReviewStage = @ReviewStage
-                          AND IsSubmit = 1 AND PM.isExist != 0 
+                          AND IsSubmit = 1 AND PM.isExist != 0
                           AND AM.Field = @ReviewGroup
                     )
                     -- 最後組合成一張大表
-                    SELECT 
+                    SELECT
                         PS.ProjectID,
                         PS.ProjectNameTw,
                         PS.ProjectTotalScore,
@@ -3403,14 +3408,14 @@ SELECT TOP (1000) [ProjectID]
                     JOIN ReviewerScores RS ON PS.ProjectID = RS.ProjectID
                     ORDER BY DenseRankNo, PS.ProjectID, RS.ReviewerName;
                 ";
-                  
+
                 }
                 else//初審、複審
                 {
                     db.CommandText = @"
                 WITH ProjectScores AS (
 
-		            SELECT 
+		            SELECT
                             PM.ProjectID,
                             ProjectName ,
                             SUM(TotalScore) AS ProjectTotalScore,
@@ -3419,25 +3424,25 @@ SELECT TOP (1000) [ProjectID]
                         LEFT JOIN OFS_CUL_Project PM ON PM.ProjectID = RR.ProjectID
                         WHERE PM.ProgressStatus = @ReviewStage
                           AND RR.ReviewStage = @ReviewStage
-                          AND IsSubmit = 1 AND PM.IsExists != 0 
+                          AND IsSubmit = 1 AND PM.IsExists != 0
                           AND PM.Field =@ReviewGroup
                         GROUP BY PM.ProjectID, ProjectName
                     ),
                     -- 每個委員對各專案的分數
                     ReviewerScores AS (
-                        SELECT 
+                        SELECT
                             RR.ProjectID,
                             RR.ReviewerName,
                             RR.TotalScore
                         FROM OFS_ReviewRecords RR
                         LEFT JOIN OFS_CUL_Project PM ON PM.ProjectID = RR.ProjectID
-                        WHERE PM.ProgressStatus = @ReviewStage 
+                        WHERE PM.ProgressStatus = @ReviewStage
                           AND RR.ReviewStage = @ReviewStage
-                          AND IsSubmit = 1 AND PM.IsExists != 0 
+                          AND IsSubmit = 1 AND PM.IsExists != 0
                           AND PM.Field = @ReviewGroup
                     )
                     -- 最後組合成一張大表
-                    SELECT 
+                    SELECT
                         PS.ProjectID,
                         PS.ProjectName as ProjectNameTw,
                         PS.ProjectTotalScore,
@@ -3450,21 +3455,21 @@ SELECT TOP (1000) [ProjectID]
                     JOIN ReviewerScores RS ON PS.ProjectID = RS.ProjectID
                     ORDER BY DenseRankNo, PS.ProjectID, RS.ReviewerName;";
                 }
-                
+
 
                 db.Parameters.Add("@ReviewStage", reviewStage);
                 db.Parameters.Add("@ReviewGroup", reviewGroup);
-            
-                
+
+
                 var dataTable = db.GetTable();
-                
+
                 // 將查詢結果轉換為排名物件
                 var rankingData = new Dictionary<string, ReviewRankingItem>();
-                
+
                 foreach (DataRow row in dataTable.Rows)
                 {
                     string projectId = row["ProjectID"].ToString();
-                    
+
                     if (!rankingData.ContainsKey(projectId))
                     {
                         rankingData[projectId] = new ReviewRankingItem
@@ -3477,14 +3482,14 @@ SELECT TOP (1000) [ProjectID]
                             ReviewerScores = new List<ReviewerScore>()
                         };
                     }
-                    
+
                     rankingData[projectId].ReviewerScores.Add(new ReviewerScore
                     {
                         ReviewerName = row["ReviewerName"].ToString(),
                         TotalScore = Convert.ToDecimal(row["TotalScore"])
                     });
                 }
-                
+
                 results = rankingData.Values.OrderBy(x => x.DenseRankNo).ToList();
             }
         }
@@ -3493,7 +3498,7 @@ SELECT TOP (1000) [ProjectID]
             System.Diagnostics.Debug.WriteLine($"取得審查排名時發生錯誤: {ex.Message}");
             throw new Exception($"載入排名資料時發生錯誤: {ex.Message}");
         }
-        
+
         return results;
     }
 
@@ -3505,10 +3510,10 @@ SELECT TOP (1000) [ProjectID]
     public static List<DropdownItem> GetReviewGroupOptions(string reviewType)
     {
         var options = new List<DropdownItem>();
-        
+
         try
         {
-            
+
             // 根據審查類型提供不同的組別選項
             if (reviewType == "2" || reviewType == "3")
             {
@@ -3517,14 +3522,14 @@ SELECT TOP (1000) [ProjectID]
                 options.Add(new DropdownItem { Value = "Environment", Text = "環境工程" });
                 options.Add(new DropdownItem { Value = "Material", Text = "材料科技" });
                 options.Add(new DropdownItem { Value = "Mechanical", Text = "機械與機電工程" });
-       
+
             }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"取得審查組別選項時發生錯誤: {ex.Message}");
         }
-        
+
         return options;
     }
 
@@ -3754,10 +3759,10 @@ SELECT TOP (1000) [ProjectID]
             {
                 // 取得 CUL 文化資料
                 var culResults = GetCulBasicData(year, orgName, supervisor, keyword, "初審");
-                
+
                 // 篩選符合進度和回覆狀態的 ProjectID
                 var filteredCulResults = FilterByProgressAndReplyStatus(culResults, progress, replyStatus, "CUL");
-            
+
                 foreach (var item in filteredCulResults)
                 {
                     string projectId = item.ProjectID ?? "";
@@ -3766,7 +3771,7 @@ SELECT TOP (1000) [ProjectID]
                     {
                         string pdfPath = HttpContext.Current.Server.MapPath($"~/UploadFiles/OFS/CUL/{projectId}/TechReviewFiles/{projectId}_文化_{ProjectName}_送審版.pdf");
 
-            
+
                         DataRow row = result.NewRow();
                         row["ProjectID"] = projectId;
                         row["PdfPath"] = pdfPath;
