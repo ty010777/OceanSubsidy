@@ -382,7 +382,6 @@ public class OFS_CulProjectHelper
             UPDATE [OFS_CUL_Project]
                SET [Status] = @Status
                   ,[UpdateTime] = GETDATE()
-                  ,[IsExists] = 0
                   ,[UpdateUser] = @UpdateUser
              WHERE [ProjectID] = @ProjectID
         ";

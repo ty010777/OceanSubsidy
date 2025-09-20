@@ -398,7 +398,6 @@ public class OFS_MulProjectHelper
             UPDATE [OFS_MUL_Project]
                SET [Status] = @Status
                   ,[UpdateTime] = GETDATE()
-                  ,[IsExists] = 0
                   ,[UpdateUser] = @UpdateUser
              WHERE [ProjectID] = @ProjectID
         ";
