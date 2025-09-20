@@ -26,9 +26,10 @@
                                 <required-label v-else>{{ item.Title }}</required-label>
                             </div>
                             <div class="mt-3 small" v-html="item.Comment" v-if="editable && item.Comment"></div>
-                            <a class="btn btn-sm btn-teal-dark rounded-pill mt-2" :href="item.Template" style="width:140px" type="button" v-if="editable && item.Template">
+                            <!-- 為了方便測試，先把 v-if="editable" 拿掉 -->
+                            <button class="btn btn-sm btn-teal-dark rounded-pill mt-2" @click="downloadTemplate(idx +1)" style="width:140px" type="button" v-if="item.Template">
                                 <i class="fas fa-file-download me-1"></i>範本下載
-                            </a>
+                            </button>
                         </td>
                         <td class="text-center" v-if="editable">
                             <span v-if="item.Uploaded">已上傳</span>
@@ -110,6 +111,14 @@
     };
 
     const download = api.download;
+
+    const downloadTemplate = (idx) => {
+        const doc = docs.value[idx - 1];
+
+        if (doc?.Template) {
+            window.open(`/Service/OFS/DownloadTemplateLIT.ashx?type=${doc.Type}&id=${props.id}`);
+        }
+    };
 
     const emit = defineEmits(["next"]);
 
