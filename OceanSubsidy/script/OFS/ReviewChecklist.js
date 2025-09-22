@@ -3900,7 +3900,7 @@ function exportApplicationPdfData() {
 function exportReviewRanking(exportType = 'Type2') {
     try {
         // 根據匯出類型設定標題
-        const titleText = exportType === 'Type3' ? '正在匯出Type3審查結果排名...' : '正在匯出SCI審查結果排名...';
+        const titleText = exportType === 'Type3' ? '正在匯出審查結果排名...' : '正在匯出審查結果排名...';
 
         // 顯示載入中訊息
         Swal.fire({
@@ -4256,6 +4256,104 @@ function exportType4ListData() {
     }
 }
 
+/**
+ * 匯出審查結果與意見回覆對照表
+ */
+function exportReviewCommentsComparison() {
+    try {
+        // 從 planDetailModal 的基本資訊區域取得 ProjectID
+        const projectId = $('#planDetailModal .modal-body .bg-light-gray li:nth-child(2) span:nth-child(2)').text().trim();
+
+        if (!projectId) {
+            Swal.fire({
+                title: '錯誤',
+                text: '無法取得計畫編號',
+                icon: 'error',
+                confirmButtonText: '確定'
+            });
+            return;
+        }
+
+        // 取得當前審查類型
+        const currentType = window.ReviewChecklist.getCurrentType();
+
+        // 顯示載入中訊息
+        Swal.fire({
+            title: '匯出中...',
+            text: '正在產生審查結果與意見回覆對照表',
+            icon: 'info',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // 呼叫後端 API
+        $.ajax({
+            type: "POST",
+            url: "ReviewChecklist.aspx/ExportReviewCommentsComparison",
+            data: JSON.stringify({
+                projectId: projectId,
+                reviewType: currentType
+            }),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json"
+        }).done(function(response) {
+            let result;
+            if (typeof response.d === 'string') {
+                result = JSON.parse(response.d);
+            } else {
+                result = response.d || response;
+            }
+
+            if (result && result.Success) {
+                // 匯出成功，下載檔案
+                const downloadUrl = `/temp/${result.FileName}`;
+
+                // 建立隱藏的下載連結
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = result.FileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                Swal.fire({
+                    title: '匯出成功',
+                    text: '審查結果與意見回覆對照表已完成匯出',
+                    icon: 'success',
+                    confirmButtonText: '確定'
+                });
+            } else {
+                Swal.fire({
+                    title: '匯出失敗',
+                    text: result ? result.Message : '匯出時發生未知錯誤',
+                    icon: 'error',
+                    confirmButtonText: '確定'
+                });
+            }
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            console.error('匯出失敗:', textStatus, errorThrown);
+            Swal.fire({
+                title: '匯出失敗',
+                text: '匯出審查結果與意見回覆對照表時發生錯誤，請稍後再試',
+                icon: 'error',
+                confirmButtonText: '確定'
+            });
+        });
+
+    } catch (error) {
+        console.error('匯出審查結果與意見回覆對照表時發生錯誤:', error);
+        Swal.fire({
+            title: '系統錯誤',
+            text: '匯出功能發生錯誤，請稍後再試',
+            icon: 'error',
+            confirmButtonText: '確定'
+        });
+    }
+}
 
 // DOM載入完成後初始化
 $(document).ready(function() {

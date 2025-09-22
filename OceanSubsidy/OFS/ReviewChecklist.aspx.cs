@@ -1432,6 +1432,26 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
     /// <param name="projectId">專案編號</param>
     /// <param name="reviewType">審查類型 (2:領域審查, 3:技術審查)</param>
     /// <returns>計畫詳細資料</returns>
+    /// <summary>
+    /// 匯出審查結果與意見回覆對照表
+    /// </summary>
+    /// <param name="projectId">專案編號</param>
+    /// <param name="reviewType">審查類型</param>
+    /// <returns>匯出結果</returns>
+    [WebMethod]
+    public static object ExportReviewCommentsComparison(string projectId, string reviewType)
+    {
+        try
+        {
+            string fileName = ReviewCheckListHelper.ExportReviewCommentsComparison(projectId, reviewType);
+            return new { Success = true, FileName = fileName };
+        }
+        catch (Exception ex)
+        {
+            return new { Success = false, Message = ex.Message };
+        }
+    }
+
     [WebMethod]
     public static object GetPlanDetail(string projectId, string reviewType)
     {

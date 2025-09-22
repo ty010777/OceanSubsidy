@@ -4,14 +4,14 @@
     計畫執行
 </asp:Content>
 
+
 <asp:Content ID="HeadContent" ContentPlaceHolderID="HeadExtra" runat="server">
     <!-- 引用 inprogressList.js -->
     <script src="<%= ResolveUrl("~/script/OFS/inprogressList.js") %>"></script>
 </asp:Content>
 
-<asp:Content ID="MainContent" ContentPlaceHolderID="MainContent" runat="server">
-    
-    <!-- 頁面標題 -->
+<asp:Content ID="Breadcrumbs" ContentPlaceHolderID="Breadcrumbs" runat="server">
+     <!-- 頁面標題 -->
     <div class="d-flex justify-content-between mb-4">
         <div class="page-title">
             <img src="<%= ResolveUrl("~/assets/img/information-system-title-icon05.svg") %>" alt="logo">
@@ -23,17 +23,19 @@
             </div>
         </div>
     </div>
-    
-    <!-- 公告bar -->
-    <div class="notice">
-        <div class="notice-content">
-            <h3 class="notice-title">114/12/31 條款正式上線</h3>
-        </div>
-        <div class="notice-action">
-            <a href="#" class="btn-link">全部公告</a>
-        </div>
-    </div>
-    
+</asp:Content>
+
+<asp:Content ID="MainContent" ContentPlaceHolderID="MainContent" runat="server">
+      <!-- 公告bar -->
+   <div class="notice">
+       <div class="notice-content">
+           <h3 class="notice-title">114/12/31 條款正式上線</h3>
+       </div>
+       <div class="notice-action">
+           <a href="#" class="btn-link">全部公告</a>
+       </div>
+   </div>
+
     <!-- 查詢 -->
     <div class="search bg-gray mt-4">
         <h3 class="text-teal">

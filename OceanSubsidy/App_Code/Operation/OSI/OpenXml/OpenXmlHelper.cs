@@ -419,5 +419,110 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
 
             mainPart.Document.Save();
         }
+
+        /// <summary>
+        /// 根據書籤名稱找到表格，並向下延伸指定數量的新行
+        /// </summary>
+        /// <param name="bookmarkName">表格書籤名稱</param>
+        /// <param name="addRowCount">要新增的行數</param>
+        /// <returns>延伸成功返回 true，否則返回 false</returns>
+        public bool SetTableRowCount(string bookmarkName, int addRowCount)
+        {
+            if (Bookmarks == null || !Bookmarks.ContainsKey(bookmarkName) || addRowCount < 0)
+                return false;
+
+            var bookmarkElement = Bookmarks[bookmarkName];
+
+            // 找到包含書籤的表格
+            var table = FindParentTable(bookmarkElement);
+            if (table == null) return false;
+
+            var currentRows = table.Elements<TableRow>().ToList();
+            if (currentRows.Count == 0) return false;
+
+            // 使用第一行（標題行）作為模板來複製結構
+            var templateRow = currentRows[0];
+
+            // 新增指定數量的行
+            for (int i = 0; i < addRowCount; i++)
+            {
+                var newRow = (TableRow)templateRow.CloneNode(true);
+
+                // 清空新行的內容，保持格式
+                foreach (var cell in newRow.Elements<TableCell>())
+                {
+                    foreach (var paragraph in cell.Elements<Paragraph>())
+                    {
+                        paragraph.RemoveAllChildren<Run>();
+                        paragraph.AppendChild(new Run(new Text("")));
+                    }
+                }
+
+                table.AppendChild(newRow);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 根據書籤名稱找到表格，並設定指定位置的單元格內容
+        /// </summary>
+        /// <param name="bookmarkName">表格書籤名稱</param>
+        /// <param name="rowIndex">行索引（0為第一行）</param>
+        /// <param name="columnIndex">列索引（0為第一列）</param>
+        /// <param name="content">要輸入的內容</param>
+        /// <returns>設定成功返回 true，否則返回 false</returns>
+        public bool SetTableCellValue(string bookmarkName, int rowIndex, int columnIndex, string content)
+        {
+            if (Bookmarks == null || !Bookmarks.ContainsKey(bookmarkName) ||
+                rowIndex < 0 || columnIndex < 0 || string.IsNullOrEmpty(content))
+                return false;
+
+            var bookmarkElement = Bookmarks[bookmarkName];
+
+            // 找到包含書籤的表格
+            var table = FindParentTable(bookmarkElement);
+            if (table == null) return false;
+
+            var rows = table.Elements<TableRow>().ToList();
+            if (rowIndex >= rows.Count) return false;
+
+            var targetRow = rows[rowIndex];
+            var cells = targetRow.Elements<TableCell>().ToList();
+            if (columnIndex >= cells.Count) return false;
+
+            var targetCell = cells[columnIndex];
+            var paragraph = targetCell.Elements<Paragraph>().FirstOrDefault();
+
+            if (paragraph == null)
+            {
+                paragraph = new Paragraph();
+                targetCell.AppendChild(paragraph);
+            }
+
+            // 清空單元格內容
+            paragraph.RemoveAllChildren<Run>();
+
+            // 插入新內容
+            paragraph.AppendChild(new Run(new Text(content)));
+
+            return true;
+        }
+
+        /// <summary>
+        /// 輔助方法：找到包含指定元素的表格
+        /// </summary>
+        private Table FindParentTable(OpenXmlElement element)
+        {
+            var currentElement = element;
+            while (currentElement != null)
+            {
+                if (currentElement is Table table)
+                    return table;
+
+                currentElement = currentElement.Parent;
+            }
+            return null;
+        }
     }
 }

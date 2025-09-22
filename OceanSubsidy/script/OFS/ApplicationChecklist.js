@@ -607,7 +607,7 @@ function generateActionButtons(record) {
                 </button>`;
     }
 
-    if(record.Category == "科專" || record.Category == "文化"){
+    if((record.Category == "科專" || record.Category == "文化")&&(record.Statuses != "尚未提送"  && record.Statuses != "資格審查" )){
     // 回覆按鈕（檢視審查意見）
         buttons += `<button class="btn btn-sm btn-teal-dark" type="button" onclick="showReviewComments('${record.ProjectID}')"
                     data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="檢視審查意見">
@@ -1051,12 +1051,16 @@ function displayReviewCommentsData(data) {
 
     // 填入計畫基本資訊
     if (data.projectInfo) {
-        document.getElementById('projectIdDisplay').textContent = data.projectInfo.ProjectID || '';
+        const projectId = data.projectInfo.ProjectID || '';
+        document.getElementById('projectIdDisplay').textContent = projectId;
         document.getElementById('projectYearDisplay').textContent = data.projectInfo.year || '';
         document.getElementById('projectCategoryDisplay').textContent = '科專'; // 預設值或從資料取得
         document.getElementById('reviewGroupDisplay').textContent = data.projectInfo.reviewGroup || '';
         document.getElementById('applicantUnitDisplay').textContent = data.projectInfo.applicantUnit || '';
         document.getElementById('projectNameDisplay').textContent = data.projectInfo.projectName || '';
+
+        // 根據專案類型設定審查階段標題和按鈕文字
+        updateReviewSectionTitles(projectId);
     }
 
     // 建立領域審查意見表格
@@ -1162,11 +1166,11 @@ function showCommentErrorState(message) {
     const technicalTableBody = document.getElementById('technicalReviewCommentsTableBody');
 
     if (domainTableBody) {
-        domainTableBody.innerHTML = `<tr><td colspan="3" class="text-center p-4 ">載入失敗: ${message}</td></tr>`;
+        domainTableBody.innerHTML = `<tr><td colspan="3" class="text-center p-4 "> ${message}</td></tr>`;
     }
 
     if (technicalTableBody) {
-        technicalTableBody.innerHTML = `<tr><td colspan="3" class="text-center p-4 ">載入失敗: ${message}</td></tr>`;
+        technicalTableBody.innerHTML = `<tr><td colspan="3" class="text-center p-4 "> ${message}</td></tr>`;
     }
 
     // 清空計畫基本資訊
@@ -1285,4 +1289,126 @@ function submitReply() {
 // 向後相容性別名 - 其他程式碼可能仍會呼叫 loadPageData
 function loadPageData(showLoading = true) {
     loadFilteredData(showLoading);
+}
+
+// 匯出審查意見回覆表
+function exportReviewCommentReply(reviewType) {
+    // 取得當前顯示的計畫ID
+    const projectId = document.getElementById('projectIdDisplay').textContent.trim();
+
+    if (!projectId) {
+        alert('無法取得計畫編號');
+        return;
+    }
+
+    // 根據 reviewType 確認對應的審查意見資料
+    let hasComments = false;
+    let exportTypeName = '';
+
+    if (reviewType === 'domain') {
+        const domainComments = document.querySelectorAll('#domainReviewCommentsTableBody tr').length;
+        hasComments = domainComments > 0;
+        exportTypeName = '領域審查意見回覆表';
+    } else if (reviewType === 'technical') {
+        const technicalComments = document.querySelectorAll('#technicalReviewCommentsTableBody tr').length;
+        hasComments = technicalComments > 0;
+        exportTypeName = '技術審查意見回覆表';
+    } else {
+        alert('無效的審查類型');
+        return;
+    }
+
+    if (!hasComments) {
+        alert(`目前沒有${exportTypeName.replace('回覆表', '')}資料可供匯出`);
+        return;
+    }
+
+    // 建立下載連結
+    const downloadUrl = `../Service/DownloadApplicationChecklistFile.ashx?action=exportReviewCommentReply&projectId=${encodeURIComponent(projectId)}&reviewType=${encodeURIComponent(reviewType)}`;
+
+    // 建立隱藏的下載連結並觸發下載
+    const downloadLink = document.createElement('a');
+    downloadLink.href = downloadUrl;
+    downloadLink.download = `${projectId}_${exportTypeName}_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.docx`;
+    downloadLink.style.display = 'none';
+
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+}
+
+// 根據專案類型更新審查階段標題和按鈕文字
+function updateReviewSectionTitles(projectId) {
+    let domainTitle = '';
+    let technicalTitle = '';
+    let domainButtonText = '';
+    let technicalButtonText = '';
+
+    if (projectId.includes('SCI')) {
+        // 科專專案
+        domainTitle = '領域審查意見回覆';
+        technicalTitle = '技術審查意見回覆';
+        domainButtonText = '匯出領域審查意見回覆表';
+        technicalButtonText = '匯出技術審查意見回覆表';
+    } else if (projectId.includes('CUL')) {
+        // 文化專案
+        domainTitle = '初審意見回覆';
+        technicalTitle = '複審意見回覆';
+        domainButtonText = '匯出初審意見回覆表';
+        technicalButtonText = '匯出複審意見回覆表';
+    } else {
+        // 預設值（其他專案類型）
+        domainTitle = '領域審查意見回覆';
+        technicalTitle = '技術審查意見回覆';
+        domainButtonText = '匯出領域審查意見回覆表';
+        technicalButtonText = '匯出技術審查意見回覆表';
+    }
+
+    // 更新標題 - 使用更精確的選擇器
+    const titleElements = document.querySelectorAll('#planCommentModal h5.square-title');
+
+    // 找到領域審查/初審標題（通常是第一個）
+    titleElements.forEach((element, index) => {
+        const text = element.textContent;
+        if (text.includes('領域審查') || text.includes('初審')) {
+            element.textContent = domainTitle;
+        } else if (text.includes('技術審查') || text.includes('複審')) {
+            element.textContent = technicalTitle;
+        }
+    });
+
+    // 更新按鈕文字
+    const domainButton = document.querySelector('button[onclick*="exportReviewCommentReply(\'domain\')"]');
+    if (domainButton) {
+        domainButton.innerHTML = `<i class="fas fa-download"></i>${domainButtonText}`;
+    }
+
+    const technicalButton = document.querySelector('button[onclick*="exportReviewCommentReply(\'technical\')"]');
+    if (technicalButton) {
+        technicalButton.innerHTML = `<i class="fas fa-download"></i>${technicalButtonText}`;
+    }
+}
+
+// 匯出申請資料（計畫書 PDF）
+function exportApplicationData() {
+    // 取得當前顯示的計畫ID
+    const projectId = document.getElementById('projectIdDisplay').textContent.trim();
+
+    if (!projectId) {
+        alert('無法取得計畫編號');
+        return;
+    }
+
+    // 建立下載連結
+    const downloadUrl = `../Service/DownloadApplicationChecklistFile.ashx?action=exportApplicationData&projectId=${encodeURIComponent(projectId)}`;
+
+    // 建立隱藏的下載連結並觸發下載
+    const downloadLink = document.createElement('a');
+    downloadLink.href = downloadUrl;
+    downloadLink.target = '_blank'; // 在新視窗開啟，類似 SciApplicationReview 的實作
+    downloadLink.style.display = 'none';
+
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
 }

@@ -818,48 +818,79 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             {
                  Stage1 = "領域審查";
                  Stage2 = "技術審查";
+                 // 查詢領域/初審 審查意見
+                 var domainCommentsTable = ReviewCheckListHelper.GetSciReviewComments(projectId, Stage1);
+                 if (domainCommentsTable != null && domainCommentsTable.Rows.Count > 0)
+                 {
+                     foreach (DataRow row in domainCommentsTable.Rows)
+                     {
+                         domainReviewComments.Add(new
+                         {
+                             reviewerReviewID = row["ReviewID"]?.ToString() ?? "",
+                             reviewerName = row["ReviewerName"]?.ToString() ?? "",
+                             reviewComment = row["ReviewComment"]?.ToString() ?? "",
+                             replyComment = row["ReplyComment"]?.ToString() ?? ""
+                         });
+                     }
+                 }
+
+                 // 查詢技術審查/複審 意見
+                 var technicalCommentsTable = ReviewCheckListHelper.GetSciReviewComments(projectId, Stage2);
+                 if (technicalCommentsTable != null && technicalCommentsTable.Rows.Count > 0)
+                 {
+                     foreach (DataRow row in technicalCommentsTable.Rows)
+                     {
+                         technicalReviewComments.Add(new
+                         {
+                             reviewerReviewID = row["ReviewID"]?.ToString() ?? "",
+                             reviewerName = row["ReviewerName"]?.ToString() ?? "",
+                             reviewComment = row["ReviewComment"]?.ToString() ?? "",
+                             replyComment = row["ReplyComment"]?.ToString() ?? ""
+                         });
+                     }
+                 }
+
             }
             else if (projectId.Contains("CUL"))
             {
-                Stage1 = "初審";
-                Stage2 = "複審";
+                Stage1 = "2";//初審
+                Stage2 = "3";//複審
+                // 查詢領域/初審 審查意見
+                var domainCommentsTable = ReviewCheckListHelper.GetCulturalReviewComments(projectId, Stage1);
+                if (domainCommentsTable != null && domainCommentsTable.Rows.Count > 0)
+                {
+                    foreach (DataRow row in domainCommentsTable.Rows)
+                    {
+                        domainReviewComments.Add(new
+                        {
+                            reviewerReviewID = row["ReviewID"]?.ToString() ?? "",
+                            reviewerName = row["ReviewerName"]?.ToString() ?? "",
+                            reviewComment = row["ReviewComment"]?.ToString() ?? "",
+                            replyComment = row["ReplyComment"]?.ToString() ?? ""
+                        });
+                    }
+                }
+
+                // 查詢技術審查/複審 意見
+                var technicalCommentsTable = ReviewCheckListHelper.GetCulturalReviewComments(projectId, Stage2);
+                if (technicalCommentsTable != null && technicalCommentsTable.Rows.Count > 0)
+                {
+                    foreach (DataRow row in technicalCommentsTable.Rows)
+                    {
+                        technicalReviewComments.Add(new
+                        {
+                            reviewerReviewID = row["ReviewID"]?.ToString() ?? "",
+                            reviewerName = row["ReviewerName"]?.ToString() ?? "",
+                            reviewComment = row["ReviewComment"]?.ToString() ?? "",
+                            replyComment = row["ReplyComment"]?.ToString() ?? ""
+                        });
+                    }
+                }
+
             }
 
-            // 查詢領域/初審 審查意見
-            var domainCommentsTable = ReviewCheckListHelper.GetSciReviewComments(projectId, Stage1);
-            if (domainCommentsTable != null && domainCommentsTable.Rows.Count > 0)
-            {
-                foreach (DataRow row in domainCommentsTable.Rows)
-                {
-                    domainReviewComments.Add(new
-                    {
-                        reviewerReviewID = row["ReviewID"]?.ToString() ?? "",
-                        reviewerName = row["ReviewerName"]?.ToString() ?? "",
-                        reviewComment = row["ReviewComment"]?.ToString() ?? "",
-                        replyComment = row["ReplyComment"]?.ToString() ?? ""
-                    });
-                }
-            }
-            else
-            {
-                return new { success = false, message = "無資料，或尚未提送審查意見" };
-            }
-            // 查詢技術審查/複審 意見
-            var technicalCommentsTable = ReviewCheckListHelper.GetSciReviewComments(projectId, Stage2);
-            if (technicalCommentsTable != null && technicalCommentsTable.Rows.Count > 0)
-            {
-                foreach (DataRow row in technicalCommentsTable.Rows)
-                {
-                    technicalReviewComments.Add(new
-                    {
-                        reviewerReviewID = row["ReviewID"]?.ToString() ?? "",
-                        reviewerName = row["ReviewerName"]?.ToString() ?? "",
-                        reviewComment = row["ReviewComment"]?.ToString() ?? "",
-                        replyComment = row["ReplyComment"]?.ToString() ?? ""
-                    });
-                }
-            }
-            else
+            // 檢查是否至少有一個階段有資料
+            if (domainReviewComments.Count == 0 && technicalReviewComments.Count == 0)
             {
                 return new { success = false, message = "無資料，或尚未提送審查意見" };
             }

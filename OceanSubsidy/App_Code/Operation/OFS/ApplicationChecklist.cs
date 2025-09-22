@@ -554,24 +554,38 @@ public class ApplicationChecklistHelper
             {
                 // 科專計畫
                 db.CommandText = @"SELECT TOP (1)
-                    [ProjectID],
+                    AM.[ProjectID],
                     [Year],
                     [SubsidyPlanType],
                     [ProjectNameTw] as ProjectName,
-                    (SELECT Descname
+					AM.OrgName,
+                    UserName,
+					(SELECT Descname
                      FROM Sys_ZgsCode
-                     WHERE Code = AM.[Field]
+                     WHERE Code = AM.[Field] and CodeGroup = 'SCIField'
                     ) as ReviewGroup,
-                    [OrgName] as ApplicantUnit,
-                    [updated_at]
-                FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Application_Main] AM
-                WHERE ProjectID = @ProjectID";
+                    [OrgName] as ApplicantUnit
+                    FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Application_Main] AM
+				LEFT JOIN OFS_SCI_Project_Main PM ON AM.ProjectID = PM.ProjectID
+                WHERE AM.ProjectID = @ProjectID";
             }
             else if (projectId.Contains("CUL"))
             {
-                // TODO: 文化計畫資料查詢的 SQL
-                // TODO: 查詢文化計畫的 Application_Main 表
-                return null;
+                db.CommandText = @"SELECT TOP (1)
+                    [ProjectID],
+                    [Year],
+                    [SubsidyPlanType],
+                    ProjectName,
+                    (SELECT TOP(1)Descname
+                        FROM Sys_ZgsCode
+                        WHERE Code = CP.Field and CodeGroup = 'CULField'
+                    ) as ReviewGroup,
+                    [OrgName] as ApplicantUnit,
+                    UserName
+                FROM [OCA_OceanSubsidy].[dbo].[OFS_CUL_Project] CP
+	            where ProjectID = @ProjectID
+	";
+                
             }
             else
             {
@@ -591,7 +605,8 @@ public class ApplicationChecklistHelper
                     Year = row["Year"]?.ToString(),
                     ProjectName = row["ProjectName"]?.ToString(),
                     ReviewGroup = row["ReviewGroup"]?.ToString(),
-                    ApplicantUnit = row["ApplicantUnit"]?.ToString()
+                    ApplicantUnit = row["ApplicantUnit"]?.ToString(),
+                    UserName = row["UserName"]?.ToString()
                 };
             }
 

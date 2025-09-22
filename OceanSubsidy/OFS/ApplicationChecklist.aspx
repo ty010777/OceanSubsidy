@@ -8,20 +8,23 @@
     <script src="<%= ResolveUrl("~/script/OFS/ApplicationChecklist.js") %>"></script>
 </asp:Content>
 
+<asp:Content ID="Breadcrumbs" ContentPlaceHolderID="Breadcrumbs" runat="server">
+     <div class="page-title">
+            <img src="<%= ResolveUrl("~/assets/img/information-system-title-icon04.svg") %>" alt="logo">
+            <div>
+                <span>目前位置</span>
+                <div class="d-flex align-items-end gap-3">
+                    <h2 class="text-teal-dark">計畫申請</h2>
+                </div>
+            </div>
+        </div>
+</asp:Content>
 <asp:Content ID="MainContent" ContentPlaceHolderID="MainContent" runat="server">
     <asp:HiddenField ID="hidSelectedStage" runat="server" />
     <asp:Button ID="btnStageFilter" runat="server" OnClick="btnStageFilter_Click" style="display: none;" />
     
     <!-- 頁面標題 -->
-    <div class="page-title">
-        <img src="<%= ResolveUrl("~/assets/img/information-system-title-icon04.svg") %>" alt="logo">
-        <div>
-            <span>目前位置</span>
-            <div class="d-flex align-items-end gap-3">
-                <h2 class="text-teal-dark">計畫申請</h2>
-            </div>
-        </div>
-    </div>
+   
     
     <!-- 公告提醒 -->
     <div class="notice">
@@ -382,12 +385,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>114/03/16 17:45:45</td>
-                                    <td>張申請</td>
-                                    <td>領域審查 審核中-->領域審查 已撤案</td>
-                                    <td>因OOO原因撤案</td>
-                                </tr>
+                               
                             </tbody>
                         </table>
                     </div>
@@ -662,7 +660,7 @@
 
                     <div class="d-flex justify-content-between">
                         <h5 class="square-title">計畫資料</h5>
-                        <button class="btn btn-teal-dark" type="button"><i class="fas fa-download"></i>匯出申請資料</button>
+                        <button class="btn btn-teal-dark" type="button" onclick="exportApplicationData()"><i class="fas fa-download"></i>匯出申請資料</button>
                     </div>
 
                     <div class="bg-light-gray p-3 mb-5 mt-3">
@@ -697,7 +695,7 @@
 
                     <div class="d-flex justify-content-between">
                         <h5 class="square-title">領域審查意見回覆</h5>
-                        <button class="btn btn-teal-dark" type="button"><i class="fas fa-download"></i>匯出審查意見回覆表</button>
+                        <button class="btn btn-teal-dark" type="button" onclick="exportReviewCommentReply('domain')"><i class="fas fa-download"></i>匯出領域審查意見回覆表</button>
                     </div>
                     <div class="table-responsive mt-3">
                         <table class="table align-middle gray-table lh-base">
@@ -716,7 +714,7 @@
                     
                     <div class="d-flex justify-content-between mt-5">
                         <h5 class="square-title">技術審查意見回覆</h5>
-                        <button class="btn btn-teal-dark" type="button"><i class="fas fa-download"></i>匯出技術審查意見回覆表</button>
+                        <button class="btn btn-teal-dark" type="button" onclick="exportReviewCommentReply('technical')"><i class="fas fa-download"></i>匯出技術審查意見回覆表</button>
                     </div>
                     <div class="table-responsive mt-3">
                         <table class="table align-middle gray-table lh-base">
