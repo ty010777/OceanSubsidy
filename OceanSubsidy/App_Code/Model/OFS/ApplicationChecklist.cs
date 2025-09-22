@@ -12,6 +12,7 @@ namespace GS.OCA_OceanSubsidy.Model.OFS
         public string ProjectName { get; set; }
         public string ReviewGroup { get; set; }
         public string ApplicantUnit { get; set; }
+        public string UserName { get; set; }
     }
     public class ReplyItem
     {

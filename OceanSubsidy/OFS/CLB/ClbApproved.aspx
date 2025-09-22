@@ -76,6 +76,46 @@
         </div>
     </div>
     
+    <!-- Modal 計畫變更 -->
+    <div class="modal fade" id="planChangeModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="planChangeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="fs-24 fw-bold text-green-light">計畫變更申請</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <div class="fs-16 text-gray mb-3">
+                            <i class="fas fa-info-circle text-primary me-2"></i>
+                            計畫變更原因
+                        </div>
+                        <textarea id="planChangeReason" class="form-control" rows="6"
+                                  placeholder="請詳細說明計畫變更的原因與內容..."
+                                  style="resize: vertical; min-height: 150px;"></textarea>
+                        <div class="text-muted small mt-2">
+                            <i class="fas fa-exclamation-triangle text-warning me-1"></i>
+                            請詳細說明變更原因，此資訊將作為審核依據
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-4 flex-wrap justify-content-center mt-5">
+                        <button type="button" class="btn btn-gray" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>
+                            取消
+                        </button>
+                        <button type="button" class="btn btn-teal" onclick="confirmPlanChange()">
+                            <i class="fas fa-check me-1"></i>
+                            確定變更
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal 移轉案件 -->
     <div class="modal fade" id="transferCaseModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="transferCaseModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-md">

@@ -4,6 +4,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Web;
+using GS.OCA_OceanSubsidy.Operation.OSI.OpenXml;
 using GS.Data;
 using GS.Data.Sql;
 using GS.OCA_OceanSubsidy.Entity;
@@ -2628,7 +2629,9 @@ SELECT TOP (1000) [ProjectID]
                         FROM Sys_ZgsCode
                         WHERE Code = AM.[Field]
                     ) AS [TopicField],
-                    [OrgName]
+                    [OrgName],
+                    [StartTime],
+                    [EndTime]
                 FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Application_Main] AM
                 WHERE [ProjectID] = @projectId
             ";
@@ -2654,7 +2657,9 @@ SELECT TOP (1000) [ProjectID]
                        [SubsidyPlanType],
                        [ProjectName] AS [ProjectNameTw],
                        M.Descname + '-' + S.Descname AS [TopicField],
-                       [OrgName]
+                       [OrgName],
+                       [StartTime],
+                       [EndTime]
                   FROM [OFS_CUL_Project] AS P
              LEFT JOIN [Sys_ZgsCode] AS S ON (S.CodeGroup = 'CULField' AND S.Code = P.Field)
              LEFT JOIN [Sys_ZgsCode] AS M ON (M.CodeGroup = 'CULField' AND M.Code = S.ParentCode)
@@ -2735,6 +2740,80 @@ SELECT TOP (1000) [ProjectID]
             db.Parameters.Add("@projectId", projectId);
             db.Parameters.Add("@reviewStage", reviewStage);
             return db.GetTable();
+        }
+    }
+
+    /// <summary>
+    /// 匯出審查結果與意見回覆對照表
+    /// </summary>
+    /// <param name="projectId">專案編號</param>
+    /// <param name="reviewType">審查類型</param>
+    /// <returns>匯出檔案名稱</returns>
+    public static string ExportReviewCommentsComparison(string projectId, string reviewType)
+    {
+        try
+        {
+            // 取得計畫基本資料
+            DataTable planData = null;
+            DataTable reviewData = null;
+            string reviewStage = "";
+
+            if (projectId.Contains("SCI"))
+            {
+                planData = GetSciPlanDetail(projectId);
+
+                if (reviewType == "2")
+                {
+                    reviewStage = "領域審查";
+                }
+                else if (reviewType == "3")
+                {
+                    reviewStage = "技術審查";
+                }
+
+                reviewData = GetSciReviewComments(projectId, reviewStage);
+            }
+            else if (projectId.Contains("CUL"))
+            {
+                planData = GetCulturalPlanDetail(projectId);
+                reviewData = GetCulturalReviewComments(projectId, reviewType);
+
+                if (reviewType == "2")
+                {
+                    reviewStage = "初審";
+                }
+                else if (reviewType == "3")
+                {
+                    reviewStage = "複審";
+                }
+            }
+
+            if (planData == null || planData.Rows.Count == 0)
+            {
+                throw new Exception("查無計畫資料");
+            }
+
+            var planRow = planData.Rows[0];
+
+            // 生成檔案名稱
+            string fileName = $"審查結果與意見回覆對照表_{projectId}_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
+            string filePath = HttpContext.Current.Server.MapPath($"~/temp/{fileName}");
+
+            // 確保目錄存在
+            string tempDir = HttpContext.Current.Server.MapPath("~/temp/");
+            if (!Directory.Exists(tempDir))
+            {
+                Directory.CreateDirectory(tempDir);
+            }
+
+            // 使用 ExcelExtensions 匯出
+            ExcelExtensions.ExportReviewCommentsComparison(planRow, reviewData, filePath);
+
+            return fileName;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"匯出審查結果與意見回覆對照表失敗: {ex.Message}");
         }
     }
 

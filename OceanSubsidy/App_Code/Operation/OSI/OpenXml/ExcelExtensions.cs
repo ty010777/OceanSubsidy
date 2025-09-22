@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
+using System.Web;
 
 namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
 {
@@ -290,6 +291,100 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
                         outputExcel.WriteRange(file.Key, exportData, 1, 1);
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// 匯出審查結果與意見回覆對照表（使用範本）
+        /// </summary>
+        /// <param name="planData">計畫基本資料</param>
+        /// <param name="reviewData">審查意見資料</param>
+        /// <param name="filePath">輸出檔案路徑</param>
+        /// <param name="templatePath">範本檔案路徑</param>
+        public static void ExportReviewCommentsComparison(DataRow planData, DataTable reviewData, string filePath, string templatePath = null)
+        {
+            // 預設範本路徑
+            if (string.IsNullOrEmpty(templatePath))
+            {
+                templatePath = HttpContext.Current.Server.MapPath("~/Template/Shared/審查意見及回覆紀錄_匯出範本.xlsx");
+            }
+
+            // 複製範本到目標路徑
+            File.Copy(templatePath, filePath, true);
+
+            // 開啟複製的檔案進行編輯
+            using (var excel = new ExcelHelper(filePath))
+            {
+                var sheetNames = excel.GetWorksheetNames();
+                var sheetName = sheetNames.FirstOrDefault() ?? "工作表1";
+
+                // 計算計畫期程
+                string projectPeriod = "";
+                if (planData["StartTime"] != DBNull.Value && planData["StartTime"] != null)
+                {
+                    DateTime startTime = Convert.ToDateTime(planData["StartTime"]);
+                    DateTime endTime = DateTime.MinValue;
+
+                    // 科專使用 TimeEnd，文化使用 EndTime
+                    string endTimeField = planData.Table.Columns.Contains("TimeEnd") ? "TimeEnd" : "EndTime";
+                    if (planData[endTimeField] != DBNull.Value && planData[endTimeField] != null)
+                    {
+                        endTime = Convert.ToDateTime(planData[endTimeField]);
+                    }
+
+                    if (endTime != DateTime.MinValue)
+                    {
+                        projectPeriod = $"{startTime:yyy/MM/dd} - {endTime:yyy/MM/dd}";
+                    }
+                    else
+                    {
+                        projectPeriod = startTime.ToString("yyy/MM/dd");
+                    }
+                }
+
+                // 寫入計畫基本資訊（從第1行開始）
+                var basicInfoData = new List<List<object>>
+                {
+                    new List<object> { "計畫編號", planData["ProjectID"]?.ToString() ?? "" },
+                    new List<object> { "計畫名稱", planData["ProjectNameTw"]?.ToString() ?? "" },
+                    new List<object> { "申請單位", planData["OrgName"]?.ToString() ?? "" },
+                    new List<object> { "計畫期程", projectPeriod }
+                };
+
+                excel.WriteRange(sheetName, basicInfoData, 1, 1);
+
+                // 範本中的表頭預計在第6行，審查資料從第7行開始寫入
+                int dataStartRow = 7;
+
+                if (reviewData != null && reviewData.Rows.Count > 0)
+                {
+                    var reviewDataList = new List<List<object>>();
+
+                    foreach (DataRow reviewRow in reviewData.Rows)
+                    {
+                        // 格式化審查日期
+                        string reviewDate = "";
+                        if (reviewRow["CreateTime"] != DBNull.Value && reviewRow["CreateTime"] != null)
+                        {
+                            DateTime createTime = Convert.ToDateTime(reviewRow["CreateTime"]);
+                            reviewDate = createTime.ToString("yyy/MM/dd");
+                        }
+
+                        reviewDataList.Add(new List<object>
+                        {
+                            reviewDate,
+                            reviewRow["ReviewerName"]?.ToString() ?? "",
+                            reviewRow["ReviewComment"]?.ToString() ?? "",
+                            reviewRow["ReplyComment"]?.ToString() ?? ""
+                        });
+                    }
+
+                    // 寫入審查資料
+                    excel.WriteRange(sheetName, reviewDataList, dataStartRow, 1);
+                }
+
+                // 自動調整欄位寬度
+                excel.AutoSizeColumns(sheetName, 4, 15, 50);
             }
         }
 

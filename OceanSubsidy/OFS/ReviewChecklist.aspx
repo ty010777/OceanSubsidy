@@ -7,21 +7,24 @@
 
 </asp:Content>
 
+<asp:Content ID="Breadcrumbs" ContentPlaceHolderID="Breadcrumbs" runat="server">
+      <!-- 頁面標題 -->
+       <div class="page-title">
+           <img src="<%= ResolveUrl("~/assets/img/information-system-title-icon04.svg") %>" alt="logo">
+           <div>
+               <span>目前位置</span>
+               <div class="d-flex align-items-end gap-3">
+                   <h2 class="text-teal-dark">計畫審查</h2>
+               </div>
+           </div>
+       </div>
+</asp:Content>
 <asp:Content ID="MainContent" ContentPlaceHolderID="MainContent" runat="server">
     <!-- 隱藏欄位和按鈕 -->
     <asp:HiddenField ID="hdnSelectedProjectIds" runat="server" ClientIDMode="Static"/>
     <asp:Button ID="btnSendToApplicant" runat="server" Text="提送至申請者" 
                 OnClick="btnSendToApplicant_Click" Style="display: none;" ClientIDMode="Static"/>
-    <!-- 頁面標題 -->
-    <div class="page-title">
-        <img src="<%= ResolveUrl("~/assets/img/information-system-title-icon04.svg") %>" alt="logo">
-        <div>
-            <span>目前位置</span>
-            <div class="d-flex align-items-end gap-3">
-                <h2 class="text-teal-dark">計畫審查</h2>
-            </div>
-        </div>
-    </div>
+ 
     
     <!-- 公告提醒 -->
     <div class="notice">
@@ -1238,7 +1241,7 @@
                            <button type="button" class="btn btn-gray" data-bs-dismiss="modal">
                                取消
                            </button>
-                           <button type="button" class="btn btn-teal">
+                           <button type="button" class="btn btn-teal" onclick="exportReviewCommentsComparison()">
                                匯出歷次審查結果及回覆對照表
                            </button>
                        </div>
