@@ -52,6 +52,7 @@ import MultipleProgressBar from "./components/Multiple/ProgressBar.vue";
 import MultipleWorkSchedule from "./components/Multiple/WorkSchedule.vue";
 import NewsDetail from "./components/NewsDetail.vue";
 import NewsList from "./components/NewsList.vue";
+import NewsMarquee from "./components/NewsMarquee.vue";
 import ProjectChangeReview from "./components/ProjectChangeReview.vue";
 import ProjectCorrectionReview from "./components/ProjectCorrectionReview.vue";
 import ProjectOrganizer from "./components/ProjectOrganizer.vue";
@@ -136,6 +137,7 @@ const components = {
     MultipleWorkSchedule,
     NewsDetail,
     NewsList,
+    NewsMarquee,
     ProjectChangeReview,
     ProjectCorrectionReview,
     ProjectOrganizer,

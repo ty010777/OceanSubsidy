@@ -55,6 +55,8 @@ const system = (method, param = {}) => {
     return post("Service/OFS/System.ashx", { method, param });
 };
 
+const toUrl = (relative) => `${base}${relative}`;
+
 const upload = (file) => {
     const payload = new FormData();
 
@@ -63,4 +65,4 @@ const upload = (file) => {
     return post("Service/OFS/Upload.ashx", payload);
 };
 
-export const api = Object.assign(post, { accessibility, culture, download, education, literacy, multiple, setBaseUrl, system, upload });
+export const api = Object.assign(post, { accessibility, culture, download, education, literacy, multiple, setBaseUrl, system, toUrl, upload });
