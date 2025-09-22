@@ -130,7 +130,7 @@ public class MultipleService : BaseService
 
         if (snapshot != null)
         {
-            data = snapshot["Project"].ToObject<OFS_CulProject>();
+            data = snapshot["Project"].ToObject<OFS_MulProject>();
 
             return new
             {
@@ -304,7 +304,7 @@ public class MultipleService : BaseService
 
             if (payment.Stage == 3)
             {
-                OFS_CulProjectHelper.updateProgressStatus(data.ProjectID, 9); //結案
+                OFS_MulProjectHelper.updateProgressStatus(data.ProjectID, 9); //結案
             }
         }
         else
@@ -809,9 +809,9 @@ public class MultipleService : BaseService
         throw new Exception("狀態錯誤");
     }
 
-    private OFS_CulProject getProject(JObject param, out JObject snapshot)
+    private OFS_MulProject getProject(JObject param, out JObject snapshot)
     {
-        var project = OFS_CulProjectHelper.get(getID(param["ID"].ToString()));
+        var project = OFS_MulProjectHelper.get(getID(param["ID"].ToString()));
 
         snapshot = project.ProgressStatus >= 5 && bool.Parse(param["Apply"].ToString()) ? getSnapshot("MUL", project.ID) : null;
 
