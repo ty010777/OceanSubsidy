@@ -192,7 +192,7 @@ public class EducationService : BaseService
             payment.Status = "通過";
             payment.CurrentActualPaidAmount = int.Parse(param["Amount"].ToString());
 
-            OFS_CulProjectHelper.updateProgressStatus(data.ProjectID, 9); //結案
+            OFS_EdcProjectHelper.updateProgressStatus(data.ProjectID, 9); //結案
         }
         else
         {
@@ -518,9 +518,9 @@ public class EducationService : BaseService
         throw new Exception("狀態錯誤");
     }
 
-    private OFS_CulProject getProject(JObject param, out JObject snapshot)
+    private OFS_EdcProject getProject(JObject param, out JObject snapshot)
     {
-        var project = OFS_CulProjectHelper.get(getID(param["ID"].ToString()));
+        var project = OFS_EdcProjectHelper.get(getID(param["ID"].ToString()));
 
         snapshot = project.ProgressStatus >= 5 && bool.Parse(param["Apply"].ToString()) ? getSnapshot("EDC", project.ID) : null;
 

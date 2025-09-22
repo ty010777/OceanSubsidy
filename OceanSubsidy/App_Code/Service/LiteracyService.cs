@@ -130,7 +130,7 @@ public class LiteracyService : BaseService
 
         if (snapshot != null)
         {
-            data = snapshot["Project"].ToObject<OFS_CulProject>();
+            data = snapshot["Project"].ToObject<OFS_LitProject>();
 
             return new
             {
@@ -281,7 +281,7 @@ public class LiteracyService : BaseService
 
             if (payment.Stage == 2)
             {
-                OFS_CulProjectHelper.updateProgressStatus(data.ProjectID, 9); //結案
+                OFS_LitProjectHelper.updateProgressStatus(data.ProjectID, 9); //結案
             }
         }
         else
@@ -780,9 +780,9 @@ public class LiteracyService : BaseService
         throw new Exception("狀態錯誤");
     }
 
-    private OFS_CulProject getProject(JObject param, out JObject snapshot)
+    private OFS_LitProject getProject(JObject param, out JObject snapshot)
     {
-        var project = OFS_CulProjectHelper.get(getID(param["ID"].ToString()));
+        var project = OFS_LitProjectHelper.get(getID(param["ID"].ToString()));
 
         snapshot = project.ProgressStatus >= 5 && bool.Parse(param["Apply"].ToString()) ? getSnapshot("LIT", project.ID) : null;
 
