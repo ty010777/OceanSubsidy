@@ -27,7 +27,7 @@
                                 <required-label v-else>{{ item.Title }}</required-label>
                             </div>
                             <div class="mt-3 small" v-html="item.Comment" v-if="editable && item.Comment"></div>
-                            <a class="btn btn-sm btn-teal-dark rounded-pill mt-2" :href="item.Template" style="width:140px" type="button" v-if="editable && item.Template">
+                            <a class="btn btn-sm btn-teal-dark rounded-pill mt-2" download :href="item.Template" style="width:140px" type="button" v-if="editable && item.Template">
                                 <i class="fas fa-file-download me-1"></i>範本下載
                             </a>
                         </td>
@@ -87,9 +87,9 @@
     });
 
     const docs = ref([
-        { Type: 1, Title: "申請表", Template: "../../Template/EDC/1-申請表.docx", Files: [] },
-        { Type: 2, Title: "計畫書", Template: "../../Template/EDC/2-申請計畫書.docx", Files: [] },
-        { Type: 3, Title: "未違反公職人員利益衝突迴避法切結書及事前揭露表", Template: "../../Template/EDC/3-未違反公職人員利益衝突迴避法切結書及事前揭露表.docx", Files: [] }
+        { Type: 1, Title: "申請表", Template: `../../Service/OFS/DownloadTemplateEDC.ashx?type=1&id=${props.id}`, Files: [] },
+        { Type: 2, Title: "計畫書", Template: `../../Service/OFS/DownloadTemplateEDC.ashx?type=2&id=${props.id}`, Files: [] },
+        { Type: 3, Title: "未違反公職人員利益衝突迴避法切結書及事前揭露表", Template: `../../Service/OFS/DownloadTemplateEDC.ashx?type=3&id=${props.id}`, Files: [] }
     ]);
 
     const changeForm = ref();

@@ -26,7 +26,7 @@
                                 <required-label v-else>{{ item.Title }}</required-label>
                             </div>
                             <div class="mt-3 small" v-html="item.Comment" v-if="editable && item.Comment"></div>
-                            <a class="btn btn-sm btn-teal-dark rounded-pill mt-2" :href="item.Template" style="width:140px" type="button" v-if="editable && item.Template">
+                            <a class="btn btn-sm btn-teal-dark rounded-pill mt-2" download :href="item.Template" style="width:140px" type="button" v-if="editable && item.Template">
                                 <i class="fas fa-file-download me-1"></i>範本下載
                             </a>
                         </td>
@@ -86,10 +86,10 @@
     });
 
     const docs = ref([
-        { Type: 1, Title: "申請表", Template: "../../Template/CUL/1.申請表.docx", Files: [] },
-        { Type: 2, Title: "申請捐（補）助計畫書", Template: "../../Template/CUL/2.計畫書.docx", Files: [] },
-        { Type: 3, Title: "執行承諾書", Template: "../../Template/CUL/3.執行承諾書.docx", Files: [], Excludes: ["1"] },
-        { Type: 4, Title: "未違反公職人員利益衝突迴避法切結書及事前揭露表", Comment: "(與本計畫相關之補充資料、如立案證明、配合提案計畫邀集相關合作單位召開討論之會議紀錄等；若有合作對象，請附合作對象同意書)", Template: "../../Template/CUL/4.未違反公職人員利益衝突迴避法切結書及事前揭露表.docx", Files: [] },
+        { Type: 1, Title: "申請表", Template: `../../Service/OFS/DownloadTemplateCUL.ashx?type=1&id=${props.id}`, Files: [] },
+        { Type: 2, Title: "申請捐（補）助計畫書", Template: `../../Service/OFS/DownloadTemplateCUL.ashx?type=2&id=${props.id}`, Files: [] },
+        { Type: 3, Title: "執行承諾書", Template: `../../Service/OFS/DownloadTemplateCUL.ashx?type=3&id=${props.id}`, Files: [], Excludes: ["1"] },
+        { Type: 4, Title: "未違反公職人員利益衝突迴避法切結書及事前揭露表", Comment: "(與本計畫相關之補充資料、如立案證明、配合提案計畫邀集相關合作單位召開討論之會議紀錄等；若有合作對象，請附合作對象同意書)", Template: `../../Service/OFS/DownloadTemplateCUL.ashx?type=4&id=${props.id}`, Files: [] },
         { Type: 5, Title: "附錄", Files: [], Multiple: true }
     ]);
 
@@ -110,14 +110,6 @@
     };
 
     const download = api.download;
-
-    const downloadTemplate = (idx) => {
-        const doc = docs.value[idx - 1];
-
-        if (doc?.Template) {
-            window.open(`/Service/DownloadTemplateCUL.ashx?cate=CUL&type=${doc.Type}&id=${props.id}`);
-        }
-    };
 
     const emit = defineEmits(["next"]);
 
