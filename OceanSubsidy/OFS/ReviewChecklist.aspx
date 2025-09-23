@@ -22,20 +22,15 @@
 <asp:Content ID="MainContent" ContentPlaceHolderID="MainContent" runat="server">
     <!-- 隱藏欄位和按鈕 -->
     <asp:HiddenField ID="hdnSelectedProjectIds" runat="server" ClientIDMode="Static"/>
-    <asp:Button ID="btnSendToApplicant" runat="server" Text="提送至申請者" 
+    <asp:Button ID="btnSendToApplicant" runat="server" Text="提送至申請者"
                 OnClick="btnSendToApplicant_Click" Style="display: none;" ClientIDMode="Static"/>
- 
-    
+
+
     <!-- 公告提醒 -->
-    <div class="notice">
-        <div class="notice-content">
-            <h3 class="notice-title">114/12/31 條款正式上線</h3>
-        </div>
-        <div class="notice-action">
-            <a href="#" class="btn-link">全部公告</a>
-        </div>
+    <div id="news-marquee">
+        <news-marquee></news-marquee>
     </div>
-    
+
     <!-- 總計列表 -->
     <ul class="total-list mt-4">
         <li class="total-item" id="total-item-1">
@@ -93,7 +88,7 @@
             </a>
         </li>
     </ul>
-    
+
     <div id="content-type-1" class="review-content" style="display: none;">
 	    <div class="search bg-light-teal-100 rounded-0">
 	     <!-- 查詢表單 -->
@@ -104,7 +99,7 @@
 	                   <div class="fs-16 text-gray mb-2">計畫編號或名稱關鍵字</div>
 	                   <input type="text" name="txtKeyword_Type1" class="form-control" placeholder="請輸入計畫編號、計畫名稱相關文字">
 	               </div>
-	               
+
 	               <!-- 年度/類別/狀態 -->
 	               <div class="row g-3">
 	                   <div class="col-12 col-lg-3">
@@ -124,8 +119,8 @@
 	                   </div>
 	               </div>
 	           </div>
-	   
-	   
+
+
 	           <div class="column-2">
 	               <div class="search-item">
 	                   <div class="fs-16 text-gray mb-2">申請單位</div>
@@ -137,16 +132,16 @@
 	                   <asp:DropDownList ID="ddlSupervisor_Type1" runat="server" CssClass="form-select">
 	                   </asp:DropDownList>
 	               </div>
-	           </div>        
-	   
+	           </div>
+
 	           <button type="button" id="btnSearch_Type1" class="btn btn-teal-dark d-table mx-auto" onclick="performAjaxSearch(1)">
 	               🔍 查詢
 	           </button>
 	       </div>
 		</div>
-                           
+
         <!-- 列表內容 -->
-        
+
         <div class="block rounded-bottom-4">
             <div class="title border-teal">
                 <div class="d-flex align-items-center gap-2">
@@ -156,7 +151,7 @@
                     </h4>
                     <span>共 <span class="text-teal" id="total-count-type1">0</span> 筆資料</span>
                 </div>
-          
+
                 <div class="d-flex gap-2">
                     <button class="btn btn-teal-dark" type="button" onclick="exportType1ReviewingData()">
                         <i class="fas fa-download"></i>匯出審查中資料
@@ -166,7 +161,7 @@
                     </button>
                 </div>
             </div>
-          
+
             <div class="table-responsive mb-0">
                 <table class="table teal-table" id="DataTable_Type1">
                     <thead>
@@ -178,7 +173,7 @@
                             <th width="100">
                                 <div class="hstack align-items-center justify-content-center">
                                     <span>類別</span>
-            
+
                                     <!-- 排序按鈕： -->
                                     <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
                                     <button class="sort down">
@@ -190,7 +185,7 @@
                             <th width="140">
                                 <div class="hstack align-items-center">
                                     <span>計畫編號</span>
-            
+
                                     <!-- 排序按鈕： -->
                                     <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
                                     <button class="sort up">
@@ -202,7 +197,7 @@
                             <th width="220">
                                 <div class="hstack align-items-center">
                                     <span>計畫名稱</span>
-            
+
                                     <!-- 排序按鈕： -->
                                     <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
                                     <button class="sort">
@@ -214,7 +209,7 @@
                             <th>
                                 <div class="hstack align-items-center">
                                     <span>申請單位</span>
-            
+
                                     <!-- 排序按鈕： -->
                                 <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
                                   <button class="sort">
@@ -226,7 +221,7 @@
                             <th width="150">
                                 <div class="hstack align-items-center justify-content-center">
                                 <span>申請經費</span>
-          
+
                                     <!-- 排序按鈕： -->
                                     <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
                                     <button class="sort">
@@ -238,7 +233,7 @@
                             <th>
                                 <div class="hstack align-items-center justify-content-center">
                                     <span>狀態</span>
-            
+
                                     <!-- 排序按鈕： -->
                                     <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
                                     <button class="sort">
@@ -250,7 +245,7 @@
                             <th>
                                 <div class="hstack align-items-center justify-content-center">
                                     <span>補正件期限</span>
-                
+
                                     <!-- 排序按鈕： -->
                                     <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
                                     <button class="sort">
@@ -262,7 +257,7 @@
                             <th>
                                 <div class="hstack align-items-center justify-content-center">
                                     <span>承辦人員</span>
-            
+
                                     <!-- 排序按鈕： -->
                                     <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
                                     <button class="sort">
@@ -279,7 +274,7 @@
                     </tbody>
                 </table>
             </div>
-            
+
             <!-- 審查勾選後底部功能按鈕 -->
             <div class="bg-light-teal-100 mb-5 checkPlanBtnPanel checkPlanBtnPanel-type1" style="display: none;">
                 <div class="p-3 d-flex justify-content-between align-items-center">
@@ -295,12 +290,12 @@
                     <button class="nav-button btn-prev-page" aria-label="Previous page" disabled>
                         <i class="fas fa-chevron-left"></i>
                     </button>
-                
+
                     <button class="nav-button btn-next-page" aria-label="Next page" disabled>
                         <i class="fas fa-chevron-right"></i>
                     </button>
                 </nav>
-          
+
                 <div class="page-number-control">
                     <div class="page-number-control-item">
                         <span>跳到</span>
@@ -327,7 +322,7 @@
                 </div>
             </div>
         </div>
-    </div>       
+    </div>
     <!-- 搜尋表單 -->
     <!-- 類型2：領域審查/初審 -->
     <div id="content-type-2" class="review-content" style="display: none;">
@@ -340,7 +335,7 @@
             		  <div class="fs-16 text-gray mb-2">計畫編號或名稱關鍵字</div>
             		  <input type="text" name="txtKeyword_Type2" class="form-control" placeholder="請輸入計畫編號、計畫名稱相關文字">
             	  </div>
-            	  
+
             	  <!-- 年度/類別/狀態 -->
             	  <div class="row g-3">
             		  <div class="col-12 col-lg-3">
@@ -360,7 +355,7 @@
             		  </div>
             	  </div>
               </div>
-            
+
               <div class="row">
             	  <div class="col-12 col-lg-2">
             		  <div class="fs-16 text-gray mb-2">回覆狀態</div>
@@ -377,13 +372,13 @@
             		  <asp:DropDownList ID="ddlSupervisor_Type2" runat="server" CssClass="form-select">
             		  </asp:DropDownList>
             	  </div>
-              </div>    
-            
+              </div>
+
               <button type="button" id="btnSearch_Type2" class="btn btn-teal-dark d-table mx-auto" onclick="performAjaxSearch(2)">
                   🔍 查詢
               </button>
             </div>
-        </div>   
+        </div>
         <div class="block rounded-bottom-4">
           <div class="title border-teal">
         	  <div class="d-flex align-items-center gap-2">
@@ -393,7 +388,7 @@
         		  </h4>
         		  <span>共 <span class="text-teal" id="total-count-type2">0</span> 筆資料</span>
         	  </div>
-        
+
         	  <div>
         		  <button class="btn btn-teal-dark" type="button" data-bs-toggle="modal" data-bs-target="#reviewResultModal">
         			  <i class="fas fa-list-ol"></i>
@@ -401,11 +396,11 @@
         		  </button>
         		  <button class="btn btn-teal-dark" type="button" onclick="exportApplicationPdfData()"><i class="fas fa-download"></i>匯出申請資料</button>
         	  </div>
-        
+
           </div>
-        
-          
-          
+
+
+
           <div class="table-responsive mb-0">
         	  <table class="table teal-table" id="DataTable_Type2">
         		  <thead>
@@ -462,7 +457,7 @@
         		  </tbody>
         	  </table>
           </div>
-        
+
           <!-- 審查勾選後底部功能按鈕 -->
           <div class="bg-light-teal-100 mb-5 checkPlanBtnPanel checkPlanBtnPanel-type2" style="display: none;">
         	  <div class="p-3 d-flex justify-content-between align-items-start gap-3 flex-wrap">
@@ -472,23 +467,23 @@
         			  <button class="btn btn-teal" type="button" onclick="handleBatchApproval('進入決審')"><i class="fa-solid fa-check"></i>批次通過，進入決審</button>
         			  <button class="btn btn-pink" type="button" onclick="handleBatchReject('批次不通過')"><i class="fa-solid fa-xmark"></i>批次不通過</button>
         		  </div>
-          
+
         	  </div>
           </div>
-        
-        
+
+
           <!-- 分頁 -->
           <div id="pagination-type2" class="d-flex align-items-center justify-content-between flex-wrap gap-2 pagination-wrapper" data-review-type="2">
         	  <nav class="pagination justify-content-start" aria-label="Pagination">
         		  <button class="nav-button btn-prev-page" aria-label="Previous page" disabled>
         			  <i class="fas fa-chevron-left"></i>
         		  </button>
-        	  
+
         		  <button class="nav-button btn-next-page" aria-label="Next page" disabled>
         			  <i class="fas fa-chevron-right"></i>
         		  </button>
         	  </nav>
-        
+
         	  <div class="page-number-control">
         		  <div class="page-number-control-item">
         			  <span>跳到</span>
@@ -513,15 +508,15 @@
                       <!-- 分頁資訊將顯示在這裡 -->
                   </div>
         	  </div>
-        
+
           </div>
         </div>
     </div>
-        
+
     <!-- 類型3：會議審查 -->
     <div id="content-type-3" class="review-content" style="display: none;">
         <!-- 搜尋表單 -->
-       
+
        <div class="search bg-light-teal-100 rounded-0">
          <!-- 查詢表單 -->
              <div class="search-form" action="">
@@ -531,7 +526,7 @@
                          <div class="fs-16 text-gray mb-2">計畫編號或名稱關鍵字</div>
                          <input type="text" name="txtKeyword_Type3" class="form-control" placeholder="請輸入計畫編號、計畫名稱相關文字">
                      </div>
-                     
+
                      <!-- 年度/類別/狀態 -->
                      <div class="row g-3">
                          <div class="col-12 col-lg-3">
@@ -551,7 +546,7 @@
                          </div>
                      </div>
                  </div>
-         
+
                  <div class="row">
                      <div class="col-12 col-lg-2">
                          <div class="fs-16 text-gray mb-2">回覆狀態</div>
@@ -568,8 +563,8 @@
                          <asp:DropDownList ID="ddlSupervisor_Type3" runat="server" CssClass="form-select">
                          </asp:DropDownList>
                      </div>
-                 </div>    
-         
+                 </div>
+
                  <button type="button" id="btnSearch_Type3" class="btn btn-teal-dark d-table mx-auto" onclick="performAjaxSearch(3)">
                      🔍 查詢
                  </button>
@@ -585,7 +580,7 @@
                      </h4>
                      <span>共 <span class="text-teal" id="total-count-type3">0</span> 筆資料</span>
                  </div>
-         
+
                  <div>
                      <button class="btn btn-teal-dark" type="button" data-bs-toggle="modal" data-bs-target="#reviewResultModal">
                          <i class="fas fa-list-ol"></i>
@@ -593,11 +588,11 @@
                      </button>
                      <button class="btn btn-teal-dark" type="button" onclick="exportBatchPresentations()"><i class="fas fa-download"></i>批次匯出簡報</button>
                  </div>
-         
+
              </div>
-         
-             
-             
+
+
+
              <div class="table-responsive mb-0">
                  <table class="table teal-table">
                      <thead>
@@ -650,11 +645,11 @@
                          </tr>
                      </thead>
                      <tbody>
-                         
+
                      </tbody>
                  </table>
              </div>
-         
+
              <!-- 審查勾選後底部功能按鈕 -->
              <div class="bg-light-teal-100 mb-5 checkPlanBtnPanel checkPlanBtnPanel-type3" style="display: none;">
                  <div class="p-3 d-flex justify-content-between align-items-start gap-3 flex-wrap">
@@ -663,24 +658,24 @@
                          <button class="btn btn-teal" type="button" onclick="handleBatchApproval('轉入下一階段')"><i class="fa-solid fa-check"></i>批次通過，轉入下一階段</button>
                          <button class="btn btn-pink" type="button" onclick="handleBatchReject('批次不通過')"><i class="fa-solid fa-xmark"></i>批次不通過</button>
                      </div>
-             
-                     
+
+
                  </div>
              </div>
-         
-         
+
+
              <!-- 分頁 -->
              <div id="pagination-type3" class="d-flex align-items-center justify-content-between flex-wrap gap-2 pagination-wrapper" data-review-type="3">
                  <nav class="pagination justify-content-start" aria-label="Pagination">
                      <button class="nav-button btn-prev-page" aria-label="Previous page" disabled>
                          <i class="fas fa-chevron-left"></i>
                      </button>
-                 
+
                      <button class="nav-button btn-next-page" aria-label="Next page" disabled>
                          <i class="fas fa-chevron-right"></i>
                      </button>
                  </nav>
-         
+
                  <div class="page-number-control">
                      <div class="page-number-control-item">
                          <span>跳到</span>
@@ -705,11 +700,11 @@
                          <!-- 分頁資訊將顯示在這裡 -->
                      </div>
                  </div>
-         
+
              </div>
          </div>
     </div>
-    
+
     <!-- 類型4：決定審核清單 -->
     <div id="content-type-4" class="review-content" style="display: none;">
         <!-- 搜尋表單 -->
@@ -722,14 +717,14 @@
                       <div class="fs-16 text-gray mb-2">計畫編號或名稱關鍵字</div>
                       <input type="text" name="txtKeyword_Type4" class="form-control" placeholder="請輸入計畫編號、計畫名稱相關文字">
                   </div>
-                  
+
                   <!-- 年度 -->
                   <div class="search-item">
                       <div class="fs-16 text-gray mb-2">年度</div>
                       <asp:DropDownList ID="ddlYear_Type4" runat="server" CssClass="form-select" ClientIDMode="Static">
                       </asp:DropDownList>
                   </div>
-                  
+
                   <!-- 類別/審查組別 -->
                   <div class="row g-3">
                       <div class="col-12 col-lg-6">
@@ -744,7 +739,7 @@
                       </div>
                   </div>
               </div>
-      
+
               <div class="column-2">
                   <div class="search-item">
                       <div class="fs-16 text-gray mb-2">申請單位</div>
@@ -756,8 +751,8 @@
                       <asp:DropDownList ID="ddlSupervisor_Type4" runat="server" CssClass="form-select" ClientIDMode="Static">
                       </asp:DropDownList>
                   </div>
-              </div>    
-      
+              </div>
+
               <button type="button" id="btnSearch_Type4" class="btn btn-teal-dark d-table mx-auto" onclick="performType4Search()">
                   🔍 查詢
               </button>
@@ -772,7 +767,7 @@
         			  <span>列表</span>
         		  </h4>
         		  <span>共 <span class="text-teal">3</span> 筆資料</span>
-        
+
         		  <button class="btn btn-sm btn-teal-dark mb-0" type="button" onclick="handleType4ApprovalSave()">
         			  <i class="fas fa-check"></i>
         			  儲存
@@ -784,7 +779,7 @@
         	  </div>
         	  <button class="btn btn-teal-dark" type="button" onclick="exportType4ListData()"><i class="fas fa-download"></i>匯出列表資料</button>
           </div>
-        
+
           <!-- 核定模式列表 -->
           <div class="approval-mode-table">
         	  <div class="table-responsive mb-0">
@@ -819,11 +814,11 @@
         				  </tr>
         			  </thead>
         			  <tbody>
-        				
+
         			  </tbody>
         		  </table>
         	  </div>
-        	  
+
         	  <!-- 審查勾選後底部功能按鈕 -->
         	  <div class="bg-light-teal-100 mb-5 checkPlanBtnPanel checkPlanBtnPanel-type4" style="display: none;">
         		  <div class="p-3 d-flex justify-content-between align-items-start gap-3 flex-wrap">
@@ -832,15 +827,15 @@
         				  <button class="btn btn-teal" type="button" onclick="handleBatchApproval('轉入計畫執行階段')"><i class="fa-solid fa-check"></i>批次核定完成，轉入計畫執行階段</button>
         				  <button class="btn btn-pink" type="button" onclick="handleBatchReject('批次不通過')"><i class="fa-solid fa-xmark"></i>批次不通過</button>
         			  </div>
-        	  
-        
+
+
         		  </div>
         	  </div>
           </div>
-        
+
         </div>
     </div>
-    
+
     <!-- 類型5：計畫變更審核 -->
     <div id="content-type-5" class="review-content" style="display: none;">
         <!-- 搜尋表單 -->
@@ -852,7 +847,7 @@
                   <div class="col-12 col-lg-3">
                       <div class="fs-16 text-gray mb-2">年度</div>
                       <asp:DropDownList ID="ddlYear_Type5" runat="server" CssClass="form-select">
-             
+
                       </asp:DropDownList>
                   </div>
                   <div class="col-12 col-lg-3">
@@ -886,7 +881,7 @@
               </button>
           </div>
         </div>
-        
+
         <!-- 列表內容 -->
         <div class="block rounded-bottom-4">
           <div class="title border-teal">
@@ -898,17 +893,17 @@
                   <span>共 <span class="text-teal" id="total-count-type5">0</span> 筆資料</span>
               </div>
         </div>
-        
+
           <div class="table-responsive mb-0">
               <table class="table teal-table" id="DataTable_Type5">
                   <thead>
                       <tr>
-                         
+
                           <th width="80">年度</th>
                           <th width="140">
                               <div class="hstack align-items-center">
                                   <span>計畫編號</span>
-                
+
                                   <!-- 排序按鈕： -->
                                   <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
                                   <button class="sort up">
@@ -920,7 +915,7 @@
                           <th width="100">
                               <div class="hstack align-items-center justify-content-center">
                                   <span>類別</span>
-                
+
                                   <!-- 排序按鈕： -->
                                   <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
                                   <button class="sort down">
@@ -932,7 +927,7 @@
                           <th width="300">
                               <div class="hstack align-items-center">
                                   <span>計畫名稱</span>
-                
+
                                   <!-- 排序按鈕： -->
                                   <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
                                   <button class="sort">
@@ -944,7 +939,7 @@
                           <th>
                               <div class="hstack align-items-center">
                                   <span>申請單位</span>
-                
+
                                   <!-- 排序按鈕： -->
                               <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
                                 <button class="sort">
@@ -961,19 +956,19 @@
                   </tbody>
               </table>
           </div>
-            
+
           <!-- 分頁 -->
           <div id="pagination-type5" class="d-flex align-items-center justify-content-between flex-wrap gap-2 pagination-wrapper" data-review-type="5">
               <nav class="pagination justify-content-start" aria-label="Pagination">
                   <button class="nav-button btn-prev-page" aria-label="Previous page" disabled>
                       <i class="fas fa-chevron-left"></i>
                   </button>
-              
+
                   <button class="nav-button btn-next-page" aria-label="Next page" disabled>
                       <i class="fas fa-chevron-right"></i>
                   </button>
               </nav>
-        
+
               <div class="page-number-control">
                   <div class="page-number-control-item">
                       <span>跳到</span>
@@ -1001,7 +996,7 @@
           </div>
         </div>
     </div>
-    
+
     <!-- 類型6：執行計畫審核 -->
     <div id="content-type-6" class="review-content" style="display: none;">
         <!-- 搜尋表單 -->
@@ -1013,7 +1008,7 @@
                   <div class="col-12 col-lg-3">
                       <div class="fs-16 text-gray mb-2">年度</div>
                       <asp:DropDownList ID="ddlYear_Type6" runat="server" CssClass="form-select">
-                          
+
                       </asp:DropDownList>
                   </div>
                   <div class="col-12 col-lg-3">
@@ -1046,7 +1041,7 @@
               </button>
           </div>
         </div>
-        
+
         <!-- 列表內容 -->
         <div class="block rounded-bottom-4">
           <div class="title border-teal">
@@ -1058,17 +1053,17 @@
                   <span>共 <span class="text-teal" id="total-count-type6">0</span> 筆資料</span>
               </div>
         </div>
-        
+
           <div class="table-responsive mb-0">
               <table class="table teal-table" id="DataTable_Type6">
                   <thead>
                       <tr>
-                       
+
                           <th width="50">年度</th>
                           <th width="100">
                               <div class="hstack align-items-center justify-content-center">
                                   <span>類別</span>
-                
+
                                   <!-- 排序按鈕： -->
                                   <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
                                   <button class="sort down">
@@ -1080,7 +1075,7 @@
                           <th width="140">
                               <div class="hstack align-items-center">
                                   <span>計畫編號</span>
-                
+
                                   <!-- 排序按鈕： -->
                                   <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
                                   <button class="sort up">
@@ -1092,7 +1087,7 @@
                           <th width="300">
                               <div class="hstack align-items-center">
                                   <span>計畫名稱</span>
-                
+
                                   <!-- 排序按鈕： -->
                                   <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
                                   <button class="sort">
@@ -1104,7 +1099,7 @@
                           <th>
                               <div class="hstack align-items-center">
                                   <span>申請單位</span>
-                
+
                                   <!-- 排序按鈕： -->
                               <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
                                 <button class="sort">
@@ -1131,21 +1126,21 @@
                   </tbody>
               </table>
           </div>
-          
-         
-          
+
+
+
           <!-- 分頁 -->
           <div id="pagination-type6" class="d-flex align-items-center justify-content-between flex-wrap gap-2 pagination-wrapper" data-review-type="6">
               <nav class="pagination justify-content-start" aria-label="Pagination">
                   <button class="nav-button btn-prev-page" aria-label="Previous page" disabled>
                       <i class="fas fa-chevron-left"></i>
                   </button>
-              
+
                   <button class="nav-button btn-next-page" aria-label="Next page" disabled>
                       <i class="fas fa-chevron-right"></i>
                   </button>
               </nav>
-        
+
               <div class="page-number-control">
                   <div class="page-number-control-item">
                       <span>跳到</span>
@@ -1173,7 +1168,7 @@
           </div>
         </div>
     </div>
-    
+
      <div class="modal fade" id="planDetailModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="planDetailModalLabel" aria-hidden="true">
            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
                <div class="modal-content">
@@ -1184,7 +1179,7 @@
                        </button>
                    </div>
                    <div class="modal-body">
-                       
+
                        <div class="bg-light-gray p-3 mb-4">
                            <ul class="lh-lg">
                                <li>
@@ -1213,8 +1208,8 @@
                                </li>
                            </ul>
                        </div>
-       
-                       
+
+
                        <div class="table-responsive">
                            <table class="table align-middle gray-table lh-base">
                                <thead>
@@ -1235,8 +1230,8 @@
                                </tbody>
                            </table>
                        </div>
-       
-       
+
+
                        <div class="d-flex justify-content-center mt-4 gap-4">
                            <button type="button" class="btn btn-gray" data-bs-dismiss="modal">
                                取消
@@ -1246,7 +1241,7 @@
                            </button>
                        </div>
                    </div>
-       
+
                </div>
            </div>
        </div>
@@ -1367,7 +1362,7 @@
                   </button>
               </div>
               <div class="modal-body">
-                  
+
                   <div class="table-responsive">
                       <table class="table align-middle gray-table lh-base">
                           <thead>
@@ -1428,13 +1423,13 @@
                           </tbody>
                       </table>
                   </div>
-  
+
               </div>
-  
+
           </div>
       </div>
   </div>
-  
+
   <!-- 審查結果排名 Modal -->
   <div class="modal fade" id="reviewResultModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="reviewResultModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
@@ -1489,6 +1484,7 @@
           </div>
       </div>
   </div>
-  
-  
+    <script>
+        startVueApp("#news-marquee");
+    </script>
 </asp:Content>
