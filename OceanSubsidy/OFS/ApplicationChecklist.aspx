@@ -22,27 +22,22 @@
 <asp:Content ID="MainContent" ContentPlaceHolderID="MainContent" runat="server">
     <asp:HiddenField ID="hidSelectedStage" runat="server" />
     <asp:Button ID="btnStageFilter" runat="server" OnClick="btnStageFilter_Click" style="display: none;" />
-    
+
     <!-- 頁面標題 -->
-   
-    
+
+
     <!-- 公告提醒 -->
-    <div class="notice">
-        <div class="notice-content">
-            <h3 class="notice-title">114/12/31 條款正式上線</h3>
-        </div>
-        <div class="notice-action">
-            <a href="#" class="btn-link">全部公告</a>
-        </div>
+    <div id="news-marquee">
+        <news-marquee></news-marquee>
     </div>
-    
+
     <!-- 搜尋表單 -->
     <div class="search bg-gray mt-4">
         <h3 class="text-teal">
             <i class="fa-solid fa-magnifying-glass"></i>
             查詢
         </h3>
-        
+
         <div class="search-form">
             <div class="column-2">
                 <!-- 計畫編號或名稱關鍵字 -->
@@ -50,14 +45,14 @@
                     <div class="fs-16 text-gray mb-2">計畫編號或名稱關鍵字</div>
                     <asp:TextBox ID="txtSearch" runat="server" CssClass="form-control" placeholder="請輸入計畫編號、計畫名稱相關文字"></asp:TextBox>
                 </div>
-                
+
                 <!-- 計畫內容關鍵字 -->
                 <div class="search-item">
                     <div class="fs-16 text-gray mb-2">計畫內容關鍵字</div>
                     <asp:TextBox ID="txtContentKeyword" runat="server" CssClass="form-control" placeholder="計畫內容關鍵字"></asp:TextBox>
                 </div>
             </div>
-            
+
             <div class="column-2">
                 <div class="row g-3">
                     <div class="col-12 col-lg-4">
@@ -120,17 +115,17 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="form-check-input-group d-flex justify-content-center">
-                <input id="waitingReply" class="form-check-input check-teal" type="checkbox" 
+                <input id="waitingReply" class="form-check-input check-teal" type="checkbox"
                        name="waitingReply" runat="server"/>
                 <label for="waitingReply">待回覆</label>
             </div>
-            
+
             <asp:Button ID="btnSearch" runat="server" Text="查詢" CssClass="btn btn-teal-dark d-table mx-auto" OnClick="btnSearch_Click" />
         </div>
     </div>
-    
+
     <!-- 總計列表 -->
     <ul class="total-list">
         <li class="total-item active">
@@ -206,7 +201,7 @@
             </a>
         </li>
     </ul>
-    
+
     <!-- 列表內容 -->
     <div class="block rounded-bottom-4">
         <div class="title border-teal">
@@ -217,13 +212,13 @@
                 </h4>
                 <span>共 <asp:Literal ID="litRecordInfo" runat="server" Text="<span class='text-teal'>0</span> 筆資料"></asp:Literal></span>
             </div>
-            
+
             <button type="button" class="btn btn-teal-dark" data-bs-toggle="modal" data-bs-target="#planApplyModal">
                 <i class="fa-solid fa-plus"></i>
                 申請計畫
             </button>
         </div>
-        
+
         <div class="table-responsive" style="min-height: 400px;">
             <table class="table teal-table">
                 <thead>
@@ -303,7 +298,7 @@
                 </tbody>
             </table>
         </div>
-        
+
         <!-- 分頁控制 -->
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
             <nav class="pagination justify-content-start" aria-label="Pagination" id="paginationNav">
@@ -311,7 +306,7 @@
                 <!-- 動態分頁按鈕將在這裡插入 -->
                 <button type="button" id="btnNextPage" class="nav-button" aria-label="Next page" onclick="changePage('next')">›</button>
             </nav>
-            
+
             <div class="page-number-control">
                 <div class="page-number-control-item">
                     <span>跳到</span>
@@ -334,7 +329,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Modal 申請計畫 -->
     <div class="modal fade" id="planApplyModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="planApplyModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
@@ -362,7 +357,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Modal 案件歷程 -->
     <div class="modal fade" id="planHistoryModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="planHistoryModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
@@ -385,7 +380,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                               
+
                             </tbody>
                         </table>
                     </div>
@@ -393,7 +388,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Modal 撤案 -->
     <div class="modal fade" id="planWithdrawModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="planWithdrawModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
@@ -407,7 +402,7 @@
                 <div class="modal-body">
                     <div class="">
                         <div class="fs-16 text-gray mb-2">撤案原因</div>
-                        <asp:TextBox ID="txtWithdrawReason" runat="server" TextMode="MultiLine" 
+                        <asp:TextBox ID="txtWithdrawReason" runat="server" TextMode="MultiLine"
                                     Rows="3" CssClass="form-control" placeholder="請輸入撤案原因"></asp:TextBox>
                         <asp:HiddenField ID="hdnWithdrawProjectId" runat="server" />
                     </div>
@@ -416,15 +411,15 @@
                         <button type="button" class="btn btn-gray" data-bs-dismiss="modal">
                             取消
                         </button>
-                        <asp:Button ID="btnConfirmWithdraw" runat="server" Text="確認撤案" 
-                                   CssClass="btn btn-teal" OnClick="btnConfirmWithdraw_Click" 
+                        <asp:Button ID="btnConfirmWithdraw" runat="server" Text="確認撤案"
+                                   CssClass="btn btn-teal" OnClick="btnConfirmWithdraw_Click"
                                    OnClientClick="return validateWithdrawReason();" />
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <!-- Modal 恢復案件 -->
     <div class="modal fade" id="planRestoreModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="planRestoreModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
@@ -445,14 +440,14 @@
                         <button type="button" class="btn btn-gray" data-bs-dismiss="modal">
                             取消
                         </button>
-                        <asp:Button ID="btnConfirmRestore" runat="server" Text="確認恢復" 
+                        <asp:Button ID="btnConfirmRestore" runat="server" Text="確認恢復"
                                    CssClass="btn btn-teal" OnClick="btnConfirmRestore_Click" />
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <!-- Modal 上傳技術審查/初審檔案 -->
     <div class="modal fade" id="techReviewUploadModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="techReviewUploadModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -465,13 +460,13 @@
                 </div>
                 <div class="modal-body">
                     <asp:HiddenField ID="hdnUploadProjectId" runat="server" />
-                    
+
                     <div class="mb-3">
                         <div class="fs-16 text-gray mb-2">選擇檔案 (支援 PPT, PPTX 格式)</div>
                         <asp:FileUpload ID="fileUploadTechReview" runat="server" CssClass="form-control" accept=".ppt,.pptx" />
                         <small class="text-muted">檔案大小限制：50MB</small>
                     </div>
-                    
+
                     <div id="currentFileDisplay" class="mb-3" style="display: none;">
                         <div class="fs-16 text-gray mb-2">目前檔案</div>
                         <div class="d-flex align-items-center gap-2 p-3 bg-light rounded">
@@ -493,7 +488,7 @@
             </div>
         </div>
     </div>
-    
+
     <script type="text/javascript">
         // 處理撤案操作
         function handleWithdraw(projectId) {
@@ -520,7 +515,7 @@
         function setWithdrawProjectId(projectId) {
             document.getElementById('<%= hdnWithdrawProjectId.ClientID %>').value = projectId;
         }
-        
+
         // 處理恢復案件操作
         function handleRestore(projectId) {
             // 設定要恢復的 ProjectID
@@ -529,12 +524,12 @@
             const modal = new bootstrap.Modal(document.getElementById('planRestoreModal'));
             modal.show();
         }
-        
+
         // 設定恢復案件的 ProjectID（當開啟恢復 Modal 時呼叫）
         function setRestoreProjectId(projectId) {
             document.getElementById('<%= hdnRestoreProjectId.ClientID %>').value = projectId;
         }
-        
+
         // 處理刪除操作
         function handleDelete(projectId) {
             // 設定要刪除的 ProjectID
@@ -545,7 +540,7 @@
             // 清空原因輸入框
             document.getElementById('<%= txtDeleteReason.ClientID %>').value = '';
         }
-        
+
         // 客戶端驗證刪除原因
         function validateDeleteReason() {
             const reason = document.getElementById('<%= txtDeleteReason.ClientID %>').value.trim();
@@ -555,25 +550,25 @@
             }
             return true;
         }
-        
+
         // 設定刪除的 ProjectID（當開啟刪除 Modal 時呼叫）
         function setDeleteProjectId(projectId) {
             document.getElementById('<%= hdnDeleteProjectId.ClientID %>').value = projectId;
         }
-        
+
         // 處理上傳技術審查檔案操作
         function showUploadModal(projectId) {
             // 設定要上傳檔案的 ProjectID
             document.getElementById('<%= hdnUploadProjectId.ClientID %>').value = projectId;
-            
+
             // 檢查是否已有現有檔案並顯示
             checkExistingFile(projectId);
-            
+
             // 顯示上傳模態框
             const modal = new bootstrap.Modal(document.getElementById('techReviewUploadModal'));
             modal.show();
         }
-        
+
         // 檢查現有檔案
         function checkExistingFile(projectId) {
             // 透過 AJAX 檢查是否已有檔案
@@ -604,7 +599,7 @@
                 }
             });
         }
-        
+
         // 下載目前檔案
         function downloadCurrentFile() {
             const projectId = document.getElementById('<%= hdnUploadProjectId.ClientID %>').value;
@@ -614,7 +609,7 @@
             }
         }
     </script>
-    
+
     <!-- Modal 刪除計畫 -->
     <div class="modal fade" id="planDeleteModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="planDeleteModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
@@ -628,7 +623,7 @@
                 <div class="modal-body">
                     <div class="">
                         <div class="fs-16 text-gray mb-2">刪除說明</div>
-                        <asp:TextBox ID="txtDeleteReason" runat="server" TextMode="MultiLine" 
+                        <asp:TextBox ID="txtDeleteReason" runat="server" TextMode="MultiLine"
                                     Rows="3" CssClass="form-control" placeholder="請輸入刪除原因"></asp:TextBox>
                         <asp:HiddenField ID="hdnDeleteProjectId" runat="server" />
                     </div>
@@ -638,14 +633,14 @@
                             取消
                         </button>
                         <asp:Button ID="btnConfirmDelete" runat="server" Text="確認刪除" 1
-                                   CssClass="btn btn-teal" OnClick="btnConfirmDelete_Click" 
+                                   CssClass="btn btn-teal" OnClick="btnConfirmDelete_Click"
                                    OnClientClick="return validateDeleteReason();" />
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <!-- Modal 審查意見回覆 -->
     <div class="modal fade" id="planCommentModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="planCommentModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
@@ -711,7 +706,7 @@
                             </tbody>
                         </table>
                     </div>
-                    
+
                     <div class="d-flex justify-content-between mt-5">
                         <h5 class="square-title">技術審查意見回覆</h5>
                         <button class="btn btn-teal-dark" type="button" onclick="exportReviewCommentReply('technical')"><i class="fas fa-download"></i>匯出技術審查意見回覆表</button>
@@ -744,4 +739,7 @@
             </div>
         </div>
     </div>
+    <script>
+        startVueApp("#news-marquee");
+    </script>
 </asp:Content>

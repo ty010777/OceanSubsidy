@@ -4,16 +4,9 @@
 <asp:Content ID="HeadContent" ContentPlaceHolderID="HeadExtra" runat="server">
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
-    <!-- Moment.js and Taiwan date picker -->
-    <script src="<%= ResolveUrl("~/assets/vendor/moment.min.js") %>"></script>
-    <script src="<%= ResolveUrl("~/assets/vendor/locale/zh-tw.js") %>"></script>
-    <script src="<%= ResolveUrl("~/assets/vendor/moment-taiwan.js") %>"></script>
-    <script src="<%= ResolveUrl("~/assets/vendor/daterangepicker.js") %>"></script>
-    <link rel="stylesheet" href="<%= ResolveUrl("~/assets/vendor/daterangepicker.css") %>" />
-    
+
     <script src="<%= ResolveUrl("~/script/OFS/CLB/ClbApplication.js") %>"></script>
-    
+
     <style>
         /* Bootstrap disabled 樣式擴展 */
         .application-step .step-item.disabled {
@@ -21,22 +14,22 @@
             pointer-events: none;
             cursor: default;
         }
-        
+
         .application-step .step-item.disabled .step-label,
         .application-step .step-item.disabled .step-status {
             color: #6c757d !important;
         }
-        
+
         /* 確保無障礙性 */
         .application-step .step-item[aria-disabled="true"] {
             cursor: not-allowed;
         }
     </style>
-    
+
 </asp:Content>
 
 <asp:Content ID="MainContent" ContentPlaceHolderID="MainContent" runat="server">
-    
+
     <!-- 頁面標題 -->
     <div class="d-flex justify-content-between mb-4">
         <div class="page-title">
@@ -70,30 +63,30 @@
     </div>
     <!-- Hidden field to store ProjectID -->
     <asp:HiddenField ID="hdnProjectID" runat="server" />
-    
+
     <!-- Hidden field to store current step index -->
     <asp:HiddenField ID="hdnStepIndex" runat="server" Value="0" />
 
     <!-- 使用 UserControl -->
     <uc:ClbApplicationControl ID="ucClbApplication" runat="server" />
-                  
+
     <!-- 底部區塊 -->
     <div class="block-bottom bg-light-teal">
-        <asp:Button ID="btnTempSave" runat="server"  
-                    Text="暫存"  
-                    CssClass="btn btn-outline-teal"  
-                    OnClick="btnTempSave_Click" /> 
-        
-        <asp:Button ID="btnSaveAndNext" runat="server" 
-                    Text="完成本頁，下一步"  
-                    CssClass="btn btn-teal"  
-                    OnClick="btnSaveAndNext_Click" /> 
-                    
-        <asp:Button ID="btnSubmitApplication" runat="server" 
-                    Text="完成本頁，提送申請"  
+        <asp:Button ID="btnTempSave" runat="server"
+                    Text="暫存"
+                    CssClass="btn btn-outline-teal"
+                    OnClick="btnTempSave_Click" />
+
+        <asp:Button ID="btnSaveAndNext" runat="server"
+                    Text="完成本頁，下一步"
+                    CssClass="btn btn-teal"
+                    OnClick="btnSaveAndNext_Click" />
+
+        <asp:Button ID="btnSubmitApplication" runat="server"
+                    Text="完成本頁，提送申請"
                     CssClass="btn btn-teal"
                     Style="display: none;"
-                    OnClick="btnSubmitApplication_Click" /> 
+                    OnClick="btnSubmitApplication_Click" />
     </div>
 
 </asp:Content>
