@@ -412,7 +412,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
         }
 
         /// <summary>
-        /// 將 HTML 表格內容插入到 Word 文件中的指定位置
+        /// 將 HTML 表格內容插入到 Word 文件中的指定位置，支援 rowspan 與 colspan 欄位合併，並呈現部分 CSS 樣式
         /// </summary>
         public void InsertHtmlAsTable(string placeholder, string htmlContent)
         {
@@ -586,13 +586,21 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
                             for (int j = 0; j < lines.Length; j++)
                             {
                                 if (j > 0) p.Append(new Run(new Break()));
-                                p.Append(new Run(new Text(lines[j])));
+                                var innerRun = new Run(new Text(lines[j]));
+
+                                // 設定字型大小 12pt (24 half-points)
+                                innerRun.PrependChild(new RunProperties(new FontSize() { Val = "24" }));
+                                p.Append(innerRun);
                             }
                         }
                         else
                         {
                             // 其他節點（如 span），遞迴處理
-                            p.Append(new Run(new Text(node.InnerText)));
+                            var innerRun = new Run(new Text(node.InnerText));
+
+                            // 設定字型大小 12pt (24 half-points)
+                            innerRun.PrependChild(new RunProperties(new FontSize() { Val = "24" }));
+                            p.Append(innerRun);
                         }
                     }
 
@@ -631,7 +639,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
         }
 
         /// <summary>
-        /// 依據資料與欄位陣列，將 Word 表格中的對應欄位字串替換為資料內容
+        /// 將 Word 表格中的對應欄位字串替換為資料內容，支援巢狀表格與合併欄位之多筆資料列
         /// <summary>
         public void InsertSubTableRows(string[] columnKeys, List<Dictionary<string, string>> repeatData)
         {
@@ -682,17 +690,21 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
                             string value = (key != null && data.ContainsKey(key)) ? data[key] : "";
 
                             // 解析 cell 內容，處理 與 \n
-                            var para = new Paragraph();
+                            var p = new Paragraph();
                             var lines = value.Split(new[] { "\n" }, StringSplitOptions.None);
 
                             for (int lineIdx = 0; lineIdx < lines.Length; lineIdx++)
                             {
                                 if (lineIdx > 0)
-                                    para.AppendChild(new Run(new Break()));
-                                para.AppendChild(new Run(new Text(lines[lineIdx])));
+                                    p.AppendChild(new Run(new Break()));
+                                var innerRun = new Run(new Text(lines[lineIdx]));
+
+                                // 設定字型大小 12pt (24 half-points)
+                                innerRun.PrependChild(new RunProperties(new FontSize() { Val = "24" }));
+                                p.Append(innerRun);
                             }
 
-                            cell.AppendChild(para);
+                            cell.AppendChild(p);
                         }
 
                         table.InsertBefore(newRow, targetRow);
@@ -705,6 +717,9 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
             }
         }
 
+        /// <summary>
+        /// 替換佔位符為多行文字 (每行換行)
+        /// </summary>
         public void ReplacePlaceholderWithLines(string placeholder, IEnumerable<string> lines)
         {
             var body = Word.MainDocumentPart.Document.Body;

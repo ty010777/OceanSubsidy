@@ -280,9 +280,6 @@ public class DownloadTemplateEDC : IHttpHandler
                 }
                 schedules += "</table>";
 
-                // context.Response.Write(schedules);
-                // return;
-
                 // BudgetPlans
                 data = accessibilityService.getFunding(new JObject { ["ID"] = id }, context);
                 jobj = JObject.Parse(JsonConvert.SerializeObject(data));
