@@ -1,0 +1,7 @@
+
+
+ALTER TABLE [OFS_ProjectChangeRecord] ALTER COLUMN [DataID] VARCHAR(10) NOT NULL
+ALTER TABLE [OFS_ProjectChangeRecord] ALTER COLUMN [Reason] NVARCHAR(500)
+ALTER TABLE [OFS_ProjectChangeRecord] ADD [Method] INT NOT NULL DEFAULT 1
+
+

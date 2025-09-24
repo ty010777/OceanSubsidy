@@ -5,13 +5,14 @@ using System.Data;
 
 public class OFSProjectChangeRecordHelper
 {
-    public static ProjectChangeRecord getApplying(string type, int dataID)
+    public static ProjectChangeRecord getApplying(string type, string dataID)
     {
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
             SELECT TOP (1) [ID]
                   ,[Type]
+                  ,[Method]
                   ,[DataID]
                   ,[Reason]
                   ,[Form1Before]
@@ -28,6 +29,7 @@ public class OFSProjectChangeRecordHelper
                   ,[RejectReason]
               FROM [OFS_ProjectChangeRecord]
              WHERE [Type] = @Type
+               AND [Method] = 1
                AND [DataID] = @DataID
                AND [Status] <> 3
           ORDER BY CreateTime DESC
@@ -46,11 +48,12 @@ public class OFSProjectChangeRecordHelper
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
-            INSERT INTO [OFS_ProjectChangeRecord] ([Type],[DataID],[Reason],[Status],[CreateTime],[CreateUser])
-                        OUTPUT Inserted.ID VALUES (@Type, @DataID, @Reason, 1,       GETDATE(),   @CreateUser)
+            INSERT INTO [OFS_ProjectChangeRecord] ([Type],[Method],[DataID],[Reason],[Status],[CreateTime],[CreateUser])
+                        OUTPUT Inserted.ID VALUES (@Type, @Method, @DataID, @Reason, 1,       GETDATE(),   @CreateUser)
         ";
 
         db.Parameters.Add("@Type", model.Type);
+        db.Parameters.Add("@Method", model.Method);
         db.Parameters.Add("@DataID", model.DataID);
         db.Parameters.Add("@Reason", model.Reason);
         db.Parameters.Add("@CreateUser", CurrentUser.ID);
@@ -105,7 +108,8 @@ public class OFSProjectChangeRecordHelper
         {
             ID = row.Field<int>("ID"),
             Type = row.Field<string>("Type"),
-            DataID = row.Field<int>("DataID"),
+            Method = row.Field<int>("Method"),
+            DataID = row.Field<string>("DataID"),
             Reason = row.Field<string>("Reason"),
             Form1Before = row.Field<string>("Form1Before"),
             Form1After = row.Field<string>("Form1After"),

@@ -13,15 +13,15 @@ public class EducationService : BaseService
     public object applyChange(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
-
-        getProject(id, new int[] {51}); //執行階段-審核中
+        var data = getProject(id, new int[] {51}); //執行階段-審核中
 
         OFS_EdcProjectHelper.setProjectChanged(id, true);
 
         OFSProjectChangeRecordHelper.insert(new ProjectChangeRecord
         {
             Type = "EDC",
-            DataID = id,
+            Method = 1,
+            DataID = data.ProjectID,
             Reason = param["Reason"].ToString()
         });
 
@@ -509,7 +509,7 @@ public class EducationService : BaseService
         {
             if (project.IsProjChanged)
             {
-                project.changeApply = OFSProjectChangeRecordHelper.getApplying("EDC", project.ID);
+                project.changeApply = OFSProjectChangeRecordHelper.getApplying("EDC", project.ProjectID);
             }
 
             return project;

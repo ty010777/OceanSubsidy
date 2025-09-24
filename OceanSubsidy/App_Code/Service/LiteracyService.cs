@@ -13,15 +13,15 @@ public class LiteracyService : BaseService
     public object applyChange(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
-
-        getProject(id, new int[] {51}); //執行階段-審核中
+        var data = getProject(id, new int[] {51}); //執行階段-審核中
 
         OFS_LitProjectHelper.setProjectChanged(id, true);
 
         OFSProjectChangeRecordHelper.insert(new ProjectChangeRecord
         {
             Type = "LIT",
-            DataID = id,
+            Method = 1,
+            DataID = data.ProjectID,
             Reason = param["Reason"].ToString()
         });
 
@@ -771,7 +771,7 @@ public class LiteracyService : BaseService
         {
             if (project.IsProjChanged)
             {
-                project.changeApply = OFSProjectChangeRecordHelper.getApplying("LIT", project.ID);
+                project.changeApply = OFSProjectChangeRecordHelper.getApplying("LIT", project.ProjectID);
             }
 
             return project;
