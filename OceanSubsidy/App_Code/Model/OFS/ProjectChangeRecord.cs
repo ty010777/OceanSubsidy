@@ -6,6 +6,8 @@ namespace GS.OCA_OceanSubsidy.Model.OFS
 
         public string Type { get; set; }
 
+        public int Method { get; set; }
+
         public string DataID { get; set; }
 
         public string Reason { get; set; }

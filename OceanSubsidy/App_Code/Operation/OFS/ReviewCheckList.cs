@@ -3265,9 +3265,9 @@ SELECT TOP (1000) [ProjectID]
             {
                 taskTemplates = new List<TaskTemplate>
                 {
-                    new TaskTemplate("Change", "計畫變更", 1, true, false),
-                    new TaskTemplate("MonthlyReport", "填寫每月進度報告", 2, true, false),
-                    new TaskTemplate("MidReport", "填寫期中報告", 3, true, false),
+                    new TaskTemplate("Change", "計畫變更", 1, false, false),
+                    new TaskTemplate("MonthlyReport", "填寫每月進度報告", 2, false, false),
+                    new TaskTemplate("MidReport", "填寫期中報告", 3, false, false),
                     new TaskTemplate("Payment1", "第一次請款", 4, false, false),
                     new TaskTemplate("FinalReport", "填寫期末報告", 5, false, false),
                     new TaskTemplate("Payment2", "第二期請款", 6, false, false)
@@ -3277,8 +3277,8 @@ SELECT TOP (1000) [ProjectID]
             {
                 taskTemplates = new List<TaskTemplate>
                 {
-                    new TaskTemplate("Change", "計畫變更", 1, true, false),
-                    new TaskTemplate("Report", "上傳成果報告", 2, true, false),
+                    new TaskTemplate("Change", "計畫變更", 1, false, false),
+                    new TaskTemplate("Report", "上傳成果報告", 2, false, false),
                     new TaskTemplate("Payment", "請款", 3, false, false)
                 };
             }
@@ -3286,8 +3286,8 @@ SELECT TOP (1000) [ProjectID]
             {
                 taskTemplates = new List<TaskTemplate>
                 {
-                    new TaskTemplate("Change", "計畫變更", 1, true, false),
-                    new TaskTemplate("Payment1", "請款", 2, true, false),
+                    new TaskTemplate("Change", "計畫變更", 1, false, false),
+                    new TaskTemplate("Payment1", "請款", 2, false, false),
                     new TaskTemplate("Payment2", "核銷轉正/請款", 3, false, false),
                     new TaskTemplate("Report", "上傳成果報告", 4, false, false),
                     new TaskTemplate("Payment3", "結案核銷轉正", 5, false, false)
@@ -3297,8 +3297,8 @@ SELECT TOP (1000) [ProjectID]
             {
                 taskTemplates = new List<TaskTemplate>
                 {
-                    new TaskTemplate("Change", "計畫變更", 1, true, false),
-                    new TaskTemplate("Payment1", "第一次請款", 2, true, false),
+                    new TaskTemplate("Change", "計畫變更", 1, false, false),
+                    new TaskTemplate("Payment1", "第一次請款", 2, false, false),
                     new TaskTemplate("Report", "上傳成果報告", 3, false, false),
                     new TaskTemplate("Payment2", "第二期請款", 4, false, false)
                 };
@@ -3307,8 +3307,8 @@ SELECT TOP (1000) [ProjectID]
             {
                 taskTemplates = new List<TaskTemplate>
                 {
-                    new TaskTemplate("Change", "計畫變更", 1, true, false),
-                    new TaskTemplate("MidReport", "填寫期中報告", 2, true, false),
+                    new TaskTemplate("Change", "計畫變更", 1, false, false),
+                    new TaskTemplate("MidReport", "填寫期中報告", 2, false, false),
                     new TaskTemplate("Payment1", "第一次請款", 3, false, false),
                     new TaskTemplate("FinalReport", "上傳成果報告", 4, false, false),
                     new TaskTemplate("Payment2", "第二期請款", 5, false, false)

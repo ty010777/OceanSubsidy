@@ -26,15 +26,10 @@
 </asp:Content>
 
 <asp:Content ID="MainContent" ContentPlaceHolderID="MainContent" runat="server">
-      <!-- 公告bar -->
-   <div class="notice">
-       <div class="notice-content">
-           <h3 class="notice-title">114/12/31 條款正式上線</h3>
-       </div>
-       <div class="notice-action">
-           <a href="#" class="btn-link">全部公告</a>
-       </div>
-   </div>
+    <!-- 公告bar -->
+    <div id="news-marquee">
+        <news-marquee></news-marquee>
+    </div>
 
     <!-- 查詢 -->
     <div class="search bg-gray mt-4">
@@ -42,7 +37,7 @@
             <i class="fa-solid fa-magnifying-glass"></i>
             查詢
         </h3>
-        
+
         <!-- 查詢表單 -->
         <div class="search-form">
             <div class="column-2">
@@ -77,23 +72,23 @@
                     <div class="fs-16 text-gray mb-2">計畫編號或名稱關鍵字</div>
                     <asp:TextBox ID="txtProjectKeyword" runat="server" CssClass="form-control" placeholder="請輸入計畫編號、計畫名稱相關文字"></asp:TextBox>
                 </div>
-                
+
                 <!-- 計畫內容關鍵字 -->
                 <div class="search-item">
                     <div class="fs-16 text-gray mb-2">計畫內容關鍵字</div>
                     <asp:TextBox ID="txtContentKeyword" runat="server" CssClass="form-control" placeholder="計畫內容關鍵字"></asp:TextBox>
                 </div>
             </div>
-            
+
             <%-- <div class="form-check-input-group d-flex justify-content-center"> --%>
             <%--     <input id="chkPendingReply" class="form-check-input check-teal" type="checkbox" name="type2"> --%>
             <%--     <label for="chkPendingReply">待回覆</label> --%>
             <%-- </div> --%>
-            
+
             <asp:Button ID="btnSearch" runat="server" Text="查詢" CssClass="btn btn-teal-dark d-table mx-auto" OnClick="btnSearch_Click" />
         </div>
     </div>
-    
+
     <!-- 總計列表 -->
     <ul class="total-list">
         <li class="total-item active">
@@ -142,7 +137,7 @@
             </a>
         </li>
     </ul>
-    
+
     <!-- 列表內容 -->
     <div class="block rounded-bottom-4">
         <div class="title border-teal">
@@ -154,7 +149,7 @@
                 <span>共 <span class="text-teal" id="totalRecordsSpan"><asp:Label ID="lblTotalRecords" runat="server" Text="0"></asp:Label></span> 筆資料</span>
             </div>
         </div>
-        
+
         <div class="table-responsive" style="min-height: 400px;">
             <table class="table teal-table">
                 <thead>
@@ -218,7 +213,7 @@
                 </tbody>
             </table>
         </div>
-        
+
         <!-- 前端分頁系統 -->
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
             <nav class="pagination justify-content-start" aria-label="Pagination" id="paginationNav">
@@ -226,7 +221,7 @@
                 <!-- 動態分頁按鈕將在這裡插入 -->
                 <button type="button" id="btnNextPage" class="nav-button" aria-label="Next page">›</button>
             </nav>
-      
+
             <div class="page-number-control">
                 <div class="page-number-control-item">
                     <span>跳到</span>
@@ -265,12 +260,12 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    
+
                     <div class="d-flex justify-content-between">
                         <h5 class="square-title">計畫資料</h5>
                         <button class="btn btn-teal-dark" type="button"><i class="fas fa-download"></i>匯出申請資料</button>
                     </div>
-                    
+
                     <div class="bg-light-gray p-3 mb-5 mt-3">
                         <ul class="lh-lg">
                             <li>
@@ -299,7 +294,7 @@
                             </li>
                         </ul>
                     </div>
-                    
+
                     <div class="d-flex justify-content-between">
                         <h5 class="square-title">領域審查意見回覆</h5>
                         <button class="btn btn-teal-dark" type="button"><i class="fas fa-download"></i>匯出審查意見回覆表</button>
@@ -324,7 +319,7 @@
                             </tbody>
                         </table>
                     </div>
-                    
+
                     <div class="d-flex gap-3 flex-wrap justify-content-center mt-4">
                         <button type="button" class="btn btn-outline-teal">
                             暫存
@@ -334,10 +329,12 @@
                             提送回覆
                         </button>
                     </div>
-                    
+
                 </div>
             </div>
         </div>
     </div>
-
+    <script>
+        startVueApp("#news-marquee");
+    </script>
 </asp:Content>
