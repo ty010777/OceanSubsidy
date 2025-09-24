@@ -5,7 +5,7 @@ using System.Data;
 
 public class OFSProjectChangeRecordHelper
 {
-    public static ProjectChangeRecord getApplying(string type, int dataID)
+    public static ProjectChangeRecord getApplying(string type, string dataID)
     {
         DbHelper db = new DbHelper();
 
@@ -105,7 +105,7 @@ public class OFSProjectChangeRecordHelper
         {
             ID = row.Field<int>("ID"),
             Type = row.Field<string>("Type"),
-            DataID = row.Field<int>("DataID"),
+            DataID = row.Field<string>("DataID"),
             Reason = row.Field<string>("Reason"),
             Form1Before = row.Field<string>("Form1Before"),
             Form1After = row.Field<string>("Form1After"),

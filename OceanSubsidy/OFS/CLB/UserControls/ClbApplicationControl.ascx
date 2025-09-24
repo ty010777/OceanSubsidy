@@ -1,5 +1,5 @@
 ﻿<%@ Control Language="C#" AutoEventWireup="true" CodeFile="ClbApplicationControl.ascx.cs" Inherits="OFS_CLB_UserControls_ClbApplicationControl" %>
-
+<%@ Register TagPrefix="uc" TagName="ChangeDescriptionControl" Src="~/OFS/CLB/UserControls/ChangeDescriptionControl.ascx" %>
 
 
 <!-- 申請表區塊 -->
@@ -275,124 +275,126 @@
 
 <!-- 上傳附件區塊 -->
 <div id="uploadAttachmentSection" style="display: none;">
-
-<div class="block">
-    <h5 class="square-title">上傳附件</h5>
-    <p class="text-pink lh-base mt-3">
-        請下載附件範本，填寫資料及公文用印後上傳（僅支援PDF格式上傳，每個檔案10MB以內）<br>
-        申請計畫書請自行留存送審版電子檔，待審核結果公告後請提交修正計畫書以供核定。
-    </p>
-    <div class="table-responsive mt-3 mb-0">
-        <table id="FileTable" class="table align-middle gray-table">
-            <thead class="text-center">
-                <tr>
-                    <th width="60">附件編號</th>
-                    <th>附件名稱</th>
-                    <th width="180">狀態</th>
-                    <th width="350">上傳附件</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td class="text-center">1</td>
-                    <td>
-                        <div>
-                            <span class="text-pink view-mode">*</span>
-                            申請表
-                        </div>
-                           <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2 view-mode" 
-                                  onclick="downloadTemplate('1')">
+    <div class="block">
+        <h5 class="square-title">上傳附件</h5>
+        <p class="text-pink lh-base mt-3">
+            請下載附件範本，填寫資料及公文用印後上傳（僅支援PDF格式上傳，每個檔案10MB以內）<br>
+            申請計畫書請自行留存送審版電子檔，待審核結果公告後請提交修正計畫書以供核定。
+        </p>
+        <div class="table-responsive mt-3 mb-0">
+            <table id="FileTable" class="table align-middle gray-table">
+                <thead class="text-center">
+                    <tr>
+                        <th width="60">附件編號</th>
+                        <th>附件名稱</th>
+                        <th width="180">狀態</th>
+                        <th width="350">上傳附件</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="text-center">1</td>
+                        <td>
+                            <div>
+                                <span class="text-pink view-mode">*</span>
+                                申請表
+                            </div>
+                               <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2 view-mode" 
+                                      onclick="downloadTemplate('1')">
+                                  <i class="fas fa-file-download me-1"></i> 範本下載
+                              </button>
+                        </td>
+                        <td class="text-center">
+                            <asp:Label ID="lblStatusCLB1" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
+                        </td>
+                        <td>
+                            <input type="file" id="fileInput_FILE_CLB1" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_CLB1', this)" />
+                            <button class="btn btn-teal-dark view-mode" type="button" onclick="document.getElementById('fileInput_FILE_CLB1').click()">
+                                <i class="fas fa-file-upload me-1"></i> 上傳
+                            </button>
+                            <asp:Panel ID="pnlFilesCLB1" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
+                            </asp:Panel>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-center">2</td>
+                        <td>
+                            <div>
+                                <span class="text-pink view-mode">*</span>
+                                計畫書
+                            </div>
+                            <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2 view-mode" 
+                                 onclick="downloadTemplate('2')">
+                             <i class="fas fa-file-download me-1"></i> 範本下載
+                            </button>
+                        </td>
+                        <td class="text-center">
+                            <asp:Label ID="lblStatusCLB2" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
+                        </td>
+                        <td>
+                            <input type="file" id="fileInput_FILE_CLB2" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_CLB2', this)" />
+                            <button class="btn btn-teal-dark view-mode" type="button" onclick="document.getElementById('fileInput_FILE_CLB2').click()">
+                                <i class="fas fa-file-upload me-1"></i> 上傳
+                            </button>
+                            <asp:Panel ID="pnlFilesCLB2" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
+                            </asp:Panel>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-center">3</td>
+                        <td>
+                            <div>
+                                <span class="text-pink view-mode">*</span>
+                                未違反公職人員利益衝突迴避法切結書及事前揭露表
+                            </div>
+                            <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2 view-mode" 
+                                  onclick="downloadTemplate('3')">
                               <i class="fas fa-file-download me-1"></i> 範本下載
                           </button>
-                    </td>
-                    <td class="text-center">
-                        <asp:Label ID="lblStatusCLB1" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
-                    </td>
-                    <td>
-                        <input type="file" id="fileInput_FILE_CLB1" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_CLB1', this)" />
-                        <button class="btn btn-teal-dark view-mode" type="button" onclick="document.getElementById('fileInput_FILE_CLB1').click()">
-                            <i class="fas fa-file-upload me-1"></i> 上傳
-                        </button>
-                        <asp:Panel ID="pnlFilesCLB1" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
-                        </asp:Panel>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="text-center">2</td>
-                    <td>
-                        <div>
-                            <span class="text-pink view-mode">*</span>
-                            計畫書
-                        </div>
-                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2 view-mode" 
-                             onclick="downloadTemplate('2')">
-                         <i class="fas fa-file-download me-1"></i> 範本下載
-                        </button>
-                    </td>
-                    <td class="text-center">
-                        <asp:Label ID="lblStatusCLB2" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
-                    </td>
-                    <td>
-                        <input type="file" id="fileInput_FILE_CLB2" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_CLB2', this)" />
-                        <button class="btn btn-teal-dark view-mode" type="button" onclick="document.getElementById('fileInput_FILE_CLB2').click()">
-                            <i class="fas fa-file-upload me-1"></i> 上傳
-                        </button>
-                        <asp:Panel ID="pnlFilesCLB2" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
-                        </asp:Panel>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="text-center">3</td>
-                    <td>
-                        <div>
-                            <span class="text-pink view-mode">*</span>
-                            未違反公職人員利益衝突迴避法切結書及事前揭露表
-                        </div>
-                        <button type="button" class="btn btn-sm btn-teal-dark rounded-pill mt-2 view-mode" 
-                              onclick="downloadTemplate('3')">
-                          <i class="fas fa-file-download me-1"></i> 範本下載
-                      </button>
-                    </td>
-                    <td class="text-center">
-                        <asp:Label ID="lblStatusCLB3" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
-                    </td>
-                    <td>
-                        <input type="file" id="fileInput_FILE_CLB3" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_CLB3', this)" />
-                        <button class="btn btn-teal-dark view-mode" type="button" onclick="document.getElementById('fileInput_FILE_CLB3').click()">
-                            <i class="fas fa-file-upload me-1"></i> 上傳
-                        </button>
-                        <asp:Panel ID="pnlFilesCLB3" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
-                        </asp:Panel>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="text-center">4</td>
-                    <td>
-                        <div>
-                            相關佐證資料
-                        </div>
-                       
-                    </td>
-                    <td class="text-center">
-                        <asp:Label ID="lblStatusCLB4" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
-                    </td>
-                    <td>
-                        <input type="file" id="fileInput_FILE_CLB4" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_CLB4', this)" />
-                        <button class="btn btn-teal-dark view-mode" type="button" onclick="document.getElementById('fileInput_FILE_CLB4').click()">
-                            <i class="fas fa-file-upload me-1"></i> 上傳
-                        </button>
-                        <asp:Panel ID="pnlFilesCLB4" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
-                        </asp:Panel>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+                        </td>
+                        <td class="text-center">
+                            <asp:Label ID="lblStatusCLB3" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
+                        </td>
+                        <td>
+                            <input type="file" id="fileInput_FILE_CLB3" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_CLB3', this)" />
+                            <button class="btn btn-teal-dark view-mode" type="button" onclick="document.getElementById('fileInput_FILE_CLB3').click()">
+                                <i class="fas fa-file-upload me-1"></i> 上傳
+                            </button>
+                            <asp:Panel ID="pnlFilesCLB3" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
+                            </asp:Panel>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-center">4</td>
+                        <td>
+                            <div>
+                                相關佐證資料
+                            </div>
+                           
+                        </td>
+                        <td class="text-center">
+                            <asp:Label ID="lblStatusCLB4" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
+                        </td>
+                        <td>
+                            <input type="file" id="fileInput_FILE_CLB4" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_CLB4', this)" />
+                            <button class="btn btn-teal-dark view-mode" type="button" onclick="document.getElementById('fileInput_FILE_CLB4').click()">
+                                <i class="fas fa-file-upload me-1"></i> 上傳
+                            </button>
+                            <asp:Panel ID="pnlFilesCLB4" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
+                            </asp:Panel>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
+
+    <!-- 隱藏欄位用於資料交換 -->
+    <asp:HiddenField ID="hdnAttachmentData" runat="server" />
 </div>
 
-<!-- 隱藏欄位用於資料交換 -->
-<asp:HiddenField ID="hdnAttachmentData" runat="server" />
-
+<div id="changeDescription">
+    <uc:ChangeDescriptionControl ID="ucChangeDescription" runat="server" />
 </div>
 <!-- 上傳附件區塊結束 -->
 
@@ -415,4 +417,24 @@
     }
 </script>
 
-    
+<!-- 底部區塊 -->
+<div class="block-bottom bg-light-teal">
+    <button type="button" id="btnTempSave"
+            class="btn btn-outline-teal"
+            onclick="handleTempSave()">
+        暫存
+    </button>
+
+    <button type="button" id="btnSaveAndNext"
+            class="btn btn-teal"
+            onclick="handleSaveAndNext()">
+        完成本頁，下一步
+    </button>
+
+    <button type="button" id="btnSubmitApplication"
+            class="btn btn-teal"
+            onclick="handleSubmitApplication()">
+        完成本頁，提送申請
+    </button>
+</div>
+

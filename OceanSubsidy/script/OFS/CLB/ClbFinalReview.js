@@ -828,44 +828,6 @@ function resetFileStatusUIFromJS(fileCode) {
     }
 }
 
-/**
- * 透過 URL 導航到指定的步驟
- */
-function navigateToStepByUrl(stepIndex) {
-    // 檢查目標步驟是否被禁用
-    const targetStep = $('.application-step .step-item').eq(stepIndex);
-    if (targetStep.hasClass('disabled') || targetStep.attr('aria-disabled') === 'true') {
-        return; // 如果步驟被禁用，不執行任何操作
-    }
-    
-    const projectID = getProjectID();
-    
-    // 建構目標 URL
-    let targetUrl = 'ClbFinalReview.aspx';
-    
-    if (projectID) {
-        targetUrl += '?ProjectID=' + encodeURIComponent(projectID);
-    }
-    
-    // 根據步驟添加 step 參數
-    if (stepIndex === 1) {
-        // 上傳附件步驟
-        targetUrl += (targetUrl.includes('?') ? '&' : '?') + 'step=1';
-    } else {
-        // 申請表步驟 (step=0 或不加 step 參數)
-        targetUrl += (targetUrl.includes('?') ? '&' : '?') + 'step=0';
-    }
-    
-    // 重新載入頁面以執行 InitializePage
-    window.location.href = targetUrl;
-}
-
-/**
- * 導航到指定的步驟（保留舊函數名稱以相容現有代碼）
- */
-function navigateToStep(stepIndex) {
-    navigateToStepByUrl(stepIndex);
-}
 
 /**
  * 執行最終申請提送

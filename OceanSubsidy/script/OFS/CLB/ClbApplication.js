@@ -4,9 +4,6 @@
     
     // 綁定事件
     bindEvents();
-    
-    // 初始化進度條
-    initializeStepBar();
 });
 
 function initializePage() {
@@ -28,7 +25,7 @@ function bindEvents() {
     $('.funds-input').on('input', function() {
         calculateTotalFunds();
     });
-    
+
     // 表單提交前驗證
     $('form').on('submit', function(e) {
         if (!validateForm()) {
@@ -36,23 +33,155 @@ function bindEvents() {
             return false;
         }
     });
-    
+
     // 初始化上傳附件功能
     initializeFileUpload();
 }
 
-function initializeStepBar() {
-    // 進度條初始化將由後端的 InitializePage 方法處理
-    // 這裡只需要綁定點擊事件
-    bindStepClickEvents();
+// 全域變數
+var currentTab = 'application'; // 預設顯示申請表
+var enableUploadStep = false; // 是否啟用上傳附件步驟
+var isReadOnlyMode = false; // 是否為檢視模式
+
+/**
+ * 切換標籤
+ * @param {string} tabName - 標籤名稱 ('application' 或 'upload')
+ */
+function switchTab(tabName) {
+    // 檢查是否允許切換到上傳附件標籤
+    if (tabName === 'upload' && !enableUploadStep) {
+        Swal.fire({
+            icon: 'warning',
+            title: '無法切換',
+            text: '請先完成申請表內容並儲存後，才能進入上傳附件步驟',
+            confirmButtonText: '確定'
+        });
+        return;
+    }
+
+    currentTab = tabName;
+
+    // 切換標籤樣式
+    $('.application-step .step-item').removeClass('active');
+
+    if (tabName === 'application') {
+        $('#applicationTab').addClass('active');
+        $('#applicationFormSection').show();
+        $('#uploadAttachmentSection').hide();
+
+        // 更新按鈕顯示
+        updateButtonVisibility('application', isReadOnlyMode);
+
+        // 更新狀態
+        updateStepStatus('application', '編輯中', 'edit');
+        if (enableUploadStep) {
+            updateStepStatus('upload', '已完成');
+        }else{
+            updateStepStatus('upload', '');
+        }
+
+    } else if (tabName === 'upload') {
+        $('#uploadTab').addClass('active');
+        $('#applicationFormSection').hide();
+        $('#uploadAttachmentSection').show();
+
+        // 更新按鈕顯示
+        updateButtonVisibility('upload', isReadOnlyMode);
+        // 更新狀態
+        updateStepStatus('application', '已完成');
+
+        updateStepStatus('upload', '編輯中', 'edit');
+    }
 }
 
-function bindStepClickEvents() {
-    // 綁定進度條點擊事件
-    $('.application-step .step-item').on('click', function() {
-        let index = $(this).index();
-        navigateToStepByUrl(index);
-    });
+/**
+ * 更新按鈕顯示狀態
+ * @param {string} currentTabName - 目前標籤名稱
+ * @param {boolean} isReadOnly - 是否為檢視模式 (可選參數，預設為 false)
+ */
+function updateButtonVisibility(currentTabName, isReadOnly = false) {
+    // 現在按鈕是 HTML button，使用正確的選擇器
+    var saveAndNextBtn = $('#btnSaveAndNext');
+    var submitAppBtn = $('#btnSubmitApplication');
+
+    // 如果是檢視模式，隱藏所有按鈕
+    if (isReadOnly) {
+        saveAndNextBtn.hide();
+        submitAppBtn.hide();
+        return;
+    }
+
+    if (currentTabName === 'application') {
+        // 申請表標籤：顯示「完成本頁，下一步」
+        saveAndNextBtn.show();
+        submitAppBtn.hide();
+    } else if (currentTabName === 'upload') {
+        // 上傳附件標籤：顯示「完成本頁，提送申請」
+        saveAndNextBtn.hide();
+        submitAppBtn.show();
+    }
+}
+
+/**
+ * 設定是否啟用上傳附件步驟
+ * @param {boolean} enable - 是否啟用
+ */
+// function setUploadStepEnabled(enable) {
+    // enableUploadStep = enable;
+    //
+    // var uploadTab = $('#uploadTab');
+    //
+    // if (enable) {
+    //     // 啟用上傳附件標籤
+    //     uploadTab.removeClass('disabled')
+    //              .attr('aria-disabled', 'false')
+    //              .attr('tabindex', '0');
+    //    
+    // } else {
+    //     // 禁用上傳附件標籤
+    //     uploadTab.addClass('disabled')
+    //              .attr('aria-disabled', 'true')
+    //              .removeAttr('tabindex');
+    //
+    //     // 移除狀態文字
+    //     uploadTab.find('.step-status').remove();
+    // }
+// }
+
+/**
+ * 更新步驟狀態文字（重新定義以避免衝突）
+ * @param {string} stepName - 步驟名稱 ('application' 或 'upload')
+ * @param {string} status - 狀態文字
+ * @param {string} statusClass - 狀態樣式類別 (可選)
+ */
+function updateStepStatus(stepName, status, statusClass = '') {
+    var targetTab = stepName === 'application' ? $('#applicationTab') : $('#uploadTab');
+
+    // 移除現有狀態
+    targetTab.find('.step-status').remove();
+
+    // 新增狀態文字
+    if (status) {
+        var statusHtml = '<div class="step-status ' + statusClass + '">' + status + '</div>';
+        targetTab.find('.step-content').append(statusHtml);
+    }
+}
+
+/**
+ * 初始化頁面標籤功能
+ * @param {boolean} uploadEnabled - 是否啟用上傳附件步驟
+ * @param {string} initialTab - 初始顯示的標籤 (可選，預設為 'application')
+ * @param {boolean} readOnly - 是否為檢視模式 (可選，預設為 false)
+ */
+function initializeTabSystem(uploadEnabled, initialTab = 'application', readOnly = false) {
+    enableUploadStep = uploadEnabled;
+    isReadOnlyMode = readOnly;
+
+    // 設定上傳步驟狀態
+    // setUploadStepEnabled(uploadEnabled);
+
+    // 切換到初始標籤
+    switchTab(initialTab);
 }
 
 function initializeDatePickers() {
@@ -241,17 +370,6 @@ function formatGregorianDate(taiwanDateString) {
     return moment(taiwanDateString, 'tYY/MM/DD').format('YYYY/MM/DD');
 }
 
-function updateStepStatus(stepNumber, status) {
-    $('.application-step .step-item').removeClass('active completed');
-    
-    $('.application-step .step-item').each(function(index) {
-        if (index < stepNumber - 1) {
-            $(this).addClass('completed');
-        } else if (index === stepNumber - 1) {
-            $(this).addClass(status);
-        }
-    });
-}
 
 function goToNextStep() {
     if (validateForm()) {
@@ -815,43 +933,14 @@ function resetFileStatusUIFromJS(fileCode) {
     }
 }
 
-/**
- * 透過 URL 導航到指定的步驟
- */
-function navigateToStepByUrl(stepIndex) {
-    // 檢查目標步驟是否被禁用
-    const targetStep = $('.application-step .step-item').eq(stepIndex);
-    if (targetStep.hasClass('disabled') || targetStep.attr('aria-disabled') === 'true') {
-        return; // 如果步驟被禁用，不執行任何操作
-    }
-    
-    const projectID = getProjectID();
-    
-    // 建構目標 URL
-    let targetUrl = 'ClbApplication.aspx';
-    
-    if (projectID) {
-        targetUrl += '?ProjectID=' + encodeURIComponent(projectID);
-    }
-    
-    // 根據步驟添加 step 參數
-    if (stepIndex === 1) {
-        // 上傳附件步驟
-        targetUrl += (targetUrl.includes('?') ? '&' : '?') + 'step=1';
-    } else {
-        // 申請表步驟 (step=0 或不加 step 參數)
-        targetUrl += (targetUrl.includes('?') ? '&' : '?') + 'step=0';
-    }
-    
-    // 重新載入頁面以執行 InitializePage
-    window.location.href = targetUrl;
-}
 
 /**
  * 導航到指定的步驟（保留舊函數名稱以相容現有代碼）
  */
 function navigateToStep(stepIndex) {
-    navigateToStepByUrl(stepIndex);
+    // 轉換為新的標籤切換方式
+    var tabName = stepIndex === 0 ? 'application' : 'upload';
+    switchTab(tabName);
 }
 
 /**
@@ -983,6 +1072,226 @@ $(document).ready(function() {
     setTimeout(initializeStepKeyboardEvents, 100);
 });
 
+/**
+ * 處理暫存按鈕點擊
+ */
+function handleTempSave() {
+    // 顯示載入中訊息
+    Swal.fire({
+        title: '暫存中...',
+        text: '正在儲存您的資料，請稍候。',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    // 收集表單資料
+    const formData = collectFormData();
+    formData.append('action', 'tempSave');
+
+    // 發送 AJAX 請求
+    fetch(window.location.pathname, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: '暫存成功！',
+                html: `計畫編號：<strong>${data.projectID}</strong><br>資料已成功暫存`,
+                confirmButtonText: '確定'
+            }).then(() => {
+                // 如果是新建的專案，需要重新載入頁面以更新 URL
+                if (window.location.search.indexOf('ProjectID=') === -1) {
+                    window.location.href = `ClbApplication.aspx?ProjectID=${data.projectID}`;
+                }
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: '暫存失敗',
+                text: data.message || '未知錯誤，請稍後再試',
+                confirmButtonText: '確定'
+            });
+        }
+    })
+    .catch(error => {
+        console.error('TempSave error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: '暫存失敗',
+            text: '網路連線錯誤，請檢查您的網路連線後再試',
+            confirmButtonText: '確定'
+        });
+    });
+}
+
+/**
+ * 處理儲存並下一步按鈕點擊
+ */
+function handleSaveAndNext() {
+    // 顯示載入中訊息
+    Swal.fire({
+        title: '儲存中...',
+        text: '正在儲存您的資料，請稍候。',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    // 收集表單資料
+    const formData = collectFormData();
+    formData.append('action', 'saveAndNext');
+
+    // 發送 AJAX 請求
+    fetch(window.location.pathname, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: '儲存成功！',
+                html: `計畫編號：<strong>${data.projectID}</strong><br>即將進入上傳附件步驟`,
+                timer: 2000,
+                showConfirmButton: false
+            }).then(() => {
+                const currentPage = window.location.pathname.split('/').pop();
+
+                if (currentPage == 'ClbApplication.aspx') {
+                    // 只有當前頁面不是 ClbApplication.aspx 才跳轉
+                    window.location.href = `ClbApplication.aspx?ProjectID=${data.projectID}`;
+                }            
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: '儲存失敗',
+                text: data.message || '未知錯誤，請稍後再試',
+                confirmButtonText: '確定'
+            });
+        }
+    })
+    .catch(error => {
+        console.error('SaveAndNext error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: '儲存失敗',
+            text: '網路連線錯誤，請檢查您的網路連線後再試',
+            confirmButtonText: '確定'
+        });
+    });
+}
+
+/**
+ * 處理提送申請按鈕點擊
+ */
+function handleSubmitApplication() {
+    const projectID = getProjectID();
+
+    if (!projectID) {
+        Swal.fire({
+            icon: 'error',
+            title: '錯誤',
+            text: '計畫編號不存在，請重新進入頁面',
+            confirmButtonText: '確定'
+        });
+        return;
+    }
+
+    // 顯示確認對話框
+    Swal.fire({
+        icon: 'warning',
+        title: '確認提送申請',
+        html: '是否要進行提送？<br><span style="color: red;">提送後將無法再編輯資料。</span>',
+        showCancelButton: true,
+        confirmButtonText: '是，提送申請',
+        cancelButtonText: '取消',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // 使用者確認提送，執行提送邏輯
+            submitApplicationFinal(projectID);
+        }
+    });
+}
+
+/**
+ * 收集表單資料
+ */
+function collectFormData() {
+    const formData = new FormData();
+
+    // 基本資料
+    const projectID = getProjectID();
+    if (projectID) formData.append('projectID', projectID);
+
+    formData.append('year', $('[id*="hidYear"]').val() || new Date().getFullYear());
+    formData.append('subsidyPlanType', $('[id*="hidSubsidyPlanType"]').val() || '學校社團');
+    formData.append('projectNameTw', $('[id*="txtProjectNameTw"]').val() || '');
+
+    // 申請補助類型
+    let subsidyType = '';
+    if ($('[id*="rbSubsidyTypeCreate"]').prop('checked')) subsidyType = 'Startup';
+    else if ($('[id*="rbSubsidyTypeOperation"]').prop('checked')) subsidyType = 'Admin';
+    else if ($('[id*="rbSubsidyTypeActivity"]').prop('checked')) subsidyType = 'Public';
+    formData.append('subsidyType', subsidyType);
+
+    formData.append('schoolName', $('[id*="txtSchoolName"]').val() || '');
+    formData.append('schoolIDNumber', $('[id*="txtSchoolIDNumber"]').val() || '');
+    formData.append('clubName', $('[id*="txtClubName"]').val() || '');
+    formData.append('address', $('[id*="txtAddress"]').val() || '');
+
+    // 日期欄位 - 從 data attribute 取得西元日期
+    const creationDate = $('[id*="txtCreationDate"]').data('gregorian-date');
+    if (creationDate) formData.append('creationDate', creationDate);
+
+    const startDate = $('[id*="txtStartDate"]').data('gregorian-date');
+    if (startDate) formData.append('startDate', startDate);
+
+    const endDate = $('[id*="txtEndDate"]').data('gregorian-date');
+    if (endDate) formData.append('endDate', endDate);
+
+    // 計畫資訊
+    formData.append('purpose', $('[id*="txtPurpose"]').val() || '');
+    formData.append('planContent', $('[id*="txtPlanContent"]').val() || '');
+    formData.append('preBenefits', $('[id*="txtPreBenefits"]').val() || '');
+    formData.append('planLocation', $('[id*="txtPlanLocation"]').val() || '');
+    formData.append('estimatedPeople', $('[id*="txtEstimatedPeople"]').val() || '');
+    formData.append('emergencyPlan', $('[id*="txtEmergencyPlan"]').val() || '');
+
+    // 經費資料
+    formData.append('subsidyFunds', $('[id*="txtSubsidyFunds"]').val() || '0');
+    formData.append('selfFunds', $('[id*="txtSelfFunds"]').val() || '0');
+    formData.append('otherGovFunds', $('[id*="txtOtherGovFunds"]').val() || '0');
+    formData.append('otherUnitFunds', $('[id*="txtOtherUnitFunds"]').val() || '0');
+
+    const previouslySubsidized = $('[id*="rbPreviouslySubsidizedYes"]').prop('checked');
+    formData.append('previouslySubsidized', previouslySubsidized);
+
+    formData.append('fundingDescription', $('[id*="txtFundingDescription"]').val() || '');
+
+    // 人員資料
+    formData.append('teacherName', $('[id*="txtTeacherName"]').val() || '');
+    formData.append('teacherJobTitle', $('[id*="txtTeacherJobTitle"]').val() || '');
+    formData.append('teacherPhone', $('[id*="txtTeacherPhone"]').val() || '');
+    formData.append('contactName', $('[id*="txtContactName"]').val() || '');
+    formData.append('contactJobTitle', $('[id*="txtContactJobTitle"]').val() || '');
+    formData.append('contactPhone', $('[id*="txtContactPhone"]').val() || '');
+
+    return formData;
+}
+
 // 將函數公開給全域範圍以供 HTML 中的 onclick 事件使用
 window.handleFileUpload = handleFileUpload;
 window.deleteFile = deleteFile;
@@ -992,3 +1301,8 @@ window.updateFileStatusUIFromJS = updateFileStatusUIFromJS;
 window.resetFileStatusUIFromJS = resetFileStatusUIFromJS;
 window.submitApplicationFinal = submitApplicationFinal;
 window.navigateToStep = navigateToStep;
+window.switchTab = switchTab;
+window.initializeTabSystem = initializeTabSystem;
+window.handleTempSave = handleTempSave;
+window.handleSaveAndNext = handleSaveAndNext;
+window.handleSubmitApplication = handleSubmitApplication;

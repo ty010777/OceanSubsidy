@@ -53,7 +53,7 @@ public class OFS_ClbApplicationHelper
             }
             
             // 產生 ProjectID：年份 + "CLB" + 序號（補零到3位數）
-            string projectID = $"{year}CLB{nextSerial:D4}";
+            string projectID = $"CLB{year}{nextSerial:D4}";
             
             return projectID;
         }
@@ -720,38 +720,14 @@ public class OFS_ClbApplicationHelper
         }
     }
 
-    /// <summary>
-    /// 儲存 Project_Main 資訊
-    /// </summary>
-    /// <param name="projectMainData">Project_Main 資訊物件</param>
-    public static void SaveProjectMainData(OFS_CLB_Project_Main projectMainData)
-    {
-        try
-        {
-            // 檢查是否已存在
-            bool isUpdate = CheckProjectMainDataExists(projectMainData.ProjectID);
-            
-            if (isUpdate)
-            {
-                UpdateProjectMainData(projectMainData);
-            }
-            else
-            {
-                InsertProjectMainData(projectMainData);
-            }
-        }
-        catch (Exception ex)
-        {
-            throw new Exception($"儲存 Project_Main 資訊失敗：{ex.Message}");
-        }
-    }
+ 
 
     /// <summary>
     /// 檢查 Project_Main 資訊是否已存在
     /// </summary>
     /// <param name="projectID">計畫編號</param>
     /// <returns>是否存在</returns>
-    private static bool CheckProjectMainDataExists(string projectID)
+    public static bool CheckProjectMainDataExists(string projectID)
     {
         DbHelper db = new DbHelper();
         db.CommandText = @"
@@ -781,7 +757,7 @@ public class OFS_ClbApplicationHelper
     /// 新增 Project_Main 資訊
     /// </summary>
     /// <param name="projectMainData">Project_Main 資訊物件</param>
-    private static void InsertProjectMainData(OFS_CLB_Project_Main projectMainData)
+    public static void InsertProjectMainData(OFS_CLB_Project_Main projectMainData)
     {
         DbHelper db = new DbHelper();
         db.CommandText = @"
@@ -832,7 +808,7 @@ public class OFS_ClbApplicationHelper
     /// 更新 Project_Main 資訊
     /// </summary>
     /// <param name="projectMainData">Project_Main 資訊物件</param>
-    private static void UpdateProjectMainData(OFS_CLB_Project_Main projectMainData)
+    public static void UpdateProjectMainData(OFS_CLB_Project_Main projectMainData)
     {
         // 先取得目前的狀態
         var currentProjectData = GetProjectMainData(projectMainData.ProjectID);
@@ -843,9 +819,9 @@ public class OFS_ClbApplicationHelper
         {
             string currentStatus = currentProjectData.Statuses.Trim();
             // 如果當前狀態為"內容審查"或"決審核定"，則不更新狀態
-            shouldNotUpdateStatus = currentStatus == "內容審查" || currentStatus == "決審核定";
+            shouldNotUpdateStatus = currentStatus == "內容審查" || currentStatus == "決審核定" || currentStatus == "計畫執行";
         }
-
+        
         DbHelper db = new DbHelper();
         
         // 根據是否應該更新狀態來決定 SQL 語句
@@ -940,7 +916,8 @@ public class OFS_ClbApplicationHelper
                     created_at = row["created_at"] != DBNull.Value ? Convert.ToDateTime(row["created_at"]) : (DateTime?)null,
                     updated_at = row["updated_at"] != DBNull.Value ? Convert.ToDateTime(row["updated_at"]) : (DateTime?)null,
                     isWithdrawal = row["isWithdrawal"] != DBNull.Value ? Convert.ToBoolean(row["isWithdrawal"]) : (bool?)null,
-                    isExist = row["isExist"] != DBNull.Value ? Convert.ToBoolean(row["isExist"]) : (bool?)null
+                    isExist = row["isExist"] != DBNull.Value ? Convert.ToBoolean(row["isExist"]) : (bool?)null,
+                    IsProjChanged = row["IsProjChanged"] != DBNull.Value ? Convert.ToInt32(row["IsProjChanged"]) : 0
                 };
             }
 
@@ -1223,6 +1200,8 @@ public class OFS_ClbApplicationHelper
         }
     }
 
+    
+    
     /// <summary>
     /// 更新專案承辦人資料（用於案件移轉）
     /// </summary>
@@ -1257,6 +1236,35 @@ public class OFS_ClbApplicationHelper
         catch (Exception ex)
         {
             throw new Exception($"更新專案承辦人資料時發生錯誤: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 更新計畫變更狀態
+    /// </summary>
+    /// <param name="projectID">專案編號</param>
+    /// <param name="changeStatus">變更狀態 (0=沒有計畫變更申請, 1=計畫變更中, 2=計畫變更審核中)</param>
+    public static void UpdateProjectChangeStatus(string projectID, int changeStatus)
+    {
+        try
+        {
+            DbHelper db = new DbHelper();
+
+            db.CommandText = @"
+                UPDATE [OCA_OceanSubsidy].[dbo].[OFS_CLB_Project_Main]
+                SET [IsProjChanged] = @IsProjChanged,
+                    [updated_at] = GETDATE()
+                WHERE [ProjectID] = @ProjectID";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@ProjectID", projectID);
+            db.Parameters.Add("@IsProjChanged", changeStatus);
+
+            db.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"更新計畫變更狀態時發生錯誤: {ex.Message}");
         }
     }
 

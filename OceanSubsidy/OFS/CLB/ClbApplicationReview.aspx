@@ -82,24 +82,24 @@
             $('.application-step .step-item').eq(0).addClass('active');
         });
 
-        // 覆寫進度條點擊行為，只在當前頁面切換顯示
-        function navigateToStepByUrl(step) {
-            if (step === 0) {
-                // 顯示申請表區塊
-                $('#applicationFormSection').show();
-                $('#uploadAttachmentSection').hide();
-                // 更新進度條狀態
-                $('.application-step .step-item').removeClass('active');
-                $('.application-step .step-item').eq(0).addClass('active');
-            } else if (step === 1) {
-                // 顯示上傳附件區塊
-                $('#applicationFormSection').hide();
-                $('#uploadAttachmentSection').show();
-                // 更新進度條狀態
-                $('.application-step .step-item').removeClass('active');
-                $('.application-step .step-item').eq(1).addClass('active');
-            }
-        }
+        // // 覆寫進度條點擊行為，只在當前頁面切換顯示
+        // function navigateToStepByUrl(step) {
+        //     if (step === 0) {
+        //         // 顯示申請表區塊
+        //         $('#applicationFormSection').show();
+        //         $('#uploadAttachmentSection').hide();
+        //         // 更新進度條狀態
+        //         $('.application-step .step-item').removeClass('active');
+        //         $('.application-step .step-item').eq(0).addClass('active');
+        //     } else if (step === 1) {
+        //         // 顯示上傳附件區塊
+        //         $('#applicationFormSection').hide();
+        //         $('#uploadAttachmentSection').show();
+        //         // 更新進度條狀態
+        //         $('.application-step .step-item').removeClass('active');
+        //         $('.application-step .step-item').eq(1).addClass('active');
+        //     }
+        // }
 
         // 下載申請資料
         document.addEventListener('DOMContentLoaded', function() {
@@ -147,20 +147,20 @@
     </div>
     
     <!-- 申請流程進度條 -->
-    <div class="application-step">
-        <div class="step-item" role="button" onclick="navigateToStepByUrl(0)">
-            <div class="step-content">
-                <div class="step-label">申請表</div>
-                <!-- 狀態將由後端動態設定 -->
-            </div>
-        </div>
-        <div class="step-item" role="button" onclick="navigateToStepByUrl(1)">
-            <div class="step-content">
-                <div class="step-label">上傳附件/提送申請</div>
-                <!-- 狀態將由後端動態設定 -->
-            </div>
-        </div>
-    </div>
+   <div class="application-step">
+         <div class="step-item active" role="button" onclick="switchTab('application')" id="applicationTab">
+             <div class="step-content">
+                 <div class="step-label">申請表</div>
+                 <!-- 狀態將由後端動態設定 -->
+             </div>
+         </div>
+         <div class="step-item" role="button" onclick="switchTab('upload')" id="uploadTab">
+             <div class="step-content">
+                 <div class="step-label">上傳附件/提送申請</div>
+                 <!-- 狀態將由後端動態設定 -->
+             </div>
+         </div>
+     </div>
 
     <!-- 申請資料內容 -->
     <div class="tab-content">

@@ -1883,7 +1883,8 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                     else if (projectId.Contains("LIT"))
                     {
                         // 素養
-                        continue;
+                        OFS_LitProjectHelper.updateStatus(projectId, 42); //計畫書修正中
+                        ReviewCheckListHelper.InsertReviewHistory(projectId, "核定中", "計畫書修正中", "提送至申請者", currentUser.Account);
                     }
                     else if (projectId.Contains("ACC"))
                     {

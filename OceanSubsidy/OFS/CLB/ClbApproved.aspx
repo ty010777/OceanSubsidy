@@ -7,6 +7,8 @@
     
     <!-- ClbApproved JavaScript 功能 -->
     <script src="<%= ResolveUrl("~/script/OFS/CLB/ClbApproved.js") %>"></script>
+    <script src="<%= ResolveUrl("~/script/OFS/CLB/ClbApplication.js") %>"></script>
+
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" Runat="Server">
@@ -15,7 +17,7 @@
     <!--  計畫變更紀錄 下載核定計畫書 -->
     <div class="block rounded-top-4 py-4 d-flex justify-content-between" style="position: sticky; top: 180px; z-index: 15;">
         <div>
-            <button class="btn btn-teal-dark" type="button" onclick="applyChange()">
+            <button class="btn btn-teal-dark" type="button" data-bs-toggle="modal" data-bs-target="#planChangeModal">
                 <i class="fas fa-exchange"></i>
                 計畫變更申請
             </button>
@@ -43,21 +45,21 @@
     </div>
     
     <!-- 申請表的進度圖 -->
-    <div class="application-step-container">
-        <div class="application-step">
-            <div class="step-item active" role="button" data-application-step="1">
-                <div class="step-content">
-                    <div class="step-label">申請表內容</div>
-                    <div class="step-status">檢視中</div>
-                </div>
-            </div>
-            <div class="step-item" role="button" data-application-step="2">
-                <div class="step-content">
-                    <div class="step-label">上傳附件</div>
-                </div>
-            </div>
-        </div>
-    </div>
+  <div class="application-step">
+          <div class="step-item active" role="button" onclick="switchTab('application')" id="applicationTab">
+              <div class="step-content">
+                  <div class="step-label">申請表</div>
+                  <!-- 狀態將由後端動態設定 -->
+              </div>
+          </div>
+          <div class="step-item" role="button" onclick="switchTab('upload')" id="uploadTab">
+              <div class="step-content">
+                  <div class="step-label">上傳附件/提送申請</div>
+                  <!-- 狀態將由後端動態設定 -->
+              </div>
+          </div>
+      </div>
+
     
     <!-- 資料檢視區域 -->
     <div class="data-view-section">
@@ -66,12 +68,6 @@
             <!-- 第一頁：申請表內容 -->
             <div class="tab-pane active" id="tab1">
                 <uc:ClbApplicationControl ID="ucClbApplication" runat="server" />
-            </div>
-            
-            <!-- 第二頁：上傳附件 -->
-            <div class="tab-pane" id="tab2" style="display: none;">
-                <!-- 使用 UserControl 的上傳附件區塊 -->
-                <div id="uploadAttachmentFromUserControl"></div>
             </div>
         </div>
     </div>

@@ -55,13 +55,13 @@
     </div>
     <!-- 申請流程進度條 -->
     <div class="application-step">
-        <div class="step-item" role="button" onclick="navigateToStepByUrl(0)">
+        <div class="step-item active" role="button" onclick="switchTab('application')" id="applicationTab">
             <div class="step-content">
                 <div class="step-label">申請表</div>
                 <!-- 狀態將由後端動態設定 -->
             </div>
         </div>
-        <div class="step-item" role="button" onclick="navigateToStepByUrl(1)">
+        <div class="step-item" role="button" onclick="switchTab('upload')" id="uploadTab">
             <div class="step-content">
                 <div class="step-label">上傳附件/提送申請</div>
                 <!-- 狀態將由後端動態設定 -->
@@ -76,24 +76,5 @@
 
     <!-- 使用 UserControl -->
     <uc:ClbApplicationControl ID="ucClbApplication" runat="server" />
-                  
-    <!-- 底部區塊 -->
-    <div class="block-bottom bg-light-teal">
-        <asp:Button ID="btnTempSave" runat="server"  
-                    Text="暫存"  
-                    CssClass="btn btn-outline-teal"  
-                    OnClick="btnTempSave_Click" /> 
-        
-        <asp:Button ID="btnSaveAndNext" runat="server" 
-                    Text="完成本頁，下一步"  
-                    CssClass="btn btn-teal"  
-                    OnClick="btnSaveAndNext_Click" /> 
-                    
-        <asp:Button ID="btnSubmitApplication" runat="server" 
-                    Text="完成本頁，提送申請"  
-                    CssClass="btn btn-teal"
-                    Style="display: none;"
-                    OnClick="btnSubmitApplication_Click" /> 
-    </div>
 
 </asp:Content>

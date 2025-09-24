@@ -68,13 +68,24 @@ public partial class OFS_CLB_ClbApproved : System.Web.UI.Page
             {
                 return;
             }
-            
+
             // 設定 UserControl 的 ProjectID
             ucClbApplication.ProjectID = ProjectID;
-            
-            // 設定為檢視模式（已核定的計畫應該是唯讀的）
-            ucClbApplication.IsReadOnly = true;
-            
+
+            // 從資料庫檢查計畫變更狀態
+            var projectMain = OFS_ClbApplicationHelper.GetProjectMainData(ProjectID);
+            bool canEdit = false;
+
+            if (projectMain != null)
+            {
+                // 只有當 IsProjChanged = 1 (計畫變更中) 時才可以編輯
+                canEdit = projectMain.IsProjChanged == 1;
+            }
+
+            // 設定 UserControl 的編輯權限
+            ucClbApplication.IsReadOnly = !canEdit;
+
+
         }
         catch (Exception ex)
         {
@@ -116,38 +127,76 @@ public partial class OFS_CLB_ClbApproved : System.Web.UI.Page
             {
                 return new { success = false, message = "請選擇部門" };
             }
-            
+
             if (string.IsNullOrEmpty(ReviewerAccount))
             {
                 return new { success = false, message = "請選擇承辦人員" };
             }
-            
+
             if (string.IsNullOrEmpty(ProjectID))
             {
                 return new { success = false, message = "找不到計畫ID" };
             }
-            
+
             // 取得案件資料
             var projectMain = OFS_ClbApplicationHelper.GetProjectMainData(ProjectID);
             if (projectMain == null)
             {
                 return new { success = false, message = "找不到案件資料" };
             }
-            
+
             // 更新承辦人相關的三個欄位
             OFS_ClbApplicationHelper.UpdateProjectSupervisoryInfo(
-                ProjectID, 
-                ReviewerAccount, 
-                ReviewerName, 
+                ProjectID,
+                ReviewerAccount,
+                ReviewerName,
                 DepartmentName
             );
-            
+
             return new { success = true, message = "案件移轉完成" };
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"移轉案件時發生錯誤: {ex.Message}");
             return new { success = false, message = "移轉案件時發生錯誤，請稍後再試" };
+        }
+    }
+
+    /// <summary>
+    /// 處理計畫變更申請 WebMethod (AJAX 呼叫)
+    /// </summary>
+    [System.Web.Services.WebMethod]
+    public static object ProcessPlanChange(string ProjectID, string ChangeReason)
+    {
+        try
+        {
+            // 驗證必填欄位
+            if (string.IsNullOrEmpty(ProjectID))
+            {
+                return new { success = false, message = "找不到計畫ID" };
+            }
+
+            if (string.IsNullOrEmpty(ChangeReason))
+            {
+                return new { success = false, message = "請輸入計畫變更原因" };
+            }
+
+            // 取得案件資料
+            var projectMain = OFS_ClbApplicationHelper.GetProjectMainData(ProjectID);
+            if (projectMain == null)
+            {
+                return new { success = false, message = "找不到案件資料" };
+            }
+
+            // 更新 IsProjChanged 為 1 (計畫變更中)
+            OFS_ClbApplicationHelper.UpdateProjectChangeStatus(ProjectID, 1);
+
+            return new { success = true, message = "計畫變更申請已通過" };
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"處理計畫變更申請時發生錯誤: {ex.Message}");
+            return new { success = false, message = "處理計畫變更申請時發生錯誤，請稍後再試" };
         }
     }
     
@@ -283,6 +332,7 @@ public partial class OFS_CLB_ClbApproved : System.Web.UI.Page
         System.Diagnostics.Debug.WriteLine($"{context}: {ex.Message}");
         // 可以在這裡加入記錄或通知邏輯
     }
-    
+
+
     #endregion
 }
