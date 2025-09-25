@@ -509,7 +509,11 @@ public class EducationService : BaseService
         {
             if (project.IsProjChanged)
             {
-                project.changeApply = OFSProjectChangeRecordHelper.getApplying("EDC", project.ProjectID);
+                project.changeApply = OFSProjectChangeRecordHelper.getApplying("EDC", 1, project.ProjectID);
+            }
+            else if (project.Status == 42 || project.Status == 43)
+            {
+                project.changeApply = OFSProjectChangeRecordHelper.getApplying("EDC", 2, project.ProjectID);
             }
 
             return project;

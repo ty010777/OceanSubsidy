@@ -249,6 +249,24 @@ public class AccessibilityService : BaseService
                     saveRevisionReviewLog(project.ProjectID, "決審核定-計畫書已確認");
                     break;
             }
+
+            var apply = project.changeApply;
+
+            if (apply != null && apply.Status == 2) //待審核
+            {
+                if (int.Parse(param["Result"].ToString()) == 1)
+                {
+                    apply.Status = 3; //審核通過
+                    apply.RejectReason = null;
+                }
+                else
+                {
+                    apply.Status = 4; //退回修改
+                    apply.RejectReason = param["Reason"].ToString();
+                }
+
+                OFSProjectChangeRecordHelper.update(apply);
+            }
         }
 
         OFS_AccProjectHelper.reviewApplication(project);
@@ -434,7 +452,7 @@ public class AccessibilityService : BaseService
         var id = getID(param["ID"].ToString());
         var data = getProject(id, new int[] {1,14,42}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
 
-        if (data.IsProjChanged)
+        if (data.IsProjChanged || data.Status == 42)
         {
             var apply = data.changeApply;
 
@@ -501,7 +519,7 @@ public class AccessibilityService : BaseService
         var project = param["Project"].ToObject<OFS_AccProject>();
         var data = getProject(project.ID, new int[] {1,14,42}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
 
-        if (data.IsProjChanged)
+        if (data.IsProjChanged || data.Status == 42)
         {
             var apply = data.changeApply;
 
@@ -551,7 +569,7 @@ public class AccessibilityService : BaseService
 
         OFS_AccProjectHelper.updateFunding(project);
 
-        if (data.IsProjChanged)
+        if (data.IsProjChanged || data.Status == 42)
         {
             var apply = data.changeApply;
 
@@ -711,7 +729,7 @@ public class AccessibilityService : BaseService
 
         OFS_AccProjectHelper.updateSchedule(project);
 
-        if (data.IsProjChanged)
+        if (data.IsProjChanged || data.Status == 42)
         {
             var apply = data.changeApply;
 
@@ -807,7 +825,11 @@ public class AccessibilityService : BaseService
         {
             if (project.IsProjChanged)
             {
-                project.changeApply = OFSProjectChangeRecordHelper.getApplying("ACC", project.ProjectID);
+                project.changeApply = OFSProjectChangeRecordHelper.getApplying("ACC", 1, project.ProjectID);
+            }
+            else if (project.Status == 42 || project.Status == 43)
+            {
+                project.changeApply = OFSProjectChangeRecordHelper.getApplying("ACC", 2, project.ProjectID);
             }
 
             return project;
