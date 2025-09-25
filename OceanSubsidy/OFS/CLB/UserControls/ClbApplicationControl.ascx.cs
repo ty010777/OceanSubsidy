@@ -1035,7 +1035,8 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
 
             if (string.IsNullOrEmpty(projectID))
             {
-                Response.Write("{\"success\":false,\"message\":\"計畫編號不能為空\"}");
+                var errorResult = new { success = false, message = "計畫編號不能為空" };
+                Response.Write(JsonConvert.SerializeObject(errorResult));
                 return;
             }
 
@@ -1050,15 +1051,16 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
 
                 if (string.IsNullOrEmpty(changeBefore) && string.IsNullOrEmpty(changeAfter))
                 {
-                    Response.Write("{\"success\":false,\"message\":\"計畫變更中，請填寫變更說明後再提送申請\"}");
+                    var changeErrorResult = new { success = false, message = "計畫變更中，請填寫變更說明後再提送申請" };
+                    Response.Write(JsonConvert.SerializeObject(changeErrorResult));
                     return;
                 }
             }
             var basicData = OFS_ClbApplicationHelper.GetBasicData(projectID);
             string ProjectName = basicData.ProjectNameTw;
             // 新增 PDF 合併邏輯
-            
-            
+
+
             try
             {
                 if (lastProjectMain.StatusesName == "計畫書修正中")
@@ -1068,15 +1070,15 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
 
                     // 產生核定版 PDF
                     MergePdfFiles(projectID, ProjectName,"核定版");
+
                 }
                 //這是計畫變更
                 else if(lastProjectMain.Statuses== "計畫執行")
                 {
-                    ExecuteProjectChange(projectID, ProjectName);
                     // 儲存變更說明記錄
                     string changeBefore  = Request.Form["txtChangeBefore"] ?? "";
                     string changeAfter = Request.Form["txtChangeAfter"] ?? "";
-                    
+
                     // 只有當有變更說明時才儲存
                     if (!string.IsNullOrEmpty(changeBefore) || !string.IsNullOrEmpty(changeAfter))
                     {
@@ -1085,8 +1087,10 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
                         ChangeRecord.Form2Before = changeBefore;
                         ChangeRecord.Status = 2; // 變更審核中
                         OFSProjectChangeRecordHelper.update(ChangeRecord);
+
                     }
-                    OFS_ClbApplicationHelper.UpdateProjectChangeStatus(ProjectID, 1);
+                    ExecuteProjectChange(projectID, ProjectName);
+
                 }
                 else
                 {
@@ -1096,21 +1100,34 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
                     // 產生送審版與核定版 PDF
                     MergePdfFiles(projectID, ProjectName,"送審版");
                     MergePdfFiles(projectID, ProjectName,"核定版");
+
+
                 }
+                //提送歷史紀錄
+                InsertClbHistory(projectID);
+
+                var successResult = new { success = true, message = "儲存成功！", projectID = projectID, enableUpload = true };
+                Response.Write(JsonConvert.SerializeObject(successResult));
             }
             catch (Exception pdfEx)
             {
                 // PDF 合併錯誤不影響主要流程，但會記錄錯誤
-                System.Diagnostics.Debug.WriteLine($"PDF 合併錯誤：{pdfEx.Message}");
+                var pdfErrorResult = new
+                {
+                    success = false,
+                    message = $"PDF 合併失敗：{pdfEx.Message}",
+                    projectID = projectID,
+                    enableUpload = true
+                };
+                Response.Write(JsonConvert.SerializeObject(pdfErrorResult));
+                HttpContext.Current.ApplicationInstance.CompleteRequest(); // 避免後面 ASPX 繼續輸出 HTML
+                return;
             }
-
-            //提送歷史紀錄
-            InsertClbHistory(projectID);
-
         }
         catch (Exception ex)
         {
-            Response.Write($"{{\"success\":false,\"message\":\"提送失敗：{ex.Message}\"}}");
+            var mainErrorResult = new { success = false, message = $"提送失敗：{ex.Message}" };
+            Response.Write(JsonConvert.SerializeObject(mainErrorResult));
         }
     }
     private void ExecuteProjectChange(string projectID, string projectName)
@@ -1147,7 +1164,6 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
         };
         ApplicationChecklistHelper.InsertCaseHistoryLog(historyLog);
 
-        Response.Write("{\"success\":true,\"message\":\"申請已成功提送，狀態已更新為審核中\"}");
     }
 
     /// <summary>

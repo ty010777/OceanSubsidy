@@ -325,6 +325,7 @@ public partial class OFS_CLB_ClbApproved : System.Web.UI.Page
                 changeRecord.RejectReason = reviewNotes;
 
                 // 專案主表的變更狀態保持1 (可繼續修改)
+                OFS_ClbApplicationHelper.UpdateProjectChangeStatus(ProjectID, 1);
             }
 
             // 更新變更記錄

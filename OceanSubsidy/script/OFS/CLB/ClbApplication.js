@@ -987,57 +987,43 @@ function submitApplicationFinal(projectID) {
     formData.append('txtChangeBefore', $('[id*="txtChangeBefore"]').val() || '');
     formData.append('txtChangeAfter', $('[id*="txtChangeAfter"]').val() || '');
 
-    // 執行 AJAX 請求
-    $.ajax({
-        url: window.location.pathname, // 發送到當前頁面
-        type: 'POST',
-        data: formData,
-        processData: false,
-        contentType: false,
-        success: function(response) {
-            try {
-                const result = typeof response === 'string' ? JSON.parse(response) : response;
-                
-                if (result.success) {
-                    // 提送成功
-                    Swal.fire({
-                        icon: 'success',
-                        title: '提送成功！',
-                        html: result.message + '<br><br>系統將自動導向申請列表頁面。',
-                        timer: 3000,
-                        showConfirmButton: false
-                    }).then(() => {
-                        // 導向申請列表頁面
-                        window.location.href = '/OFS/ApplicationChecklist.aspx';
-                    });
-                } else {
-                    // 提送失敗
-                    Swal.fire({
-                        icon: 'error',
-                        title: '提送失敗',
-                        text: result.message || '未知錯誤，請稍後再試',
-                        confirmButtonText: '確定'
-                    });
-                }
-            } catch (e) {
-                console.error('Response parsing error:', e);
-                Swal.fire({
-                    icon: 'error',
-                    title: '提送失敗',
-                    text: '系統回應格式錯誤，請稍後再試',
-                    confirmButtonText: '確定'
-                });
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error('Submit error:', error);
+    // 執行 fetch 請求
+    fetch(window.location.pathname, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            // 提送成功
+            Swal.fire({
+                icon: 'success',
+                title: '提送成功！',
+                html: result.message + '<br><br>系統將自動導向申請列表頁面。',
+                timer: 3000,
+                showConfirmButton: false
+            }).then(() => {
+                // 導向申請列表頁面
+                window.location.href = window.AppRootPath+'/OFS/ApplicationChecklist.aspx';
+            });
+        } else {
+            // 提送失敗
             Swal.fire({
                 icon: 'error',
                 title: '提送失敗',
-                text: '網路連線錯誤，請檢查您的網路連線後再試',
+                text: result.message || '未知錯誤，請稍後再試',
                 confirmButtonText: '確定'
             });
         }
+    })
+    .catch(error => {
+        console.error('Submit error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: '提送失敗',
+            text: '網路連線錯誤，請檢查您的網路連線後再試',
+            confirmButtonText: '確定'
+        });
     });
 }
 
