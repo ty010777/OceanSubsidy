@@ -6,7 +6,9 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using GS.OCA_OceanSubsidy.Entity;
 using GS.OCA_OceanSubsidy.Entity.Base;
+using GS.OCA_OceanSubsidy.Operation.OFS;
 using GS.App;
+using GS.OCA_OceanSubsidy.Model.OFS;
 
 public partial class OFS_CLB_ClbApproved : System.Web.UI.Page
 {
@@ -47,9 +49,12 @@ public partial class OFS_CLB_ClbApproved : System.Web.UI.Page
             
             // 設定審核者資訊（從資料庫讀取）
             SetReviewerInfoFromDatabase();
-            
+
             // 載入移轉案件的部門下拉選單
             LoadDepartmentDropDown();
+
+            // 檢查並顯示計畫變更審核面板
+            CheckAndShowChangeReviewPanel();
         }
         catch (Exception ex)
         {
@@ -191,6 +196,23 @@ public partial class OFS_CLB_ClbApproved : System.Web.UI.Page
             // 更新 IsProjChanged 為 1 (計畫變更中)
             OFS_ClbApplicationHelper.UpdateProjectChangeStatus(ProjectID, 1);
 
+            // 插入變更記錄到資料庫
+            try
+            {
+                OFSProjectChangeRecordHelper.insert(new ProjectChangeRecord
+                {
+                    Type = "CLB",
+                    Method = 1,
+                    DataID = ProjectID,
+                    Reason = ChangeReason
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"插入變更記錄時發生錯誤: {ex.Message}");
+                // 不因為插入變更記錄失敗而中斷主要流程，但記錄錯誤
+            }
+
             return new { success = true, message = "計畫變更申請已通過" };
         }
         catch (Exception ex)
@@ -199,9 +221,145 @@ public partial class OFS_CLB_ClbApproved : System.Web.UI.Page
             return new { success = false, message = "處理計畫變更申請時發生錯誤，請稍後再試" };
         }
     }
-    
+
     #endregion
-    
+
+    #region 計畫變更審核功能
+
+    /// <summary>
+    /// 檢查並顯示計畫變更審核面板
+    /// </summary>
+    private void CheckAndShowChangeReviewPanel()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(ProjectID))
+            {
+                return;
+            }
+
+            // 檢查是否為承辦人員
+            var projectMain = OFS_ClbApplicationHelper.GetProjectMainData(ProjectID);
+            if (projectMain == null)
+            {
+                return;
+            }
+
+            string currentUserAccount = CurrentUser.Account;
+            bool isProjectSupervisor = projectMain.SupervisoryPersonAccount == currentUserAccount;
+
+            if (!isProjectSupervisor)
+            {
+                return; // 不是承辦人員，不顯示審核面板
+            }
+
+            // 檢查計畫變更記錄狀態
+            var changeRecord = OFSProjectChangeRecordHelper.getApplying("CLB", ProjectID);
+            if (changeRecord == null || changeRecord.Status != 2)
+            {
+                return; // 沒有狀態為2的變更記錄，不顯示審核面板
+            }
+
+            // 顯示審核面板並載入變更原因
+            changeReviewPanel.Visible = true;
+            lblChangeReason.Text = changeRecord.Reason;
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "檢查計畫變更審核面板時發生錯誤");
+        }
+    }
+
+    /// <summary>
+    /// 確認計畫變更審核按鈕點擊事件
+    /// </summary>
+    protected void btnConfirmChangeReview_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(ProjectID))
+            {
+                ShowSweetAlert("錯誤", "找不到計畫ID", "error");
+                return;
+            }
+
+            // 取得審核結果
+            string reviewResult = Request.Form["changeReviewResult"];
+            string reviewNotes = Request.Form["changeReviewNotesHidden"];
+
+            if (string.IsNullOrEmpty(reviewResult))
+            {
+                ShowSweetAlert("錯誤", "請選擇審核結果", "error");
+                return;
+            }
+
+            // 驗證退回修改時必須有審核意見
+            if (reviewResult == "reject" && string.IsNullOrEmpty(reviewNotes))
+            {
+                ShowSweetAlert("錯誤", "退回修改時請輸入審核意見", "error");
+                return;
+            }
+
+            // 取得計畫變更記錄
+            var changeRecord = OFSProjectChangeRecordHelper.getApplying("CLB", ProjectID);
+            if (changeRecord == null)
+            {
+                ShowSweetAlert("錯誤", "找不到計畫變更記錄", "error");
+                return;
+            }
+
+            // 根據審核結果更新狀態
+            if (reviewResult == "approve")
+            {
+                // 通過：更新狀態為3 (已核准)
+                changeRecord.Status = 3;
+                changeRecord.RejectReason = reviewNotes; // 儲存審核意見
+
+                // 同時更新專案主表的變更狀態為0 (變更完成)
+                OFS_ClbApplicationHelper.UpdateProjectChangeStatus(ProjectID, 0);
+            }
+            else if (reviewResult == "reject")
+            {
+                // 退回修改：更新狀態為1 (已退回)
+                changeRecord.Status = 1; // 保持為1 (可繼續修改)
+                changeRecord.RejectReason = reviewNotes;
+
+                // 專案主表的變更狀態保持1 (可繼續修改)
+            }
+
+            // 更新變更記錄
+            OFSProjectChangeRecordHelper.update(changeRecord);
+
+            // 顯示成功訊息並重新載入頁面
+            string successMessage = reviewResult == "approve" ? "計畫變更已通過審核" : "計畫變更已退回修改";
+            ShowSweetAlert("成功", successMessage, "success");
+
+            // 隱藏審核面板
+            changeReviewPanel.Visible = false;
+            string script = $@"
+                       Swal.fire({{
+                           title: '成功',
+                           icon: 'success',
+                           text: '{successMessage}',
+                           confirmButtonText: '確定'
+                       }}).then((result) => {{
+                           if (result.isConfirmed) {{
+                                // 審核完成後重新整理頁面
+                                window.location.href = window.location.href;
+                           }}
+                       }});
+                   ";
+            Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowSuccessAndReload", script, true);
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "確認計畫變更審核時發生錯誤");
+            ShowSweetAlert("錯誤", "審核處理時發生錯誤，請稍後再試", "error");
+        }
+    }
+
+    #endregion
+
     #region 私有方法
     
     /// <summary>

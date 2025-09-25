@@ -162,7 +162,11 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
         txtContactName.Enabled = false;
         txtContactJobTitle.Enabled = false;
         txtContactPhone.Enabled = false;
-        
+
+        // 變更說明欄位
+        txtChangeBefore.Enabled = false;
+        txtChangeAfter.Enabled = false;
+
         // 隱藏按鈕控制項（現在是 HTML button，使用 JavaScript 隱藏）
 
         // 使用 JavaScript 處理前端樣式
@@ -521,9 +525,40 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
             throw new Exception($"儲存 Project_Main 資訊失敗：{ex.Message}");
         }
     }
-        
-    
-    
+
+    /// <summary>
+    /// 儲存變更說明記錄
+    /// </summary>
+    /// <param name="projectID">專案ID</param>
+    /// <param name="formData">表單資料</param>
+    private void SaveProjectChangeRecord(string projectID, Dictionary<string, object> formData)
+    {
+        try
+        {
+            // 從 ASP.NET TextBox 控制項讀取資料
+            string changeBefore = formData["txtChangeBefore"]?.ToString();
+            string changeAfter = formData["txtChangeAfter"]?.ToString();
+
+
+            // 只有當有變更說明時才儲存
+            if (!string.IsNullOrEmpty(changeBefore) || !string.IsNullOrEmpty(changeAfter))
+            {
+                var ChangeRecord = OFSProjectChangeRecordHelper.getApplying("CLB", projectID);
+                ChangeRecord.Form1After = changeAfter;
+                ChangeRecord.Form1Before = changeBefore;
+                OFSProjectChangeRecordHelper.update(ChangeRecord);
+            }
+
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"儲存變更說明記錄時發生錯誤: {ex.Message}");
+            // 不中斷主要流程，只記錄錯誤
+        }
+    }
+
+   
+
     public static string SaveBasicData(OFS_CLB_Application_Basic basicData)
     {
         try
@@ -946,12 +981,31 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
             // 取得表單資料
             var formData = GetFormDataFromRequest();
 
-            // 執行正式儲存（傳入 false 表示正式儲存）
-            string projectID = SaveBasicDataAjax(formData, false);
-
+            // 檢查是否為計畫變更中狀態，如果是則驗證變更說明
+            string projectID = formData["ProjectID"]?.ToString();
             if (!string.IsNullOrEmpty(projectID))
             {
-                Response.Write($"{{\"success\":true,\"message\":\"儲存成功！\",\"projectID\":\"{projectID}\",\"enableUpload\":true}}");
+                var projectMain = OFS_ClbApplicationHelper.GetProjectMainData(projectID);
+                if (projectMain != null && projectMain.IsProjChanged == 1)
+                {
+                    // 驗證變更說明是否已填寫
+                    string changeBefore = Request.Form["txtChangeBefore"] ?? "";
+                    string changeAfter = Request.Form["txtChangeAfter"] ?? "";
+
+                    if (string.IsNullOrEmpty(changeBefore) && string.IsNullOrEmpty(changeAfter))
+                    {
+                        Response.Write("{\"success\":false,\"message\":\"計畫變更中，請填寫變更說明後再進行儲存\"}");
+                        return;
+                    }
+                }
+            }
+
+            // 執行正式儲存（傳入 false 表示正式儲存）
+            string savedProjectID = SaveBasicDataAjax(formData, false);
+
+            if (!string.IsNullOrEmpty(savedProjectID))
+            {
+                Response.Write($"{{\"success\":true,\"message\":\"儲存成功！\",\"projectID\":\"{savedProjectID}\",\"enableUpload\":true}}");
             }
             else
             {
@@ -984,10 +1038,27 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
                 Response.Write("{\"success\":false,\"message\":\"計畫編號不能為空\"}");
                 return;
             }
+
             var lastProjectMain = OFS_ClbApplicationHelper.GetProjectMainData(projectID);
+
+            // 檢查是否為計畫變更中狀態，如果是則驗證變更說明
+            if (lastProjectMain != null && lastProjectMain.IsProjChanged == 1)
+            {
+                // 驗證變更說明是否已填寫
+                string changeBefore = Request.Form["txtChangeBefore"] ?? "";
+                string changeAfter = Request.Form["txtChangeAfter"] ?? "";
+
+                if (string.IsNullOrEmpty(changeBefore) && string.IsNullOrEmpty(changeAfter))
+                {
+                    Response.Write("{\"success\":false,\"message\":\"計畫變更中，請填寫變更說明後再提送申請\"}");
+                    return;
+                }
+            }
             var basicData = OFS_ClbApplicationHelper.GetBasicData(projectID);
             string ProjectName = basicData.ProjectNameTw;
             // 新增 PDF 合併邏輯
+            
+            
             try
             {
                 if (lastProjectMain.StatusesName == "計畫書修正中")
@@ -998,16 +1069,24 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
                     // 產生核定版 PDF
                     MergePdfFiles(projectID, ProjectName,"核定版");
                 }
+                //這是計畫變更
                 else if(lastProjectMain.Statuses== "計畫執行")
                 {
-                    // 計畫執行 計畫變更 -->=計畫變更審核中
-                    OFS_ClbApplicationHelper.UpdateProjectChangeStatus(projectID, 2);
-
-                    // 計畫變更版本管理 - 檢查是否存在計畫變更最新版並建立版本備份
-                    CreatePlanChangeVersionBackup(projectID, ProjectName);
-                    // 產生送審版與核定版 PDF
-                    MergePdfFiles(projectID, ProjectName,"計畫變更最新版");
-
+                    ExecuteProjectChange(projectID, ProjectName);
+                    // 儲存變更說明記錄
+                    string changeBefore  = Request.Form["txtChangeBefore"] ?? "";
+                    string changeAfter = Request.Form["txtChangeAfter"] ?? "";
+                    
+                    // 只有當有變更說明時才儲存
+                    if (!string.IsNullOrEmpty(changeBefore) || !string.IsNullOrEmpty(changeAfter))
+                    {
+                        var ChangeRecord = OFSProjectChangeRecordHelper.getApplying("CLB", projectID);
+                        ChangeRecord.Form2After = changeAfter;
+                        ChangeRecord.Form2Before = changeBefore;
+                        ChangeRecord.Status = 2; // 變更審核中
+                        OFSProjectChangeRecordHelper.update(ChangeRecord);
+                    }
+                    OFS_ClbApplicationHelper.UpdateProjectChangeStatus(ProjectID, 1);
                 }
                 else
                 {
@@ -1033,6 +1112,17 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
         {
             Response.Write($"{{\"success\":false,\"message\":\"提送失敗：{ex.Message}\"}}");
         }
+    }
+    private void ExecuteProjectChange(string projectID, string projectName)
+    {
+        // 計畫執行：計畫變更 --> 計畫變更審核中
+        OFS_ClbApplicationHelper.UpdateProjectChangeStatus(projectID, 2);
+
+        // 計畫變更版本管理 - 檢查是否存在計畫變更最新版並建立版本備份
+        CreatePlanChangeVersionBackup(projectID, projectName);
+
+        // 產生並合併送審版與核定版 PDF
+        MergePdfFiles(projectID, projectName, "計畫變更最新版");
     }
 
     /// <summary>
@@ -1292,6 +1382,9 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
         data["ContactName"] = Request.Form["contactName"] ?? "";
         data["ContactJobTitle"] = Request.Form["contactJobTitle"] ?? "";
         data["ContactPhone"] = Request.Form["contactPhone"] ?? "";
+        data["txtChangeBefore"] = Request.Form["txtChangeBefore"] ?? "";
+        data["txtChangeAfter"] = Request.Form["txtChangeAfter"] ?? "";
+        
 
         return data;
     }
@@ -1336,7 +1429,9 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
             // 儲存 Project_Main 資訊
             
             SaveProjectMainData(savedProjectID, formData, isTempSave);
-
+            
+            //儲存變更說明
+            SaveProjectChangeRecord(savedProjectID, formData);
             return savedProjectID;
         }
         catch (Exception ex)
@@ -1543,6 +1638,8 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
         // });
     }
 
+    #region 變更說明相關方法
+
     /// <summary>
     /// 初始化變更說明控制項
     /// </summary>
@@ -1552,7 +1649,16 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
         {
             if (!string.IsNullOrEmpty(ProjectID))
             {
-                ucChangeDescription.LoadData(ProjectID, IsReadOnly);
+                LoadChangeDescriptionData(ProjectID);
+                bool canEdit = CheckCanEditChangeDescription(ProjectID);
+                bool shouldShow = CheckDisplayCondition(ProjectID);
+
+                changeDescriptionSection.Visible = shouldShow;
+
+                if (shouldShow && (IsReadOnly || !canEdit))
+                {
+                    ApplyChangeDescriptionViewMode();
+                }
             }
         }
         catch (Exception ex)
@@ -1560,4 +1666,290 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
             System.Diagnostics.Debug.WriteLine($"初始化變更說明控制項時發生錯誤: {ex.Message}");
         }
     }
+
+    /// <summary>
+    /// 檢查是否符合顯示條件
+    /// </summary>
+    /// <param name="projectID">計畫ID</param>
+    /// <returns>是否應該顯示</returns>
+    private bool CheckDisplayCondition(string projectID)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(projectID))
+            {
+                return false;
+            }
+
+            // 取得專案狀態資料
+            var projectData = OFS_ClbApplicationHelper.GetProjectMainData(projectID);
+            if (projectData == null)
+            {
+                return false;
+            }
+
+            // 根據業務規則判斷是否顯示
+            // 顯示條件：IsProjChanged = 1 或 2
+            bool shouldShow = (projectData.IsProjChanged == 1 || projectData.IsProjChanged == 2);
+
+
+            return shouldShow;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"檢查顯示條件時發生錯誤：{ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 檢查是否可以編輯
+    /// </summary>
+    /// <param name="projectID">計畫ID</param>
+    /// <returns>是否可以編輯</returns>
+    private bool CheckCanEditChangeDescription(string projectID)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(projectID))
+            {
+                return false;
+            }
+
+            // 取得專案狀態資料
+            var projectData = OFS_ClbApplicationHelper.GetProjectMainData(projectID);
+            if (projectData == null)
+            {
+                return false;
+            }
+
+            // 根據業務規則判斷是否可以編輯
+            // 可以編輯：IsProjChanged = 1
+            bool canEdit = projectData.IsProjChanged == 1;
+
+            return canEdit;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"檢查編輯權限時發生錯誤：{ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 載入已存在的變更說明資料
+    /// </summary>
+    /// <param name="projectID">專案ID</param>
+    private void LoadChangeDescriptionData(string projectID)
+    {
+        try
+        {
+            var changeDescription = OFSProjectChangeRecordHelper.getApplying("CLB", projectID);
+
+            // 將變更說明資料轉換為 JSON 格式並傳送到前端
+            if (changeDescription != null)
+            {
+                ConvertChangeDescriptionToJson(changeDescription);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"載入變更說明資料時發生錯誤：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 將變更說明資料轉換為 JSON 格式並傳送到前端
+    /// </summary>
+    /// <param name="changeDescription">變更說明資料</param>
+    private void ConvertChangeDescriptionToJson(object changeDescription)
+    {
+        try
+        {
+            // 反序列化為動態物件以便讀取屬性
+            dynamic data = changeDescription;
+
+            // 載入到 ASP.NET TextBox 控制項
+            if (data != null)
+            {
+                string form1Before = data.Form1Before?.ToString() ?? "";
+                string form1After = data.Form1After?.ToString() ?? "";
+
+                txtChangeBefore.Text = form1Before;
+                txtChangeAfter.Text = form1After;
+            }
+
+            // 序列化整個 changeDescription 物件為 JSON（供前端切換時使用）
+            string jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(changeDescription);
+
+            // 傳送 JSON 到前端並設定切換函數
+            string script = $@"
+                // 儲存變更說明資料到全域變數
+                window.changeDescriptionData = {jsonString};
+                console.log('變更說明資料已載入:', window.changeDescriptionData);
+
+                // 載入當前表單資料的函數
+                function loadCurrentFormData() {{
+                    const currentForm = getCurrentFormType(); // 取得當前表單類型
+                    loadFormChangeData(currentForm);
+                }}
+
+                // 取得當前表單類型的函數
+                function getCurrentFormType() {{
+                    // 檢查當前顯示的是哪個頁面
+                    const applicationTab = document.getElementById('tab1');
+                    const uploadTab = document.getElementById('uploadAttachmentSection');
+
+                    if (applicationTab && applicationTab.style.display !== 'none') {{
+                        return 'Form1'; // 申請表
+                    }} else if (uploadTab && uploadTab.style.display !== 'none') {{
+                        return 'Form2'; // 上傳附件
+                    }}
+                    return 'Form1'; // 預設為申請表
+                }}
+
+                // 根據表單類型載入對應的變更說明資料
+                function loadFormChangeData(formType) {{
+                    const txtChangeBefore = document.getElementById('{txtChangeBefore.ClientID}');
+                    const txtChangeAfter = document.getElementById('{txtChangeAfter.ClientID}');
+
+                    if (txtChangeBefore && txtChangeAfter && window.changeDescriptionData) {{
+                        let beforeData = '';
+                        let afterData = '';
+
+                        if (formType === 'Form1') {{
+                            // 申請表的變更說明
+                            beforeData = window.changeDescriptionData.Form1Before || '';
+                            afterData = window.changeDescriptionData.Form1After || '';
+                        }} else if (formType === 'Form2') {{
+                            // 上傳附件的變更說明
+                            beforeData = window.changeDescriptionData.Form2Before || '';
+                            afterData = window.changeDescriptionData.Form2After || '';
+                        }}
+
+                        txtChangeBefore.value = beforeData;
+                        txtChangeAfter.value = afterData;
+                    }}
+                }}
+
+                // 監聽頁面切換事件
+                function setupFormSwitchListeners() {{
+                    // 監聽申請表切換
+                    const applicationTab = document.getElementById('applicationTab');
+                    if (applicationTab) {{
+                        applicationTab.addEventListener('click', function() {{
+                            setTimeout(() => loadFormChangeData('Form1'), 100);
+                        }});
+                    }}
+
+                    // 監聽上傳附件切換
+                    const uploadTab = document.getElementById('uploadTab');
+                    if (uploadTab) {{
+                        uploadTab.addEventListener('click', function() {{
+                            setTimeout(() => loadFormChangeData('Form2'), 100);
+                        }});
+                    }}
+                }}
+
+                // 頁面載入完成後執行
+                if (document.readyState === 'complete') {{
+                    loadCurrentFormData();
+                    setupFormSwitchListeners();
+                }} else {{
+                    window.addEventListener('load', function() {{
+                        loadCurrentFormData();
+                        setupFormSwitchListeners();
+                    }});
+                }}
+            ";
+
+            Page.ClientScript.RegisterStartupScript(this.GetType(), "LoadChangeDescriptionData", script, true);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"轉換變更說明為 JSON 時發生錯誤：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 套用檢視模式
+    /// </summary>
+    private void ApplyChangeDescriptionViewMode()
+    {
+        txtChangeBefore.Enabled = false;
+        txtChangeAfter.Enabled = false;
+    }
+
+    /// <summary>
+    /// 驗證變更說明資料
+    /// </summary>
+    /// <returns>驗證結果</returns>
+    public ValidationResult ValidateChangeDescription()
+    {
+        var result = new ValidationResult();
+
+        try
+        {
+            if (!changeDescriptionSection.Visible)
+            {
+                return result;
+            }
+
+            string changeBefore = txtChangeBefore.Text?.Trim();
+            string changeAfter = txtChangeAfter.Text?.Trim();
+
+            if (!string.IsNullOrEmpty(changeBefore) || !string.IsNullOrEmpty(changeAfter))
+            {
+                if (string.IsNullOrEmpty(changeBefore))
+                {
+                    result.AddError("請填寫變更前的內容");
+                }
+
+                if (string.IsNullOrEmpty(changeAfter))
+                {
+                    result.AddError("請填寫變更後的內容");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            result.AddError($"驗證變更說明時發生錯誤：{ex.Message}");
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// 插入變更記錄到資料庫
+    /// </summary>
+    /// <param name="projectID">計畫ID</param>
+    /// <param name="reason">變更原因</param>
+    /// <returns>是否成功</returns>
+    public bool InsertChangeRecord(string projectID, string reason)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(projectID) || string.IsNullOrEmpty(reason))
+            {
+                return false;
+            }
+
+            // 呼叫 OFSProjectChangeRecordHelper.insert 插入變更記錄
+            OFSProjectChangeRecordHelper.insert(new ProjectChangeRecord
+            {
+                Type = "CLB",
+                Method = 1,
+                DataID = projectID,
+                Reason = reason
+            });
+            return true;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"插入變更記錄時發生錯誤：{ex.Message}");
+            return false;
+        }
+    }
+
+    #endregion
 }

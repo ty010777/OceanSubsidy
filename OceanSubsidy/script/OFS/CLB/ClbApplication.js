@@ -984,6 +984,8 @@ function submitApplicationFinal(projectID) {
     const formData = new FormData();
     formData.append('action', 'submitApplication');
     formData.append('projectID', projectID);
+    formData.append('txtChangeBefore', $('[id*="txtChangeBefore"]').val() || '');
+    formData.append('txtChangeAfter', $('[id*="txtChangeAfter"]').val() || '');
 
     // 執行 AJAX 請求
     $.ajax({
@@ -1288,6 +1290,8 @@ function collectFormData() {
     formData.append('contactName', $('[id*="txtContactName"]').val() || '');
     formData.append('contactJobTitle', $('[id*="txtContactJobTitle"]').val() || '');
     formData.append('contactPhone', $('[id*="txtContactPhone"]').val() || '');
+    formData.append('txtChangeBefore', $('[id*="txtChangeBefore"]').val() || '');
+    formData.append('txtChangeAfter', $('[id*="txtChangeAfter"]').val() || '');
 
     return formData;
 }

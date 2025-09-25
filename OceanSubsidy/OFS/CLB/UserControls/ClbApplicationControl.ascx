@@ -1,5 +1,4 @@
 ﻿<%@ Control Language="C#" AutoEventWireup="true" CodeFile="ClbApplicationControl.ascx.cs" Inherits="OFS_CLB_UserControls_ClbApplicationControl" %>
-<%@ Register TagPrefix="uc" TagName="ChangeDescriptionControl" Src="~/OFS/CLB/UserControls/ChangeDescriptionControl.ascx" %>
 
 
 <!-- 申請表區塊 -->
@@ -269,8 +268,11 @@
             </table>
         </div>
     </div>
-
+   
 </div>
+
+
+   
 <!-- 申請表區塊結束 -->
 
 <!-- 上傳附件區塊 -->
@@ -393,9 +395,47 @@
     <asp:HiddenField ID="hdnAttachmentData" runat="server" />
 </div>
 
-<div id="changeDescription">
-    <uc:ChangeDescriptionControl ID="ucChangeDescription" runat="server" />
+
+<!-- 變更說明區塊 -->
+<div id="changeDescriptionSection" runat="server" class="mt-4">
+  
+     <div class="block">
+                <h5 class="square-title mt-4">變更說明</h5>
+                <div class="text-pink fw-normal fs-16 mt-2">本頁若有資料變更，請務必詳細說明「變更欄位」及「變更前／變更後」之資料內容。若有多項欄位請條列式(1,2,3,...)說明。</div>
+                <div class="text-pink fw-normal fs-16 mt-2">本頁若無任何修改，請填寫「無」</div>
+    
+                <div class="mt-4">
+                    
+                    <table class="table align-middle gray-table side-table mt-3">
+                        <tbody>
+                            <tr>
+                                <th width="120">
+                                    <span class="text-pink">*</span>
+                                    變更前
+                                </th>
+                                <td>
+                                    <asp:TextBox ID="txtChangeBefore" runat="server" CssClass="form-control textarea-auto-resize"
+                                               TextMode="MultiLine" Rows="4"
+                                               placeholder="請輸入變更前的內容"  />
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    <span class="text-pink">*</span>
+                                    變更後
+                                </th>
+                                <td>
+                                    <asp:TextBox ID="txtChangeAfter" runat="server" CssClass="form-control textarea-auto-resize"
+                                               TextMode="MultiLine" Rows="4"
+                                               placeholder="請輸入變更後的內容"  />
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+        </div>
 </div>
+
 <!-- 上傳附件區塊結束 -->
 
 <script type="text/javascript">

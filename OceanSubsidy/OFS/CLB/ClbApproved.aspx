@@ -9,6 +9,66 @@
     <script src="<%= ResolveUrl("~/script/OFS/CLB/ClbApproved.js") %>"></script>
     <script src="<%= ResolveUrl("~/script/OFS/CLB/ClbApplication.js") %>"></script>
 
+    <!-- 計畫變更審核功能 -->
+    <script>
+        $(document).ready(function() {
+            // 綁定審核結果變更事件
+            $('input[name="changeReviewResult"]').change(function() {
+                if ($(this).val() === 'reject') {
+                    // 退回修改：顯示審核意見輸入框並設為必填
+                    $('#changeReviewNotes').show().attr('data-required', 'true');
+                } else {
+                    // 通過：隱藏審核意見輸入框並清空內容
+                    $('#changeReviewNotes').hide().removeAttr('data-required').val('');
+                }
+            });
+
+            // 初始化：預設隱藏審核意見輸入框
+            $('#changeReviewNotes').hide();
+
+            // 確認審核按鈕點擊事件
+            $('[id$="btnConfirmChangeReview"]').click(function(e) {
+                const selectedResult = $('input[name="changeReviewResult"]:checked').val();
+                const reviewNotesElement = $('#changeReviewNotes');
+                const reviewNotes = reviewNotesElement.val().trim(); // 使用 val() 而不是 text()
+
+                // 設定隱藏欄位值
+                $('#changeReviewNotesHidden').val(reviewNotes);
+
+                // 驗證：退回修改時必須填寫審核意見
+                if (selectedResult === 'reject' && !reviewNotes) {
+                    Swal.fire({
+                        title: '提醒',
+                        text: '退回修改時請輸入審核意見',
+                        icon: 'warning',
+                        confirmButtonText: '確定'
+                    });
+                    e.preventDefault();
+                    return false;
+                }
+
+                // 確認審核動作
+                const actionText = selectedResult === 'approve' ? '通過' : '退回修改';
+
+                e.preventDefault(); // 先阻止默認提交
+
+                Swal.fire({
+                    title: '確認審核',
+                    text: `確定要${actionText}此計畫變更申請嗎？`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: '確定',
+                    cancelButtonText: '取消'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // 用戶確認後，觸發實際的按鈕點擊
+                        $(e.target).off('click').click();
+                    }
+                });
+            });
+        });
+    </script>
+
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" Runat="Server">
@@ -149,6 +209,32 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- 計畫變更審核面板 (僅限承辦人員且狀態為2才顯示) -->
+    <div class="scroll-bottom-panel" id="changeReviewPanel" runat="server" Visible="false">
+        <h5 class="text-pink fs-18 fw-bold mb-3">計畫變更審核</h5>
+
+        <div class="d-flex gap-2 mb-3">
+            <span class="text-gray">變更原因：</span>
+            <asp:Label ID="lblChangeReason" runat="server" CssClass="fw-bold text-dark" />
+        </div>
+
+        <div class="d-flex gap-2 mb-4">
+            <span class="text-gray mt-2">審核結果：</span>
+            <div class="d-flex flex-column gap-2 align-items-start flex-grow-1 checkPass">
+                <div class="form-check-input-group d-flex text-nowrap mb-2 align-items-center">
+                    <input id="radio-approve" class="form-check-input check-teal radioApprove" type="radio" name="changeReviewResult" value="approve" checked="">
+                    <label for="radio-approve">通過</label>
+                    <input id="radio-reject" class="form-check-input check-teal radioReject" type="radio" name="changeReviewResult" value="reject">
+                    <label for="radio-reject">退回修改</label>
+                </div>
+                <textarea class="form-control textarea-auto-resize w-100" placeholder="請輸入審核意見" name="changeReviewNotes" id="changeReviewNotes" rows="4"></textarea>
+                <input type="hidden" name="changeReviewNotesHidden" id="changeReviewNotesHidden">
+            </div>
+        </div>
+
+        <asp:Button ID="btnConfirmChangeReview" runat="server" Text="確認審核" CssClass="btn btn-teal d-table mx-auto" OnClick="btnConfirmChangeReview_Click"/>
     </div>
 
 </asp:Content>
