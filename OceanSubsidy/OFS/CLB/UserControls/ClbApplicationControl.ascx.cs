@@ -543,7 +543,7 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
             // 只有當有變更說明時才儲存
             if (!string.IsNullOrEmpty(changeBefore) || !string.IsNullOrEmpty(changeAfter))
             {
-                var ChangeRecord = OFSProjectChangeRecordHelper.getApplying("CLB", projectID);
+                var ChangeRecord = OFSProjectChangeRecordHelper.getApplying("CLB", 1, projectID);
                 ChangeRecord.Form1After = changeAfter;
                 ChangeRecord.Form1Before = changeBefore;
                 OFSProjectChangeRecordHelper.update(ChangeRecord);
@@ -1080,7 +1080,7 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
                     // 只有當有變更說明時才儲存
                     if (!string.IsNullOrEmpty(changeBefore) || !string.IsNullOrEmpty(changeAfter))
                     {
-                        var ChangeRecord = OFSProjectChangeRecordHelper.getApplying("CLB", projectID);
+                        var ChangeRecord = OFSProjectChangeRecordHelper.getApplying("CLB", 1, projectID);
                         ChangeRecord.Form2After = changeAfter;
                         ChangeRecord.Form2Before = changeBefore;
                         ChangeRecord.Status = 2; // 變更審核中
@@ -1744,7 +1744,7 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
     {
         try
         {
-            var changeDescription = OFSProjectChangeRecordHelper.getApplying("CLB", projectID);
+            var changeDescription = OFSProjectChangeRecordHelper.getApplying("CLB", 1, projectID);
 
             // 將變更說明資料轉換為 JSON 格式並傳送到前端
             if (changeDescription != null)
