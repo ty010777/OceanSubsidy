@@ -771,7 +771,11 @@ public class LiteracyService : BaseService
         {
             if (project.IsProjChanged)
             {
-                project.changeApply = OFSProjectChangeRecordHelper.getApplying("LIT", project.ProjectID);
+                project.changeApply = OFSProjectChangeRecordHelper.getApplying("LIT", 1, project.ProjectID);
+            }
+            else if (project.Status == 42 || project.Status == 43)
+            {
+                project.changeApply = OFSProjectChangeRecordHelper.getApplying("LIT", 2, project.ProjectID);
             }
 
             return project;

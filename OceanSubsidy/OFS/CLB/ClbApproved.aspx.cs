@@ -254,7 +254,7 @@ public partial class OFS_CLB_ClbApproved : System.Web.UI.Page
             }
 
             // 檢查計畫變更記錄狀態
-            var changeRecord = OFSProjectChangeRecordHelper.getApplying("CLB", ProjectID);
+            var changeRecord = OFSProjectChangeRecordHelper.getApplying("CLB", 1, ProjectID);
             if (changeRecord == null || changeRecord.Status != 2)
             {
                 return; // 沒有狀態為2的變更記錄，不顯示審核面板
@@ -301,7 +301,7 @@ public partial class OFS_CLB_ClbApproved : System.Web.UI.Page
             }
 
             // 取得計畫變更記錄
-            var changeRecord = OFSProjectChangeRecordHelper.getApplying("CLB", ProjectID);
+            var changeRecord = OFSProjectChangeRecordHelper.getApplying("CLB", 1, ProjectID);
             if (changeRecord == null)
             {
                 ShowSweetAlert("錯誤", "找不到計畫變更記錄", "error");

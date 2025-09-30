@@ -5,7 +5,7 @@ using System.Data;
 
 public class OFSProjectChangeRecordHelper
 {
-    public static ProjectChangeRecord getApplying(string type, string dataID)
+    public static ProjectChangeRecord getApplying(string type, int method, string dataID)
     {
         DbHelper db = new DbHelper();
 
@@ -29,13 +29,14 @@ public class OFSProjectChangeRecordHelper
                   ,[RejectReason]
               FROM [OFS_ProjectChangeRecord]
              WHERE [Type] = @Type
-               AND [Method] = 1
+               AND [Method] = @Method
                AND [DataID] = @DataID
                AND [Status] <> 3
           ORDER BY CreateTime DESC
         ";
 
         db.Parameters.Add("@Type", type);
+        db.Parameters.Add("@Method", method);
         db.Parameters.Add("@DataID", dataID);
 
         var table = db.GetTable();
