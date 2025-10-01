@@ -21,150 +21,26 @@ public partial class OFSApplicationMaster : System.Web.UI.MasterPage
     public bool IsEditMode => DisplayMode == DisplayModeEnum.Edit;
     public bool IsViewMode => DisplayMode == DisplayModeEnum.View;
     
-    // 4. 公開方法供內容頁面調用
-    public void SetModeTo(string mode)
+    // MasterPage.master.cs
+    protected void Page_Init(object sender, EventArgs e)
     {
-        switch (mode.ToLower())
+        hdnProjectID.Value = Request.QueryString["ProjectID"];
+        // 根據申請狀態決定模式
+        if (ShouldShowInEditMode(hdnProjectID.Value))
         {
-            case "編輯":
-                DisplayMode = DisplayModeEnum.Edit;
-                break;
-
-            case "檢視":
-                DisplayMode = DisplayModeEnum.View;
-                break;
-
-            default:
-                DisplayMode = DisplayModeEnum.View; // 預設為檢視模式（安全考量）
-                break;
+            DisplayMode = DisplayModeEnum.Edit;
         }
-
-        // 立即套用模式
-        ApplyModeToPage();
-    }
-
-    private void ApplyModeToPage()
-    {
-        // 在檢視模式時禁用所有輸入控制項
-        if (IsViewMode)
+        else
         {
-            // DisableAllControls(this.Page);
-            AddViewModeStyles();
+            DisplayMode = DisplayModeEnum.View;
         }
     }
-
-    // private void DisableAllControls(Control parent)
-    // {
-    //     foreach (Control control in parent.Controls)
-    //     {
-    //         // 禁用按鈕類型的控制項
-    //         if (control is System.Web.UI.WebControls.Button btn)
-    //             btn.Enabled = false;
-    //         else if (control is System.Web.UI.WebControls.LinkButton linkBtn)
-    //             linkBtn.Enabled = false;
-    //         else if (control is System.Web.UI.WebControls.ImageButton imgBtn)
-    //             imgBtn.Enabled = false;
-    //         else if (control is System.Web.UI.HtmlControls.HtmlInputButton htmlButton)
-    //             htmlButton.Disabled = true;
-    //
-    //         // 禁用輸入類型的控制項
-    //         else if (control is System.Web.UI.WebControls.TextBox textBox)
-    //             textBox.Enabled = false;
-    //         else if (control is System.Web.UI.WebControls.DropDownList dropDown)
-    //             dropDown.Enabled = false;
-    //         else if (control is System.Web.UI.WebControls.CheckBox checkBox)
-    //             checkBox.Enabled = false;
-    //         else if (control is System.Web.UI.WebControls.RadioButton radioButton)
-    //             radioButton.Enabled = false;
-    //         else if (control is System.Web.UI.WebControls.RadioButtonList radioButtonList)
-    //             radioButtonList.Enabled = false;
-    //         else if (control is System.Web.UI.WebControls.CheckBoxList checkBoxList)
-    //             checkBoxList.Enabled = false;
-    //         else if (control is System.Web.UI.WebControls.ListBox listBox)
-    //             listBox.Enabled = false;
-    //         else if (control is System.Web.UI.WebControls.FileUpload fileUpload)
-    //             fileUpload.Enabled = false;
-    //         else if (control is System.Web.UI.HtmlControls.HtmlInputText htmlInputText)
-    //             htmlInputText.Disabled = true;
-    //         else if (control is System.Web.UI.HtmlControls.HtmlInputFile htmlInputFile)
-    //             htmlInputFile.Disabled = true;
-    //         else if (control is System.Web.UI.HtmlControls.HtmlInputCheckBox htmlInputCheckBox)
-    //             htmlInputCheckBox.Disabled = true;
-    //         else if (control is System.Web.UI.HtmlControls.HtmlInputRadioButton htmlInputRadioButton)
-    //             htmlInputRadioButton.Disabled = true;
-    //         else if (control is System.Web.UI.HtmlControls.HtmlSelect htmlSelect)
-    //             htmlSelect.Disabled = true;
-    //         else if (control is System.Web.UI.HtmlControls.HtmlTextArea htmlTextArea)
-    //             htmlTextArea.Disabled = true;
-    //
-    //         // 遞迴處理子控制項
-    //         if (control.HasControls())
-    //             DisableAllControls(control);
-    //     }
-    // }
-
-    private void AddViewModeStyles()
-    {
-        // 使用 JavaScript 添加檢視模式的 CSS 類別並禁用輸入控制項
-        string script = @"
-            document.addEventListener('DOMContentLoaded', function() {
-                document.body.classList.add('app-mode-view');
-
-                // 禁用所有表單元素，但跳過 UserInfo div 內的元素
-                var formElements = document.querySelectorAll('input, textarea, select, button');
-                formElements.forEach(function(element) {
-                    // 檢查元素是否在 UserInfo div 內
-                    if (!element.closest('#UserInfo, #FuncBtn')) {
-                        element.disabled = true;
-                        element.readOnly = true;
-                    }
-                });
-
-                // 將所有有 view-mode class 的元件加上 d-none class
-                var viewModeElements = document.querySelectorAll('.view-mode');
-                viewModeElements.forEach(function(element) {
-                    element.classList.add('d-none');
-                });
-
-                // 特別處理一些可能動態生成的元素
-                setTimeout(function() {
-                    var dynamicElements = document.querySelectorAll('input, textarea, select, button');
-                    dynamicElements.forEach(function(element) {
-                        // 檢查元素是否在 UserInfo div 內且尚未被禁用
-                        if (!element.disabled && !element.closest('#UserInfo, #FuncBtn')) {
-                            element.disabled = true;
-                            element.readOnly = true;
-                        }
-                    });
-
-                    // 再次處理可能動態生成的 view-mode 元素
-                    var dynamicViewModeElements = document.querySelectorAll('.view-mode');
-                    dynamicViewModeElements.forEach(function(element) {
-                        if (!element.classList.contains('d-none')) {
-                            element.classList.add('d-none');
-                        }
-                    });
-                }, 1000);
-            });
-        ";
-        Page.ClientScript.RegisterStartupScript(this.GetType(), "AddViewModeStyles", script, true);
-    }
-    
-    
     protected void Page_Load(object sender, EventArgs e)
     {
-        // 從URL參數中獲取ProjectID並設定到hidden欄位
-        if (Request.QueryString["ProjectID"] != null)
+        if (!ValidateProjectOwnership(Request.QueryString["ProjectID"]))
         {
-            hdnProjectID.Value = Request.QueryString["ProjectID"];
-            
-            // 檢查專案擁有權
-            if (!ValidateProjectOwnership(Request.QueryString["ProjectID"]))
-            {
-                return; // 如果不是擁有者，已經導向到清單頁
-            }
+            return; // 如果不是擁有者，已經導向到清單頁
         }
-        
         // 根據當前頁面設定進度條狀態
         SetStepStatus();
         
@@ -365,6 +241,22 @@ public partial class OFSApplicationMaster : System.Web.UI.MasterPage
     {
         try
         {
+            // 如果沒有 projectID,只有在 SciApplication.aspx 才允許(新建專案)
+            if (string.IsNullOrEmpty(projectID))
+            {
+                // 檢查當前頁面是否為 SciApplication.aspx
+                string currentPage = System.IO.Path.GetFileName(Request.PhysicalPath);
+                if (currentPage.Equals("SciApplication.aspx", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true; // SciApplication.aspx 允許新建專案
+                }
+                else
+                {
+                    // 其他頁面沒有 projectID 則導回清單頁
+                    RedirectToApplicationChecklist("缺少專案編號");
+                    return false;
+                }
+            }
             // 取得當前使用者資訊
             var currentUser = GetCurrentUserInfo();
             if (currentUser == null || string.IsNullOrEmpty(currentUser.Account))
@@ -383,12 +275,7 @@ public partial class OFSApplicationMaster : System.Web.UI.MasterPage
                 return false;
             }
             
-            // 檢查專案是否屬於當前使用者
-            if (string.IsNullOrEmpty(projectData.UserAccount))
-            {
-                // 專案沒有設定擁有者，允許通過（可能是舊資料）
-                return true;
-            }
+          
             
             // 比較使用者帳號，或檢查是否為主管單位人員
             if (projectData.UserAccount != currentUser.Account && !IsSupervisorRole(currentUser))
@@ -557,5 +444,39 @@ public partial class OFSApplicationMaster : System.Web.UI.MasterPage
     {
         ShowSweetAlert(message, "提示", "info", callback);
     }
-    
+    /// <summary>
+    /// 判斷是否應該顯示為編輯模式
+    /// </summary>
+    /// <returns>true: 編輯模式, false: 檢視模式</returns>
+    private bool ShouldShowInEditMode(string ProjectID)
+    {
+        // 如果沒有 ProjectID，是新申請案件，可以編輯
+        if (string.IsNullOrEmpty(ProjectID))
+        {
+            return true;
+        }
+        
+        try
+        {
+            // 取得最新版本的狀態
+            var ApplicationData = OFS_SciApplicationHelper.getVersionByProjectID(ProjectID);
+            if (ApplicationData == null)
+            {
+                return true; // 沒有資料時允許編輯
+            }
+            
+            // 只有這些狀態可以編輯
+            string statuses = ApplicationData.Statuses ?? "";
+            string statusesName = ApplicationData.StatusesName ?? "";
+            
+            return statuses == "尚未提送" || 
+                   statusesName == "補正補件" || 
+                   statusesName == "計畫書修正中";
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得申請狀態時發生錯誤：{ex.Message}");
+            return false; // 發生錯誤時預設為檢視模式
+        }
+    }
 }

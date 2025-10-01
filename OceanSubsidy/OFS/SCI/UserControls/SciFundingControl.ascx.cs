@@ -23,12 +23,12 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
     /// <summary>
     /// 目前的計畫ID
     /// </summary>
-    public string ProjectID { get; set; }
+    protected string ProjectID => Request.QueryString["ProjectID"];
 
     /// <summary>
     /// 是否為檢視模式
     /// </summary>
-    public bool IsViewMode { get; set; } = false;
+    public bool IsViewMode { get; set; } 
 
     /// <summary>
     /// 人事費資料
@@ -52,7 +52,12 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             {
                 InitializeControl();
             }
+            else
+            {
+       
             
+            }
+
             BindDropDown();
         }
         catch (Exception ex)
@@ -70,20 +75,21 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
     /// </summary>
     /// <param name="projectID">計畫ID</param>
     /// <param name="isViewMode">是否為檢視模式</param>
-    public void LoadData(string projectID, bool isViewMode = false)
+    public void LoadData(string projectID)
     {
         try
         {
-            this.ProjectID = projectID;
-            this.IsViewMode = isViewMode;
 
             if (!string.IsNullOrEmpty(projectID))
             {
                 LoadExistingData(projectID);
-            }
+                // 載入變更說明控制項
+                ucChangeDescription.LoadData(projectID );
+                CheckFormStatusAndHideTempSaveButton();
 
+            }
             // 套用檢視模式
-            if (isViewMode)
+            if (IsViewMode)
             {
                 ApplyViewMode();
             }
@@ -92,6 +98,34 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
         catch (Exception ex)
         {
             HandleException(ex, "載入資料時發生錯誤");
+        }
+    }
+    /// <summary>
+    /// 檢查表單狀態並控制暫存按鈕顯示
+    /// </summary>
+    private void CheckFormStatusAndHideTempSaveButton()
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(ProjectID))
+            {
+                var lastVersion = OFS_SciApplicationHelper.getVersionByProjectID(ProjectID);
+                if (lastVersion != null)
+                {
+                    var formStatus = OFS_SciWorkSchHelper.GetFormStatusByProjectID(lastVersion.ProjectID, "Form3Status");
+                    
+                    if (formStatus == "完成")
+                    {
+                        // 隱藏暫存按鈕
+                        btnTempSave.Style["display"] = "none";
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // 發生錯誤時不隱藏按鈕，讓用戶正常使用
+            System.Diagnostics.Debug.WriteLine($"檢查表單狀態失敗: {ex.Message}");
         }
     }
 
@@ -108,6 +142,8 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             // 從隱藏欄位取得資料進行驗證
             var personnelData = GetPersonnelDataFromHidden();
             var totalFeesData = GetTotalFeesDataFromHidden();
+            var otherData = GetOtherDataFromHidden();
+            var otherRentData = GetOtherRentDataFromHidden();
 
             // 驗證人事費資料
             if (personnelData == null || personnelData.Count == 0)
@@ -141,10 +177,54 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                 }
             }
 
+            // 驗證其他業務費資料
+            if (otherData != null && otherData.Count > 0)
+            {
+                foreach (var other in otherData)
+                {
+                   
+                    if (string.IsNullOrWhiteSpace(other.title))
+                    {
+                        result.AddError("其他業務費：請選擇職稱");
+                        break;
+                    }
+                    if (other.avgSalary <= 0)
+                    {
+                        result.AddError("其他業務費：請輸入有效的平均月薪");
+                        break;
+                    }
+                    if (other.months <= 0)
+                    {
+                        result.AddError("其他業務費：請輸入有效的參與人月");
+                        break;
+                    } if (other.people <= 0)
+                    {
+                        result.AddError("其他業務費：請輸入有效的參與人數");
+                        break;
+                    }
+                }
+            }
+
             // 驗證總費用資料
             if (totalFeesData == null || totalFeesData.Count == 0)
             {
                 result.AddError("請輸入經費總表資料");
+            }
+            else
+            {
+                foreach (var totalFee in totalFeesData)
+                {
+                    if (string.IsNullOrWhiteSpace(totalFee.accountingItem))
+                    {
+                        result.AddError("經費總表：請輸入會計科目");
+                        break;
+                    }
+                    if (totalFee.subsidyAmount <= 0 && totalFee.coopAmount <= 0)
+                    {
+                        result.AddError("經費總表：請輸入有效的補助金額或合作金額");
+                        break;
+                    }
+                }
             }
 
             // 驗證行政管理費（可選）
@@ -161,9 +241,8 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
     /// 儲存表單資料
     /// </summary>
     /// <returns>儲存是否成功</returns>
-    public bool SaveData(string projectID)
-    {
-        this.ProjectID = projectID;
+    public bool SaveData()
+    { 
         try
         {
             // 取得表單資料
@@ -367,6 +446,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             var techTransferData = researchData.FirstOrDefault(r => r.category == "技術移轉");
             if (techTransferData != null)
             {
+                // taiwan-date-picker 套件會自動處理民國年顯示和西元年儲存
                 txtDate1Start.Text = techTransferData.dateStart;
                 txtDate1End.Text = techTransferData.dateEnd;
                 ResearchFeesName1.Text = techTransferData.projectName;
@@ -377,6 +457,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             var researchData2 = researchData.FirstOrDefault(r => r.category == "委託研究");
             if (researchData2 != null)
             {
+                // taiwan-date-picker 套件會自動處理民國年顯示和西元年儲存
                 txtDate2Start.Text = researchData2.dateStart;
                 txtDate2End.Text = researchData2.dateEnd;
                 ResearchFeesName2.Text = researchData2.projectName;
@@ -407,6 +488,81 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
     }
 
 
+    
+    protected void btnTempSave_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            // 暫存不需要檢核，直接儲存
+            if (SaveData())
+            {
+                // 儲存變更說明
+                ucChangeDescription.SaveChangeDescription(ProjectID);
+                // 更新版本狀態（暫存）
+                if (!string.IsNullOrEmpty(ProjectID))
+                {
+                    UpdateVersionStatusBasedOnAction(ProjectID, false);
+                }
+
+                // 重新載入資料
+                string isViewMode = Request.QueryString["IsViewMode"];
+                LoadData(ProjectID);
+
+                ShowSuccessMessage("暫存成功！");
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowErrorMessage($"暫存失敗：{ex.Message}");
+        }
+    }
+    
+    protected void btnSaveAndNext_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            // PostBack 時，檢查是否是驗證按鈕觸發的 PostBack
+            // 如果是「完成本頁，下一步」按鈕觸發，在按鈕事件執行前先保存當前資料
+            SaveDataToSessionBeforeValidation();    
+            // 驗證 UserControl 資料
+            var validationResult = ValidateForm();
+            if (!validationResult.IsValid)
+            {
+                RestoreDataFromSession();
+                ShowErrorMessage($"請修正以下錯誤：{validationResult.GetErrorsAsString()}");
+                return;
+            }
+
+            // 儲存 UserControl 資料
+            if (SaveData())
+            {
+                // 更新版本狀態
+                if (!string.IsNullOrEmpty(ProjectID))
+                {
+                    UpdateVersionStatusBasedOnAction(ProjectID, true);
+                    // 儲存變更說明
+                    ucChangeDescription.SaveChangeDescription(ProjectID);
+
+                }
+
+                // 清除 Session 暫存資料（因為已成功儲存）
+                ClearSessionData();
+
+                // 儲存成功後跳轉到下一頁
+                if (!string.IsNullOrEmpty(ProjectID))
+                {
+                    Response.Redirect($"SciRecusedList.aspx?ProjectID={ProjectID}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            RestoreDataFromSession();
+            ShowErrorMessage($"儲存失敗：{ex.Message}");
+        }
+    }
+    
+    
     /// <summary>
     /// 從隱藏欄位取得人事費資料
     /// </summary>
@@ -507,7 +663,54 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
 
         return totalFeesList;
     }
-
+    /// <summary>
+    /// 根據動作類型更新版本狀態
+    /// </summary>
+    /// <param name="ProjectID">ProjectID</param>
+    /// <param name="isComplete">是否為完成動作（下一步）</param>
+    private void UpdateVersionStatusBasedOnAction(string ProjectID, bool isComplete)
+    {
+        try
+        {
+            if (isComplete)
+            {
+                // 點擊「完成本頁，下一步」按鈕
+                // 1. Form3Status 設為 "完成" 
+                // 2. 檢查 CurrentStep，如果 <= 3 則改成 4
+                
+                string currentStep = OFS_SciWorkSchHelper.GetCurrentStepByProjectID(ProjectID);
+                int currentStepNum = 1;
+                int.TryParse(currentStep, out currentStepNum);
+                
+                bool shouldUpdateCurrentStep = currentStepNum <= 3;
+                string newCurrentStep = shouldUpdateCurrentStep ? "4" : currentStep;
+                
+                // 更新 Form3Status 為 "完成" 和 CurrentStep (如果需要)
+                // 使用通用的版本狀態更新方法，針對 Form3
+                if (shouldUpdateCurrentStep)
+                {
+                    OFS_SciFundingHelper.UpdateForm3StatusAndCurrentStep(ProjectID, "完成", newCurrentStep);
+                }
+                else
+                {
+                    OFS_SciFundingHelper.UpdateForm3Status(ProjectID, "完成");
+                }
+            }
+            else
+            {
+                // 點擊「暫存」按鈕
+                // 只更新 Form3Status 為 "暫存"，CurrentStep 不變
+                
+                OFS_SciFundingHelper.UpdateForm3Status(ProjectID, "暫存");
+            }
+        }
+        catch (Exception ex)
+        {
+         
+            // 記錄錯誤但不中斷流程
+            System.Diagnostics.Debug.WriteLine($"更新狀態失敗: {ex.Message}");
+        }
+    }
     /// <summary>
     /// 從隱藏欄位取得材料費資料
     /// </summary>
@@ -540,11 +743,15 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             // 從表單控制項取得技術移轉和委託研究資料
             if (!string.IsNullOrEmpty(ResearchFeesPrice1.Text))
             {
+                // 從隱藏欄位讀取西元年日期，如果沒有則使用顯示欄位的值
+                string date1Start = !string.IsNullOrEmpty(hdnDate1Start.Value) ? hdnDate1Start.Value : txtDate1Start.Text;
+                string date1End = !string.IsNullOrEmpty(hdnDate1End.Value) ? hdnDate1End.Value : txtDate1End.Text;
+
                 researchList.Add(new ResearchFeeRow
                 {
                     category = "技術移轉",
-                    dateStart = txtDate1Start.Text,
-                    dateEnd = txtDate1End.Text,
+                    dateStart = date1Start,
+                    dateEnd = date1End,
                     projectName = ResearchFeesName1.Text,
                     targetPerson = ResearchFeesPersonName1.Text,
                     price = decimal.TryParse(ResearchFeesPrice1.Text, out decimal price1) ? price1 : 0
@@ -553,11 +760,15 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
 
             if (!string.IsNullOrEmpty(ResearchFeesPrice2.Text))
             {
+                // 從隱藏欄位讀取西元年日期，如果沒有則使用顯示欄位的值
+                string date2Start = !string.IsNullOrEmpty(hdnDate2Start.Value) ? hdnDate2Start.Value : txtDate2Start.Text;
+                string date2End = !string.IsNullOrEmpty(hdnDate2End.Value) ? hdnDate2End.Value : txtDate2End.Text;
+
                 researchList.Add(new ResearchFeeRow
                 {
                     category = "委託研究",
-                    dateStart = txtDate2Start.Text,
-                    dateEnd = txtDate2End.Text,
+                    dateStart = date2Start,
+                    dateEnd = date2End,
                     projectName = ResearchFeesName2.Text,
                     targetPerson = ResearchFeesPersonName2.Text,
                     price = decimal.TryParse(ResearchFeesPrice2.Text, out decimal price2) ? price2 : 0
@@ -657,7 +868,73 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             string script = @"
             <script>
              $(document).ready(function () {
-                 $(""#point1Table, #point2Table, #point3Table ,#travelTable,#otherTable"").addClass(""hide-col-last"");
+                // 只針對此 UserControl 內的元素進行鎖定
+                // 找到 tab3 容器（經費/人事費明細）
+                var userControl = document.querySelector('#tab3');
+
+                if (!userControl) {
+                    console.warn('找不到 UserControl 容器: #tab3');
+                    return;
+                }
+
+                // 創建一個函數來處理此 UserControl 內所有表單元素的禁用
+                function disableAllFormElements() {
+                    var allElements = userControl.querySelectorAll('input, textarea, select, button');
+                    allElements.forEach(function(element) {
+                        element.disabled = true;
+                        element.readOnly = true;
+                    });
+
+                    // 處理 view-mode 元素
+                    var viewModeElements = userControl.querySelectorAll('.view-mode');
+                    viewModeElements.forEach(function(element) {
+                        if (!element.classList.contains('d-none')) {
+                            element.classList.add('d-none');
+                        }
+                    });
+                }
+
+                // 初始執行
+                disableAllFormElements();
+
+                // 特別處理一些可能動態生成的元素 - 多次檢查
+                setTimeout(disableAllFormElements, 1000);
+                setTimeout(disableAllFormElements, 2000);
+                setTimeout(disableAllFormElements, 3000);
+
+                // 使用 MutationObserver 監聽此 UserControl 內的 DOM 變化
+                var observer = new MutationObserver(function(mutations) {
+                    var shouldDisable = false;
+                    mutations.forEach(function(mutation) {
+                        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                            for (var i = 0; i < mutation.addedNodes.length; i++) {
+                                var node = mutation.addedNodes[i];
+                                if (node.nodeType === 1) { // Element node
+                                    var hasFormElements = node.querySelectorAll &&
+                                        node.querySelectorAll('input, textarea, select, button').length > 0;
+                                    if (hasFormElements ||
+                                        (node.tagName && ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(node.tagName))) {
+                                        shouldDisable = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    if (shouldDisable) {
+                        setTimeout(disableAllFormElements, 100);
+                    }
+                });
+
+                // 只監聽此 UserControl 的變化
+                observer.observe(userControl, {
+                    childList: true,
+                    subtree: true
+                });
+
+                // 處理表格欄位隱藏
+                $('#tab3 #point1Table, #tab3 #point2Table, #tab3 #point3Table, #tab3 #travelTable, #tab3 #otherTable').addClass('hide-col-last');
                 });
             </script>";
             Page.ClientScript.RegisterStartupScript(this.GetType(), "AddClassToTable", script);
@@ -672,6 +949,376 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
     {
         System.Diagnostics.Debug.WriteLine($"{context}: {ex.Message}");
         // 可以在這裡加入記錄或通知邏輯
+    }
+ /// <summary>
+    /// 顯示成功訊息
+    /// </summary>
+    private void ShowSuccessMessage(string message, string callback = "")
+    {
+        string safeMessage = System.Web.HttpUtility.JavaScriptStringEncode(message);
+
+        string script = $@"
+            Swal.fire({{
+                title: '成功',
+                text: '{safeMessage}',
+                icon: 'success',
+                confirmButtonText: '確定',
+                customClass: {{
+                    popup: 'animated fadeInDown'
+                }}
+            }})";
+
+        if (!string.IsNullOrEmpty(callback))
+        {
+            script += $".then(function() {{ {callback} }})";
+        }
+
+        script += ";";
+
+        Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowSuccessMessage" + Guid.NewGuid().ToString(), script, true);
+    }
+
+    /// <summary>
+    /// 顯示錯誤訊息
+    /// </summary>
+    private void ShowErrorMessage(string message, string callback = "")
+    {
+        string safeMessage = System.Web.HttpUtility.JavaScriptStringEncode(message.Replace("\r\n", "<br>"));
+
+        string script = $@"
+            Swal.fire({{
+                title: '錯誤',
+                html: '{safeMessage}',
+                icon: 'error',
+                confirmButtonText: '確定',
+                customClass: {{
+                    popup: 'animated fadeInDown'
+                }}
+            }})";
+
+        if (!string.IsNullOrEmpty(callback))
+        {
+            script += $".then(function() {{ {callback} }})";
+        }
+
+        script += ";";
+
+        Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowErrorMessage" + Guid.NewGuid().ToString(), script, true);
+    }
+
+    /// <summary>
+    /// 顯示警告訊息
+    /// </summary>
+    private void ShowWarningMessage(string message, string callback = "")
+    {
+        string safeMessage = System.Web.HttpUtility.JavaScriptStringEncode(message);
+
+        string script = $@"
+            Swal.fire({{
+                title: '警告',
+                text: '{safeMessage}',
+                icon: 'warning',
+                confirmButtonText: '確定',
+                customClass: {{
+                    popup: 'animated fadeInDown'
+                }}
+            }})";
+
+        if (!string.IsNullOrEmpty(callback))
+        {
+            script += $".then(function() {{ {callback} }})";
+        }
+
+        script += ";";
+
+        Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowWarningMessage" + Guid.NewGuid().ToString(), script, true);
+    }
+
+    /// <summary>
+    /// 在按鈕事件執行前保存當前表單資料到 Session（在 Page_Load 中呼叫）
+    /// </summary>
+    private void SaveDataToSessionBeforeValidation()
+    {
+        try
+        {
+            string sessionKey = $"SciFundingControl_Temp_{ProjectID}";
+
+            // 取得表單資料（與 SaveData() 中相同的方法）
+            var personnelData = GetPersonnelDataFromHidden();
+            var materialData = GetMaterialDataFromHidden();
+            var researchData = GetResearchDataFromHidden();
+            var travelData = GetTravelDataFromHidden();
+            var otherData = GetOtherDataFromHidden();
+            var otherRentData = GetOtherRentDataFromHidden();
+            var totalFeesData = GetTotalFeesDataFromHidden();
+
+            // 建立暫存資料物件
+            var tempData = new
+            {
+                // 從前端收集到的實際資料物件
+                PersonnelData = personnelData,
+                MaterialData = materialData,
+                ResearchData = researchData,
+                TravelData = travelData,
+                OtherData = otherData,
+                OtherRentData = otherRentData,
+                TotalFeesData = totalFeesData,
+
+                // ASP.NET 控制項資料
+                TxtDate1Start = txtDate1Start.Text,
+                TxtDate1End = txtDate1End.Text,
+                ResearchFeesName1 = ResearchFeesName1.Text,
+                ResearchFeesPersonName1 = ResearchFeesPersonName1.Text,
+                ResearchFeesPrice1 = ResearchFeesPrice1.Text,
+
+                TxtDate2Start = txtDate2Start.Text,
+                TxtDate2End = txtDate2End.Text,
+                ResearchFeesName2 = ResearchFeesName2.Text,
+                ResearchFeesPersonName2 = ResearchFeesPersonName2.Text,
+                ResearchFeesPrice2 = ResearchFeesPrice2.Text,
+
+                RentCash = rentCash.Text,
+                RentDescription = rentDescription.Text,
+
+                AdminFeeSubsidy = AdminFeeSubsidy.Text,
+                AdminFeeCoop = AdminFeeCoop.Text
+            };
+
+            // 將資料序列化並保存到 Session
+            Session[sessionKey] = JsonConvert.SerializeObject(tempData);
+        }
+        catch (Exception ex)
+        {
+            // 記錄錯誤但不中斷流程
+            System.Diagnostics.Debug.WriteLine($"保存 Session 資料失敗: {ex.Message}");
+        }
+    }
+
+
+    /// <summary>
+    /// 從 Session 恢復表單資料（用於 PostBack 時恢復）
+    /// </summary>
+    private void RestoreDataFromSession()
+    {
+        try
+        {
+            string sessionKey = $"SciFundingControl_Temp_{ProjectID}";
+
+            if (Session[sessionKey] != null)
+            {
+                string sessionDataJson = Session[sessionKey].ToString();
+
+                // 解析暫存的資料
+                dynamic tempDataDynamic = JsonConvert.DeserializeObject(sessionDataJson);
+
+                if (tempDataDynamic != null)
+                {
+                    // 重建實際資料物件
+                    var personnelData = (tempDataDynamic.PersonnelData != null) ?
+                        JsonConvert.DeserializeObject<List<PersonRow>>(tempDataDynamic.PersonnelData.ToString()) : new List<PersonRow>();
+                    var materialData = (tempDataDynamic.MaterialData != null) ?
+                        JsonConvert.DeserializeObject<List<MaterialRow>>(tempDataDynamic.MaterialData.ToString()) : new List<MaterialRow>();
+                    var researchData = (tempDataDynamic.ResearchData != null) ?
+                        JsonConvert.DeserializeObject<List<ResearchFeeRow>>(tempDataDynamic.ResearchData.ToString()) : new List<ResearchFeeRow>();
+                    var travelData = (tempDataDynamic.TravelData != null) ?
+                        JsonConvert.DeserializeObject<List<TravelRow>>(tempDataDynamic.TravelData.ToString()) : new List<TravelRow>();
+                    var otherData = (tempDataDynamic.OtherData != null) ?
+                        JsonConvert.DeserializeObject<List<OtherFeeRow>>(tempDataDynamic.OtherData.ToString()) : new List<OtherFeeRow>();
+                    var otherRentData = (tempDataDynamic.OtherRentData != null) ?
+                        JsonConvert.DeserializeObject<List<OtherRent>>(tempDataDynamic.OtherRentData.ToString()) : new List<OtherRent>();
+                    var totalFeesData = (tempDataDynamic.TotalFeesData != null) ?
+                        JsonConvert.DeserializeObject<List<TotalFeeRow>>(tempDataDynamic.TotalFeesData.ToString()) : new List<TotalFeeRow>();
+
+                    // 使用與 LoadExistingData 相同的方式輸出前端資料
+                    var serializer = new JavaScriptSerializer();
+
+                    StringBuilder jsBuilder = new StringBuilder();
+                    jsBuilder.AppendLine("window.restoredData = {");
+                    jsBuilder.AppendLine($"    personnel: {serializer.Serialize(personnelData)},");
+                    jsBuilder.AppendLine($"    material: {serializer.Serialize(materialData)},");
+                    jsBuilder.AppendLine($"    research: {serializer.Serialize(researchData)},");
+                    jsBuilder.AppendLine($"    travel: {serializer.Serialize(travelData)},");
+                    jsBuilder.AppendLine($"    other: {serializer.Serialize(otherData)},");
+                    jsBuilder.AppendLine($"    otherRent: {serializer.Serialize(otherRentData)},");
+                    jsBuilder.AppendLine($"    totalFees: {serializer.Serialize(totalFeesData)}");
+                    jsBuilder.AppendLine("};");
+
+                    // 使用與 LoadExistingData 相同的方式載入 ASP.NET 控制項
+                    RestoreFormControls(researchData, otherRentData, totalFeesData, tempDataDynamic);
+
+                    // 使用與 LoadExistingData 相同的前端觸發方式
+                    jsBuilder.AppendLine();
+                    jsBuilder.AppendLine("// 恢復資料到前端表單");
+                    jsBuilder.AppendLine("if (document.readyState === 'loading') {");
+                    jsBuilder.AppendLine("    document.addEventListener('DOMContentLoaded', function() {");
+                    jsBuilder.AppendLine("        setTimeout(function() {");
+                    jsBuilder.AppendLine("            if (typeof restoreDataFromPostback === 'function') {");
+                    jsBuilder.AppendLine("                restoreDataFromPostback();");
+                    jsBuilder.AppendLine("            } else if (typeof loadExistingDataToForm === 'function') {");
+                    jsBuilder.AppendLine("                // 使用現有的載入函數，將 restoredData 設為 loadedData");
+                    jsBuilder.AppendLine("                window.loadedData = window.restoredData;");
+                    jsBuilder.AppendLine("                loadExistingDataToForm();");
+                    jsBuilder.AppendLine("            }");
+                    jsBuilder.AppendLine("        }, 100);");
+                    jsBuilder.AppendLine("    });");
+                    jsBuilder.AppendLine("} else {");
+                    jsBuilder.AppendLine("    setTimeout(function() {");
+                    jsBuilder.AppendLine("        if (typeof restoreDataFromPostback === 'function') {");
+                    jsBuilder.AppendLine("            restoreDataFromPostback();");
+                    jsBuilder.AppendLine("        } else if (typeof loadExistingDataToForm === 'function') {");
+                    jsBuilder.AppendLine("            // 使用現有的載入函數，將 restoredData 設為 loadedData");
+                    jsBuilder.AppendLine("            window.loadedData = window.restoredData;");
+                    jsBuilder.AppendLine("            loadExistingDataToForm();");
+                    jsBuilder.AppendLine("        }");
+                    jsBuilder.AppendLine("    }, 100);");
+                    jsBuilder.AppendLine("}");
+
+                    Page.ClientScript.RegisterStartupScript(
+                        this.GetType(),
+                        "RestoreDataScript",
+                        jsBuilder.ToString(),
+                        true
+                    );
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // 記錄錯誤但不中斷流程
+            System.Diagnostics.Debug.WriteLine($"從 Session 恢復資料失敗: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 恢復 ASP.NET 控制項資料（仿照 LoadFormControls 的方式）
+    /// </summary>
+    private void RestoreFormControls(List<ResearchFeeRow> researchData, List<OtherRent> otherRentData, List<TotalFeeRow> totalFeesData, dynamic tempDataDynamic)
+    {
+        try
+        {
+            // 載入研究費資料到 ASP.NET 控件（與 LoadFormControls 相同邏輯）
+            var techTransferData = researchData.FirstOrDefault(r => r.category == "技術移轉");
+            if (techTransferData != null)
+            {
+                txtDate1Start.Text = techTransferData.dateStart ?? "";
+                txtDate1End.Text = techTransferData.dateEnd ?? "";
+                ResearchFeesName1.Text = techTransferData.projectName ?? "";
+                ResearchFeesPersonName1.Text = techTransferData.targetPerson ?? "";
+                ResearchFeesPrice1.Text = techTransferData.price.ToString();
+            }
+            else
+            {
+                // 如果資料物件中沒有，從 tempDataDynamic 恢復
+                if (tempDataDynamic.TxtDate1Start != null)
+                    txtDate1Start.Text = tempDataDynamic.TxtDate1Start.ToString();
+                if (tempDataDynamic.TxtDate1End != null)
+                    txtDate1End.Text = tempDataDynamic.TxtDate1End.ToString();
+                if (tempDataDynamic.ResearchFeesName1 != null)
+                    ResearchFeesName1.Text = tempDataDynamic.ResearchFeesName1.ToString();
+                if (tempDataDynamic.ResearchFeesPersonName1 != null)
+                    ResearchFeesPersonName1.Text = tempDataDynamic.ResearchFeesPersonName1.ToString();
+                if (tempDataDynamic.ResearchFeesPrice1 != null)
+                    ResearchFeesPrice1.Text = tempDataDynamic.ResearchFeesPrice1.ToString();
+            }
+
+            var researchData2 = researchData.FirstOrDefault(r => r.category == "委託研究");
+            if (researchData2 != null)
+            {
+                txtDate2Start.Text = researchData2.dateStart ?? "";
+                txtDate2End.Text = researchData2.dateEnd ?? "";
+                ResearchFeesName2.Text = researchData2.projectName ?? "";
+                ResearchFeesPersonName2.Text = researchData2.targetPerson ?? "";
+                ResearchFeesPrice2.Text = researchData2.price.ToString();
+            }
+            else
+            {
+                // 如果資料物件中沒有，從 tempDataDynamic 恢復
+                if (tempDataDynamic.TxtDate2Start != null)
+                    txtDate2Start.Text = tempDataDynamic.TxtDate2Start.ToString();
+                if (tempDataDynamic.TxtDate2End != null)
+                    txtDate2End.Text = tempDataDynamic.TxtDate2End.ToString();
+                if (tempDataDynamic.ResearchFeesName2 != null)
+                    ResearchFeesName2.Text = tempDataDynamic.ResearchFeesName2.ToString();
+                if (tempDataDynamic.ResearchFeesPersonName2 != null)
+                    ResearchFeesPersonName2.Text = tempDataDynamic.ResearchFeesPersonName2.ToString();
+                if (tempDataDynamic.ResearchFeesPrice2 != null)
+                    ResearchFeesPrice2.Text = tempDataDynamic.ResearchFeesPrice2.ToString();
+            }
+
+            // 載入租金資料到 ASP.NET 控件
+            var rentData = otherRentData.FirstOrDefault(r => r.item == "租金");
+            if (rentData != null)
+            {
+                rentCash.Text = rentData.amount.ToString();
+                rentDescription.Text = rentData.note ?? "";
+            }
+            else
+            {
+                // 如果資料物件中沒有，從 tempDataDynamic 恢復
+                if (tempDataDynamic.RentCash != null)
+                    rentCash.Text = tempDataDynamic.RentCash.ToString();
+                if (tempDataDynamic.RentDescription != null)
+                    rentDescription.Text = tempDataDynamic.RentDescription.ToString();
+            }
+
+            // 載入行政管理費資料到 ASP.NET 控件
+            var adminFeeData = totalFeesData.FirstOrDefault(t => t.accountingItem?.Contains("行政管理費") == true);
+            if (adminFeeData != null)
+            {
+                AdminFeeSubsidy.Text = adminFeeData.subsidyAmount?.ToString() ?? "0";
+                AdminFeeCoop.Text = adminFeeData.coopAmount?.ToString() ?? "0";
+            }
+            else
+            {
+                // 如果資料物件中沒有，從 tempDataDynamic 恢復
+                if (tempDataDynamic.AdminFeeSubsidy != null)
+                    AdminFeeSubsidy.Text = tempDataDynamic.AdminFeeSubsidy.ToString();
+                if (tempDataDynamic.AdminFeeCoop != null)
+                    AdminFeeCoop.Text = tempDataDynamic.AdminFeeCoop.ToString();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"恢復控制項資料失敗: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 清除 Session 暫存資料
+    /// </summary>
+    private void ClearSessionData()
+    {
+        try
+        {
+            string sessionKey = $"SciFundingControl_Temp_{ProjectID}";
+            Session.Remove(sessionKey);
+        }
+        catch (Exception ex)
+        {
+            // 記錄錯誤但不中斷流程
+            System.Diagnostics.Debug.WriteLine($"清除 Session 資料失敗: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 取得此 UserControl 對應的變更說明資料
+    /// </summary>
+    /// <returns>變更說明資料 (changeBefore, changeAfter)</returns>
+    public (string changeBefore, string changeAfter) GetChangeDescriptionData()
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(ProjectID))
+            {
+                return ucChangeDescription.GetChangeDescriptionBySourcePage(ProjectID, "SciFunding");
+            }
+            return ("", "");
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "取得變更說明資料時發生錯誤");
+            return ("", "");
+        }
     }
 
     #endregion

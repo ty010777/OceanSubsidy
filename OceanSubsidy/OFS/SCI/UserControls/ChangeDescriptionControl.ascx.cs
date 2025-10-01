@@ -114,23 +114,12 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
     /// 驗證變更說明資料
     /// </summary>
     /// <returns>驗證結果</returns>
-    public ValidationResult ValidateChangeDescription()
+    public ValidationResult ValidateChangeDescription(string changeBefore , string changeAfter)
     {
         var result = new ValidationResult();
 
         try
         {
-            // 如果區塊不可見，跳過驗證
-            if (!changeDescriptionSection.Visible)
-            {
-                return result;
-            }
-
-            // 同步前端資料到隱藏欄位
-            SyncContentFromFrontend();
-
-            string changeBefore = hdnChangeBefore.Value?.Trim();
-            string changeAfter = hdnChangeAfter.Value?.Trim();
 
             // 如果有填寫任何一個欄位，則兩個都必須填寫
             if (!string.IsNullOrEmpty(changeBefore) || !string.IsNullOrEmpty(changeAfter))
@@ -163,20 +152,26 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
         this.ProjectID = projectID;
         try
         {
+            SyncContentFromFrontend();
             // 如果區塊不可見，不需要儲存
+            string changeBefore = hdnChangeBefore.Value?.Trim();
+            string changeAfter = hdnChangeAfter.Value?.Trim();
+
             if (!changeDescriptionSection.Visible)
             {
                 return true;
             }
-            string pageName = SourcePage;
-            // 同步前端資料到隱藏欄位
-            SyncContentFromFrontend();
-            
-            string changeBefore = hdnChangeBefore.Value?.Trim();
-            string changeAfter = hdnChangeAfter.Value?.Trim();
-            
+            // 執行驗證並檢查結果
+            var validationResult = ValidateChangeDescription(changeBefore, changeAfter);
+            if (!validationResult.IsValid)
+            {
+                // 將錯誤訊息組合成字串並拋出例外
+                string errorMessage = string.Join("; ", validationResult.Errors);
+                throw new Exception($"驗證失敗：{errorMessage}");
+            }
             // 儲存到資料庫（這裡需要根據實際的資料表結構來實作）
-            SaveChangeDescriptionToDatabase(projectID,pageName, changeBefore, changeAfter);
+            SaveChangeDescriptionToDatabase(projectID, changeBefore, changeAfter);
+            
 
             return true;
         }
@@ -230,7 +225,8 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
             
             // 其他頁面只有在特定狀態下才顯示
             return project.StatusesName == "計畫書修正中" ||
-                   project.StatusesName == "計畫書審查中";
+                   project.StatusesName == "計畫書審核中" ||
+                     project.IsProjChanged == 1;
             
         }
         catch (Exception ex)
@@ -257,13 +253,10 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
             else
             {
                 // 一般模式：從資料庫載入已儲存的變更說明
-                var changeDescription = GetChangeDescriptionFromDatabase(projectID);
-                
-                if (changeDescription != null)
-                {
-                    ChangeBefore = changeDescription.ChangeBefore ?? "";
-                    ChangeAfter = changeDescription.ChangeAfter ?? "";
-                }
+                var (changeBefore, changeAfter) = GetChangeDescriptionFromDatabase(projectID);
+
+                ChangeBefore = changeBefore ?? "";
+                ChangeAfter = changeAfter ?? "";
             }
         }
         catch (Exception ex)
@@ -277,20 +270,40 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
     /// </summary>
     /// <param name="projectID">專案ID</param>
     /// <returns>變更說明資料</returns>
-    private OFS_SCI_PageModifyNote GetChangeDescriptionFromDatabase(string projectID)
+    private (string changeBefore, string changeAfter) GetChangeDescriptionFromDatabase(string projectID)
     {
         try
         {
             // 優先使用設定的 SourcePage，否則使用當前頁面名稱
             string sourcePage = !string.IsNullOrEmpty(SourcePage) ? SourcePage : GetCurrentPageName();
-            
+            // 取得專案狀態資訊來判斷是計畫變更還是計畫書修正
+            var project = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
+
+            // 判斷 Method：計畫書修正 = 1, 計畫變更 = 2
+            int method = 2; // 預設為計畫書修正
+            if (project.IsProjChanged == 1)
+            {
+                method = 1; // 計畫變更
+            }
+            else if (project.StatusesName == "計畫書修正中")
+            {
+                method = 2; // 計畫書修正
+            }
             // 從資料庫載入變更說明
-            return OFS_SciApplicationHelper.GetPageModifyNote(projectID, sourcePage);
+            var changeRecord = OFSProjectChangeRecordHelper.getApplying("SCI",method, projectID);
+
+            if (changeRecord == null)
+            {
+                return ("", "");
+            }
+
+            
+            return  HandleFormFields(changeRecord, sourcePage);
         }
         catch (Exception ex)
         {
             HandleException(ex, "從資料庫取得變更說明時發生錯誤");
-            return null;
+            return ("", "");
         }
     }
 
@@ -301,19 +314,50 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
     /// <param name="pageName">頁面名稱</param>
     /// <param name="changeBefore">變更前內容</param>
     /// <param name="changeAfter">變更後內容</param>
-    private void SaveChangeDescriptionToDatabase(string projectID, string pageName, string changeBefore, string changeAfter)
+    private void SaveChangeDescriptionToDatabase(string projectID, string changeBefore, string changeAfter)
     {
         try
         {
             // 優先使用設定的 SourcePage，否則使用當前頁面名稱
             string sourcePage = !string.IsNullOrEmpty(SourcePage) ? SourcePage : GetCurrentPageName();
-            
-            // 儲存到資料庫
-            bool success = OFS_SciApplicationHelper.SavePageModifyNote(projectID, sourcePage, changeBefore, changeAfter);
-            
-            if (!success)
+
+            // 取得專案狀態資訊來判斷是計畫變更還是計畫書修正
+            var project = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
+
+            // 判斷 Method：計畫書修正 = 1, 計畫變更 = 2
+            int method = 2; // 預設為計畫書修正
+            if (project.IsProjChanged == 1)
             {
-                throw new Exception("資料庫儲存操作失敗");
+                method = 1; // 計畫變更
+            }
+
+            // 查詢是否已有現存的記錄
+            var existingRecord = OFSProjectChangeRecordHelper.getApplying("SCI", method,projectID);
+
+            if (existingRecord != null)
+            {
+                // 更新現有記錄
+                HandleFormFields(existingRecord, sourcePage, changeBefore, changeAfter, isUpdate: true);
+
+                OFSProjectChangeRecordHelper.update(existingRecord);
+            }
+            else
+            {
+                // 新增記錄
+                var newRecord = new ProjectChangeRecord
+                {
+                    Type = "SCI",
+                    Method = method,
+                    DataID = projectID,
+                    Reason = "",
+                    Status = 1 // 編輯中
+                };
+
+                OFSProjectChangeRecordHelper.insert(newRecord);
+
+                // 更新對應的欄位
+                HandleFormFields(newRecord, sourcePage, changeBefore, changeAfter, isUpdate: true);
+                OFSProjectChangeRecordHelper.update(newRecord);
             }
         }
         catch (Exception ex)
@@ -387,17 +431,15 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
         if (IsViewMode)
         {
             string script = @"
-                setTimeout(function() {
-                    // 停用所有 contenteditable 元素
-                    const editableElements = document.querySelectorAll('#changeDescriptionSection [contenteditable]');
-                    editableElements.forEach(function(element) {
-                        element.setAttribute('contenteditable', 'false');
-                        element.style.backgroundColor = '#f8f9fa';
-                        element.style.cursor = 'default';
-                    });
-                }, 100);
-            ";
-
+    document.addEventListener('DOMContentLoaded', function () {
+        const editableElements = document.querySelectorAll('#changeDescriptionSection [contenteditable]');
+        editableElements.forEach(function(element) {
+            element.contentEditable = 'false';
+            element.style.backgroundColor = '#e9ecef';
+            element.style.cursor = 'default';
+        });
+    });
+";
             Page.ClientScript.RegisterStartupScript(this.GetType(), "ApplyChangeDescriptionViewMode", script, true);
         }
     }
@@ -446,6 +488,78 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
         }
     }
 
+   
+
+    /// <summary>
+    /// 根據 SourcePage 取得對應的 Form 欄位操作
+    /// </summary>
+    /// <param name="record">ProjectChangeRecord 模型</param>
+    /// <param name="sourcePage">來源頁面名稱</param>
+    /// <param name="changeBefore">變更前內容（用於更新操作）</param>
+    /// <param name="changeAfter">變更後內容（用於更新操作）</param>
+    /// <param name="isUpdate">是否為更新操作</param>
+    /// <returns>如果是讀取操作，回傳 (before, after)；如果是更新操作，回傳 ("", "")</returns>
+    private (string before, string after) HandleFormFields(ProjectChangeRecord record, string sourcePage, string changeBefore = null, string changeAfter = null, bool isUpdate = false)
+    {
+        switch (sourcePage)
+        {
+            case "SciApplication":
+                if (isUpdate)
+                {
+                    record.Form1Before = changeBefore;
+                    record.Form1After = changeAfter;
+                    return ("", "");
+                }
+                return (record.Form1Before ?? "", record.Form1After ?? "");
+
+            case "SciWorkSch":
+                if (isUpdate)
+                {
+                    record.Form2Before = changeBefore;
+                    record.Form2After = changeAfter;
+                    return ("", "");
+                }
+                return (record.Form2Before ?? "", record.Form2After ?? "");
+
+            case "SciFunding":
+                if (isUpdate)
+                {
+                    record.Form3Before = changeBefore;
+                    record.Form3After = changeAfter;
+                    return ("", "");
+                }
+                return (record.Form3Before ?? "", record.Form3After ?? "");
+
+            case "SciRecusedList":
+                if (isUpdate)
+                {
+                    record.Form4Before = changeBefore;
+                    record.Form4After = changeAfter;
+                    return ("", "");
+                }
+                return (record.Form4Before ?? "", record.Form4After ?? "");
+
+            case "SciUploadAttachments":
+                if (isUpdate)
+                {
+                    record.Form5Before = changeBefore;
+                    record.Form5After = changeAfter;
+                    return ("", "");
+                }
+                return (record.Form5Before ?? "", record.Form5After ?? "");
+
+            default:
+                if (isUpdate)
+                {
+                    record.Form1Before = changeBefore;
+                    record.Form1After = changeAfter;
+                    return ("", "");
+                }
+                return (record.Form1Before ?? "", record.Form1After ?? "");
+        }
+    }
+    
+
     /// <summary>
     /// 處理例外錯誤
     /// </summary>
@@ -463,56 +577,7 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
 
     #region 公用載入方法
 
-    /// <summary>
-    /// 載入變更說明資料到固定ID的輸入框中
-    /// </summary>
-    /// <param name="projectID">計畫ID</param>
-    /// <param name="sourcePage">來源頁面名稱</param>
-    public static void LoadChangeDescriptionToElements(string projectID, string sourcePage)
-    {
-        try
-        {
-            if (string.IsNullOrEmpty(projectID) || string.IsNullOrEmpty(sourcePage))
-            {
-                return;
-            }
-
-            // 從資料庫取得變更說明資料
-            var changeDescription = OFS_SciApplicationHelper.GetPageModifyNote(projectID, sourcePage);
-            
-            if (changeDescription == null)
-            {
-                return;
-            }
-
-            // 產生 JavaScript 來設定輸入框的值
-            string script = $@"
-                setTimeout(function() {{
-                    // 設定變更前的內容
-                    const changeBeforeElement = document.getElementById('txtChangeBefore');
-                    if (changeBeforeElement && '{changeDescription.ChangeBefore?.Replace("'", "\\'")}') {{
-                        changeBeforeElement.textContent = '{changeDescription.ChangeBefore?.Replace("'", "\\'")}';
-                    }}
-                    
-                    // 設定變更後的內容
-                    const changeAfterElement = document.getElementById('txtChangeAfter');
-                    if (changeAfterElement && '{changeDescription.ChangeAfter?.Replace("'", "\\'")}') {{
-                        changeAfterElement.textContent = '{changeDescription.ChangeAfter?.Replace("'", "\\'")}';
-                    }}
-                }}, 100);
-            ";
-
-            // 註冊 JavaScript 到頁面
-            if (HttpContext.Current?.Handler is Page page)
-            {
-                page.ClientScript.RegisterStartupScript(typeof(Page), "LoadChangeDescription", script, true);
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"載入變更說明到輸入框時發生錯誤：{ex.Message}");
-        }
-    }
+    
 
     /// <summary>
     /// 載入所有 SourcePage 的變更說明資料供審核頁面使用
@@ -530,13 +595,13 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
             for (int i = 0; i < sourcePages.Length; i++)
             {
                 var sourcePage = sourcePages[i];
-                var changeDescription = GetChangeDescriptionBySourcePage(projectID, sourcePage);
-                
-                string changeBefore = changeDescription?.ChangeBefore?.Replace("'", "\\'").Replace("\n", "\\n").Replace("\r", "") ?? "";
-                string changeAfter = changeDescription?.ChangeAfter?.Replace("'", "\\'").Replace("\n", "\\n").Replace("\r", "") ?? "";
-                
-                script += $"'{sourcePage}': {{ 'ChangeBefore': '{changeBefore}', 'ChangeAfter': '{changeAfter}' }}";
-                
+                var (changeBefore, changeAfter) = GetChangeDescriptionBySourcePage(projectID, sourcePage);
+
+                string changeBeforeEscaped = changeBefore?.Replace("'", "\\'").Replace("\n", "\\n").Replace("\r", "") ?? "";
+                string changeAfterEscaped = changeAfter?.Replace("'", "\\'").Replace("\n", "\\n").Replace("\r", "") ?? "";
+
+                script += $"'{sourcePage}': {{ 'ChangeBefore': '{changeBeforeEscaped}', 'ChangeAfter': '{changeAfterEscaped}' }}";
+
                 if (i < sourcePages.Length - 1)
                 {
                     script += ",";
@@ -564,17 +629,87 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
     /// <param name="projectID">專案ID</param>
     /// <param name="sourcePage">來源頁面</param>
     /// <returns>變更說明資料</returns>
-    private OFS_SCI_PageModifyNote GetChangeDescriptionBySourcePage(string projectID, string sourcePage)
+    public (string changeBefore, string changeAfter) GetChangeDescriptionBySourcePage(string projectID, string sourcePage)
     {
         try
         {
-            return OFS_SciApplicationHelper.GetPageModifyNote(projectID, sourcePage);
+            var project = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
+
+            // 判斷 Method：計畫書修正 = 1, 計畫變更 = 2
+            int method = 2; // 預設為計畫書修正
+            if (project.IsProjChanged == 1)
+            {
+                method = 1; // 計畫變更
+            }
+
+            var changeRecord = OFSProjectChangeRecordHelper.getApplying("SCI",method, projectID);
+
+            if (changeRecord == null)
+            {
+                return ("", "");
+            }
+
+            // 根據 SourcePage 取得對應的欄位內容
+
+            return HandleFormFields(changeRecord, sourcePage);
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"取得 {sourcePage} 變更說明資料時發生錯誤：{ex.Message}");
-            return null;
+            return ("", "");
         }
+    }
+
+    /// <summary>
+    /// 載入變更說明資料並直接渲染到控制項
+    /// </summary>
+    /// <param name="projectID">專案ID</param>
+    /// <param name="sourcePage">來源頁面</param>
+    public void LoadChangeDescriptionAndRender(string projectID, string sourcePage)
+    {
+        try
+        {
+            var (changeBefore, changeAfter) = GetChangeDescriptionBySourcePage(projectID, sourcePage);
+
+            // 使用 JavaScript 更新前端顯示
+            string script = $@"
+                (function() {{
+                    var changeBeforeElement = document.getElementById('txtChangeBefore');
+                    var changeAfterElement = document.getElementById('txtChangeAfter');
+
+                    if (changeBeforeElement) {{
+                        changeBeforeElement.textContent = {EscapeJavaScriptString(changeBefore)};
+                    }}
+
+                    if (changeAfterElement) {{
+                        changeAfterElement.textContent = {EscapeJavaScriptString(changeAfter)};
+                    }}
+
+                    console.log('已渲染 {sourcePage} 的變更說明');
+                }})();
+            ";
+
+            Page.ClientScript.RegisterStartupScript(this.GetType(), $"RenderChangeDescription_{sourcePage}_{Guid.NewGuid()}", script, true);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"載入並渲染 {sourcePage} 變更說明時發生錯誤：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 將字串轉換為安全的 JavaScript 字串格式
+    /// </summary>
+    private string EscapeJavaScriptString(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+        {
+            return "''";
+        }
+
+        // 使用 System.Web.HttpUtility.JavaScriptStringEncode 進行轉義
+        string escaped = System.Web.HttpUtility.JavaScriptStringEncode(input);
+        return $"'{escaped}'";
     }
 
     #endregion

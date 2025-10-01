@@ -21,6 +21,7 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
     /// 目前審核的計畫ID
     /// </summary>
     protected string ProjectID => Request.QueryString["ProjectID"];
+    public bool IsViewMode { get; set; } = false;
 
     #endregion
 
@@ -64,117 +65,6 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
     #endregion
 
     #region 按鈕事件
-
-
-    /// <summary>
-    /// 確認審查結果
-    /// </summary>
-    // protected void btnConfirmReview_Click(object sender, EventArgs e)
-    // {
-    //     try
-    //     {
-    //         // 檢查當前使用者是否為指派的審核承辦人員
-    //         if (!ValidateReviewer())
-    //         {
-    //             ShowSweetAlert("錯誤", "您不是此案件的指派審核承辦人員，無法提交審查結果", "error");
-    //             return;
-    //         }
-    //
-    //         // 取得審查結果
-    //         string reviewResult = Request.Form["reviewResult"];
-    //         string returnDate = Request.Form["returnDate"];
-    //         string reviewNotes = Request.Form["reviewNotesHidden"];
-    //
-    //         if (string.IsNullOrEmpty(reviewResult))
-    //         {
-    //             ShowSweetAlert("錯誤", "請選擇審查結果", "error");
-    //             return;
-    //         }
-    //
-    //         if (string.IsNullOrEmpty(ProjectID))
-    //         {
-    //             ShowSweetAlert("錯誤", "找不到計畫ID", "error");
-    //             return;
-    //         }
-    //
-    //         // 建立更新物件
-    //         var projectMain = new OFS_SCI_Project_Main
-    //         {
-    //             ProjectID = ProjectID,
-    //             updated_at = DateTime.Now
-    //         };
-    //
-    //         // 根據審查結果設定狀態
-    //         switch (reviewResult)
-    //         {
-    //             case "pass":
-    //                 projectMain.StatusesName = "通過";
-    //                 break;
-    //             case "fail":
-    //                 projectMain.StatusesName = "不通過";
-    //                 break;
-    //             case "return":
-    //                 projectMain.StatusesName = "補正補件";
-    //                 // 使用使用者設定的日期
-    //                 if (!string.IsNullOrEmpty(returnDate))
-    //                 {
-    //                     if (DateTime.TryParse(returnDate, out DateTime expirationDate))
-    //                     {
-    //                         projectMain.ExpirationDate = expirationDate;
-    //                     }
-    //                 }
-    //                 break;
-    //             default:
-    //                 ShowSweetAlert("錯誤", "無效的審查結果", "error");
-    //                 return;
-    //         }
-    //
-    //         // 取得最新歷史記錄的狀態
-    //         string stageStatusBefore = ApplicationChecklistHelper.GetLatestStageStatus(ProjectID) ?? "";
-    //         
-    //         // 更新資料庫
-    //         OFS_SciApplicationHelper.UpdateOFS_SCIVersion(projectMain);
-    //         
-    //         // 新增案件歷史記錄
-    //         var currentUser = GetCurrentUserInfo();
-    //         var historyLog = new OFS_CaseHistoryLog
-    //         {
-    //             ProjectID = ProjectID,
-    //             ChangeTime = DateTime.Now,
-    //             UserName = currentUser?.UserName ?? "系統",
-    //             StageStatusBefore = stageStatusBefore,
-    //             StageStatusAfter =  projectMain.Statuses + projectMain.StatusesName,
-    //             Description = $"因{reviewNotes}原因「{projectMain.StatusesName}」" +
-    //                           (reviewResult == "return" && !string.IsNullOrEmpty(returnDate)
-    //                               ? $"，補正期限：{returnDate}" 
-    //                               : "")
-    //         };
-    //         
-    //         // 儲存歷史記錄
-    //         ApplicationChecklistHelper.InsertCaseHistoryLog(historyLog);
-    //         
-    //         // 送出成功後直接跳轉，避免 PostBack 問題
-    //         string script = $@"
-    //             Swal.fire({{
-    //                 title: '成功',
-    //                 text: '審查結果已設定為：{projectMain.StatusesName}',
-    //                 icon: 'success',
-    //                 confirmButtonText: '確定'
-    //             }}).then((result) => {{
-    //                 if (result.isConfirmed) {{
-    //                     window.location.href = '{ResolveUrl("~/OFS/ReviewChecklist.aspx")}';
-    //                 }}
-    //             }});
-    //         ";
-    //         Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowSuccessAndRedirect", script, true);
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         HandleException(ex, "提交審查結果時發生錯誤");
-    //         ShowSweetAlert("錯誤", "提交審查結果時發生錯誤，請稍後再試", "error");
-    //     }
-    // }
-
     /// <summary>
     /// 部門下拉選單變更事件
     /// </summary>
@@ -347,78 +237,34 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
             {
                 return;
             }
-            
+
+            IsViewMode = true;
             // 第一頁：申請表/聲明書
-            ucSciApplication.LoadData(ProjectID, isViewMode: true);
-            
+            ucSciApplication.IsViewMode = IsViewMode;
+            ucSciApplication.LoadData(ProjectID);
+
             // 第二頁：期程及工作項目
-            ucSciWorkSch.LoadData(ProjectID, isViewMode: true);
-            
+            ucSciWorkSch.IsViewMode = IsViewMode;
+            ucSciWorkSch.LoadData(ProjectID);
+
             // 第三頁：經費/人事費明細
-            ucSciFunding.LoadData(ProjectID, isViewMode: true);
-            
+            ucSciFunding.IsViewMode = IsViewMode;
+            ucSciFunding.LoadData(ProjectID);
+
             // 第四頁：委員迴避清單
-            ucSciRecusedList.LoadData(ProjectID, isViewMode: true);
-            
+            ucSciRecusedList.IsViewMode = IsViewMode;
+            ucSciRecusedList.LoadData(ProjectID);
+
             // 第五頁：上傳附件
-            ucSciUploadAttachments.LoadData(ProjectID, isViewMode: true);
-            
-            // 註冊 JavaScript，在所有資料載入完成後重新應用檢視模式
-            RegisterViewModeScript();
+            ucSciUploadAttachments.IsViewMode = IsViewMode;
+            ucSciUploadAttachments.LoadData(ProjectID);
+
             
         }
         catch (Exception ex)
         {
             HandleException(ex, "載入 UserControl 資料時發生錯誤");
         }
-    }
-
-    /// <summary>
-    /// 註冊檢視模式 JavaScript，在所有動態內容載入後執行
-    /// </summary>
-    private void RegisterViewModeScript()
-    {
-        // 使用 JavaScript 添加檢視模式的 CSS 類別並禁用輸入控制項
-        string script = @"
-            document.addEventListener('DOMContentLoaded', function() {
-                document.body.classList.add('app-mode-view');
-
-                // 禁用所有表單元素，但跳過 UserInfo div 內的元素
-                var formElements = document.querySelectorAll('input, textarea, select');
-                formElements.forEach(function(element) {
-                    // 檢查元素是否在 UserInfo div 內
-                    if (!element.closest('#UserInfo, #FuncBtn,#btnTransferProject,#transferCaseModal,#BodyContent_MainContent_ApplicationContent_scrollBottomPanel')) {
-                        element.disabled = true;
-                    }
-                });
-
-                // 將所有有 view-mode class 的元件加上 d-none class
-                var viewModeElements = document.querySelectorAll('.view-mode');
-                viewModeElements.forEach(function(element) {
-                    element.classList.add('d-none');
-                });
-
-                // 特別處理一些可能動態生成的元素
-                setTimeout(function() {
-                    var dynamicElements = document.querySelectorAll('input ,textarea, select');
-                    dynamicElements.forEach(function(element) {
-                        // 檢查元素是否在 UserInfo div 內且尚未被禁用
-                        if (!element.disabled && !element.closest('#UserInfo, #FuncBtn,#btnTransferProject,#transferCaseModal,#BodyContent_MainContent_ApplicationContent_scrollBottomPanel')) {
-                            element.disabled = true;
-                        }
-                    });
-
-                    // 再次處理可能動態生成的 view-mode 元素
-                    var dynamicViewModeElements = document.querySelectorAll('.view-mode');
-                    dynamicViewModeElements.forEach(function(element) {
-                        if (!element.classList.contains('d-none')) {
-                            element.classList.add('d-none');
-                        }
-                    });
-                }, 1000);
-            });
-        ";
-        Page.ClientScript.RegisterStartupScript(this.GetType(), "AddViewModeStyles", script, true);
     }
 
     /// <summary>
@@ -577,21 +423,30 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
             {
                 return;
             }
-            
+
             // 從 OFS_SCI_Project_Main 表中讀取承辦人員資訊
             var projectMain = OFS_SciApplicationHelper.getVersionByProjectID(ProjectID);
-            
-            
+
+            // 取得當前使用者資訊
+            var currentUser = GetCurrentUserInfo();
+            string currentUserAccount = currentUser?.Account ?? "";
+
             if (projectMain != null && !string.IsNullOrEmpty(projectMain.SupervisoryPersonName))
             {
                 lblReviewerName.Text = projectMain.SupervisoryPersonName;
-                
+
                 // 將指派的審核承辦人員帳號存到 HiddenField
                 hdnAssignedReviewerAccount.Value = projectMain.SupervisoryPersonAccount ?? "";
-                
+
                 // 設定有指派審核人員的狀態
                 ViewState["HasAssignedReviewer"] = true;
-                scrollBottomPanel.Visible = true;
+
+                // 判斷當前使用者是否為指派的審核人員
+                bool isAssignedReviewer = !string.IsNullOrEmpty(projectMain.SupervisoryPersonAccount) &&
+                                          string.Equals(currentUserAccount, projectMain.SupervisoryPersonAccount, StringComparison.OrdinalIgnoreCase);
+
+                // 只有當前使用者與審核人員相同時才顯示 scrollBottomPanel
+                scrollBottomPanel.Visible = isAssignedReviewer;
             }
             else
             {
@@ -604,7 +459,7 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
                 ViewState["HasAssignedReviewer"] = false;
                 scrollBottomPanel.Visible = false;
             }
-            
+
         }
         catch (Exception ex)
         {

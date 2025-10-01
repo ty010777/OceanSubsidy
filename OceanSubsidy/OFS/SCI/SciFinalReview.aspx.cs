@@ -67,31 +67,6 @@ public partial class OFS_SCI_Review_SciFinalReview : System.Web.UI.Page
     #region 按鈕事件
 
     /// <summary>
-    /// 載入變更說明控制項
-    /// </summary>
-    protected void btnLoadChangeDescription_Click(object sender, EventArgs e)
-    {
-        try
-        {
-            string sourcePage = hdnCurrentSourcePage.Value;
-            
-            if (!string.IsNullOrEmpty(sourcePage) && !string.IsNullOrEmpty(ProjectID))
-            {
-                // 設定 SourcePage 並重新載入 ChangeDescriptionControl
-                ucChangeDescription.SourcePage = sourcePage;
-                ucChangeDescription.LoadData(ProjectID, true); // 審核頁面總是 View Mode
-                
-                // 更新 UpdatePanel
-                upChangeDescription.Update();
-            }
-        }
-        catch (Exception ex)
-        {
-            HandleException(ex, "載入變更說明時發生錯誤");
-        }
-    }
-
-    /// <summary>
     /// 確認審查結果
     /// </summary>
     protected void btnConfirmReview_Click(object sender, EventArgs e)
@@ -342,19 +317,18 @@ public partial class OFS_SCI_Review_SciFinalReview : System.Web.UI.Page
 
             // 設定審核者資訊（從資料庫讀取）
             SetReviewerInfoFromDatabase();
-            
+
             // 初始化審查結果面板
             InitializeReviewPanel();
-            
+
             // 載入移轉案件的部門下拉選單
             LoadDepartmentDropDown();
-            
+
             // 設定 Master Page 的進度條狀態
             InitializeReviewSteps();
-            
-            // 載入變更說明控制項（設定為 SciFinalReview 模式）
-            ucChangeDescription.SourcePage = "SciFinalReview";
-            ucChangeDescription.LoadData(ProjectID, true);
+
+            // 預先載入所有變更說明資料並輸出到前端
+            LoadAllChangeDescriptions();
         }
         catch (Exception ex)
         {
@@ -402,22 +376,27 @@ public partial class OFS_SCI_Review_SciFinalReview : System.Web.UI.Page
             }
             
             // 第一頁：申請表/聲明書
-            ucSciApplication.LoadData(ProjectID, isViewMode: true);
+            ucSciApplication.IsViewMode = true;
+            ucSciApplication.LoadData(ProjectID);
             
             // 第二頁：期程及工作項目
-            ucSciWorkSch.LoadData(ProjectID, isViewMode: true);
+            ucSciWorkSch.IsViewMode = true;
+            ucSciWorkSch.LoadData(ProjectID );
             
             // 第三頁：經費/人事費明細
-            ucSciFunding.LoadData(ProjectID, isViewMode: true);
+            ucSciFunding.IsViewMode = true;
+            ucSciFunding.LoadData(ProjectID);
             
             // 第四頁：委員迴避清單
-            ucSciRecusedList.LoadData(ProjectID, isViewMode: true);
+            ucSciRecusedList.IsViewMode = true;
+            ucSciRecusedList.LoadData(ProjectID);
             
             // 第五頁：上傳附件
-            ucSciUploadAttachments.LoadData(ProjectID, isViewMode: true);
+            ucSciUploadAttachments.IsViewMode = true;
+            ucSciUploadAttachments.LoadData(ProjectID);
             
             // 註冊 JavaScript，在所有資料載入完成後重新應用檢視模式
-            RegisterViewModeScript();
+            // RegisterViewModeScript();
             
         }
         catch (Exception ex)
@@ -429,48 +408,48 @@ public partial class OFS_SCI_Review_SciFinalReview : System.Web.UI.Page
     /// <summary>
     /// 註冊檢視模式 JavaScript，在所有動態內容載入後執行
     /// </summary>
-    private void RegisterViewModeScript()
-    {
-        string script = @"
-            setTimeout(function() {
-                // 將所有輸入元素設為唯讀（除了審核相關元素和 transferCaseModal）
-                $('input, textarea, select').not('#transferCaseModal input, #transferCaseModal textarea, #transferCaseModal select').each(function() {
-                    var $element = $(this);
-                    var elementId = $element.attr('id') || '';
-                    var excludeIds = ['radio-pass','radio-fail','radio-return','returnDate'];
-                    
-                    if (elementId.indexOf('ConfirmReview') !== -1 ||
-                        $.inArray(elementId, excludeIds) !== -1) {
-                        return;
-                    }
-                    
-                    // 統一設為 readOnly
-                    if ($element.is('input[type=text], input[type=number], input[type=email], input[type=tel], textarea')) {
-                        $element.prop('readOnly', true);
-                    } else if ($element.is('select')) {
-                        $element.prop('disabled', true); 
-                    } else if ($element.is('input[type=checkbox], input[type=radio]')) {
-                        $element.prop('disabled', true); 
-                    }
-                });
-                
-                // 只隱藏非審核相關的按鈕，不禁用（排除 transferCaseModal 內的按鈕）
-                $('button').not('#" + btnConfirmReview.ClientID + @", #btnDownloadPlan, #" + btnConfirmTransfer.ClientID + @", #btnTransferProject, .btn-close, [data-bs-dismiss=modal], #transferCaseModal button').each(function() {
-                    var $element = $(this);
-                    $element.hide(); // 改為隱藏而不是禁用
-                });
-             
-                // 特別處理動態生成的關鍵字欄位
-                $('.keyword-ch, .keyword-en').prop('readOnly', true);
-                
-                // 隱藏所有新增/刪除按鈕
-                $('.delete-keyword, .add-keyword, .add-row, .delete-row, .btn-add, .btn-delete')
-                    .hide(); // 改為只隱藏
-            }, 1500);
-        ";
-        
-        Page.ClientScript.RegisterStartupScript(this.GetType(), "ApplyViewMode", script, true);
-    }
+    // private void RegisterViewModeScript()
+    // {
+    //     string script = @"
+    //         setTimeout(function() {
+    //             // 將所有輸入元素設為唯讀（除了審核相關元素和 transferCaseModal）
+    //             $('input, textarea, select').not('#transferCaseModal input, #transferCaseModal textarea, #transferCaseModal select').each(function() {
+    //                 var $element = $(this);
+    //                 var elementId = $element.attr('id') || '';
+    //                 var excludeIds = ['radio-pass','radio-fail','radio-return','returnDate'];
+    //                 
+    //                 if (elementId.indexOf('ConfirmReview') !== -1 ||
+    //                     $.inArray(elementId, excludeIds) !== -1) {
+    //                     return;
+    //                 }
+    //                 
+    //                 // 統一設為 readOnly
+    //                 if ($element.is('input[type=text], input[type=number], input[type=email], input[type=tel], textarea')) {
+    //                     $element.prop('readOnly', true);
+    //                 } else if ($element.is('select')) {
+    //                     $element.prop('disabled', true); 
+    //                 } else if ($element.is('input[type=checkbox], input[type=radio]')) {
+    //                     $element.prop('disabled', true); 
+    //                 }
+    //             });
+    //             
+    //             // 只隱藏非審核相關的按鈕，不禁用（排除 transferCaseModal 內的按鈕）
+    //             $('button').not('#" + btnConfirmReview.ClientID + @", #btnDownloadPlan, #" + btnConfirmTransfer.ClientID + @", #btnTransferProject, .btn-close, [data-bs-dismiss=modal], #transferCaseModal button').each(function() {
+    //                 var $element = $(this);
+    //                 $element.hide(); // 改為隱藏而不是禁用
+    //             });
+    //          
+    //             // 特別處理動態生成的關鍵字欄位
+    //             $('.keyword-ch, .keyword-en').prop('readOnly', true);
+    //             
+    //             // 隱藏所有新增/刪除按鈕
+    //             $('.delete-keyword, .add-keyword, .add-row, .delete-row, .btn-add, .btn-delete')
+    //                 .hide(); // 改為只隱藏
+    //         }, 1500);
+    //     ";
+    //     
+    //     Page.ClientScript.RegisterStartupScript(this.GetType(), "ApplyViewMode", script, true);
+    // }
 
     /// <summary>
     /// 檢查審核權限
@@ -762,6 +741,101 @@ public partial class OFS_SCI_Review_SciFinalReview : System.Web.UI.Page
         Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowErrorAndRedirect", script, true);
     }
 
+
+    /// <summary>
+    /// 預先載入所有 tab 的變更說明資料並輸出到前端
+    /// </summary>
+    private void LoadAllChangeDescriptions()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(ProjectID))
+            {
+                return;
+            }
+
+            // 透過各 UserControl 內部的 ChangeDescriptionControl 取得變更說明資料
+            var sciApplicationData = GetChangeDescriptionData(ucSciApplication);
+            var sciWorkSchData = GetChangeDescriptionData(ucSciWorkSch);
+            var sciFundingData = GetChangeDescriptionData(ucSciFunding);
+            var sciRecusedListData = GetChangeDescriptionData(ucSciRecusedList);
+            var sciUploadAttachmentsData = GetChangeDescriptionData(ucSciUploadAttachments);
+
+            // 將所有變更說明資料打包成 JavaScript 物件並輸出到前端
+            string script = $@"
+                window.allChangeDescriptions = {{
+                    'SciApplication': {{
+                        ChangeBefore: {EscapeJavaScriptString(sciApplicationData.changeBefore)},
+                        ChangeAfter: {EscapeJavaScriptString(sciApplicationData.changeAfter)}
+                    }},
+                    'SciWorkSch': {{
+                        ChangeBefore: {EscapeJavaScriptString(sciWorkSchData.changeBefore)},
+                        ChangeAfter: {EscapeJavaScriptString(sciWorkSchData.changeAfter)}
+                    }},
+                    'SciFunding': {{
+                        ChangeBefore: {EscapeJavaScriptString(sciFundingData.changeBefore)},
+                        ChangeAfter: {EscapeJavaScriptString(sciFundingData.changeAfter)}
+                    }},
+                    'SciRecusedList': {{
+                        ChangeBefore: {EscapeJavaScriptString(sciRecusedListData.changeBefore)},
+                        ChangeAfter: {EscapeJavaScriptString(sciRecusedListData.changeAfter)}
+                    }},
+                    'SciUploadAttachments': {{
+                        ChangeBefore: {EscapeJavaScriptString(sciUploadAttachmentsData.changeBefore)},
+                        ChangeAfter: {EscapeJavaScriptString(sciUploadAttachmentsData.changeAfter)}
+                    }}
+                }};
+                console.log('所有變更說明資料已預載:', window.allChangeDescriptions);
+            ";
+
+            Page.ClientScript.RegisterStartupScript(this.GetType(), "LoadAllChangeDescriptions", script, true);
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "載入變更說明時發生錯誤");
+        }
+    }
+
+    /// <summary>
+    /// 從 UserControl 取得變更說明資料（透過反射調用 GetChangeDescriptionData 方法）
+    /// </summary>
+    private (string changeBefore, string changeAfter) GetChangeDescriptionData(Control userControl)
+    {
+        try
+        {
+            // 使用反射取得 UserControl 的 GetChangeDescriptionData 方法
+            var method = userControl.GetType().GetMethod("GetChangeDescriptionData");
+            if (method != null)
+            {
+                var result = method.Invoke(userControl, null);
+                if (result is ValueTuple<string, string> tuple)
+                {
+                    return tuple;
+                }
+            }
+            return ("", "");
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, $"取得 {userControl.GetType().Name} 變更說明資料時發生錯誤");
+            return ("", "");
+        }
+    }
+
+    /// <summary>
+    /// 將字串轉換為安全的 JavaScript 字串格式
+    /// </summary>
+    private string EscapeJavaScriptString(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+        {
+            return "''";
+        }
+
+        // 使用 System.Web.HttpUtility.JavaScriptStringEncode 進行轉義
+        string escaped = System.Web.HttpUtility.JavaScriptStringEncode(input);
+        return $"'{escaped}'";
+    }
 
     /// <summary>
     /// 例外處理

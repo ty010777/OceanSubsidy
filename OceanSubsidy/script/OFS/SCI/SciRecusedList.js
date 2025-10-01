@@ -160,13 +160,13 @@ function addNewRow($btn) {
     var $table = $btn.closest('table');
     var $tbody = $table.find('tbody');
     var isCommitteeTable = $table.attr('id') === 'committeeTable';
-    
+
     // 如果是委員表格，檢查是否已勾選無需迴避
     if (isCommitteeTable && isNoAvoidanceChecked()) {
         console.log('無需迴避之審查委員已勾選，無法新增行');
         return;
     }
-    
+
     var newRowHtml = '';
     if (isCommitteeTable) {
         // 委員清單表格的新行
@@ -177,6 +177,9 @@ function addNewRow($btn) {
                 <td><input type="text" class="form-control" name="committeePosition" placeholder="請輸入職稱" /></td>
                 <td><input type="text" class="form-control" name="committeeReason" placeholder="請輸入應迴避之具體理由及事證" /></td>
                 <td>
+                    <button type="button" class="btn btn-sm btn-teal add-row me-1">
+                        <i class="fas fa-plus"></i>
+                    </button>
                     <button type="button" class="btn btn-sm btn-teal delete-row">
                         <i class="fas fa-trash-alt"></i>
                     </button>
@@ -223,14 +226,17 @@ function addNewRow($btn) {
                     <textarea class="form-control" rows="3" name="techProcess" placeholder="請輸入"></textarea>
                 </td>
                 <td>
+                    <button type="button" class="btn btn-sm btn-teal add-row me-1">
+                        <i class="fas fa-plus"></i>
+                    </button>
                     <button type="button" class="btn btn-sm btn-teal delete-row">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </td>
             </tr>`;
     }
-    
-    // 加號按鈕保持不變，直接在表格最後添加新行（新行帶有垃圾桶）
+
+    // 直接在表格最後添加新行（新行也帶有加號）
     $tbody.append(newRowHtml);
 }
 
@@ -240,23 +246,26 @@ function deleteRow($btn) {
     var $tbody = $row.closest('tbody');
     var $table = $row.closest('table');
     var isCommitteeTable = $table.attr('id') === 'committeeTable';
-    
+
     // 如果是委員表格，檢查是否已勾選無需迴避
     if (isCommitteeTable && isNoAvoidanceChecked()) {
         console.log('無需迴避之審查委員已勾選，無法刪除行');
         return;
     }
-    
-    // 計算有加號按鈕的行和有垃圾桶按鈕的行
-    var $addRows = $tbody.find('.add-row').closest('tr');
-    var $deleteRows = $tbody.find('.delete-row').closest('tr');
-    
-    // 至少保留一行（加號按鈕的行）
-    if ($addRows.length + $deleteRows.length <= 1) {
-        alert('至少需要保留一行資料');
+
+    // 計算表格中的總行數
+    var totalRows = $tbody.find('tr').length;
+
+    // 至少保留一行資料
+    if (totalRows <= 1) {
+        Swal.fire({
+            icon: 'warning',
+            title: '提示',
+            text: '至少需要保留一行資料'
+        });
         return;
     }
-    
+
     $row.remove();
 }
 
@@ -330,9 +339,13 @@ function validateForm() {
     
     // 顯示錯誤訊息
     if (!isValid) {
-        alert(errorMessages.join('\n'));
+        Swal.fire({
+            icon: 'error',
+            title: '驗證失敗',
+            html: errorMessages.join('<br>')
+        });
     }
-    
+
     return isValid;
 }
 // 技術能力與技術關聯圖管理器
@@ -368,43 +381,104 @@ class TechDiagramManager {
         const fileInput = document.getElementById('fileUploadTechDiagram');
 
         if (!fileInput || !fileInput.files.length) {
-            alert('請先選擇要上傳的檔案');
+            Swal.fire({
+                icon: 'warning',
+                title: '提示',
+                text: '請先選擇要上傳的檔案'
+            });
             return;
         }
 
         const file = fileInput.files[0];
 
         if (!file.type.match(/^image\/(jpeg|jpg|png)$/i)) {
-            alert('請選擇JPG或PNG格式的圖片文件');
+            Swal.fire({
+                icon: 'error',
+                title: '格式錯誤',
+                text: '請選擇JPG或PNG格式的圖片文件'
+            });
             return;
         }
 
         if (file.size > 10 * 1024 * 1024) {
-            alert('文件大小不能超過10MB');
+            Swal.fire({
+                icon: 'error',
+                title: '檔案過大',
+                text: '文件大小不能超過10MB'
+            });
             return;
         }
 
-        this.showFilePreview(file);
-        this.prepareFileForUpload();
-        console.log('技術能力與技術關聯圖預覽已載入:', file.name);
+        // 立即上傳檔案到伺服器
+        this.uploadTechDiagramToServer(file);
     }
 
-    prepareFileForUpload() {
-        const fileInput = document.getElementById('fileUploadTechDiagram');
-        if (fileInput && fileInput.files.length > 0) {
-            // 確保 form 包含 file input，並設定正確的 name 屬性
-            fileInput.name = 'fileUploadTechDiagram';
-            
-            const form = document.getElementById('form1');
-            if (form && !form.contains(fileInput)) {
-                form.appendChild(fileInput);
-            }
-            
-            // 設定 form 為 multipart/form-data
-            if (form) {
-                form.enctype = 'multipart/form-data';
-            }
+    uploadTechDiagramToServer(file) {
+        // 獲取 ProjectID
+        const urlParams = new URLSearchParams(window.location.search);
+        const projectID = urlParams.get('ProjectID');
+
+        if (!projectID) {
+            Swal.fire({
+                icon: 'error',
+                title: '錯誤',
+                text: '無法取得 ProjectID，請重新載入頁面'
+            });
+            return;
         }
+
+        // 創建 FormData 物件
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('projectID', projectID);
+        formData.append('action', 'uploadTechDiagram');
+
+        // 顯示上傳進度
+        const uploadBtn = document.getElementById('btnUploadTechDiagram');
+        const originalText = uploadBtn.textContent;
+        uploadBtn.textContent = '上傳中...';
+        uploadBtn.disabled = true;
+
+        // 使用 fetch 進行上傳
+        fetch('/Service/SCI_Upload.ashx', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // 上傳成功，顯示預覽
+                this.showFilePreview(file);
+                Swal.fire({
+                    icon: 'success',
+                    title: '成功',
+                    text: '檔案上傳成功！',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                console.log('技術能力與技術關聯圖上傳成功:', file.name);
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: '上傳失敗',
+                    text: '檔案上傳失敗：' + (data.message || '未知錯誤')
+                });
+                console.error('技術能力與技術關聯圖上傳失敗:', data.message);
+            }
+        })
+        .catch(error => {
+            Swal.fire({
+                icon: 'error',
+                title: '錯誤',
+                text: '檔案上傳時發生錯誤：' + error.message
+            });
+            console.error('技術能力與技術關聯圖上傳錯誤:', error);
+        })
+        .finally(() => {
+            // 恢復按鈕狀態
+            uploadBtn.textContent = originalText;
+            uploadBtn.disabled = false;
+        });
     }
 
     showFilePreview(file) {
@@ -524,18 +598,29 @@ function loadExistingData(retryCount = 0) {
 // 載入委員迴避清單資料到表格
 function loadCommitteeData(recusedData) {
     const $tbody = $('#committeeTableBody');
-    
+
     // 清空現有資料，只保留第一行作為模板
     $tbody.find('tr').slice(1).remove();
-    
+
     // 檢查是否有資料，如果沒有資料且無需迴避checkbox未勾選，則保持空白
     if (!recusedData || recusedData.length === 0) {
-        // 確保第一行保持空白狀態
+        // 確保第一行保持空白狀態，並更新按鈕
         const $firstRow = $tbody.find('tr').first();
         $firstRow.find('input[type="text"]').val('');
+
+        // 確保第一行有加號和刪除按鈕
+        const $btnCell = $firstRow.find('td').last();
+        $btnCell.html(`
+            <button type="button" class="btn btn-sm btn-teal add-row me-1">
+                <i class="fas fa-plus"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-teal delete-row">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        `);
         return;
     }
-    
+
     // 如果有資料，則載入資料並添加新行
     recusedData.forEach((item, index) => {
         if (index === 0) {
@@ -545,15 +630,17 @@ function loadCommitteeData(recusedData) {
             $firstRow.find('input[name="committeeUnit"]').val(item.committeeUnit || '');
             $firstRow.find('input[name="committeePosition"]').val(item.committeePosition || '');
             $firstRow.find('input[name="committeeReason"]').val(item.committeeReason || '');
-            
-            // 將第一行的加號按鈕改為垃圾桶按鈕（如果有多筆資料）
-            if (recusedData.length > 1) {
-                const $addBtn = $firstRow.find('.add-row');
-                if ($addBtn.length > 0) {
-                    $addBtn.removeClass('add-row').addClass('delete-row');
-                    $addBtn.find('i').removeClass('fa-plus').addClass('fa-trash-alt');
-                }
-            }
+
+            // 確保第一行有加號和刪除按鈕
+            const $btnCell = $firstRow.find('td').last();
+            $btnCell.html(`
+                <button type="button" class="btn btn-sm btn-teal add-row me-1">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-teal delete-row">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            `);
         } else {
             // 其他資料創建新行
             const newRowHtml = `
@@ -563,6 +650,9 @@ function loadCommitteeData(recusedData) {
                     <td><input type="text" class="form-control" name="committeePosition" placeholder="請輸入職稱" value="${item.committeePosition || ''}" /></td>
                     <td><input type="text" class="form-control" name="committeeReason" placeholder="請輸入應迴避之具體理由及事證" value="${item.committeeReason || ''}" /></td>
                     <td>
+                        <button type="button" class="btn btn-sm btn-teal add-row me-1">
+                            <i class="fas fa-plus"></i>
+                        </button>
                         <button type="button" class="btn btn-sm btn-teal delete-row">
                             <i class="fas fa-trash-alt"></i>
                         </button>
@@ -571,55 +661,67 @@ function loadCommitteeData(recusedData) {
             $tbody.append(newRowHtml);
         }
     });
-    
-    // 在最後一行添加加號按鈕
-    const $lastRow = $tbody.find('tr').last();
-    const $lastCell = $lastRow.find('td').last();
-    if (!$lastCell.find('.add-row').length) {
-        $lastCell.append(`
-            <button type="button" class="btn btn-sm btn-teal add-row">
-                <i class="fas fa-plus"></i>
-            </button>
-        `);
-    }
 }
 
 // 載入技術能力資料到表格
 function loadTechData(techData) {
     const $tbody = $('#techTableBody');
-    
+
     // 清空現有資料，只保留第一行作為模板
     $tbody.find('tr').slice(1).remove();
-    
+
+    // 如果沒有資料，保持第一行為空白並顯示加號和刪除按鈕
+    if (!techData || techData.length === 0) {
+        const $firstRow = $tbody.find('tr').first();
+        $firstRow.find('input[name="techItem"]').val('');
+        $firstRow.find('select[name="trlPlanLevel"]').val('0');
+        $firstRow.find('select[name="trlTrackLevel"]').val('0');
+        $firstRow.find('textarea[name="techProcess"]').val('');
+
+        // 確保第一行有加號和刪除按鈕
+        const $btnCell = $firstRow.find('td').last();
+        $btnCell.html(`
+            <button type="button" class="btn btn-sm btn-teal add-row me-1">
+                <i class="fas fa-plus"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-teal delete-row">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        `);
+        return;
+    }
+
     // 如果有資料，則載入資料並添加新行
     techData.forEach((item, index) => {
         if (index === 0) {
             // 第一筆資料填入現有的第一行
             const $firstRow = $tbody.find('tr').first();
             $firstRow.find('input[name="techItem"]').val(item.techItem || '');
-            
+
             // 設定執行前TRL層級
             const $trlPlanSelect = $firstRow.find('select[name="trlPlanLevel"]');
             if ($trlPlanSelect.length > 0) {
                 $trlPlanSelect.val(item.trlPlanLevel || '0');
             }
-            
+
             // 設定執行後TRL層級
             const $trlTrackSelect = $firstRow.find('select[name="trlTrackLevel"]');
             if ($trlTrackSelect.length > 0) {
                 $trlTrackSelect.val(item.trlTrackLevel || '0');
             }
-            
+
             $firstRow.find('textarea[name="techProcess"]').val(item.techProcess || '');
-            
-            // 將第一行的加號按鈕改為垃圾桶按鈕（如果有多筆資料）
-            if (techData.length > 1) {
-                const $addBtn = $firstRow.find('.add-row');
-                if ($addBtn.length > 0) {
-                    $addBtn.removeClass('add-row').addClass('delete-row');
-                    $addBtn.find('i').removeClass('fa-plus').addClass('fa-trash-alt');
-                }
-            }
+
+            // 確保第一行有加號和刪除按鈕
+            const $btnCell = $firstRow.find('td').last();
+            $btnCell.html(`
+                <button type="button" class="btn btn-sm btn-teal add-row me-1">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-teal delete-row">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            `);
         } else {
             // 其他資料創建新行
             const newRowHtml = `
@@ -661,6 +763,9 @@ function loadTechData(techData) {
                         <textarea class="form-control" rows="3" name="techProcess" placeholder="請輸入">${item.techProcess || ''}</textarea>
                     </td>
                     <td>
+                        <button type="button" class="btn btn-sm btn-teal add-row me-1">
+                            <i class="fas fa-plus"></i>
+                        </button>
                         <button type="button" class="btn btn-sm btn-teal delete-row">
                             <i class="fas fa-trash-alt"></i>
                         </button>
@@ -669,17 +774,6 @@ function loadTechData(techData) {
             $tbody.append(newRowHtml);
         }
     });
-    
-    // 在最後一行添加加號按鈕
-    const $lastRow = $tbody.find('tr').last();
-    const $lastCell = $lastRow.find('td').last();
-    if (!$lastCell.find('.add-row').length) {
-        $lastCell.append(`
-            <button type="button" class="btn btn-sm btn-teal add-row">
-                <i class="fas fa-plus"></i>
-            </button>
-        `);
-    }
 }
 
 // 頁面載入後初始化技術能力與技術關聯圖管理器

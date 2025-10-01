@@ -195,22 +195,22 @@ public partial class OFS_SCI_SciInprogress_Approved : System.Web.UI.Page
             }
             
             // 第一頁：申請表/聲明書 (檢視模式)
-            ucSciApplication.LoadData(ProjectID, isViewMode: false);
+            ucSciApplication.LoadData(ProjectID);
             
             // 第二頁：期程／工作項目／查核 (檢視模式)
-            ucSciWorkSch.LoadData(ProjectID, isViewMode: false);
+            ucSciWorkSch.LoadData(ProjectID);
             
             // 第三頁：經費／人事 (檢視模式)
-            ucSciFunding.LoadData(ProjectID, isViewMode: false);
+            ucSciFunding.LoadData(ProjectID);
             
             // 第四頁：其他 (檢視模式)
-            ucSciRecusedList.LoadData(ProjectID, isViewMode: false);
+            ucSciRecusedList.LoadData(ProjectID);
             
             // 第五頁：上傳附件/提送申請 (檢視模式)
-            ucSciUploadAttachments.LoadData(ProjectID, isViewMode: false);
+            ucSciUploadAttachments.LoadData(ProjectID);
             
             // 註冊 JavaScript，在所有資料載入完成後重新應用檢視模式
-            // RegisterViewModeScript();
+            RegisterViewModeScript();
             
         }
         catch (Exception ex)

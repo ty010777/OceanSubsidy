@@ -1,10 +1,11 @@
 ﻿<%@ Control Language="C#" AutoEventWireup="true" CodeFile="SciRecusedListControl.ascx.cs" Inherits="OFS_SCI_UserControls_SciRecusedListControl" %>
+<%@ Register TagPrefix="uc" TagName="ChangeDescriptionControl" Src="~/OFS/SCI/UserControls/ChangeDescriptionControl.ascx" %>
 
 <!-- 內容區塊 -->
 <div class="block">
     <h5 class="square-title">建議迴避之審查委員清單</h5>
     <div class="d-flex align-items-center gap-1 mt-4">
-        <input type="checkbox" ID="chkNoAvoidance" runat="server" name="chkNoAvoidance" Class="form-check-input check-teal" />
+        <input type="checkbox" ID="chkNoAvoidance" runat="server"  Class="form-check-input check-teal" />
         <label for="<%=chkNoAvoidance.ClientID%>">無需迴避之審查委員</label>
     </div>
     <div class="table-responsive mt-3 mb-0">
@@ -37,8 +38,11 @@
                     <td><input type="text" class="form-control" name="committeePosition" placeholder="請輸入職稱" /></td>
                     <td><input type="text" class="form-control" name="committeeReason" placeholder="請輸入應迴避之具體理由及事證" /></td>
                     <td>
-                        <button type="button" class="btn btn-sm btn-teal add-row">
+                        <button type="button" class="btn btn-sm btn-teal add-row me-1">
                             <i class="fas fa-plus"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-teal delete-row">
+                            <i class="fas fa-trash-alt"></i>
                         </button>
                     </td>
                 </tr>
@@ -52,7 +56,7 @@
         <li>3. 建議迴避之審查委員，請務必具體說明迴避理由及事證，否則不予以採納。</li>
     </ul>
 
-    <h5 class="square-title mt-5">技術能力</h5>
+    <h5 class="square-title mt-5">但</h5>
     
     <div class="table-responsive mt-3 mb-0">
         <table class="table align-middle gray-table" id="techTable">
@@ -115,8 +119,11 @@
                         <textarea class="form-control" rows="3" name="techProcess" placeholder="請輸入"></textarea>
                     </td>
                     <td>
-                        <button type="button" class="btn btn-sm btn-teal add-row">
+                        <button type="button" class="btn btn-sm btn-teal add-row me-1">
                             <i class="fas fa-plus"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-teal delete-row">
+                            <i class="fas fa-trash-alt"></i>
                         </button>
                     </td>
                 </tr>
@@ -165,7 +172,13 @@
 </div>
 
 <!-- 變更說明區塊 -->
-
+    <uc:ChangeDescriptionControl ID="ucChangeDescription" runat="server" SourcePage="SciRecusedList" />
+    
+    <!-- 底部區塊 -->
+    <div class="block-bottom bg-light-teal view-mode">
+        <asp:Button ID="btnTempSave" runat="server" Text="暫存" CssClass="btn btn-outline-teal" OnClick="btnSave_Click" />
+        <asp:Button ID="btnNext" runat="server" Text="完成本頁，下一步" CssClass="btn btn-teal" OnClick="btnNext_Click" />
+    </div>
 <!-- 隱藏欄位用於資料交換 -->
 <asp:HiddenField ID="hdnCommitteeData" runat="server" />
 <asp:HiddenField ID="hdnTechData" runat="server" />

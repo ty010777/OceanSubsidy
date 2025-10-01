@@ -12,20 +12,7 @@
     <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePartialRendering="true" />
     
     <!-- 使用 UserControl -->
-    <uc:SciWorkSchControl ID="sciWorkSchControl" runat="server" />
-    
-    <!-- 變更說明 UserControl -->
-    <uc:ChangeDescriptionControl ID="ucChangeDescription" runat="server" SourcePage="SciWorkSch" />
-                  
-    <!-- 底部區塊 -->
-    <div class="block-bottom bg-light-teal view-mode">
-        <asp:Button ID="btnTempSave" runat="server" 
-            Text="暫存" 
-            CssClass="btn btn-outline-teal" 
-            OnClick="btnTempSave_Click" />
-        <asp:Button ID="btnSaveAndNext" runat="server" 
-            Text="完成本頁，下一步" 
-            CssClass="btn btn-teal" 
-            OnClick="btnSaveAndNext_Click" />
+    <div class="tab-pane" id="tab2">
+        <uc:SciWorkSchControl ID="sciWorkSchControl" runat="server" />
     </div>
 </asp:Content>

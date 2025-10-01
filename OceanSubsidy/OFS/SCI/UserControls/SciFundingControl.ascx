@@ -1,4 +1,5 @@
 ﻿<%@ Control Language="C#" AutoEventWireup="true" CodeFile="SciFundingControl.ascx.cs" Inherits="OFS_SCI_UserControls_SciFundingControl" %>
+<%@ Register TagPrefix="uc" TagName="ChangeDescriptionControl" Src="~/OFS/SCI/UserControls/ChangeDescriptionControl.ascx" %>
 
 <!-- Hidden Fields for dynamic data -->
 <asp:HiddenField ID="hdnPersonnelData" runat="server" ClientIDMode="Static" />
@@ -169,9 +170,13 @@
                     </td>
                     <td class="text-center">
                         <div class="input-group" style="width: 400px;">
-                            <asp:TextBox ID="txtDate1Start" runat="server" ClientIDMode="Static" CssClass="form-control" TextMode="Date" />
+                            <asp:TextBox ID="txtDate1Start" runat="server" ClientIDMode="Static" CssClass="form-control taiwan-date-picker"
+                                       placeholder="請選擇開始日期" readonly />
+                            <asp:HiddenField ID="hdnDate1Start" runat="server" ClientIDMode="Static" />
                             <span class="input-group-text">至</span>
-                            <asp:TextBox ID="txtDate1End" runat="server" ClientIDMode="Static" CssClass="form-control" TextMode="Date" />
+                            <asp:TextBox ID="txtDate1End" runat="server" ClientIDMode="Static" CssClass="form-control taiwan-date-picker"
+                                       placeholder="請選擇結束日期" readonly />
+                            <asp:HiddenField ID="hdnDate1End" runat="server" ClientIDMode="Static" />
                         </div>
                     </td>
                     <td>
@@ -190,9 +195,13 @@
                     </td>
                     <td class="text-center">
                         <div class="input-group" style="width: 400px;">
-                            <asp:TextBox ID="txtDate2Start" runat="server" ClientIDMode="Static" CssClass="form-control" TextMode="Date" />
+                            <asp:TextBox ID="txtDate2Start" runat="server" ClientIDMode="Static" CssClass="form-control taiwan-date-picker"
+                                       placeholder="請選擇開始日期" readonly />
+                            <asp:HiddenField ID="hdnDate2Start" runat="server" ClientIDMode="Static" />
                             <span class="input-group-text">至</span>
-                            <asp:TextBox ID="txtDate2End" runat="server" ClientIDMode="Static" CssClass="form-control" TextMode="Date" />
+                            <asp:TextBox ID="txtDate2End" runat="server" ClientIDMode="Static" CssClass="form-control taiwan-date-picker"
+                                       placeholder="請選擇結束日期" readonly />
+                            <asp:HiddenField ID="hdnDate2End" runat="server" ClientIDMode="Static" />
                         </div>
                     </td>
                     <td>
@@ -488,6 +497,22 @@
             <li>6.計畫執行期間若辦理計畫變更與經費調整，致各會計科目占總經費百分比超過經費編列規定時，經主管機關核可，則該科目得維持原經費額度，惟各科目補助比率不得超過該科目經費50%。</li>
             <li>7.申請人配合款以小於申請人實收資本額為原則。</li>
         </ul>
+    </div>
+    <!-- 變更說明 UserControl -->
+    <uc:ChangeDescriptionControl ID="ucChangeDescription" runat="server" SourcePage="SciFunding" />
+
+    <!-- 底部區塊 -->
+    <div class="block-bottom bg-light-teal view-mode">
+        <asp:Button ID="btnTempSave" runat="server" 
+            Text="暫存" 
+            CssClass="btn btn-outline-teal" 
+            OnClientClick="collectAllFormData(); return true;"
+            OnClick="btnTempSave_Click" />
+        <asp:Button ID="btnSaveAndNext" runat="server" 
+            Text="完成本頁，下一步" 
+            CssClass="btn btn-teal" 
+            OnClientClick="collectAllFormData(); return true;"
+            OnClick="btnSaveAndNext_Click" />
     </div>
 
 </div>

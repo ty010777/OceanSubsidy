@@ -4,12 +4,149 @@
 document.addEventListener('DOMContentLoaded', function () {
     initializeDropdowns();
     calculateResearch();
-    
+
+    // 延遲初始化日期選擇器，確保所有相關套件都已載入
+    setTimeout(function() {
+        initializeDatePickers(); // 初始化日期選擇器
+    }, 500);
+
     // 延遲載入資料，確保所有初始化完成
     setTimeout(function() {
         loadExistingDataToForm();
-    }, 100);
+    }, 800);
 });
+
+// 確保頁面完全載入後再次檢查日期選擇器
+window.addEventListener('load', function() {
+    setTimeout(function() {
+        // 檢查日期選擇器是否正確初始化
+        const dateInputs = document.querySelectorAll('input[id*="txtDate"]');
+        dateInputs.forEach(input => {
+            if (input.value && input.value.includes('NaN')) {
+                // 如果發現 NaN，重新初始化該欄位
+                input.value = '';
+                console.log('發現 NaN，重新初始化日期欄位:', input.id);
+            }
+        });
+
+        // 強制重新渲染日期選擇器
+        if (typeof $.fn.daterangepicker !== 'undefined') {
+            $('input[id*="txtDate1Start"], input[id*="txtDate1End"], input[id*="txtDate2Start"], input[id*="txtDate2End"]').each(function() {
+                if ($(this).data('daterangepicker')) {
+                    $(this).data('daterangepicker').remove();
+                }
+            });
+
+            // 重新初始化
+            setTimeout(initializeDatePickers, 100);
+        }
+    }, 300);
+});
+
+// 初始化台灣日期選擇器
+function initializeDatePickers() {
+    if (typeof moment !== 'undefined') {
+        moment.locale('zh-tw');
+
+        // 統一初始化所有日期選擇器（都使用民國年顯示）
+        initializeAllDatePickers();
+    }
+}
+
+function syncLoadedDatesToHiddenFields() {
+    // 同步所有具有 data-gregorian-date 屬性的日期欄位到隱藏欄位
+    $('.taiwan-date-picker').each(function() {
+        const $input = $(this);
+        const gregorianDate = $input.data('gregorian-date');
+
+        if (gregorianDate) {
+            // 建立隱藏欄位儲存西元日期供後端使用
+            const hiddenFieldName = $input.attr('name') + '_gregorian';
+            let hiddenField = $(`input[name="${hiddenFieldName}"]`);
+            if (hiddenField.length === 0) {
+                hiddenField = $(`<input type="hidden" name="${hiddenFieldName}" />`);
+                $input.after(hiddenField);
+            }
+            hiddenField.val(gregorianDate);
+        }
+    });
+}
+
+function initializeAllDatePickers() {
+    // 統一的日期選擇器配置 - 所有日期都使用民國年顯示，但儲存為西元年
+    const datePickerConfig = {
+        singleDatePicker: true,
+        showDropdowns: true,
+        autoUpdateInput: false,
+        autoApply: true,
+        locale: {
+            format: 'tYY/MM/DD' // 使用 moment-taiwan 提供的 tYY 格式
+        }
+    };
+
+    // 通用的日期選擇處理函數
+    const handleDateSelection = function(ev, picker) {
+        const selectedMoment = moment(picker.startDate);
+
+        // 顯示：民國年格式
+        const displayDate = selectedMoment.format('tYY/MM/DD');
+
+        // 儲存：西元年格式
+        const gregorianDate = selectedMoment.format('YYYY/MM/DD');
+
+        $(this).val(displayDate);
+        $(this).data('gregorian-date', gregorianDate);
+
+        // 找到對應的隱藏欄位並設定西元年日期
+        const inputId = $(this).attr('id');
+        if (inputId) {
+            const hiddenFieldId = inputId.replace('txt', 'hdn');
+            const hiddenField = $(`#${hiddenFieldId}`);
+            if (hiddenField.length > 0) {
+                hiddenField.val(gregorianDate);
+                console.log(`設定隱藏欄位 ${hiddenFieldId} 值為: ${gregorianDate}`);
+            }
+        }
+    };
+
+    // 初始化技術移轉期間日期選擇器
+    $('input[id*="txtDate1Start"], input[id*="txtDate1End"]').daterangepicker(datePickerConfig)
+        .on('apply.daterangepicker', handleDateSelection);
+
+    // 初始化委託研究期間日期選擇器
+    $('input[id*="txtDate2Start"], input[id*="txtDate2End"]').daterangepicker(datePickerConfig)
+        .on('apply.daterangepicker', handleDateSelection);
+}
+
+// 使用 moment-taiwan 套件的輔助函數
+// function formatTaiwanDate(gregorianDateString) {
+//     if (!gregorianDateString) return '';
+//     try {
+//         const momentObj = moment(gregorianDateString);
+//         if (momentObj.isValid()) {
+//             return momentObj.format('tYY/MM/DD');
+//         }
+//         return gregorianDateString;
+//     } catch (error) {
+//         console.error('轉換民國年格式失敗:', error);
+//         return gregorianDateString;
+//     }
+// }
+
+// function formatGregorianDate(taiwanDateString) {
+//     if (!taiwanDateString) return '';
+//     try {
+//         const momentObj = moment(taiwanDateString, 'tYY/MM/DD');
+//         if (momentObj.isValid()) {
+//             return momentObj.format('YYYY/MM/DD');
+//         }
+//         return taiwanDateString;
+//     } catch (error) {
+//         console.error('轉換西元年格式失敗:', error);
+//         return taiwanDateString;
+//     }
+// }
+
 
 // 收集所有表單資料並填入隱藏欄位
 function collectAllFormData() {
@@ -219,10 +356,32 @@ function initializeDropdowns() {
 
 // 1.人事費明細表
 function P_deleteRow(button) {
-    if (confirm('確定要刪除此行資料嗎？')) {
-        button.closest('tr').remove();
-        calculateAndUpdateTotal();
+    const table = document.querySelector('.person tbody');
+    const dataRows = table.querySelectorAll('tr:not(.total-row)');
+
+    if (dataRows.length <= 1) {
+        Swal.fire({
+            icon: 'warning',
+            title: '無法刪除',
+            text: '至少需保留一行資料',
+            confirmButtonText: '確定'
+        });
+        return;
     }
+
+    Swal.fire({
+        icon: 'question',
+        title: '確定要刪除嗎？',
+        text: '確定要刪除此行資料嗎？',
+        showCancelButton: true,
+        confirmButtonText: '確定',
+        cancelButtonText: '取消'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            button.closest('tr').remove();
+            calculateAndUpdateTotal();
+        }
+    });
 }
 
 function checkSalaryLimit(rowIndex) {
@@ -233,7 +392,12 @@ function checkSalaryLimit(rowIndex) {
 
     const selectedItem = ddlPersonOptions.find(x => x.value === selectedCode);
     if (selectedItem && salary > selectedItem.maxLimit) {
-        alert(`輸入金額 ${salary} 超過上限：${selectedItem.maxLimit}`);
+        Swal.fire({
+            icon: 'warning',
+            title: '金額超過上限',
+            text: `輸入金額 ${salary} 超過上限：${selectedItem.maxLimit}`,
+            confirmButtonText: '確定'
+        });
         salaryInput.value = selectedItem.maxLimit;
     }
 }
@@ -302,10 +466,32 @@ function P_addNewRow() {
 
 // 2.消耗性器材及原材料費
 function M_deleteRow(button) {
-    if (confirm('確定要刪除此行資料嗎？')) {
-        button.closest('tr').remove();
-        calculateMaterial();
+    const table = document.querySelector('.Material tbody');
+    const dataRows = table.querySelectorAll('tr:not(.total-row)');
+
+    if (dataRows.length <= 1) {
+        Swal.fire({
+            icon: 'warning',
+            title: '無法刪除',
+            text: '至少需保留一行資料',
+            confirmButtonText: '確定'
+        });
+        return;
     }
+
+    Swal.fire({
+        icon: 'question',
+        title: '確定要刪除嗎？',
+        text: '確定要刪除此行資料嗎？',
+        showCancelButton: true,
+        confirmButtonText: '確定',
+        cancelButtonText: '取消'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            button.closest('tr').remove();
+            calculateMaterial();
+        }
+    });
 }
 
 function calculateMaterial() {
@@ -339,7 +525,12 @@ function checkMaterialLimit(rowIndex) {
 
     const selectedItem = ddlMaterialOptions.find(x => x.value === selectedCode);
     if (selectedItem && MaterialUnitPrice > selectedItem.maxLimit && selectedItem.maxLimit != 0) {
-        alert(`輸入金額 ${MaterialUnitPrice} 超過上限：${selectedItem.maxLimit}`);
+        Swal.fire({
+            icon: 'warning',
+            title: '金額超過上限',
+            text: `輸入金額 ${MaterialUnitPrice} 超過上限：${selectedItem.maxLimit}`,
+            confirmButtonText: '確定'
+        });
         MaterialUnitPriceInput.value = selectedItem.maxLimit;
     }
 }
@@ -414,10 +605,32 @@ function calculateTravel() {
 }
 
 function T_DeleteRow(button) {
-    if (confirm('確定要刪除此行資料嗎？')) {
-        button.closest('tr').remove();
-        calculateTravel();
+    const table = document.querySelector('.travel tbody');
+    const dataRows = table.querySelectorAll('tr:not(.total-row)');
+
+    if (dataRows.length <= 1) {
+        Swal.fire({
+            icon: 'warning',
+            title: '無法刪除',
+            text: '至少需保留一行資料',
+            confirmButtonText: '確定'
+        });
+        return;
     }
+
+    Swal.fire({
+        icon: 'question',
+        title: '確定要刪除嗎？',
+        text: '確定要刪除此行資料嗎？',
+        showCancelButton: true,
+        confirmButtonText: '確定',
+        cancelButtonText: '取消'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            button.closest('tr').remove();
+            calculateTravel();
+        }
+    });
 }
 
 function T_addRow() {
@@ -520,10 +733,32 @@ function calculateOtherRentTotal() {
 }
 
 function O_DeleteRow(button) {
-    if (confirm('確定要刪除此行資料嗎？')) {
-        button.closest('tr').remove();
-        calculateOther();
+    const table = document.querySelector('.other tbody');
+    const dataRows = table.querySelectorAll('tr:not(.total-row)');
+
+    if (dataRows.length <= 1) {
+        Swal.fire({
+            icon: 'warning',
+            title: '無法刪除',
+            text: '至少需保留一行資料',
+            confirmButtonText: '確定'
+        });
+        return;
     }
+
+    Swal.fire({
+        icon: 'question',
+        title: '確定要刪除嗎？',
+        text: '確定要刪除此行資料嗎？',
+        showCancelButton: true,
+        confirmButtonText: '確定',
+        cancelButtonText: '取消'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            button.closest('tr').remove();
+            calculateOther();
+        }
+    });
 }
 
 function O_addRow() {
@@ -860,7 +1095,7 @@ function loadMaterialData(materialData) {
 // 載入研究費資料
 function loadResearchData(researchData) {
     if (!researchData || researchData.length === 0) return Promise.resolve();
-    
+
     return new Promise((resolve) => {
         researchData.forEach((research) => {
             if (research.category === '技術移轉') {
@@ -869,9 +1104,22 @@ function loadResearchData(researchData) {
                 const nameInput = document.getElementById('ResearchFeesName1');
                 const personInput = document.getElementById('ResearchFeesPersonName1');
                 const priceInput = document.getElementById('ResearchFeesPrice1');
-                
-                if (startDateInput) startDateInput.value = research.dateStart || '';
-                if (endDateInput) endDateInput.value = research.dateEnd || '';
+
+                // 處理日期格式 - 將西元年轉換為民國年顯示
+                if (startDateInput && research.dateStart) {
+                    const displayDate = convertToMinguoFormat(research.dateStart);
+                    startDateInput.value = displayDate;
+                    $(startDateInput).data('gregorian-date', research.dateStart);
+                    // 設定隱藏欄位
+                    $('#hdnDate1Start').val(research.dateStart);
+                }
+                if (endDateInput && research.dateEnd) {
+                    const displayDate = convertToMinguoFormat(research.dateEnd);
+                    endDateInput.value = displayDate;
+                    $(endDateInput).data('gregorian-date', research.dateEnd);
+                    // 設定隱藏欄位
+                    $('#hdnDate1End').val(research.dateEnd);
+                }
                 if (nameInput) nameInput.value = research.projectName || '';
                 if (personInput) personInput.value = research.targetPerson || '';
                 if (priceInput) priceInput.value = research.price || '0';
@@ -881,17 +1129,90 @@ function loadResearchData(researchData) {
                 const nameInput = document.getElementById('ResearchFeesName2');
                 const personInput = document.getElementById('ResearchFeesPersonName2');
                 const priceInput = document.getElementById('ResearchFeesPrice2');
-                
-                if (startDateInput) startDateInput.value = research.dateStart || '';
-                if (endDateInput) endDateInput.value = research.dateEnd || '';
+
+                // 處理日期格式 - 將西元年轉換為民國年顯示
+                if (startDateInput && research.dateStart) {
+                    const displayDate = convertToMinguoFormat(research.dateStart);
+                    startDateInput.value = displayDate;
+                    $(startDateInput).data('gregorian-date', research.dateStart);
+                    // 設定隱藏欄位
+                    $('#hdnDate2Start').val(research.dateStart);
+                }
+                if (endDateInput && research.dateEnd) {
+                    const displayDate = convertToMinguoFormat(research.dateEnd);
+                    endDateInput.value = displayDate;
+                    $(endDateInput).data('gregorian-date', research.dateEnd);
+                    // 設定隱藏欄位
+                    $('#hdnDate2End').val(research.dateEnd);
+                }
                 if (nameInput) nameInput.value = research.projectName || '';
                 if (personInput) personInput.value = research.targetPerson || '';
                 if (priceInput) priceInput.value = research.price || '0';
             }
         });
-        
-        resolve();
+
+        // 載入完成後同步隱藏欄位
+        setTimeout(() => {
+            syncLoadedDatesToHiddenFields();
+            resolve();
+        }, 50);
     });
+}
+
+// 輔助函數：將西元年日期轉換為民國年格式
+function  convertToMinguoFormat(gregorianDate) {
+    if (!gregorianDate) return '';
+
+    try {
+        // 先嘗試用多種格式解析日期
+        let momentObj = null;
+
+        if (typeof moment !== 'undefined') {
+            // 嘗試不同的日期格式
+            const possibleFormats = [
+                'YYYY/MM/DD',
+                'YYYY-MM-DD',
+                'YYYY/M/D',
+                'YYYY-M-D',
+                'MM/DD/YYYY',
+                'M/D/YYYY'
+            ];
+
+            // 先嘗試直接解析
+            momentObj = moment(gregorianDate);
+
+            // 如果無效，嘗試特定格式
+            if (!momentObj.isValid()) {
+                for (let format of possibleFormats) {
+                    momentObj = moment(gregorianDate, format);
+                    if (momentObj.isValid()) {
+                        break;
+                    }
+                }
+            }
+
+            // 如果解析成功，轉換為民國年
+            if (momentObj.isValid()) {
+                return momentObj.format('tYY/MM/DD');
+            }
+        }
+
+        // 如果 moment.js 解析失敗，使用原生 JavaScript
+        const date = new Date(gregorianDate);
+        if (!isNaN(date.getTime())) {
+            const minguoYear = date.getFullYear() - 1911;
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${minguoYear}/${month}/${day}`;
+        }
+
+        // 如果都失敗，返回原始值
+        return gregorianDate;
+
+    } catch (error) {
+        console.error('日期轉換錯誤:', error, '輸入值:', gregorianDate);
+        return gregorianDate; // 如果轉換失敗，返回原始值
+    }
 }
 
 // 載入差旅費資料

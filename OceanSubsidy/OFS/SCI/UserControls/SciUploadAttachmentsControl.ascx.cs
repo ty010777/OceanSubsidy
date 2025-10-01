@@ -8,6 +8,7 @@ using System.Web.UI.WebControls;
 using GS.OCA_OceanSubsidy.Entity;
 using GS.OCA_OceanSubsidy.Model.OFS;
 using GS.OCA_OceanSubsidy.Operation.OFS;
+using GS.OCA_OceanSubsidy.Operation.OSI.OpenXml;
 
 /// <summary>
 /// 海洋科技專案計畫申請 - 上傳附件 UserControl
@@ -20,8 +21,8 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
     /// <summary>
     /// 目前的計畫ID
     /// </summary>
-    public string ProjectID { get; set; }
-
+    protected string ProjectID => Request.QueryString["ProjectID"];
+    
     /// <summary>
     /// 是否為檢視模式
     /// </summary>
@@ -37,26 +38,28 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
     /// 載入資料到控制項
     /// </summary>
     /// <param name="projectID">計畫ID</param>
-    /// <param name="isViewMode">是否為檢視模式</param>
-    public void LoadData(string projectID, bool isViewMode = false)
+    /// <param name="IsViewMode">是否為檢視模式</param>
+    public void LoadData(string projectID)
     {
         try
         {
-            // 執行基本初始化（原本在 Page_Load 中的工作）
-            InitializeControl();
-            
-            this.ProjectID = projectID;
-            this.IsViewMode = isViewMode;
-
             if (!string.IsNullOrEmpty(projectID))
             {
                 // 根據OrgCategory決定顯示哪個表單
                 DetermineFormType(projectID);
                 LoadExistingData(projectID);
+                
+
+                // 載入變更說明控制項
+                ucChangeDescription.LoadData(projectID,IsViewMode );
+
+                // 檢查表單狀態並控制暫存按鈕顯示
+                CheckFormStatusAndHideTempSaveButton();
+
             }
        
             // 套用檢視模式
-            if (isViewMode)
+            if (IsViewMode)
             {
                 ApplyViewMode();
             }
@@ -67,26 +70,6 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
             HandleException(ex, "載入資料時發生錯誤");
         }
     }
-    
-    /// <summary>
-    /// 儲存表單資料
-    /// </summary>
-    /// <returns>儲存是否成功</returns>
-    // public bool SaveData(string projectID)
-    // {
-    //     this.ProjectID = projectID;
-    //     try
-    //     {
-    //         // 附件資料更新功能暫時移除，待實際需求確認後再實作
-    //         
-    //         
-    //         return true;
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         throw new Exception($"儲存資料時發生錯誤：{ex.Message}", ex);
-    //     }
-    // }
 
     #endregion
 
@@ -106,12 +89,7 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
 
     #region 私有方法
 
-    private void InitializeControl()
-    {
-        // 初始化隱藏欄位
-        hdnAttachmentData.Value = "[]";
-        // 由於現在使用原生 HTML input，不需要初始化 FileUpload 控制項
-    }
+
 
     /// <summary>
     /// 載入現有資料
@@ -141,23 +119,59 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
     {
         if (IsViewMode)
         {
-            DisableAllControls(this);
-        }
-    }
-
-    /// <summary>
-    /// 禁用所有控制項
-    /// </summary>
-    private void DisableAllControls(Control parent)
-    {
         string script = @"
             <script>
              $(document).ready(function () {
-                 $(""#academicTable, #oceanTechTable"").addClass(""hide-col-3"");
+                // 只針對此 UserControl 內的元素進行鎖定
+                // 找到 tab5 容器（上傳附件）
+                var userControl = document.querySelector('#tab5');
+
+                if (!userControl) {
+                    console.warn('找不到 UserControl 容器: #tab5');
+                    return;
+                }
+
+                // 禁用此 UserControl 內的所有表單元素
+                var formElements = userControl.querySelectorAll('input, textarea, select, button');
+                formElements.forEach(function(element) {
+                    element.disabled = true;
+                    element.readOnly = true;
                 });
+
+                // 將此 UserControl 內有 view-mode class 的元件加上 d-none class
+                var viewModeElements = userControl.querySelectorAll('.view-mode');
+                viewModeElements.forEach(function(element) {
+                    element.classList.add('d-none');
+                });
+
+                // 特別處理一些可能動態生成的元素
+                setTimeout(function() {
+                    var dynamicElements = userControl.querySelectorAll('input, textarea, select, button');
+                    dynamicElements.forEach(function(element) {
+                        if (!element.disabled) {
+                            element.disabled = true;
+                            element.readOnly = true;
+                        }
+                    });
+
+                    // 再次處理可能動態生成的 view-mode 元素
+                    var dynamicViewModeElements = userControl.querySelectorAll('.view-mode');
+                    dynamicViewModeElements.forEach(function(element) {
+                        if (!element.classList.contains('d-none')) {
+                            element.classList.add('d-none');
+                        }
+                    });
+
+                    // 處理表格欄位隱藏
+                    $('#tab5 #academicTable, #tab5 #oceanTechTable').addClass('hide-col-3');
+                }, 500);
+            });
             </script>";
-        Page.ClientScript.RegisterStartupScript(this.GetType(), "AddClassToTable", script);
+            Page.ClientScript.RegisterStartupScript(this.GetType(), "AddClassToTable", script);
+        }
     }
+    
+ 
 
     /// <summary>
     /// 顯示訊息給使用者
@@ -387,7 +401,7 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
             mapping["FILE_AC5"] = new AttachmentMapping { StatusLabel = FindControl("lblStatusAcademic5") as Label, FilePanel = FindControl("pnlFilesAcademic5") as Panel };
             mapping["FILE_AC6"] = new AttachmentMapping { StatusLabel = FindControl("lblStatusAcademic6") as Label, FilePanel = FindControl("pnlFilesAcademic6") as Panel };
             mapping["FILE_AC7"] = new AttachmentMapping { StatusLabel = FindControl("lblStatusAcademic7") as Label, FilePanel = FindControl("pnlFilesAcademic7") as Panel };
-            mapping["FILE_AC9"] = new AttachmentMapping { StatusLabel = FindControl("lblStatus9") as Label, FilePanel = FindControl("pnlFiles9") as Panel };
+            mapping["FILE_AC9"] = new AttachmentMapping { StatusLabel = FindControl("lblStatus9") as Label, FilePanel = FindControl("pnlFilesAcademic9") as Panel };
             mapping["FILE_AC11"] = new AttachmentMapping { StatusLabel = FindControl("lblStatusAcademic11") as Label, FilePanel = FindControl("pnlFilesAcademic11") as Panel };
         }
         catch (Exception ex)
@@ -419,7 +433,493 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
 
         return mapping;
     }
+ #region 頁面操作按鈕事件
 
+    /// <summary>
+    /// 暫存按鈕事件
+    /// </summary>
+    protected void btnSave_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            // 檢查是否處於編輯模式
+            if (IsViewMode)
+            {
+                ShowMessage("目前為檢視模式，無法執行暫存操作", false);
+                return;
+            }
+
+
+            // 儲存變更說明
+            ucChangeDescription.SaveChangeDescription(ProjectID);
+            // 更新專案狀態為暫存
+            UpdateProjectSaveStatus();
+
+            // 記錄操作歷程
+            LogSaveHistory();
+
+            ShowMessage("資料已暫存", true);
+        }
+        catch (Exception ex)
+        {
+            ShowMessage($"暫存失敗：{ex.Message}", false);
+        }
+    }
+
+    /// <summary>
+    /// 確認提送申請的實際處理
+    /// </summary>
+    protected void btnSubmitConfirmed_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            // 檢查是否處於編輯模式
+            if (IsViewMode)
+            {
+                ShowSweetAlertError("目前為檢視模式，無法執行提送申請操作");
+                return;
+            }
+
+            // 使用 UserControl 驗證資料
+            // var validationResult = ucSciUploadAttachments.ValidateForm();
+            // if (!validationResult.IsValid)
+            // {
+            //     ShowSweetAlertError($"資料驗證失敗：{validationResult.ErrorMessage}");
+            //     return;
+            // }
+
+            // 儲存資料
+            // bool saveSuccess = ucSciUploadAttachments.SaveData(CurrentProjectID);
+
+            // 儲存變更說明
+            ucChangeDescription.SaveChangeDescription(ProjectID);
+
+            // 檢查目前狀態
+            var projectData = OFS_SciApplicationHelper.getVersionByProjectID(ProjectID);
+            string currentStatusesName = projectData?.StatusesName ?? "";
+
+            // 新增 PDF 合併邏輯
+            try
+            {
+                var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(ProjectID);
+                string ProjectName = applicationMain.ProjectNameTw ?? "";
+                string orgCategory = applicationMain?.OrgCategory ?? "";
+                
+                if (currentStatusesName == "計畫書修正中")
+                {
+                    // 計畫書修正中 -> 計畫書審核中
+                    UpdateProjectStatusForPlanRevision();
+                    LogPlanRevisionSubmissionHistory();
+
+                    // 產生核定版 PDF
+                    MergePdfFiles(ProjectID, orgCategory,ProjectName, "核定版");
+                }
+                else
+                {
+                    // 其他狀態的正常流程
+                    UpdateProjectStatus();
+                    LogSubmissionHistory();
+
+                    // 產生送審版與核定版 PDF
+                    MergePdfFiles(ProjectID, orgCategory,ProjectName, "送審版");
+                    MergePdfFiles(ProjectID, orgCategory,ProjectName, "核定版");
+                }
+            }
+            catch (Exception pdfEx)
+            {
+                // PDF 合併錯誤不影響主要流程，但會記錄錯誤
+                System.Diagnostics.Debug.WriteLine($"PDF 合併錯誤：{pdfEx.Message}");
+            }
+
+            // 顯示成功訊息並跳轉
+            ShowSweetAlertSuccess();
+        }
+        catch (Exception ex)
+        {
+            ShowSweetAlertError($"提送申請失敗：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 更新專案狀態為暫存 - 設定 Form5Status 為 '暫存'
+    /// </summary>
+    private void UpdateProjectSaveStatus()
+    {
+        try
+        {
+            OFS_SciUploadAttachmentsHelper.UpdateProjectSaveStatus(ProjectID);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"更新專案暫存狀態時發生錯誤：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 更新專案狀態 - 設定 Form5Status 為 '完成'，CurrentStep 為 6 
+    /// </summary>
+    private void UpdateProjectStatus()
+    {
+        try
+        {
+            OFS_SciUploadAttachmentsHelper.UpdateProjectSubmissionStatus(ProjectID);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"更新專案狀態時發生錯誤：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 記錄暫存的操作歷程
+    /// </summary>
+    private void LogSaveHistory()
+    {
+        try
+        {
+            var currentUser = GetCurrentUserInfo();
+            string userName = currentUser?.UserName ?? "系統";
+
+            // 建立案件歷程記錄
+            var caseHistoryLog = new OFS_CaseHistoryLog
+            {
+                ProjectID = ProjectID,
+                ChangeTime = DateTime.Now,
+                UserName = userName,
+                StageStatusBefore = "編輯中",
+                StageStatusAfter = "暫存",
+                Description = "暫存附件上傳頁面"
+            };
+
+            // 儲存到資料庫
+            bool success = ApplicationChecklistHelper.InsertCaseHistoryLog(caseHistoryLog);
+
+            if (success)
+            {
+                System.Diagnostics.Debug.WriteLine($"暫存歷程記錄已儲存：{ProjectID}");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"暫存歷程記錄儲存失敗：{ProjectID}");
+            }
+        }
+        catch (Exception ex)
+        {
+            // 歷程記錄失敗不影響主要流程，只記錄錯誤
+            System.Diagnostics.Debug.WriteLine($"記錄暫存歷程失敗：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 記錄提送申請的操作歷程
+    /// </summary>
+    private void LogSubmissionHistory()
+    {
+        try
+        {
+            var currentUser = GetCurrentUserInfo();
+            string userName = currentUser?.UserName ?? "系統";
+
+            // 建立案件歷程記錄
+            var caseHistoryLog = new OFS_CaseHistoryLog
+            {
+                ProjectID = ProjectID,
+                ChangeTime = DateTime.Now,
+                UserName = userName,
+                StageStatusBefore = "編輯中",
+                StageStatusAfter = "資格審查 審核中",
+                Description = "完成附件上傳並提送申請"
+            };
+
+            // 儲存到資料庫
+            bool success = ApplicationChecklistHelper.InsertCaseHistoryLog(caseHistoryLog);
+
+            if (success)
+            {
+                System.Diagnostics.Debug.WriteLine($"提送申請歷程記錄已儲存：{ProjectID}");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"提送申請歷程記錄儲存失敗：{ProjectID}");
+            }
+        }
+        catch (Exception ex)
+        {
+            // 歷程記錄失敗不影響主要流程，只記錄錯誤
+            System.Diagnostics.Debug.WriteLine($"記錄提送申請歷程失敗：{ex.Message}");
+        }
+    }
+
+    // 附件驗證功能已移至 UserControl
+
+    #endregion
+    
+
+    #region 輔助方法
+
+    /// <summary>
+    /// 顯示訊息 (傳統 alert)
+    /// </summary>
+    private void ShowMessage(string message, bool isSuccess)
+    {
+        string alertType = isSuccess ? "success" : "error";
+        string script = $"alert('{message}');";
+        Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowMessage", script, true);
+    }
+
+    /// <summary>
+    /// 顯示 SweetAlert 成功訊息並跳轉
+    /// </summary>
+    private void ShowSweetAlertSuccess()
+    {
+        Response.Redirect("~/OFS/ApplicationChecklist.aspx", false);
+    }
+
+    /// <summary>
+    /// 顯示 SweetAlert 錯誤訊息
+    /// </summary>
+    private void ShowSweetAlertError(string message)
+    {
+        string escapedMessage = message.Replace("'", "\\'").Replace("\"", "\\\"");
+        string script = $"window.SciUploadAttachments.showErrorMessage('{escapedMessage}');";
+        Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowSweetAlertError", script, true);
+    }
+
+    /// <summary>
+    /// 取得目前登入使用者資訊
+    /// </summary>
+    private SessionHelper.UserInfoClass GetCurrentUserInfo()
+    {
+        try
+        {
+            return SessionHelper.Get<SessionHelper.UserInfoClass>(SessionHelper.UserInfo);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得使用者資訊時發生錯誤: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// 檢查是否為決審核定+審核中狀態
+    /// </summary>
+    /// <returns>true: 決審核定+審核中, false: 其他狀態</returns>
+    private bool IsDecisionReviewMode()
+    {
+        try
+        {
+            // 取得最新版本的狀態
+            var projectData = OFS_SciApplicationHelper.getVersionByProjectID(ProjectID);
+            if (projectData == null)
+            {
+                return false;
+            }
+
+            string statuses = projectData.Statuses ?? "";
+            string statusesName = projectData.StatusesName ?? "";
+
+            return statusesName == "計畫書修正中";
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"檢查決審核定狀態時發生錯誤：{ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 檢查表單狀態並控制暫存按鈕顯示
+    /// </summary>
+    private void CheckFormStatusAndHideTempSaveButton()
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(ProjectID))
+            {
+                var formStatus = OFS_SciWorkSchHelper.GetFormStatusByProjectID(ProjectID, "Form5Status");
+
+                if (formStatus == "完成")
+                {
+                    // 隱藏暫存按鈕
+                    btnSave.Style["display"] = "none";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // 發生錯誤時不隱藏按鈕，讓用戶正常使用
+            System.Diagnostics.Debug.WriteLine($"檢查表單狀態失敗: {ex.Message}");
+        }
+    }
+
+   
+
+    /// <summary>
+    /// 更新計畫書修正狀態 - 計畫書修正中 -> 計畫書審核中
+    /// </summary>
+    private void UpdateProjectStatusForPlanRevision()
+    {
+        try
+        {
+            // 使用ReviewCheckListHelper更新StatusesName
+            ReviewCheckListHelper.SCI_UpdateProjectStatusName(ProjectID, "計畫書審核中",
+                GetCurrentUserInfo()?.Account ?? "系統");
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"更新計畫書修正狀態時發生錯誤：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 記錄計畫書修正提送申請的操作歷程
+    /// </summary>
+    private void LogPlanRevisionSubmissionHistory()
+    {
+        try
+        {
+            var currentUser = GetCurrentUserInfo();
+            string userName = currentUser?.UserName ?? "系統";
+
+            // 建立案件歷程記錄
+            var caseHistoryLog = new OFS_CaseHistoryLog
+            {
+                ProjectID = ProjectID,
+                ChangeTime = DateTime.Now,
+                UserName = userName,
+                StageStatusBefore = "計畫書修正中",
+                StageStatusAfter = "計畫書審核中",
+                Description = "完成計畫書修正並重新提送審核"
+            };
+
+            // 儲存到資料庫
+            bool success = ApplicationChecklistHelper.InsertCaseHistoryLog(caseHistoryLog);
+
+            if (success)
+            {
+                System.Diagnostics.Debug.WriteLine($"計畫書修正提送歷程記錄已儲存：{ProjectID}");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"計畫書修正提送歷程記錄儲存失敗：{ProjectID}");
+            }
+        }
+        catch (Exception ex)
+        {
+            // 歷程記錄失敗不影響主要流程，只記錄錯誤
+            System.Diagnostics.Debug.WriteLine($"記錄計畫書修正提送歷程失敗：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 合併 PDF 檔案
+    /// </summary>
+    /// <param name="projectId">專案ID</param>
+    /// <param name="orgCategory">機構類別</param>
+    /// <param name="version">版本（送審版或核定版）</param>
+    private void MergePdfFiles(string projectId, string orgCategory,string ProjectName, string version)
+    {
+        try
+        {
+            // 建立檔案路徑清單
+            var pdfFilePaths = new List<string>();
+
+            // 根據 OrgCategory 決定要合併的檔案 Code
+            var fileCodesToMerge = GetFileCodesToMerge(orgCategory);
+
+            // 從資料庫取得檔案路徑並檢查檔案是否存在
+            foreach (string fileCode in fileCodesToMerge)
+            {
+                var uploadedFiles = OFS_SciUploadAttachmentsHelper.GetAttachmentsByFileCodeAndProject(projectId, fileCode);
+
+                if (uploadedFiles != null && uploadedFiles.Count > 0)
+                {
+                    var uploadedFile = uploadedFiles.First();
+                    string fullPath = Server.MapPath($"~/{uploadedFile.TemplatePath}");
+
+                    if (File.Exists(fullPath))
+                    {
+                        pdfFilePaths.Add(fullPath);
+                        System.Diagnostics.Debug.WriteLine($"找到檔案 {fileCode}：{fullPath}");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"檔案 {fileCode} 不存在：{fullPath}");
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"資料庫中找不到檔案記錄，FileCode：{fileCode}");
+                }
+            }
+
+            // 如果沒有檔案可以合併，直接返回
+            if (pdfFilePaths.Count == 0)
+            {
+                System.Diagnostics.Debug.WriteLine("沒有找到任何可合併的 PDF 檔案");
+                return;
+            }
+
+            // 建立合併後的檔案名稱和路徑
+            string mergedFileName = $"{projectId}_科專_{ProjectName}_{version}.pdf";
+            string uploadFolderPath = Server.MapPath($"~/UploadFiles/OFS/SCI/{projectId}/SciApplication");
+            string mergedFilePath = Path.Combine(uploadFolderPath, mergedFileName);
+
+            // 確保目錄存在
+            if (!Directory.Exists(uploadFolderPath))
+            {
+                Directory.CreateDirectory(uploadFolderPath);
+            }
+
+            // 使用 PdfHelper 合併 PDF
+            byte[] mergedPdfBytes = PdfHelper.MergePdfs(pdfFilePaths, mergedFilePath);
+
+            System.Diagnostics.Debug.WriteLine($"PDF 合併完成：{mergedFilePath}，合併了 {pdfFilePaths.Count} 個檔案");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"合併 PDF 檔案時發生錯誤：{ex.Message}");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// 根據機構類別取得要合併的檔案 Code 清單
+    /// </summary>
+    /// <param name="orgCategory">機構類別</param>
+    /// <returns>檔案 Code 清單（依指定順序）</returns>
+    private List<string> GetFileCodesToMerge(string orgCategory)
+    {
+        var fileCodes = new List<string>();
+
+        if (orgCategory == "OceanTech")
+        {
+            // 海洋科技業者（OceanTech）- 6 個檔案（依順序）
+            fileCodes.Add("FILE_OTech2");  // 海洋科技科專案計畫書
+            fileCodes.Add("FILE_OTech3");  // 建議迴避之審查委員清單
+            fileCodes.Add("FILE_OTech4");  // 未違反公職人員利益衝突迴避法切結書
+            fileCodes.Add("FILE_OTech5");  // 蒐集個人資料告知事項暨個人資料提供同意書
+            fileCodes.Add("FILE_OTech6");  // 申請人自我檢查表
+            fileCodes.Add("FILE_OTech8");  // 海洋科技業者科專計畫補助契約書
+        }
+        else
+        {
+            // 學術機構/法人機構 - 8 個檔案（依順序）
+            fileCodes.Add("FILE_AC2");     // 海洋科技科專案計畫書
+            fileCodes.Add("FILE_AC3");     // 建議迴避之審查委員清單
+            fileCodes.Add("FILE_AC4");     // 未違反公職人員利益衝突迴避法切結書
+            fileCodes.Add("FILE_AC5");     // 蒐集個人資料告知事項暨個人資料提供同意書
+            fileCodes.Add("FILE_AC6");     // 共同執行單位基本資料表
+            fileCodes.Add("FILE_AC7");     // 申請人自我檢查表
+            fileCodes.Add("FILE_AC9");     // 海洋委員會補助科技專案計畫契約書
+            fileCodes.Add("FILE_AC11");    // 海洋科技專案成效追蹤自評表
+        }
+
+        return fileCodes;
+    }
+
+    #endregion
     /// <summary>
     /// 附件對應類別
     /// </summary>
@@ -427,6 +927,27 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
     {
         public Label StatusLabel { get; set; }
         public Panel FilePanel { get; set; }
+    }
+
+    /// <summary>
+    /// 取得此 UserControl 對應的變更說明資料
+    /// </summary>
+    /// <returns>變更說明資料 (changeBefore, changeAfter)</returns>
+    public (string changeBefore, string changeAfter) GetChangeDescriptionData()
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(ProjectID))
+            {
+                return ucChangeDescription.GetChangeDescriptionBySourcePage(ProjectID, "SciUploadAttachments");
+            }
+            return ("", "");
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "取得變更說明資料時發生錯誤");
+            return ("", "");
+        }
     }
 
     #endregion

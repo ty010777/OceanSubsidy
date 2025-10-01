@@ -1,4 +1,5 @@
 ﻿<%@ Control Language="C#" AutoEventWireup="true" CodeFile="SciApplicationControl.ascx.cs" Inherits="OFS_SCI_UserControls_SciApplicationControl" %>
+<%@ Register TagPrefix="uc" TagName="ChangeDescriptionControl" Src="~/OFS/SCI/UserControls/ChangeDescriptionControl.ascx" %>
 
 <div class="block">
 
@@ -475,5 +476,21 @@
             </div>
         </div>
     </div>
+    <!-- 變更說明 UserControl -->
+    <uc:ChangeDescriptionControl ID="ucChangeDescription" runat="server" SourcePage="SciApplication" />
+
+     <!-- 底部區塊 -->
+       <div class="block-bottom bg-light-teal view-mode">
+           
+            <asp:Button ID="btnTempSave" runat="server"  
+                      Text="暫存"  
+                      CssClass="btn btn-outline-teal"  
+                      OnClick="btnSave_Click" /> 
+           
+            <asp:Button ID="btnSubmit" runat="server" 
+                      Text="完成本頁，下一步"  
+                      CssClass="btn btn-teal"  
+                      OnClick="btnSave_Click" /> 
+       </div>
 </div>
 

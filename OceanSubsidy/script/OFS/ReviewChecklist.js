@@ -2400,7 +2400,11 @@ function handleBatchReject(actionText) {
                 const result = response.d || response;
                 if (result.Success) {
                     Swal.fire('已完成', result.Message, 'success').then(() => {
-                        performAjaxSearch(currentType)
+                        if (currentType == 4) {
+                            performType4Search();
+                        } else {
+                            performAjaxSearch(currentType);
+                        }
                     });
                 } else {
                     Swal.fire('操作失敗', result.Message, 'error');
@@ -2885,6 +2889,11 @@ window.PaginationManager = {
 
         // 更新分頁控件
         this.updatePaginationControls(type);
+
+        // 重新初始化 checkbox 功能（包括檢查批次按鈕面板的顯示）
+        if (window.ReviewChecklist && typeof window.ReviewChecklist.updateCheckboxTargets === 'function') {
+            window.ReviewChecklist.updateCheckboxTargets();
+        }
     },
 
     /**

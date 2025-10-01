@@ -15,23 +15,7 @@
 
 <asp:Content ID="Content3" ContentPlaceHolderID="ApplicationContent" runat="server">
     <!-- 上傳附件 UserControl -->
+    <div class="tab-pane" id="tab5">
     <uc:SciUploadAttachmentsControl ID="ucSciUploadAttachments" runat="server" />
-    
-    <!-- 變更說明 UserControl -->
-    <uc:ChangeDescriptionControl ID="ucChangeDescription" runat="server" SourcePage="SciUploadAttachments" />
-    
-    <!-- 底部區塊 -->
-    <div class="block-bottom bg-light-teal view-mode">
-        <asp:Button ID="btnSave" runat="server" 
-            CssClass="btn btn-outline-teal" 
-            Text="暫存" OnClick="btnSave_Click" />
-        <asp:Button ID="btnSubmit" runat="server" 
-            CssClass="btn btn-teal" 
-            Text="✓ 全部完成，提送申請" />
-        
-        <!-- 隱藏的確認提送按鈕 -->
-        <asp:Button ID="btnSubmitConfirmed" runat="server" 
-            OnClick="btnSubmitConfirmed_Click" 
-            Style="display: none;" />
     </div>
 </asp:Content>

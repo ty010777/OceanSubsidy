@@ -1,4 +1,5 @@
 ﻿<%@ Control Language="C#" AutoEventWireup="true" CodeFile="SciWorkSchControl.ascx.cs" Inherits="OFS_SCI_UserControls_SciWorkSchControl" %>
+<%@ Register TagPrefix="uc" TagName="ChangeDescriptionControl" Src="~/OFS/SCI/UserControls/ChangeDescriptionControl.ascx" %>
 
 <div class="block">
 
@@ -15,9 +16,9 @@
 
                         <div class="d-flex align-items-center flex-wrap gap-2">
                             <div class="input-group" style="width: 400px;">
-                                <input id="startDate" name="startDate" type="date" class="form-control" aria-label="計畫開始日期" runat="server"/>
+                                <input id="startDate" name="startDate" type="text" class="form-control taiwan-date-picker" aria-label="計畫開始日期" placeholder="請選擇日期" readonly runat="server"/>
                                 <span class="input-group-text">至</span>
-                                <input id="endDate" name="endDate" type="date" class="form-control" aria-label="計畫結束日期" runat="server"/>
+                                <input id="endDate" name="endDate" type="text" class="form-control taiwan-date-picker" aria-label="計畫結束日期" placeholder="請選擇日期" readonly runat="server"/>
                             </div>
                             <span class="text-dark-green2">(期程不可超過 115/04/30)</span>
                         </div>
@@ -348,7 +349,7 @@
                     </td>
                     <td class="align-middle"></td>
                     <td class="align-middle">
-                        <input type="date" name="" class="form-control">
+                        <input type="text" name="" class="form-control taiwan-date-picker" placeholder="請選擇日期" readonly>
                     </td>
                     <td class="align-middle" width="500">
                         <textarea class="form-control " rows="3" placeholder="請輸入"></textarea>
@@ -380,7 +381,7 @@
                         <a href="<%= ResolveUrl("~/assets/img/project-structure-example.png") %>" class="link-teal view-mode" target="_blank">範例圖下載<i class="fas fa-file-download ms-1"></i></a>
                         <div class="input-group mt-3">
                             <asp:FileUpload ID="fileUploadDiagram" runat="server" CssClass="form-control view-mode"  ClientIDMode="Static" />
-                            <button type="button" id="btnUploadDiagram" class="btn btn-blue-green2 view-mode">上傳</button>
+                            <asp:Button ID="btnUploadDiagram" runat="server" Text="上傳" CssClass="btn btn-blue-green2 view-mode" OnClick="btnUploadDiagram_Click" ClientIDMode="Static" />
                         </div>
 
                      <div id="diagramPreviewContainer" class="mt-3" style="display: none;" runat="server" ClientIDMode="Static">
@@ -408,5 +409,17 @@
     <asp:HiddenField ID="hiddenCheckStandardsData" runat="server"  ClientIDMode="Static"/>
 
 </div>
+    <!-- 變更說明 UserControl -->
+    <uc:ChangeDescriptionControl ID="ucChangeDescription" runat="server" SourcePage="SciWorkSch" />
 
-<!-- 變更說明 UserControl -->
+<!-- 底部區塊 -->
+<div class="block-bottom bg-light-teal view-mode">
+    <asp:Button ID="btnTempSave" runat="server"
+        Text="暫存"
+        CssClass="btn btn-outline-teal"
+        OnClick="btnTempSave_Click" />
+    <asp:Button ID="btnSaveAndNext" runat="server"
+        Text="完成本頁，下一步"
+        CssClass="btn btn-teal"
+        OnClick="btnSaveAndNext_Click" />
+</div>

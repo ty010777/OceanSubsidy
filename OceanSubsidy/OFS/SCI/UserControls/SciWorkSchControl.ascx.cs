@@ -6,10 +6,34 @@ using System.Web;
 using System.Web.UI;
 using System.Web.UI.HtmlControls;
 using System.Web.UI.WebControls;
+using System.Web.Services;
+using GS.App;
 using GS.OCA_OceanSubsidy.Entity;
 using GS.OCA_OceanSubsidy.Model.OFS;
 using GS.OCA_OceanSubsidy.Operation.OFS;
 using Newtonsoft.Json;
+
+/// <summary>
+/// Control 擴展方法
+/// </summary>
+public static class ControlExtensions
+{
+    /// <summary>
+    /// 遞歸搜尋控制項
+    /// </summary>
+    public static Control FindControlRecursive(this Control root, string id)
+    {
+        if (root.ID == id) return root;
+
+        foreach (Control control in root.Controls)
+        {
+            Control foundControl = control.FindControlRecursive(id);
+            if (foundControl != null) return foundControl;
+        }
+
+        return null;
+    }
+}
 
 /// <summary>
 /// 科專計畫工作排程 UserControl
@@ -22,12 +46,12 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
     /// <summary>
     /// 目前的計畫ID
     /// </summary>
-    public string ProjectID { get; set; }
+    protected string ProjectID => Request.QueryString["ProjectID"];
 
     /// <summary>
     /// 是否為檢視模式
     /// </summary>
-    public bool IsViewMode { get; set; } = false;
+    public bool IsViewMode { get; set; }
 
     /// <summary>
     /// 工作排程資料
@@ -55,6 +79,7 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
             if (!IsPostBack)
             {
                 InitializeControl();
+                
             }
         }
         catch (Exception ex)
@@ -62,6 +87,140 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
             HandleException(ex, "UserControl 載入時發生錯誤");
         }
     }
+
+    private void SetViewMode()
+    {
+        if (IsViewMode)
+        {
+         // 使用 JavaScript 添加檢視模式的 CSS 類別並禁用輸入控制項
+        string script = @"
+            document.addEventListener('DOMContentLoaded', function() {
+                // 只針對此 UserControl 內的元素進行鎖定
+                // 找到 tab2 容器（期程及工作項目）
+                var userControl = document.querySelector('#tab2');
+
+                if (!userControl) {
+                    console.warn('找不到 UserControl 容器: #tab2');
+                    return;
+                }
+
+                // 禁用此 UserControl 內的所有表單元素
+                var formElements = userControl.querySelectorAll('input, textarea, select, button');
+                formElements.forEach(function(element) {
+                    element.disabled = true;
+                    element.readOnly = true;
+                });
+
+                // 將此 UserControl 內有 view-mode class 的元件加上 d-none class
+                var viewModeElements = userControl.querySelectorAll('.view-mode');
+                viewModeElements.forEach(function(element) {
+                    element.classList.add('d-none');
+                });
+
+                // 特別處理一些可能動態生成的元素
+                setTimeout(function() {
+                    var dynamicElements = userControl.querySelectorAll('input, textarea, select, button');
+                    dynamicElements.forEach(function(element) {
+                        if (!element.disabled) {
+                            element.disabled = true;
+                            element.readOnly = true;
+                        }
+                    });
+
+                    // 再次處理可能動態生成的 view-mode 元素
+                    var dynamicViewModeElements = userControl.querySelectorAll('.view-mode');
+                    dynamicViewModeElements.forEach(function(element) {
+                        if (!element.classList.contains('d-none')) {
+                            element.classList.add('d-none');
+                        }
+                    });
+                }, 1000);
+
+                // 處理表格欄位隱藏
+                var table = userControl.querySelector('#checkStandards');
+                var table2 = userControl.querySelector('#workItemsTable');
+
+                if (table) {
+                    table.classList.add('hide-col-last');
+                }
+                if (table2) {
+                    table2.classList.add('hide-col-last');
+                }
+            });
+        ";
+        Page.ClientScript.RegisterStartupScript(this.GetType(), "AddViewModeStyles", script, true);
+        }
+    }
+    
+    #endregion
+
+    #region 按鈕事件處理
+
+    /// <summary>
+    /// 暫存按鈕點擊事件
+    /// </summary>
+    protected void btnTempSave_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            // 儲存資料
+            string message = SaveDraft();
+
+            // 顯示成功訊息
+            ShowSuccessMessage(message);
+        }
+        catch (Exception ex)
+        {
+            ShowErrorMessage($"暫存失敗：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 儲存並下一步按鈕點擊事件
+    /// </summary>
+    protected void btnSaveAndNext_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            // 儲存並完成下一步
+            string message = SaveAndNext();
+
+            // 儲存變更說明 - 透過頁面找到變更說明控制項
+            ucChangeDescription.SaveChangeDescription(ProjectID);
+
+            // 跳轉到下一頁
+            HttpContext.Current.Response.Redirect($"SciFunding.aspx?ProjectID={ProjectID}");
+        }
+        catch (Exception ex)
+        {
+            ShowErrorMessage($"{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 計畫架構圖上傳按鈕點擊事件
+    /// </summary>
+    protected void btnUploadDiagram_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            // 立即處理檔案上傳
+            ProcessDiagramUpload();
+
+            // 重新載入計畫架構圖顯示
+            LoadDiagramFile(ProjectID);
+            //會觸發postback 所以要先存檔並還原
+            BackupFormDataToSession();
+            RestoreFormDataFromSession();
+            // 顯示成功訊息
+            ShowSuccessMessage("計畫架構圖上傳成功！");
+        }
+        catch (Exception ex)
+        {
+            ShowErrorMessage($"上傳失敗：{ex.Message}");
+        }
+    }
+
 
     #endregion
 
@@ -71,24 +230,21 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
     /// 載入資料到控制項
     /// </summary>
     /// <param name="projectID">計畫ID</param>
-    /// <param name="isViewMode">是否為檢視模式</param>
-    public void LoadData(string projectID, bool isViewMode = false)
+    public void LoadData(string ProjectID)
     {
         try
         {
-            this.ProjectID = projectID;
-            this.IsViewMode = isViewMode;
-
-            if (!string.IsNullOrEmpty(projectID))
+            if (!string.IsNullOrEmpty(ProjectID))
             {
-                LoadExistingData(projectID);
+                LoadExistingData(ProjectID);
+                // 載入資料到 UserControl
+                SetViewMode();
+                // 載入變更說明控制項
+                ucChangeDescription.LoadData(ProjectID, IsViewMode);
             }
+            
 
-            // 套用檢視模式
-            if (isViewMode)
-            {
-                ApplyViewMode();
-            }
+  
 
         }
         catch (Exception ex)
@@ -133,6 +289,19 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
             {
                 result.AddError("請至少新增一個工作項目");
             }
+            else
+            {
+                // 檢查工作項目內容是否有效
+                var validWorkItems = workItems.Where(w =>
+                    !string.IsNullOrWhiteSpace(w.WorkName) &&
+                    w.StartMonth.HasValue && w.StartMonth > 0 &&
+                    w.EndMonth.HasValue && w.EndMonth > 0).ToList();
+
+                if (validWorkItems.Count == 0)
+                {
+                    result.AddError("請至少新增一個有效的工作項目");
+                }
+            }
 
             // 驗證查核標準
             var checkStandards = GetCheckStandardsFromForm();
@@ -140,11 +309,32 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
             {
                 result.AddError("請至少新增一個查核標準");
             }
+            else
+            {
+                // 檢查查核標準內容是否有效
+                var validCheckStandards = checkStandards.Where(c =>
+                    !string.IsNullOrWhiteSpace(c.WorkItem) &&
+                    !string.IsNullOrWhiteSpace(c.SerialNumber) &&
+                    !string.IsNullOrWhiteSpace(c.CheckDescription) &&
+                    c.PlannedFinishDate.HasValue).ToList();
+
+                if (validCheckStandards.Count == 0)
+                {
+                    result.AddError("請至少新增一個有效的查核標準");
+                }
+            }
 
             // 檢查計畫架構圖
-            var hasExistingDiagram = DiagramFile != null;
             var hasNewUpload = fileUploadDiagram.HasFile;
-            
+            var hasExistingDiagram = false;
+
+            // 直接從資料庫查詢是否已有上傳檔案
+            if (!string.IsNullOrEmpty(ProjectID))
+            {
+                var existingFiles = OFS_SciWorkSchHelper.GetUploadFilesByProjectIDAndFileCode(ProjectID, "WorkSchStructure");
+                hasExistingDiagram = existingFiles != null && existingFiles.Any();
+            }
+
             if (!hasExistingDiagram && !hasNewUpload)
             {
                 result.AddError("請上傳計畫架構圖");
@@ -166,8 +356,8 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
     {
         try
         {
-            // 處理檔案上傳
-            ProcessDiagramUpload();
+            // 檔案上傳現在已通過上傳按鈕立即處理，這裡不再重複處理
+            // ProcessDiagramUpload();
 
             // 取得表單資料
             var projectSchedule = GetProjectScheduleFromForm();
@@ -192,6 +382,108 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
         }
     }
 
+    /// <summary>
+    /// 暫存資料（不更新版本狀態為完成）
+    /// </summary>
+    /// <returns>操作結果訊息</returns>
+    public string SaveDraft()
+    {
+        try
+        {
+            // 儲存表單資料
+            SaveData();
+
+            // 更新版本狀態為暫存
+            UpdateVersionStatusBasedOnAction(ProjectID, false);
+
+            // 重新載入資料到 UserControl 並自動渲染到前端
+            LoadData(ProjectID);
+
+            return "資料暫存成功！";
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"暫存失敗：{ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// 儲存並完成下一步
+    /// </summary>
+    /// <returns>操作結果訊息</returns>
+    public string SaveAndNext()
+    {
+        try
+        {
+            // 先備份表單資料到 Session
+            BackupFormDataToSession();
+
+            // 驗證資料
+            var validationResult = ValidateForm();
+            if (!validationResult.IsValid)
+            {
+                // 驗證失敗時還原表單資料
+                RestoreFormDataFromSession();
+                throw new Exception($"資料驗證失敗：{validationResult.GetErrorsAsString()}");
+            }
+
+            // 儲存表單資料
+            SaveData();
+
+            // 更新版本狀態為完成並進入下一步
+            UpdateVersionStatusBasedOnAction(ProjectID, true);
+
+            // 成功後清除備份的 Session 資料
+            ClearBackupSession();
+
+            return "資料儲存成功，即將跳轉至下一頁！";
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"{ex.Message}", ex);
+        }
+    }
+
+   
+    /// <summary>
+    /// 根據動作類型更新版本狀態
+    /// </summary>
+    /// <param name="projectID">ProjectID</param>
+    /// <param name="isComplete">是否為完成動作（下一步）</param>
+    private void UpdateVersionStatusBasedOnAction(string projectID, bool isComplete)
+    {
+        try
+        {
+            if (isComplete)
+            {
+                // 點擊「完成本頁，下一步」按鈕
+                // 1. Form2Status 設為 "完成"
+                // 2. 檢查 CurrentStep，如果 < 3則改成 3
+
+                string currentStep = OFS_SciWorkSchHelper.GetCurrentStepByProjectID(projectID);
+                int currentStepNum = 1;
+                int.TryParse(currentStep, out currentStepNum);
+
+                bool shouldUpdateCurrentStep = currentStepNum < 3;
+                string newCurrentStep = shouldUpdateCurrentStep ? "3" : currentStep;
+
+                OFS_SciWorkSchHelper.UpdateVersionStatus(projectID, "完成", shouldUpdateCurrentStep, newCurrentStep);
+            }
+            else
+            {
+                // 點擊「暫存」按鈕
+                // 只更新 Form2Status 為 "暫存"，CurrentStep 不變
+
+                OFS_SciWorkSchHelper.UpdateVersionStatus(projectID, "暫存");
+            }
+        }
+        catch (Exception ex)
+        {
+            // 記錄錯誤但不中斷流程
+            System.Diagnostics.Debug.WriteLine($"更新版本狀態失敗: {ex.Message}");
+        }
+    }
+
     #endregion
 
     #region 私有方法
@@ -204,8 +496,32 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
         // 初始化隱藏欄位
         hiddenWorkItemsData.Value = "[]";
         hiddenCheckStandardsData.Value = "[]";
+        CheckFormStatusAndHideTempSaveButton();
     }
-
+    /// <summary>
+    /// 檢查表單狀態並控制暫存按鈕顯示
+    /// </summary>
+    private void CheckFormStatusAndHideTempSaveButton()
+    {
+        try
+        {
+            var ProjectID = Request.QueryString["ProjectID"];
+            var formStatus = OFS_SciWorkSchHelper.GetFormStatusByProjectID(ProjectID, "Form2Status");
+            
+            if (formStatus == "完成")
+            {
+                // 隱藏暫存按鈕
+                btnTempSave.Style["display"] = "none";
+                
+                // 也可以用 Visible 屬性
+            }
+        }
+        catch (Exception ex)
+        {
+            // 發生錯誤時不隱藏按鈕，讓用戶正常使用
+            System.Diagnostics.Debug.WriteLine($"檢查表單狀態失敗: {ex.Message}");
+        }
+    }
     /// <summary>
     /// 載入現有資料
     /// </summary>
@@ -238,14 +554,17 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
     {
         var (startTime, endTime) = OFS_SciWorkSchHelper.GetProjectScheduleByProjectID(projectID);
 
+        // 參考 CLB 的做法：顯示民國年，同時設定 data-gregorian-date 屬性
         if (startTime.HasValue)
         {
-            startDate.Value = startTime.Value.ToString("yyyy-MM-dd");
+            startDate.Value = startTime.Value.ToMinguoDate();
+            startDate.Attributes["data-gregorian-date"] = startTime.Value.ToString("yyyy/MM/dd");
         }
 
         if (endTime.HasValue)
         {
-            endDate.Value = endTime.Value.ToString("yyyy-MM-dd");
+            endDate.Value = endTime.Value.ToMinguoDate();
+            endDate.Attributes["data-gregorian-date"] = endTime.Value.ToString("yyyy/MM/dd");
         }
     }
 
@@ -310,7 +629,7 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
                 projectId = c.ProjectID,
                 workItem = c.WorkItem,
                 serialNumber = c.SerialNumber,
-                plannedFinishDate = c.PlannedFinishDate?.ToString("yyyy-MM-dd"),
+                plannedFinishDate = c.PlannedFinishDate?.ToMinguoDate() ?? "",
                 description = c.CheckDescription
             }));
 
@@ -384,14 +703,35 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
         DateTime? startDateTime = null;
         DateTime? endDateTime = null;
 
-        if (DateTime.TryParse(startDate.Value, out DateTime start))
+        // 參考 CLB 的做法：優先從隱藏欄位或 data-gregorian-date 屬性取得西元年格式
+        string startDateValue = Request.Form[startDate.UniqueID + "_gregorian"] ?? startDate.Attributes["data-gregorian-date"];
+        string endDateValue = Request.Form[endDate.UniqueID + "_gregorian"] ?? endDate.Attributes["data-gregorian-date"];
+
+        // 如果有西元年格式的值，直接使用
+        if (!string.IsNullOrEmpty(startDateValue) && DateTime.TryParse(startDateValue, out DateTime start))
         {
             startDateTime = start;
         }
+        else if (!string.IsNullOrEmpty(startDate.Value))
+        {
+            // 嘗試解析民國年格式
+            if (DateTimeHelper.TryParseMinguoDate(startDate.Value, out DateTime parsedStart))
+            {
+                startDateTime = parsedStart;
+            }
+        }
 
-        if (DateTime.TryParse(endDate.Value, out DateTime end))
+        if (!string.IsNullOrEmpty(endDateValue) && DateTime.TryParse(endDateValue, out DateTime end))
         {
             endDateTime = end;
+        }
+        else if (!string.IsNullOrEmpty(endDate.Value))
+        {
+            // 嘗試解析民國年格式
+            if (DateTimeHelper.TryParseMinguoDate(endDate.Value, out DateTime parsedEnd))
+            {
+                endDateTime = parsedEnd;
+            }
         }
 
         return (startDateTime, endDateTime);
@@ -591,33 +931,7 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
             throw;
         }
     }
-
-    /// <summary>
-    /// 套用檢視模式
-    /// </summary>
-    private void ApplyViewMode()
-    {
-        if (IsViewMode)
-        {
-            string script = @"
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    var table = document.getElementById('checkStandards');
-                    var table2 = document.getElementById('workItemsTable');
-                    
-                    if (table) {
-                        table.classList.add('hide-col-last');
-                    }
-                    if (table) {
-                        table2.classList.add('hide-col-last');
-                    }
-                });
-            </script>";
-            Page.ClientScript.RegisterStartupScript(this.GetType(), "AddClassToTable", script);
-            
-        }
-    }
-
+ 
 
     /// <summary>
     /// 例外處理
@@ -626,6 +940,312 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
     {
         System.Diagnostics.Debug.WriteLine($"{context}: {ex.Message}");
         // 可以在這裡加入記錄或通知邏輯
+    }
+  /// <summary>
+    /// 顯示成功訊息
+    /// </summary>
+    private void ShowSuccessMessage(string message, string callback = "")
+    {
+        string safeMessage = System.Web.HttpUtility.JavaScriptStringEncode(message);
+
+        string script = $@"
+            Swal.fire({{
+                title: '成功',
+                text: '{safeMessage}',
+                icon: 'success',
+                confirmButtonText: '確定',
+                customClass: {{
+                    popup: 'animated fadeInDown'
+                }}
+            }})";
+
+        if (!string.IsNullOrEmpty(callback))
+        {
+            script += $".then(function() {{ {callback} }})";
+        }
+
+        script += ";";
+
+        Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowSuccessMessage" + Guid.NewGuid().ToString(), script, true);
+    }
+
+    /// <summary>
+    /// 顯示錯誤訊息
+    /// </summary>
+    private void ShowErrorMessage(string message, string callback = "")
+    {
+        string safeMessage = System.Web.HttpUtility.JavaScriptStringEncode(message.Replace("\r\n", "<br>"));
+
+        string script = $@"
+            Swal.fire({{
+                title: '錯誤',
+                html: '{safeMessage}',
+                icon: 'error',
+                confirmButtonText: '確定',
+                customClass: {{
+                    popup: 'animated fadeInDown'
+                }}
+            }})";
+
+        if (!string.IsNullOrEmpty(callback))
+        {
+            script += $".then(function() {{ {callback} }})";
+        }
+
+        script += ";";
+
+        Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowErrorMessage" + Guid.NewGuid().ToString(), script, true);
+    }
+
+    /// <summary>
+    /// 顯示警告訊息
+    /// </summary>
+    private void ShowWarningMessage(string message, string callback = "")
+    {
+        string safeMessage = System.Web.HttpUtility.JavaScriptStringEncode(message);
+
+        string script = $@"
+            Swal.fire({{
+                title: '警告',
+                text: '{safeMessage}',
+                icon: 'warning',
+                confirmButtonText: '確定',
+                customClass: {{
+                    popup: 'animated fadeInDown'
+                }}
+            }})";
+
+        if (!string.IsNullOrEmpty(callback))
+        {
+            script += $".then(function() {{ {callback} }})";
+        }
+
+        script += ";";
+
+        Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowWarningMessage" + Guid.NewGuid().ToString(), script, true);
+    }
+
+    /// <summary>
+    /// 備份表單資料到 Session
+    /// </summary>
+    private void BackupFormDataToSession()
+    {
+        try
+        {
+            string sessionKey = $"SciWorkSch_FormData_{ProjectID}";
+
+            // 從表單取得資料，參考 SaveData 方法的邏輯
+            var projectSchedule = GetProjectScheduleFromForm();
+            var workItems = GetWorkItemsFromForm();
+            var checkStandards = GetCheckStandardsFromForm();
+            
+            var backupData = new
+            {
+                ProjectSchedule = new
+                {
+                    StartDate = projectSchedule.startDate,
+                    EndDate = projectSchedule.endDate
+                },
+                WorkItems = workItems,
+                CheckStandards = checkStandards,
+            };
+
+            var serializedData = JsonConvert.SerializeObject(backupData);
+            Session[sessionKey] = serializedData;
+
+            System.Diagnostics.Debug.WriteLine($"備份資料完成，Session Key: {sessionKey}");
+            System.Diagnostics.Debug.WriteLine($"備份的 JSON 長度: {serializedData.Length}");
+            System.Diagnostics.Debug.WriteLine($"備份的 JSON 內容 (前 500 字元): {serializedData.Substring(0, Math.Min(500, serializedData.Length))}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"備份表單資料失敗: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 從 Session 還原表單資料
+    /// </summary>
+    private void RestoreFormDataFromSession()
+    {
+        try
+        {
+            string sessionKey = $"SciWorkSch_FormData_{ProjectID}";
+            string backupJson = Session[sessionKey] as string;
+
+            if (!string.IsNullOrEmpty(backupJson))
+            {
+                System.Diagnostics.Debug.WriteLine($"Session 中的完整 JSON: {backupJson}");
+
+                // 使用 JObject 而非 dynamic 來避免存取問題
+                var backupData = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(backupJson);
+
+                // 檢查反序列化後的完整結構
+                System.Diagnostics.Debug.WriteLine($"反序列化後的 backupData: {backupData}");
+
+                // 還原計畫期程資料 - 參考 LoadProjectSchedule 方法的邏輯
+                var projectSchedule = backupData["ProjectSchedule"];
+                if (projectSchedule != null)
+                {
+                    var startDateToken = projectSchedule["StartDate"];
+                    if (startDateToken != null)
+                    {
+                        if (DateTime.TryParse(startDateToken.ToString(), out DateTime startTime))
+                        {
+                            startDate.Value = startTime.ToMinguoDate();
+                            startDate.Attributes["data-gregorian-date"] = startTime.ToString("yyyy/MM/dd");
+                        }
+                    }
+
+                    var endDateToken = projectSchedule["EndDate"];
+                    if (endDateToken != null)
+                    {
+                        if (DateTime.TryParse(endDateToken.ToString(), out DateTime endTime))
+                        {
+                            endDate.Value = endTime.ToMinguoDate();
+                            endDate.Attributes["data-gregorian-date"] = endTime.ToString("yyyy/MM/dd");
+                        }
+                    }
+                }
+
+                // 還原工作項目資料 - 參考 LoadWorkItems 方法的邏輯
+                var workItemsToken = backupData["WorkItems"];
+                if (workItemsToken != null)
+                {
+                    string workItemsJsonString = workItemsToken.ToString();
+                    var workItemsData = JsonConvert.DeserializeObject<List<OFS_SCI_WorkSch_Main>>(workItemsJsonString);
+                    WorkItemsData = workItemsData;
+
+                    if (workItemsData != null && workItemsData.Any())
+                    {
+                        var workItemsList = new List<object>();
+                        foreach (var w in workItemsData)
+                        {
+                            workItemsList.Add(new
+                            {
+                                projectId = w.ProjectID,
+                                workItemId = w.WorkItem_id,
+                                itemCode = OFS_SciWorkSchHelper.ExtractItemCodeFromWorkItemId(w.WorkItem_id),
+                                itemName = w.WorkName,
+                                startMonth = w.StartMonth,
+                                endMonth = w.EndMonth,
+                                weight = w.Weighting,
+                                personMonth = w.InvestMonth,
+                                isOutsourced = w.IsOutsourced ?? false
+                            });
+                        }
+
+                        var workItemsJson = JsonConvert.SerializeObject(workItemsList);
+                        hiddenWorkItemsData.Value = workItemsJson;
+
+                        string script = $@"
+                            function restoreWorkItemsData() {{
+                                if (window.sciWorkSchManager) {{
+                                    window.sciWorkSchManager.loadWorkItems({workItemsJson});
+                                    console.log('已還原工作項目資料');
+                                }} else {{
+                                    setTimeout(restoreWorkItemsData, 500);
+                                }}
+                            }}
+
+                            if (document.readyState === 'loading') {{
+                                document.addEventListener('DOMContentLoaded', restoreWorkItemsData);
+                            }} else {{
+                                restoreWorkItemsData();
+                            }}
+                        ";
+
+                        Page.ClientScript.RegisterStartupScript(this.GetType(), "RestoreWorkItems", script, true);
+                    }
+                }
+
+                // 還原查核標準資料 - 參考 LoadCheckStandards 方法的邏輯
+                var checkStandardsToken = backupData["CheckStandards"];
+                if (checkStandardsToken != null)
+                {
+                    string checkStandardsJsonString = checkStandardsToken.ToString();
+                    var checkStandardsData = JsonConvert.DeserializeObject<List<OFS_SCI_WorkSch_CheckStandard>>(checkStandardsJsonString);
+                    CheckStandardsData = checkStandardsData;
+
+                    if (checkStandardsData != null && checkStandardsData.Any())
+                    {
+                        var checkStandardsList = new List<object>();
+                        foreach (var c in checkStandardsData)
+                        {
+                            checkStandardsList.Add(new
+                            {
+                                id = c.Id,
+                                projectId = c.ProjectID,
+                                workItem = c.WorkItem,
+                                serialNumber = c.SerialNumber,
+                                plannedFinishDate = c.PlannedFinishDate?.ToMinguoDate() ?? "",
+                                description = c.CheckDescription
+                            });
+                        }
+
+                        var checkStandardsJson = JsonConvert.SerializeObject(checkStandardsList);
+                        hiddenCheckStandardsData.Value = checkStandardsJson;
+
+                        var script = $@"
+                            function restoreCheckStandardsData() {{
+                                if (window.sciWorkSchManager) {{
+                                    window.sciWorkSchManager.loadCheckStandards({checkStandardsJson});
+                                    console.log('已還原查核標準資料');
+                                }} else {{
+                                    setTimeout(restoreCheckStandardsData, 500);
+                                }}
+                            }}
+
+                            setTimeout(restoreCheckStandardsData, 1000);
+                        ";
+
+                        Page.ClientScript.RegisterStartupScript(this.GetType(), "RestoreCheckStandards", script, true);
+                    }
+                }
+
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"還原表單資料失敗: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 清除備份的 Session 資料
+    /// </summary>
+    private void ClearBackupSession()
+    {
+        try
+        {
+            string sessionKey = $"SciWorkSch_FormData_{ProjectID}";
+            Session.Remove(sessionKey);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"清除備份 Session 失敗: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 取得此 UserControl 對應的變更說明資料
+    /// </summary>
+    /// <returns>變更說明資料 (changeBefore, changeAfter)</returns>
+    public (string changeBefore, string changeAfter) GetChangeDescriptionData()
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(ProjectID))
+            {
+                return ucChangeDescription.GetChangeDescriptionBySourcePage(ProjectID, "SciWorkSch");
+            }
+            return ("", "");
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "取得變更說明資料時發生錯誤");
+            return ("", "");
+        }
     }
 
     #endregion

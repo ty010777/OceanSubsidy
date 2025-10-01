@@ -1,4 +1,55 @@
 
+//#region 民國年日期處理
+class TaiwanDateHandler {
+    static initializeDatePickers() {
+        // 設定 moment.js 為繁體中文
+        if (typeof moment !== 'undefined') {
+            moment.locale('zh-tw');
+            this.initializeAllDatePickers();
+        }
+    }
+
+    static initializeAllDatePickers() {
+        // 統一的日期選擇器配置 - 所有日期都使用民國年顯示，但儲存為西元年
+        const datePickerConfig = {
+            singleDatePicker: true,
+            showDropdowns: true,
+            autoUpdateInput: false,
+            autoApply: true,
+            locale: {
+                format: 'tYY/MM/DD' // 使用 moment-taiwan 提供的 tYY 格式
+            }
+        };
+
+        // 通用的日期選擇處理函數
+        const handleDateSelection = function(ev, picker) {
+            const selectedMoment = moment(picker.startDate);
+            // 顯示：民國年格式 - moment-taiwan.js 會自動處理轉換
+            const displayDate = selectedMoment.format('tYY/MM/DD');
+            $(this).val(displayDate);
+        };
+
+        // 初始化計畫期程日期選擇器
+        $('input[id*="startDate"], input[id*="endDate"]').daterangepicker(datePickerConfig)
+            .on('apply.daterangepicker', handleDateSelection);
+
+        // 初始化查核標準的預定完成日期選擇器
+        $(document).on('focus', '.taiwan-date-picker', function() {
+            if (!$(this).hasClass('daterangepicker-initialized')) {
+                $(this).addClass('daterangepicker-initialized');
+                $(this).daterangepicker(datePickerConfig)
+                    .on('apply.daterangepicker', handleDateSelection);
+                $(this).trigger('click'); // 觸發開啟日期選擇器
+            }
+        });
+    }
+
+
+    // 直接使用前端已有的民國年日期，無需額外處理
+    // 因為後端已經使用 ToMinguoDate() 處理並設定 data-gregorian-date 屬性
+}
+//#endregion
+
 //#region 通用工具類
 class EventBindingHelper {
     static bindElementsWithAttribute(selector, eventType, handler, attributeName, container = document) {
@@ -77,7 +128,6 @@ class DOMCache {
         this.elements = {
             // 常用的DOM元素ID
             checkStandards: () => document.getElementById('checkStandards'),
-            btnUploadDiagram: () => document.getElementById('btnUploadDiagram'),
             btnDeleteDiagram: () => document.getElementById('btnDeleteDiagram'),
             fileUploadDiagram: () => document.getElementById('fileUploadDiagram'),
             diagramPreviewContainer: () => document.getElementById('diagramPreviewContainer'),
@@ -892,7 +942,7 @@ class CheckStandardManager {
             </td>
             <td class="align-middle">請選擇</td>
             <td class="align-middle">
-                <input type="date" name="" class="form-control">
+                <input type="text" name="" class="form-control taiwan-date-picker" placeholder="請選擇日期" readonly>
             </td>
             <td class="align-middle" width="500">
                 <textarea class="form-control" rows="3" placeholder="請輸入"></textarea>
@@ -1006,8 +1056,9 @@ class CheckStandardManager {
                     }, 50);
                 }
 
-                const dateInput = row.querySelector('input[type="date"]');
+                const dateInput = row.querySelector('input.taiwan-date-picker');
                 if (dateInput && checkStandard.plannedFinishDate) {
+                    // 後端已經使用 ToMinguoDate() 處理，直接使用民國年格式
                     dateInput.value = checkStandard.plannedFinishDate;
                 }
 
@@ -1050,18 +1101,9 @@ class DiagramManager {
 
     bindDiagramUpload() {
         const domCache = this.parent.workItems.domCache;
-        const uploadBtn = domCache.getElement('btnUploadDiagram');
         const deleteBtn = domCache.getElement('btnDeleteDiagram');
 
-        if (uploadBtn) {
-            uploadBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                if (!this.validateFileForUpload()) {
-                    return false;
-                }
-                this.handleDiagramPreview();
-            });
-        }
+        // 上傳按鈕現在由 ASP.NET 後端處理，不需要前端事件綁定
 
         if (deleteBtn) {
             deleteBtn.addEventListener('click', (e) => {
@@ -1071,43 +1113,7 @@ class DiagramManager {
         }
     }
 
-    validateFileForUpload() {
-        const fileInput = this.parent.workItems.domCache.getElement('fileUploadDiagram');
-
-        if (!fileInput || !fileInput.files.length) {
-            alert('請先選擇要上傳的檔案');
-            return false;
-        }
-
-        const file = fileInput.files[0];
-
-        if (!file.type.match(/^image\/(jpeg|jpg|png)$/i)) {
-            alert('請選擇JPG或PNG格式的圖片文件');
-            return false;
-        }
-
-        if (file.size > 10 * 1024 * 1024) {
-            alert('文件大小不能超過10MB');
-            return false;
-        }
-
-        return true;
-    }
-
-    handleDiagramPreview() {
-        const fileInput = this.parent.workItems.domCache.getElement('fileUploadDiagram');
-        const file = fileInput.files[0];
-
-        this.showFilePreview(file);
-    }
-
-    showFilePreview(file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            this.displayDiagramPreview(e.target.result, file.name);
-        };
-        reader.readAsDataURL(file);
-    }
+    // 上傳相關方法已移至後端處理，不再需要前端驗證和預覽
 
     handleDiagramDelete() {
         const fileInput = document.getElementById('fileUploadDiagram');
@@ -1218,13 +1224,7 @@ class DataManager {
 
     collectAndSubmitData() {
         try {
-            // 檢查是否有檔案需要上傳
-            const fileInput = document.getElementById('fileUploadDiagram');
-            const uploadBtn = document.getElementById('btnUploadDiagram');
-
-            // 如果有檔案且顯示"已上傳"狀態，表示需要真正上傳
-            if (fileInput && fileInput.files.length > 0 && uploadBtn && uploadBtn.textContent === '已上傳') {
-            }
+            // 檔案上傳現在由後端立即處理，不需要前端檢查
 
             const scheduleData = this.collectScheduleData();
             const workItemsData = this.collectWorkItemsData();
@@ -1244,12 +1244,54 @@ class DataManager {
     }
 
     collectScheduleData() {
-        const startDateInput = document.querySelector('input[type="date"]');
-        const endDateInput = document.querySelectorAll('input[type="date"]')[1];
+        const startDateInput = document.querySelector('input[id*="startDate"]');
+        const endDateInput = document.querySelector('input[id*="endDate"]');
+
+        // 參考 CLB 的方式：優先從隱藏欄位或 data-gregorian-date 屬性取得西元年格式
+        let startDate = '';
+        let endDate = '';
+
+        if (startDateInput) {
+            // 嘗試從隱藏欄位取得
+            const startHiddenField = document.querySelector(`input[name="${startDateInput.name}_gregorian"]`);
+            if (startHiddenField && startHiddenField.value) {
+                startDate = startHiddenField.value;
+            } else {
+                // 從 data-gregorian-date 屬性取得
+                startDate = startDateInput.getAttribute('data-gregorian-date') || '';
+            }
+
+            // 如果還是沒有，且有輸入值，使用 moment-taiwan 解析
+            if (!startDate && startDateInput.value) {
+                const momentDate = moment(startDateInput.value, 'tYY/MM/DD');
+                if (momentDate.isValid()) {
+                    startDate = momentDate.format('YYYY-MM-DD');
+                }
+            }
+        }
+
+        if (endDateInput) {
+            // 嘗試從隱藏欄位取得
+            const endHiddenField = document.querySelector(`input[name="${endDateInput.name}_gregorian"]`);
+            if (endHiddenField && endHiddenField.value) {
+                endDate = endHiddenField.value;
+            } else {
+                // 從 data-gregorian-date 屬性取得
+                endDate = endDateInput.getAttribute('data-gregorian-date') || '';
+            }
+
+            // 如果還是沒有，且有輸入值，使用 moment-taiwan 解析
+            if (!endDate && endDateInput.value) {
+                const momentDate = moment(endDateInput.value, 'tYY/MM/DD');
+                if (momentDate.isValid()) {
+                    endDate = momentDate.format('YYYY-MM-DD');
+                }
+            }
+        }
 
         return {
-            startDate: startDateInput ? startDateInput.value : '',
-            endDate: endDateInput ? endDateInput.value : ''
+            startDate: startDate,
+            endDate: endDate
         };
     }
 
@@ -1347,8 +1389,27 @@ class DataManager {
                 const serialNumberCell = row.cells[1];
                 const serialNumber = serialNumberCell ? serialNumberCell.textContent.trim() : '';
 
-                const dateInput = row.cells[2] ? row.cells[2].querySelector('input[type="date"]') : null;
-                const plannedFinishDate = dateInput ? dateInput.value : '';
+                const dateInput = row.cells[2] ? row.cells[2].querySelector('input.taiwan-date-picker') : null;
+                let plannedFinishDate = '';
+
+                if (dateInput) {
+                    // 嘗試從隱藏欄位取得
+                    const hiddenField = document.querySelector(`input[name="${dateInput.name}_gregorian"]`);
+                    if (hiddenField && hiddenField.value) {
+                        plannedFinishDate = hiddenField.value;
+                    } else {
+                        // 從 data-gregorian-date 屬性取得
+                        plannedFinishDate = dateInput.getAttribute('data-gregorian-date') || '';
+                    }
+
+                    // 如果還是沒有，且有輸入值，使用 moment-taiwan 解析
+                    if (!plannedFinishDate && dateInput.value) {
+                        const momentDate = moment(dateInput.value, 'tYY/MM/DD');
+                        if (momentDate.isValid()) {
+                            plannedFinishDate = momentDate.format('YYYY-MM-DD');
+                        }
+                    }
+                }
 
                 const descriptionTextarea = row.cells[3] ? row.cells[3].querySelector('textarea') : null;
                 const description = descriptionTextarea ? descriptionTextarea.value.trim() : '';
@@ -1423,6 +1484,16 @@ class SciWorkSchManager {
         this.checkStandards = new CheckStandardManager(this);
         this.diagram = new DiagramManager(this);
         this.dataManager = new DataManager(this);
+
+        // 初始化民國年日期處理
+        this.initializeDateHandlers();
+    }
+
+    initializeDateHandlers() {
+        // 延遲初始化，確保頁面載入完成
+        setTimeout(() => {
+            TaiwanDateHandler.initializeDatePickers();
+        }, 100);
     }
 
     // 提供給後端呼叫的載入方法
@@ -1437,6 +1508,8 @@ class SciWorkSchManager {
     loadDiagramFile(filePath, fileName) {
         this.diagram.loadDiagramFile(filePath, fileName);
     }
+
+    // 日期載入應該由後端使用 ToMinguoDate() 處理，前端不需要額外載入方法
 }
 //#endregion
 

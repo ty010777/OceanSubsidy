@@ -1849,47 +1849,69 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             string toStatus = "計畫書修正中";
             foreach (string projectId in projectIds)
             {
+                // 取得專案類型
+                string projectType = null;
+                if (projectId.Contains("SCI")) projectType = "SCI";
+                else if (projectId.Contains("CUL")) projectType = "CUL";
+                else if (projectId.Contains("EDC")) projectType = "EDC";
+                else if (projectId.Contains("CLB")) projectType = "CLB";
+                else if (projectId.Contains("MUL")) projectType = "MUL";
+                else if (projectId.Contains("LIT")) projectType = "LIT";
+                else if (projectId.Contains("ACC")) projectType = "ACC";
+
+                // 準備計畫變更記錄 model
+                var changeRecord = new ProjectChangeRecord
+                {
+                    Type = projectType,
+                    Method = 2, // 2: 修正計畫書
+                    DataID = projectId,
+                    Reason = Reason,
+                    Status = 1
+                };
+
                 try
                 {
-                    if (projectId.Contains("SCI"))
+                    // 使用 switch 處理不同專案類型
+                    switch (projectType)
                     {
-                        // 更新專案狀態名稱為「計畫書修正中 」
-                        ReviewCheckListHelper.SCI_UpdateProjectStatusName(projectId, toStatus, currentUser.UserName);
-                        // 記錄歷程：核定中 → 計畫書修正中
-                        ReviewCheckListHelper.InsertReviewHistory(projectId, fromStatus, toStatus, Reason, currentUser.UserName);
-                    }
-                    else if (projectId.Contains("CUL"))
-                    {
-                        // 文化
-                        OFS_CulProjectHelper.updateStatus(projectId, 42); //計畫書修正中
-                        ReviewCheckListHelper.InsertReviewHistory(projectId, "核定中", "計畫書修正中", "提送至申請者", currentUser.Account);
-                    }
-                    else if (projectId.Contains("EDC"))
-                    {
-                        // 學校民間
-                        continue;
-                    }
-                    else if (projectId.Contains("CLB"))
-                    {
-                        ReviewCheckListHelper.CLB_UpdateProjectStatusName(projectId, toStatus, currentUser.UserName);
-                        ReviewCheckListHelper.InsertReviewHistory(projectId, fromStatus, toStatus, Reason, currentUser.UserName);
-                    }
-                    else if (projectId.Contains("MUL"))
-                    {
-                        // 多元
-                        OFS_MulProjectHelper.updateStatus(projectId, 42); //計畫書修正中
-                        ReviewCheckListHelper.InsertReviewHistory(projectId, "核定中", "計畫書修正中", "提送至申請者", currentUser.Account);
-                    }
-                    else if (projectId.Contains("LIT"))
-                    {
-                        // 素養
-                        OFS_LitProjectHelper.updateStatus(projectId, 42); //計畫書修正中
-                        ReviewCheckListHelper.InsertReviewHistory(projectId, "核定中", "計畫書修正中", "提送至申請者", currentUser.Account);
-                    }
-                    else if (projectId.Contains("ACC"))
-                    {
-                        OFS_AccProjectHelper.updateStatus(projectId, 42); //計畫書修正中
-                        ReviewCheckListHelper.InsertReviewHistory(projectId, "核定中", "計畫書修正中", "提送至申請者", currentUser.Account);
+                        case "SCI":
+                            // 更新專案狀態名稱為「計畫書修正中」
+                            ReviewCheckListHelper.SCI_UpdateProjectStatusName(projectId, toStatus, currentUser.UserName);
+                            // 記錄歷程：核定中 → 計畫書修正中
+                            ReviewCheckListHelper.InsertReviewHistory(projectId, fromStatus, toStatus, Reason, currentUser.UserName);
+                            // 插入計畫變更記錄
+                            OFSProjectChangeRecordHelper.insert(changeRecord);
+                            break;
+
+                        case "CUL":
+                            // 文化
+                            OFS_CulProjectHelper.updateStatus(projectId, 42); //計畫書修正中
+                            ReviewCheckListHelper.InsertReviewHistory(projectId, "核定中", "計畫書修正中", "提送至申請者", currentUser.Account);
+                            OFSProjectChangeRecordHelper.insert(changeRecord);
+                            break;
+
+                        case "EDC":
+                            // 學校民間
+                            continue;
+
+                        case "CLB":
+                            continue;
+
+                        case "MUL":
+                            // 多元
+                            OFS_MulProjectHelper.updateStatus(projectId, 42); //計畫書修正中
+                            ReviewCheckListHelper.InsertReviewHistory(projectId, "核定中", "計畫書修正中", "提送至申請者", currentUser.Account);
+                            OFSProjectChangeRecordHelper.insert(changeRecord);
+                            break;
+
+                        case "LIT":
+                            continue;
+
+                        case "ACC":
+                            OFS_AccProjectHelper.updateStatus(projectId, 42); //計畫書修正中
+                            ReviewCheckListHelper.InsertReviewHistory(projectId, "核定中", "計畫書修正中", "提送至申請者", currentUser.Account);
+                            OFSProjectChangeRecordHelper.insert(changeRecord);
+                            break;
                     }
                     // TODO: 寄信 實作寄信給申請者功能
                     // SendNotificationEmail(projectId);

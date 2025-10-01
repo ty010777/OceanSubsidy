@@ -21,7 +21,7 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
     /// <summary>
     /// 目前的計畫ID
     /// </summary>
-    public string ProjectID { get; set; }
+    protected string ProjectID => Request.QueryString["ProjectID"];
 
     /// <summary>
     /// 是否為檢視模式
@@ -47,6 +47,7 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
     /// 需要設定的下拉選單值（延遲到 PreRender 設定）
     /// </summary>
     private Dictionary<DropDownList, string> _pendingDropDownValues = new Dictionary<DropDownList, string>();
+    
 
     #endregion
 
@@ -58,7 +59,7 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
         {
             if (!IsPostBack)
             {
-                InitializeControl();
+
             }
             else
             {
@@ -100,6 +101,30 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
 
     #endregion
 
+    #region 按鈕事件
+
+    /// <summary>
+    /// 按鈕點擊事件處理
+    /// </summary>
+    protected void btnSave_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            Button btnClicked = (Button)sender;
+            bool isTemporarySave = btnClicked.ID == "btnTempSave";
+
+            
+            HandleSaveOperation(this.ProjectID, isTemporarySave);
+
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "按鈕點擊事件處理時發生錯誤");
+        }
+    }
+
+    #endregion
+
     #region 公開方法
 
     /// <summary>
@@ -107,30 +132,29 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
     /// </summary>
     /// <param name="projectID">計畫ID</param>
     /// <param name="isViewMode">是否為檢視模式</param>
-    public void LoadData(string projectID, bool isViewMode = false)
+    public void LoadData(string projectID)
     {
         try
         {
-            this.ProjectID = projectID;
-            this.IsViewMode = isViewMode;
-
+            
             // 確保下拉選單已初始化
             LoadDropDownLists();
-
             if (!string.IsNullOrEmpty(projectID))
             {
+                // 檢查表單狀態並隱藏暫存按鈕（如果已完成）
+                CheckFormStatusAndHideTempSaveButton();
                 LoadExistingData(projectID);
+                // 載入變更說明資料到輸入框
+                SetViewMode();
+                // 載入變更說明控制項
+                ucChangeDescription.LoadData(ProjectID, IsViewMode);
+
             }
             else
             {
                 LoadDefaultData();
             }
-
-            // 套用檢視模式
-            if (isViewMode)
-            {
-                ApplyViewMode();
-            }
+            
 
         }
         catch (Exception ex)
@@ -139,6 +163,57 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
         }
     }
 
+    private void SetViewMode()
+    {
+        if (IsViewMode)
+        {
+            string script = @"
+            document.addEventListener('DOMContentLoaded', function() {
+                // 只針對此 UserControl 內的元素進行鎖定
+                // 找到 tab1 容器（申請表/聲明書）
+                var userControl = document.querySelector('#tab1');
+
+                if (!userControl) {
+                    console.warn('找不到 UserControl 容器: #tab1');
+                    return;
+                }
+
+                // 禁用此 UserControl 內的所有表單元素
+                var formElements = userControl.querySelectorAll('input, textarea, select, button');
+                formElements.forEach(function(element) {
+                    element.disabled = true;
+                    element.readOnly = true;
+                });
+
+                // 將此 UserControl 內有 view-mode class 的元件加上 d-none class
+                var viewModeElements = userControl.querySelectorAll('.view-mode');
+                viewModeElements.forEach(function(element) {
+                    element.classList.add('d-none');
+                });
+
+                // 特別處理一些可能動態生成的元素
+                setTimeout(function() {
+                    var dynamicElements = userControl.querySelectorAll('input, textarea, select, button');
+                    dynamicElements.forEach(function(element) {
+                        if (!element.disabled) {
+                            element.disabled = true;
+                            element.readOnly = true;
+                        }
+                    });
+
+                    // 再次處理可能動態生成的 view-mode 元素
+                    var dynamicViewModeElements = userControl.querySelectorAll('.view-mode');
+                    dynamicViewModeElements.forEach(function(element) {
+                        if (!element.classList.contains('d-none')) {
+                            element.classList.add('d-none');
+                        }
+                    });
+                }, 1000);
+            });
+        ";
+            Page.ClientScript.RegisterStartupScript(this.GetType(), "AddViewModeStyles", script, true);
+        }
+    }
     /// <summary>
     /// 驗證表單資料
     /// </summary>
@@ -296,18 +371,38 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
         }
     }
 
+    /// <summary>
+    /// 隱藏暫存按鈕
+    /// </summary>
+    /// <summary>
+    /// 檢查表單狀態並隱藏暫存按鈕（如果已完成）
+    /// </summary>
+    private void CheckFormStatusAndHideTempSaveButton()
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(ProjectID))
+            {
+                var formStatus = OFS_SciWorkSchHelper.GetFormStatusByProjectID(ProjectID, "Form1Status");
+
+                if (formStatus == "完成")
+                {
+                    // 通知 UserControl 隱藏暫存按鈕
+                    btnTempSave.Style["display"] = "none";
+
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // 發生錯誤時不隱藏按鈕，讓用戶正常使用
+            System.Diagnostics.Debug.WriteLine($"檢查表單狀態失敗: {ex.Message}");
+        }
+    }
     #endregion
 
     #region 私有方法
 
-    /// <summary>
-    /// 初始化控制項
-    /// </summary>
-    private void InitializeControl()
-    {
-        LoadDropDownLists();
-        // 不在這裡初始化關鍵字，等 LoadData() 處理
-    }
 
     /// <summary>
     /// 載入下拉選單資料
@@ -355,6 +450,7 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
     {
         try
         {
+            //TODO 改成從GrantType取資料
             txtYear.Text = DateTimeHelper.GregorianYearToMinguo(DateTime.Now.Year).ToString();
             txtSubsidyPlanType.Text = "科專（114年度補助學術機構、研究機關(構)及海洋科技業者執行海洋科技專案）";
             
@@ -810,26 +906,304 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
     {
         if (!string.IsNullOrEmpty(hiddenKeywordsData.Value))
         {
-            string script = $@"
-                if (window.SciApplicationKeywords) {{
-                    window.SciApplicationKeywords.restoreFromHidden();
-                }}
-            ";
+            try
+            {
+                // 解析關鍵字資料
+                var serializer = new JavaScriptSerializer();
+                var keywordsArray = serializer.Deserialize<dynamic[]>(hiddenKeywordsData.Value);
+                var keywordsJson = serializer.Serialize(keywordsArray);
 
-            Page.ClientScript.RegisterStartupScript(this.GetType(), "RestoreKeywords", script, true);
+                string script = $@"
+                    if (window.KeywordManager) {{
+                        window.KeywordManager.loadExistingKeywords({keywordsJson});
+                    }} else {{
+                        setTimeout(function() {{
+                            if (window.KeywordManager) {{
+                                window.KeywordManager.loadExistingKeywords({keywordsJson});
+                            }}
+                        }}, 500);
+                    }}
+                ";
+
+                Page.ClientScript.RegisterStartupScript(this.GetType(), "RestoreKeywords", script, true);
+            }
+            catch (Exception ex)
+            {
+                HandleException(ex, "還原關鍵字資料時發生錯誤");
+            }
         }
     }
 
     /// <summary>
-    /// 套用檢視模式
+    /// 處理儲存操作
     /// </summary>
-    private void ApplyViewMode()
+    private void HandleSaveOperation(string projectID, bool isTemporarySave)
     {
-        if (IsViewMode)
+        try
         {
+            // 如果是檢視模式，不允許儲存
+            if (!ShouldShowInEditMode())
+            {
+                ShowWarningMessage("目前為檢視模式，無法執行儲存操作");
+                return;
+            }
+
+            // // 驗證表單資料
+            if (!isTemporarySave)
+            {
+                var validationResult = ValidateForm();
+                if (!validationResult.IsValid)
+                {
+                    ShowErrorMessage(validationResult.GetErrorsAsString());
+                    return;
+                }
+            }
+
+            // 儲存資料
+            string resultProjectID = SaveData(projectID);
+
+            // 儲存變更說明
+            ucChangeDescription.SaveChangeDescription(resultProjectID);
+
+            // 更新版本狀態
+            UpdateVersionStatusBasedOnAction(resultProjectID, !isTemporarySave);
+
+            if (isTemporarySave)
+            {
+                ShowSuccessMessage("資料已暫存");
+
+                // 如果是新建案件，更新URL中的ProjectID
+                if (string.IsNullOrEmpty(ProjectID) && !string.IsNullOrEmpty(resultProjectID))
+                {
+                    Response.Redirect($"SciApplication.aspx?ProjectID={resultProjectID}");
+                }
+            }
+            else
+            {
+                // 完成並跳轉到下一頁
+                ShowSuccessMessage("第一步已完成，即將跳轉到下一頁");
+                Response.Redirect($"SciWorkSch.aspx?ProjectID={resultProjectID}");
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowErrorMessage($"儲存失敗：{ex.Message}");
+            HandleException(ex, "儲存時發生錯誤");
         }
     }
-    
+
+    /// <summary>
+    /// 顯示成功訊息
+    /// </summary>
+    private void ShowSuccessMessage(string message, string callback = "")
+    {
+        string safeMessage = System.Web.HttpUtility.JavaScriptStringEncode(message);
+
+        string script = $@"
+            Swal.fire({{
+                title: '成功',
+                text: '{safeMessage}',
+                icon: 'success',
+                confirmButtonText: '確定',
+                customClass: {{
+                    popup: 'animated fadeInDown'
+                }}
+            }})";
+
+        if (!string.IsNullOrEmpty(callback))
+        {
+            script += $".then(function() {{ {callback} }})";
+        }
+
+        script += ";";
+
+        Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowSuccessMessage" + Guid.NewGuid().ToString(), script, true);
+    }
+
+    /// <summary>
+    /// 顯示錯誤訊息
+    /// </summary>
+    private void ShowErrorMessage(string message, string callback = "")
+    {
+        string safeMessage = System.Web.HttpUtility.JavaScriptStringEncode(message.Replace("\r\n", "<br>"));
+
+        string script = $@"
+            Swal.fire({{
+                title: '錯誤',
+                html: '{safeMessage}',
+                icon: 'error',
+                confirmButtonText: '確定',
+                customClass: {{
+                    popup: 'animated fadeInDown'
+                }}
+            }})";
+
+        if (!string.IsNullOrEmpty(callback))
+        {
+            script += $".then(function() {{ {callback} }})";
+        }
+
+        script += ";";
+
+        Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowErrorMessage" + Guid.NewGuid().ToString(), script, true);
+    }
+
+    /// <summary>
+    /// 顯示警告訊息
+    /// </summary>
+    private void ShowWarningMessage(string message, string callback = "")
+    {
+        string safeMessage = System.Web.HttpUtility.JavaScriptStringEncode(message);
+
+        string script = $@"
+            Swal.fire({{
+                title: '警告',
+                text: '{safeMessage}',
+                icon: 'warning',
+                confirmButtonText: '確定',
+                customClass: {{
+                    popup: 'animated fadeInDown'
+                }}
+            }})";
+
+        if (!string.IsNullOrEmpty(callback))
+        {
+            script += $".then(function() {{ {callback} }})";
+        }
+
+        script += ";";
+
+        Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowWarningMessage" + Guid.NewGuid().ToString(), script, true);
+    }
+
+    /// <summary>
+    /// 判斷是否應該顯示為編輯模式
+    /// </summary>
+    /// <returns>true: 編輯模式, false: 檢視模式</returns>
+    private bool ShouldShowInEditMode()
+    {
+        // 如果沒有 ProjectID，是新申請案件，可以編輯
+        if (string.IsNullOrEmpty(ProjectID))
+        {
+            return true;
+        }
+        
+        try
+        {
+            // 取得最新版本的狀態
+            var projectData = OFS_SciApplicationHelper.getVersionByProjectID(ProjectID);
+            if (projectData == null)
+            {
+                return true; // 沒有資料時允許編輯
+            }
+            
+            // 只有這些狀態可以編輯
+            string statuses = projectData.Statuses ?? "";
+            string statusesName = projectData.StatusesName ?? "";
+            
+            return statuses == "尚未提送" || 
+                   statusesName == "補正補件" || 
+                   statusesName == "計畫書修正中";
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "取得申請狀態時發生錯誤");
+            return false; // 發生錯誤時預設為檢視模式
+        }
+    }
+ /// <summary>
+    /// 根據動作類型更新版本狀態
+    /// </summary>
+    /// <param name="projectID">計畫ID</param>
+    /// <param name="isComplete">是否為完成動作（下一步）</param>
+    private void UpdateVersionStatusBasedOnAction(string projectID, bool isComplete)
+    {
+        try
+        {
+            
+            if (isComplete)
+            {
+                // 點擊「完成本頁，下一步」按鈕
+                // 1. Form1Status 設為 "完成" 
+                // 2. 檢查 CurrentStep，如果 <= 1 則改成 2
+                
+                var projectData = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
+                if (projectData != null)
+                {
+                    int res;
+                    int.TryParse(projectData.CurrentStep,out res); 
+                    bool shouldUpdateCurrentStep =  res <= 1;
+                    string newCurrentStep = shouldUpdateCurrentStep ? "2" : projectData.CurrentStep;
+                    
+                    // 更新專案版本狀態
+                    var updateData = new OFS_SCI_Project_Main
+                    {
+                        ProjectID = projectID,
+                        Form1Status = "完成",
+                        CurrentStep = newCurrentStep,
+                        updated_at = DateTime.Now
+                    };
+                    
+                    OFS_SciApplicationHelper.UpdateOFS_SCIVersion(updateData);
+                }
+            }
+            else
+            {
+                // 點擊「暫存」按鈕
+                // 只更新 Form1Status 為 "暫存"，CurrentStep 不變
+                var updateData = new OFS_SCI_Project_Main
+                {
+                    ProjectID = projectID,
+                    Form1Status = "暫存",
+                    CurrentStep = "1", // 保持在第一步
+                    updated_at = DateTime.Now,
+                    
+                    
+                };
+                
+                OFS_SciApplicationHelper.UpdateOFS_SCIVersion(updateData);
+            }
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "更新版本狀態時發生錯誤");
+        }
+    }
+    // /// <summary>
+    // /// 載入變更說明資料到輸入框
+    // /// </summary>
+    // private void LoadChangeDescriptionData()
+    // {
+    //     try
+    //     {
+    //         if (!string.IsNullOrEmpty(ProjectID))
+    //         {
+    //             // 從資料庫取得變更說明並設定到頁面元素
+    //             var changeDescription = OFS_SciApplicationHelper.GetPageModifyNote(ProjectID, "SciApplication");
+    //             if (changeDescription != null)
+    //             {
+    //                 string script = $@"
+    //                     setTimeout(function() {{
+    //                         const changeBeforeElement = document.getElementById('txtChangeBefore');
+    //                         if (changeBeforeElement && '{changeDescription.ChangeBefore?.Replace("'", "\\'")}') {{
+    //                             changeBeforeElement.textContent = '{changeDescription.ChangeBefore?.Replace("'", "\\'")}';
+    //                         }}
+    //                         
+    //                         const changeAfterElement = document.getElementById('txtChangeAfter');
+    //                         if (changeAfterElement && '{changeDescription.ChangeAfter?.Replace("'", "\\'")}') {{
+    //                             changeAfterElement.textContent = '{changeDescription.ChangeAfter?.Replace("'", "\\'")}';
+    //                         }}
+    //                     }}, 100);
+    //                 ";
+    //                 Page.ClientScript.RegisterStartupScript(this.GetType(), "LoadChangeDescription", script, true);
+    //             }
+    //         }
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         HandleException(ex, "載入變更說明資料時發生錯誤");
+    //     }
+    // }
     /// <summary>
     /// 例外處理
     /// </summary>
@@ -837,6 +1211,27 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
     {
         System.Diagnostics.Debug.WriteLine($"{context}: {ex.Message}");
         // 可以在這裡加入記錄或通知邏輯
+    }
+
+    /// <summary>
+    /// 取得此 UserControl 對應的變更說明資料
+    /// </summary>
+    /// <returns>變更說明資料 (changeBefore, changeAfter)</returns>
+    public (string changeBefore, string changeAfter) GetChangeDescriptionData()
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(ProjectID))
+            {
+                return ucChangeDescription.GetChangeDescriptionBySourcePage(ProjectID, "SciApplication");
+            }
+            return ("", "");
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "取得變更說明資料時發生錯誤");
+            return ("", "");
+        }
     }
 
     #endregion
@@ -857,6 +1252,7 @@ public class ValidationResult
 
     public string GetErrorsAsString()
     {
-        return string.Join("\\n", Errors);
+        return string.Join("<br>", Errors);
     }
+    
 }

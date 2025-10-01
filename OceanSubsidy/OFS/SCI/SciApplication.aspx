@@ -8,24 +8,9 @@
 
 <asp:Content ID="ApplicationContent" ContentPlaceHolderID="ApplicationContent" runat="server">
     <!-- 使用 UserControl -->
-    <uc:SciApplicationControl ID="ucSciApplication" runat="server" />
-    
-    <!-- 變更說明 UserControl -->
-    <uc:ChangeDescriptionControl ID="ucChangeDescription" runat="server" SourcePage="SciApplication" />
-                  
-                  <!-- 底部區塊 -->
-                  <div class="block-bottom bg-light-teal view-mode">
-                      
-                       <asp:Button ID="btnTempSave" runat="server"  
-                                 Text="暫存"  
-                                 CssClass="btn btn-outline-teal"  
-                                 OnClick="btnSave_Click" /> 
-                      
-                       <asp:Button ID="btnSubmit" runat="server" 
-                                 Text="完成本頁，下一步"  
-                                 CssClass="btn btn-teal"  
-                                 OnClick="btnSave_Click" /> 
-                  </div>
+    <div class="tab-pane active" id="tab1">
+        <uc:SciApplicationControl ID="ucSciApplication" runat="server" />
+    </div>
 </asp:Content>
 
 

@@ -1,7 +1,7 @@
 ﻿<%@ Control Language="C#" AutoEventWireup="true" CodeFile="ChangeDescriptionControl.ascx.cs" Inherits="OFS_SCI_UserControls_ChangeDescriptionControl" %>
 
 <!-- 變更說明區塊 -->
-<div id="changeDescriptionSection" runat="server" class="mt-4">
+<div id="changeDescriptionSection" runat="server" ClientIDMode="Static" class="mt-4" >
     <div class="text-pink fw-normal fs-16 mt-2">本頁若有資料變更，請務必詳細說明「變更欄位」及「變更前／變更後」之資料內容。若有多項欄位請條列式(1,2,3,...)說明。</div>
     
     <h5 class="square-title mt-4">變更說明</h5>
@@ -16,7 +16,7 @@
                 <td>
                     <span class="form-control textarea" role="textbox" contenteditable="" 
                           data-placeholder="請輸入變更前的內容" aria-label="變更前文本輸入區域"
-                          id="txtChangeBefore" name="txtChangeBefore"></span>
+                          id="txtChangeBefore" name="txtChangeBefore" ClientIDMode="Static" ></span>
                 </td>
             </tr>
             <tr>
@@ -27,7 +27,7 @@
                 <td>
                     <span class="form-control textarea" role="textbox" contenteditable="" 
                           data-placeholder="請輸入變更後的內容" aria-label="變更後文本輸入區域"
-                          id="txtChangeAfter" name="txtChangeAfter"></span>
+                          id="txtChangeAfter" name="txtChangeAfter" ClientIDMode="Static"  ></span>
                 </td>
             </tr>
         </tbody>

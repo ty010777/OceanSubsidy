@@ -15,7 +15,7 @@ namespace GS.OCA_OceanSubsidy.Model.OFS
 
         public string GetErrorsAsString()
         {
-            return string.Join("\\n", Errors);
+            return string.Join("<br>", Errors);
         }
     }
 }
