@@ -4,7 +4,10 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
+using System.Net.Http;
+using System.Text;
 using System.Web;
 
 public class SystemService : BaseService
@@ -98,7 +101,7 @@ public class SystemService : BaseService
 
         if (content == null)
         {
-            content = new GrantTypeContent { TypeID = data.TypeID, IsValid = false };
+            content = new GrantTypeContent { TypeID = data.TypeID, Status = 0 };
 
             OFSGrantTypeContentHelper.insert(content);
         }
@@ -263,7 +266,12 @@ public class SystemService : BaseService
             }
         }
 
-        return new { ID = data.TypeID };
+        if (bool.Parse(param["Submit"].ToString()))
+        {
+            return syncGrantTypeContent(data.TypeID);
+        }
+
+        return new { ID = data.TypeID, Success = true };
     }
 
     public object saveNews(JObject param, HttpContext context)
@@ -361,5 +369,100 @@ public class SystemService : BaseService
         }
 
         return new {};
+    }
+
+    private object syncGrantTypeContent(int id)
+    {
+        var data = OFSGrantTypeHelper.get(id);
+        var content = OFSGrantTypeContentHelper.get(id);
+        var url = ConfigurationManager.AppSettings["Host"] + ConfigurationManager.AppSettings["AppRootPath"];
+
+        switch (data.TypeCode)
+        {
+            case "SCI":
+                url = $"{url}/OFS/SCI/SciApplication.aspx?GrantTypeID=SCI";
+                break;
+            case "CLB":
+                url = $"{url}/OFS/CLB/ClbApplication.aspx?GrantTypeID=CLB";
+                break;
+            default:
+                url = $"{url}/OFS/{data.TypeCode}/Application.aspx";
+                break;
+        }
+
+        var identifier = ConfigurationManager.AppSettings["EGovIdentifier"] + "-" + id.ToString().PadLeft(6, '0');
+
+        var payload = JsonConvert.SerializeObject(new List<object>() {
+            new
+            {
+                oid = ConfigurationManager.AppSettings["EGovOid"],
+                identifier = identifier,
+                categorytheme = ConfigurationManager.AppSettings["EGovOid"],
+                categorycake = ConfigurationManager.AppSettings["EGovOid"],
+                categoryservice = ConfigurationManager.AppSettings["EGovOid"],
+                keywords = content.Keywords,
+                notificationemails = ConfigurationManager.AppSettings["EGovOid"],
+                language = 0,
+                title = data.FullName,
+                statusreason = content.Status == 2 ? content.StatusReason : "",
+                // replacecontent
+                function = "1",
+                servicecontent1 = content.ServiceContent,
+                criteria1 = content.Criteria,
+                procedure1 = string.Join("\n", OFSGrantTypeProcedureHelper.query(id).Select(d => d.Content).ToList()),
+                documentary1 = content.Documentary,
+                mydataresourceid1 = false,
+                // workingdays1 = content.WorkingDays.ToString(),
+                contactperson1 = $"{content.ContactPerson} ({content.ContactTel})",
+                remarks1 = content.Remark,
+                // reference1 = new List<object>() { new { link = "", linktitle = "" } },
+                onlinelink = url
+            }
+        });
+
+        var api = ConfigurationManager.AppSettings["EGovAPI"];
+        var method = content.Status == 2 ? HttpMethod.Delete : (OFSGrantTypeContentLogHelper.count(id) > 0 ? HttpMethod.Put : HttpMethod.Post);
+        var token = ConfigurationManager.AppSettings["EGovToken"];
+
+        if (method == HttpMethod.Delete)
+        {
+            api = $"{api}{identifier}/";
+        }
+
+        if (!string.IsNullOrEmpty(api) && !string.IsNullOrEmpty(token))
+        {
+            using (var client = new HttpClient())
+            {
+                var request = new HttpRequestMessage(method, api);
+
+                request.Headers.Add("Authorization", $"Bearer {token}");
+                request.Content = new StringContent(payload, Encoding.UTF8, "application/json");
+
+                var response = client.SendAsync(request).GetAwaiter().GetResult();
+
+                response.EnsureSuccessStatusCode();
+
+                var result = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                JObject res = JObject.Parse(result);
+
+                if (res != null && bool.Parse(res["Success"].ToString()))
+                {
+                    OFSGrantTypeContentLogHelper.insert(new GrantTypeContentLog
+                    {
+                        TypeID = id,
+                        URL = api,
+                        Method = method.ToString(),
+                        Content = payload,
+                        Result = result
+                    });
+
+                    res = (JObject) res["ResultData"];
+
+                    return new { ID = id, Success = bool.Parse(res["Success"].ToString()), Message = res["Message"].ToString() };
+                }
+            }
+        }
+
+        return new { ID = id, Success = false };
     }
 }
