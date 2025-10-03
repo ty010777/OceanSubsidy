@@ -20,7 +20,7 @@ namespace EmailApi.Controllers
         {
             try
             {
-                await _biz.SendEmailAsync(request.To, request.Subject, request.Body);
+                await _biz.SendEmailAsync(request.To, request.Cc, request.Bcc, request.Subject, request.Body);
 
                 return Ok(new { success = true });
             }
