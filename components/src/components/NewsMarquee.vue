@@ -2,8 +2,8 @@
     <div class="notice mb-3" v-if="list.length">
         <div class="notice-content">
             <div class="notice-list" ref="marquee">
-                <h3 class="notice-title" style="margin-bottom:0.5rem;" :key="item" v-for="(item) in list"><tw-date :value="item.EnableTime"></tw-date> {{ item.Title }}</h3>
-                <h3 class="notice-title" v-if="list.length > 1"><tw-date :value="list[0].EnableTime"></tw-date> {{ list[0].Title }}</h3>
+                <h3 class="notice-title" @click="open(item)" style="margin-bottom:0.5rem;cursor:pointer" :key="item" v-for="(item) in list"><tw-date :value="item.EnableTime"></tw-date> {{ item.Title }}</h3>
+                <h3 class="notice-title" @click="open(list[0])" style="cursor:pointer" v-if="list.length > 1"><tw-date :value="list[0].EnableTime"></tw-date> {{ list[0].Title }}</h3>
             </div>
         </div>
         <div class="notice-action">
@@ -40,6 +40,10 @@
     const list = ref([]);
     const marquee = ref();
     const url = computed(() => api.toUrl("/OFS/Information/NewsList.aspx"));
+
+    const open = (item) => {
+        window.open(api.toUrl(`/OFS/Information/NewsDetail.aspx?ID=${item.ID}`), "_blank");
+    };
 
     onMounted(() => {
         api.system("getPublishedNewsList").subscribe((res) => {
