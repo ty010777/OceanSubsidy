@@ -84,7 +84,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             {
                 LoadExistingData(projectID);
                 // 載入變更說明控制項
-                ucChangeDescription.LoadData(projectID );
+                tab3_ucChangeDescription.LoadData(projectID );
                 CheckFormStatusAndHideTempSaveButton();
 
             }
@@ -117,7 +117,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                     if (formStatus == "完成")
                     {
                         // 隱藏暫存按鈕
-                        btnTempSave.Style["display"] = "none";
+                        tab3_btnTempSave.Style["display"] = "none";
                     }
                 }
             }
@@ -497,7 +497,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             if (SaveData())
             {
                 // 儲存變更說明
-                ucChangeDescription.SaveChangeDescription(ProjectID);
+                tab3_ucChangeDescription.SaveChangeDescription(ProjectID);
                 // 更新版本狀態（暫存）
                 if (!string.IsNullOrEmpty(ProjectID))
                 {
@@ -528,31 +528,31 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             var validationResult = ValidateForm();
             if (!validationResult.IsValid)
             {
-                RestoreDataFromSession();
+                
                 ShowErrorMessage($"請修正以下錯誤：{validationResult.GetErrorsAsString()}");
+                RestoreDataFromSession();
                 return;
             }
-
             // 儲存 UserControl 資料
             if (SaveData())
             {
-                // 更新版本狀態
-                if (!string.IsNullOrEmpty(ProjectID))
-                {
-                    UpdateVersionStatusBasedOnAction(ProjectID, true);
-                    // 儲存變更說明
-                    ucChangeDescription.SaveChangeDescription(ProjectID);
-
-                }
+            
+                UpdateVersionStatusBasedOnAction(ProjectID, true);
+                // 儲存變更說明
+                tab3_ucChangeDescription.SaveChangeDescription(ProjectID);
+                RestoreDataFromSession();
 
                 // 清除 Session 暫存資料（因為已成功儲存）
                 ClearSessionData();
 
-                // 儲存成功後跳轉到下一頁
-                if (!string.IsNullOrEmpty(ProjectID))
-                {
-                    Response.Redirect($"SciRecusedList.aspx?ProjectID={ProjectID}");
-                }
+                // 判斷當前頁面是否為 SciInprogress_Approved.aspx
+                string currentPage = System.IO.Path.GetFileName(Request.Url.AbsolutePath);
+                string redirectUrl = currentPage != "SciInprogress_Approved.aspx"
+                    ? $"SciRecusedList.aspx?ProjectID={ProjectID}"
+                    : "";
+
+                // 顯示成功訊息（如果有 URL 則 1 秒後跳轉）
+                ShowSuccessMessage("儲存成功", redirectUrl);
             }
         }
         catch (Exception ex)
@@ -934,7 +934,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                 });
 
                 // 處理表格欄位隱藏
-                $('#tab3 #point1Table, #tab3 #point2Table, #tab3 #point3Table, #tab3 #travelTable, #tab3 #otherTable').addClass('hide-col-last');
+                $('#tab3 #point1Table, #tab3 #point2Table, #tab3 #travelTable, #tab3 #otherTable').addClass('hide-col-last');
                 });
             </script>";
             Page.ClientScript.RegisterStartupScript(this.GetType(), "AddClassToTable", script);
@@ -950,30 +950,52 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
         System.Diagnostics.Debug.WriteLine($"{context}: {ex.Message}");
         // 可以在這裡加入記錄或通知邏輯
     }
- /// <summary>
+
+    /// <summary>
     /// 顯示成功訊息
     /// </summary>
-    private void ShowSuccessMessage(string message, string callback = "")
+    /// <param name="message">訊息內容</param>
+    /// <param name="redirectUrl">跳轉網址，如果為空則不跳轉</param>
+    private void ShowSuccessMessage(string message, string redirectUrl = "")
     {
         string safeMessage = System.Web.HttpUtility.JavaScriptStringEncode(message);
 
-        string script = $@"
-            Swal.fire({{
-                title: '成功',
-                text: '{safeMessage}',
-                icon: 'success',
-                confirmButtonText: '確定',
-                customClass: {{
-                    popup: 'animated fadeInDown'
-                }}
-            }})";
+        string script;
 
-        if (!string.IsNullOrEmpty(callback))
+        if (!string.IsNullOrEmpty(redirectUrl))
         {
-            script += $".then(function() {{ {callback} }})";
+            // 有 URL：顯示 1 秒後自動跳轉
+            string safeUrl = System.Web.HttpUtility.JavaScriptStringEncode(redirectUrl);
+            script = $@"
+                Swal.fire({{
+                    title: '成功',
+                    text: '{safeMessage}',
+                    icon: 'success',
+                    timer: 1000,
+                    showConfirmButton: false,
+                    customClass: {{
+                        popup: 'animated fadeInDown'
+                    }}
+                }}).then(function() {{
+                    window.location.href = '{safeUrl}';
+                }});
+            ";
         }
-
-        script += ";";
+        else
+        {
+            // 沒有 URL：正常顯示訊息
+            script = $@"
+                Swal.fire({{
+                    title: '成功',
+                    text: '{safeMessage}',
+                    icon: 'success',
+                    confirmButtonText: '確定',
+                    customClass: {{
+                        popup: 'animated fadeInDown'
+                    }}
+                }});
+            ";
+        }
 
         Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowSuccessMessage" + Guid.NewGuid().ToString(), script, true);
     }
@@ -1310,7 +1332,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
         {
             if (!string.IsNullOrEmpty(ProjectID))
             {
-                return ucChangeDescription.GetChangeDescriptionBySourcePage(ProjectID, "SciFunding");
+                return tab3_ucChangeDescription.GetChangeDescriptionBySourcePage(ProjectID, "SciFunding");
             }
             return ("", "");
         }

@@ -143,9 +143,21 @@ public partial class OFS_SCI_Review_SciFinalReview : System.Web.UI.Page
 
             // 取得最新歷史記錄的狀態
             string stageStatusBefore = ApplicationChecklistHelper.GetLatestStageStatus(ProjectID) ?? "";
-            
+
             // 更新資料庫
             OFS_SciApplicationHelper.UpdateOFS_SCIVersion(projectMain);
+
+            // 如果狀態為「計畫書已確認 , 計畫書修正中」，則更新 OFS_ProjectChangeRecord.Status 為 3 -->完成
+            //是否要再重新更新 應該是 「提送至申請者」 按鈕該做的事情，這邊審核完應該都要通過。
+            if (projectMain.StatusesName == "計畫書已確認" || projectMain.StatusesName == "計畫書修正中" )
+            {
+                var changeRecord = OFSProjectChangeRecordHelper.getApplying("SCI", 2, ProjectID);
+                if (changeRecord != null)
+                {
+                    changeRecord.Status = 3; // 3: 審核通過
+                    OFSProjectChangeRecordHelper.update(changeRecord);
+                }
+            }
             
             // 新增案件歷史記錄
             var currentUser = GetCurrentUserInfo();
@@ -327,8 +339,8 @@ public partial class OFS_SCI_Review_SciFinalReview : System.Web.UI.Page
             // 設定 Master Page 的進度條狀態
             InitializeReviewSteps();
 
-            // 預先載入所有變更說明資料並輸出到前端
-            LoadAllChangeDescriptions();
+            // 載入並渲染所有 UserControl 的變更說明
+            LoadAndRenderAllChangeDescriptions();
         }
         catch (Exception ex)
         {
@@ -743,9 +755,9 @@ public partial class OFS_SCI_Review_SciFinalReview : System.Web.UI.Page
 
 
     /// <summary>
-    /// 預先載入所有 tab 的變更說明資料並輸出到前端
+    /// 載入並渲染所有 UserControl 的變更說明（後端渲染方式）
     /// </summary>
-    private void LoadAllChangeDescriptions()
+    private void LoadAndRenderAllChangeDescriptions()
     {
         try
         {
@@ -754,45 +766,36 @@ public partial class OFS_SCI_Review_SciFinalReview : System.Web.UI.Page
                 return;
             }
 
-            // 透過各 UserControl 內部的 ChangeDescriptionControl 取得變更說明資料
-            var sciApplicationData = GetChangeDescriptionData(ucSciApplication);
-            var sciWorkSchData = GetChangeDescriptionData(ucSciWorkSch);
-            var sciFundingData = GetChangeDescriptionData(ucSciFunding);
-            var sciRecusedListData = GetChangeDescriptionData(ucSciRecusedList);
-            var sciUploadAttachmentsData = GetChangeDescriptionData(ucSciUploadAttachments);
+            // 定義所有需要處理的 UserControl
+            var userControls = new[]
+            {
+                (control: (Control)ucSciApplication, controlName: "ucSciApplication"),
+                (control: (Control)ucSciWorkSch, controlName: "ucSciWorkSch"),
+                (control: (Control)ucSciFunding, controlName: "ucSciFunding"),
+                (control: (Control)ucSciRecusedList, controlName: "ucSciRecusedList"),
+                (control: (Control)ucSciUploadAttachments, controlName: "ucSciUploadAttachments")
+            };
 
-            // 將所有變更說明資料打包成 JavaScript 物件並輸出到前端
-            string script = $@"
-                window.allChangeDescriptions = {{
-                    'SciApplication': {{
-                        ChangeBefore: {EscapeJavaScriptString(sciApplicationData.changeBefore)},
-                        ChangeAfter: {EscapeJavaScriptString(sciApplicationData.changeAfter)}
-                    }},
-                    'SciWorkSch': {{
-                        ChangeBefore: {EscapeJavaScriptString(sciWorkSchData.changeBefore)},
-                        ChangeAfter: {EscapeJavaScriptString(sciWorkSchData.changeAfter)}
-                    }},
-                    'SciFunding': {{
-                        ChangeBefore: {EscapeJavaScriptString(sciFundingData.changeBefore)},
-                        ChangeAfter: {EscapeJavaScriptString(sciFundingData.changeAfter)}
-                    }},
-                    'SciRecusedList': {{
-                        ChangeBefore: {EscapeJavaScriptString(sciRecusedListData.changeBefore)},
-                        ChangeAfter: {EscapeJavaScriptString(sciRecusedListData.changeAfter)}
-                    }},
-                    'SciUploadAttachments': {{
-                        ChangeBefore: {EscapeJavaScriptString(sciUploadAttachmentsData.changeBefore)},
-                        ChangeAfter: {EscapeJavaScriptString(sciUploadAttachmentsData.changeAfter)}
-                    }}
-                }};
-                console.log('所有變更說明資料已預載:', window.allChangeDescriptions);
-            ";
+            // 遍歷所有 UserControl，取得變更說明並渲染
+            foreach (var (control, controlName) in userControls)
+            {
+                try
+                {
+                    // 使用反射調用 GetChangeDescriptionData 方法
+                    var (changeBefore, changeAfter) = GetChangeDescriptionData(control);
 
-            Page.ClientScript.RegisterStartupScript(this.GetType(), "LoadAllChangeDescriptions", script, true);
+                    // 渲染到該 UserControl 的 ucChangeDescription 元件
+                    RenderChangeDescriptionToControl(control, changeBefore, changeAfter, controlName);
+                }
+                catch (Exception ex)
+                {
+                    HandleException(ex, $"載入 {controlName} 的變更說明時發生錯誤");
+                }
+            }
         }
         catch (Exception ex)
         {
-            HandleException(ex, "載入變更說明時發生錯誤");
+            HandleException(ex, "載入所有變更說明時發生錯誤");
         }
     }
 
@@ -823,18 +826,66 @@ public partial class OFS_SCI_Review_SciFinalReview : System.Web.UI.Page
     }
 
     /// <summary>
-    /// 將字串轉換為安全的 JavaScript 字串格式
+    /// 渲染變更說明到 UserControl 的 ucChangeDescription 元件
     /// </summary>
-    private string EscapeJavaScriptString(string input)
+    private void RenderChangeDescriptionToControl(Control userControl, string changeBefore, string changeAfter, string controlName)
     {
-        if (string.IsNullOrEmpty(input))
+        try
         {
-            return "''";
-        }
+            // 在 UserControl 中尋找 ucChangeDescription 元件
+            Control changeDescriptionControl = userControl.FindControl("ucChangeDescription");
 
-        // 使用 System.Web.HttpUtility.JavaScriptStringEncode 進行轉義
-        string escaped = System.Web.HttpUtility.JavaScriptStringEncode(input);
-        return $"'{escaped}'";
+            if (changeDescriptionControl != null)
+            {
+                // 根據 controlName 設定對應的 SourcePage
+                string sourcePage = GetSourcePageByControlName(controlName);
+
+                // 使用反射設定 SourcePage 屬性
+                var sourcePageProperty = changeDescriptionControl.GetType().GetProperty("SourcePage");
+                if (sourcePageProperty != null)
+                {
+                    sourcePageProperty.SetValue(changeDescriptionControl, sourcePage);
+                }
+
+                // 使用反射設定 ChangeBefore 和 ChangeAfter 屬性
+                var changeBeforeProperty = changeDescriptionControl.GetType().GetProperty("ChangeBefore");
+                var changeAfterProperty = changeDescriptionControl.GetType().GetProperty("ChangeAfter");
+
+                if (changeBeforeProperty != null && changeAfterProperty != null)
+                {
+                    changeBeforeProperty.SetValue(changeDescriptionControl, changeBefore ?? "");
+                    changeAfterProperty.SetValue(changeDescriptionControl, changeAfter ?? "");
+
+                    System.Diagnostics.Debug.WriteLine($"已渲染 {controlName} ({sourcePage}) 的變更說明");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, $"渲染 {controlName} 變更說明時發生錯誤");
+        }
+    }
+
+    /// <summary>
+    /// 根據 UserControl 名稱取得對應的 SourcePage
+    /// </summary>
+    private string GetSourcePageByControlName(string controlName)
+    {
+        switch (controlName)
+        {
+            case "ucSciApplication":
+                return "SciApplication";
+            case "ucSciWorkSch":
+                return "SciWorkSch";
+            case "ucSciFunding":
+                return "SciFunding";
+            case "ucSciRecusedList":
+                return "SciRecusedList";
+            case "ucSciUploadAttachments":
+                return "SciUploadAttachments";
+            default:
+                return "SciApplication";
+        }
     }
 
     /// <summary>

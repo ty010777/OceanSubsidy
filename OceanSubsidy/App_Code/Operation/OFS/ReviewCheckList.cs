@@ -1249,7 +1249,7 @@ SELECT TOP (1000) [ProjectID]
                 db.CommandText = $@"
                     UPDATE {tableName}
                     SET FinalReviewOrder = @finalReviewOrder,
-                        FinalReviewNotes = @finalReviewNotes,
+                        FinalReviewNotes = @finalReviewNotes
                     WHERE ProjectID = @projectId
                 ";
 
@@ -2115,7 +2115,7 @@ SELECT TOP (1000) [ProjectID]
     /// <param name="projectId">專案編號</param>
     /// <param name="statusName">狀態名稱</param>
     /// <param name="userAccount">操作者帳號</param>
-    public static void SCI_UpdateProjectStatusName(string projectId, string statusName, string userAccount)
+    public static void SCI_UpdateProjectStatusName(string projectId, string statusName)
     {
         using (DbHelper db = new DbHelper())
         {

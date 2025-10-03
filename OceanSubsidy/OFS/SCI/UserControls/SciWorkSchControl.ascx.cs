@@ -186,10 +186,16 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
             string message = SaveAndNext();
 
             // 儲存變更說明 - 透過頁面找到變更說明控制項
-            ucChangeDescription.SaveChangeDescription(ProjectID);
+            tab2_ucChangeDescription.SaveChangeDescription(ProjectID);
 
-            // 跳轉到下一頁
-            HttpContext.Current.Response.Redirect($"SciFunding.aspx?ProjectID={ProjectID}");
+            // 判斷當前頁面是否為 SciInprogress_Approved.aspx
+            string currentPage = System.IO.Path.GetFileName(Request.Url.AbsolutePath);
+            string redirectUrl = currentPage != "SciInprogress_Approved.aspx"
+                ? $"SciFunding.aspx?ProjectID={ProjectID}"
+                : "";
+
+            // 顯示成功訊息（如果有 URL 則 1 秒後跳轉）
+            ShowSuccessMessage(message, redirectUrl);
         }
         catch (Exception ex)
         {
@@ -240,7 +246,7 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
                 // 載入資料到 UserControl
                 SetViewMode();
                 // 載入變更說明控制項
-                ucChangeDescription.LoadData(ProjectID, IsViewMode);
+                tab2_ucChangeDescription.LoadData(ProjectID, IsViewMode);
             }
             
 
@@ -356,8 +362,6 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
     {
         try
         {
-            // 檔案上傳現在已通過上傳按鈕立即處理，這裡不再重複處理
-            // ProcessDiagramUpload();
 
             // 取得表單資料
             var projectSchedule = GetProjectScheduleFromForm();
@@ -417,16 +421,14 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
         {
             // 先備份表單資料到 Session
             BackupFormDataToSession();
-
+    
             // 驗證資料
             var validationResult = ValidateForm();
             if (!validationResult.IsValid)
             {
-                // 驗證失敗時還原表單資料
-                RestoreFormDataFromSession();
                 throw new Exception($"資料驗證失敗：{validationResult.GetErrorsAsString()}");
             }
-
+            RestoreFormDataFromSession();
             // 儲存表單資料
             SaveData();
 
@@ -436,7 +438,7 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
             // 成功後清除備份的 Session 資料
             ClearBackupSession();
 
-            return "資料儲存成功，即將跳轉至下一頁！";
+            return "資料儲存成功";
         }
         catch (Exception ex)
         {
@@ -511,7 +513,7 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
             if (formStatus == "完成")
             {
                 // 隱藏暫存按鈕
-                btnTempSave.Style["display"] = "none";
+                tab2_btnTempSave.Style["display"] = "none";
                 
                 // 也可以用 Visible 屬性
             }
@@ -581,7 +583,7 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
             {
                 projectId = w.ProjectID,
                 workItemId = w.WorkItem_id,
-                itemCode = OFS_SciWorkSchHelper.ExtractItemCodeFromWorkItemId(w.WorkItem_id),
+                code = OFS_SciWorkSchHelper.ExtractItemCodeFromWorkItemId(w.WorkItem_id),
                 itemName = w.WorkName,
                 startMonth = w.StartMonth,
                 endMonth = w.EndMonth,
@@ -623,17 +625,29 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
 
         if (CheckStandardsData != null && CheckStandardsData.Any())
         {
+            // HiddenField 儲存西元年格式（供後端解析使用）
+            var checkStandardsForHidden = JsonConvert.SerializeObject(CheckStandardsData.Select(c => new
+            {
+                id = c.Id,
+                projectId = c.ProjectID,
+                workItem = c.WorkItem,
+                serialNumber = c.SerialNumber,
+                plannedFinishDate = c.PlannedFinishDate?.ToString("yyyy-MM-dd") ?? "",  // 西元年
+                description = c.CheckDescription
+            }));
+
+            hiddenCheckStandardsData.Value = checkStandardsForHidden;
+
+            // JavaScript 顯示用的資料（民國年格式）
             var checkStandardsJson = JsonConvert.SerializeObject(CheckStandardsData.Select(c => new
             {
                 id = c.Id,
                 projectId = c.ProjectID,
                 workItem = c.WorkItem,
                 serialNumber = c.SerialNumber,
-                plannedFinishDate = c.PlannedFinishDate?.ToMinguoDate() ?? "",
+                plannedFinishDate = c.PlannedFinishDate?.ToMinguoDate() ?? "",  // 民國年（僅供前端顯示）
                 description = c.CheckDescription
             }));
-
-            hiddenCheckStandardsData.Value = checkStandardsJson;
 
             var script = $@"
                 if (window.sciWorkSchManager) {{
@@ -941,30 +955,52 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
         System.Diagnostics.Debug.WriteLine($"{context}: {ex.Message}");
         // 可以在這裡加入記錄或通知邏輯
     }
-  /// <summary>
+
+    /// <summary>
     /// 顯示成功訊息
     /// </summary>
-    private void ShowSuccessMessage(string message, string callback = "")
+    /// <param name="message">訊息內容</param>
+    /// <param name="redirectUrl">跳轉網址，如果為空則不跳轉</param>
+    private void ShowSuccessMessage(string message, string redirectUrl = "")
     {
         string safeMessage = System.Web.HttpUtility.JavaScriptStringEncode(message);
 
-        string script = $@"
-            Swal.fire({{
-                title: '成功',
-                text: '{safeMessage}',
-                icon: 'success',
-                confirmButtonText: '確定',
-                customClass: {{
-                    popup: 'animated fadeInDown'
-                }}
-            }})";
+        string script;
 
-        if (!string.IsNullOrEmpty(callback))
+        if (!string.IsNullOrEmpty(redirectUrl))
         {
-            script += $".then(function() {{ {callback} }})";
+            // 有 URL：顯示 1 秒後自動跳轉
+            string safeUrl = System.Web.HttpUtility.JavaScriptStringEncode(redirectUrl);
+            script = $@"
+                Swal.fire({{
+                    title: '成功',
+                    text: '{safeMessage}',
+                    icon: 'success',
+                    timer: 1000,
+                    showConfirmButton: false,
+                    customClass: {{
+                        popup: 'animated fadeInDown'
+                    }}
+                }}).then(function() {{
+                    window.location.href = '{safeUrl}';
+                }});
+            ";
         }
-
-        script += ";";
+        else
+        {
+            // 沒有 URL：正常顯示訊息
+            script = $@"
+                Swal.fire({{
+                    title: '成功',
+                    text: '{safeMessage}',
+                    icon: 'success',
+                    confirmButtonText: '確定',
+                    customClass: {{
+                        popup: 'animated fadeInDown'
+                    }}
+                }});
+            ";
+        }
 
         Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowSuccessMessage" + Guid.NewGuid().ToString(), script, true);
     }
@@ -1125,7 +1161,7 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
                             {
                                 projectId = w.ProjectID,
                                 workItemId = w.WorkItem_id,
-                                itemCode = OFS_SciWorkSchHelper.ExtractItemCodeFromWorkItemId(w.WorkItem_id),
+                                code = OFS_SciWorkSchHelper.ExtractItemCodeFromWorkItemId(w.WorkItem_id),
                                 itemName = w.WorkName,
                                 startMonth = w.StartMonth,
                                 endMonth = w.EndMonth,
@@ -1169,22 +1205,40 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
 
                     if (checkStandardsData != null && checkStandardsData.Any())
                     {
-                        var checkStandardsList = new List<object>();
+                        // HiddenField 儲存西元年格式（供後端解析使用）
+                        var checkStandardsForHidden = new List<object>();
+                        // JavaScript 顯示用的資料（民國年格式）
+                        var checkStandardsForDisplay = new List<object>();
+
                         foreach (var c in checkStandardsData)
                         {
-                            checkStandardsList.Add(new
+                            // 西元年版本（存入 HiddenField）
+                            checkStandardsForHidden.Add(new
                             {
                                 id = c.Id,
                                 projectId = c.ProjectID,
                                 workItem = c.WorkItem,
                                 serialNumber = c.SerialNumber,
-                                plannedFinishDate = c.PlannedFinishDate?.ToMinguoDate() ?? "",
+                                plannedFinishDate = c.PlannedFinishDate?.ToString("yyyy-MM-dd") ?? "",  // 西元年
+                                description = c.CheckDescription
+                            });
+
+                            // 民國年版本（供前端顯示）
+                            checkStandardsForDisplay.Add(new
+                            {
+                                id = c.Id,
+                                projectId = c.ProjectID,
+                                workItem = c.WorkItem,
+                                serialNumber = c.SerialNumber,
+                                plannedFinishDate = c.PlannedFinishDate?.ToMinguoDate() ?? "",  // 民國年
                                 description = c.CheckDescription
                             });
                         }
 
-                        var checkStandardsJson = JsonConvert.SerializeObject(checkStandardsList);
-                        hiddenCheckStandardsData.Value = checkStandardsJson;
+                        var checkStandardsJsonForHidden = JsonConvert.SerializeObject(checkStandardsForHidden);
+                        hiddenCheckStandardsData.Value = checkStandardsJsonForHidden;
+
+                        var checkStandardsJson = JsonConvert.SerializeObject(checkStandardsForDisplay);
 
                         var script = $@"
                             function restoreCheckStandardsData() {{
@@ -1237,7 +1291,7 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
         {
             if (!string.IsNullOrEmpty(ProjectID))
             {
-                return ucChangeDescription.GetChangeDescriptionBySourcePage(ProjectID, "SciWorkSch");
+                return tab2_ucChangeDescription.GetChangeDescriptionBySourcePage(ProjectID, "SciWorkSch");
             }
             return ("", "");
         }

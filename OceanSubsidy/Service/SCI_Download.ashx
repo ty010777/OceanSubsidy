@@ -36,9 +36,12 @@ public class SCI_Download : IHttpHandler
                 case "downloadfile":
                     DownloadUploadedFile(context);
                     break;
+                case "downloadreviewfile":
+                    DownloadReviewFile(context);
+                    break;
                 default:
                     context.Response.StatusCode = 400;
-                    context.Response.Write("Invalid action. Use 'downloadPlan', 'downloadApprovedPlan', 'downloadTemplate', or 'downloadFile'.");
+                    context.Response.Write("Invalid action. Use 'downloadPlan', 'downloadApprovedPlan', 'downloadTemplate', 'downloadFile', or 'downloadReviewFile'.");
                     break;
             }
         }
@@ -221,6 +224,39 @@ public class SCI_Download : IHttpHandler
 
         string downloadFileName = !string.IsNullOrEmpty(fileName) ? fileName : attachment.FileName;
         DownloadFile(context, filePath, downloadFileName, "application/pdf");
+    }
+
+    /// <summary>
+    /// 下載審查意見檔案
+    /// </summary>
+    private void DownloadReviewFile(HttpContext context)
+    {
+        var filePath = context.Request.QueryString["filePath"];
+
+        if (string.IsNullOrEmpty(filePath))
+        {
+            context.Response.StatusCode = 400;
+            context.Response.Write("Missing filePath parameter.");
+            return;
+        }
+
+        // 確保路徑以 ~/ 開頭
+        if (!filePath.StartsWith("~/"))
+        {
+            filePath = "~/" + filePath;
+        }
+
+        string physicalPath = context.Server.MapPath(filePath);
+
+        if (!File.Exists(physicalPath))
+        {
+            context.Response.StatusCode = 404;
+            context.Response.Write("Review file not found.");
+            return;
+        }
+
+        string fileName = Path.GetFileName(physicalPath);
+        DownloadFile(context, physicalPath, fileName, "application/pdf");
     }
 
     /// <summary>

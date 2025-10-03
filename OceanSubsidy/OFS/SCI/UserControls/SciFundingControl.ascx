@@ -499,19 +499,19 @@
         </ul>
     </div>
     <!-- 變更說明 UserControl -->
-    <uc:ChangeDescriptionControl ID="ucChangeDescription" runat="server" SourcePage="SciFunding" />
+    <uc:ChangeDescriptionControl ID="tab3_ucChangeDescription" runat="server" SourcePage="SciFunding" />
 
     <!-- 底部區塊 -->
     <div class="block-bottom bg-light-teal view-mode">
-        <asp:Button ID="btnTempSave" runat="server" 
-            Text="暫存" 
-            CssClass="btn btn-outline-teal" 
-            OnClientClick="collectAllFormData(); return true;"
+        <asp:Button ID="tab3_btnTempSave" runat="server"
+            Text="暫存"
+            CssClass="btn btn-outline-teal"
+            OnClientClick="collectAllFormData(); if (typeof syncAllChangeDescriptions === 'function') { syncAllChangeDescriptions(); } return true;"
             OnClick="btnTempSave_Click" />
-        <asp:Button ID="btnSaveAndNext" runat="server" 
-            Text="完成本頁，下一步" 
-            CssClass="btn btn-teal" 
-            OnClientClick="collectAllFormData(); return true;"
+        <asp:Button ID="tab3_btnSaveAndNext" runat="server"
+            Text="完成本頁，下一步"
+            CssClass="btn btn-teal"
+            OnClientClick="collectAllFormData(); if (typeof syncAllChangeDescriptions === 'function') { syncAllChangeDescriptions(); } return true;"
             OnClick="btnSaveAndNext_Click" />
     </div>
 

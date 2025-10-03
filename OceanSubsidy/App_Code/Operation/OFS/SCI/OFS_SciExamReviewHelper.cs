@@ -268,12 +268,20 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                 throw new Exception("找不到對應的審查資料");
 
             string projectID = examData["ProjectID"]?.ToString();
-            string reviewer = examData["Reviewer"]?.ToString() ?? "reviewer";
-            
-            // 產生檔案名稱：ProjectID_審查委員_審查意見.pdf
+            int examVersion = examData["ExamVersion"] != DBNull.Value ? Convert.ToInt32(examData["ExamVersion"]) : 0;
+
+            // 決定版本文字
+            string versionText = examVersion == 0 ? "初版" : $"修正版v{examVersion}";
+
+            // 產生時間序（民國年月日時分秒）
+            DateTime now = DateTime.Now;
+            int rocYear = GS.App.DateTimeHelper.GregorianYearToMinguo(now.Year);
+            string timestamp = $"{rocYear:000}{now.Month:00}{now.Day:00}{now.Hour:00}{now.Minute:00}{now.Second:00}";
+
+            // 產生檔案名稱：ProjectID_審查意見_版本_時間序.pdf
             string fileExtension = System.IO.Path.GetExtension(uploadedFile.FileName);
-            string fileName = $"{projectID}_{reviewer}_審查意見{fileExtension}";
-            
+            string fileName = $"{projectID}_審查意見_{versionText}_{timestamp}{fileExtension}";
+
             // 產生儲存路徑
             string relativePath = $"UploadFiles/OFS/SCI/{projectID}/ReviewFiles/{fileName}";
             string physicalPath = System.Web.HttpContext.Current.Server.MapPath("~/" + relativePath);

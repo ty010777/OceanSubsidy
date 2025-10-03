@@ -65,14 +65,22 @@ public class CLB_download : IHttpHandler
         string subsidyType = GetSubsidyType(projectID);
         string fileName = GetTemplateFileName(templateType, subsidyType, fileType);
         string templatePath = context.Server.MapPath($"~/Template/CLB/{fileName}");
- 
+
         if (!File.Exists(templatePath))
         {
             context.Response.StatusCode = 404;
             context.Response.Write($"Template file not found: {fileName}");
             return;
         }
-        DownloadFile(context, templatePath, fileName, GetContentType(fileName));
+
+        // 🔧 對範本進行加工處理（填入專案資料等）
+        string processedFilePath = ProcessDynamicTemplate(templateType, templatePath, projectID, subsidyType, fileType);
+
+        // 下載加工後的檔案
+        DownloadFile(context, processedFilePath, fileName, GetContentType(fileName));
+
+        // 清理暫存檔案
+        CleanupTempFile(processedFilePath);
     }
 
     /// <summary>
@@ -314,6 +322,191 @@ public class CLB_download : IHttpHandler
                 return "application/octet-stream";
         }
     }
+
+    #region 範本加工處理
+
+    /// <summary>
+    /// 處理需要動態內容的範本檔案
+    /// </summary>
+    private string ProcessDynamicTemplate(string templateType, string originalFilePath, string projectID, string subsidyType, string fileType)
+    {
+        // 如果 projectID 為空，代表是系統管理員下載空白範本，不需要加工
+        if (string.IsNullOrEmpty(projectID))
+        {
+            return originalFilePath;
+        }
+
+        // 根據 templateType 決定是否需要加工
+        switch (templateType)
+        {
+            case "1": // 申請表
+                return ProcessApplicationForm(originalFilePath, projectID, subsidyType);
+            case "2": // 計畫書
+                return ProcessPlanForm(originalFilePath, projectID, subsidyType);
+            case "3": // 切結書
+                return ProcessAffidavitForm(originalFilePath, projectID);
+            case "report": // 成果報告書
+                return ProcessReportForm(originalFilePath, projectID);
+            case "payment": // 請款範本
+                return ProcessPaymentForm(originalFilePath, projectID, fileType);
+            default:
+                // 不需要動態處理的範本直接返回原路徑
+                return originalFilePath;
+        }
+    }
+
+    /// <summary>
+    /// 加工申請表（填入專案資料）
+    /// </summary>
+    private string ProcessApplicationForm(string originalFilePath, string projectID, string subsidyType)
+    {
+        try
+        {
+            // 建立暫存檔案路徑
+            string tempFilePath = Path.Combine(Path.GetTempPath(), Path.GetFileName(originalFilePath));
+
+            // 複製範本檔案到暫存資料夾
+            File.Copy(originalFilePath, tempFilePath, true);
+
+            // TODO: 使用 OpenXmlHelper 處理 Word 文件，填入專案資料
+            // 例如：替換 {{ProjectName}}, {{OrgName}} 等佔位符
+            // var helper = new OpenXmlHelper(tempFilePath);
+            // var placeholder = new Dictionary<string, string>();
+            // placeholder.Add("{{ProjectName}}", projectData.ProjectName);
+            // helper.GenerateWord(placeholder, new List<Dictionary<string, string>>());
+
+            return tempFilePath;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"ProcessApplicationForm Error: {ex.Message}");
+            return originalFilePath; // 如果處理失敗，返回原檔案路徑
+        }
+    }
+
+    /// <summary>
+    /// 加工計畫書（填入專案資料）
+    /// </summary>
+    private string ProcessPlanForm(string originalFilePath, string projectID, string subsidyType)
+    {
+        try
+        {
+            // 建立暫存檔案路徑
+            string tempFilePath = Path.Combine(Path.GetTempPath(), Path.GetFileName(originalFilePath));
+
+            // 複製範本檔案到暫存資料夾
+            File.Copy(originalFilePath, tempFilePath, true);
+
+            // TODO: 加工邏輯
+            // 填入專案相關資料
+
+            return tempFilePath;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"ProcessPlanForm Error: {ex.Message}");
+            return originalFilePath;
+        }
+    }
+
+    /// <summary>
+    /// 加工切結書（填入專案資料）
+    /// </summary>
+    private string ProcessAffidavitForm(string originalFilePath, string projectID)
+    {
+        try
+        {
+            // 建立暫存檔案路徑
+            string tempFilePath = Path.Combine(Path.GetTempPath(), Path.GetFileName(originalFilePath));
+
+            // 複製範本檔案到暫存資料夾
+            File.Copy(originalFilePath, tempFilePath, true);
+
+            // TODO: 加工邏輯
+            // 填入組織名稱、日期等
+
+            return tempFilePath;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"ProcessAffidavitForm Error: {ex.Message}");
+            return originalFilePath;
+        }
+    }
+
+    /// <summary>
+    /// 加工成果報告書（填入專案資料）
+    /// </summary>
+    private string ProcessReportForm(string originalFilePath, string projectID)
+    {
+        try
+        {
+            // 建立暫存檔案路徑
+            string tempFilePath = Path.Combine(Path.GetTempPath(), Path.GetFileName(originalFilePath));
+
+            // 複製範本檔案到暫存資料夾
+            File.Copy(originalFilePath, tempFilePath, true);
+
+            // TODO: 加工邏輯
+
+            return tempFilePath;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"ProcessReportForm Error: {ex.Message}");
+            return originalFilePath;
+        }
+    }
+
+    /// <summary>
+    /// 加工請款範本（填入專案資料）
+    /// </summary>
+    private string ProcessPaymentForm(string originalFilePath, string projectID, string fileType)
+    {
+        try
+        {
+            // 建立暫存檔案路徑
+            string tempFilePath = Path.Combine(Path.GetTempPath(), Path.GetFileName(originalFilePath));
+
+            // 複製範本檔案到暫存資料夾
+            File.Copy(originalFilePath, tempFilePath, true);
+
+            // TODO: 根據 fileType 進行不同的加工
+            // fileType: 1=收支明細表, 2=受補助清單, 3=經費分攤表, 4=憑證, 5=領據
+
+            return tempFilePath;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"ProcessPaymentForm Error: {ex.Message}");
+            return originalFilePath;
+        }
+    }
+
+    /// <summary>
+    /// 清理暫存檔案
+    /// </summary>
+    private void CleanupTempFile(string filePath)
+    {
+        try
+        {
+            // 判斷是否為暫存檔案（在 Temp 目錄中的檔案）
+            if (!string.IsNullOrEmpty(filePath) &&
+                filePath.Contains(Path.GetTempPath()) &&
+                File.Exists(filePath))
+            {
+                File.Delete(filePath);
+                System.Diagnostics.Debug.WriteLine($"已清理暫存檔案：{filePath}");
+            }
+        }
+        catch (Exception ex)
+        {
+            // 清理失敗不影響主要功能，只記錄錯誤
+            System.Diagnostics.Debug.WriteLine($"清理暫存檔案失敗：{ex.Message}");
+        }
+    }
+
+    #endregion
 
     public bool IsReusable => false;
 }

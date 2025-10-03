@@ -65,6 +65,12 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
             {
                 InitializeControl();
             }
+            else
+            {
+                // PostBack 時，將 HiddenField 的值重新渲染到前端
+                // 因為 contenteditable 不是標準表單控件，PostBack 後內容會消失
+                RestoreContentFromHiddenFields();
+            }
         }
         catch (Exception ex)
         {
@@ -152,16 +158,17 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
         this.ProjectID = projectID;
         try
         {
+            // 1. 同步前端內容
             SyncContentFromFrontend();
-            // 如果區塊不可見，不需要儲存
+            // 2. 如果區塊不可見，不需要儲存
             string changeBefore = hdnChangeBefore.Value?.Trim();
             string changeAfter = hdnChangeAfter.Value?.Trim();
 
             if (!changeDescriptionSection.Visible)
-            {
+            { 
                 return true;
             }
-            // 執行驗證並檢查結果
+            // 3. 執行驗證並檢查結果
             var validationResult = ValidateChangeDescription(changeBefore, changeAfter);
             if (!validationResult.IsValid)
             {
@@ -169,9 +176,34 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
                 string errorMessage = string.Join("; ", validationResult.Errors);
                 throw new Exception($"驗證失敗：{errorMessage}");
             }
-            // 儲存到資料庫（這裡需要根據實際的資料表結構來實作）
-            SaveChangeDescriptionToDatabase(projectID, changeBefore, changeAfter);
-            
+            // 4. 儲存到資料庫
+            // 判斷 Method：計畫書修正 = 1, 計畫變更 = 2
+            var project = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
+            int method = 2; // 預設為計畫書修正
+            if (project.IsProjChanged == 1)
+            {
+                method = 1; // 計畫變更
+            }
+            try
+            {
+                string sourcePage = !string.IsNullOrEmpty(SourcePage) ? SourcePage : GetCurrentPageName();
+
+                // 查詢是否已有現存的記錄
+                var existingRecord = OFSProjectChangeRecordHelper.getApplying("SCI", method, projectID);
+
+                if (existingRecord != null)
+                {
+                    // 更新現有記錄
+                    HandleFormFields(existingRecord, sourcePage, changeBefore, changeAfter, isUpdate: true);
+                    OFSProjectChangeRecordHelper.update(existingRecord);
+                }
+            }
+            catch (Exception exDb)
+            {
+                throw new Exception($"儲存變更說明到資料庫時發生錯誤：{exDb.Message}", exDb);
+            }
+
+            return true;            
 
             return true;
         }
@@ -226,7 +258,7 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
             // 其他頁面只有在特定狀態下才顯示
             return project.StatusesName == "計畫書修正中" ||
                    project.StatusesName == "計畫書審核中" ||
-                     project.IsProjChanged == 1;
+                     project.IsProjChanged == 1 || project.IsProjChanged == 2;
             
         }
         catch (Exception ex)
@@ -281,7 +313,7 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
 
             // 判斷 Method：計畫書修正 = 1, 計畫變更 = 2
             int method = 2; // 預設為計畫書修正
-            if (project.IsProjChanged == 1)
+            if (project.IsProjChanged == 1 || project.IsProjChanged == 2)
             {
                 method = 1; // 計畫變更
             }
@@ -307,64 +339,6 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
         }
     }
 
-    /// <summary>
-    /// 儲存變更說明到資料庫
-    /// </summary>
-    /// <param name="projectID">專案ID</param>
-    /// <param name="pageName">頁面名稱</param>
-    /// <param name="changeBefore">變更前內容</param>
-    /// <param name="changeAfter">變更後內容</param>
-    private void SaveChangeDescriptionToDatabase(string projectID, string changeBefore, string changeAfter)
-    {
-        try
-        {
-            // 優先使用設定的 SourcePage，否則使用當前頁面名稱
-            string sourcePage = !string.IsNullOrEmpty(SourcePage) ? SourcePage : GetCurrentPageName();
-
-            // 取得專案狀態資訊來判斷是計畫變更還是計畫書修正
-            var project = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
-
-            // 判斷 Method：計畫書修正 = 1, 計畫變更 = 2
-            int method = 2; // 預設為計畫書修正
-            if (project.IsProjChanged == 1)
-            {
-                method = 1; // 計畫變更
-            }
-
-            // 查詢是否已有現存的記錄
-            var existingRecord = OFSProjectChangeRecordHelper.getApplying("SCI", method,projectID);
-
-            if (existingRecord != null)
-            {
-                // 更新現有記錄
-                HandleFormFields(existingRecord, sourcePage, changeBefore, changeAfter, isUpdate: true);
-
-                OFSProjectChangeRecordHelper.update(existingRecord);
-            }
-            else
-            {
-                // 新增記錄
-                var newRecord = new ProjectChangeRecord
-                {
-                    Type = "SCI",
-                    Method = method,
-                    DataID = projectID,
-                    Reason = "",
-                    Status = 1 // 編輯中
-                };
-
-                OFSProjectChangeRecordHelper.insert(newRecord);
-
-                // 更新對應的欄位
-                HandleFormFields(newRecord, sourcePage, changeBefore, changeAfter, isUpdate: true);
-                OFSProjectChangeRecordHelper.update(newRecord);
-            }
-        }
-        catch (Exception ex)
-        {
-            throw new Exception($"儲存變更說明到資料庫時發生錯誤：{ex.Message}", ex);
-        }
-    }
 
     /// <summary>
     /// 同步前端內容到隱藏欄位
@@ -389,16 +363,22 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
     {
         if (!string.IsNullOrEmpty(content))
         {
+            // 使用 Predictable ClientID 而不是 Static ID
+            string txtChangeBeforeID = txtChangeBefore.ClientID;
+
             string script = $@"
                 setTimeout(function() {{
-                    const element = document.getElementById('txtChangeBefore');
+                    const element = document.getElementById('{txtChangeBeforeID}');
                     if (element) {{
-                        element.textContent = '{content.Replace("'", "\\'")}';
+                        element.textContent = '{EscapeForJavaScript(content)}';
+                        console.log('已設定變更前內容:', '{txtChangeBeforeID}', '{EscapeForJavaScript(content)}');
+                    }} else {{
+                        console.warn('找不到變更前元素:', '{txtChangeBeforeID}');
                     }}
                 }}, 100);
             ";
-            
-            Page.ClientScript.RegisterStartupScript(this.GetType(), "SetChangeBeforeContent", script, true);
+
+            Page.ClientScript.RegisterStartupScript(this.GetType(), $"SetChangeBeforeContent_{txtChangeBeforeID}", script, true);
         }
     }
 
@@ -410,16 +390,22 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
     {
         if (!string.IsNullOrEmpty(content))
         {
+            // 使用 Predictable ClientID 而不是 Static ID
+            string txtChangeAfterID = txtChangeAfter.ClientID;
+
             string script = $@"
                 setTimeout(function() {{
-                    const element = document.getElementById('txtChangeAfter');
+                    const element = document.getElementById('{txtChangeAfterID}');
                     if (element) {{
-                        element.textContent = '{content.Replace("'", "\\'")}';
+                        element.textContent = '{EscapeForJavaScript(content)}';
+                        console.log('已設定變更後內容:', '{txtChangeAfterID}', '{EscapeForJavaScript(content)}');
+                    }} else {{
+                        console.warn('找不到變更後元素:', '{txtChangeAfterID}');
                     }}
                 }}, 100);
             ";
-            
-            Page.ClientScript.RegisterStartupScript(this.GetType(), "SetChangeAfterContent", script, true);
+
+            Page.ClientScript.RegisterStartupScript(this.GetType(), $"SetChangeAfterContent_{txtChangeAfterID}", script, true);
         }
     }
 
@@ -710,6 +696,79 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
         // 使用 System.Web.HttpUtility.JavaScriptStringEncode 進行轉義
         string escaped = System.Web.HttpUtility.JavaScriptStringEncode(input);
         return $"'{escaped}'";
+    }
+
+    /// <summary>
+    /// 根據 SourcePage 取得對應的 tab ID
+    /// </summary>
+    private string GetTabIdBySourcePage()
+    {
+        string sourcePage = !string.IsNullOrEmpty(SourcePage) ? SourcePage : GetCurrentPageName();
+
+        switch (sourcePage)
+        {
+            case "SciApplication":
+                return "tab1";
+            case "SciWorkSch":
+                return "tab2";
+            case "SciFunding":
+                return "tab3";
+            case "SciRecusedList":
+                return "tab4";
+            case "SciUploadAttachments":
+                return "tab5";
+            default:
+                return "tab1"; // 預設回傳第一個 tab
+        }
+    }
+
+    /// <summary>
+    /// 將字串轉義以便安全地嵌入 JavaScript 字串中
+    /// </summary>
+    private string EscapeForJavaScript(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+        {
+            return "";
+        }
+
+        return input
+            .Replace("\\", "\\\\")
+            .Replace("'", "\\'")
+            .Replace("\"", "\\\"")
+            .Replace("\n", "\\n")
+            .Replace("\r", "\\r")
+            .Replace("\t", "\\t");
+    }
+
+    /// <summary>
+    /// 從 HiddenField 還原內容到前端 contenteditable 元素
+    /// </summary>
+    private void RestoreContentFromHiddenFields()
+    {
+        try
+        {
+            // 讀取 HiddenField 的值
+            string changeBefore = hdnChangeBefore.Value ?? "";
+            string changeAfter = hdnChangeAfter.Value ?? "";
+
+            // 如果有值，則渲染到前端
+            if (!string.IsNullOrEmpty(changeBefore))
+            {
+                SetChangeBeforeContent(changeBefore);
+            }
+
+            if (!string.IsNullOrEmpty(changeAfter))
+            {
+                SetChangeAfterContent(changeAfter);
+            }
+
+            System.Diagnostics.Debug.WriteLine($"PostBack 後還原變更說明: Before={changeBefore}, After={changeAfter}");
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "從 HiddenField 還原內容時發生錯誤");
+        }
     }
 
     #endregion

@@ -5,77 +5,77 @@
 
 // 頁面載入完成後初始化
 document.addEventListener('DOMContentLoaded', function() {
-    initializePage();
+    // initializePage();
 });
 
 /**
  * 初始化頁面
  */
-function initializePage() {
-    // 綁定提送申請按鈕事件
-    bindSubmitButton();
-}
+// function initializePage() {
+//     // 綁定提送申請按鈕事件
+//     bindSubmitButton();
+// }
 
 /**
  * 綁定提送申請按鈕事件
  */
-function bindSubmitButton() {
-    // 找到提送申請按鈕
-    const submitBtn = document.querySelector('[id$="btnSubmit"]');
-    if (submitBtn) {
-        submitBtn.addEventListener('click', function(event) {
-            event.preventDefault();
-            showSubmitConfirmation();
-            return false;
-        });
-    }
-    
-    // 暫存按鈕直接使用 WebForm 處理，不需要 JavaScript 攔截
-}
+// function bindSubmitButton() {
+//     // 找到提送申請按鈕
+//     const submitBtn = document.querySelector('[id$="tab5_btnSubmit"]');
+//     if (submitBtn) {
+//         submitBtn.addEventListener('click', function(event) {
+//             event.preventDefault();
+//             showSubmitConfirmation();
+//             return false;
+//         });
+//     }
+//    
+//     // 暫存按鈕直接使用 WebForm 處理，不需要 JavaScript 攔截
+// }
 
 /**
  * 顯示提送申請確認對話框
  */
-function showSubmitConfirmation() {
-    // 檢查頁面是否處於檢視模式
-    if (isViewMode()) {
-        showErrorMessage('目前為檢視模式，無法執行提送申請操作');
-        return;
-    }
-
-    Swal.fire({
-        title: '提送審核確認',
-        text: '請問要提送審核嗎？送出後即不可再編輯修改。',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: '確認提送',
-        cancelButtonText: '取消',
-        reverseButtons: true,
-        allowOutsideClick: false,
-        allowEscapeKey: false
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // 用戶確認後，觸發隱藏的確認按鈕
-            triggerConfirmedSubmit();
-        }
-    });
-}
+// function showSubmitConfirmation() {
+//     // 檢查頁面是否處於檢視模式
+//     if (isViewMode()) {
+//         showErrorMessage('目前為檢視模式，無法執行提送申請操作');
+//         return;
+//     }
+//
+//     Swal.fire({
+//         title: '提送審核確認',
+//         text: '請問要提送審核嗎？送出後即不可再編輯修改。',
+//         icon: 'question',
+//         showCancelButton: true,
+//         confirmButtonColor: '#3085d6',
+//         cancelButtonColor: '#d33',
+//         confirmButtonText: '確認提送',
+//         cancelButtonText: '取消',
+//         reverseButtons: true,
+//         allowOutsideClick: false,
+//         allowEscapeKey: false
+//     }).then((result) => {
+//         if (result.isConfirmed) {
+//             // 用戶確認後，觸發隱藏的確認按鈕
+//             triggerConfirmedSubmit();
+//         }
+//     });
+// }
 
 /**
  * 觸發確認提送的後端處理
  */
-function triggerConfirmedSubmit() {
-    // 找到隱藏的確認按鈕並觸發點擊
-    const confirmedBtn = document.querySelector('[id$="btnSubmitConfirmed"]');
-    if (confirmedBtn) {
-        confirmedBtn.click();
-    } else {
-        console.error('找不到確認提送按鈕');
-        showErrorMessage('系統錯誤：找不到確認提送按鈕');
-    }
-}
+// function triggerConfirmedSubmit() {
+//     // 找到隱藏的確認按鈕並觸發點擊
+//     const confirmedBtn = document.querySelector('[id$="btnSubmitConfirmed"]');
+//     if (confirmedBtn) {
+//         confirmedBtn.click();
+//     } else {
+//         console.error('找不到確認提送按鈕');
+//         showErrorMessage('系統錯誤：找不到確認提送按鈕');
+//     }
+// }
 
 
 /**
@@ -366,9 +366,6 @@ function updateFileStatusUI(fileCode, fileName, relativePath) {
         const num = fileCode.replace('FILE_OTech', '');
         statusLabelSelector = `[id*="lblStatus_OTech${num}"], [id*="lblStatusOTech${num}"], [id*="lblStatus${num}_OT"]`;
         filesPanelSelector = `[id*="pnlFiles_OTech${num}"]`;
-    } else if (fileCode === 'FILE_AC9') {
-        statusLabelSelector = `[id*="lblStatus9"]`;
-        filesPanelSelector = `[id*="pnlFilesAcademic9"]`;
     }
 
     const statusLabel = document.querySelector(statusLabelSelector);
@@ -434,9 +431,6 @@ function resetFileStatusUI(fileCode) {
         const num = fileCode.replace('FILE_OTech', '');
         statusLabelSelector = `[id*="lblStatus_OTech${num}"], [id*="lblStatusOTech${num}"], [id*="lblStatus${num}_OT"]`;
         filesPanelSelector = `[id*="pnlFiles_OTech${num}"]`;
-    } else if (fileCode === 'FILE_AC9') {
-        statusLabelSelector = `[id*="lblStatus9"]`;
-        filesPanelSelector = `[id*="pnlFilesAcademic9"]`;
     }
 
     const statusLabel = document.querySelector(statusLabelSelector);

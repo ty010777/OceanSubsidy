@@ -8,123 +8,24 @@
 <asp:Content ID="HeadContent" ContentPlaceHolderID="HeadExtra" runat="server">
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
+
     <!-- UserControl 相關 JavaScript 檔案 -->
     <script src="<%= ResolveUrl("~/script/OFS/SCI/SciApplication.js") %>"></script>
     <script src="<%= ResolveUrl("~/script/OFS/SCI/SciWorkSch.js") %>"></script>
     <script src="<%= ResolveUrl("~/script/OFS/SCI/SciFunding.js") %>"></script>
     <script src="<%= ResolveUrl("~/script/OFS/SCI/SciRecusedList.js") %>"></script>
     <script src="<%= ResolveUrl("~/script/OFS/SCI/SciUploadAttachments.js") %>"></script>
-    
-    <!-- 申請表進度切換 JavaScript -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // 綁定進度條點擊事件
-            const stepItems = document.querySelectorAll('.application-step-container .step-item');
-            const tabPanes = document.querySelectorAll('.tab-pane');
 
-            stepItems.forEach((item, index) => {
-                item.addEventListener('click', function() {
-                    const stepNumber = this.getAttribute('data-application-step');
-                    switchToApplicationStep(stepNumber);
-                });
-            });
-
-            // 切換申請表步驟
-            function switchToApplicationStep(stepNumber) {
-                // 移除所有 active 狀態
-                stepItems.forEach(item => {
-                    item.classList.remove('active');
-                    const statusElement = item.querySelector('.step-status');
-                    if (statusElement) {
-                        statusElement.textContent = '';
-                    }
-                });
-
-                // 設定新的 active 狀態
-                const targetStep = document.querySelector(`[data-application-step="${stepNumber}"]`);
-                if (targetStep) {
-                    targetStep.classList.add('active');
-                    let statusElement = targetStep.querySelector('.step-status');
-                    if (!statusElement) {
-                        statusElement = document.createElement('div');
-                        statusElement.className = 'step-status';
-                        targetStep.querySelector('.step-content').appendChild(statusElement);
-                    }
-                    statusElement.textContent = '檢視中';
-                }
-
-                // 切換對應的分頁內容
-                if (tabPanes.length > 0) {
-                    tabPanes.forEach(pane => {
-                        pane.classList.remove('active');
-                        pane.style.display = 'none';
-                    });
-
-                    const targetTab = document.getElementById(`tab${stepNumber}`);
-                    if (targetTab) {
-                        targetTab.classList.add('active');
-                        targetTab.style.display = 'block';
-                    }
-                }
-            }
-
-            // 初始化第一個步驟
-            switchToApplicationStep('1');
-        });
-        function showAuditRecords() {
-            const projectID = getProjectIDFromUrl();
-            if (!projectID) {
-                Swal.fire({
-                    title: '錯誤',
-                    text: '找不到計畫ID',
-                    icon: 'error',
-                    confirmButtonText: '確定'
-                });
-                return;
-            }
-            
-            // 引導到查核紀錄頁面
-            const auditRecordsUrl = `../AuditRecords.aspx?ProjectID=${encodeURIComponent(projectID)}`;
-            window.location.href = auditRecordsUrl;
-        }
-
-        /**
-         * 從 URL 取得專案ID
-         */
-        function getProjectIDFromUrl() {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('ProjectID');
-        }
-
-        // 下載核定版計畫書
-        document.addEventListener('DOMContentLoaded', function() {
-            var btnDownloadPlan = document.getElementById('btnDownloadPlan');
-            if (btnDownloadPlan) {
-                btnDownloadPlan.addEventListener('click', function() {
-                    var projectId = getProjectIDFromUrl();
-
-                    if (!projectId) {
-                        Swal.fire({
-                            title: '錯誤',
-                            text: '找不到計畫ID',
-                            icon: 'error',
-                            confirmButtonText: '確定'
-                        });
-                        return;
-                    }
-
-                    // 直接開啟下載 URL
-                    var downloadUrl = '<%= ResolveUrl("~/Service/SCI_Download.ashx") %>?action=downloadApprovedPlan&projectID=' + projectId;
-                    window.open(downloadUrl, '_blank');
-                });
-            }
-        });
-    </script>
+    <!-- 頁面主要 JavaScript -->
+    <script src="<%= ResolveUrl("~/script/OFS/SCI/SciInprogress_Approved.js") %>"></script>
 </asp:Content>
 
 <asp:Content ID="MainContent" ContentPlaceHolderID="MainContent" runat="server">
     <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePartialRendering="true" />
+
+    <!-- 用於儲存當前頁簽狀態 -->
+    <asp:HiddenField ID="hdnCurrentStep" runat="server" Value="1" ClientIDMode="Static" />
+
         <!--  計畫變更紀錄 下載核定計畫書 -->
         <div class="block rounded-top-4 py-4 d-flex justify-content-between" style="position: sticky; top: 180px; z-index: 15;">
             <div>
@@ -217,6 +118,51 @@
         </div>
     </div>
 
+    <!-- Modal 計畫變更申請 -->
+    <div class="modal fade" id="changePlanModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="changePlanModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-md">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="fs-24 fw-bold text-green-light">計畫變更申請</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- 提醒訊息 -->
+                    <div class="alert alert-danger d-flex align-items-start mb-4" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2 mt-1"></i>
+                        <div>
+                            <strong>提醒您：</strong>計畫變更審核通過後，預定進度及每月進度資料將清空，必須重填！
+                        </div>
+                    </div>
+
+                    <!-- 計畫變更原因 -->
+                    <div>
+                        <label for="txtChangeReason" class="form-label fs-16 text-gray mb-3">
+                            計畫變更原因 <span class="text-danger">*</span>
+                        </label>
+                        <textarea
+                            id="txtChangeReason"
+                            class="form-control"
+                            rows="8"
+                            placeholder="請詳細說明計畫變更原因..."></textarea>
+                    </div>
+
+                    <!-- 按鈕群組 -->
+                    <div class="d-flex gap-4 flex-wrap justify-content-center mt-5">
+                        <button type="button" class="btn btn-gray" data-bs-dismiss="modal">
+                            取消
+                        </button>
+                        <button type="button" id="btnConfirmChange" class="btn btn-teal">
+                            確定變更
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal 移轉案件 -->
     <div class="modal fade" id="transferCaseModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="transferCaseModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-md">
@@ -247,13 +193,81 @@
                         <button type="button" class="btn btn-gray" data-bs-dismiss="modal">
                             取消
                         </button>
-                        <asp:Button ID="btnConfirmTransfer" runat="server" 
-                            Text="確認移轉" 
-                            CssClass="btn btn-teal" 
+                        <asp:Button ID="btnConfirmTransfer" runat="server"
+                            Text="確認移轉"
+                            CssClass="btn btn-teal"
                             OnClick="btnConfirmTransfer_Click" />
                     </div>
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Modal 計畫變更紀錄 -->
+    <div class="modal fade" id="changePlanRecordModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="changePlanRecordModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="fs-24 fw-bold text-green-light">計畫變更紀錄</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table align-middle gray-table">
+                            <thead>
+                                <tr>
+                                    <th width="80">項次</th>
+                                    <th width="150">變更日期</th>
+                                    <th>變更原因</th>
+                                    <th width="100">狀態</th>
+                                </tr>
+                            </thead>
+                            <tbody id="changePlanRecordTable">
+                                <!-- 靜態展示範例 -->
+                                <tr>
+                                    <td class="text-center">1</td>
+                                    <td>2025-01-10</td>
+                                    <td>因應實驗設備延遲到貨，調整執行進度</td>
+                                    <td><span class="badge bg-success">已核定</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">2</td>
+                                    <td>2024-12-15</td>
+                                    <td>研究範圍擴大，增加經費需求</td>
+                                    <td><span class="badge bg-warning">審核中</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 計畫變更審查面板 (右下角浮動面板) -->
+    <div class="scroll-bottom-panel" id="reviewPanel" runat="server" style="display: none;">
+        <h5 class="text-pink fs-18 fw-bold mb-3">計畫變更審查</h5>
+        <ul class="d-flex flex-column gap-3 mb-3">
+            <li class="d-flex gap-2">
+                <span class="text-gray mt-2">審查結果 :</span>
+                <div class="d-flex flex-column gap-2 align-items-start flex-grow-1">
+                    <div class="form-check-input-group d-flex text-nowrap mt-2 align-items-center">
+                        <input id="radioPass" class="form-check-input check-teal" type="radio" name="reviewResult" value="pass"/>
+                        <label for="radioPass">通過</label>
+                        <input id="radioReject" class="form-check-input check-teal" type="radio" name="reviewResult" value="reject"/>
+                        <label for="radioReject">不通過</label>
+                    </div>
+                </div>
+            </li>
+            <li class="d-flex gap-2 d-none" id="rejectReasonSection">
+                <span class="text-gray mt-2">退回原因 :</span>
+                <div class="d-flex flex-column gap-2 align-items-start flex-grow-1">
+                    <span class="form-control textarea w-100" role="textbox" contenteditable="" data-placeholder="請輸入退回原因" aria-label="退回原因輸入區域" id="rejectReasonText" style="min-height: 120px;"></span>
+                </div>
+            </li>
+        </ul>
+        <button type="button" class="btn btn-teal d-table mx-auto" id="submitReviewButton" onclick="submitChangeReview()">確定</button>
     </div>
 </asp:Content>

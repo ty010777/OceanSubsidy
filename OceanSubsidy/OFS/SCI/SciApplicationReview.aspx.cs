@@ -259,7 +259,6 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
             ucSciUploadAttachments.IsViewMode = IsViewMode;
             ucSciUploadAttachments.LoadData(ProjectID);
 
-            
         }
         catch (Exception ex)
         {

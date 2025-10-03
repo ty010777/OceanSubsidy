@@ -56,7 +56,7 @@
         <li>3. 建議迴避之審查委員，請務必具體說明迴避理由及事證，否則不予以採納。</li>
     </ul>
 
-    <h5 class="square-title mt-5">但</h5>
+    <h5 class="square-title mt-5">技術能力</h5>
     
     <div class="table-responsive mt-3 mb-0">
         <table class="table align-middle gray-table" id="techTable">
@@ -172,12 +172,16 @@
 </div>
 
 <!-- 變更說明區塊 -->
-    <uc:ChangeDescriptionControl ID="ucChangeDescription" runat="server" SourcePage="SciRecusedList" />
+    <uc:ChangeDescriptionControl ID="tab4_ucChangeDescription" runat="server" SourcePage="SciRecusedList" />
     
     <!-- 底部區塊 -->
     <div class="block-bottom bg-light-teal view-mode">
-        <asp:Button ID="btnTempSave" runat="server" Text="暫存" CssClass="btn btn-outline-teal" OnClick="btnSave_Click" />
-        <asp:Button ID="btnNext" runat="server" Text="完成本頁，下一步" CssClass="btn btn-teal" OnClick="btnNext_Click" />
+        <asp:Button ID="tab4_btnTempSave" runat="server" Text="暫存" CssClass="btn btn-outline-teal"
+                    OnClientClick="if (typeof syncAllChangeDescriptions === 'function') { syncAllChangeDescriptions(); } return true;"
+                    OnClick="btnSave_Click" />
+        <asp:Button ID="tab4_btnNext" runat="server" Text="完成本頁，下一步" CssClass="btn btn-teal"
+                    OnClientClick="if (typeof syncAllChangeDescriptions === 'function') { syncAllChangeDescriptions(); } return true;"
+                    OnClick="btnNext_Click" />
     </div>
 <!-- 隱藏欄位用於資料交換 -->
 <asp:HiddenField ID="hdnCommitteeData" runat="server" />

@@ -51,10 +51,8 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
                 
 
                 // 載入變更說明控制項
-                ucChangeDescription.LoadData(projectID,IsViewMode );
+                tab5_ucChangeDescription.LoadData(projectID,IsViewMode );
 
-                // 檢查表單狀態並控制暫存按鈕顯示
-                CheckFormStatusAndHideTempSaveButton();
 
             }
        
@@ -174,27 +172,57 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
  
 
     /// <summary>
-    /// 顯示訊息給使用者
+    /// 顯示訊息
     /// </summary>
-    private void ShowMessage(string message, string icon = "info")
+    /// <param name="message">訊息內容</param>
+    /// <param name="icon">圖示類型</param>
+    /// <param name="redirectUrl">跳轉網址，如果為空則不跳轉</param>
+    private void ShowMessage(string message, string icon = "info", string redirectUrl = "")
     {
         string escapedMessage = message.Replace("'", "\\'").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "");
-        string script = $@"
-            Swal.fire({{
-                icon: '{icon}',
-                title: '訊息',
-                text: '{escapedMessage}',
-                confirmButtonText: '確定'
-            }});";
-        Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowSweetAlert", script, true);
+
+        string script;
+
+        if (!string.IsNullOrEmpty(redirectUrl))
+        {
+            // 有 URL：顯示 1 秒後自動跳轉
+            string safeUrl = System.Web.HttpUtility.JavaScriptStringEncode(redirectUrl);
+            script = $@"
+                Swal.fire({{
+                    icon: '{icon}',
+                    title: '訊息',
+                    text: '{escapedMessage}',
+                    timer: 1000,
+                    showConfirmButton: false
+                }}).then(function() {{
+                    window.location.href = '{safeUrl}';
+                }});
+            ";
+        }
+        else
+        {
+            // 沒有 URL：正常顯示訊息
+            script = $@"
+                Swal.fire({{
+                    icon: '{icon}',
+                    title: '訊息',
+                    text: '{escapedMessage}',
+                    confirmButtonText: '確定'
+                }});
+            ";
+        }
+
+        Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowSweetAlert" + Guid.NewGuid().ToString(), script, true);
     }
 
     /// <summary>
     /// 顯示成功訊息
     /// </summary>
-    private void ShowSuccessMessage(string message)
+    /// <param name="message">訊息內容</param>
+    /// <param name="redirectUrl">跳轉網址，如果為空則不跳轉</param>
+    private void ShowSuccessMessage(string message, string redirectUrl = "")
     {
-        ShowMessage(message, "success");
+        ShowMessage(message, "success", redirectUrl);
     }
 
     /// <summary>
@@ -401,7 +429,7 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
             mapping["FILE_AC5"] = new AttachmentMapping { StatusLabel = FindControl("lblStatusAcademic5") as Label, FilePanel = FindControl("pnlFilesAcademic5") as Panel };
             mapping["FILE_AC6"] = new AttachmentMapping { StatusLabel = FindControl("lblStatusAcademic6") as Label, FilePanel = FindControl("pnlFilesAcademic6") as Panel };
             mapping["FILE_AC7"] = new AttachmentMapping { StatusLabel = FindControl("lblStatusAcademic7") as Label, FilePanel = FindControl("pnlFilesAcademic7") as Panel };
-            mapping["FILE_AC9"] = new AttachmentMapping { StatusLabel = FindControl("lblStatus9") as Label, FilePanel = FindControl("pnlFilesAcademic9") as Panel };
+            mapping["FILE_AC9"] = new AttachmentMapping { StatusLabel = FindControl("lblStatusAcademic9") as Label, FilePanel = FindControl("pnlFilesAcademic9") as Panel };
             mapping["FILE_AC11"] = new AttachmentMapping { StatusLabel = FindControl("lblStatusAcademic11") as Label, FilePanel = FindControl("pnlFilesAcademic11") as Panel };
         }
         catch (Exception ex)
@@ -438,33 +466,33 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
     /// <summary>
     /// 暫存按鈕事件
     /// </summary>
-    protected void btnSave_Click(object sender, EventArgs e)
-    {
-        try
-        {
-            // 檢查是否處於編輯模式
-            if (IsViewMode)
-            {
-                ShowMessage("目前為檢視模式，無法執行暫存操作", false);
-                return;
-            }
-
-
-            // 儲存變更說明
-            ucChangeDescription.SaveChangeDescription(ProjectID);
-            // 更新專案狀態為暫存
-            UpdateProjectSaveStatus();
-
-            // 記錄操作歷程
-            LogSaveHistory();
-
-            ShowMessage("資料已暫存", true);
-        }
-        catch (Exception ex)
-        {
-            ShowMessage($"暫存失敗：{ex.Message}", false);
-        }
-    }
+    // protected void btnSave_Click(object sender, EventArgs e)
+    // {
+    //     try
+    //     {
+    //         // 檢查是否處於編輯模式
+    //         if (IsViewMode)
+    //         {
+    //             ShowMessage("目前為檢視模式，無法執行暫存操作", false);
+    //             return;
+    //         }
+    //
+    //
+    //         // 儲存變更說明
+    //         tab5_ucChangeDescription.SaveChangeDescription(ProjectID);
+    //         // 更新專案狀態為暫存
+    //         UpdateProjectSaveStatus();
+    //
+    //         // 記錄操作歷程
+    //         LogSaveHistory();
+    //
+    //         ShowMessage("資料已暫存", true);
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         ShowMessage($"暫存失敗：{ex.Message}", false);
+    //     }
+    // }
 
     /// <summary>
     /// 確認提送申請的實際處理
@@ -491,8 +519,6 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
             // 儲存資料
             // bool saveSuccess = ucSciUploadAttachments.SaveData(CurrentProjectID);
 
-            // 儲存變更說明
-            ucChangeDescription.SaveChangeDescription(ProjectID);
 
             // 檢查目前狀態
             var projectData = OFS_SciApplicationHelper.getVersionByProjectID(ProjectID);
@@ -504,17 +530,86 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
                 var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(ProjectID);
                 string ProjectName = applicationMain.ProjectNameTw ?? "";
                 string orgCategory = applicationMain?.OrgCategory ?? "";
-                
+                // // 計畫書修正中 -> 計畫書審核中
                 if (currentStatusesName == "計畫書修正中")
                 {
-                    // 計畫書修正中 -> 計畫書審核中
+                    tab5_ucChangeDescription.SaveChangeDescription(ProjectID);
+                    // 驗證計畫變更記錄的 Form1~5 是否都有填寫
+                    var validationResult = ValidateChangeRecordForms(ProjectID, 2);
+                    if (!validationResult.IsValid)
+                    {
+                        ShowSweetAlertError($"請先完成變更說明填寫：<br>{validationResult.GetErrorsAsString()}");
+                        return;
+                    }
+
                     UpdateProjectStatusForPlanRevision();
                     LogPlanRevisionSubmissionHistory();
-
-                    // 產生核定版 PDF
+                    var changeRecord = OFSProjectChangeRecordHelper.getApplying("SCI", 2, ProjectID);
+                    if (changeRecord != null)
+                    {
+                        changeRecord.Status = 2;
+                        OFSProjectChangeRecordHelper.update(changeRecord);
+                        System.Diagnostics.Debug.WriteLine($"專案 {ProjectID} 計畫變更記錄狀態更新成功：Status=2");
+                    }
                     MergePdfFiles(ProjectID, orgCategory,ProjectName, "核定版");
+
+                }else if (projectData?.IsProjChanged == 1)//計畫變更
+                {
+                    tab5_ucChangeDescription.SaveChangeDescription(ProjectID);
+                    // 驗證計畫變更記錄的 Form1~5 是否都有填寫
+                    var validationResult = ValidateChangeRecordForms(ProjectID, 1);
+                    if (!validationResult.IsValid)
+                    {
+                        ShowSweetAlertError($"請先完成變更說明填寫：<br>{validationResult.GetErrorsAsString()}");
+                        return;
+                    }
+
+                    // 儲存變更說明
+                    // 1. 更新 IsProjChanged = 2
+                    OFS_SciUploadAttachmentsHelper.UpdateProjectChangeCompleted(ProjectID);
+
+                    // 2. 更新 OFS_ProjectChangeRecord Status = 2
+                    var changeRecord = OFSProjectChangeRecordHelper.getApplying("SCI", 1, ProjectID);
+                    if (changeRecord != null)
+                    {
+                        changeRecord.Status = 2;
+                        OFSProjectChangeRecordHelper.update(changeRecord);
+                        System.Diagnostics.Debug.WriteLine($"專案 {ProjectID} 計畫變更記錄狀態更新成功：Status=2");
+                    }
+
+                    // 3. 處理檔案版本控制
+                    string uploadFolderPath = Server.MapPath($"~/UploadFiles/OFS/SCI/{ProjectID}/SciApplication");
+                    string latestFileNameSuffix = "計畫變更最新版";
+                    string latestFullFileName = $"{ProjectID}_科專_{ProjectName}_{latestFileNameSuffix}.pdf";
+                    string latestFilePath = Path.Combine(uploadFolderPath, latestFullFileName);
+                    
+                    // 3.1 檢查「計畫變更最新版」是否存在
+                    if (File.Exists(latestFilePath))
+                    {
+                        // 3.2 取得目前最新的版本號（計畫變更記錄筆數）
+                        int latestVersion = OFS_SciUploadAttachmentsHelper.GetLatestChangeVersionNumber(ProjectID);
+
+                        // 3.3 複製「最新版」並改名為 v{版本號+1}
+                        int newVersion = latestVersion + 1;
+                        string versionFileNameSuffix = $"計畫變更v{newVersion}";
+                        string versionFullFileName = $"{ProjectID}_科專_{ProjectName}_{versionFileNameSuffix}.pdf";
+                        string versionFilePath = Path.Combine(uploadFolderPath, versionFullFileName);
+
+                        try
+                        {
+                            File.Copy(latestFilePath, versionFilePath, true);
+                            System.Diagnostics.Debug.WriteLine($"已複製：{latestFullFileName} -> {versionFullFileName}");
+                        }
+                        catch (Exception copyEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"複製檔案時發生錯誤：{copyEx.Message}");
+                        }
+                    }
+
+                    // 3.4 產生新的「計畫變更最新版」PDF
+                    MergePdfFiles(ProjectID, orgCategory, ProjectName, latestFileNameSuffix);
                 }
-                else
+                else //申請階段
                 {
                     // 其他狀態的正常流程
                     UpdateProjectStatus();
@@ -531,8 +626,12 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
                 System.Diagnostics.Debug.WriteLine($"PDF 合併錯誤：{pdfEx.Message}");
             }
 
-            // 顯示成功訊息並跳轉
-            ShowSweetAlertSuccess();
+            // 判斷當前頁面是否為 SciInprogress_Approved.aspx
+            string currentPage = System.IO.Path.GetFileName(Request.Url.AbsolutePath);
+            string redirectUrl ="/OFS/ApplicationChecklist.aspx";
+
+            // 顯示成功訊息（如果有 URL 則 1 秒後跳轉）
+            ShowSuccessMessage("提送成功", redirectUrl);
         }
         catch (Exception ex)
         {
@@ -667,21 +766,21 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
         Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowMessage", script, true);
     }
 
-    /// <summary>
-    /// 顯示 SweetAlert 成功訊息並跳轉
-    /// </summary>
-    private void ShowSweetAlertSuccess()
-    {
-        Response.Redirect("~/OFS/ApplicationChecklist.aspx", false);
-    }
 
     /// <summary>
     /// 顯示 SweetAlert 錯誤訊息
     /// </summary>
     private void ShowSweetAlertError(string message)
     {
-        string escapedMessage = message.Replace("'", "\\'").Replace("\"", "\\\"");
-        string script = $"window.SciUploadAttachments.showErrorMessage('{escapedMessage}');";
+        string escapedMessage = message.Replace("'", "\\'").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "");
+        string script = $@"
+            Swal.fire({{
+                icon: 'error',
+                title: '錯誤',
+                html: '{escapedMessage}',
+                confirmButtonText: '確定'
+            }});
+        ";
         Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowSweetAlertError", script, true);
     }
 
@@ -728,30 +827,7 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
         }
     }
 
-    /// <summary>
-    /// 檢查表單狀態並控制暫存按鈕顯示
-    /// </summary>
-    private void CheckFormStatusAndHideTempSaveButton()
-    {
-        try
-        {
-            if (!string.IsNullOrEmpty(ProjectID))
-            {
-                var formStatus = OFS_SciWorkSchHelper.GetFormStatusByProjectID(ProjectID, "Form5Status");
-
-                if (formStatus == "完成")
-                {
-                    // 隱藏暫存按鈕
-                    btnSave.Style["display"] = "none";
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            // 發生錯誤時不隱藏按鈕，讓用戶正常使用
-            System.Diagnostics.Debug.WriteLine($"檢查表單狀態失敗: {ex.Message}");
-        }
-    }
+  
 
    
 
@@ -763,8 +839,8 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
         try
         {
             // 使用ReviewCheckListHelper更新StatusesName
-            ReviewCheckListHelper.SCI_UpdateProjectStatusName(ProjectID, "計畫書審核中",
-                GetCurrentUserInfo()?.Account ?? "系統");
+            ReviewCheckListHelper.SCI_UpdateProjectStatusName(ProjectID, "計畫書審核中"
+              );
         }
         catch (Exception ex)
         {
@@ -939,7 +1015,7 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
         {
             if (!string.IsNullOrEmpty(ProjectID))
             {
-                return ucChangeDescription.GetChangeDescriptionBySourcePage(ProjectID, "SciUploadAttachments");
+                return tab5_ucChangeDescription.GetChangeDescriptionBySourcePage(ProjectID, "SciUploadAttachments");
             }
             return ("", "");
         }
@@ -947,6 +1023,69 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
         {
             HandleException(ex, "取得變更說明資料時發生錯誤");
             return ("", "");
+        }
+    }
+
+    /// <summary>
+    /// 檢查最新一筆計畫變更記錄的 Form1~5 Before/After 是否都有填寫
+    /// </summary>
+    /// <param name="projectID">專案ID</param>
+    /// <param name="method">方法類型（1=計畫變更, 2=計畫書修正）</param>
+    /// <returns>ValidationResult 包含是否通過驗證及錯誤清單</returns>
+    private ValidationResult ValidateChangeRecordForms(string projectID, int method)
+    {
+        var result = new ValidationResult();
+
+        try
+        {
+            // 使用 OFSProjectChangeRecordHelper 取得最新一筆記錄
+            var changeRecord = OFSProjectChangeRecordHelper.getApplying("SCI", method, projectID);
+
+            if (changeRecord == null)
+            {
+                result.AddError("找不到計畫變更記錄");
+                return result;
+            }
+
+            // 檢查 Form1~5 的 Before 和 After
+            CheckFormField(result, 1, changeRecord.Form1Before, changeRecord.Form1After);
+            CheckFormField(result, 2, changeRecord.Form2Before, changeRecord.Form2After);
+            CheckFormField(result, 3, changeRecord.Form3Before, changeRecord.Form3After);
+            CheckFormField(result, 4, changeRecord.Form4Before, changeRecord.Form4After);
+            CheckFormField(result, 5, changeRecord.Form5Before, changeRecord.Form5After);
+
+            if (result.IsValid)
+            {
+                System.Diagnostics.Debug.WriteLine($"專案 {projectID} 的計畫變更記錄驗證通過");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"專案 {projectID} 的計畫變更記錄驗證失敗：{result.GetErrorsAsString()}");
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"驗證計畫變更記錄時發生錯誤：{ex.Message}");
+            result.AddError($"驗證計畫變更記錄時發生錯誤：{ex.Message}");
+            return result;
+        }
+    }
+
+    /// <summary>
+    /// 檢查單一表單欄位是否已填寫
+    /// </summary>
+    private void CheckFormField(ValidationResult result, int formNumber, string beforeValue, string afterValue)
+    {
+        if (string.IsNullOrWhiteSpace(beforeValue))
+        {
+            result.AddError($"表單{formNumber}變更前尚未填寫");
+        }
+
+        if (string.IsNullOrWhiteSpace(afterValue))
+        {
+            result.AddError($"表單{formNumber}變更後尚未填寫");
         }
     }
 

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Data;
@@ -11,11 +11,11 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
 {
     
     /// <summary>
-    ///  ()
+    /// 科專類-階段審核紀錄 ()
     /// </summary>
     [DataContract]
     [Serializable()]
-    [GisTableAttribute("OFS_SCI_StageExam", "", false)]
+    [GisTableAttribute("OFS_SCI_StageExam", "科專類-階段審核紀錄", false)]
     public class IOFS_SCI_StageExam : IMeta
     {
         
@@ -120,6 +120,41 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
                         UPDATE_COLUMN.Add("Stage");
                     }
                     _Stage = value;
+                }
+            }
+        }
+        
+        protected int? _ExamVersion = null;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("ExamVersion", "ExamVersion", DataSource.TABLE, "", false)]
+        public virtual int? ExamVersion
+        {
+            get
+            {
+                return _ExamVersion;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_ExamVersion == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_ExamVersion.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("ExamVersion") == -1)
+                    {
+                        UPDATE_COLUMN.Add("ExamVersion");
+                    }
+                    _ExamVersion = value;
                 }
             }
         }
@@ -346,7 +381,7 @@ namespace GS.OCA_OceanSubsidy.Entity
     using GS.OCA_OceanSubsidy.Entity.Base;
     
     /// <summary>
-    ///  ()
+    /// 科專類-階段審核紀錄 ()
     /// </summary>
     [DataContract]
     [Serializable()]

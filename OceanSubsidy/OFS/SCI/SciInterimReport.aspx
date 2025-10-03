@@ -55,7 +55,7 @@
                             </div>
                         </td>
                         <td>
-                            <button class="btn btn-sm btn-teal-dark mx-auto" type="button" data-bs-toggle="modal" data-bs-target="#reportDetailModal">
+                            <button class="btn btn-sm btn-teal-dark mx-auto" type="button" onclick="showReviewFiles(1)">
                                 <i class="fas fa-file-alt" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="詳情"></i>
                             </button>
                         </td>
@@ -86,7 +86,7 @@
                             </div>
                         </td>
                         <td>
-                            <button class="btn btn-sm btn-teal-dark mx-auto" type="button" disabled>
+                            <button class="btn btn-sm btn-teal-dark mx-auto" type="button" onclick="showReviewFiles(2)">
                                 <i class="fas fa-file-alt" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="詳情"></i>
                             </button>
                         </td>
@@ -97,10 +97,7 @@
     </div>
     <!-- 底部區塊 -->
     <div class="block-bottom bg-light-teal">
-        <button type="button" class="btn btn-outline-teal" onclick="submitReport(true)">
-            暫存
-        </button>
-        <button type="button" class="btn btn-teal" onclick="submitReport(false)">
+        <button type="button" class="btn btn-teal" id="submitButton" onclick="submitReport()">
             <i class="fas fa-check"></i>
             提送
         </button>
@@ -184,7 +181,7 @@
 
     <!-- 審查意見詳情模態視窗 -->
     <div class="modal fade" id="reportDetailModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="reportDetailModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-md">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="fs-24 text-green-light fw-bold">審查意見</h4>
@@ -198,17 +195,12 @@
                         <table class="table align-middle gray-table lh-base">
                             <thead>
                                 <tr>
-                                    <th width="150">審查委員</th>
-                                    <th>評分</th>
+                                    <th width="150">版本</th>
+                                    <th>審查意見</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td>委員Ａ</td>
-                                    <td>
-                                        <a href="#" class="link-black">審查意見.pdf</a>
-                                    </td>
-                                </tr>
+                            <tbody id="reviewFilesTableBody">
+                                <!-- 動態生成的審查意見檔案會在這裡 -->
                             </tbody>
                         </table>
                     </div>
@@ -226,7 +218,7 @@
             // 從URL參數讀取stage，預設為1
             var urlParams = new URLSearchParams(window.location.search);
             var stage = parseInt(urlParams.get('stage')) || 1;
-            
+
             loadReportData(stage);
             checkReviewPermissionAndStatus();
             initializeReviewSections();
@@ -440,17 +432,16 @@
             window.location.href = `SciInterimReport.aspx?action=download&projectID=${encodeURIComponent(currentProjectID)}&fileCode=${encodeURIComponent(fileCode)}`;
         }
         
-        // 提送報告 (isDraft: true=暫存, false=提送)
-        function submitReport(isDraft = false) {
-            let actionText = isDraft ? '暫存' : '提送';
+        // 提送報告
+        function submitReport() {
             let reportTypeName = currentReportType === 1 ? '期中報告' : '期末報告';
-            
+
             // 確認操作
             Swal.fire({
-                title: `確定${actionText}${reportTypeName}？`,
+                title: `確定提送${reportTypeName}？`,
                 icon: 'question',
                 showCancelButton: true,
-                confirmButtonText: actionText,
+                confirmButtonText: '提送',
                 cancelButtonText: '取消'
             }).then((result) => {
                 if (result.isConfirmed) {
@@ -460,8 +451,7 @@
                         contentType: 'application/json; charset=utf-8',
                         data: JSON.stringify({
                             projectID: currentProjectID,
-                            stage: currentReportType,
-                            isDraft: isDraft
+                            stage: currentReportType
                         }),
                         dataType: 'json',
                         success: function(response) {
@@ -996,11 +986,21 @@
                 success: function(response) {
                     if (response.d && response.d.Success) {
                         var status = response.d.Data.Status;
+                        var submitButton = document.getElementById('submitButton');
+
                         // 只有狀態為「審核中」時才顯示審核面板
                         if (status === '審核中') {
                             $('#reviewPanel').show();
+                            // 審核中時隱藏提送按鈕
+                            if (submitButton) {
+                                submitButton.classList.add('d-none');
+                            }
                         } else {
                             $('#reviewPanel').hide();
+                            // 非審核中時顯示提送按鈕
+                            if (submitButton) {
+                                submitButton.classList.remove('d-none');
+                            }
                         }
                     }
                 },
@@ -1019,14 +1019,14 @@
                 Swal.fire('錯誤', '請選擇審查方式', 'error');
                 return;
             }
-            
+
             // 取得審查結果
             var reviewResult = $('input[name="reviewResult"]:checked').val();
             if (!reviewResult) {
                 Swal.fire('錯誤', '請選擇審查結果', 'error');
                 return;
             }
-            
+
             // 取得審查意見
             var reviewComment = $('#reviewComment').text().trim();
             if (!reviewComment || reviewComment === '請輸入原因') {
@@ -1036,10 +1036,10 @@
                 }
                 reviewComment = '';
             }
-            
+
             var reportTypeName = currentReportType === 1 ? '期中報告' : '期末報告';
             var resultText = reviewResult === 'pass' ? '通過' : '不通過';
-            
+
             // 確認提交
             Swal.fire({
                 title: `確定提交${reportTypeName}審核結果？`,
@@ -1077,6 +1077,131 @@
                     });
                 }
             });
+        }
+
+        // 顯示審查意見檔案
+        function showReviewFiles(fileType) {
+            // fileType: 1=初版, 2=修正版
+            $.ajax({
+                url: 'SciInterimReport.aspx/GetReviewFiles',
+                type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify({
+                    projectID: currentProjectID,
+                    stage: currentReportType,
+                    fileType: fileType
+                }),
+                dataType: 'json',
+                success: function(response) {
+                    if (response.d && response.d.Success) {
+                        renderReviewFiles(response.d.Files);
+                        // 顯示 modal
+                        var modal = new bootstrap.Modal(document.getElementById('reportDetailModal'));
+                        modal.show();
+                    } else {
+                        Swal.fire('錯誤', response.d.Message || '載入審查意見失敗', 'error');
+                    }
+                },
+                error: function() {
+                    Swal.fire('錯誤', '系統發生錯誤', 'error');
+                }
+            });
+        }
+
+        // 渲染審查意見檔案到 table
+        function renderReviewFiles(files) {
+            var tbody = document.getElementById('reviewFilesTableBody');
+            tbody.innerHTML = '';
+
+            if (!files || files.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">尚無審查委員</td></tr>';
+                return;
+            }
+
+            // 檢查是否有審查委員資訊
+            var hasReviewer = files.length > 0 && files[0].Reviewer && files[0].Reviewer.trim() !== '';
+
+            // 動態調整表格標題
+            var thead = document.querySelector('#reviewFilesTableBody').closest('table').querySelector('thead tr');
+            if (hasReviewer) {
+                thead.innerHTML = `
+                    <th width="80">版本</th>
+                    <th width="100">審查委員</th>
+                    <th>審查意見</th>
+                    <th width="100" class="text-center">是否已提交</th>
+                `;
+            } else {
+                thead.innerHTML = `
+                    <th width="100">版本</th>
+                    <th>審查意見</th>
+                    <th width="100" class="text-center">是否已提交</th>
+                `;
+            }
+
+            // 渲染檔案列表
+            files.forEach(function(file) {
+                var versionText = getVersionText(file.ExamVersion);
+                var fileName = getFileNameFromPath(file.ReviewFilePath);
+                var submitIcon = file.IsSubmit
+                    ? '<i class="fas fa-check text-success"></i>'
+                    : '<i class="fas fa-times text-danger"></i>';
+
+                var fileDisplay = file.IsSubmit && file.ReviewFilePath
+                    ? `<a href="#" class="link-black" onclick="downloadReviewFile('${escapeHtml(file.ReviewFilePath)}'); return false;">
+                         <i class="fas fa-download me-1"></i>${escapeHtml(fileName)}
+                       </a>`
+                    : '<span class="text-muted">尚未提交</span>';
+
+                var row = document.createElement('tr');
+                if (hasReviewer) {
+                    row.innerHTML = `
+                        <td>${versionText}</td>
+                        <td>${escapeHtml(file.Reviewer || '')}</td>
+                        <td>${fileDisplay}</td>
+                        <td class="text-center">${submitIcon}</td>
+                    `;
+                } else {
+                    row.innerHTML = `
+                        <td>${versionText}</td>
+                        <td>${fileDisplay}</td>
+                        <td class="text-center">${submitIcon}</td>
+                    `;
+                }
+                tbody.appendChild(row);
+            });
+        }
+
+        // 取得版本文字
+        function getVersionText(examVersion) {
+            if (examVersion === 0) {
+                return '初版';
+            } else {
+                return `修正版v${examVersion}`;
+            }
+        }
+
+        // 從檔案路徑中取得檔案名稱
+        function getFileNameFromPath(filePath) {
+            if (!filePath) return '';
+            var parts = filePath.split('/');
+            return parts[parts.length - 1];
+        }
+
+        // HTML 跳脫處理
+        function escapeHtml(text) {
+            var map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+
+        // 下載審查意見檔案
+        function downloadReviewFile(filePath) {
+            window.location.href = `/Service/SCI_Download.ashx?action=downloadReviewFile&filePath=${encodeURIComponent(filePath)}`;
         }
     </script>
 </asp:Content>

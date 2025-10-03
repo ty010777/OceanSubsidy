@@ -7,6 +7,7 @@ using System.Web;
 using GS.Data;
 using GS.Data.Sql;
 using GS.OCA_OceanSubsidy.Entity;
+using GS.OCA_OceanSubsidy.Model.OFS;
 
 /// <summary>
 /// 海洋科技專案計畫申請 - 上傳附件相關資料操作
@@ -416,6 +417,76 @@ public class OFS_SciUploadAttachmentsHelper
         catch (Exception ex)
         {
             throw new Exception($"刪除附件檔案時發生錯誤：{ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// 更新計畫變更狀態為已完成 (IsProjChanged = 2)
+    /// </summary>
+    /// <param name="projectID">專案ID</param>
+    public static void UpdateProjectChangeCompleted(string projectID)
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            db.CommandText = @"
+                UPDATE [OFS_SCI_Project_Main]
+                SET IsProjChanged = @IsProjChanged,
+                    updated_at = GETDATE()
+                WHERE ProjectID = @ProjectID";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@IsProjChanged", 2);
+            db.Parameters.Add("@ProjectID", projectID);
+
+            try
+            {
+                db.ExecuteNonQuery();
+                System.Diagnostics.Debug.WriteLine($"專案 {projectID} 計畫變更狀態更新成功：IsProjChanged=2");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"更新計畫變更狀態時發生錯誤：{ex.Message}", ex);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 取得計畫變更最新版本號
+    /// </summary>
+    /// <param name="projectID">專案ID</param>
+    /// <returns>最新版本號（計畫變更紀錄筆數）</returns>
+    public static int GetLatestChangeVersionNumber(string projectID)
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            db.CommandText = @"
+                SELECT COUNT(ID)
+                FROM [OFS_ProjectChangeRecord]
+                WHERE Type = @Type AND DataID = @DataID AND Method = @Method";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@Type", "SCI");
+            db.Parameters.Add("@DataID", projectID);
+            db.Parameters.Add("@Method", 1);
+
+            try
+            {
+                DataTable dt = db.GetTable();
+                int count = 0;
+
+                if (dt.Rows.Count > 0 && dt.Rows[0][0] != DBNull.Value)
+                {
+                    count = Convert.ToInt32(dt.Rows[0][0]);
+                }
+
+                System.Diagnostics.Debug.WriteLine($"專案 {projectID} 的計畫變更記錄數：{count}");
+                return count;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"取得計畫變更版本號時發生錯誤：{ex.Message}");
+                throw new Exception($"取得計畫變更版本號時發生錯誤：{ex.Message}", ex);
+            }
         }
     }
 }

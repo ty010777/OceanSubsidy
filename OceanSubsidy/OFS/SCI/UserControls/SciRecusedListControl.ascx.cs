@@ -41,14 +41,16 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
             if (!IsPostBack)
             {
                 InitializeControl();
+
+                if (!string.IsNullOrEmpty(ProjectID))
+                {
+                    LoadData(ProjectID);
+                    // 載入變更說明控制項
+                    tab4_ucChangeDescription.LoadData(ProjectID);
+                }
             }
-            if (!string.IsNullOrEmpty(ProjectID))
-            {
-                
-                LoadData(ProjectID);
-                // 載入變更說明控制項
-                ucChangeDescription.LoadData(ProjectID);
-            }
+     
+
             // 檢查表單狀態並控制暫存按鈕顯示
             CheckFormStatusAndHideTempSaveButton();
         }
@@ -478,6 +480,203 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
     }
 
     /// <summary>
+    /// 儲存表單資料到 Session
+    /// </summary>
+    private void SaveFormDataToSession()
+    {
+        try
+        {
+            string sessionKey = $"SciRecusedList_FormData_{ProjectID}";
+
+            // 取得表單資料
+            var committeeData = GetCommitteeDataFromForm();
+            var techData = GetTechDataFromForm();
+
+            // 取得 checkbox 狀態
+            bool isChkNoAvoidance = false;
+            string checkboxValue = HttpContext.Current.Request.Form[chkNoAvoidance.UniqueID];
+            if (!string.IsNullOrEmpty(checkboxValue))
+            {
+                isChkNoAvoidance = checkboxValue.ToLower() == "on" || checkboxValue.ToLower() == "true";
+            }
+
+            // 建立 Session 資料物件
+            var sessionData = new
+            {
+                CommitteeData = committeeData,
+                TechData = techData,
+                IsChkNoAvoidance = isChkNoAvoidance,
+                SaveTime = DateTime.Now
+            };
+
+            // 儲存到 Session
+            Session[sessionKey] = sessionData;
+
+            System.Diagnostics.Debug.WriteLine($"表單資料已儲存到 Session: {sessionKey}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"儲存表單資料到 Session 失敗: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 從 Session 還原表單資料
+    /// </summary>
+    private void RestoreFormDataFromSession()
+    {
+        try
+        {
+            string sessionKey = $"SciRecusedList_FormData_{ProjectID}";
+
+            if (Session[sessionKey] != null)
+            {
+                // 從 Session 取得資料
+                dynamic sessionData = Session[sessionKey];
+
+                // 將資料轉換為可序列化格式
+                var committeeData = ((List<OFS_SCI_Other_Recused>)sessionData.CommitteeData)
+                    .Select(x => new
+                    {
+                        committeeName = x.RecusedName,
+                        committeeUnit = x.EmploymentUnit,
+                        committeePosition = x.JobTitle,
+                        committeeReason = x.RecusedReason
+                    }).ToArray();
+
+                var techData = ((List<OFS_SCI_Other_TechReadiness>)sessionData.TechData)
+                    .Select(x => new
+                    {
+                        techItem = x.Name,
+                        trlPlanLevel = x.Bef_TRLevel,
+                        trlTrackLevel = x.Aft_TRLevel,
+                        techProcess = x.Description
+                    }).ToArray();
+
+                bool isChkNoAvoidance = (bool)sessionData.IsChkNoAvoidance;
+
+                // 設定 checkbox 狀態
+                chkNoAvoidance.Checked = isChkNoAvoidance;
+
+                // 將資料傳遞到前端
+                var dataToSend = new
+                {
+                    recusedData = committeeData,
+                    techData = techData,
+                    isRecused = isChkNoAvoidance,
+                    fromSession = true
+                };
+
+                var dataJson = new JavaScriptSerializer().Serialize(dataToSend);
+
+                string script = $@"
+                    window.existingData = {dataJson};
+
+                    setTimeout(function() {{
+                        if (typeof loadExistingData === 'function') {{
+                            loadExistingData();
+                            console.log('已從 Session 還原資料：', window.existingData);
+
+                            // 如果 IsRecused 為 true，需要鎖定委員表格
+                            if (window.existingData.isRecused && typeof clearAndLockCommitteeTable === 'function') {{
+                                const $tbody = $('#committeeTableBody');
+                                clearAndLockCommitteeTable($tbody);
+                                console.log('已鎖定委員表格（從 Session）');
+                            }}
+                        }} else {{
+                            console.log('loadExistingData 函數未找到');
+                        }}
+                    }}, 200);
+                ";
+
+                Page.ClientScript.RegisterStartupScript(this.GetType(), "RestoreFromSession", script, true);
+
+                System.Diagnostics.Debug.WriteLine($"已從 Session 還原表單資料: {sessionKey}");
+            }
+
+            // 重新載入技術能力與技術關聯圖（從資料庫讀取）
+            if (!string.IsNullOrEmpty(ProjectID))
+            {
+                LoadTechDiagramFileFromDatabase();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"從 Session 還原表單資料失敗: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 從資料庫載入技術能力與技術關聯圖
+    /// </summary>
+    private void LoadTechDiagramFileFromDatabase()
+    {
+        try
+        {
+            var uploadFiles = OFS_SciWorkSchHelper.GetUploadFilesByProjectIDAndFileCode(ProjectID, "TechnologyDiagram");
+
+            if (uploadFiles.Any())
+            {
+                var file = uploadFiles.First();
+                bool isProd = Request.Url.Host.Equals("projects.geosense", StringComparison.OrdinalIgnoreCase);
+
+                // 設定 ImageUrl
+                if (isProd)
+                {
+                    file.TemplatePath = ResolveUrl($"~/OceanSubsidy/{file.TemplatePath}");
+                }
+                else
+                {
+                    file.TemplatePath = ResolveUrl($"~/{file.TemplatePath}");
+                }
+
+                var script = $@"
+                    setTimeout(function() {{
+                        if (window.techDiagramManager) {{
+                            window.techDiagramManager.loadTechDiagramFile('{file.TemplatePath}', '{file.FileName}');
+                            console.log('已從資料庫重新載入技術能力與技術關聯圖');
+                        }} else {{
+                            setTimeout(function() {{
+                                if (window.techDiagramManager) {{
+                                    window.techDiagramManager.loadTechDiagramFile('{file.TemplatePath}', '{file.FileName}');
+                                    console.log('已從資料庫重新載入技術能力與技術關聯圖（延遲）');
+                                }}
+                            }}, 1000);
+                        }}
+                    }}, 100);
+                ";
+
+                Page.ClientScript.RegisterStartupScript(this.GetType(), "LoadTechDiagramFileFromDB", script, true);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"從資料庫載入技術能力與技術關聯圖時發生錯誤: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 清除表單資料 Session
+    /// </summary>
+    private void ClearFormDataSession()
+    {
+        try
+        {
+            string sessionKey = $"SciRecusedList_FormData_{ProjectID}";
+
+            if (Session[sessionKey] != null)
+            {
+                Session.Remove(sessionKey);
+                System.Diagnostics.Debug.WriteLine($"已清除 Session 資料: {sessionKey}");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"清除 Session 資料失敗: {ex.Message}");
+        }
+    }
+
+    /// <summary>
     /// 處理例外錯誤
     /// </summary>
     private void HandleException(Exception ex, string context)
@@ -487,40 +686,39 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
 
         // 可以在這裡加入更多錯誤處理邏輯，如記錄到日誌
     }
- protected void btnSave_Click(object sender, EventArgs e)
+
+    #endregion
+
+    #region 按鈕事件
+
+    protected void btnSave_Click(object sender, EventArgs e)
     {
         string ProjectID = Request.QueryString["ProjectID"] ?? "";
         try
         {
-            // 驗證 UserControl 資料
-            var validationResult = ValidateForm();
-            if (!validationResult.IsValid)
-            {
-                Page.ClientScript.RegisterStartupScript(this.GetType(), "ValidationError", 
-                    $"alert('請修正以下錯誤：\\n{validationResult.GetErrorsAsString()}');", true);
-                return;
-            }
+            // 先儲存表單資料到 Session
+            SaveFormDataToSession();
 
             // 儲存 UserControl 資料
             if (SaveData(ProjectID))
             {
                 // 儲存變更說明
-                ucChangeDescription.SaveChangeDescription(ProjectID);
-                
+                tab4_ucChangeDescription.SaveChangeDescription(ProjectID);
+
 
                 // 更新版本狀態（暫存）
                 UpdateVersionStatusBasedOnAction(ProjectID, false);
-
-                // 重新載入資料
-                LoadData(ProjectID);
+                
+                RestoreFormDataFromSession();
+                // 清除 Session（儲存成功後）
+                ClearFormDataSession();
 
                 // 顯示成功訊息
-                Page.ClientScript.RegisterStartupScript(this.GetType(), "alert", "alert('儲存成功！');", true);
-            }
+                ShowSuccessMessage("儲存成功！");            }
         }
         catch (Exception ex)
         {
-            // 錯誤處理
+            // 錯誤處理（保留 Session 資料以便還原）
             Page.ClientScript.RegisterStartupScript(this.GetType(), "alert", $"alert('儲存失敗：{ex.Message}');", true);
         }
     }
@@ -530,12 +728,16 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
         string ProjectID = Request.QueryString["ProjectID"] ?? "";
         try
         {
+            // 先儲存表單資料到 Session
+            SaveFormDataToSession();
+
             // 驗證 UserControl 資料
             var validationResult = ValidateForm();
             if (!validationResult.IsValid)
             {
-                Page.ClientScript.RegisterStartupScript(this.GetType(), "ValidationError", 
+                Page.ClientScript.RegisterStartupScript(this.GetType(), "ValidationError",
                     $"alert('請修正以下錯誤：\\n{validationResult.GetErrorsAsString()}');", true);
+                RestoreFormDataFromSession();
                 return;
             }
 
@@ -543,21 +745,29 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
             if (SaveData(ProjectID))
             {
                 // 儲存變更說明
-                ucChangeDescription.SaveChangeDescription(ProjectID);
+                tab4_ucChangeDescription.SaveChangeDescription(ProjectID);
 
                 // 更新版本狀態（完成）
                 UpdateVersionStatusBasedOnAction(ProjectID, true);
+                
+                //postback 還原資料
+                RestoreFormDataFromSession();
+                // 清除 Session（儲存成功後）
+                ClearFormDataSession();
 
-                // 顯示成功訊息並導向下一頁
-                string redirectScript = $@"
-                    window.location.href = 'SciUploadAttachments.aspx?ProjectID={ProjectID}';
-                ";
-                Page.ClientScript.RegisterStartupScript(this.GetType(), "redirect", redirectScript, true);
+                // 判斷當前頁面是否為 SciInprogress_Approved.aspx
+                string currentPage = System.IO.Path.GetFileName(Request.Url.AbsolutePath);
+                string redirectUrl = currentPage != "SciInprogress_Approved.aspx"
+                    ? $"SciUploadAttachments.aspx?ProjectID={ProjectID}"
+                    : "";
+
+                // 顯示成功訊息（如果有 URL 則 1 秒後跳轉）
+                ShowSuccessMessage("儲存成功！", redirectUrl);
             }
         }
         catch (Exception ex)
         {
-            // 錯誤處理
+            // 錯誤處理（保留 Session 資料以便還原）
             Page.ClientScript.RegisterStartupScript(this.GetType(), "alert", $"alert('儲存失敗：{ex.Message}');", true);
         }
     }
@@ -627,7 +837,7 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
                     if (formStatus == "完成")
                     {
                         // 隱藏暫存按鈕
-                        btnTempSave.Style["display"] = "none";
+                        tab4_btnTempSave.Style["display"] = "none";
                     }
 
             }
@@ -649,7 +859,7 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
         {
             if (!string.IsNullOrEmpty(ProjectID))
             {
-                return ucChangeDescription.GetChangeDescriptionBySourcePage(ProjectID, "SciRecusedList");
+                return tab4_ucChangeDescription.GetChangeDescriptionBySourcePage(ProjectID, "SciRecusedList");
             }
             return ("", "");
         }
@@ -661,4 +871,110 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
     }
 
     #endregion
+
+    /// <summary>
+    /// 顯示成功訊息
+    /// </summary>
+    /// <param name="message">訊息內容</param>
+    /// <param name="redirectUrl">跳轉網址，如果為空則不跳轉</param>
+    private void ShowSuccessMessage(string message, string redirectUrl = "")
+    {
+        string safeMessage = System.Web.HttpUtility.JavaScriptStringEncode(message);
+
+        string script;
+
+        if (!string.IsNullOrEmpty(redirectUrl))
+        {
+            // 有 URL：顯示 1 秒後自動跳轉
+            string safeUrl = System.Web.HttpUtility.JavaScriptStringEncode(redirectUrl);
+            script = $@"
+                Swal.fire({{
+                    title: '成功',
+                    text: '{safeMessage}',
+                    icon: 'success',
+                    timer: 1000,
+                    showConfirmButton: false,
+                    customClass: {{
+                        popup: 'animated fadeInDown'
+                    }}
+                }}).then(function() {{
+                    window.location.href = '{safeUrl}';
+                }});
+            ";
+        }
+        else
+        {
+            // 沒有 URL：正常顯示訊息
+            script = $@"
+                Swal.fire({{
+                    title: '成功',
+                    text: '{safeMessage}',
+                    icon: 'success',
+                    confirmButtonText: '確定',
+                    customClass: {{
+                        popup: 'animated fadeInDown'
+                    }}
+                }});
+            ";
+        }
+
+        Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowSuccessMessage" + Guid.NewGuid().ToString(), script, true);
+    }
+
+    /// <summary>
+    /// 顯示錯誤訊息
+    /// </summary>
+    private void ShowErrorMessage(string message, string callback = "")
+    {
+        string safeMessage = System.Web.HttpUtility.JavaScriptStringEncode(message.Replace("\r\n", "<br>"));
+
+        string script = $@"
+            Swal.fire({{
+                title: '錯誤',
+                html: '{safeMessage}',
+                icon: 'error',
+                confirmButtonText: '確定',
+                customClass: {{
+                    popup: 'animated fadeInDown'
+                }}
+            }})";
+
+        if (!string.IsNullOrEmpty(callback))
+        {
+            script += $".then(function() {{ {callback} }})";
+        }
+
+        script += ";";
+
+        Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowErrorMessage" + Guid.NewGuid().ToString(), script, true);
+    }
+
+    /// <summary>
+    /// 顯示警告訊息
+    /// </summary>
+    private void ShowWarningMessage(string message, string callback = "")
+    {
+        string safeMessage = System.Web.HttpUtility.JavaScriptStringEncode(message);
+
+        string script = $@"
+            Swal.fire({{
+                title: '警告',
+                text: '{safeMessage}',
+                icon: 'warning',
+                confirmButtonText: '確定',
+                customClass: {{
+                    popup: 'animated fadeInDown'
+                }}
+            }})";
+
+        if (!string.IsNullOrEmpty(callback))
+        {
+            script += $".then(function() {{ {callback} }})";
+        }
+
+        script += ";";
+
+        Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowWarningMessage" + Guid.NewGuid().ToString(), script, true);
+    }
+
 }

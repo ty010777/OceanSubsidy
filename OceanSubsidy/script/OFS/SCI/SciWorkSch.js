@@ -133,8 +133,8 @@ class DOMCache {
             diagramPreviewContainer: () => document.getElementById('diagramPreviewContainer'),
             diagramPreview: () => document.getElementById('diagramPreview'),
             form1: () => document.getElementById('form1'),
-            btnTempSave: () => document.getElementById('btnTempSave'),
-            btnSaveAndNext: () => document.getElementById('btnSaveAndNext'),
+            btnTempSave: () => document.getElementById('tab2_btnTempSave'),
+            btnSaveAndNext: () => document.getElementById('tab2_btnSaveAndNext'),
             
             // 常用的選擇器
             subTable: () => document.querySelector('.sub-table'),
@@ -647,7 +647,7 @@ class WorkItemTableManager {
             });
         } else {
             workItemsData.forEach(item => {
-                const code = item.itemCode || item.code;
+                const code = item.code;
                 if (/^[A-Z]$/.test(code)) {
                     if (!letterGroups[code]) {
                         letterGroups[code] = { main: item, subs: [] };
@@ -679,7 +679,7 @@ class WorkItemTableManager {
 
             if (group.subs && group.subs.length > 0) {
                 group.subs.forEach((subItem, index) => {
-                    const code = subItem.itemCode || subItem.code;
+                    const code = subItem.code;
                     const subNumber = parseInt(code.substring(1)) || (index + 1);
                     const isLastInGroup = (index === group.subs.length - 1);
                     const subRow = this.createSubItemRow(letter, subNumber, isLastInGroup);
@@ -1206,8 +1206,8 @@ class DataManager {
             });
         }
 
-        const tempSaveBtn = document.getElementById('btnTempSave');
-        const saveNextBtn = document.getElementById('btnSaveAndNext');
+        const tempSaveBtn = document.getElementById('tab2_btnTempSave');
+        const saveNextBtn = document.getElementById('tab2_btnSaveAndNext');
 
         if (tempSaveBtn) {
             tempSaveBtn.addEventListener('click', (e) => {

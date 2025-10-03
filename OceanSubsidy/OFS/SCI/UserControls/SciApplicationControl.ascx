@@ -477,20 +477,22 @@
         </div>
     </div>
     <!-- 變更說明 UserControl -->
-    <uc:ChangeDescriptionControl ID="ucChangeDescription" runat="server" SourcePage="SciApplication" />
+    <uc:ChangeDescriptionControl ID="tab1_ucChangeDescription" runat="server" SourcePage="SciApplication" />
 
      <!-- 底部區塊 -->
        <div class="block-bottom bg-light-teal view-mode">
-           
-            <asp:Button ID="btnTempSave" runat="server"  
-                      Text="暫存"  
-                      CssClass="btn btn-outline-teal"  
-                      OnClick="btnSave_Click" /> 
-           
-            <asp:Button ID="btnSubmit" runat="server" 
-                      Text="完成本頁，下一步"  
-                      CssClass="btn btn-teal"  
-                      OnClick="btnSave_Click" /> 
+
+            <asp:Button ID="tab1_btnTempSave" runat="server"
+                      Text="暫存"
+                      CssClass="btn btn-outline-teal"
+                      OnClientClick="if (typeof syncAllChangeDescriptions === 'function') { syncAllChangeDescriptions(); } return true;"
+                      OnClick="btnSave_Click" />
+
+            <asp:Button ID="tab1_btnSubmit" runat="server"
+                      Text="完成本頁，下一步"
+                      CssClass="btn btn-teal"
+                      OnClientClick="if (typeof syncAllChangeDescriptions === 'function') { syncAllChangeDescriptions(); } return true;"
+                      OnClick="btnSave_Click" />
        </div>
 </div>
 

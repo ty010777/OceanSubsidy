@@ -220,53 +220,72 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
             return result;
         }
         /// <summary>
-        /// 提送階段審查報告 (新增或更新 OFS_SCI_StageExam 記錄)
+        /// 取得下一個 ExamVersion 編號
+        /// </summary>
+        /// <param name="projectID">專案ID</param>
+        /// <param name="stage">階段</param>
+        /// <returns>下一個版本號</returns>
+        private static int GetNextExamVersion(string projectID, int stage)
+        {
+            using (DbHelper db = new DbHelper())
+            {
+                try
+                {
+                    db.CommandText = @"
+                        SELECT MAX([ExamVersion])
+                        FROM [OFS_SCI_StageExam]
+                        WHERE [ProjectID] = @ProjectID AND [Stage] = @Stage";
+                    db.Parameters.Clear();
+                    db.Parameters.Add("@ProjectID", projectID);
+                    db.Parameters.Add("@Stage", stage);
+
+                    DataTable dt = db.GetTable();
+                    if (dt.Rows.Count > 0 && dt.Rows[0][0] != DBNull.Value)
+                    {
+                        return Convert.ToInt32(dt.Rows[0][0]) + 1;
+                    }
+
+                    return 0; // 第一次提送，版本號為 0
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"取得下一個版本號時發生錯誤: {ex.Message}");
+                    throw;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 提送階段審查報告 (每次都新增一筆記錄，透過 ExamVersion 區分版本)
         /// </summary>
         /// <param name="projectID">專案ID</param>
         /// <param name="stage">階段 (1=期中報告, 2=期末報告)</param>
-        /// <param name="status">狀態 (暫存/審核中)</param>
+        /// <param name="status">狀態 (審核中)</param>
         public static void SubmitStageExam(string projectID, int stage, string status)
         {
             using (DbHelper db = new DbHelper())
             {
                 try
                 {
-                    // 檢查是否已存在記錄
-                    db.CommandText = "SELECT COUNT(*) FROM [OFS_SCI_StageExam] WHERE [ProjectID] = @ProjectID AND [Stage] = @Stage";
-                    db.Parameters.Clear();
-                    db.Parameters.Add("@ProjectID", projectID);
-                    db.Parameters.Add("@Stage", stage);
-                    
-                    bool exists = Convert.ToInt32(db.GetTable().Rows[0][0]) > 0;
+                    // 取得下一個版本號
+                    int nextVersion = GetNextExamVersion(projectID, stage);
+
+                    // 每次都新增記錄
+                    db.CommandText = @"
+                        INSERT INTO [OFS_SCI_StageExam]
+                        ([ProjectID], [Stage], [ExamVersion], [ReviewMethod], [Status], [Reviewer], [Account], [create_at], [update_at])
+                        VALUES (@ProjectID, @Stage, @ExamVersion, @ReviewMethod, @Status, @Reviewer, @Account, @create_at, @update_at)";
 
                     db.Parameters.Clear();
                     db.Parameters.Add("@ProjectID", projectID);
                     db.Parameters.Add("@Stage", stage);
+                    db.Parameters.Add("@ExamVersion", nextVersion);
+                    db.Parameters.Add("@ReviewMethod", DBNull.Value); // 審查方式為 null (供審查時填入)
                     db.Parameters.Add("@Status", status);
+                    db.Parameters.Add("@Reviewer", DBNull.Value); // 審核者為 null (供審查時填入)
+                    db.Parameters.Add("@Account", DBNull.Value); // 審核者帳號為 null (供審查時填入)
+                    db.Parameters.Add("@create_at", DateTime.Now);
                     db.Parameters.Add("@update_at", DateTime.Now);
-
-                    if (exists)
-                    {
-                        // 更新現有記錄
-                        db.CommandText = @"
-                            UPDATE [OFS_SCI_StageExam] 
-                            SET [Status] = @Status, 
-                                [update_at] = @update_at
-                            WHERE [ProjectID] = @ProjectID AND [Stage] = @Stage";
-                    }
-                    else
-                    {
-                        // 新增記錄
-                        db.Parameters.Add("@ReviewMethod", DBNull.Value); // 審查方式為 null (供審查時填入)
-                        db.Parameters.Add("@Reviewer", DBNull.Value); // 審核者為 null (供審查時填入)
-                        db.Parameters.Add("@Account", DBNull.Value); // 審核者帳號為 null (供審查時填入)
-                        db.Parameters.Add("@create_at", DateTime.Now);
-                        
-                        db.CommandText = @"
-                            INSERT INTO [OFS_SCI_StageExam] 
-                            ([ProjectID], [Stage], [ReviewMethod], [Status], [Reviewer], [Account], [create_at], [update_at]) 
-                            VALUES (@ProjectID, @Stage, @ReviewMethod, @Status, @Reviewer, @Account, @create_at, @update_at)";
-                    }
 
                     db.ExecuteNonQuery();
                 }
@@ -279,7 +298,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
         }
 
         /// <summary>
-        /// 取得階段審查狀態
+        /// 取得階段審查狀態 (查詢最新版本)
         /// </summary>
         /// <param name="projectID">專案ID</param>
         /// <param name="stage">階段</param>
@@ -290,14 +309,16 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
             {
                 try
                 {
+                    // 查詢最新版本的審查狀態
                     db.CommandText = @"
-                        SELECT [Status], [ReviewMethod], [Reviewer], [Account]
-                        FROM [OFS_SCI_StageExam] 
-                        WHERE [ProjectID] = @ProjectID AND [Stage] = @Stage";
+                        SELECT TOP 1 [Status], [ReviewMethod], [Reviewer], [Account]
+                        FROM [OFS_SCI_StageExam]
+                        WHERE [ProjectID] = @ProjectID AND [Stage] = @Stage
+                        ORDER BY [ExamVersion] DESC";
                     db.Parameters.Clear();
                     db.Parameters.Add("@ProjectID", projectID);
                     db.Parameters.Add("@Stage", stage);
-                    
+
                     DataTable dt = db.GetTable();
                     if (dt.Rows.Count > 0)
                     {
@@ -310,7 +331,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                             Account = row["Account"]?.ToString() ?? ""
                         };
                     }
-                    
+
                     return new StageExamStatus { Status = "", ReviewMethod = "", Reviewer = "", Account = "" };
                 }
                 catch (Exception ex)
@@ -322,7 +343,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
         }
 
         /// <summary>
-        /// 審核階段報告
+        /// 審核階段報告 (更新最新版本)
         /// </summary>
         /// <param name="projectID">專案ID</param>
         /// <param name="stage">階段</param>
@@ -337,15 +358,34 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
             {
                 try
                 {
+                    // 先取得最新版本號
                     db.CommandText = @"
-                        UPDATE [OFS_SCI_StageExam] 
-                        SET [ReviewMethod] = @ReviewMethod, 
+                        SELECT TOP 1 [ExamVersion]
+                        FROM [OFS_SCI_StageExam]
+                        WHERE [ProjectID] = @ProjectID AND [Stage] = @Stage
+                        ORDER BY [ExamVersion] DESC";
+                    db.Parameters.Clear();
+                    db.Parameters.Add("@ProjectID", projectID);
+                    db.Parameters.Add("@Stage", stage);
+
+                    DataTable dt = db.GetTable();
+                    if (dt.Rows.Count == 0)
+                    {
+                        throw new Exception("找不到對應的階段審查記錄");
+                    }
+
+                    int latestVersion = Convert.ToInt32(dt.Rows[0]["ExamVersion"]);
+
+                    // 更新最新版本的記錄
+                    db.CommandText = @"
+                        UPDATE [OFS_SCI_StageExam]
+                        SET [ReviewMethod] = @ReviewMethod,
                             [Status] = @Status,
                             [Reviewer] = @Reviewer,
                             [Account] = @Account,
                             [update_at] = @update_at
-                        WHERE [ProjectID] = @ProjectID AND [Stage] = @Stage";
-                    
+                        WHERE [ProjectID] = @ProjectID AND [Stage] = @Stage AND [ExamVersion] = @ExamVersion";
+
                     db.Parameters.Clear();
                     db.Parameters.Add("@ReviewMethod", reviewMethod);
                     db.Parameters.Add("@Status", status);
@@ -354,6 +394,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                     db.Parameters.Add("@update_at", DateTime.Now);
                     db.Parameters.Add("@ProjectID", projectID);
                     db.Parameters.Add("@Stage", stage);
+                    db.Parameters.Add("@ExamVersion", latestVersion);
 
                     db.ExecuteNonQuery();
                 }
@@ -376,7 +417,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
         }
 
         /// <summary>
-        /// 提送審查委員
+        /// 提送審查委員 (綁定最新版本)
         /// </summary>
         /// <param name="projectID">專案ID</param>
         /// <param name="stage">階段</param>
@@ -387,31 +428,32 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
             {
                 try
                 {
-                    // 1. 取得 OFS_SCI_StageExam 的 ID
+                    // 1. 取得最新版本的 OFS_SCI_StageExam ID
                     db.CommandText = @"
-                        SELECT [ID] 
-                        FROM [OFS_SCI_StageExam] 
-                        WHERE [ProjectID] = @ProjectID AND [Stage] = @Stage";
+                        SELECT TOP 1 [ID]
+                        FROM [OFS_SCI_StageExam]
+                        WHERE [ProjectID] = @ProjectID AND [Stage] = @Stage
+                        ORDER BY [ExamVersion] DESC";
                     db.Parameters.Clear();
                     db.Parameters.Add("@ProjectID", projectID);
                     db.Parameters.Add("@Stage", stage);
-                    
+
                     DataTable dt = db.GetTable();
                     if (dt.Rows.Count == 0)
                     {
                         throw new Exception("找不到對應的階段審查記錄");
                     }
-                    
+
                     int examID = Convert.ToInt32(dt.Rows[0]["ID"]);
-                    
-                    // 2. 先刪除現有的審查委員記錄
-                    db.CommandText = @"
-                        DELETE FROM [OFS_SCI_StageExam_ReviewerList] 
-                        WHERE [ExamID] = @ExamID";
-                    db.Parameters.Clear();
-                    db.Parameters.Add("@ExamID", examID);
-                    db.ExecuteNonQuery();
-                    
+
+                    // // 2. 先刪除現有的審查委員記錄
+                    // db.CommandText = @"
+                    //     DELETE FROM [OFS_SCI_StageExam_ReviewerList]
+                    //     WHERE [ExamID] = @ExamID";
+                    // db.Parameters.Clear();
+                    // db.Parameters.Add("@ExamID", examID);
+                    // db.ExecuteNonQuery();
+
                     // 3. 批次寫入新的審查委員記錄
                     foreach (var reviewer in reviewers)
                     {
@@ -420,20 +462,20 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                         {
                             continue;
                         }
-                        
+
                         // 生成唯一的token
                         string token = GenerateReviewerToken();
-                        
+
                         db.CommandText = @"
-                            INSERT INTO [OFS_SCI_StageExam_ReviewerList] 
-                            ([ExamID], [Account], [Reviewer], [token]) 
+                            INSERT INTO [OFS_SCI_StageExam_ReviewerList]
+                            ([ExamID], [Account], [Reviewer], [token])
                             VALUES (@ExamID, @Account, @Reviewer, @token)";
                         db.Parameters.Clear();
                         db.Parameters.Add("@ExamID", examID);
                         db.Parameters.Add("@Account", reviewer.email); // Email存放在Account欄位
                         db.Parameters.Add("@Reviewer", reviewer.name);
                         db.Parameters.Add("@token", token);
-                        
+
                         db.ExecuteNonQuery();
                     }
                 }
@@ -468,6 +510,113 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
             public string ReviewMethod { get; set; }
             public string Reviewer { get; set; }
             public string Account { get; set; }
+        }
+
+        /// <summary>
+        /// 檢查專案是否有審核中的階段報告
+        /// </summary>
+        /// <param name="projectID">專案ID</param>
+        /// <returns>是否有審核中的報告</returns>
+        public static bool HasReportInReview(string projectID)
+        {
+            using (DbHelper db = new DbHelper())
+            {
+                try
+                {
+                    db.CommandText = @"
+                        SELECT COUNT(*)
+                        FROM [OFS_SCI_StageExam]
+                        WHERE [ProjectID] = @ProjectID
+                        AND [Status] = N'審核中'";
+
+                    db.Parameters.Clear();
+                    db.Parameters.Add("@ProjectID", projectID);
+
+                    DataTable dt = db.GetTable();
+                    if (dt.Rows.Count > 0)
+                    {
+                        return Convert.ToInt32(dt.Rows[0][0]) > 0;
+                    }
+
+                    return false;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"檢查審核中報告時發生錯誤: {ex.Message}");
+                    return false;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 取得階段審查意見檔案清單
+        /// </summary>
+        /// <param name="projectID">專案ID</param>
+        /// <param name="stage">階段</param>
+        /// <param name="fileType">檔案類型 (1=初版, 2=修正版)</param>
+        /// <param name="includeReviewer">是否包含審查委員姓名</param>
+        /// <returns>審查意見檔案清單</returns>
+        public static List<ReviewFileInfo> GetReviewFiles(string projectID, int stage, int fileType, bool includeReviewer = true)
+        {
+            var result = new List<ReviewFileInfo>();
+
+            using (DbHelper db = new DbHelper())
+            {
+                try
+                {
+                    string whereCondition = fileType == 1
+                        ? "AND SE.[ExamVersion] = 0"
+                        : "AND SE.[ExamVersion] > 0";
+
+                    db.CommandText = $@"
+                        SELECT SE.[ExamVersion], SR.[ReviewFilePath], SR.[Reviewer], ISNULL(SR.[isSubmit], 0) as IsSubmit
+                        FROM [OFS_SCI_StageExam] SE
+                        LEFT JOIN [OFS_SCI_StageExam_ReviewerList] SR ON SR.[ExamID] = SE.[ID]
+                        WHERE SE.[ProjectID] = @ProjectID
+                        AND SE.[Stage] = @Stage
+                        {whereCondition}
+                        AND SR.[Reviewer] IS NOT NULL
+                        ORDER BY SE.[ExamVersion], SR.[ID]";
+
+                    db.Parameters.Clear();
+                    db.Parameters.Add("@ProjectID", projectID);
+                    db.Parameters.Add("@Stage", stage);
+
+                    DataTable dt = db.GetTable();
+                    foreach (DataRow row in dt.Rows)
+                    {
+                        int examVersion = Convert.ToInt32(row["ExamVersion"]);
+                        string filePath = row["ReviewFilePath"]?.ToString() ?? "";
+                        string reviewer = includeReviewer ? (row["Reviewer"]?.ToString() ?? "") : "";
+                        bool isSubmit = Convert.ToInt32(row["IsSubmit"]) == 1;
+
+                        result.Add(new ReviewFileInfo
+                        {
+                            ExamVersion = examVersion,
+                            ReviewFilePath = filePath,
+                            Reviewer = reviewer,
+                            IsSubmit = isSubmit
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"取得審查意見檔案清單時發生錯誤: {ex.Message}");
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// 審查意見檔案資訊類別
+        /// </summary>
+        public class ReviewFileInfo
+        {
+            public int ExamVersion { get; set; }
+            public string ReviewFilePath { get; set; }
+            public string Reviewer { get; set; }
+            public bool IsSubmit { get; set; }
         }
     }
 }

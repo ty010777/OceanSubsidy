@@ -45,7 +45,7 @@ const SciApplication = {
     //#region 事件綁定
     bindEvents: function () {
         // 綁定「完成本頁，下一步」按鈕的點擊事件
-        const submitButton = document.querySelector('input[id*="btnSubmit"]');
+        const submitButton = document.querySelector('input[id*="tab1_btnSubmit"]');
         if (submitButton) {
             submitButton.addEventListener('click', (e) => {
                 if (!this.validateSubmitForm()) {
@@ -112,7 +112,7 @@ const KeywordManager = {
         }
 
         // 綁定提交按鈕，確保在提交前更新隱藏欄位
-        const submitButtons = document.querySelectorAll('input[id*="btnTempSave"], input[id*="btnSubmit"]');
+        const submitButtons = document.querySelectorAll('input[id*="tab1_btnTempSave"], input[id*="tab1_btnSubmit"]');
         submitButtons.forEach(button => {
             button.addEventListener('click', () => {
                 this.updateHiddenField();

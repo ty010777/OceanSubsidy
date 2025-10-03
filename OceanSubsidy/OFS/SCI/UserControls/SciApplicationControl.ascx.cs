@@ -61,10 +61,7 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
             {
 
             }
-            else
-            {
-                RestoreKeywordsAfterPostBack();
-            }
+ 
         }
         catch (Exception ex)
         {
@@ -111,9 +108,9 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
         try
         {
             Button btnClicked = (Button)sender;
-            bool isTemporarySave = btnClicked.ID == "btnTempSave";
+            bool isTemporarySave = btnClicked.ID == "tab1_btnTempSave";
 
-            
+
             HandleSaveOperation(this.ProjectID, isTemporarySave);
 
         }
@@ -147,7 +144,7 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
                 // 載入變更說明資料到輸入框
                 SetViewMode();
                 // 載入變更說明控制項
-                ucChangeDescription.LoadData(ProjectID, IsViewMode);
+                tab1_ucChangeDescription.LoadData(ProjectID, IsViewMode);
 
             }
             else
@@ -388,7 +385,7 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
                 if (formStatus == "完成")
                 {
                     // 通知 UserControl 隱藏暫存按鈕
-                    btnTempSave.Style["display"] = "none";
+                    tab1_btnTempSave.Style["display"] = "none";
 
                 }
             }
@@ -457,6 +454,7 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
             // 初始化空的關鍵字欄位
             KeywordsData = new List<OFS_SCI_Application_KeyWord>();
             PopulateKeywordsData(KeywordsData);
+            tab1_ucChangeDescription.Visible = false;
         }
         catch (Exception ex)
         {
@@ -941,14 +939,20 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
     {
         try
         {
+            // 先將變更說明的值存到 Session，以便 PostBack 後還原
+            SaveChangeDescriptionToSession();
+            // 讓key PostBack 後還原
+            RestoreKeywordsAfterPostBack();
+            RestoreChangeDescriptionFromSession();
+
             // 如果是檢視模式，不允許儲存
-            if (!ShouldShowInEditMode())
+            if (IsViewMode)
             {
                 ShowWarningMessage("目前為檢視模式，無法執行儲存操作");
                 return;
             }
 
-            // // 驗證表單資料
+            // 驗證表單資料
             if (!isTemporarySave)
             {
                 var validationResult = ValidateForm();
@@ -963,7 +967,7 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
             string resultProjectID = SaveData(projectID);
 
             // 儲存變更說明
-            ucChangeDescription.SaveChangeDescription(resultProjectID);
+            tab1_ucChangeDescription.SaveChangeDescription(resultProjectID);
 
             // 更新版本狀態
             UpdateVersionStatusBasedOnAction(resultProjectID, !isTemporarySave);
@@ -980,9 +984,14 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
             }
             else
             {
-                // 完成並跳轉到下一頁
-                ShowSuccessMessage("第一步已完成，即將跳轉到下一頁");
-                Response.Redirect($"SciWorkSch.aspx?ProjectID={resultProjectID}");
+                // 判斷當前頁面是否為 SciInprogress_Approved.aspx
+                string currentPage = System.IO.Path.GetFileName(Request.Url.AbsolutePath);
+                string redirectUrl = currentPage != "SciInprogress_Approved.aspx"
+                    ? $"SciWorkSch.aspx?ProjectID={resultProjectID}"
+                    : "";
+
+                // 顯示成功訊息（如果有 URL 則 1 秒後跳轉）
+                ShowSuccessMessage("儲存成功", redirectUrl);
             }
         }
         catch (Exception ex)
@@ -995,27 +1004,48 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
     /// <summary>
     /// 顯示成功訊息
     /// </summary>
-    private void ShowSuccessMessage(string message, string callback = "")
+    /// <param name="message">訊息內容</param>
+    /// <param name="redirectUrl">跳轉網址，如果為空則不跳轉</param>
+    private void ShowSuccessMessage(string message, string redirectUrl = "")
     {
         string safeMessage = System.Web.HttpUtility.JavaScriptStringEncode(message);
 
-        string script = $@"
-            Swal.fire({{
-                title: '成功',
-                text: '{safeMessage}',
-                icon: 'success',
-                confirmButtonText: '確定',
-                customClass: {{
-                    popup: 'animated fadeInDown'
-                }}
-            }})";
+        string script;
 
-        if (!string.IsNullOrEmpty(callback))
+        if (!string.IsNullOrEmpty(redirectUrl))
         {
-            script += $".then(function() {{ {callback} }})";
+            // 有 URL：顯示 1 秒後自動跳轉
+            string safeUrl = System.Web.HttpUtility.JavaScriptStringEncode(redirectUrl);
+            script = $@"
+                Swal.fire({{
+                    title: '成功',
+                    text: '{safeMessage}',
+                    icon: 'success',
+                    timer: 1000,
+                    showConfirmButton: false,
+                    customClass: {{
+                        popup: 'animated fadeInDown'
+                    }}
+                }}).then(function() {{
+                    window.location.href = '{safeUrl}';
+                }});
+            ";
         }
-
-        script += ";";
+        else
+        {
+            // 沒有 URL：正常顯示訊息
+            script = $@"
+                Swal.fire({{
+                    title: '成功',
+                    text: '{safeMessage}',
+                    icon: 'success',
+                    confirmButtonText: '確定',
+                    customClass: {{
+                        popup: 'animated fadeInDown'
+                    }}
+                }});
+            ";
+        }
 
         Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowSuccessMessage" + Guid.NewGuid().ToString(), script, true);
     }
@@ -1223,7 +1253,7 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
         {
             if (!string.IsNullOrEmpty(ProjectID))
             {
-                return ucChangeDescription.GetChangeDescriptionBySourcePage(ProjectID, "SciApplication");
+                return tab1_ucChangeDescription.GetChangeDescriptionBySourcePage(ProjectID, "SciApplication");
             }
             return ("", "");
         }
@@ -1231,6 +1261,54 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
         {
             HandleException(ex, "取得變更說明資料時發生錯誤");
             return ("", "");
+        }
+    }
+
+    /// <summary>
+    /// 將變更說明的值存到 Session
+    /// </summary>
+    private void SaveChangeDescriptionToSession()
+    {
+        try
+        {
+            string sessionKey = $"ChangeDescription_tab1_{ProjectID}";
+            var changeData = new Dictionary<string, string>
+            {
+                { "ChangeBefore", tab1_ucChangeDescription.ChangeBefore },
+                { "ChangeAfter", tab1_ucChangeDescription.ChangeAfter }
+            };
+            Session[sessionKey] = changeData;
+            System.Diagnostics.Debug.WriteLine($"已將 tab1 變更說明存入 Session: {sessionKey}");
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "儲存變更說明到 Session 時發生錯誤");
+        }
+    }
+
+    /// <summary>
+    /// 從 Session 還原變更說明的值
+    /// </summary>
+    private void RestoreChangeDescriptionFromSession()
+    {
+        try
+        {
+            string sessionKey = $"ChangeDescription_tab1_{ProjectID}";
+            if (Session[sessionKey] is Dictionary<string, string> changeData)
+            {
+                string changeBefore = changeData.ContainsKey("ChangeBefore") ? changeData["ChangeBefore"] : "";
+                string changeAfter = changeData.ContainsKey("ChangeAfter") ? changeData["ChangeAfter"] : "";
+
+                // 設定到 ChangeDescriptionControl
+                tab1_ucChangeDescription.ChangeBefore = changeBefore;
+                tab1_ucChangeDescription.ChangeAfter = changeAfter;
+
+                System.Diagnostics.Debug.WriteLine($"已從 Session 還原 tab1 變更說明: {sessionKey}");
+            }
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "從 Session 還原變更說明時發生錯誤");
         }
     }
 
@@ -1254,5 +1332,5 @@ public class ValidationResult
     {
         return string.Join("<br>", Errors);
     }
-    
+
 }

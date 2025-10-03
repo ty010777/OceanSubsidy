@@ -1666,16 +1666,17 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
             if (!string.IsNullOrEmpty(ProjectID))
             {
                 LoadChangeDescriptionData(ProjectID);
-                bool canEdit = CheckCanEditChangeDescription(ProjectID);
-                bool shouldShow = CheckDisplayCondition(ProjectID);
-
-                changeDescriptionSection.Visible = shouldShow;
-
-                if (shouldShow && (IsReadOnly || !canEdit))
-                {
-                    ApplyChangeDescriptionViewMode();
-                }
             }
+            bool canEdit = CheckCanEditChangeDescription(ProjectID);
+            bool shouldShow = CheckDisplayCondition(ProjectID);
+
+            changeDescriptionSection.Visible = shouldShow;
+
+            if (shouldShow && (IsReadOnly || !canEdit))
+            {
+                ApplyChangeDescriptionViewMode();
+            }
+           
         }
         catch (Exception ex)
         {

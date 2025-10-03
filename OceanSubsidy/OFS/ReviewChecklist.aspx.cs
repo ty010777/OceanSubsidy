@@ -1876,7 +1876,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                     {
                         case "SCI":
                             // 更新專案狀態名稱為「計畫書修正中」
-                            ReviewCheckListHelper.SCI_UpdateProjectStatusName(projectId, toStatus, currentUser.UserName);
+                            ReviewCheckListHelper.SCI_UpdateProjectStatusName(projectId, toStatus);
                             // 記錄歷程：核定中 → 計畫書修正中
                             ReviewCheckListHelper.InsertReviewHistory(projectId, fromStatus, toStatus, Reason, currentUser.UserName);
                             // 插入計畫變更記錄

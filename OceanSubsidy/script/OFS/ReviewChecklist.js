@@ -755,7 +755,7 @@ window.ReviewChecklist = (function() {
                 <td data-th="排序:">${index}</td>
                 <td data-th="年度:">${year}</td>
                 <td data-th="計畫名稱:" style="text-align: left;">
-                    <a href="#" class="link-black" target="_blank">${item.ProjectNameTw || ''}</a>
+                    <a href="${getViewUrl(item.ProjectID)}" class="link-black" target="_blank">${item.ProjectNameTw || ''}</a>
                 </td>
                 <td data-th="申請單位:" width="180" style="text-align: left;">${item.OrgName || ''}</td>
                 <td data-th="總分:" nowrap>${totalScore}</td>
@@ -2115,14 +2115,31 @@ function handleBatchApproval(actionText) {
                 }
             } else {
                 // Type2, Type3, Type4 不需要檢查狀態，直接加入
-                selectedIds.push(projectId);
+
+                // 當操作為「進入決審」時，僅允許文化項目(CUL)
+                if (actionText === '進入決審') {
+                    if (projectId.includes('CUL')) {
+                        selectedIds.push(projectId);
+                    } else {
+                        invalidProjects.push({ id: projectId, status: '非文化項目' });
+                    }
+                } else {
+                    selectedIds.push(projectId);
+                }
             }
         });
 
         if (invalidProjects.length > 0) {
+            let warningText = '';
+            if (currentType === '1') {
+                warningText = `資格審查階段只有狀態為「通過」的計畫可以${actionText}`;
+            } else if (actionText === '進入決審') {
+                warningText = '「進入決審」操作僅適用於文化項目(CUL)';
+            }
+
             Swal.fire({
                 title: '提醒',
-                text: `資格審查階段只有狀態為「通過」的計畫可以${actionText}`,
+                text: warningText,
                 icon: 'warning',
                 confirmButtonText: '確定'
             });

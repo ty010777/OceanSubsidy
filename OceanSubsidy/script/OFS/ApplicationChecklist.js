@@ -602,7 +602,7 @@ function generateActionButtons(record) {
     // 上傳技術審查/初審檔案按鈕（只有在複審或技術審查階段顯示）
     if (status === '複審' || status === '技術審查') {
         buttons += `<button class="btn btn-sm btn-teal-dark" type="button" onclick="showUploadModal('${record.ProjectID}')"
-                    data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="上傳 技術審查/初審 檔案">
+                    data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="上傳 技術審查/複審 檔案">
                     <i class="fas fa-file-upload"></i>
                 </button>`;
     }

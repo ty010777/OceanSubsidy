@@ -235,7 +235,7 @@ public partial class OFS_SCI_SciInterimReport : System.Web.UI.Page
     }
 
     [System.Web.Services.WebMethod]
-    public static object SubmitReport(string projectID, int stage, bool isDraft = false)
+    public static object SubmitReport(string projectID, int stage)
     {
         try
         {
@@ -243,25 +243,29 @@ public partial class OFS_SCI_SciInterimReport : System.Web.UI.Page
             {
                 return new { Success = false, Message = "專案ID不可為空" };
             }
-        
-            string status = isDraft ? "暫存" : "審核中";
+
+            // 檢查是否有報告審核中
+            if (OFS_SciInterimReportHelper.HasReportInReview(projectID))
+            {
+                return new { Success = false, Message = "目前有報告正在審核中，無法重複提送" };
+            }
+
+            string status = "審核中";
             string stageName = stage == 1 ? "期中報告" : "期末報告";
             string TaskNameEn = stage == 1 ? "MidReport" : "FinalReport";
+
             // 呼叫 Helper 方法處理資料庫操作
             OFS_SciInterimReportHelper.SubmitStageExam(projectID, stage, status);
-            if (!isDraft)
-            {   
-                InprogressListHelper.UpdateTaskCompleted(projectID,TaskNameEn, true);
-            }
-        
-            string message = isDraft ? $"{stageName}暫存成功" : $"{stageName}提送成功";
-            return new { Success = true, Message = message };
+            InprogressListHelper.UpdateTaskCompleted(projectID, TaskNameEn, true);
+
+            return new { Success = true, Message = $"{stageName}提送成功" };
         }
         catch (Exception ex)
         {
             return new { Success = false, Message = "系統錯誤: " + ex.Message };
         }
     }
+
 
     /// <summary>
     /// 檢查使用者是否有審核權限
@@ -334,17 +338,19 @@ public partial class OFS_SCI_SciInterimReport : System.Web.UI.Page
                 return new { Success = false, Message = "您沒有審核權限" };
             }
 
-            string status = reviewResult == "pass" ? "通過" : "暫存";
+            string status = reviewResult == "pass" ? "通過" : "不通過";
             string stageName = stage == 1 ? "期中" : "期末";
             string TaskNameEn = stage == 1 ? "MidReport" : "FinalReport";
+
             // 呼叫 Helper 方法處理審核
             OFS_SciInterimReportHelper.ReviewStageExam(projectID, stage, reviewMethod, status, reviewComment, currentUser.UserName, currentUser.Account);
+
             if (reviewResult == "pass")
-            {   
+            {
                 InprogressListHelper.UpdateLastOperation(projectID, $"已通過{stageName}審查");
-                if(stage == 2)
+                if (stage == 2)
                 {
-                    //開啟第二次請款待辦事項檢查
+                    // 開啟第二次請款待辦事項檢查
                     InprogressListHelper.UpdateTaskTodo(projectID, "Payment2", true);
                 }
             }
@@ -459,6 +465,70 @@ public partial class OFS_SCI_SciInterimReport : System.Web.UI.Page
         {
             System.Diagnostics.Debug.WriteLine($"取得使用者資訊時發生錯誤: {ex.Message}");
             return null;
+        }
+    }
+
+    /// <summary>
+    /// 取得審查意見檔案清單
+    /// </summary>
+    /// <param name="projectID">專案ID</param>
+    /// <param name="stage">階段</param>
+    /// <param name="fileType">檔案類型 (1=初版, 2=修正版)</param>
+    /// <returns></returns>
+    [System.Web.Services.WebMethod]
+    public static object GetReviewFiles(string projectID, int stage, int fileType)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(projectID))
+            {
+                return new { Success = false, Message = "專案ID不可為空" };
+            }
+
+            // 檢查使用者權限，決定是否顯示審查委員姓名
+            bool includeReviewer = CanViewReviewerName();
+
+            var files = OFS_SciInterimReportHelper.GetReviewFiles(projectID, stage, fileType, includeReviewer);
+            return new { Success = true, Files = files };
+        }
+        catch (Exception ex)
+        {
+            return new { Success = false, Message = "系統錯誤: " + ex.Message };
+        }
+    }
+
+    /// <summary>
+    /// 檢查使用者是否有權限查看審查委員姓名
+    /// </summary>
+    /// <returns></returns>
+    private static bool CanViewReviewerName()
+    {
+        try
+        {
+            var currentUser = GetCurrentUserInfo();
+
+            if (currentUser == null || currentUser.OFS_RoleName == null)
+            {
+                return false;
+            }
+
+            // 定義可以查看審查委員姓名的角色
+            var authorizedRoles = new[] { "主管單位人員", "主管單位窗口", "系統管理者" };
+
+            foreach (string roleName in currentUser.OFS_RoleName)
+            {
+                if (!string.IsNullOrEmpty(roleName) && authorizedRoles.Contains(roleName))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"檢查審查委員姓名查看權限時發生錯誤: {ex.Message}");
+            return false;
         }
     }
 }

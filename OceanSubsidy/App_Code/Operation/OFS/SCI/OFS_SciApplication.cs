@@ -1199,4 +1199,155 @@ VALUES
         }
     }
 
+    /// <summary>
+    /// 更新計畫的 IsProjChanged 狀態
+    /// </summary>
+    /// <param name="projectId">計畫ID</param>
+    /// <param name="isProjChanged">是否為變更狀態 (0: 否, 1: 是)</param>
+    public static void UpdateIsProjChanged(string projectId, int isProjChanged)
+    {
+        DbHelper db = new DbHelper();
+        try
+        {
+            db.CommandText = @"
+                UPDATE [OFS_SCI_Project_Main]
+                SET [IsProjChanged] = @IsProjChanged,
+                    [updated_at] = GETDATE()
+                WHERE [ProjectID] = @ProjectID";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@IsProjChanged", isProjChanged);
+            db.Parameters.Add("@ProjectID", projectId);
+
+            db.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"更新計畫 {projectId} 的 IsProjChanged 狀態時發生錯誤: {ex.Message}", ex);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 更新計畫變更完成狀態 (審查通過用)
+    /// </summary>
+    /// <param name="projectId">計畫ID</param>
+    public static void UpdateProjectChangeCompleted(string projectId)
+    {
+        DbHelper db = new DbHelper();
+        try
+        {
+            db.CommandText = @"
+                UPDATE OFS_SCI_Project_Main
+                SET IsProjChanged = 0,
+                    LastOperation = @LastOperation,
+                    updated_at = GETDATE()
+                WHERE ProjectID = @ProjectID";
+            db.Parameters.Add("@ProjectID", projectId);
+            db.Parameters.Add("@LastOperation", "已完成計畫變更");
+            db.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"更新計畫變更完成狀態時發生錯誤: {ex.Message}", ex);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 更新最新一筆計畫變更記錄狀態
+    /// </summary>
+    /// <param name="projectId">計畫ID</param>
+    /// <param name="status">狀態 (1: 變更中, 3: 已完成)</param>
+    /// <param name="rejectReason">退回原因 (通過時傳空字串)</param>
+    public static void UpdateProjectChangeRecordStatus(string projectId, int status, string rejectReason ="")
+    {
+        DbHelper db = new DbHelper();
+        try
+        {
+            db.CommandText = @"
+                UPDATE OFS_ProjectChangeRecord
+                SET Status = @Status,
+                    RejectReason = @RejectReason,
+                    UpdateTime = GETDATE()
+                WHERE DataID = @ProjectID
+                  AND Method = 1
+                  AND Type = 'SCI'
+                  AND ID = (
+                      SELECT TOP 1 ID
+                      FROM OFS_ProjectChangeRecord
+                      WHERE DataID = @ProjectID AND Method = 1 AND Type = 'SCI'
+                      ORDER BY CreateTime DESC
+                  )";
+            db.Parameters.Add("@Status", status);
+            db.Parameters.Add("@RejectReason", rejectReason);
+            db.Parameters.Add("@ProjectID", projectId);
+            db.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"更新計畫變更記錄狀態時發生錯誤: {ex.Message}", ex);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 刪除預定進度資料
+    /// </summary>
+    /// <param name="projectId">計畫ID</param>
+    public static void DeletePreMonthProgress(string projectId)
+    {
+        DbHelper db = new DbHelper();
+        try
+        {
+            db.CommandText = "DELETE FROM OFS_SCI_PreMonthProgress WHERE ProjectID = @ProjectID";
+            db.Parameters.Add("@ProjectID", projectId);
+            db.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"刪除預定進度資料時發生錯誤: {ex.Message}", ex);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 更新計畫變更為退回狀態 (審查不通過用)
+    /// </summary>
+    /// <param name="projectId">計畫ID</param>
+    public static void UpdateProjectChangeRejected(string projectId)
+    {
+        DbHelper db = new DbHelper();
+        try
+        {
+            db.CommandText = @"
+                UPDATE OFS_SCI_Project_Main
+                SET IsProjChanged = 1,
+                    updated_at = GETDATE()
+                WHERE ProjectID = @ProjectID";
+            db.Parameters.Add("@ProjectID", projectId);
+            db.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"更新計畫變更為退回狀態時發生錯誤: {ex.Message}", ex);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
 }

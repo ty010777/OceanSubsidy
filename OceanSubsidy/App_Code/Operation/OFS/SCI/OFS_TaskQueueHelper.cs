@@ -40,4 +40,39 @@ public class OFS_TaskQueueHelper
             db.Dispose();
         }
     }
+
+    /// <summary>
+    /// 更新特定任務的狀態
+    /// </summary>
+    /// <param name="projectId">計畫ID</param>
+    /// <param name="taskNameEn">任務英文名稱</param>
+    /// <param name="isTodo">是否為待辦 (1: 是, 0: 否)</param>
+    public static void UpdateTaskStatus(string projectId, string taskNameEn, int isTodo ,int IsCompleted)
+    {
+        DbHelper db = new DbHelper();
+        try
+        {
+            db.CommandText = @"
+                UPDATE [OCA_OceanSubsidy].[dbo].[OFS_TaskQueue]
+                SET [IsTodo] = @IsTodo, [IsCompleted] = @IsCompleted
+                WHERE [ProjectID] = @ProjectID
+                  AND [TaskNameEn] = @TaskNameEn";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@IsTodo", isTodo);
+            db.Parameters.Add("@IsCompleted", IsCompleted);
+            db.Parameters.Add("@ProjectID", projectId);
+            db.Parameters.Add("@TaskNameEn", taskNameEn);
+
+            db.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"更新任務 {taskNameEn} 的狀態時發生錯誤: {ex.Message}", ex);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
 }

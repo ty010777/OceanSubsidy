@@ -199,7 +199,7 @@
                         
                     </td>
                     <td class="text-center">
-                        <asp:Label ID="lblStatus9" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
+                        <asp:Label ID="lblStatusAcademic9" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
                     </td>
                     <td>
                         <input type="file" id="fileInput_FILE_AC9" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_AC9', this)" />
@@ -467,24 +467,48 @@
     </div>
 </div>
  <!-- 變更說明 UserControl -->
-    <uc:ChangeDescriptionControl ID="ucChangeDescription" runat="server" SourcePage="SciUploadAttachments" />
+    <uc:ChangeDescriptionControl ID="tab5_ucChangeDescription" runat="server" SourcePage="SciUploadAttachments" />
     
     <!-- 底部區塊 -->
     <div class="block-bottom bg-light-teal view-mode">
-        <asp:Button ID="btnSave" runat="server" 
-            CssClass="btn btn-outline-teal" 
-            Text="暫存" OnClick="btnSave_Click" />
-        <asp:Button ID="btnSubmit" runat="server" 
-            CssClass="btn btn-teal" 
-            Text="✓ 全部完成，提送申請" />
+        <%-- <asp:Button ID="btnSubmitConfirmed" runat="server" --%>
+        <%--     CssClass="btn btn-outline-teal" --%>
+        <%--     Text="暫存" --%>
+        <%--     OnClientClick="if (typeof syncAllChangeDescriptions === 'function') { syncAllChangeDescriptions(); } return true;" --%>
+        <%--     OnClick="btnSave_Click" /> --%>
         
+        <button type="button" id="btnSubmitConfirmed"
+            class="btn btn-teal"
+            onclick="confirmAndSubmit()">
+            ✓ 全部完成，提送申請
+        </button>
+
         <!-- 隱藏的確認提送按鈕 -->
-        <asp:Button ID="btnSubmitConfirmed" runat="server" 
-            OnClick="btnSubmitConfirmed_Click" 
+        <asp:Button ID="tab5_btnSubmit" runat="server"
+            OnClientClick="if (typeof syncAllChangeDescriptions === 'function') { syncAllChangeDescriptions(); } return true;"
+            OnClick="btnSubmitConfirmed_Click"
             Style="display: none;" />
     </div>
 <!-- 隱藏欄位用於資料交換 -->
 <asp:HiddenField ID="hdnAttachmentData" runat="server" />
 
+<script type="text/javascript">
+    function confirmAndSubmit() {
+        Swal.fire({
+            title: '確定要提送申請嗎？',
+            text: '提送後將無法再修改。',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: '確定提送',
+            cancelButtonText: '取消'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('<%= tab5_btnSubmit.ClientID %>').click();
+            }
+        });
+    }
+</script>
 
 <!-- 變更說明 UserControl -->
