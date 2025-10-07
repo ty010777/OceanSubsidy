@@ -1,8 +1,10 @@
 ﻿<%@ WebHandler Language="C#" Class="CLB_download" %>
 
 using System;
+using System.Collections.Generic;
 using System.Web;
 using System.IO;
+using GS.OCA_OceanSubsidy.Entity;
 
 public class CLB_download : IHttpHandler
 {
@@ -336,19 +338,17 @@ public class CLB_download : IHttpHandler
             return originalFilePath;
         }
 
+        OFS_CLB_Application_Plan plan = OFS_ClbApplicationHelper.GetPlanData(projectID);
+        List<OFS_CLB_Application_Personnel> Personnel = OFS_ClbApplicationHelper.GetPersonnelData(projectID);
+        OFS_CLB_Application_Funds Funds = OFS_ClbApplicationHelper.GetFundsData(projectID);
+        OFS_CLB_Application_Basic Basic = OFS_ClbApplicationHelper.GetBasicData(projectID);
         // 根據 templateType 決定是否需要加工
         switch (templateType)
         {
             case "1": // 申請表
-                return ProcessApplicationForm(originalFilePath, projectID, subsidyType);
+                return ProcessApplicationForm(originalFilePath, subsidyType, plan, Personnel, Funds, Basic);
             case "2": // 計畫書
-                return ProcessPlanForm(originalFilePath, projectID, subsidyType);
-            case "3": // 切結書
-                return ProcessAffidavitForm(originalFilePath, projectID);
-            case "report": // 成果報告書
-                return ProcessReportForm(originalFilePath, projectID);
-            case "payment": // 請款範本
-                return ProcessPaymentForm(originalFilePath, projectID, fileType);
+                return ProcessPlanForm(originalFilePath, subsidyType, plan, Personnel, Funds, Basic);
             default:
                 // 不需要動態處理的範本直接返回原路徑
                 return originalFilePath;
@@ -358,7 +358,7 @@ public class CLB_download : IHttpHandler
     /// <summary>
     /// 加工申請表（填入專案資料）
     /// </summary>
-    private string ProcessApplicationForm(string originalFilePath, string projectID, string subsidyType)
+    private string ProcessApplicationForm(string originalFilePath, string subsidyType,OFS_CLB_Application_Plan  plan,List<OFS_CLB_Application_Personnel> Personnel ,OFS_CLB_Application_Funds Funds ,OFS_CLB_Application_Basic Basic)
     {
         try
         {
@@ -368,12 +368,128 @@ public class CLB_download : IHttpHandler
             // 複製範本檔案到暫存資料夾
             File.Copy(originalFilePath, tempFilePath, true);
 
-            // TODO: 使用 OpenXmlHelper 處理 Word 文件，填入專案資料
-            // 例如：替換 {{ProjectName}}, {{OrgName}} 等佔位符
-            // var helper = new OpenXmlHelper(tempFilePath);
-            // var placeholder = new Dictionary<string, string>();
-            // placeholder.Add("{{ProjectName}}", projectData.ProjectName);
-            // helper.GenerateWord(placeholder, new List<Dictionary<string, string>>());
+            if (subsidyType == "Public")
+            {
+                // 公共活動費申請表加工
+                using (var docHelper = new GS.OCA_OceanSubsidy.Operation.OSI.OpenXml.OpenXmlHelper(tempFilePath))
+                {
+                    var replacements = new Dictionary<string, string>();
+
+                    replacements.Add("SchoolName", Basic?.SchoolName ?? "");
+                    replacements.Add("ClubName", Basic?.ClubName ?? "");
+                    string creationDate = GS.App.DateTimeHelper.ToMinguoDate(Basic.CreationDate);
+                    replacements.Add("CreationDate", creationDate??"");                    
+                    replacements.Add("ProjectName", Basic?.ProjectNameTw ?? "");
+                    replacements.Add("Address", Basic?.Address ?? "");
+                    replacements.Add("IDNumber", Basic?.School_IDNumber ?? "");
+                    // Personnel[0] - 指導老師
+                    replacements.Add("teacherName", Personnel != null && Personnel.Count > 0 ? (Personnel[0]?.Name ?? "") : "");
+                    replacements.Add("teacherTitle", Personnel != null && Personnel.Count > 0 ? (Personnel[0]?.JobTitle ?? "") : "");
+                    replacements.Add("teacherPhone", Personnel != null && Personnel.Count > 0 ? (Personnel[0]?.PhoneNum ?? "") : "");
+
+                    // Personnel[1] - 聯絡人
+                    replacements.Add("contactName", Personnel != null && Personnel.Count > 1 ? (Personnel[1]?.Name ?? "") : "");
+                    replacements.Add("contactTitle", Personnel != null && Personnel.Count > 1 ? (Personnel[1]?.JobTitle ?? "") : "");
+                    replacements.Add("contactPhone", Personnel != null && Personnel.Count > 1 ? (Personnel[1]?.PhoneNum ?? "") : "");
+                    // Plan.StartDate - 開始日期（民國年）
+                    replacements.Add("SYear", plan?.StartDate != null ? GS.App.DateTimeHelper.GregorianYearToMinguo(plan.StartDate.Value.Year).ToString() : "");
+                    replacements.Add("SMonth", plan?.StartDate?.Month.ToString() ?? "");
+                    replacements.Add("SDay", plan?.StartDate?.Day.ToString() ?? "");
+
+                    // Plan.EndDate - 結束日期（民國年）
+                    replacements.Add("EYear", plan?.EndDate != null ? GS.App.DateTimeHelper.GregorianYearToMinguo(plan.EndDate.Value.Year).ToString() : "");
+                    replacements.Add("EMonth", plan?.EndDate?.Month.ToString() ?? "");
+                    replacements.Add("EDay", plan?.EndDate?.Day.ToString() ?? "");
+                    
+                    replacements.Add("PlanContent", plan?.PlanContent ?? "");
+                    replacements.Add("Benefits", plan?.PreBenefits ?? "");
+                    
+                    replacements.Add("SubsidyFunds", Funds?.SubsidyFunds?.ToString() ?? "");
+                    replacements.Add("SelfFunds", Funds?.SelfFunds?.ToString() ?? "");
+                    replacements.Add("OtherGovFunds", Funds?.OtherGovFunds?.ToString() ?? "");
+                    replacements.Add("OtherUnitFunds", Funds?.OtherUnitFunds?.ToString() ?? "");
+                    replacements.Add("TotalFunds", Funds?.TotalFunds?.ToString() ?? "");
+
+                    // Funds.PreviouslySubsidized - 過去是否受補助
+                    bool previouslySubsidized = Funds?.PreviouslySubsidized ?? false;
+                    replacements.Add("yesSubsidy", previouslySubsidized ? "☒" : "☐");
+                    replacements.Add("noSubsidy", previouslySubsidized ? "☐" : "☒");
+
+                    // 今日日期（民國年）
+                    DateTime today = DateTime.Now;
+                    replacements.Add("TYear", GS.App.DateTimeHelper.GregorianYearToMinguo(today.Year).ToString());
+                    replacements.Add("TMonth", today.Month.ToString());
+                    replacements.Add("TDay", today.Day.ToString());
+             
+                    docHelper.GenerateWord(replacements, new List<Dictionary<string, string>>());
+                }
+            }
+            else
+            {
+                // 創社、社務申請表加工
+                using (var docHelper = new GS.OCA_OceanSubsidy.Operation.OSI.OpenXml.OpenXmlHelper(tempFilePath))
+                {
+                    // 建立替換字典
+                    var replacements = new Dictionary<string, string>();
+
+                    string societyName = (Basic?.SchoolName ?? "") + (Basic?.ClubName ?? "");
+                    replacements.Add("SocietyName", societyName);
+                    replacements.Add("ProjectName", Basic?.ProjectNameTw ?? "");
+                    // Personnel[0] - 指導老師
+                    replacements.Add("teacherName", Personnel != null && Personnel.Count > 0 ? (Personnel[0]?.Name ?? "") : "");
+                    replacements.Add("teacherTitle", Personnel != null && Personnel.Count > 0 ? (Personnel[0]?.JobTitle ?? "") : "");
+                    replacements.Add("teacherPhone", Personnel != null && Personnel.Count > 0 ? (Personnel[0]?.PhoneNum ?? "") : "");
+
+                    // Personnel[1] - 聯絡人
+                    replacements.Add("contactName", Personnel != null && Personnel.Count > 1 ? (Personnel[1]?.Name ?? "") : "");
+                    replacements.Add("contactTitle", Personnel != null && Personnel.Count > 1 ? (Personnel[1]?.JobTitle ?? "") : "");
+                    replacements.Add("contactPhone", Personnel != null && Personnel.Count > 1 ? (Personnel[1]?.PhoneNum ?? "") : "");
+                    
+                    // Plan.StartDate - 開始日期（民國年）
+                    replacements.Add("SYear", plan?.StartDate != null ? GS.App.DateTimeHelper.GregorianYearToMinguo(plan.StartDate.Value.Year).ToString() : "");
+                    replacements.Add("SMonth", plan?.StartDate?.Month.ToString() ?? "");
+                    replacements.Add("SDay", plan?.StartDate?.Day.ToString() ?? "");
+
+                    // Plan.EndDate - 結束日期（民國年）
+                    replacements.Add("EYear", plan?.EndDate != null ? GS.App.DateTimeHelper.GregorianYearToMinguo(plan.EndDate.Value.Year).ToString() : "");
+                    replacements.Add("EMonth", plan?.EndDate?.Month.ToString() ?? "");
+                    replacements.Add("EDay", plan?.EndDate?.Day.ToString() ?? "");
+                    
+                    replacements.Add("PlanContent", plan?.PlanContent ?? "");
+                    replacements.Add("Benefits", plan?.PreBenefits ?? "");
+                    
+                    
+                    replacements.Add("SubsidyFunds", Funds?.SubsidyFunds?.ToString() ?? "");
+                    replacements.Add("SelfFunds", Funds?.SelfFunds?.ToString() ?? "");
+                    replacements.Add("OtherGovFunds", Funds?.OtherGovFunds?.ToString() ?? "");
+                    replacements.Add("OtherUnitFunds", Funds?.OtherUnitFunds?.ToString() ?? "");
+                    replacements.Add("TotalFunds", Funds?.TotalFunds?.ToString() ?? "");
+
+                    // Funds.PreviouslySubsidized - 過去是否受補助
+                    bool previouslySubsidized = Funds?.PreviouslySubsidized ?? false;
+                    replacements.Add("yesSubsidy", previouslySubsidized ? "☒" : "☐");
+                    replacements.Add("noSubsidy", previouslySubsidized ? "☐" : "☒");
+
+                    // 今日日期（民國年）
+                    DateTime today = DateTime.Now;
+                    replacements.Add("TYear", GS.App.DateTimeHelper.GregorianYearToMinguo(today.Year).ToString());
+                    replacements.Add("TMonth", today.Month.ToString());
+                    replacements.Add("TDay", today.Day.ToString());
+
+                    // Basic.SubsidyType - 補助類型勾選
+                    bool isStartup = subsidyType == "Startup";
+                    replacements.Add("Check1", isStartup ? "☒" : "☐");
+                    replacements.Add("Check2", isStartup ? "☐" : "☒");
+
+                    // 年度 - 今年和去年（民國年）
+                    int currentRocYear = GS.App.DateTimeHelper.GregorianYearToMinguo(DateTime.Now.Year);
+                    replacements.Add("Check1Year", currentRocYear.ToString());
+                    replacements.Add("Check2Year", (currentRocYear - 1).ToString());
+
+                    // 執行替換
+                    docHelper.GenerateWord(replacements, new List<Dictionary<string, string>>());
+                }
+            }
 
             return tempFilePath;
         }
@@ -387,7 +503,7 @@ public class CLB_download : IHttpHandler
     /// <summary>
     /// 加工計畫書（填入專案資料）
     /// </summary>
-    private string ProcessPlanForm(string originalFilePath, string projectID, string subsidyType)
+    private string ProcessPlanForm(string originalFilePath, string subsidyType, OFS_CLB_Application_Plan plan, List<OFS_CLB_Application_Personnel> Personnel, OFS_CLB_Application_Funds Funds, OFS_CLB_Application_Basic Basic)
     {
         try
         {
@@ -397,8 +513,80 @@ public class CLB_download : IHttpHandler
             // 複製範本檔案到暫存資料夾
             File.Copy(originalFilePath, tempFilePath, true);
 
-            // TODO: 加工邏輯
-            // 填入專案相關資料
+            if (subsidyType == "Public")
+            {
+                // 公共活動費計畫書加工
+                using (var docHelper = new GS.OCA_OceanSubsidy.Operation.OSI.OpenXml.OpenXmlHelper(tempFilePath))
+                {
+                    var replacements = new Dictionary<string, string>();
+
+                    replacements.Add("SchoolName", Basic?.SchoolName ?? "");
+                    replacements.Add("ProjectName", Basic?.ProjectNameTw ?? "");
+                    replacements.Add("Purpose", plan.Purpose??"");
+
+                    // Plan.StartDate - 開始日期（民國年）
+                    replacements.Add("SYear", plan?.StartDate != null ? GS.App.DateTimeHelper.GregorianYearToMinguo(plan.StartDate.Value.Year).ToString() : "");
+                    replacements.Add("SMonth", plan?.StartDate?.Month.ToString() ?? "");
+                    replacements.Add("SDay", plan?.StartDate?.Day.ToString() ?? "");
+                    
+                    // Plan.EndDate - 結束日期（民國年）
+                    replacements.Add("EYear", plan?.EndDate != null ? GS.App.DateTimeHelper.GregorianYearToMinguo(plan.EndDate.Value.Year).ToString() : "");
+                    replacements.Add("EMonth", plan?.EndDate?.Month.ToString() ?? "");
+                    replacements.Add("EDay", plan?.EndDate?.Day.ToString() ?? "");                    
+                    
+                    //計畫地點、預估人數
+                    replacements.Add("PlanLocation", plan.PlanLocation ?? "");
+                    replacements.Add("EstimatedPeople", plan.EstimatedPeople ?? "");
+                    replacements.Add("PlanContent", plan.PlanContent ?? "");
+
+                    // CreationDate - 成立日期（民國年格式）
+                    string creationDate = GS.App.DateTimeHelper.ToMinguoDate(Basic.CreationDate);
+                    replacements.Add("CreationDate", creationDate??"");
+                    
+                    replacements.Add("SubsidyFunds", Funds?.SubsidyFunds?.ToString() ?? "");
+                    replacements.Add("SelfFunds", Funds?.SelfFunds?.ToString() ?? "");
+                    replacements.Add("OtherGovFunds", Funds?.OtherGovFunds?.ToString() ?? "");
+                    replacements.Add("OtherUnitFunds", Funds?.OtherUnitFunds?.ToString() ?? "");
+                    replacements.Add("TotalFunds", Funds?.TotalFunds?.ToString() ?? "");
+                    replacements.Add("Benefits", plan?.PreBenefits ?? "");
+                    //緊急計畫
+                    replacements.Add("EmergencyPlan", plan.EmergencyPlan??"");
+
+                    docHelper.GenerateWord(replacements, new List<Dictionary<string, string>>());
+                }
+            }
+            else
+            {
+                // 創社、社務計畫書加工
+                using (var docHelper = new GS.OCA_OceanSubsidy.Operation.OSI.OpenXml.OpenXmlHelper(tempFilePath))
+                {
+                    var replacements = new Dictionary<string, string>();
+
+                    // 今日日期（民國年）
+                    DateTime today = DateTime.Now;
+                    replacements.Add("TYear", GS.App.DateTimeHelper.GregorianYearToMinguo(today.Year).ToString());
+                    replacements.Add("SchoolName", Basic?.SchoolName ?? "");
+                    replacements.Add("ClubName", Basic?.ClubName ?? "");
+
+                    // CreationDate - 成立日期（民國年格式）
+                    string creationDate = GS.App.DateTimeHelper.ToMinguoDate(Basic.CreationDate);
+                    replacements.Add("CreationDate", creationDate??"");
+                    replacements.Add("EstimatedPeople", plan.EstimatedPeople??"");
+                    replacements.Add("Purpose", plan.Purpose??"");
+                    replacements.Add("SubsidyFunds", Funds?.SubsidyFunds?.ToString() ?? "");
+                    replacements.Add("SelfFunds", Funds?.SelfFunds?.ToString() ?? "");
+                    replacements.Add("OtherGovFunds", Funds?.OtherGovFunds?.ToString() ?? "");
+                    replacements.Add("OtherUnitFunds", Funds?.OtherUnitFunds?.ToString() ?? "");
+                    replacements.Add("TotalFunds", Funds?.TotalFunds?.ToString() ?? "");
+                    replacements.Add("Benefits", plan?.PreBenefits ?? "");
+                    // Basic.SubsidyType - 補助類型勾選
+                    bool isStartup = subsidyType == "Startup";
+                    replacements.Add("Check1", isStartup ? "☒" : "☐");
+                    replacements.Add("Check2", isStartup ? "☐" : "☒");
+                        
+                    docHelper.GenerateWord(replacements, new List<Dictionary<string, string>>());
+                }
+            }
 
             return tempFilePath;
         }
@@ -409,79 +597,9 @@ public class CLB_download : IHttpHandler
         }
     }
 
-    /// <summary>
-    /// 加工切結書（填入專案資料）
-    /// </summary>
-    private string ProcessAffidavitForm(string originalFilePath, string projectID)
-    {
-        try
-        {
-            // 建立暫存檔案路徑
-            string tempFilePath = Path.Combine(Path.GetTempPath(), Path.GetFileName(originalFilePath));
+  
+  
 
-            // 複製範本檔案到暫存資料夾
-            File.Copy(originalFilePath, tempFilePath, true);
-
-            // TODO: 加工邏輯
-            // 填入組織名稱、日期等
-
-            return tempFilePath;
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"ProcessAffidavitForm Error: {ex.Message}");
-            return originalFilePath;
-        }
-    }
-
-    /// <summary>
-    /// 加工成果報告書（填入專案資料）
-    /// </summary>
-    private string ProcessReportForm(string originalFilePath, string projectID)
-    {
-        try
-        {
-            // 建立暫存檔案路徑
-            string tempFilePath = Path.Combine(Path.GetTempPath(), Path.GetFileName(originalFilePath));
-
-            // 複製範本檔案到暫存資料夾
-            File.Copy(originalFilePath, tempFilePath, true);
-
-            // TODO: 加工邏輯
-
-            return tempFilePath;
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"ProcessReportForm Error: {ex.Message}");
-            return originalFilePath;
-        }
-    }
-
-    /// <summary>
-    /// 加工請款範本（填入專案資料）
-    /// </summary>
-    private string ProcessPaymentForm(string originalFilePath, string projectID, string fileType)
-    {
-        try
-        {
-            // 建立暫存檔案路徑
-            string tempFilePath = Path.Combine(Path.GetTempPath(), Path.GetFileName(originalFilePath));
-
-            // 複製範本檔案到暫存資料夾
-            File.Copy(originalFilePath, tempFilePath, true);
-
-            // TODO: 根據 fileType 進行不同的加工
-            // fileType: 1=收支明細表, 2=受補助清單, 3=經費分攤表, 4=憑證, 5=領據
-
-            return tempFilePath;
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"ProcessPaymentForm Error: {ex.Message}");
-            return originalFilePath;
-        }
-    }
 
     /// <summary>
     /// 清理暫存檔案

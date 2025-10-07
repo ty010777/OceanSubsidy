@@ -279,7 +279,7 @@ function initializeNumberInputs() {
     $('input[id*="Funds"]').on('input', function() {
         calculateTotalFunds();
     });
-    
+
     // 綁定經費計算
     $('input[id*="Funds"]').addClass('funds-input');
 
@@ -289,6 +289,12 @@ function initializeNumberInputs() {
             el.classList.add('form-check-input', 'check-teal');
         }
     });
+
+    // 綁定申請補助類型變更事件
+    bindSubsidyTypeChange();
+
+    // 初始化時執行一次，確保初始狀態正確
+    handleSubsidyTypeChange();
 }
 
 function initializeValidation() {
@@ -315,6 +321,51 @@ function parseFloatFromFormatted(value) {
     if (!value) return 0;
     // number type 輸入框不會有千分位逗號，直接轉換即可
     return parseFloat(value) || 0;
+}
+
+/**
+ * 綁定申請補助類型變更事件
+ */
+function bindSubsidyTypeChange() {
+    // 綁定所有補助類型的 RadioButton change 事件
+    $('[id*="rbSubsidyTypeCreate"], [id*="rbSubsidyTypeOperation"], [id*="rbSubsidyTypeActivity"]').on('change', function() {
+        handleSubsidyTypeChange();
+    });
+}
+
+/**
+ * 處理申請補助類型變更
+ * - 「公共活動費」被選取時，顯示 public-view 元素
+ * - 「社務補助」或「公共活動費」被選取時，顯示 affairs-view 元素
+ */
+function handleSubsidyTypeChange() {
+    // 檢查各補助類型是否被選取
+    const isPublicActivitySelected = $('[id*="rbSubsidyTypeActivity"]').prop('checked');
+    const isOperationSelected = $('[id*="rbSubsidyTypeOperation"]').prop('checked');
+
+    // 取得所有 class="public-view" 的元素
+    const publicViewElements = $('.public-view');
+
+    // 取得所有 class="affairs-view" 的元素
+    const affairsViewElements = $('.affairs-view');
+
+    // 處理 public-view 元素
+    if (isPublicActivitySelected) {
+        // 「公共活動費」被選取：顯示元素
+        publicViewElements.removeClass('d-none');
+    } else {
+        // 「公共活動費」未被選取：隱藏元素
+        publicViewElements.addClass('d-none');
+    }
+
+    // 處理 affairs-view 元素
+    if (isOperationSelected || isPublicActivitySelected) {
+        // 「社務補助」或「公共活動費」被選取：顯示元素
+        affairsViewElements.removeClass('d-none');
+    } else {
+        // 「創社補助」被選取：隱藏元素
+        affairsViewElements.addClass('d-none');
+    }
 }
 
 function validateForm() {
@@ -1165,7 +1216,7 @@ function handleSaveAndNext() {
             Swal.fire({
                 icon: 'error',
                 title: '儲存失敗',
-                text: data.message || '未知錯誤，請稍後再試',
+                html: data.message || '未知錯誤，請稍後再試',
                 confirmButtonText: '確定'
             });
         }
@@ -1235,15 +1286,26 @@ function collectFormData() {
     else if ($('[id*="rbSubsidyTypeActivity"]').prop('checked')) subsidyType = 'Public';
     formData.append('subsidyType', subsidyType);
 
+    // 檢查補助類型
+    const isPublicActivity = subsidyType === 'Public';
+    const isOperation = subsidyType === 'Admin';
+
     formData.append('schoolName', $('[id*="txtSchoolName"]').val() || '');
-    formData.append('schoolIDNumber', $('[id*="txtSchoolIDNumber"]').val() || '');
     formData.append('clubName', $('[id*="txtClubName"]').val() || '');
-    formData.append('address', $('[id*="txtAddress"]').val() || '');
 
-    // 日期欄位 - 從 data attribute 取得西元日期
-    const creationDate = $('[id*="txtCreationDate"]').data('gregorian-date');
-    if (creationDate) formData.append('creationDate', creationDate);
+    // 只有在「社務補助」或「公共活動費」時才收集成立日期
+    if (isOperation || isPublicActivity) {
+        const creationDate = $('[id*="txtCreationDate"]').data('gregorian-date');
+        if (creationDate) formData.append('creationDate', creationDate);
+    }
 
+    // 只有在「公共活動費」時才收集這些欄位
+    if (isPublicActivity) {
+        formData.append('schoolIDNumber', $('[id*="txtSchoolIDNumber"]').val() || '');
+        formData.append('address', $('[id*="txtAddress"]').val() || '');
+    }
+
+    // 日期欄位 - 計畫執行期間（所有類型都需要）
     const startDate = $('[id*="txtStartDate"]').data('gregorian-date');
     if (startDate) formData.append('startDate', startDate);
 
@@ -1254,15 +1316,32 @@ function collectFormData() {
     formData.append('purpose', $('[id*="txtPurpose"]').val() || '');
     formData.append('planContent', $('[id*="txtPlanContent"]').val() || '');
     formData.append('preBenefits', $('[id*="txtPreBenefits"]').val() || '');
-    formData.append('planLocation', $('[id*="txtPlanLocation"]').val() || '');
     formData.append('estimatedPeople', $('[id*="txtEstimatedPeople"]').val() || '');
-    formData.append('emergencyPlan', $('[id*="txtEmergencyPlan"]').val() || '');
+
+    // 只有在「公共活動費」時才收集這些欄位
+    if (isPublicActivity) {
+        formData.append('planLocation', $('[id*="txtPlanLocation"]').val() || '');
+        formData.append('emergencyPlan', $('[id*="txtEmergencyPlan"]').val() || '');
+    }
 
     // 經費資料
-    formData.append('subsidyFunds', $('[id*="txtSubsidyFunds"]').val() || '0');
-    formData.append('selfFunds', $('[id*="txtSelfFunds"]').val() || '0');
-    formData.append('otherGovFunds', $('[id*="txtOtherGovFunds"]').val() || '0');
-    formData.append('otherUnitFunds', $('[id*="txtOtherUnitFunds"]').val() || '0');
+    const subsidyFunds = $('[id*="txtSubsidyFunds"]').val();
+    const selfFunds = $('[id*="txtSelfFunds"]').val();
+    const otherGovFunds = $('[id*="txtOtherGovFunds"]').val();
+    const otherUnitFunds = $('[id*="txtOtherUnitFunds"]').val();
+
+    if (subsidyFunds !== null && subsidyFunds !== undefined && subsidyFunds !== '') {
+        formData.append('subsidyFunds', subsidyFunds);
+    }
+    if (selfFunds !== null && selfFunds !== undefined && selfFunds !== '') {
+        formData.append('selfFunds', selfFunds);
+    }
+    if (otherGovFunds !== null && otherGovFunds !== undefined && otherGovFunds !== '') {
+        formData.append('otherGovFunds', otherGovFunds);
+    }
+    if (otherUnitFunds !== null && otherUnitFunds !== undefined && otherUnitFunds !== '') {
+        formData.append('otherUnitFunds', otherUnitFunds);
+    }
 
     const previouslySubsidized = $('[id*="rbPreviouslySubsidizedYes"]').prop('checked');
     formData.append('previouslySubsidized', previouslySubsidized);

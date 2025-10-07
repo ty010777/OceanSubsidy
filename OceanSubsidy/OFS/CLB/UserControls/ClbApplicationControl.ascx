@@ -61,22 +61,22 @@
                             </div>
                         </td>
                     </tr>
-                    <tr>
-                        <th>成立日期</th>
+                    <tr class="affairs-view">
+                        <th >成立日期<span class="text-danger view-mode">*</span></th>
                         <td colspan="3">
-                            <asp:TextBox ID="txtCreationDate" runat="server" CssClass="form-control taiwan-date-picker" 
+                            <asp:TextBox ID="txtCreationDate" runat="server" CssClass="form-control taiwan-date-picker"
                                        placeholder="請點選選擇日期" style="width: 200px;" readonly />
-                          
+
                         </td>
                     </tr>
-                    <tr>
+                    <tr class="public-view">
                         <th>學校統一編號 <span class="text-danger view-mode">*</span></th>
                         <td colspan="3">
                             <asp:TextBox ID="txtSchoolIDNumber" runat="server" CssClass="form-control" 
                                        placeholder="請輸入學校統一編號" MaxLength="10" style="width: 200px;" />
                         </td>
                     </tr>
-                    <tr>
+                    <tr class="public-view">
                         <th>地址 <span class="text-danger view-mode">*</span></th>
                         <td colspan="3">
                             <asp:TextBox ID="txtAddress" runat="server" CssClass="form-control" 
@@ -88,15 +88,15 @@
             <table class="table align-middle gray-table side-table">
                 <thead>
                     <tr>
-                        <th style="width: 15%;">人員 <span class="text-danger view-mode">*</span></th>
-                        <th style="width: 25%;">姓名</th>
-                        <th style="width: 25%;">職稱</th>
-                        <th style="width: 35%;">手機號碼</th>
+                        <th style="width: 15%;">人員 </th>
+                        <th style="width: 25%;">姓名 <span class="text-danger view-mode">*</span></th>
+                        <th style="width: 25%;">職稱 <span class="text-danger view-mode">*</span></th>
+                        <th style="width: 35%;">手機號碼 <span class="text-danger view-mode">*</span></th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <th>社團指導老師</th>
+                        <th>社團指導老師 <span class="text-danger view-mode">*</span></th>
                         <td>
                             <asp:TextBox ID="txtTeacherName" runat="server" CssClass="form-control" 
                                        placeholder="請輸入姓名" MaxLength="50" />
@@ -171,7 +171,7 @@
                                        MaxLength="1000" style="width: 100%;" />
                         </td>
                     </tr>
-                    <tr>
+                    <tr class="public-view">
                         <th>計畫地點</th>
                         <td>
                             <asp:TextBox ID="txtPlanLocation" runat="server" CssClass="form-control" 
@@ -185,7 +185,7 @@
                                        placeholder="請輸入預估參與人數" MaxLength="50" style="width: 200px;" />
                         </td>
                     </tr>
-                    <tr>
+                    <tr class="public-view">
                         <th>相關緊急應變計畫</th>
                         <td>
                             <asp:TextBox ID="txtEmergencyPlan" runat="server" CssClass="form-control textarea-auto-resize" 
@@ -210,29 +210,29 @@
                                 <div class="d-flex align-items-center gap-5 mb-3">
                                     <div class="d-flex align-items-center">
                                         <label class="mb-0 fw-medium" style="white-space: nowrap; width: 140px;">申請海委會補助:</label>
-                                        <asp:TextBox ID="txtSubsidyFunds" runat="server" CssClass="form-control text-end" 
+                                        <asp:TextBox ID="txtSubsidyFunds" runat="server" CssClass="form-control text-end"
                                                    placeholder="0" style="width: 150px;" TextMode="Number" />
                                         <span class="ms-2">元</span>
                                     </div>
                                     <div class="d-flex align-items-center">
                                         <label class="mb-0" style="white-space: nowrap; width: 140px;">自籌款:</label>
-                                        <asp:TextBox ID="txtSelfFunds" runat="server" CssClass="form-control text-end" 
+                                        <asp:TextBox ID="txtSelfFunds" runat="server" CssClass="form-control text-end"
                                                    placeholder="0" style="width: 150px;" TextMode="Number" />
                                         <span class="ms-2">元</span>
                                     </div>
                                 </div>
-                                
+
                                 <!-- 第二行：其他政府補助 + 其他單位補助 -->
                                 <div class="d-flex align-items-center gap-5 mb-3">
                                     <div class="d-flex align-items-center">
                                         <label class="mb-0" style="white-space: nowrap; width: 140px;">其他政府補助:</label>
-                                        <asp:TextBox ID="txtOtherGovFunds" runat="server" CssClass="form-control text-end" 
+                                        <asp:TextBox ID="txtOtherGovFunds" runat="server" CssClass="form-control text-end"
                                                    placeholder="0" style="width: 150px;" TextMode="Number" />
                                         <span class="ms-2">元</span>
                                     </div>
                                     <div class="d-flex align-items-center">
                                         <label class="mb-0" style="white-space: nowrap; width: 140px;">其他單位補助:</label>
-                                        <asp:TextBox ID="txtOtherUnitFunds" runat="server" CssClass="form-control text-end" 
+                                        <asp:TextBox ID="txtOtherUnitFunds" runat="server" CssClass="form-control text-end"
                                                    placeholder="0" style="width: 150px;" TextMode="Number" />
                                         <span class="ms-2">元</span>
                                     </div>

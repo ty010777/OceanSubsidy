@@ -367,10 +367,11 @@ public class SCI_Download : IHttpHandler
         {
             case "FILE_OTech1":
                 return ApplyProjectDataToWord_FILE_OTech1(originalFilePath, projectID);
-            case "FILE_AC1":
-                return ApplyProjectDataToWord_FILE_AC1(originalFilePath, projectID);
             case "FILE_OTech4":
                 return ApplyProjectDataToWord_FILE_OTech4(originalFilePath, projectID);
+            case "FILE_AC1":
+                return ApplyProjectDataToWord_FILE_AC1(originalFilePath, projectID);
+            
             default:
                 return originalFilePath; // 不需要動態處理的範本直接返回原路徑
         }

@@ -981,6 +981,15 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
             // 取得表單資料
             var formData = GetFormDataFromRequest();
 
+            // 驗證必填欄位
+            List<string> validationErrors = ValidateRequiredFields(formData);
+            if (validationErrors.Count > 0)
+            {
+                string errorMessage = string.Join("<br>", validationErrors);
+                Response.Write($"{{\"success\":false,\"message\":\"{errorMessage}\"}}");
+                return;
+            }
+
             // 檢查是否為計畫變更中狀態，如果是則驗證變更說明
             string projectID = formData["ProjectID"]?.ToString();
             if (!string.IsNullOrEmpty(projectID))
@@ -1559,6 +1568,102 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
         {
             throw new Exception($"儲存經費資訊失敗：{ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// 驗證必填欄位
+    /// </summary>
+    /// <param name="formData">表單資料</param>
+    /// <returns>驗證錯誤訊息列表</returns>
+    private List<string> ValidateRequiredFields(Dictionary<string, object> formData)
+    {
+        List<string> errors = new List<string>();
+
+        // 取得申請補助類型
+        string subsidyType = formData["SubsidyType"]?.ToString() ?? "";
+        bool isPublicActivity = subsidyType == "Public";
+        bool isOperation = subsidyType == "Admin";
+
+        // 基本必填欄位（所有類型都需要）
+        if (string.IsNullOrWhiteSpace(formData["ProjectNameTw"]?.ToString()))
+            errors.Add("請輸入計畫名稱");
+
+        if (string.IsNullOrWhiteSpace(subsidyType))
+            errors.Add("請選擇申請補助類型");
+
+        if (string.IsNullOrWhiteSpace(formData["SchoolName"]?.ToString()))
+            errors.Add("請輸入學校名稱");
+
+        if (string.IsNullOrWhiteSpace(formData["ClubName"]?.ToString()))
+            errors.Add("請輸入社團全名");
+
+        // affairs-view 欄位：成立日期（社務補助或公共活動費才需要）
+        if (isOperation || isPublicActivity)
+        {
+            if (!formData.ContainsKey("CreationDate") || formData["CreationDate"] == null)
+                errors.Add("請輸入成立日期");
+        }
+
+        // public-view 欄位（只有公共活動費才需要）
+        if (isPublicActivity)
+        {
+            if (string.IsNullOrWhiteSpace(formData["School_IDNumber"]?.ToString()))
+                errors.Add("請輸入學校統一編號");
+
+            if (string.IsNullOrWhiteSpace(formData["Address"]?.ToString()))
+                errors.Add("請輸入地址");
+        }
+
+        // 計畫執行期間（所有類型都需要）
+        if (!formData.ContainsKey("StartDate") || formData["StartDate"] == null)
+            errors.Add("請輸入計畫執行開始日期");
+
+        if (!formData.ContainsKey("EndDate") || formData["EndDate"] == null)
+            errors.Add("請輸入計畫執行結束日期");
+
+        // 計畫資訊必填欄位（所有類型都需要）
+        if (string.IsNullOrWhiteSpace(formData["Purpose"]?.ToString()))
+            errors.Add("請輸入目的");
+
+        if (string.IsNullOrWhiteSpace(formData["PlanContent"]?.ToString()))
+            errors.Add("請輸入計畫內容");
+
+        if (string.IsNullOrWhiteSpace(formData["PreBenefits"]?.ToString()))
+            errors.Add("請輸入預期效益");
+
+        // 經費必填欄位（所有類型都需要）
+        if (!formData.ContainsKey("SubsidyFunds") || formData["SubsidyFunds"] == null)
+            errors.Add("請輸入申請海委會補助金額");
+
+        if (!formData.ContainsKey("SelfFunds") || formData["SelfFunds"] == null)
+            errors.Add("請輸入自籌款金額");
+
+        if (!formData.ContainsKey("OtherGovFunds") || formData["OtherGovFunds"] == null)
+            errors.Add("請輸入其他政府補助金額");
+
+        if (!formData.ContainsKey("OtherUnitFunds") || formData["OtherUnitFunds"] == null)
+            errors.Add("請輸入其他單位補助金額");
+
+        // 人員必填欄位（所有類型都需要）
+        if (string.IsNullOrWhiteSpace(formData["TeacherName"]?.ToString()))
+            errors.Add("請輸入社團指導老師姓名");
+
+        if (string.IsNullOrWhiteSpace(formData["TeacherJobTitle"]?.ToString()))
+            errors.Add("請輸入社團指導老師職稱");
+
+        if (string.IsNullOrWhiteSpace(formData["TeacherPhone"]?.ToString()))
+            errors.Add("請輸入社團指導老師手機號碼");
+
+        if (string.IsNullOrWhiteSpace(formData["ContactName"]?.ToString()))
+            errors.Add("請輸入社團業務聯絡人姓名");
+
+        if (string.IsNullOrWhiteSpace(formData["ContactJobTitle"]?.ToString()))
+            errors.Add("請輸入社團業務聯絡人職稱");
+
+        if (string.IsNullOrWhiteSpace(formData["ContactPhone"]?.ToString()))
+            errors.Add("請輸入社團業務聯絡人手機號碼");
+
+        return errors;
     }
 
     #endregion
