@@ -31,6 +31,12 @@
                     </td>
                 </tr>
                 <tr>
+                    <th>關鍵字</th>
+                    <td>
+                        <input-text v-model.trim="content.Keywords"></input-text>
+                    </td>
+                </tr>
+                <tr>
                     <th>申辦資格</th>
                     <td>
                         <input-textarea v-model.trim="content.Criteria"></input-textarea>
@@ -119,7 +125,7 @@
                         <div class="invalid mt-0" v-if="errors.Filename">{{ errors.Filename }}</div>
                     </td>
                 </tr>
-                <tr v-if="content.IsValid">
+                <tr v-if="content.Status === 1">
                     <th>申請下架</th>
                     <td>
                         <input class="form-check-input" id="status-checkbox" type="checkbox" v-model="checked" />
@@ -163,9 +169,22 @@
         content.value.Path = file.value?.Path;
         content.value.Filename = file.value?.Name;
 
-        if (submit && !verify()) {
-            nextTick(() => document.querySelector(".invalid")?.scrollIntoView({ behavior: "smooth", block: "center" }));
-            return;
+        if (submit) {
+            if (!verify()) {
+                nextTick(() => document.querySelector(".invalid")?.scrollIntoView({ behavior: "smooth", block: "center" }));
+                return;
+            }
+
+            switch (content.Status) {
+                case 0:
+                    content.Status = 1;
+                    break;
+                case 1:
+                    if (checked.value) {
+                        content.Status = 2;
+                    }
+                    break;
+            }
         }
 
         form.value.ShortName = types.find((type) => type.code === form.value.TypeCode)?.title;
@@ -174,7 +193,8 @@
             GrantType: form.value,
             Content: content.value,
             Procedures: procedures.value,
-            Links: links.value
+            Links: links.value,
+            Submit: submit ? "true" : "false"
         };
 
         api.system("saveGrantTypeContent", data).subscribe((res) => {

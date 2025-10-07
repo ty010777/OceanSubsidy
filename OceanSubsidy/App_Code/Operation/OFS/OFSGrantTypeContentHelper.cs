@@ -12,6 +12,7 @@ public class OFSGrantTypeContentHelper
         db.CommandText = @"
             SELECT [TypeID]
                   ,[ServiceContent]
+                  ,[Keywords]
                   ,[Criteria]
                   ,[Documentary]
                   ,[ContactPerson]
@@ -20,7 +21,7 @@ public class OFSGrantTypeContentHelper
                   ,[Filename]
                   ,[WorkingDays]
                   ,[Remark]
-                  ,[IsValid]
+                  ,[Status]
                   ,[StatusReason]
               FROM [OFS_GrantTypeContent]
              WHERE [TypeID] = @TypeID
@@ -38,12 +39,11 @@ public class OFSGrantTypeContentHelper
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
-            INSERT INTO [OFS_GrantTypeContent] ([TypeID],[IsValid],[CreateTime],[CreateUser])
-                                        VALUES (@TypeID, @IsValid, GETDATE(),   @CreateUser)
+            INSERT INTO [OFS_GrantTypeContent] ([TypeID],[Status],[CreateTime],[CreateUser])
+                                        VALUES (@TypeID, 0,       GETDATE(),   @CreateUser)
         ";
 
         db.Parameters.Add("@TypeID", model.TypeID);
-        db.Parameters.Add("@IsValid", model.IsValid);
         db.Parameters.Add("@CreateUser", CurrentUser.ID);
 
         db.ExecuteNonQuery();
@@ -56,6 +56,7 @@ public class OFSGrantTypeContentHelper
         db.CommandText = @"
             UPDATE [OFS_GrantTypeContent]
                SET [ServiceContent] = @ServiceContent
+                  ,[Keywords] = @Keywords
                   ,[Criteria] = @Criteria
                   ,[Documentary] = @Documentary
                   ,[ContactPerson] = @ContactPerson
@@ -64,7 +65,7 @@ public class OFSGrantTypeContentHelper
                   ,[Filename] = @Filename
                   ,[WorkingDays] = @WorkingDays
                   ,[Remark] = @Remark
-                  ,[IsValid] = @IsValid
+                  ,[Status] = @Status
                   ,[StatusReason] = @StatusReason
                   ,[UpdateTime] = GETDATE()
                   ,[UpdateUser] = @UpdateUser
@@ -73,6 +74,7 @@ public class OFSGrantTypeContentHelper
 
         db.Parameters.Add("@TypeID", model.TypeID);
         db.Parameters.Add("@ServiceContent", model.ServiceContent);
+        db.Parameters.Add("@Keywords", model.Keywords);
         db.Parameters.Add("@Criteria", model.Criteria);
         db.Parameters.Add("@Documentary", model.Documentary);
         db.Parameters.Add("@ContactPerson", model.ContactPerson);
@@ -81,7 +83,7 @@ public class OFSGrantTypeContentHelper
         db.Parameters.Add("@Filename", model.Filename);
         db.Parameters.Add("@WorkingDays", model.WorkingDays);
         db.Parameters.Add("@Remark", model.Remark);
-        db.Parameters.Add("@IsValid", model.IsValid);
+        db.Parameters.Add("@Status", model.Status);
         db.Parameters.Add("@StatusReason", model.StatusReason);
         db.Parameters.Add("@UpdateUser", CurrentUser.ID);
 
@@ -94,6 +96,7 @@ public class OFSGrantTypeContentHelper
         {
             TypeID = row.Field<int>("TypeID"),
             ServiceContent = row.Field<string>("ServiceContent"),
+            Keywords = row.Field<string>("Keywords"),
             Criteria = row.Field<string>("Criteria"),
             Documentary = row.Field<string>("Documentary"),
             ContactPerson = row.Field<string>("ContactPerson"),
@@ -102,7 +105,7 @@ public class OFSGrantTypeContentHelper
             Filename = row.Field<string>("Filename"),
             WorkingDays = row.Field<int?>("WorkingDays"),
             Remark = row.Field<string>("Remark"),
-            IsValid = row.Field<bool>("IsValid"),
+            Status = row.Field<int>("Status"),
             StatusReason = row.Field<string>("StatusReason")
         };
     }

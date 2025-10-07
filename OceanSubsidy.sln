@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35931.197 d17.13
+VisualStudioVersion = 17.13.35931.197
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "OceanSubsidy", "OceanSubsidy\", "{0B82B284-D87D-6017-0A90-20E25BD1AF0E}"
 	ProjectSection(WebsiteProperties) = preProject
@@ -24,13 +24,22 @@ Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "OceanSubsidy", "OceanSubsid
 		SlnRelativePath = "OceanSubsidy\"
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmailApi", "EmailApi\EmailApi.csproj", "{1E84C3D7-11BA-4ECF-B108-BDD87C4327F9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{0B82B284-D87D-6017-0A90-20E25BD1AF0E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0B82B284-D87D-6017-0A90-20E25BD1AF0E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0B82B284-D87D-6017-0A90-20E25BD1AF0E}.Release|Any CPU.ActiveCfg = Debug|Any CPU
+		{0B82B284-D87D-6017-0A90-20E25BD1AF0E}.Release|Any CPU.Build.0 = Debug|Any CPU
+		{1E84C3D7-11BA-4ECF-B108-BDD87C4327F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E84C3D7-11BA-4ECF-B108-BDD87C4327F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E84C3D7-11BA-4ECF-B108-BDD87C4327F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E84C3D7-11BA-4ECF-B108-BDD87C4327F9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
