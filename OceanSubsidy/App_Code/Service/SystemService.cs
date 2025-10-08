@@ -5,6 +5,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -45,6 +46,48 @@ public class SystemService : BaseService
         }
 
         return new {};
+    }
+
+    public object downloadRecusedList(JObject param, HttpContext context)
+    {
+        var headers = new List<string>() { "年度", "計畫名稱", "計畫申請單位", "委員姓名", "任職單位", "職稱", "應迴避之具體理由及事證" };
+        var rows = new List<List<string>>();
+
+        var year = int.Parse(param["Year"].ToString());
+        var keyword = param["Keyword"].ToString();
+        var name = param["Name"].ToString();
+        var org = param["Org"].ToString();
+
+        foreach (var row in OFS_SciRecusedList.queryRecusedList(year, keyword, name, org))
+        {
+            rows.Add(new List<string>() { row.Year.ToString(), row.ProjectNameTw, row.OrgName, row.RecusedName, row.EmploymentUnit, row.JobTitle, row.RecusedReason });
+        }
+
+        var content = NPOIHelper.CreateExcel("迴避審查委員名單", headers, rows).ToArray();
+
+        //--
+
+        var date = DateTime.Now.ToString("yyMMdd");
+        var folder = Path.Combine(Path.GetFullPath(Path.Combine(context.Server.MapPath("~"), "..")), "UploadFiles", "files", date);
+
+        if (!Directory.Exists(folder))
+        {
+            Directory.CreateDirectory(folder);
+        }
+
+        var filename = Path.GetRandomFileName() + ".xlsx";
+
+        File.WriteAllBytes(Path.Combine(folder, filename), content);
+
+        OFSBaseFileHelper.insert(new BaseFile
+        {
+            Name = filename,
+            Path = Path.Combine(date, filename),
+            Size = content.Length,
+            Type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        });
+
+        return new { filename = Path.Combine(date, filename) };
     }
 
     public object getApplyList(JObject param, HttpContext context)
@@ -157,6 +200,19 @@ public class SystemService : BaseService
         return new
         {
             List = OFSNewsHelper.query(true)
+        };
+    }
+
+    public object getRecusedList(JObject param, HttpContext context)
+    {
+        var year = int.Parse(param["Year"].ToString());
+        var keyword = param["Keyword"].ToString();
+        var name = param["Name"].ToString();
+        var org = param["Org"].ToString();
+
+        return new
+        {
+            List = OFS_SciRecusedList.queryRecusedList(year, keyword, name, org)
         };
     }
 

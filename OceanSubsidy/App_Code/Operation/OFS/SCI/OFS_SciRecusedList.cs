@@ -6,6 +6,7 @@ using System.Web;
 using GS.Data;
 using GS.Data.Sql;
 using GS.OCA_OceanSubsidy.Entity;
+using GS.OCA_OceanSubsidy.Model.OFS;
 
 /// <summary>
 /// OFSRoleHelper 的摘要描述
@@ -17,7 +18,7 @@ public class OFS_SciRecusedList : System.Web.UI.Page
         //
         // TODO: 在這裡新增建構函式邏輯
         //
-    }   
+    }
         public static void ReplaceRecusedList(List<OFS_SCI_Other_Recused> recusedList, string ProjectID, bool chkNoAvoidance)
         {
             using (DbHelper db = new DbHelper())
@@ -50,7 +51,7 @@ public class OFS_SciRecusedList : System.Web.UI.Page
                         db.Parameters.Add("@EmploymentUnit", recused.EmploymentUnit);
                         db.Parameters.Add("@JobTitle", recused.JobTitle);
                         db.Parameters.Add("@RecusedReason", recused.RecusedReason);
-        
+
                         db.ExecuteNonQuery();
                     }
                 }
@@ -82,7 +83,7 @@ public class OFS_SciRecusedList : System.Web.UI.Page
                 }
             }
 
-        
+
         }
         public static void ReplaceTechReadinessList(List<OFS_SCI_Other_TechReadiness> techList, string ProjectID)
         {
@@ -131,15 +132,15 @@ public class OFS_SciRecusedList : System.Web.UI.Page
                     FROM Sys_ZgsCode
                     WHERE CodeGroup = @CodeGroup
                     ORDER BY OrderNo";
-            
+
                     db.Parameters.Clear();
                     db.Parameters.Add("@CodeGroup", codeGroup);
-            
+
                     try
                     {
                         DataTable dt = db.GetTable();
                         List<Sys_ZgsCode> codeList = new List<Sys_ZgsCode>();
-            
+
                         foreach (DataRow row in dt.Rows)
                         {
                             var code = new Sys_ZgsCode
@@ -154,10 +155,10 @@ public class OFS_SciRecusedList : System.Web.UI.Page
                                 ParentCode = row["ParentCode"]?.ToString(),
                                 MaxPriceLimit = row["MaxPriceLimit"] != DBNull.Value ? Convert.ToDecimal(row["MaxPriceLimit"]) : 0
                             };
-            
+
                             codeList.Add(code);
                         }
-            
+
                         return codeList;
                     }
                     catch (Exception ex)
@@ -258,14 +259,14 @@ public class OFS_SciRecusedList : System.Web.UI.Page
             try
             {
                 db.CommandText = @"
-                UPDATE OFS_SCI_Project_Main 
+                UPDATE OFS_SCI_Project_Main
                 SET Form5Status = @Status
                 WHERE ProjectID = @ProjectId";
-                
+
                 db.Parameters.Clear();
                 db.Parameters.Add("@Status", status);
                 db.Parameters.Add("@ProjectId", projectId);
-                
+
                 db.ExecuteNonQuery();
             }
             catch (Exception ex)
@@ -288,15 +289,15 @@ public class OFS_SciRecusedList : System.Web.UI.Page
             try
             {
                 db.CommandText = @"
-                UPDATE OFS_SCI_Project_Main 
+                UPDATE OFS_SCI_Project_Main
                 SET Form4Status = @Status, CurrentStep = @CurrentStep
                 WHERE ProjectID = @ProjectId";
-                
+
                 db.Parameters.Clear();
                 db.Parameters.Add("@Status", status);
                 db.Parameters.Add("@CurrentStep", currentStep);
                 db.Parameters.Add("@ProjectId", projectId);
-                
+
                 db.ExecuteNonQuery();
             }
             catch (Exception ex)
@@ -321,10 +322,10 @@ public class OFS_SciRecusedList : System.Web.UI.Page
                     SELECT ISNULL(IsRecused, 0) as IsRecused
                     FROM OFS_SCI_Application_Main
                     WHERE ProjectID = @ProjectID";
-                
+
                 db.Parameters.Clear();
                 db.Parameters.Add("@ProjectID", projectID);
-                
+
                 var result = db.GetTable().Rows[0][0] ;
                 return Convert.ToBoolean(result);
             }
@@ -335,4 +336,58 @@ public class OFS_SciRecusedList : System.Web.UI.Page
         }
     }
 
+    public static List<SCI_OtherRecused> queryRecusedList(int year, string keyword, string name, string org)
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            db.CommandText = @"
+                SELECT B.[Year]
+                      ,A.[ProjectID]
+                      ,B.[ProjectNameTw]
+                      ,B.[OrgName]
+                      ,A.[RecusedName]
+                      ,A.[EmploymentUnit]
+                      ,A.[JobTitle]
+                      ,A.[RecusedReason]
+                  FROM [OFS_SCI_Other_Recused] AS A
+                  JOIN [OFS_SCI_Application_Main] AS B ON B.[ProjectID] = A.[ProjectID]
+                 WHERE 1 = 1
+            ";
+
+            if (year > 0)
+            {
+                db.CommandText += " AND B.Year = @Year";
+                db.Parameters.Add("@Year", year);
+            }
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                db.CommandText += " AND (A.RecusedName LIKE @Keyword OR A.EmploymentUnit LIKE @Keyword OR A.JobTitle LIKE @Keyword)";
+                db.Parameters.Add("@Keyword", "%" + keyword.Trim() + "%");
+            }
+
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                db.CommandText += " AND B.ProjectNameTw LIKE @Name";
+                db.Parameters.Add("@Name", "%" + name.Trim() + "%");
+            }
+
+            if (!string.IsNullOrWhiteSpace(org))
+            {
+                db.CommandText += " AND B.OrgName LIKE @Org";
+                db.Parameters.Add("@Org", "%" + org.Trim() + "%");
+            }
+
+            return db.GetTable().Rows.Cast<DataRow>().Select(row => new SCI_OtherRecused {
+                Year = row.Field<int>("Year"),
+                ProjectID = row.Field<string>("ProjectID"),
+                ProjectNameTw = row.Field<string>("ProjectNameTw"),
+                OrgName = row.Field<string>("OrgName"),
+                RecusedName = row.Field<string>("RecusedName"),
+                EmploymentUnit = row.Field<string>("EmploymentUnit"),
+                JobTitle = row.Field<string>("JobTitle"),
+                RecusedReason = row.Field<string>("RecusedReason")
+            }).ToList();
+        }
+    }
 }
