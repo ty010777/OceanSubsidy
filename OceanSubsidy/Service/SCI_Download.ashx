@@ -5,6 +5,7 @@ using System.Web;
 using System.IO;
 using System.Collections.Generic;
 using GS.App;
+using GS.OCA_OceanSubsidy.Entity;
 using GS.OCA_OceanSubsidy.Operation.OSI.OpenXml;
 
 public class SCI_Download : IHttpHandler
@@ -363,12 +364,19 @@ public class SCI_Download : IHttpHandler
     /// </summary>
     private string ProcessDynamicTemplate(string fileCode, string originalFilePath, string projectID)
     {
+         // 從資料庫取得申請主檔資料
+    
+
         switch (fileCode)
         {
             case "FILE_OTech1":
                 return ApplyProjectDataToWord_FILE_OTech1(originalFilePath, projectID);
+            case "FILE_OTech3":
+                return ApplyProjectDataToWord_FILE_OTech3(originalFilePath, projectID);
             case "FILE_OTech4":
-                return ApplyProjectDataToWord_FILE_OTech4(originalFilePath, projectID);
+                return ApplyProjectDataToWord_FILE_OTech4(originalFilePath,projectID);
+            case "FILE_OTech8":
+                return ApplyProjectDataToWord_FILE_OTech8(originalFilePath,projectID);
             case "FILE_AC1":
                 return ApplyProjectDataToWord_FILE_AC1(originalFilePath, projectID);
             
@@ -481,14 +489,105 @@ public class SCI_Download : IHttpHandler
     }
 
     /// <summary>
-    /// 處理未違反公職人員利益衝突迴避法切結書 (OTech)
+    /// 處理建議迴避之審查委員清單 (OTech)
     /// </summary>
-    private string ApplyProjectDataToWord_FILE_OTech4(string originalFilePath, string projectId)
+    private string ApplyProjectDataToWord_FILE_OTech3(string originalFilePath, string projectID)
     {
         try
         {
-            // 除錯：記錄 ProjectID
-            System.Diagnostics.Debug.WriteLine($"ApplyProjectDataToWord_FILE_OTech4 - ProjectID: {projectId}");
+            if (!File.Exists(originalFilePath))
+            {
+                return originalFilePath; // 如果原檔案不存在，返回原路徑
+            }
+            OFS_SCI_Application_Main applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
+            var projectData = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
+
+            // 取得迴避名單資料
+            var recusedList = OFS_SciRecusedList.GetRecusedListByProjectID(projectID);
+
+            // 建立暫存檔案路徑，保持原檔名
+            string originalFileName = Path.GetFileName(originalFilePath);
+            string tempFilePath = Path.Combine(Path.GetTempPath(), originalFileName);
+
+            // 複製範本檔案到暫存資料夾
+            File.Copy(originalFilePath, tempFilePath, true);
+
+            // 使用 OpenXmlHelper 處理 Word 文件
+            using (var fs = new FileStream(tempFilePath, FileMode.Open, FileAccess.ReadWrite))
+            {
+                var helper = new OpenXmlHelper(fs);
+
+                // 取得當前日期（民國年月日）
+                DateTime currentDate = DateTime.Now;
+                int year = DateTimeHelper.GregorianYearToMinguo(currentDate.Year);
+                int month = currentDate.Month;
+                int day = currentDate.Day;
+
+                // 建立替換字典
+                var placeholder = new Dictionary<string, string>();
+
+                // 加入計畫名稱
+                placeholder.Add("ProjectNameTw", applicationMain?.ProjectNameTw ?? "");
+                placeholder.Add("UserName", projectData?.UserName ?? "");
+                placeholder.Add("TYear", year.ToString());
+                placeholder.Add("TMonth", month.ToString());
+                placeholder.Add("TDay", day.ToString());
+
+                var repeatData = new List<Dictionary<string, string>>();
+
+                // 使用 GenerateWord 方法替換佔位符
+                helper.GenerateWord(placeholder, repeatData);
+
+                // 處理迴避名單表格
+                if (recusedList != null && recusedList.Count > 0)
+                {
+                    // 新增表格行數（扣除標題行，所以要新增 recusedList.Count 行）
+                    helper.SetTableRowCount("recused", recusedList.Count);
+
+                    // 填入資料到表格（從第 1 行開始，第 0 行是標題）
+                    for (int i = 0; i < recusedList.Count; i++)
+                    {
+                        var recused = recusedList[i];
+                        int rowIndex = i + 1; // 第 0 行是標題，資料從第 1 行開始
+
+                        // 欄位順序：姓名、任職單位、職稱、應迴避之具體理由及事證
+                        helper.SetTableCellValue("recused", rowIndex, 0, recused.RecusedName ?? "");
+                        helper.SetTableCellValue("recused", rowIndex, 1, recused.EmploymentUnit ?? "");
+                        helper.SetTableCellValue("recused", rowIndex, 2, recused.JobTitle ?? "");
+                        helper.SetTableCellValue("recused", rowIndex, 3, recused.RecusedReason ?? "");
+                    }
+                }
+                else
+                {
+                    // 如果沒有資料，新增一個空白行
+                    helper.SetTableRowCount("recused", 1);
+                    helper.SetTableCellValue("recused", 1, 0, "無");
+                    helper.SetTableCellValue("recused", 1, 1, "無");
+                    helper.SetTableCellValue("recused", 1, 2, "無");
+                    helper.SetTableCellValue("recused", 1, 3, "無");
+                }
+
+                helper.CloseAsSave();
+            }
+
+            // 回傳處理後的檔案路徑
+            return tempFilePath;
+        }
+        catch (Exception ex)
+        {
+            // 如果處理失敗，記錄錯誤並返回原檔案路徑
+            System.Diagnostics.Debug.WriteLine($"ApplyProjectDataToWord_FILE_OTech3 Error: {ex.Message}");
+            return originalFilePath;
+        }
+    }
+
+    /// <summary>
+    /// 處理未違反公職人員利益衝突迴避法切結書 (OTech)
+    /// </summary>
+    private string ApplyProjectDataToWord_FILE_OTech4(string originalFilePath, string projectID)
+    {
+        try
+        {
 
             if (!File.Exists(originalFilePath))
             {
@@ -498,7 +597,7 @@ public class SCI_Download : IHttpHandler
             // 建立暫存檔案路徑，保持原檔名
             string originalFileName = Path.GetFileName(originalFilePath);
             string tempFilePath = Path.Combine(Path.GetTempPath(), originalFileName);
-
+            OFS_SCI_Application_Main applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
             // 複製範本檔案到暫存資料夾
             File.Copy(originalFilePath, tempFilePath, true);
 
@@ -513,9 +612,7 @@ public class SCI_Download : IHttpHandler
                 int month = currentDate.Month;
                 int day = currentDate.Day;
 
-                // 從資料庫取得申請主檔資料
-                var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectId);
-
+               
                 // 建立替換字典
                 var placeholder = new Dictionary<string, string>();
                 placeholder.Add("year", year.ToString());
@@ -540,6 +637,72 @@ public class SCI_Download : IHttpHandler
         {
             // 如果處理失敗，記錄錯誤並返回原檔案路徑
             System.Diagnostics.Debug.WriteLine($"ApplyProjectDataToWord_FILE_OTech4 Error: {ex.Message}");
+            return originalFilePath;
+        }
+    }
+
+    /// <summary>
+    /// 處理海洋科技業界科專計畫補助契約書 (OTech)
+    /// </summary>
+    private string ApplyProjectDataToWord_FILE_OTech8(string originalFilePath, string projectID)
+    {
+        try
+        {
+            if (!File.Exists(originalFilePath))
+            {
+                return originalFilePath; // 如果原檔案不存在，返回原路徑
+            }
+            TYear TMonth TDay
+            // 取得專案資料
+            OFS_SCI_Application_Main applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
+            var projectData = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
+
+            // 建立暫存檔案路徑，保持原檔名
+            string originalFileName = Path.GetFileName(originalFilePath);
+            string tempFilePath = Path.Combine(Path.GetTempPath(), originalFileName);
+
+            // 複製範本檔案到暫存資料夾
+            File.Copy(originalFilePath, tempFilePath, true);
+
+            // 使用 OpenXmlHelper 處理 Word 文件
+            using (var fs = new FileStream(tempFilePath, FileMode.Open, FileAccess.ReadWrite))
+            {
+                var helper = new OpenXmlHelper(fs);
+
+                // 取得當前日期（民國年月日）
+                DateTime currentDate = DateTime.Now;
+                int year = DateTimeHelper.GregorianYearToMinguo(currentDate.Year);
+                int month = currentDate.Month;
+                int day = currentDate.Day;
+
+                // 建立替換字典
+                var placeholder = new Dictionary<string, string>();
+
+                // 加入日期
+                placeholder.Add("year", year.ToString());
+                placeholder.Add("month", month.ToString());
+                placeholder.Add("day", day.ToString());
+
+                // 加入計畫資料
+                placeholder.Add("ProjectNameTw", applicationMain?.ProjectNameTw ?? "");
+                placeholder.Add("OrgName", applicationMain?.OrgName ?? "");
+                placeholder.Add("UserName", projectData?.UserName ?? "");
+                placeholder.Add("ProjectID", projectID ?? "");
+
+                var repeatData = new List<Dictionary<string, string>>();
+
+                // 使用 GenerateWord 方法替換佔位符
+                helper.GenerateWord(placeholder, repeatData);
+                helper.CloseAsSave();
+            }
+
+            // 回傳處理後的檔案路徑
+            return tempFilePath;
+        }
+        catch (Exception ex)
+        {
+            // 如果處理失敗，記錄錯誤並返回原檔案路徑
+            System.Diagnostics.Debug.WriteLine($"ApplyProjectDataToWord_FILE_OTech8 Error: {ex.Message}");
             return originalFilePath;
         }
     }
