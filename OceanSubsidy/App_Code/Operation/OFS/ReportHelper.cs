@@ -7,6 +7,7 @@ using System.Linq;
 
 public class ReportHelper
 {
+    // TODO 嘉良: approved=0 申請計畫報表, approved=1 核定計畫報表, approved=2 執行計畫報表
     public static List<ApplyPlan> queryApplyList(int approved = 0)
     {
         DbHelper db = new DbHelper();
@@ -142,6 +143,7 @@ public class ReportHelper
         }).ToList();
     }
 
+    // TODO 嘉良: 首頁的統計區塊, 查詢指定使用的申請的補助案
     public static List<ApplyPlan> queryApplyListByUser(string account)
     {
         DbHelper db = new DbHelper();
@@ -179,6 +181,7 @@ public class ReportHelper
         }).ToList();
     }
 
+    // TODO 嘉良: 首頁的統計區塊, 計算各類申請案的 [核定補助經費], [實支金額], [已撥付], [核定件數], [總預算]
     public static List<ApplyPlan> queryApplyStat()
     {
         DbHelper db = new DbHelper();
