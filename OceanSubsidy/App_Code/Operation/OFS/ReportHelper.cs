@@ -187,14 +187,15 @@ public class ReportHelper
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
-            SELECT O.[Year]
-                  ,O.[Category]
-                  ,SUM(O.[ApprovedAmount]) AS [ApprovedAmount]
-                  ,SUM(O.[SpendAmount]) AS [SpendAmount]
-                  ,SUM(O.[PaymentAmount]) AS [PaymentAmount]
+            SELECT T.[Year]
+                  ,T.[TypeCode]
+                  ,ISNULL(SUM(O.[ApprovedAmount]), 0) AS [ApprovedAmount]
+                  ,ISNULL(SUM(O.[SpendAmount]), 0) AS [SpendAmount]
+                  ,ISNULL(SUM(O.[PaymentAmount]), 0) AS [PaymentAmount]
                   ,COUNT(*) AS [Count]
                   ,ISNULL(T.[BudgetFees], 0) AS [BudgetFees]
-              FROM (SELECT [Year]
+              FROM [OFS_GrantType] AS T
+         LEFT JOIN (SELECT [Year]
                           ,'CUL' AS [Category]
                           ,ISNULL([ApprovedAmount], 0) AS [ApprovedAmount]
                           ,ISNULL([SpendAmount], 0) AS [SpendAmount]
@@ -232,17 +233,16 @@ public class ReportHelper
                           ,ISNULL([SpendAmount], 0) AS [SpendAmount]
                           ,ISNULL([PaymentAmount], 0) AS [PaymentAmount]
                       FROM OFS_ACC_Project
-                     WHERE IsExists = 1 AND IsWithdrawal <> 1 AND Status IN (51,52,91)) AS O
-         LEFT JOIN [OFS_GrantType] AS T ON (T.[TypeCode] = O.[Category] AND T.[Year] = O.[Year])
+                     WHERE IsExists = 1 AND IsWithdrawal <> 1 AND Status IN (51,52,91)) AS O ON (T.[TypeCode] = O.[Category] AND T.[Year] = O.[Year])
              WHERE 1 = 1
         ";
 
-        db.CommandText += " GROUP BY O.[Year], O.[Category], T.[BudgetFees]";
+        db.CommandText += " GROUP BY T.[Year], T.[TypeCode], T.[BudgetFees]";
 
         return db.GetTable().Rows.Cast<DataRow>().Select(row => new ApplyPlan
         {
             Year = row.Field<int>("Year"),
-            Category = row.Field<string>("Category"),
+            Category = row.Field<string>("TypeCode"),
             ApprovedAmount = row.Field<int>("ApprovedAmount"),
             SpendAmount = row.Field<int>("SpendAmount"),
             PaymentAmount = row.Field<int>("PaymentAmount"),
