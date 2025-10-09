@@ -60,13 +60,13 @@
                             </td>
                             <td v-if="editable">
                                 <div class="d-flex gap-2">
-                                    <button class="btn btn-sm btn-teal-dark m-0" @click="removeOther(item)" type="button" v-if="filteredOthers.length > 1"><i class="fas fa-trash-alt"></i></button>
-                                    <button class="btn btn-sm btn-teal-dark m-0" @click="addOther" type="button" v-if="idx + 1 === filteredOthers.length"><i class="fas fa-plus"></i></button>
+                                    <button class="btn btn-sm btn-teal-dark m-0" @click="removeOther(item)" type="button"><i class="fas fa-trash-alt"></i></button>
                                 </div>
                             </td>
                         </tr>
                     </tbody>
                 </table>
+                <button class="btn btn-sm btn-teal-dark m-0" @click="addOther" type="button" v-if="editable"><i class="fas fa-plus"></i> 新增</button>
             </div>
         </div>
         <h5 class="square-title">經費預算規劃</h5>
@@ -191,10 +191,6 @@
             items.value = data.Items;
             setting.value = data.GrantTargetSetting;
 
-            if (!others.value.length) {
-                addOther();
-            }
-
             if (!plans.value.length) {
                 addPlan();
             }
@@ -254,7 +250,7 @@
             Amount: { presence: { allowEmpty: false, message: `^請輸入申請金額` }, numericality: { greaterThan: 0, message: "^申請金額不可為 0" } }
         };
 
-        others.value.forEach((other, index) => Object.assign(errors.value, validateData(other, rules, `other-${index}-`)));
+        filteredOthers.value.forEach((other, index) => Object.assign(errors.value, validateData(other, rules, `other-${index}-`)));
 
         rules = {
             ItemID: { numericality: { greaterThan: 0, message: "^請選擇工作項目" } },
@@ -264,7 +260,7 @@
             Description: "計算方式及說明"
         };
 
-        plans.value.forEach((plan, index) => Object.assign(errors.value, validateData(plan, rules, `plan-${index}-`)));
+        filteredPlans.value.forEach((plan, index) => Object.assign(errors.value, validateData(plan, rules, `plan-${index}-`)));
 
         if (changeForm.value) {
             rules = {

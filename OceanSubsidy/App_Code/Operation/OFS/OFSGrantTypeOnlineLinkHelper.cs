@@ -27,11 +27,12 @@ public class OFSGrantTypeOnlineLinkHelper
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
-            INSERT INTO [OFS_GrantTypeOnlineLink] ([TypeID],[URL],[CreateTime],[CreateUser])
-                        OUTPUT Inserted.ID VALUES (@TypeID, @URL, GETDATE(),   @CreateUser)
+            INSERT INTO [OFS_GrantTypeOnlineLink] ([TypeID],[Title],[URL],[CreateTime],[CreateUser])
+                        OUTPUT Inserted.ID VALUES (@TypeID, @Title, @URL, GETDATE(),   @CreateUser)
         ";
 
         db.Parameters.Add("@TypeID", model.TypeID);
+        db.Parameters.Add("@Title", model.Title);
         db.Parameters.Add("@URL", model.URL);
         db.Parameters.Add("@CreateUser", CurrentUser.ID);
 
@@ -45,6 +46,7 @@ public class OFSGrantTypeOnlineLinkHelper
         db.CommandText = @"
             SELECT [ID]
                   ,[TypeID]
+                  ,[Title]
                   ,[URL]
               FROM [OFS_GrantTypeOnlineLink]
              WHERE [TypeID] = @TypeID
@@ -61,13 +63,15 @@ public class OFSGrantTypeOnlineLinkHelper
 
         db.CommandText = @"
             UPDATE [OFS_GrantTypeOnlineLink]
-               SET [URL] = @URL
+               SET [Title] = @Title
+                  ,[URL] = @URL
                   ,[UpdateTime] = GETDATE()
                   ,[UpdateUser] = @UpdateUser
              WHERE [ID] = @ID
         ";
 
         db.Parameters.Add("@ID", model.ID);
+        db.Parameters.Add("@Title", model.Title);
         db.Parameters.Add("@URL", model.URL);
         db.Parameters.Add("@UpdateUser", CurrentUser.ID);
 
@@ -80,6 +84,7 @@ public class OFSGrantTypeOnlineLinkHelper
         {
             ID = row.Field<int>("ID"),
             TypeID = row.Field<int>("TypeID"),
+            Title = row.Field<string>("Title"),
             URL = row.Field<string>("URL")
         };
     }
