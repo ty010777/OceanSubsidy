@@ -80,6 +80,14 @@ public class Env
         get { return ConfigurationManager.AppSettings["MailReceiverBcc"]; }
     }
 
+    public static log4net.ILog Log
+    {
+        get
+        {
+            return log4net.LogManager.GetLogger(new System.Diagnostics.StackFrame(1).GetMethod().DeclaringType);
+        }
+    }
+
     #endregion
 
 

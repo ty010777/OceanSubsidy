@@ -344,7 +344,10 @@ public class OSI_GetNSTCData : IHttpHandler
         string result = string.Empty;
 
         // 設定 TLS 1.2 以解決 SSL/TLS 錯誤
-        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+        System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
+
+        // 強制使用 TLS 1.2 並忽略憑證錯誤（僅適用於特定外部 API）
+        System.Net.ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
 
         var request = (HttpWebRequest)WebRequest.Create(options.Uri);
         request.Accept = options.Accept;

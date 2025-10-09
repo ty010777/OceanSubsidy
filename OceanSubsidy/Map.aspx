@@ -627,6 +627,4 @@
         }
 
     </script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMt5GlDE2w0dpESkPnyUO4V-g5FVVXEbw&libraries=places&callback=initAutocomplete"
-        async defer></script>
 </asp:Content>

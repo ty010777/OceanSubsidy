@@ -130,7 +130,7 @@
                     </LayoutTemplate>
                     <ItemTemplate>
                         <tr>
-                            <td><%# Container.DisplayIndex + 1 %></td>
+                            <td><%# Container.DisplayIndex + 1 + (dpReports.StartRowIndex) %></td>
                             <td data-th="填報週期:"><%# Eval("Period") %></td>
                             <td data-th="填報機關:">
                                 <asp:Literal ID="litReportingUnit" runat="server" Text='<%# Eval("ReportingUnit") %>' /></td>

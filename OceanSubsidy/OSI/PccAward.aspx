@@ -118,9 +118,9 @@
                                         <thead>
                                             <tr>
                                                 <th width="80">項次</th>
-                                                <th width="200">機關名稱</th>
-                                                <th width="360">標案名稱</th>
-                                                <th>決標金額</th>
+                                                <th width="200" style="text-align:left" >機關名稱</th>
+                                                <th width="360" style="text-align:left">標案名稱</th>
+                                                <th style="text-align:right">決標金額</th>
                                                 <th>決標日</th>
                                                 <th width="80">功能</th>
                                             </tr>
@@ -133,9 +133,9 @@
                                 <ItemTemplate>
                                     <tr>
                                         <td data-th="排序:"><%# Container.DisplayIndex + 1 + (dpPccAward.StartRowIndex) %></td>
-                                        <td data-th="機關名稱:"><%# Eval("OrgName") %></td>
-                                        <td data-th="標案名稱:"><%# Eval("AwardName") %></td>
-                                        <td data-th="決標金額:"><%# FormatPrice(Eval("AwardPrice")) %></td>
+                                        <td data-th="機關名稱:" style="text-align:left"><%# Eval("OrgName") %></td>
+                                        <td data-th="標案名稱:" style="text-align:left"><%# Eval("AwardName") %></td>
+                                        <td data-th="決標金額:" style="text-align:right"><%# FormatPrice(Eval("AwardPrice")) %></td>
                                         <td data-th="決標日:"><%# FormatRocDate(Eval("AwardDate")) %></td>
                                         <td data-th="功能:">
                                             <div class="d-flex flex-wrap justify-content-center gap-2">
@@ -152,9 +152,9 @@
                                         <thead>
                                             <tr>
                                                 <th width="80">項次</th>
-                                                <th width="200">機關名稱</th>
-                                                <th width="360">標案名稱</th>
-                                                <th>決標金額</th>
+                                                <th width="200" style="text-align:left">機關名稱</th>
+                                                <th width="360" style="text-align:left">標案名稱</th>
+                                                <th style="text-align:right">決標金額</th>
                                                 <th>決標日</th>
                                                 <th width="80">功能</th>
                                             </tr>
@@ -279,9 +279,9 @@
                                             <tr>
                                                 <th width="80">項次</th>
                                                 <th width="80">年度</th>
-                                                <th width="300">執行機關</th>
-                                                <th>計畫名稱</th>
-                                                <th width="150">總核定金額</th>
+                                                <th width="300" style="text-align:left">執行機關</th>
+                                                <th style="text-align:left">計畫名稱</th>
+                                                <th width="150" style="text-align:right">總核定金額</th>
                                                 <th width="200">執行起迄日期</th>
                                             </tr>
                                         </thead>
@@ -294,9 +294,9 @@
                                     <tr>
                                         <td data-th="項次:"><%# Container.DisplayIndex + 1 + (dpNSTCGrant.StartRowIndex) %></td>
                                         <td data-th="年度:"><%# Eval("Year") %></td>
-                                        <td data-th="執行機關:"><%# Eval("Unit") %></td>
-                                        <td data-th="計畫名稱:"><%# Eval("tName") %></td>
-                                        <td data-th="總核定金額:"><%# FormatNSTCAmount(Eval("TotalApprovedAmount")) %></td>
+                                        <td data-th="執行機關:" style="text-align:left"><%# Eval("Unit") %></td>
+                                        <td data-th="計畫名稱:" style="text-align:left"><%# Eval("tName") %></td>
+                                        <td data-th="總核定金額:" style="text-align:right"><%# FormatNSTCAmount(Eval("TotalApprovedAmount")) %></td>
                                         <td data-th="執行起迄日期:"><%# FormatExecutionDate(Eval("ExecutionStart")) %>~<%# FormatExecutionDate(Eval("ExecutionEnd")) %></td>
                                     </tr>
                                 </ItemTemplate>
@@ -306,9 +306,9 @@
                                             <tr>
                                                 <th width="80">項次</th>
                                                 <th width="80">年度</th>
-                                                <th width="300">執行機關</th>
-                                                <th>計畫名稱</th>
-                                                <th width="150">總核定金額</th>
+                                                <th width="300" style="text-align:left">執行機關</th>
+                                                <th style="text-align:left">計畫名稱</th>
+                                                <th width="150" style="text-align:right">總核定金額</th>
                                                 <th width="200">執行起迄日期</th>
                                             </tr>
                                         </thead>

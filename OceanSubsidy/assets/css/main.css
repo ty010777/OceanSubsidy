@@ -5023,7 +5023,7 @@ h6 {
   border: 0;
   padding: 3px; }
   .form-select .ts-control input {
-    font-size: 16px; }
+    font-size: 1rem; }
 
 .ts-wrapper.multi .ts-control > div.item {
   margin: 0;
@@ -5923,7 +5923,7 @@ h6 {
 
 .square-title {
   color: #26A69A;
-  font-size: 21.6px;
+  font-size: 1.35rem;
   font-weight: 800;
   display: -webkit-box;
   display: -webkit-flex;
@@ -6224,7 +6224,7 @@ body.scroll-down .top-block {
       color: #fff; }
     .step .step-item .icon {
       color: #C5C5C5;
-      font-size: 32px; }
+      font-size: 2rem; }
     .step .step-item:last-child .icon {
       display: none; }
   @media (max-width: 768px) {
@@ -6437,7 +6437,7 @@ body.scroll-down .top-block {
     .step-line .step-line-item.active {
       background-color: #C8E6C9; }
     .step-line .step-line-item .step-line-item-title {
-      font-size: 18px;
+      font-size: 1.125rem;
       color: #037F72;
       position: relative;
       width: 100%;
@@ -6520,7 +6520,7 @@ body.scroll-down .top-block {
     color: #037F72;
     text-decoration: none;
     padding: 6px;
-    font-size: 22px;
+    font-size: 1.375rem;
     display: inline-block;
     border-radius: 6px;
     font-weight: 800; }
@@ -6723,7 +6723,7 @@ body.scroll-down .top-block {
   border-radius: 50%;
   color: #5C5C5C;
   background: unset;
-  font-size: 24px; }
+  font-size: 1.5rem; }
 
 /* 取消 tooltip 元素的 active 效果 */
 [data-bs-toggle="tooltip"]:active .tooltip {
@@ -6793,7 +6793,7 @@ body.scroll-down .top-block {
   .anchor-menu .anchor-menu-item {
     text-decoration: none;
     color: #fff;
-    font-size: 14px;
+    font-size: 0.875rem;
     padding: 4px 10px; }
     .anchor-menu .anchor-menu-item:hover {
       color: #FFF600; }
@@ -6853,7 +6853,7 @@ body.scroll-down .top-block {
   text-align: end;
   overflow-x: auto; }
   .total-list .total-item-title {
-    font-size: 18px;
+    font-size: 1.125rem;
     margin-bottom: 16px; }
   .total-list .total-item {
     -webkit-box-flex: 1;
@@ -6884,12 +6884,12 @@ body.scroll-down .top-block {
               justify-content: end;
       gap: 10px; }
       .total-list .total-item-content .count {
-        font-size: 40px;
+        font-size: 2.5rem;
         font-weight: 700;
         font-family: 'Inter', sans-serif;
         line-height: 1; }
       .total-list .total-item-content .unit {
-        font-size: 24px;
+        font-size: 1.5rem;
         font-weight: 700;
         line-height: 1;
         color: #C8E6C9; }
@@ -6981,7 +6981,7 @@ body.scroll-down .top-block {
   padding: 16px 24px;
   background-color: #F5F5F5; }
   .total-label .total-label-item-title {
-    font-size: 21.6px;
+    font-size: 1.35rem;
     font-weight: 700;
     color: #037F72; }
   .total-label .total-label-item-content {
@@ -6996,10 +6996,10 @@ body.scroll-down .top-block {
     gap: 10px;
     font-weight: 700; }
     .total-label .total-label-item-content .count {
-      font-size: 39px;
+      font-size: 2.4375rem;
       color: #005E53; }
     .total-label .total-label-item-content .unit {
-      font-size: 21.6px;
+      font-size: 1.35rem;
       color: #037F72; }
 
 .page-number-control {
@@ -7165,7 +7165,7 @@ body.scroll-down .scroll-bottom-panel h5 {
   padding-inline: 18px; }
   .timeline .year {
     color: #5C5C5C;
-    font-size: 18px;
+    font-size: 1.125rem;
     line-height: normal;
     display: block; }
   .timeline ul.month {
@@ -7177,7 +7177,7 @@ body.scroll-down .scroll-bottom-panel h5 {
     padding-bottom: 0; }
     .timeline ul.month li a {
       color: #037F72;
-      font-size: 22px;
+      font-size: 1.375rem;
       line-height: normal;
       font-weight: 800;
       text-decoration: none;
@@ -7259,7 +7259,7 @@ body.scroll-down .scroll-bottom-panel h5 {
       -webkit-justify-content: center;
           -ms-flex-pack: center;
               justify-content: center;
-      font-size: 16px;
+      font-size: 1rem;
       outline: none;
       border: none; }
       .image-preview__item-overlay .btn-remove-image, .image-preview__item-overlay .btn:active {
@@ -7381,7 +7381,7 @@ body {
     display: none; }
   .mis-header h1 {
     text-shadow: 0px 4px 20px rgba(0, 0, 0, 0.25);
-    font-size: 22px;
+    font-size: 1.375rem;
     font-weight: 700;
     line-height: 33px;
     color: #FFC51B;

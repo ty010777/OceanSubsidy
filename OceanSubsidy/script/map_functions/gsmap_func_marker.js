@@ -1719,7 +1719,11 @@ function editMarkerName(PK, type, typeNum) {
     } else if (type == "text") {
         getTypeStyle("Text");
     }
-    var Text = olFeature.getStyle().getText().getText();
+
+    var style = olFeature.getStyle();
+    var mainStyle = Array.isArray(style) ? style[0] : style;
+    var textStyle = mainStyle.getText();
+    var Text = textStyle ? textStyle.getText() : '';
     setMkCtrlStyle(olFeature, type, Text);
     
     // 設定編輯模式相關變數
@@ -2115,6 +2119,12 @@ function CancelUpdateMark() {
     // 恢復被禁用的功能
     $("#ddlCategory").prop("disabled", false);
     $("#MarkList .layer-tool").css("pointer-events", "").css("opacity", "");
+    
+    // 依據 ddlCategory 的選擇觸發 getTypeStyle
+    var selectedCategory = $("#ddlCategory").val();
+    if (selectedCategory) {
+        getTypeStyle(selectedCategory);
+    }
 }
 
 // 清除所有標註輸入欄位

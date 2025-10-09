@@ -1,5 +1,4 @@
 ﻿// geoserver 的網址
-//gisServerURL = "https://tm.gis.tw/geoserver/";
 gisServerURL = "https://projects.geosense.tw/geoserver/";
 
 

@@ -194,39 +194,6 @@ public class EzMailSender
 
     /// <summary>寄出郵件</summary>
     /// <param name="MailServerIP_or_Name">郵件伺服器IP或DNS</param>
-    public void Send(string MailServerIP_or_Name)
-    {
-        string OutPutMessage = "";
-        SmtpClient Client1 = new SmtpClient(MailServerIP_or_Name, 25);
-
-        if (TLSorSSL != "")
-        {
-            Client1.EnableSsl = true;
-            // 這段一定要, 要寫這個才可以跳過 "根據驗證程序,遠端憑證是無效的" 的錯誤 
-            ServicePointManager.ServerCertificateValidationCallback = new System.Net.Security.RemoteCertificateValidationCallback(ValidateServerCertificate);
-            if (TLSorSSL == "TLS")
-            {
-                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls;
-            }
-            else
-            {
-                ServicePointManager.SecurityProtocol = SecurityProtocolType.Ssl3;
-            }
-        }
-
-        try
-        {
-            Client1.Send(MailMessage1);
-        }
-        catch (Exception ex)
-        {
-            OutPutMessage = "Failure:" + ex.Message;
-        }
-        Client1 = null;
-    }
-
-    /// <summary>寄出郵件</summary>
-    /// <param name="MailServerIP_or_Name">郵件伺服器IP或DNS</param>
     /// <param name="MailServerPort">郵件伺服器連接埠</param>
     /// <param name="UserID">登入郵件伺服器帳號</param>
     /// <param name="UserPasswd">登入郵件伺服器密碼</param>
@@ -243,10 +210,6 @@ public class EzMailSender
             if (TLSorSSL == "TLS")
             {
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-            }
-            else
-            {
-                ServicePointManager.SecurityProtocol = SecurityProtocolType.Ssl3;
             }
         }
 

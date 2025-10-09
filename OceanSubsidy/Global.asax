@@ -15,6 +15,9 @@
         // 初始化 log4net
         log4net.Config.XmlConfigurator.Configure();
 
+        // 記錄 Log4net 啟動資訊
+        Env.Log.Info("Log4net啟動");
+
         // 註冊DBConnectionString預設連線資訊
         Generic.DBConnectionString = Env.S_DefaultConnection;
     }
@@ -137,6 +140,7 @@
         if (perms == null)
         {
             // Session 過期或尚未登入 → 導到登入
+            Env.Log.Info($"Session 過期或尚未登入，導向登入頁面。Request Path: {path}");
             ctx.Response.Redirect("~/Login.aspx");
             return;
         }
@@ -145,6 +149,7 @@
         string pageCode = SysPermissionHelper.QueryPermissionCodeByUrl(path);
         if (pageCode != null && !perms.Contains(pageCode))
         {
+            Env.Log.Info($"權限不足，導向預設頁面。Request Path: {path}, PageCode: {pageCode}");
             ctx.Response.Redirect("~/Default.aspx");
             return;
         }

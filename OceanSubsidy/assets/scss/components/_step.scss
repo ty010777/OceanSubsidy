@@ -36,7 +36,7 @@
         }
         .icon {
             color: $neutral-400;
-            font-size: 32px;
+            font-size: 2rem;
         }
 
         &:last-child {
@@ -252,7 +252,7 @@ $app-step-status-size: 14px;
         }
 
         .step-line-item-title {
-            font-size: 18px;
+            font-size: 1.125rem; // 18px
             color: $teal-dark;
             position: relative;
             width: 100%;

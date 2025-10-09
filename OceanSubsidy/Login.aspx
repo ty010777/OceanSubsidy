@@ -15,76 +15,6 @@
             flex-direction: column;
             gap: 1rem;
         }
-
-        /* 無障礙修正：覆蓋固定字型大小為相對單位 */
-        .fs-12 {
-            font-size: 0.75rem !important;
-        }
-
-        .fs-14 {
-            font-size: 0.875rem !important;
-        }
-
-        .fs-15 {
-            font-size: 0.9375rem !important;
-        }
-
-        .fs-16 {
-            font-size: 1rem !important;
-        }
-
-        .fs-18 {
-            font-size: 1.125rem !important;
-        }
-
-        .fs-20 {
-            font-size: 1.25rem !important;
-        }
-
-        .fs-21 {
-            font-size: 1.3125rem !important;
-        }
-
-        .fs-22 {
-            font-size: 1.375rem !important;
-        }
-
-        .fs-24 {
-            font-size: 1.5rem !important;
-        }
-
-        .fs-32 {
-            font-size: 2rem !important;
-        }
-
-        .fs-39 {
-            font-size: 2.4375rem !important;
-        }
-
-        .fs-40 {
-            font-size: 2.5rem !important;
-        }
-
-        /* 針對登入頁面特定元素的字型大小修正 */
-        h1 {
-            font-size: 2rem !important;
-        }
-
-        .login-container h1 {
-            font-size: 1.75rem !important;
-        }
-
-        span.fs-12 {
-            font-size: 0.75rem !important;
-        }
-
-        span.fs-18 {
-            font-size: 1.125rem !important;
-        }
-
-        span.fs-20 {
-            font-size: 1.25rem !important;
-        }
     </style>
 
 </asp:Content>
@@ -94,7 +24,7 @@
 
         <a href="#AC" id="AC" accesskey="C" class="a11yBrick position-absolute text-black text-decoration-none fs-18 mt-3 ms-3" title="中央內容區塊[快捷鍵Alt+C]">:::</a>
 
-        <button class="btn btn-blue-deep position-absolute top-0 end-0 mt-3 me-3" style="z-index: 3;" type="button" data-bs-toggle="modal" data-bs-target="#siteNavigationModal">
+        <button title="網站導覽" class="btn btn-blue-deep position-absolute top-0 end-0 mt-3 me-3" style="z-index: 3;" type="button" data-bs-toggle="modal" data-bs-target="#siteNavigationModal">
             網站導覽
         </button>
 
@@ -110,7 +40,7 @@
                     <div class="form-group">
                         <div class="form-title">
                             <asp:Label ID="lblEmail" runat="server" AssociatedControlID="txtEmail">帳號</asp:Label>
-                            <a href="#" data-bs-toggle="modal" data-bs-target="#registerModal">
+                            <a href="#" title="申請帳號" data-bs-toggle="modal" data-bs-target="#registerModal">
                                 <i class="fas fa-user-plus"></i>
                                 申請帳號
                             </a>
@@ -137,7 +67,7 @@
                     <div class="form-group">
                         <div class="form-title">
                             <asp:Label ID="lblPassword" runat="server" AssociatedControlID="password">密碼</asp:Label>
-                            <a href="#" data-bs-toggle="modal" data-bs-target="#forgotModal">
+                            <a href="#" title="忘記密碼" data-bs-toggle="modal" data-bs-target="#forgotModal">
                                 <i class="fas fa-question-circle"></i>
                                 忘記密碼
                             </a>
@@ -175,11 +105,11 @@
                             <div class="form-icon-input">
                                 <asp:TextBox ID="txtCaptcha" runat="server" placeholder="請輸入驗證碼" title="驗證碼" />
                             </div>
-                            <button type="button" onclick="return reloadcode();" class="d-grid p-0 border-0 bg-transparent">
+                            <button type="button" title="點擊圖片可換驗證碼" onclick="return reloadcode();" class="d-grid p-0 border-0 bg-transparent">
                                 <span class="fs-12 text-gray" style="cursor: pointer;">點擊圖片可換驗證碼</span>
                                 <img id="imgValidate" alt="驗證碼" />
                             </button>
-                            <button class="btn p-0 mt-auto" type="button" style="min-width: unset;" onclick="playCaptchaAudio()" aria-label="播放驗證碼">
+                            <button class="btn p-0 mt-auto" type="button" style="min-width: unset;" onclick="playCaptchaAudio()" aria-label="播放驗證碼" title="播放驗證碼">
                                 <img src="assets/img/play.svg" aria-hidden="true">
                             </button>
                         </div>

@@ -12,9 +12,11 @@ using GS.Extension;
 using GS.OCA_OceanSubsidy.Entity;
 using NPOI.Util;
 using static GS.App.Utility;
+using log4net;
 
 public partial class Login : System.Web.UI.Page
 {
+    private static readonly ILog log = LogManager.GetLogger(typeof(Login));
     protected void Page_Load(object sender, EventArgs e)
     {
         if (!IsPostBack)
@@ -71,15 +73,24 @@ public partial class Login : System.Web.UI.Page
         Page.Validate("Login");
         if (!Page.IsValid) return;
 
-        bool ok = ValidateUser(txtEmail.Text.Trim(), password.Text, out int userId);
+        string account = txtEmail.Text.Trim();
+        string clientIP = GetClientIP();
+
+        bool ok = ValidateUser(account, password.Text, out int userId);
         if (ok)
         {
+            // 記錄成功登入日誌
+            log.Info($"使用者登入成功 - 帳號: {account}, UserID: {userId}, IP: {clientIP}");
+
             // 呼叫共用登入方法
-            PerformLogin(txtEmail.Text.Trim(), userId);
+            PerformLogin(account, userId);
             return;
         }
         else
         {
+            // 記錄登入失敗日誌
+            log.Warn($"使用者登入失敗 - 帳號: {account}, IP: {clientIP}");
+
             // 登入失敗，顯示錯誤訊息
             ScriptManager.RegisterStartupScript(
                 this, GetType(),

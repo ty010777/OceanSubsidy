@@ -17,24 +17,20 @@
     <link rel="stylesheet" href="<%= ResolveUrl("~/assets/vendor/fontawesome-free-6.5.2-web/css/all.min.css") %>">
     <link rel="stylesheet" href="<%= ResolveUrl("~/assets/vendor/fontawesome-free-6.5.2-web/css/all.css") %>">
 
-    <!-- Google Icons -->
-    <link rel="stylesheet" href="<%= ResolveUrl("~/assets/vendor/googleFont/googleFont-Material-Symbols-Rounded.css") %>">
-    <link rel="stylesheet" href="<%= ResolveUrl("~/assets/vendor/googleFont/googleFont-Material-Icons-Round.css") %>">
-
     <!-- Google Fonts -->
     <link href="<%= ResolveUrl("~/assets/vendor/googleFont/googleFont.css") %>" rel="stylesheet">
 
-    <!-- Clandars -->
-    <script src="<%=ResolveUrl("~/lib/JQueryDatePickerTW/Lib/jquery-1.9.1.js")%>"></script>
-    <script src="<%= ResolveUrl("~/lib/JQueryDatePickerTW/Lib/jquery-ui-1.10.3.custom.js") %>"></script>
-    <link href="<%= ResolveUrl("~/lib/JQueryDatePickerTW/Lib/jquery-ui-1.10.3.custom.css") %>" rel="stylesheet"/>
-    <link href="<%= ResolveUrl("~/lib/JQueryDatePickerTW/Lib/jquery-ui.theme.min.css") %>" rel="stylesheet">
-    <script src="<%= ResolveUrl("~/lib/JQueryDatePickerTW/JQueryDatePickerTW.js") %>"></script>
+    <!-- Modern Date Picker -->
+    <script src="<%= ResolveUrl("~/lib/rocDatePicker/jquery-3.7.1.min.js") %>"></script>
+    <link rel="stylesheet" href="<%= ResolveUrl("~/lib/rocDatePicker/flatpickr.min.css") %>">
+    <script src="<%= ResolveUrl("~/lib/rocDatePicker/flatpickr.js") %>"></script>
+    <script src="<%= ResolveUrl("~/lib/rocDatePicker/zh-tw.js") %>"></script>
 
     <!-- 自訂 -->
     <link rel="stylesheet" href="<%= ResolveUrl("~/assets/css/login.css") %>">
     <link rel="stylesheet" href="<%= ResolveUrl("~/assets/css/main.css") %>">
     <script src="<%= ResolveUrl("~/assets/js/customJS.js") %>"></script>
+    <script src="<%= ResolveUrl("~/assets/js/rocDatePicker.js") %>"></script>
 
     <!-- 全站共用 -->
     <script>
@@ -50,13 +46,65 @@
         }
 
         function pageLoad() {
-            $(".rocDate").datepickerTW({
-                dateFormat: 'yy/mm/dd',
-                changeMonth: true,
-                changeYear: true,
-                showButtonPanel: true
-            });
+            // 初始化民國年日期選擇器
+            if (typeof initRocDatePicker === 'function') {
+                initRocDatePicker('.rocDate');
+            }
         }
+
+        // ASP.NET AJAX 相容性處理
+        function setupAjaxSupport() {
+            if (typeof Sys !== 'undefined' && Sys.WebForms && Sys.WebForms.PageRequestManager) {
+                var prm = Sys.WebForms.PageRequestManager.getInstance();
+
+                // 儲存日期值的變數
+                var savedDateValues = {};
+
+                // UpdatePanel 開始更新前
+                prm.add_beginRequest(function(sender, args) {
+                    // 保存所有民國年日期輸入框的值
+                    savedDateValues = {};
+                    var rocDateElements = document.querySelectorAll('.rocDate');
+                    rocDateElements.forEach(function(element) {
+                        if (element.name || element.id) {
+                            var key = element.name || element.id;
+                            if (element.value) {
+                                savedDateValues[key] = element.value;
+                            }
+                        }
+                    });
+
+                    // 清理現有的 Flatpickr 實例
+                    if (typeof cleanupRocDatePickers === 'function') {
+                        cleanupRocDatePickers();
+                    }
+                });
+
+                // UpdatePanel 更新完成後
+                prm.add_endRequest(function(sender, args) {
+                    // 延遲處理確保 DOM 完全更新
+                    setTimeout(function() {
+                        // 恢復民國年格式的值
+                        for (var key in savedDateValues) {
+                            var element = document.getElementById(key) || document.querySelector('[name="' + key + '"]');
+                            if (element && element.classList.contains('rocDate')) {
+                                element.value = savedDateValues[key];
+                            }
+                        }
+
+                        // 重新初始化日期選擇器
+                        if (typeof initRocDatePicker === 'function') {
+                            initRocDatePicker('.rocDate');
+                        }
+                    }, 150);
+                });
+            }
+        }
+
+        // 頁面載入完成時設定 AJAX 支援
+        document.addEventListener('DOMContentLoaded', function() {
+            setupAjaxSupport();
+        });
 
     </script>
    

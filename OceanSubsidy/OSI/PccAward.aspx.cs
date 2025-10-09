@@ -12,11 +12,7 @@ public partial class OSI_PccAward : System.Web.UI.Page
     protected void Page_Load(object sender, EventArgs e)
     {
         if (!IsPostBack)
-        {
-            // 中華民國月曆需要在頁面載入後才設定readonly
-            txtAwardDateFrom.Attributes.Add("readonly", "readonly");
-            txtAwardDateTo.Attributes.Add("readonly", "readonly");
-            
+        {            
             // 獲取並設定最新的決標日期
             SetLatestAwardDate();
             

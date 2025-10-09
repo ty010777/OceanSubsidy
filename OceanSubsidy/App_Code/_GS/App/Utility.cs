@@ -145,22 +145,35 @@ namespace GS.App
             {
                 public static string EncryptText(string plaintext, string salt = "")
                 {
-                    string key = Env.C_AESGCM_SECRET_KEY;
-                    return Core.AESGCM.Encrypt(plaintext, key, salt);
+                    string key = null;
+                    try
+                    {
+                        key = Env.C_AESGCM_SECRET_KEY;
+                        return Core.AESGCM.Encrypt(plaintext, key, salt);
+                    }
+                    finally
+                    {
+                        key = null; // 協助 GC 清除 string 物件
+                    }
                 }
 
 
                 public static string DecryptText(string ciphertext, string salt = "")
                 {
                     string result = "解密失敗。Decrypt error";
-                    string key = Env.C_AESGCM_SECRET_KEY;                    
+                    string key = null;
                     try
                     {
+                        key = Env.C_AESGCM_SECRET_KEY;
                         result = Core.AESGCM.Decrypt(ciphertext, key, salt);
                     }
                     catch (Exception ex)
                     {
-                        //result = ex.Message;                        
+                        //result = ex.Message;
+                    }
+                    finally
+                    {
+                        key = null; // 協助 GC 清除 string 物件
                     }
                     return result;
                 }

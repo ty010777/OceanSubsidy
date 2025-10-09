@@ -2,12 +2,11 @@
 /*****
 
 *****/
-//var chiayiwaterLegendURL = gisServerURL + "chiayiwater/ows?service=WMS&request=GetLegendGraphic&format=image%2Fpng&width=18&height=18&legend_options=forceLabels:off&layer=chiayiwater%3A";
 var chiayiwaterLegendURL = "service/proxy2.ashx?" + gisServerURL + "ows?service=WMS&request=GetLegendGraphic&format=image%2Fpng&width=18&height=18&legend_options=forceLabels:off&layer=chiayiwater%3A";
 var chiayiwaterLargeLegendURL = gisServerURL + "ows?service=WMS&request=GetLegendGraphic&format=image%2Fpng&width=26&height=26&legend_options=forceLabels:off&layer=chiayiwater%3A";
 var treeLayerSelectInteraction = null;
 
-var gisLegendURL = gisServerURL + "ows?service=WMS&request=GetLegendGraphic&format=image%2Fpng&width=18&height=18&legend_options=forceLabels:off&layer=oca%3A";
+var gisLegendURL = gisServerURL + "ows?service=WMS&request=GetLegendGraphic&format=image%2Fpng&width=18&height=18&legend_options=forceLabels:off&layer=OceanSubsidy%3A";
 
 var map_layers =
 {
@@ -27,8 +26,9 @@ var map_layers =
                     "targetPrj": "EPSG:3826",
                     "params": {
                         "version": "1.3.0",
-                        "layers": "oca:map_County",
-                        "styles": ""
+                        "layers": "OceanSubsidy:map_County",
+                        "styles": "",
+                        FORMAT: 'image/png8'
                     },
                 }
             },
@@ -44,8 +44,9 @@ var map_layers =
                     "targetPrj": "EPSG:3826",
                     "params": {
                         "version": "1.3.0",
-                        "layers": "oca:map_Town",
-                        "styles": ""
+                        "layers": "OceanSubsidy:map_Town",
+                        "styles": "",
+                        FORMAT: 'image/png8'
                     },
                 }
             },
@@ -61,8 +62,9 @@ var map_layers =
                     "targetPrj": "EPSG:3826",
                     "params": {
                         "version": "1.3.0",
-                        "layers": "oca:map_Village",
-                        "styles": ""
+                        "layers": "OceanSubsidy:map_Village",
+                        "styles": "",
+                        FORMAT: 'image/png8'
                     }
                 }
             }
@@ -83,7 +85,8 @@ var map_layers =
                     targetPrj: "EPSG:3826",
                     params: {
                         VERSION: "1.3.0",
-                        layers: "oca:map_CountyOceanSection"
+                        layers: "OceanSubsidy:map_CountyOceanSection",
+                        FORMAT: 'image/png8'
                     }
                 }
             },
@@ -98,7 +101,8 @@ var map_layers =
                     targetPrj: "EPSG:3826",
                     params: {
                         VERSION: "1.3.0",
-                        layers: "oca:map_3SeaMileArea"
+                        layers: "OceanSubsidy:map_3SeaMileArea",
+                        FORMAT: 'image/png8'
                     }
                 }
             },
@@ -113,7 +117,8 @@ var map_layers =
                     targetPrj: "EPSG:3826",
                     params: {
                         VERSION: "1.3.0",
-                        layers: "oca:map_12SeaMileline"
+                        layers: "OceanSubsidy:map_12SeaMileline",
+                        FORMAT: 'image/png8'
                     }
                 }
             },
@@ -128,7 +133,8 @@ var map_layers =
                     targetPrj: "EPSG:3826",
                     params: {
                         VERSION: "1.3.0",
-                        layers: "oca:map_12SeaMileline"
+                        layers: "OceanSubsidy:map_24SeaMileline",
+                        FORMAT: 'image/png8'
                     }
                 }
             },
@@ -143,7 +149,8 @@ var map_layers =
                     targetPrj: "EPSG:3826",
                     params: {
                         VERSION: "1.3.0",
-                        layers: "oca:map_CoastArea"
+                        layers: "OceanSubsidy:map_CoastArea",
+                        FORMAT: 'image/png8'
                     },
                 }
             },

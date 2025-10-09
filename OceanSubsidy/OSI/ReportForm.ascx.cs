@@ -263,9 +263,6 @@ public partial class OSI_ReportForm : System.Web.UI.UserControl
             BasicBind();
             LoadData();
             lastUpdate.Visible = !IsNew;
-            // 中華民國月曆需要在頁面載入後才設定readonly
-            //txtResFrom.Attributes.Add("readonly", "readonly");
-            //txtResTo.Attributes.Add("readonly", "readonly");
         }
     }
 

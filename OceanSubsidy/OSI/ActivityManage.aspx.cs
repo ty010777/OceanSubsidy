@@ -254,13 +254,6 @@ public partial class OSI_ActivityManage : System.Web.UI.Page
         var txtColor = (TextBox)item.FindControl("txtEditColor");
         string newColor = txtColor.Text;
 
-        // 中華民國月曆需要在載入後再加上readonly屬性
-        if (txtStart != null)
-            txtStart.Attributes.Add("readonly", "readonly");
-        if (txtEnd != null)
-            txtEnd.Attributes.Add("readonly", "readonly");
-
-
         // 解析使用者輸入
         if (!DateTimeHelper.TryParseMinguoDate(txtStart.Text, out var newStart)
             || !DateTimeHelper.TryParseMinguoDate(txtEnd.Text, out var newEnd))

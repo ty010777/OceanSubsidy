@@ -8,7 +8,7 @@
     overflow-x: auto;
 
     .total-item-title {
-        font-size: 18px;
+        font-size: 1.125rem;
         margin-bottom: 16px;
     }
     .total-item {
@@ -28,13 +28,13 @@
             justify-content: end;
             gap: 10px;
             .count {
-                font-size: 40px;
+                font-size: 2.5rem;
                 font-weight: 700;
                 font-family: 'Inter', sans-serif;
                 line-height: 1;
             }
             .unit {
-                font-size: 24px;
+                font-size: 1.5rem;
                 font-weight: 700;
                 line-height: 1;
                 color: $pale-green;
@@ -113,7 +113,7 @@
     padding: 16px 24px;
     background-color: $neutral-100;
     .total-label-item-title {
-        font-size: 21.6px;
+        font-size: 1.35rem;
         font-weight: 700;
         color: $teal-dark;
     }
@@ -123,11 +123,11 @@
         gap: 10px;
         font-weight: 700;
         .count {
-            font-size: 39px;
+            font-size: 2.4375rem;
             color: $dark-green;
         }
         .unit {
-            font-size: 21.6px;
+            font-size: 1.35rem;
             color: $teal-dark;
         }
     }

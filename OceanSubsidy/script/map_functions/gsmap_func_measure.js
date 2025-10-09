@@ -6,6 +6,8 @@ gsmap.func.Measure = function (_plugin, targetDom) {
     var $mainDom;
     var bShow = false;
     var me = this;
+    var totalLength = 0;
+    var area = 0;
 
     var helpHtmls = [
     "<p>• 於圖面上點擊量測範圍，並雙擊滑鼠左鍵結束。</p><p>• 可依需求選擇量測單位。</p>",
@@ -62,13 +64,13 @@ gsmap.func.Measure = function (_plugin, targetDom) {
     }
 
 
-    function fillLength(partNum, totalLength) {
-        this.totalLength = totalLength;
+    function fillLength(partNum, _totalLength) {
+        totalLength = _totalLength;
         switchLengthUnit();
         $mainDom.find("#lengthPartNum").text(partNum);
     }
-    function fillArea(area, perimeter) {
-        this.area = area;
+    function fillArea(_area, perimeter) {
+        area = _area;
         $mainDom.find("#perimeter").text((perimeter + "").toMoney(2));
         switchAreaUnit();
     }
@@ -104,7 +106,7 @@ gsmap.func.Measure = function (_plugin, targetDom) {
     }
 
     function switchLengthUnit() {
-        var currUnitLength = this.totalLength;
+        var currUnitLength = totalLength;
         var unitDesc = "公尺(m)";
         switch ($mainDom.find("#lengthUnit").val()) {
             case "m":
@@ -119,7 +121,7 @@ gsmap.func.Measure = function (_plugin, targetDom) {
     }
 
     function switchAreaUnit() {
-        var currUnitArea = this.area;
+        var currUnitArea = area;
         var unitDesc = "平方公尺(m<sup>2</sup>)";
         switch ($mainDom.find("#areaUnit").val()) {
             case "m2":
