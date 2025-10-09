@@ -471,7 +471,7 @@ public class SystemService : BaseService
                 // workingdays1 = content.WorkingDays.ToString(),
                 contactperson1 = $"{content.ContactPerson} ({content.ContactTel})",
                 remarks1 = content.Remark,
-                // reference1 = new List<object>() { new { link = "", linktitle = "" } },
+                reference1 = OFSGrantTypeOnlineLinkHelper.query(id).Select(d => new { link = d.URL, linktitle = d.Title }).ToList(),
                 onlinelink = url
             }
         });

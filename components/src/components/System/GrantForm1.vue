@@ -94,7 +94,16 @@
                             <tbody>
                                 <tr :key="item" v-for="(item,idx) in filterLinks">
                                     <td width="1%">{{ idx + 1 }}</td>
-                                    <td><input-text :error="errors[`link-${idx}-URL`]" v-model.trim="item.URL"></input-text></td>
+                                    <td>
+                                        <div class="row">
+                                            <div class="col">
+                                                <input-text :error="errors[`link-${idx}-Title`]" placeholder="參考資料名稱" v-model.trim="item.Title"></input-text>
+                                            </div>
+                                            <div class="col">
+                                                <input-text :error="errors[`link-${idx}-URL`]" placeholder="網址" v-model.trim="item.URL"></input-text>
+                                            </div>
+                                        </div>
+                                    </td>
                                     <td width="1%">
                                         <div class="d-flex gap-2">
                                             <button class="btn btn-sm btn-teal-dark m-0" @click="item.Deleted = true" type="button">
@@ -238,6 +247,7 @@
 
         if (filterLinks.value.length) {
             rules = {
+                Title: "參考資料名稱",
                 URL: "網址"
             };
 
