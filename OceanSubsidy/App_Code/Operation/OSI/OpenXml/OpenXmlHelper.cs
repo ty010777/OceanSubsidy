@@ -934,7 +934,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
         }
 
         /// <summary>
-        /// 建立圖片的 Drawing 元素
+        /// 建立圖片的 Drawing 元素（文繞圖 - 矩形模式）
         /// </summary>
         private Drawing CreateImageElement(string relationshipId, long widthEmu, long heightEmu)
         {
@@ -944,7 +944,16 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
             uint imageId = maxId + 1;
 
             var element = new Drawing(
-                new DW.Inline(
+                new DW.Anchor(
+                    new DW.SimplePosition() { X = 0L, Y = 0L },
+                    new DW.HorizontalPosition(new DW.PositionOffset("0"))
+                    {
+                        RelativeFrom = DW.HorizontalRelativePositionValues.Column
+                    },
+                    new DW.VerticalPosition(new DW.PositionOffset("0"))
+                    {
+                        RelativeFrom = DW.VerticalRelativePositionValues.Paragraph
+                    },
                     new DW.Extent() { Cx = widthEmu, Cy = heightEmu },
                     new DW.EffectExtent()
                     {
@@ -953,6 +962,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
                         RightEdge = 0L,
                         BottomEdge = 0L
                     },
+                    new DW.WrapSquare() { WrapText = DW.WrapTextValues.BothSides },
                     new DW.DocProperties()
                     {
                         Id = imageId,
@@ -998,9 +1008,16 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
                 {
                     DistanceFromTop = 0U,
                     DistanceFromBottom = 0U,
-                    DistanceFromLeft = 0U,
-                    DistanceFromRight = 0U,
-                    EditId = "50D07946"
+                    DistanceFromLeft = 114300U,
+                    DistanceFromRight = 114300U,
+                    SimplePos = false,
+                    RelativeHeight = 251658240U,
+                    BehindDoc = false,
+                    Locked = false,
+                    LayoutInCell = true,
+                    AllowOverlap = true,
+                    EditId = "50D07946",
+                    AnchorId = "12345678"
                 });
 
             return element;
