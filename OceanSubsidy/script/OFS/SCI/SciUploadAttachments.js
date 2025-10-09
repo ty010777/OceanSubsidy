@@ -201,7 +201,7 @@ function handleFileUpload(attachmentNumber, fileInput) {
     }
 
     // 發送 AJAX 請求到 SCI_Upload.ashx
-    fetch('/Service/SCI_Upload.ashx', {
+    fetch(window.AppRootPath+'/Service/SCI_Upload.ashx', {
         method: 'POST',
         body: formData
     })
@@ -276,7 +276,7 @@ function deleteFile(projectId, fileCode, btnElement) {
             formData.append('projectID', projectId);
 
             // 發送 AJAX 請求到 SCI_Upload.ashx
-            fetch('/Service/SCI_Upload.ashx', {
+            fetch(window.AppRootPath+'/Service/SCI_Upload.ashx', {
                 method: 'POST',
                 body: formData
             })
@@ -312,7 +312,7 @@ function deleteFile(projectId, fileCode, btnElement) {
 function downloadTemplate(fileCode) {
     console.log('downloadTemplate called with fileCode:', fileCode);
     const projectID = getProjectId();
-    const url = '/Service/SCI_Download.ashx?action=downloadTemplate&fileCode=' + encodeURIComponent(fileCode) + '&ProjectID=' + encodeURIComponent(projectID);
+    const url = window.AppRootPath+'/Service/SCI_Download.ashx?action=downloadTemplate&fileCode=' + encodeURIComponent(fileCode) + '&ProjectID=' + encodeURIComponent(projectID);
     console.log('Download URL:', url);
     window.location.href = url;
 }
@@ -325,7 +325,7 @@ function downloadTemplate(fileCode) {
  */
 function downloadFile(projectId, fileCode, fileName) {
     console.log('downloadFile called with projectId:', projectId, 'fileCode:', fileCode, 'fileName:', fileName);
-    const url = '/Service/SCI_Download.ashx?action=downloadFile&projectId=' + encodeURIComponent(projectId) +
+    const url = window.AppRootPath+'/Service/SCI_Download.ashx?action=downloadFile&projectId=' + encodeURIComponent(projectId) +
                 '&fileCode=' + encodeURIComponent(fileCode) +
                 '&fileName=' + encodeURIComponent(fileName);
     window.location.href = url;

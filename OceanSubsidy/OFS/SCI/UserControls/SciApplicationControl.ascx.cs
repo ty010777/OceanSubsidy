@@ -340,7 +340,7 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
         try
         {
             // 取得表單資料
-            var applicationData = GetApplicationDataFromForm();
+            var applicationData = GetApplicationDataFromForm(ProjectID);
             var personnelData = GetPersonnelDataFromForm();
             var keywordsData = GetKeywordsFromForm();
 
@@ -657,30 +657,49 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
     /// <summary>
     /// 從表單取得申請資料
     /// </summary>
-    private OFS_SCI_Application_Main GetApplicationDataFromForm()
+    private OFS_SCI_Application_Main GetApplicationDataFromForm(string ProjectID)
     {
-        return new OFS_SCI_Application_Main
+        OFS_SCI_Application_Main applicationData;
+
+        // 如果 ProjectID 不為空，先從資料庫取得現有資料
+        if (!string.IsNullOrEmpty(ProjectID))
         {
-            ProjectID = txtProjectID.Text,
-            PersonID = txtPersonID.Text,
-            Year = int.TryParse(txtYear.Text, out int year) ? year :DateTimeHelper.GregorianYearToMinguo(DateTime.Now.Year),
-            SubsidyPlanType = txtSubsidyPlanType.Text,
-            ProjectNameTw = txtProjectNameCh.Text.Trim(),
-            ProjectNameEn = txtProjectNameEn.Text.Trim(),
-            OrgCategory = ddlApplicationType.SelectedValue,
-            Topic = ddlTopic.SelectedValue,
-            Field = ddlField.SelectedValue,
-            CountryTech_Underwater = GetRadioButtonValue("Underwater"),
-            CountryTech_Geology = GetRadioButtonValue("Marine"),
-            CountryTech_Physics = GetRadioButtonValue("Physics"),
-            OrgName = txtOrgName.Text.Trim(),
-            RegisteredAddress = txtRegisteredAddress.Text.Trim(),
-            CorrespondenceAddress = txtCorrespondenceAddress.Text.Trim(),
-            Target = txtTarget.Text.Trim(),
-            Summary = txtSummary.Text.Trim(),
-            Innovation = txtInnovation.Text.Trim(),
-            Declaration = ChkAgreeTerms.Checked
-        };
+            applicationData = OFS_SciApplicationHelper.getApplicationMainByProjectID(ProjectID);
+
+            // 如果沒有找到現有資料，建立新的物件
+            if (applicationData == null)
+            {
+                applicationData = new OFS_SCI_Application_Main();
+            }
+        }
+        else
+        {
+            // ProjectID 為空，建立新的物件
+            applicationData = new OFS_SCI_Application_Main();
+        }
+
+        // 將表單的值填入物件中
+        applicationData.ProjectID = txtProjectID.Text;
+        applicationData.PersonID = txtPersonID.Text;
+        applicationData.Year = int.TryParse(txtYear.Text, out int year) ? year : DateTimeHelper.GregorianYearToMinguo(DateTime.Now.Year);
+        applicationData.SubsidyPlanType = txtSubsidyPlanType.Text;
+        applicationData.ProjectNameTw = txtProjectNameCh.Text.Trim();
+        applicationData.ProjectNameEn = txtProjectNameEn.Text.Trim();
+        applicationData.OrgCategory = ddlApplicationType.SelectedValue;
+        applicationData.Topic = ddlTopic.SelectedValue;
+        applicationData.Field = ddlField.SelectedValue;
+        applicationData.CountryTech_Underwater = GetRadioButtonValue("Underwater");
+        applicationData.CountryTech_Geology = GetRadioButtonValue("Marine");
+        applicationData.CountryTech_Physics = GetRadioButtonValue("Physics");
+        applicationData.OrgName = txtOrgName.Text.Trim();
+        applicationData.RegisteredAddress = txtRegisteredAddress.Text.Trim();
+        applicationData.CorrespondenceAddress = txtCorrespondenceAddress.Text.Trim();
+        applicationData.Target = txtTarget.Text.Trim();
+        applicationData.Summary = txtSummary.Text.Trim();
+        applicationData.Innovation = txtInnovation.Text.Trim();
+        applicationData.Declaration = ChkAgreeTerms.Checked;
+
+        return applicationData;
     }
 
     /// <summary>

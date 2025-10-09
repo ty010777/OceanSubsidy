@@ -632,13 +632,13 @@ public class OFS_SciFundingHelper
                 FROM OFS_SCI_PersonnelCost_TotalFee
                 WHERE ProjectID = @ProjectID
                 ORDER BY AccountingItem";
-                
+
                 db.Parameters.Clear();
                 db.Parameters.Add("@ProjectID", ProjectID);
-                
+
                 DataTable dt = db.GetTable();
                 List<TotalFeeRow> totalFeeList = new List<TotalFeeRow>();
-                
+
                 foreach (DataRow row in dt.Rows)
                 {
                     var totalFee = new TotalFeeRow
@@ -649,12 +649,54 @@ public class OFS_SciFundingHelper
                     };
                     totalFeeList.Add(totalFee);
                 }
-                
+
                 return totalFeeList;
             }
             catch (Exception ex)
             {
                 throw new Exception($"讀取經費總表資料時發生錯誤: {ex.Message}", ex);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 取得專案的經費總計金額（補助款、配合款、總計）
+    /// </summary>
+    public static (decimal SubsidyAmount, decimal CoopAmount, decimal TotalAmount) GetTotalFeeSum(string ProjectID)
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            try
+            {
+                db.CommandText = @"
+                SELECT
+                    ISNULL(SUM([SubsidyAmount]), 0) AS SubsidyAmount,
+                    ISNULL(SUM([CoopAmount]), 0) AS CoopAmount,
+                    ISNULL(SUM([TotalAmount]), 0) AS TotalAmount
+                FROM [OFS_SCI_PersonnelCost_TotalFee]
+                WHERE ProjectID = @ProjectID
+                GROUP BY ProjectID";
+
+                db.Parameters.Clear();
+                db.Parameters.Add("@ProjectID", ProjectID);
+
+                DataTable dt = db.GetTable();
+
+                if (dt.Rows.Count > 0)
+                {
+                    DataRow row = dt.Rows[0];
+                    decimal subsidyAmount = row["SubsidyAmount"] != DBNull.Value ? Convert.ToDecimal(row["SubsidyAmount"]) : 0;
+                    decimal coopAmount = row["CoopAmount"] != DBNull.Value ? Convert.ToDecimal(row["CoopAmount"]) : 0;
+                    decimal totalAmount = row["TotalAmount"] != DBNull.Value ? Convert.ToDecimal(row["TotalAmount"]) : 0;
+
+                    return (subsidyAmount, coopAmount, totalAmount);
+                }
+
+                return (0, 0, 0);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"讀取經費總計資料時發生錯誤: {ex.Message}", ex);
             }
         }
     }

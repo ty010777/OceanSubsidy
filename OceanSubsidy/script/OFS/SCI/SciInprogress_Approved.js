@@ -126,7 +126,8 @@ function initDownloadPlan() {
 
             // 直接開啟下載 URL
             // 注意：這裡的 URL 需要在 ASPX 中動態設定，或者使用相對路徑
-            var downloadUrl = '../../Service/SCI_Download.ashx?action=downloadApprovedPlan&projectID=' + projectId;
+            
+            var downloadUrl = '../../' + window.AppRootPath+'Service/SCI_Download.ashx?action=downloadApprovedPlan&projectID=' + projectId;
             window.open(downloadUrl, '_blank');
         });
     }

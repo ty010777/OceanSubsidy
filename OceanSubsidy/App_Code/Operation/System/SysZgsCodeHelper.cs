@@ -74,4 +74,46 @@ public class SysZgsCodeHelper
             Text = row.Field<string>("Descname")
         }).ToList();
     }
+
+    /// <summary>
+    /// 根據 CodeGroup 和 Code 查詢 Descname
+    /// </summary>
+    /// <param name="codeGroup">代碼群組（如 SCITopic, SCIField）</param>
+    /// <param name="code">代碼</param>
+    /// <returns>對應的 Descname，若查無資料則回傳空字串</returns>
+    public static string GetDescnameByCode(string codeGroup, string code)
+    {
+        if (string.IsNullOrEmpty(codeGroup) || string.IsNullOrEmpty(code))
+            return "";
+
+        using (DbHelper db = new DbHelper())
+        {
+            try
+            {
+                db.CommandText = @"
+                    SELECT [Descname]
+                    FROM [Sys_ZgsCode]
+                    WHERE [CodeGroup] = @CodeGroup
+                      AND [Code] = @Code
+                      AND [IsValid] = 1";
+
+                db.Parameters.Clear();
+                db.Parameters.Add("@CodeGroup", codeGroup);
+                db.Parameters.Add("@Code", code);
+
+                DataTable dt = db.GetTable();
+
+                if (dt.Rows.Count > 0)
+                {
+                    return dt.Rows[0]["Descname"]?.ToString() ?? "";
+                }
+
+                return "";
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"查詢 Sys_ZgsCode 資料時發生錯誤: {ex.Message}", ex);
+            }
+        }
+    }
 }

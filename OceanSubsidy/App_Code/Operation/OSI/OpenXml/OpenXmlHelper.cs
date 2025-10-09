@@ -8,6 +8,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using A = DocumentFormat.OpenXml.Drawing;
+using DW = DocumentFormat.OpenXml.Drawing.Wordprocessing;
+using PIC = DocumentFormat.OpenXml.Drawing.Pictures;
 
 namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
 {
@@ -849,6 +852,158 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
                 currentElement = currentElement.Parent;
             }
             return null;
+        }
+
+        /// <summary>
+        /// 在指定書籤位置插入圖片
+        /// </summary>
+        /// <param name="bookmarkName">書籤名稱</param>
+        /// <param name="imageFilePath">圖片檔案路徑</param>
+        /// <param name="widthInEmus">圖片寬度（EMUs，1 inch = 914400 EMUs），預設為 3 inches</param>
+        /// <param name="heightInEmus">圖片高度（EMUs，1 inch = 914400 EMUs），預設為 2 inches</param>
+        /// <returns>插入成功返回 true，否則返回 false</returns>
+        public bool InsertImageAtBookmark(string bookmarkName, string imageFilePath, long widthInEmus = 2743200, long heightInEmus = 1828800)
+        {
+            if (Bookmarks == null || !Bookmarks.ContainsKey(bookmarkName))
+                return false;
+
+            if (!File.Exists(imageFilePath))
+                return false;
+
+            var bookmarkStart = Bookmarks[bookmarkName];
+
+            // 取得書籤的 ID
+            var idAttribute = bookmarkStart.GetAttributes().FirstOrDefault(at => at.LocalName.ToLower() == "id");
+            if (idAttribute == null || string.IsNullOrEmpty(idAttribute.Value))
+                return false;
+
+            string bookmarkId = idAttribute.Value;
+
+            // 建立 ImagePart
+            var mainPart = Word.MainDocumentPart;
+            ImagePart imagePart = mainPart.AddImagePart(GetImagePartType(imageFilePath));
+
+            // 讀取圖片並寫入 ImagePart
+            using (FileStream stream = new FileStream(imageFilePath, FileMode.Open))
+            {
+                imagePart.FeedData(stream);
+            }
+
+            // 取得 ImagePart 的關聯 ID
+            string relationshipId = mainPart.GetIdOfPart(imagePart);
+
+            // 建立圖片元素
+            var element = CreateImageElement(relationshipId, widthInEmus, heightInEmus);
+
+            // 建立包含圖片的 Run
+            var imageRun = new Run(element);
+
+            // 將圖片插入到書籤之後
+            bookmarkStart.InsertAfterSelf(imageRun);
+
+            return true;
+        }
+
+        /// <summary>
+        /// 根據檔案副檔名取得 ImagePartType
+        /// </summary>
+        private ImagePartType GetImagePartType(string filePath)
+        {
+            string extension = Path.GetExtension(filePath).ToLower();
+            switch (extension)
+            {
+                case ".png":
+                    return ImagePartType.Png;
+                case ".jpg":
+                case ".jpeg":
+                    return ImagePartType.Jpeg;
+                case ".bmp":
+                    return ImagePartType.Bmp;
+                case ".gif":
+                    return ImagePartType.Gif;
+                case ".tif":
+                case ".tiff":
+                    return ImagePartType.Tiff;
+                case ".emf":
+                    return ImagePartType.Emf;
+                case ".wmf":
+                    return ImagePartType.Wmf;
+                default:
+                    throw new ArgumentException($"不支援的圖片格式: {extension}");
+            }
+        }
+
+        /// <summary>
+        /// 建立圖片的 Drawing 元素
+        /// </summary>
+        private Drawing CreateImageElement(string relationshipId, long widthEmu, long heightEmu)
+        {
+            // 產生唯一的圖片 ID
+            var docProperties = Word.MainDocumentPart.Document.Body.Descendants<DW.DocProperties>();
+            uint maxId = docProperties.Any() ? docProperties.Max(d => d.Id.Value) : 0;
+            uint imageId = maxId + 1;
+
+            var element = new Drawing(
+                new DW.Inline(
+                    new DW.Extent() { Cx = widthEmu, Cy = heightEmu },
+                    new DW.EffectExtent()
+                    {
+                        LeftEdge = 0L,
+                        TopEdge = 0L,
+                        RightEdge = 0L,
+                        BottomEdge = 0L
+                    },
+                    new DW.DocProperties()
+                    {
+                        Id = imageId,
+                        Name = $"Picture {imageId}"
+                    },
+                    new DW.NonVisualGraphicFrameDrawingProperties(
+                        new A.GraphicFrameLocks() { NoChangeAspect = true }),
+                    new A.Graphic(
+                        new A.GraphicData(
+                            new PIC.Picture(
+                                new PIC.NonVisualPictureProperties(
+                                    new PIC.NonVisualDrawingProperties()
+                                    {
+                                        Id = imageId,
+                                        Name = $"Picture {imageId}.png"
+                                    },
+                                    new PIC.NonVisualPictureDrawingProperties()),
+                                new PIC.BlipFill(
+                                    new A.Blip(
+                                        new A.BlipExtensionList(
+                                            new A.BlipExtension()
+                                            {
+                                                Uri = "{28A0092B-C50C-407E-A947-70E740481C1C}"
+                                            })
+                                    )
+                                    {
+                                        Embed = relationshipId,
+                                        CompressionState = A.BlipCompressionValues.Print
+                                    },
+                                    new A.Stretch(
+                                        new A.FillRectangle())),
+                                new PIC.ShapeProperties(
+                                    new A.Transform2D(
+                                        new A.Offset() { X = 0L, Y = 0L },
+                                        new A.Extents() { Cx = widthEmu, Cy = heightEmu }),
+                                    new A.PresetGeometry(
+                                        new A.AdjustValueList()
+                                    )
+                                    { Preset = A.ShapeTypeValues.Rectangle }))
+                        )
+                        { Uri = "http://schemas.openxmlformats.org/drawingml/2006/picture" })
+                )
+                {
+                    DistanceFromTop = 0U,
+                    DistanceFromBottom = 0U,
+                    DistanceFromLeft = 0U,
+                    DistanceFromRight = 0U,
+                    EditId = "50D07946"
+                });
+
+            return element;
         }
     }
 }
