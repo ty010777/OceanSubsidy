@@ -259,7 +259,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
         }
 
         /// <summary>
-        /// 插入新行
+        /// 插入新行（改良版 - 複製上一行格式,正確處理行順序、公式和合併儲存格）
         /// </summary>
         /// <param name="sheetName">工作表名稱</param>
         /// <param name="rowIndex">插入位置（1-based）</param>
@@ -267,8 +267,14 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
         public void InsertRows(string sheetName, int rowIndex, int count = 1)
         {
             var worksheetPart = GetWorksheetPart(sheetName);
-            var sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>();
+            var worksheet = worksheetPart.Worksheet;
+            var sheetData = worksheet.GetFirstChild<SheetData>();
 
+            // 取得要複製格式的來源行 (rowIndex - 1)
+            var templateRow = sheetData.Elements<Row>()
+                .FirstOrDefault(r => r.RowIndex == (uint)(rowIndex - 1));
+
+            // 1. 先將現有行向下移動
             var existingRows = sheetData.Elements<Row>()
                 .Where(r => r.RowIndex >= rowIndex)
                 .OrderByDescending(r => r.RowIndex)
@@ -287,10 +293,119 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
                 }
             }
 
+            // 2. 在正確位置插入新行,並複製上一行格式
             for (int i = 0; i < count; i++)
             {
-                var newRow = new Row() { RowIndex = (uint)(rowIndex + i) };
-                sheetData.Append(newRow);
+                Row newRow;
+
+                // 如果有範本行,複製它的格式
+                if (templateRow != null)
+                {
+                    newRow = (Row)templateRow.CloneNode(true);
+                    newRow.RowIndex = (uint)(rowIndex + i);
+
+                    // 清除儲存格的值,只保留格式和公式
+                    foreach (var cell in newRow.Elements<Cell>().ToList())
+                    {
+                        var col = GetColumnFromCellReference(cell.CellReference.Value);
+                        cell.CellReference = GetCellReference(rowIndex + i, col);
+
+                        // 如果儲存格有公式,保留公式
+                        // 否則清除值,只保留樣式
+                        if (cell.CellFormula == null)
+                        {
+                            // 移除 CellValue 元素來清除值
+                            cell.RemoveAllChildren<CellValue>();
+                        }
+                    }
+                }
+                else
+                {
+                    // 沒有範本行,建立空白行
+                    newRow = new Row() { RowIndex = (uint)(rowIndex + i) };
+                }
+
+                // 找到正確的插入位置（按照 RowIndex 順序）
+                Row refRow = sheetData.Elements<Row>()
+                    .FirstOrDefault(r => r.RowIndex > (uint)(rowIndex + i));
+
+                if (refRow != null)
+                {
+                    sheetData.InsertBefore(newRow, refRow);
+                }
+                else
+                {
+                    sheetData.Append(newRow);
+                }
+            }
+
+            // 3. 更新合併儲存格範圍
+            UpdateMergedCellsOnInsert(worksheet, rowIndex, count);
+
+            // 4. 刪除計算鏈,讓 Excel 重新建立以避免公式錯誤警告
+            RemoveCalculationChain();
+        }
+
+        /// <summary>
+        /// 移除計算鏈(Calculation Chain)
+        /// 當插入或刪除行時,需要刪除計算鏈讓 Excel 重新建立,避免公式錯誤警告
+        /// </summary>
+        private void RemoveCalculationChain()
+        {
+            var calculationChainPart = WorkbookPart.CalculationChainPart;
+            if (calculationChainPart != null)
+            {
+                WorkbookPart.DeletePart(calculationChainPart);
+            }
+        }
+
+        /// <summary>
+        /// 更新合併儲存格範圍（插入行時）
+        /// </summary>
+        /// <param name="worksheet">工作表</param>
+        /// <param name="rowIndex">插入的行索引</param>
+        /// <param name="count">插入的行數</param>
+        private void UpdateMergedCellsOnInsert(Worksheet worksheet, int rowIndex, int count)
+        {
+            var mergeCells = worksheet.Elements<MergeCells>().FirstOrDefault();
+            if (mergeCells == null) return;
+
+            var mergeCellsList = mergeCells.Elements<MergeCell>().ToList();
+
+            foreach (var mergeCell in mergeCellsList)
+            {
+                var reference = mergeCell.Reference.Value;
+                var parts = reference.Split(':');
+
+                if (parts.Length == 2)
+                {
+                    // 解析起始和結束儲存格
+                    var startCell = parts[0];
+                    var endCell = parts[1];
+
+                    var startRow = GetRowFromCellReference(startCell);
+                    var startCol = GetColumnFromCellReference(startCell);
+                    var endRow = GetRowFromCellReference(endCell);
+                    var endCol = GetColumnFromCellReference(endCell);
+
+                    // 如果合併範圍的起始行 >= 插入位置，整個範圍向下移動
+                    if (startRow >= rowIndex)
+                    {
+                        startRow += count;
+                        endRow += count;
+
+                        var newStartCell = GetCellReference(startRow, startCol);
+                        var newEndCell = GetCellReference(endRow, endCol);
+                        mergeCell.Reference = new StringValue($"{newStartCell}:{newEndCell}");
+                    }
+                    // 如果合併範圍跨越插入位置（起始行 < 插入位置 <= 結束行），擴展結束行
+                    else if (startRow < rowIndex && endRow >= rowIndex)
+                    {
+                        endRow += count;
+                        var newEndCell = GetCellReference(endRow, endCol);
+                        mergeCell.Reference = new StringValue($"{startCell}:{newEndCell}");
+                    }
+                }
             }
         }
 
@@ -330,6 +445,9 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
                     cell.CellReference = GetCellReference(newRow, col);
                 }
             }
+
+            // 刪除計算鏈,讓 Excel 重新建立以避免公式錯誤警告
+            RemoveCalculationChain();
         }
 
         /// <summary>
@@ -657,6 +775,228 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
         private bool IsNumber(string value)
         {
             return double.TryParse(value, out _);
+        }
+
+        /// <summary>
+        /// 設定儲存格背景色（保留現有樣式）
+        /// </summary>
+        /// <param name="sheetName">工作表名稱</param>
+        /// <param name="row">行號</param>
+        /// <param name="column">列號</param>
+        /// <param name="colorHex">顏色十六進位值（例如：FFD3D3D3 為淺灰色）</param>
+        public void SetCellBackgroundColor(string sheetName, int row, int column, string colorHex)
+        {
+            var worksheetPart = GetWorksheetPart(sheetName);
+            var sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>();
+            var cellReference = GetCellReference(row, column);
+            var cell = GetCell(sheetData, cellReference);
+
+            // 取得或建立 StylesPart
+            var stylesPart = WorkbookPart.WorkbookStylesPart;
+            if (stylesPart == null)
+            {
+                stylesPart = WorkbookPart.AddNewPart<WorkbookStylesPart>();
+                stylesPart.Stylesheet = CreateDefaultStylesheet();
+            }
+
+            // 取得儲存格當前的樣式索引
+            uint currentStyleIndex = cell.StyleIndex != null ? cell.StyleIndex.Value : 0;
+
+            // 複製現有樣式並只修改背景色
+            uint newStyleIndex = CloneStyleWithNewFill(stylesPart.Stylesheet, currentStyleIndex, colorHex);
+
+            // 設定儲存格樣式
+            cell.StyleIndex = newStyleIndex;
+        }
+
+        /// <summary>
+        /// 建立預設樣式表
+        /// </summary>
+        private Stylesheet CreateDefaultStylesheet()
+        {
+            var stylesheet = new Stylesheet();
+
+            // Fonts
+            var fonts = new Fonts() { Count = 1 };
+            fonts.Append(new DocumentFormat.OpenXml.Spreadsheet.Font());
+            stylesheet.Append(fonts);
+
+            // Fills
+            var fills = new Fills() { Count = 2 };
+            fills.Append(new Fill(new PatternFill() { PatternType = PatternValues.None })); // 0: 無填充
+            fills.Append(new Fill(new PatternFill() { PatternType = PatternValues.Gray125 })); // 1: 預設灰色
+            stylesheet.Append(fills);
+
+            // Borders
+            var borders = new Borders() { Count = 1 };
+            borders.Append(new Border());
+            stylesheet.Append(borders);
+
+            // CellFormats
+            var cellFormats = new CellFormats() { Count = 1 };
+            cellFormats.Append(new CellFormat()); // 0: 預設格式
+            stylesheet.Append(cellFormats);
+
+            return stylesheet;
+        }
+
+        /// <summary>
+        /// 複製現有樣式並只修改背景色
+        /// </summary>
+        /// <param name="stylesheet">樣式表</param>
+        /// <param name="sourceStyleIndex">來源樣式索引</param>
+        /// <param name="colorHex">新的背景顏色</param>
+        /// <returns>新樣式的索引</returns>
+        private uint CloneStyleWithNewFill(Stylesheet stylesheet, uint sourceStyleIndex, string colorHex)
+        {
+            var cellFormats = stylesheet.CellFormats;
+            var fills = stylesheet.Fills;
+
+            // 取得來源樣式
+            var sourceCellFormat = (CellFormat)cellFormats.ElementAt((int)sourceStyleIndex);
+
+            // 取得或建立新的填充色
+            uint newFillIndex = GetOrCreateFill(fills, colorHex);
+
+            // 檢查是否已經有相同配置的樣式（避免重複建立）
+            uint styleIndex = 0;
+            foreach (CellFormat cellFormat in cellFormats)
+            {
+                if (IsSameCellFormatExceptFill(cellFormat, sourceCellFormat, newFillIndex))
+                {
+                    return styleIndex;
+                }
+                styleIndex++;
+            }
+
+            // 複製來源樣式並修改填充色
+            var newCellFormat = (CellFormat)sourceCellFormat.CloneNode(true);
+            newCellFormat.FillId = newFillIndex;
+            newCellFormat.ApplyFill = true;
+
+            // 加入新樣式
+            cellFormats.Append(newCellFormat);
+            cellFormats.Count = (uint)cellFormats.ChildElements.Count;
+
+            return cellFormats.Count - 1;
+        }
+
+        /// <summary>
+        /// 取得或建立指定顏色的填充
+        /// </summary>
+        /// <param name="fills">填充集合</param>
+        /// <param name="colorHex">顏色十六進位值</param>
+        /// <returns>填充索引</returns>
+        private uint GetOrCreateFill(Fills fills, string colorHex)
+        {
+            // 檢查是否已有指定顏色的填充
+            uint fillIndex = 0;
+            foreach (Fill fill in fills)
+            {
+                var patternFill = fill.PatternFill;
+                if (patternFill != null &&
+                    patternFill.ForegroundColor != null &&
+                    patternFill.ForegroundColor.Rgb != null &&
+                    patternFill.ForegroundColor.Rgb.Value == colorHex)
+                {
+                    return fillIndex;
+                }
+                fillIndex++;
+            }
+
+            // 建立新的填充
+            var newFill = new Fill(
+                new PatternFill(
+                    new ForegroundColor() { Rgb = colorHex }
+                )
+                { PatternType = PatternValues.Solid }
+            );
+            fills.Append(newFill);
+            fills.Count = (uint)fills.ChildElements.Count;
+
+            return fills.Count - 1;
+        }
+
+        /// <summary>
+        /// 比較兩個 CellFormat 是否相同（除了填充色）
+        /// </summary>
+        private bool IsSameCellFormatExceptFill(CellFormat format1, CellFormat format2, uint newFillIndex)
+        {
+            return format1.FillId == newFillIndex &&
+                   format1.FontId == format2.FontId &&
+                   format1.BorderId == format2.BorderId &&
+                   format1.NumberFormatId == format2.NumberFormatId &&
+                   format1.ApplyFont == format2.ApplyFont &&
+                   format1.ApplyBorder == format2.ApplyBorder &&
+                   format1.ApplyNumberFormat == format2.ApplyNumberFormat &&
+                   format1.ApplyAlignment == format2.ApplyAlignment;
+        }
+
+        /// <summary>
+        /// 取得或建立指定顏色的樣式索引（舊方法，保留以防相容性）
+        /// </summary>
+        /// <param name="stylesheet">樣式表</param>
+        /// <param name="colorHex">顏色十六進位值</param>
+        private uint GetOrCreateColorStyle(Stylesheet stylesheet, string colorHex)
+        {
+            var fills = stylesheet.Fills;
+            var cellFormats = stylesheet.CellFormats;
+
+            // 檢查是否已有指定顏色的填充
+            uint colorFillIndex = 0;
+            bool foundColorFill = false;
+
+            uint fillIndex = 0;
+            foreach (Fill fill in fills)
+            {
+                var patternFill = fill.PatternFill;
+                if (patternFill != null &&
+                    patternFill.ForegroundColor != null &&
+                    patternFill.ForegroundColor.Rgb != null &&
+                    patternFill.ForegroundColor.Rgb.Value == colorHex)
+                {
+                    colorFillIndex = fillIndex;
+                    foundColorFill = true;
+                    break;
+                }
+                fillIndex++;
+            }
+
+            // 如果沒有找到指定顏色的填充，則建立一個
+            if (!foundColorFill)
+            {
+                var colorFill = new Fill(
+                    new PatternFill(
+                        new ForegroundColor() { Rgb = colorHex }
+                    )
+                    { PatternType = PatternValues.Solid }
+                );
+                fills.Append(colorFill);
+                fills.Count = (uint)fills.ChildElements.Count;
+                colorFillIndex = fills.Count - 1;
+            }
+
+            // 檢查是否已有使用此填充的樣式
+            uint styleIndex = 0;
+            foreach (CellFormat cellFormat in cellFormats)
+            {
+                if (cellFormat.FillId != null && cellFormat.FillId.Value == colorFillIndex)
+                {
+                    return styleIndex;
+                }
+                styleIndex++;
+            }
+
+            // 建立新的樣式
+            var newCellFormat = new CellFormat()
+            {
+                FillId = colorFillIndex,
+                ApplyFill = true
+            };
+            cellFormats.Append(newCellFormat);
+            cellFormats.Count = (uint)cellFormats.ChildElements.Count;
+
+            return cellFormats.Count - 1;
         }
 
         #endregion

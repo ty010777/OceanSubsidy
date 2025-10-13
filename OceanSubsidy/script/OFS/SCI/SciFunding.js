@@ -13,6 +13,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // 延遲載入資料，確保所有初始化完成
     setTimeout(function() {
         loadExistingDataToForm();
+        // 根據 OrgCategory 決定是否隱藏行政管理費
+        handleAdminFeeVisibility();
     }, 800);
 });
 
@@ -711,8 +713,8 @@ function generateServiceDescription(total) {
         const totalInThousands = (total / 1000).toFixed(0);
         descriptionLines.push(`總計: ${totalInThousands}千元`);
     }
-    
-    document.getElementById('serviceDescription').textContent = descriptionLines.join('\n');
+
+    document.getElementById('serviceDescription').textContent = descriptionLines.join(',\n');
 }
 
 function calculateOtherRentTotal() {
@@ -1315,21 +1317,21 @@ function loadOtherRentData(otherRentData) {
 // 載入經費總表資料
 function loadTotalFeesData(totalFeesData) {
     if (!totalFeesData || totalFeesData.length === 0) return Promise.resolve();
-    
+
     return new Promise((resolve) => {
         const rows = document.querySelectorAll('.main-table tbody tr:not(.total-row):not(.percentage-row)');
-        
+
         totalFeesData.forEach((totalFee) => {
             rows.forEach(row => {
                 const firstCell = row.children[0]?.textContent;
                 if (firstCell?.includes(totalFee.accountingItem)) {
                     const amountBCell = row.querySelector('.amount-b');
                     const amountBInput = amountBCell?.querySelector('input');
-                    
+
                     if (amountBInput) {
                         amountBInput.value = totalFee.coopAmount || '0';
                     }
-                    
+
                     // 如果是行政管理費，也需要設定補助款
                     if (totalFee.accountingItem.includes('行政管理費')) {
                         const amountACell = row.querySelector('.amount-a');
@@ -1341,7 +1343,55 @@ function loadTotalFeesData(totalFeesData) {
                 }
             });
         });
-        
+
         resolve();
     });
+}
+
+// 根據 OrgCategory 決定是否隱藏行政管理費
+function handleAdminFeeVisibility() {
+    try {
+        // 檢查 window.loadedData 是否存在並包含 orgCategory
+        if (typeof window.loadedData === 'undefined' || !window.loadedData.orgCategory) {
+            return;
+        }
+
+        const orgCategory = window.loadedData.orgCategory;
+        const isOceanTech = orgCategory.toLowerCase() === 'oceantech';
+
+        // 找到行政管理費的行
+        const rows = document.querySelectorAll('.main-table tbody tr:not(.total-row):not(.percentage-row)');
+        let adminFeeRow = null;
+
+        rows.forEach(row => {
+            const firstCell = row.children[0]?.textContent;
+            if (firstCell && firstCell.includes('6.行政管理費')) {
+                adminFeeRow = row;
+            }
+        });
+
+        if (adminFeeRow && isOceanTech) {
+            // 隱藏行政管理費行
+            adminFeeRow.style.display = 'none';
+
+            // 將行政管理費的輸入欄位設為 0（確保儲存時為 0）
+            const amountAInput = adminFeeRow.querySelector('.amount-a input');
+            const amountBInput = adminFeeRow.querySelector('.amount-b input');
+
+            if (amountAInput) {
+                amountAInput.value = '0';
+            }
+            if (amountBInput) {
+                amountBInput.value = '0';
+            }
+
+            console.log('已隱藏行政管理費行 (OrgCategory = OceanTech)');
+        } else if (adminFeeRow && !isOceanTech) {
+            // 確保行顯示（非 OceanTech 時）
+            adminFeeRow.style.display = '';
+            console.log('顯示行政管理費行 (OrgCategory ≠ OceanTech)');
+        }
+    } catch (error) {
+        console.error('處理行政管理費顯示狀態時發生錯誤:', error);
+    }
 }

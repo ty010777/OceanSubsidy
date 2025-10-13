@@ -104,10 +104,46 @@
                                 </div>
                             </div>
                             
+                            <!-- 審查委員資訊區 -->
+                            <div id="reviewerInfoSection" class="mt-5">
+                                <h5 class="square-title mb-3">審查委員資訊</h5>
+
+                                <div class="table-responsive mt-3">
+                                    <table class="table align-middle gray-table">
+                                        <tbody>
+                                            <tr>
+                                                <th width="200" class="bg-light">審查委員</th>
+                                                <td>
+                                                    <span id="reviewerDisplayName">委員姓名</span>
+                                                    <span id="reviewerAccount" class="text-muted ms-2"></span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th class="bg-light">銀行金融代號、銀行帳號</th>
+                                                <td>
+                                                    <div class="d-flex align-items-center gap-3">
+                                                        <select id="bankCodeSelect" class="form-select" style="max-width: 400px;">
+                                                            <option value="">請選擇銀行</option>
+                                                        </select>
+                                                        <input type="text" id="bankAccountInput" class="form-control" style="max-width: 300px;" placeholder="請輸入銀行帳號">
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th class="bg-light">戶籍地址</th>
+                                                <td>
+                                                    <input type="text" id="registrationAddressInput" class="form-control" placeholder="請輸入戶籍地址">
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
                             <!-- 審查結果區 -->
                             <div id="reviewSection" class="mt-5">
                                 <h5 class="square-title mb-3">審查結果</h5>
-                                
+
                                 <div class="table-responsive mt-3">
                                     <table class="table align-middle gray-table">
                                         <thead>
@@ -141,7 +177,7 @@
                                         </tbody>
                                     </table>
                                 </div>
-                                
+
                                 <div class="d-flex justify-content-center mt-4">
                                     <button type="button" class="btn btn-teal" id="btnSubmitReview">
                                         <i class="fas fa-check me-2"></i>提交審查結果
@@ -209,13 +245,14 @@
             // 從URL取得token
             const urlParams = new URLSearchParams(window.location.search);
             currentToken = urlParams.get('token');
-            
+
             if (currentToken) {
                 loadExamData();
+                loadBankCodeList();
             } else {
                 alert('無效的審查連結，請檢查Token參數');
             }
-            
+
             // 綁定提交審查結果事件
             $('#btnSubmitReview').click(function() {
                 submitReviewResult();
@@ -238,13 +275,28 @@
                         
                         // 更新標題
                         $('#reportTitle').text(data.StageName + '審查');
-                        
+
                         // 設定審查委員姓名
                         $('#reviewerName').text(data.Reviewer || '審查委員');
-                        
+                        $('#reviewerDisplayName').text(data.Reviewer || '審查委員');
+                        if (data.Account) {
+                            $('#reviewerAccount').text('(' + data.Account + ')');
+                        }
+
+                        // 設定審查委員銀行資訊
+                        if (data.BankCode) {
+                            $('#bankCodeSelect').val(data.BankCode);
+                        }
+                        if (data.BankAccount) {
+                            $('#bankAccountInput').val(data.BankAccount);
+                        }
+                        if (data.RegistrationAddress) {
+                            $('#registrationAddressInput').val(data.RegistrationAddress);
+                        }
+
                         // 載入檔案清單
                         loadReportFiles(data.Files);
-                        
+
                         // 檢查是否已有上傳的審查檔案
                         checkExistingReviewFile();
                     } else {
@@ -433,7 +485,28 @@
                 Swal.fire('錯誤', '請先上傳審查意見PDF檔案', 'error');
                 return;
             }
-            
+
+            // 取得銀行資訊
+            const bankCode = $('#bankCodeSelect').val();
+            const bankAccount = $('#bankAccountInput').val();
+            const registrationAddress = $('#registrationAddressInput').val();
+
+            // 驗證銀行資訊必填欄位
+            if (!bankCode) {
+                Swal.fire('錯誤', '請選擇銀行金融代號', 'error');
+                return;
+            }
+
+            if (!bankAccount) {
+                Swal.fire('錯誤', '請輸入銀行帳號', 'error');
+                return;
+            }
+
+            if (!registrationAddress) {
+                Swal.fire('錯誤', '請輸入戶籍地址', 'error');
+                return;
+            }
+
             Swal.fire({
                 title: '確定要提交審查結果嗎？',
                 text: '提交後將無法修改',
@@ -443,19 +516,34 @@
                 cancelButtonText: '取消'
             }).then((result) => {
                 if (result.isConfirmed) {
+                    // 顯示載入中
+                    Swal.fire({
+                        title: '處理中...',
+                        text: '正在儲存資料並提交審查結果',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    // 提交審查結果（包含銀行資訊）
                     $.ajax({
                         type: 'POST',
                         url: 'SciExamReview.aspx/SubmitReviewResult',
                         data: JSON.stringify({
                             token: currentToken,
+                            bankCode: bankCode,
+                            bankAccount: bankAccount,
+                            registrationAddress: registrationAddress
                         }),
                         contentType: 'application/json; charset=utf-8',
                         dataType: 'json',
                         success: function(response) {
+                            Swal.close();
                             if (response.d && response.d.Success) {
                                 Swal.fire({
                                     title: '成功',
-                                    text: response.d.Message,
+                                    text: '審查結果提交成功',
                                     icon: 'success',
                                     confirmButtonText: '確定'
                                 }).then(() => {
@@ -467,6 +555,7 @@
                             }
                         },
                         error: function(xhr, status, error) {
+                            Swal.close();
                             console.error('AJAX Error:', error);
                             Swal.fire('錯誤', '提交審查結果時發生錯誤', 'error');
                         }
@@ -474,6 +563,40 @@
                 }
             });
         }
+
+        // 載入銀行代碼清單
+        function loadBankCodeList() {
+            $.ajax({
+                type: 'POST',
+                url: 'SciExamReview.aspx/GetBankCodeList',
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.d && response.d.Success) {
+                        const bankCodes = response.d.Data;
+                        const select = $('#bankCodeSelect');
+
+                        // 清空現有選項（保留預設選項）
+                        select.find('option:not(:first)').remove();
+
+                        // 新增銀行代碼選項
+                        bankCodes.forEach(function(bank) {
+                            select.append(
+                                $('<option></option>')
+                                    .val(bank.Code)
+                                    .text(bank.DisplayText)
+                            );
+                        });
+                    } else {
+                        console.error('載入銀行代碼清單失敗:', response.d ? response.d.Message : '未知錯誤');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('載入銀行代碼清單時發生錯誤:', error);
+                }
+            });
+        }
+
         </script>
     </form>
 </body>

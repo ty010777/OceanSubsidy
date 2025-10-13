@@ -83,17 +83,19 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                     {
                         // 插入新的工作項目
                         string insertSql = @"
-                            INSERT INTO OFS_SCI_WorkSch_Main 
-                            (ProjectID, WorkItem_id, WorkName, StartMonth, EndMonth, Weighting, InvestMonth, IsOutsourced)
-                            VALUES 
-                            (@ProjectId, @WorkItemId, @WorkName, @StartMonth, @EndMonth, @Weighting, @InvestMonth, @IsOutsourced)";
+                            INSERT INTO OFS_SCI_WorkSch_Main
+                            (ProjectID, WorkItem_id, WorkName, StartYear, StartMonth, EndYear, EndMonth, Weighting, InvestMonth, IsOutsourced)
+                            VALUES
+                            (@ProjectId, @WorkItemId, @WorkName, @StartYear, @StartMonth, @EndYear, @EndMonth, @Weighting, @InvestMonth, @IsOutsourced)";
                         
                         db.CommandText = insertSql;
                         db.Parameters.Clear();
                         db.Parameters.Add("@ProjectId", ProjectID);
                         db.Parameters.Add("@WorkItemId", item.WorkItem_id);
                         db.Parameters.Add("@WorkName", item.WorkName ?? "");
+                        db.Parameters.Add("@StartYear", (object)item.StartYear ?? DBNull.Value);
                         db.Parameters.Add("@StartMonth", (object)item.StartMonth ?? DBNull.Value);
+                        db.Parameters.Add("@EndYear", (object)item.EndYear ?? DBNull.Value);
                         db.Parameters.Add("@EndMonth", (object)item.EndMonth ?? DBNull.Value);
                         db.Parameters.Add("@Weighting", (object)item.Weighting ?? DBNull.Value);
                         db.Parameters.Add("@InvestMonth", (object)item.InvestMonth ?? DBNull.Value);
@@ -367,9 +369,9 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                 try
                 {
                     string sql = @"
-                        SELECT ProjectID, WorkItem_id, WorkName, StartMonth, EndMonth, 
+                        SELECT ProjectID, WorkItem_id, WorkName, StartYear, StartMonth, EndYear, EndMonth,
                                Weighting, InvestMonth, IsOutsourced
-                        FROM OFS_SCI_WorkSch_Main 
+                        FROM OFS_SCI_WorkSch_Main
                         WHERE ProjectID = @ProjectId
                         ORDER BY WorkItem_id";
                     
@@ -387,7 +389,9 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                             ProjectID = row["ProjectID"].ToString(),
                             WorkItem_id = row["WorkItem_id"].ToString(),
                             WorkName = row["WorkName"].ToString(),
+                            StartYear = row["StartYear"] != DBNull.Value ? Convert.ToInt32(row["StartYear"]) : (int?)null,
                             StartMonth = row["StartMonth"] != DBNull.Value ? Convert.ToInt32(row["StartMonth"]) : (int?)null,
+                            EndYear = row["EndYear"] != DBNull.Value ? Convert.ToInt32(row["EndYear"]) : (int?)null,
                             EndMonth = row["EndMonth"] != DBNull.Value ? Convert.ToInt32(row["EndMonth"]) : (int?)null,
                             Weighting = row["Weighting"] != DBNull.Value ? Convert.ToDecimal(row["Weighting"]) : (decimal?)null,
                             InvestMonth = row["InvestMonth"] != DBNull.Value ? Convert.ToDecimal(row["InvestMonth"]) : (decimal?)null,
@@ -455,6 +459,59 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
             }
         }
         
+        public static DataTable GetWorkScheduleWithCheckStandard(string projectId)
+        {
+            using (DbHelper db = new DbHelper())
+            {
+                try
+                {
+                    string sql = @"
+                SELECT 
+                    m.ProjectID,
+                    m.WorkItem_id,
+                    m.WorkName,
+                    m.StartYear,
+                    m.StartMonth,
+                    m.EndYear,
+                    m.EndMonth,
+                    m.Weighting,
+                    m.InvestMonth,
+                    m.IsOutsourced,
+                    c.Id AS CheckStandardId,
+                    c.WorkItem,
+                    c.SerialNumber,
+                    c.PlannedFinishDate,
+                    c.CheckDescription,
+                    c.ActFinishTime,
+                    c.DelayReason,
+                    c.ImprovedWay,
+                    c.IsFinish,
+                    c.CreatedAt,
+                    c.UpdatedAt
+                FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_WorkSch_Main] m
+                INNER JOIN [OCA_OceanSubsidy].[dbo].[OFS_SCI_WorkSch_CheckStandard] c
+                    ON m.ProjectID = c.ProjectID
+                    AND CHARINDEX(c.WorkItem, m.WorkItem_id) > 0
+                WHERE m.ProjectID = @ProjectId
+                ORDER BY m.WorkItem_id, c.SerialNumber;
+            ";
+
+                    db.CommandText = sql;
+                    db.Parameters.Clear();
+                    db.Parameters.Add("@ProjectId", projectId);
+
+                    // 直接回傳 DataTable
+                    DataTable dt = db.GetTable();
+                    return dt;
+                }
+                catch (Exception ex)
+                {
+                    // 可視情況記錄 log
+                    return new DataTable();
+                }
+            }
+        }
+
         #endregion
         
         #region 檔案上傳操作

@@ -34,9 +34,13 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
 
             DbHelper db = new DbHelper();
             db.CommandText = @"
-                SELECT 
+                SELECT
                     se.*,
                     srl.Reviewer,
+                    srl.Account,
+                    srl.BankCode,
+                    srl.BankAccount,
+                    srl.RegistrationAddress,
                     srl.token,
                     am.ProjectNameTw AS ProjectName,
                     am.Field,
@@ -452,6 +456,95 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
             }
         }
 
+        /// <summary>
+        /// 取得銀行代碼清單
+        /// </summary>
+        /// <returns>銀行代碼清單</returns>
+        public static List<BankCodeInfo> GetBankCodeList()
+        {
+            var result = new List<BankCodeInfo>();
+
+            DbHelper db = new DbHelper();
+            db.CommandText = @"
+                SELECT
+                    Code,
+                    Descname
+                FROM Sys_ZgsCode
+                WHERE CodeGroup = @CodeGroup
+                  AND ISNULL(IsValid, 0) = 1
+                ORDER BY OrderNo, Code";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@CodeGroup", "BankCode");
+
+            try
+            {
+                DataTable dt = db.GetTable();
+                foreach (DataRow row in dt.Rows)
+                {
+                    result.Add(new BankCodeInfo
+                    {
+                        Code = row["Code"]?.ToString() ?? "",
+                        Name = row["Descname"]?.ToString() ?? "",
+                        DisplayText = $"{row["Code"]} - {row["Descname"]}"
+                    });
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"取得銀行代碼清單時發生錯誤: {ex.Message}");
+                throw new Exception($"取得銀行代碼清單時發生錯誤: {ex.Message}", ex);
+            }
+            finally
+            {
+                db.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// 更新審查委員的銀行資訊
+        /// </summary>
+        /// <param name="token">Token</param>
+        /// <param name="bankCode">銀行代碼</param>
+        /// <param name="bankAccount">銀行帳號</param>
+        /// <param name="registrationAddress">戶籍地址</param>
+        public static void UpdateReviewerBankInfo(string token, string bankCode, string bankAccount, string registrationAddress)
+        {
+            if (string.IsNullOrEmpty(token))
+                throw new Exception("Token不可為空");
+
+            DbHelper db = new DbHelper();
+            db.CommandText = @"
+                UPDATE OFS_SCI_StageExam_ReviewerList
+                SET
+                    BankCode = @BankCode,
+                    BankAccount = @BankAccount,
+                    RegistrationAddress = @RegistrationAddress
+                WHERE token = @token";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@BankCode", bankCode ?? "");
+            db.Parameters.Add("@BankAccount", bankAccount ?? "");
+            db.Parameters.Add("@RegistrationAddress", registrationAddress ?? "");
+            db.Parameters.Add("@token", token);
+
+            try
+            {
+                db.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"更新審查委員銀行資訊時發生錯誤: {ex.Message}");
+                throw new Exception($"更新審查委員銀行資訊時發生錯誤: {ex.Message}", ex);
+            }
+            finally
+            {
+                db.Dispose();
+            }
+        }
+
         #region 內部類別定義
 
         /// <summary>
@@ -481,6 +574,16 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
             public string Reviewer { get; set; } = "";
             public string Status { get; set; } = "";
             public string ReviewMethod { get; set; } = "";
+        }
+
+        /// <summary>
+        /// 銀行代碼資訊類別
+        /// </summary>
+        public class BankCodeInfo
+        {
+            public string Code { get; set; } = "";
+            public string Name { get; set; } = "";
+            public string DisplayText { get; set; } = "";
         }
 
         #endregion

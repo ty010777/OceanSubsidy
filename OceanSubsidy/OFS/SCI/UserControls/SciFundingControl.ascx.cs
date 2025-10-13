@@ -208,24 +208,9 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             // 驗證總費用資料
             if (totalFeesData == null || totalFeesData.Count == 0)
             {
-                result.AddError("請輸入經費總表資料");
+                result.AddError("請輸入有效的補助金額或合作金額");
             }
-            else
-            {
-                foreach (var totalFee in totalFeesData)
-                {
-                    if (string.IsNullOrWhiteSpace(totalFee.accountingItem))
-                    {
-                        result.AddError("經費總表：請輸入會計科目");
-                        break;
-                    }
-                    if (totalFee.subsidyAmount <= 0 && totalFee.coopAmount <= 0)
-                    {
-                        result.AddError("經費總表：請輸入有效的補助金額或合作金額");
-                        break;
-                    }
-                }
-            }
+           
 
             // 驗證行政管理費（可選）
         }
@@ -380,9 +365,25 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             var otherRentData = OFS_SciFundingHelper.GetOtherObjectFeeList(projectID);
             var totalFeesData = OFS_SciFundingHelper.GetTotalFeeList(projectID);
 
+            // 取得 OrgCategory 資訊
+            var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
+            string orgCategory = applicationMain?.OrgCategory ?? "";
+            bool isOceanTech = orgCategory.Equals("OceanTech", StringComparison.OrdinalIgnoreCase);
+
+            // 如果是 OceanTech，將 totalFeesData 中的行政管理費歸零
+            if (isOceanTech && totalFeesData != null)
+            {
+                var adminFee = totalFeesData.FirstOrDefault(t => t.accountingItem?.Contains("行政管理費") == true);
+                if (adminFee != null)
+                {
+                    adminFee.subsidyAmount = 0;
+                    adminFee.coopAmount = 0;
+                }
+            }
+
             // 將資料轉換為 JSON 並輸出到前端
             var serializer = new JavaScriptSerializer();
-            
+
             StringBuilder jsBuilder = new StringBuilder();
             jsBuilder.AppendLine("window.loadedData = {");
             jsBuilder.AppendLine($"    personnel: {serializer.Serialize(personnelData)},");
@@ -391,7 +392,8 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             jsBuilder.AppendLine($"    travel: {serializer.Serialize(travelData)},");
             jsBuilder.AppendLine($"    other: {serializer.Serialize(otherData)},");
             jsBuilder.AppendLine($"    otherRent: {serializer.Serialize(otherRentData)},");
-            jsBuilder.AppendLine($"    totalFees: {serializer.Serialize(totalFeesData)}");
+            jsBuilder.AppendLine($"    totalFees: {serializer.Serialize(totalFeesData)},");
+            jsBuilder.AppendLine($"    orgCategory: '{orgCategory}'");
             jsBuilder.AppendLine("};");
 
             // 載入固定欄位資料到 ASP.NET 控件
@@ -474,11 +476,29 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             }
 
             // 載入行政管理費資料到 ASP.NET 控件
+            // 判斷 OrgCategory，如果是 OceanTech 則強制歸零
+            var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(ProjectID);
+            string orgCategory = applicationMain?.OrgCategory ?? "";
+            bool isOceanTech = orgCategory.Equals("OceanTech", StringComparison.OrdinalIgnoreCase);
+
             var adminFeeData = totalFeesData.FirstOrDefault(t => t.accountingItem?.Contains("行政管理費") == true);
-            if (adminFeeData != null)
+            if (isOceanTech)
             {
+                // OceanTech 類型：強制歸零
+                AdminFeeSubsidy.Text = "0";
+                AdminFeeCoop.Text = "0";
+            }
+            else if (adminFeeData != null)
+            {
+                // 非 OceanTech：載入實際資料
                 AdminFeeSubsidy.Text = adminFeeData.subsidyAmount?.ToString() ?? "0";
                 AdminFeeCoop.Text = adminFeeData.coopAmount?.ToString() ?? "0";
+            }
+            else
+            {
+                // 沒有資料時預設為 0
+                AdminFeeSubsidy.Text = "0";
+                AdminFeeCoop.Text = "0";
             }
         }
         catch (Exception ex)
@@ -632,28 +652,42 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                     }
                 }
             }
-            
-            // 確保包含行政管理費資料（從表單控制項取得）
-            if (!string.IsNullOrEmpty(AdminFeeSubsidy.Text) || !string.IsNullOrEmpty(AdminFeeCoop.Text))
-            {
-                var adminFee = new TotalFeeRow
-                {
-                    accountingItem = "行政管理費",
-                    subsidyAmount = decimal.TryParse(AdminFeeSubsidy.Text, out decimal adminSub) ? adminSub : 0,
-                    coopAmount = decimal.TryParse(AdminFeeCoop.Text, out decimal adminCoop) ? adminCoop : 0
-                };
 
-                // 如果已存在行政管理費記錄，則更新；否則新增
-                var existingAdminFee = totalFeesList.FirstOrDefault(t => t.accountingItem?.Contains("行政管理費") == true);
-                if (existingAdminFee != null)
-                {
-                    existingAdminFee.subsidyAmount = adminFee.subsidyAmount;
-                    existingAdminFee.coopAmount = adminFee.coopAmount;
-                }
-                else
-                {
-                    totalFeesList.Add(adminFee);
-                }
+            // 取得 OrgCategory 來判斷是否需要強制設置行政管理費為 0
+            var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(ProjectID);
+            string orgCategory = applicationMain?.OrgCategory ?? "";
+            bool isOceanTech = orgCategory.Equals("OceanTech", StringComparison.OrdinalIgnoreCase);
+
+            // 確保包含行政管理費資料（從表單控制項取得）
+            // 當 OrgCategory 為 OceanTech 時，行政管理費金額設為 0
+            decimal adminSubsidyAmount = 0;
+            decimal adminCoopAmount = 0;
+
+            if (!isOceanTech)
+            {
+                // 非 OceanTech 時，從表單欄位讀取金額
+                adminSubsidyAmount = decimal.TryParse(AdminFeeSubsidy.Text, out decimal adminSub) ? adminSub : 0;
+                adminCoopAmount = decimal.TryParse(AdminFeeCoop.Text, out decimal adminCoop) ? adminCoop : 0;
+            }
+            // 如果是 OceanTech，adminSubsidyAmount 和 adminCoopAmount 保持為 0
+
+            var adminFee = new TotalFeeRow
+            {
+                accountingItem = "行政管理費",
+                subsidyAmount = adminSubsidyAmount,
+                coopAmount = adminCoopAmount
+            };
+
+            // 如果已存在行政管理費記錄，則更新；否則新增
+            var existingAdminFee = totalFeesList.FirstOrDefault(t => t.accountingItem?.Contains("行政管理費") == true);
+            if (existingAdminFee != null)
+            {
+                existingAdminFee.subsidyAmount = adminFee.subsidyAmount;
+                existingAdminFee.coopAmount = adminFee.coopAmount;
+            }
+            else
+            {
+                totalFeesList.Add(adminFee);
             }
         }
         catch (Exception ex)

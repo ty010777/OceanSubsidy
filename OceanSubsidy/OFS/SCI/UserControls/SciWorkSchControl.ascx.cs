@@ -424,11 +424,11 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
     
             // 驗證資料
             var validationResult = ValidateForm();
+            RestoreFormDataFromSession();
             if (!validationResult.IsValid)
             {
                 throw new Exception($"資料驗證失敗：{validationResult.GetErrorsAsString()}");
             }
-            RestoreFormDataFromSession();
             // 儲存表單資料
             SaveData();
 
@@ -556,17 +556,14 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
     {
         var (startTime, endTime) = OFS_SciWorkSchHelper.GetProjectScheduleByProjectID(projectID);
 
-        // 參考 CLB 的做法：顯示民國年，同時設定 data-gregorian-date 屬性
         if (startTime.HasValue)
         {
             startDate.Value = startTime.Value.ToMinguoDate();
-            startDate.Attributes["data-gregorian-date"] = startTime.Value.ToString("yyyy/MM/dd");
         }
 
         if (endTime.HasValue)
         {
             endDate.Value = endTime.Value.ToMinguoDate();
-            endDate.Attributes["data-gregorian-date"] = endTime.Value.ToString("yyyy/MM/dd");
         }
     }
 
@@ -585,7 +582,11 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
                 workItemId = w.WorkItem_id,
                 code = OFS_SciWorkSchHelper.ExtractItemCodeFromWorkItemId(w.WorkItem_id),
                 itemName = w.WorkName,
+                // 將西元年轉換為民國年供前端顯示
+                startYear = w.StartYear.HasValue ? DateTimeHelper.GregorianYearToMinguo(w.StartYear.Value) : (int?)null,
                 startMonth = w.StartMonth,
+                // 將西元年轉換為民國年供前端顯示
+                endYear = w.EndYear.HasValue ? DateTimeHelper.GregorianYearToMinguo(w.EndYear.Value) : (int?)null,
                 endMonth = w.EndMonth,
                 weight = w.Weighting,
                 personMonth = w.InvestMonth,
@@ -717,37 +718,25 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
         DateTime? startDateTime = null;
         DateTime? endDateTime = null;
 
-        // 參考 CLB 的做法：優先從隱藏欄位或 data-gregorian-date 屬性取得西元年格式
-        string startDateValue = Request.Form[startDate.UniqueID + "_gregorian"] ?? startDate.Attributes["data-gregorian-date"];
-        string endDateValue = Request.Form[endDate.UniqueID + "_gregorian"] ?? endDate.Attributes["data-gregorian-date"];
-
-        // 如果有西元年格式的值，直接使用
-        if (!string.IsNullOrEmpty(startDateValue) && DateTime.TryParse(startDateValue, out DateTime start))
+        // 處理開始日期：直接從民國年欄位值解析（PostBack 時會自動傳到後端）
+        if (!string.IsNullOrEmpty(startDate.Value))
         {
-            startDateTime = start;
-        }
-        else if (!string.IsNullOrEmpty(startDate.Value))
-        {
-            // 嘗試解析民國年格式
             if (DateTimeHelper.TryParseMinguoDate(startDate.Value, out DateTime parsedStart))
             {
                 startDateTime = parsedStart;
             }
         }
 
-        if (!string.IsNullOrEmpty(endDateValue) && DateTime.TryParse(endDateValue, out DateTime end))
+
+        // 處理結束日期：直接從民國年欄位值解析（PostBack 時會自動傳到後端）
+        if (!string.IsNullOrEmpty(endDate.Value))
         {
-            endDateTime = end;
-        }
-        else if (!string.IsNullOrEmpty(endDate.Value))
-        {
-            // 嘗試解析民國年格式
             if (DateTimeHelper.TryParseMinguoDate(endDate.Value, out DateTime parsedEnd))
             {
                 endDateTime = parsedEnd;
             }
         }
-
+    
         return (startDateTime, endDateTime);
     }
 
@@ -773,9 +762,21 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
                     workItem.WorkItem_id = OFS_SciWorkSchHelper.GenerateWorkItemId(ProjectID, code);
                     workItem.WorkName = item.itemName?.ToString() ?? "";
 
+                    if (int.TryParse(item.startYear?.ToString(), out int startYear) && startYear > 0)
+                    {
+                        // 將民國年轉換為西元年
+                        workItem.StartYear = DateTimeHelper.MinguoYearToGregorian(startYear);
+                    }
+
                     if (int.TryParse(item.startMonth?.ToString(), out int startMonth) && startMonth > 0)
                     {
                         workItem.StartMonth = startMonth;
+                    }
+
+                    if (int.TryParse(item.endYear?.ToString(), out int endYear) && endYear > 0)
+                    {
+                        // 將民國年轉換為西元年
+                        workItem.EndYear = DateTimeHelper.MinguoYearToGregorian(endYear);
                     }
 
                     if (int.TryParse(item.endMonth?.ToString(), out int endMonth) && endMonth > 0)
@@ -1129,7 +1130,6 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
                         if (DateTime.TryParse(startDateToken.ToString(), out DateTime startTime))
                         {
                             startDate.Value = startTime.ToMinguoDate();
-                            startDate.Attributes["data-gregorian-date"] = startTime.ToString("yyyy/MM/dd");
                         }
                     }
 
@@ -1139,7 +1139,6 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
                         if (DateTime.TryParse(endDateToken.ToString(), out DateTime endTime))
                         {
                             endDate.Value = endTime.ToMinguoDate();
-                            endDate.Attributes["data-gregorian-date"] = endTime.ToString("yyyy/MM/dd");
                         }
                     }
                 }
@@ -1163,7 +1162,11 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
                                 workItemId = w.WorkItem_id,
                                 code = OFS_SciWorkSchHelper.ExtractItemCodeFromWorkItemId(w.WorkItem_id),
                                 itemName = w.WorkName,
+                                // 將西元年轉換為民國年供前端顯示
+                                startYear = w.StartYear.HasValue ? DateTimeHelper.GregorianYearToMinguo(w.StartYear.Value) : (int?)null,
                                 startMonth = w.StartMonth,
+                                // 將西元年轉換為民國年供前端顯示
+                                endYear = w.EndYear.HasValue ? DateTimeHelper.GregorianYearToMinguo(w.EndYear.Value) : (int?)null,
                                 endMonth = w.EndMonth,
                                 weight = w.Weighting,
                                 personMonth = w.InvestMonth,

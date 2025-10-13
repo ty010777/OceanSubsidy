@@ -21,10 +21,10 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
         
         protected string _ProjectID = "";
         ///<summary>
-        /// 計畫ID ()
+        ///  ()
         ///</summary>
         [DataMember]
-        [GisFieldAttribute("ProjectID", "ProjectID", DataSource.TABLE, "計畫ID", false)]
+        [GisFieldAttribute("ProjectID", "ProjectID", DataSource.TABLE, "", false)]
         public virtual string ProjectID
         {
             get
@@ -56,10 +56,10 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
         
         protected string _WorkItem_id = "";
         ///<summary>
-        ///  ()
+        /// 編號 (編號)
         ///</summary>
         [DataMember]
-        [GisFieldAttribute("WorkItem_id", "WorkItem_id", DataSource.TABLE, "", false)]
+        [GisFieldAttribute("WorkItem_id", "WorkItem_id", DataSource.TABLE, "編號", false)]
         public virtual string WorkItem_id
         {
             get
@@ -91,10 +91,10 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
         
         protected string _WorkName = "";
         ///<summary>
-        ///  ()
+        /// 工作項目 (工作項目)
         ///</summary>
         [DataMember]
-        [GisFieldAttribute("WorkName", "WorkName", DataSource.TABLE, "", false)]
+        [GisFieldAttribute("WorkName", "WorkName", DataSource.TABLE, "工作項目", false)]
         public virtual string WorkName
         {
             get
@@ -124,12 +124,47 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
         
-        protected int? _StartMonth = null;
+        protected int? _StartYear = null;
         ///<summary>
         ///  ()
         ///</summary>
         [DataMember]
-        [GisFieldAttribute("StartMonth", "StartMonth", DataSource.TABLE, "", false)]
+        [GisFieldAttribute("StartYear", "StartYear", DataSource.TABLE, "", false)]
+        public virtual int? StartYear
+        {
+            get
+            {
+                return _StartYear;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_StartYear == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_StartYear.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("StartYear") == -1)
+                    {
+                        UPDATE_COLUMN.Add("StartYear");
+                    }
+                    _StartYear = value;
+                }
+            }
+        }
+        
+        protected int? _StartMonth = null;
+        ///<summary>
+        /// 起訖月份 (起訖月份)
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("StartMonth", "StartMonth", DataSource.TABLE, "起訖月份", false)]
         public virtual int? StartMonth
         {
             get
@@ -159,12 +194,47 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
         
-        protected int? _EndMonth = null;
+        protected int? _EndYear = null;
         ///<summary>
         ///  ()
         ///</summary>
         [DataMember]
-        [GisFieldAttribute("EndMonth", "EndMonth", DataSource.TABLE, "", false)]
+        [GisFieldAttribute("EndYear", "EndYear", DataSource.TABLE, "", false)]
+        public virtual int? EndYear
+        {
+            get
+            {
+                return _EndYear;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_EndYear == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_EndYear.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("EndYear") == -1)
+                    {
+                        UPDATE_COLUMN.Add("EndYear");
+                    }
+                    _EndYear = value;
+                }
+            }
+        }
+        
+        protected int? _EndMonth = null;
+        ///<summary>
+        /// 起訖月份 (起訖月份)
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("EndMonth", "EndMonth", DataSource.TABLE, "起訖月份", false)]
         public virtual int? EndMonth
         {
             get
@@ -196,10 +266,10 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
         
         protected decimal? _Weighting = null;
         ///<summary>
-        ///  ()
+        /// 權重 (權重)
         ///</summary>
         [DataMember]
-        [GisFieldAttribute("Weighting", "Weighting", DataSource.TABLE, "", false)]
+        [GisFieldAttribute("Weighting", "Weighting", DataSource.TABLE, "權重", false)]
         public virtual decimal? Weighting
         {
             get
@@ -231,10 +301,10 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
         
         protected decimal? _InvestMonth = null;
         ///<summary>
-        ///  ()
+        /// 投入人月數 (投入人月數)
         ///</summary>
         [DataMember]
-        [GisFieldAttribute("InvestMonth", "InvestMonth", DataSource.TABLE, "", false)]
+        [GisFieldAttribute("InvestMonth", "InvestMonth", DataSource.TABLE, "投入人月數", false)]
         public virtual decimal? InvestMonth
         {
             get
@@ -266,10 +336,10 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
         
         protected bool? _IsOutsourced = false;
         ///<summary>
-        ///  ()
+        /// 是否委外 (是否委外)
         ///</summary>
         [DataMember]
-        [GisFieldAttribute("IsOutsourced", "IsOutsourced", DataSource.TABLE, "", false)]
+        [GisFieldAttribute("IsOutsourced", "IsOutsourced", DataSource.TABLE, "是否委外", false)]
         public virtual bool? IsOutsourced
         {
             get

@@ -787,20 +787,244 @@ public class OFS_SciFundingHelper
             try
             {
                 db.CommandText = @"
-                UPDATE OFS_SCI_Project_Main 
+                UPDATE OFS_SCI_Project_Main
                 SET Form3Status = @Status, CurrentStep = @CurrentStep
                 WHERE ProjectID = @ProjectId";
-                
+
                 db.Parameters.Clear();
                 db.Parameters.Add("@Status", status);
                 db.Parameters.Add("@CurrentStep", currentStep);
                 db.Parameters.Add("@ProjectId", projectId);
-                
+
                 db.ExecuteNonQuery();
             }
             catch (Exception ex)
             {
                 throw new Exception($"更新 Form3Status 和 CurrentStep 時發生錯誤: {ex.Message}", ex);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 取得經費概算彙總表資料 (包含百分比計算)
+    /// 金額欄位自動除以 1000 (單位:千元)
+    /// </summary>
+    /// <param name="projectID">專案編號</param>
+    /// <returns>經費概算彙總表資料清單</returns>
+    public static List<BudgetSummaryRow> GetBudgetSummaryList(string projectID)
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            try
+            {
+                db.CommandText = @"
+                -- Step 1: 計算經費總計 (補助款總計(I)、配合款總計、合計總計(II))
+                WITH TotalSums AS (
+                    SELECT
+                        ProjectID,
+                        SUM(SubsidyAmount) AS TotalSubsidy_I,
+                        SUM(CoopAmount) AS TotalCoop,
+                        SUM(TotalAmount) AS TotalAll_II,
+                        MAX(ID) AS MaxID
+                    FROM OFS_SCI_PersonnelCost_TotalFee
+                    WHERE ProjectID = @ProjectID
+                    GROUP BY ProjectID
+                )
+                -- Step 2: 計算各項目的百分比和比率
+                SELECT
+                    t.ID,
+                    t.ProjectID,
+                    t.AccountingItem,
+                    CAST(ROUND(t.SubsidyAmount / 1000.0, 3) AS DECIMAL(18, 3)) AS SubsidyAmount,
+                    CAST(ROUND(t.CoopAmount / 1000.0, 3) AS DECIMAL(18, 3)) AS CoopAmount,
+                    CAST(ROUND(t.TotalAmount / 1000.0, 3) AS DECIMAL(18, 3)) AS TotalAmount,
+                    CAST(ROUND(t.TotalAmount * 100.0 / ts.TotalAll_II, 2) AS DECIMAL(10, 2)) AS RatioOfTotalBudget,
+                    CAST(ROUND(t.SubsidyAmount * 100.0 / ts.TotalSubsidy_I, 2) AS DECIMAL(10, 2)) AS RatioOfSubsidy
+                FROM OFS_SCI_PersonnelCost_TotalFee t
+                CROSS JOIN TotalSums ts
+                WHERE t.ProjectID = @ProjectID
+
+                UNION ALL
+
+                -- 經費總計列
+                SELECT
+                    ts.MaxID + 1 AS ID,
+                    ts.ProjectID,
+                    '經費總計' AS AccountingItem,
+                    CAST(ROUND(ts.TotalSubsidy_I / 1000.0, 3) AS DECIMAL(18, 3)) AS SubsidyAmount,
+                    CAST(ROUND(ts.TotalCoop / 1000.0, 3) AS DECIMAL(18, 3)) AS CoopAmount,
+                    CAST(ROUND(ts.TotalAll_II / 1000.0, 3) AS DECIMAL(18, 3)) AS TotalAmount,
+                    NULL AS RatioOfTotalBudget,
+                    NULL AS RatioOfSubsidy
+                FROM TotalSums ts
+
+                UNION ALL
+
+                -- 百分比列
+                SELECT
+                    ts.MaxID + 2 AS ID,
+                    ts.ProjectID,
+                    '百分比' AS AccountingItem,
+                    CAST(ROUND(ts.TotalSubsidy_I * 100.0 / ts.TotalAll_II, 2) AS DECIMAL(18, 3)) AS SubsidyAmount,
+                    CAST(ROUND(ts.TotalCoop * 100.0 / ts.TotalAll_II, 2) AS DECIMAL(18, 3)) AS CoopAmount,
+                    CAST(100.00 AS DECIMAL(18, 3)) AS TotalAmount,
+                    NULL AS RatioOfTotalBudget,
+                    NULL AS RatioOfSubsidy
+                FROM TotalSums ts
+
+                ORDER BY ID ASC";
+
+                db.Parameters.Clear();
+                db.Parameters.Add("@ProjectID", projectID);
+
+                DataTable dt = db.GetTable();
+                List<BudgetSummaryRow> summaryList = new List<BudgetSummaryRow>();
+
+                foreach (DataRow row in dt.Rows)
+                {
+                    var summary = new BudgetSummaryRow
+                    {
+                        ID = row["ID"] != DBNull.Value ? Convert.ToInt32(row["ID"]) : 0,
+                        ProjectID = row["ProjectID"]?.ToString() ?? "",
+                        AccountingItem = row["AccountingItem"]?.ToString() ?? "",
+                        SubsidyAmount = row["SubsidyAmount"] != DBNull.Value ? Convert.ToDecimal(row["SubsidyAmount"]) : 0,
+                        CoopAmount = row["CoopAmount"] != DBNull.Value ? Convert.ToDecimal(row["CoopAmount"]) : 0,
+                        TotalAmount = row["TotalAmount"] != DBNull.Value ? Convert.ToDecimal(row["TotalAmount"]) : 0,
+                        RatioOfTotalBudget = row["RatioOfTotalBudget"] != DBNull.Value ? Convert.ToDecimal(row["RatioOfTotalBudget"]) : (decimal?)null,
+                        RatioOfSubsidy = row["RatioOfSubsidy"] != DBNull.Value ? Convert.ToDecimal(row["RatioOfSubsidy"]) : (decimal?)null
+                    };
+                    summaryList.Add(summary);
+                }
+
+                return summaryList;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"取得經費概算彙總表資料時發生錯誤: {ex.Message}", ex);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 取得人事費明細表資料 (用於 Excel 匯出)
+    /// </summary>
+    /// <param name="projectID">專案編號</param>
+    /// <returns>人事費明細表資料清單</returns>
+    public static List<PersonnelCostRow> GetPersonnelCostList(string projectID)
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            try
+            {
+                db.CommandText = @"
+                SELECT
+                    p.ProjectID,
+                    p.Name,
+                    p.JobTitle,
+                    c.Descname AS JobTitleDesc,
+                    p.AvgSalary,
+                    p.Month,
+                    p.IsPending,
+                    (p.AvgSalary * p.Month) AS Subtotal
+                FROM
+                    OFS_SCI_PersonnelCost_PersonForm p
+                LEFT JOIN
+                    Sys_ZgsCode c
+                    ON p.JobTitle = c.Code
+                       AND c.CodeGroup IN ('SCIPersonAcademic','SCIPersonIndustry')
+                WHERE
+                    p.ProjectID = @ProjectID
+                ORDER BY p.Name";
+
+                db.Parameters.Clear();
+                db.Parameters.Add("@ProjectID", projectID);
+
+                DataTable dt = db.GetTable();
+                List<PersonnelCostRow> personnelList = new List<PersonnelCostRow>();
+
+                foreach (DataRow row in dt.Rows)
+                {
+                    var personnel = new PersonnelCostRow
+                    {
+                        ProjectID = row["ProjectID"]?.ToString() ?? "",
+                        Name = row["Name"]?.ToString() ?? "",
+                        JobTitle = row["JobTitle"]?.ToString() ?? "",
+                        JobTitleDesc = row["JobTitleDesc"]?.ToString() ?? "",
+                        AvgSalary = row["AvgSalary"] != DBNull.Value ? Convert.ToDecimal(row["AvgSalary"]) : 0,
+                        Month = row["Month"] != DBNull.Value ? Convert.ToDecimal(row["Month"]) : 0,
+                        IsPending = row["IsPending"] != DBNull.Value ? Convert.ToBoolean(row["IsPending"]) : false,
+                        Subtotal = row["Subtotal"] != DBNull.Value ? Convert.ToDecimal(row["Subtotal"]) : 0
+                    };
+                    personnelList.Add(personnel);
+                }
+
+                return personnelList;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"取得人事費明細表資料時發生錯誤: {ex.Message}", ex);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 取得消耗性器材及原材料費明細表資料 (用於 Excel 匯出)
+    /// </summary>
+    /// <param name="projectID">專案編號</param>
+    /// <returns>材料費明細表資料清單</returns>
+    public static List<MaterialCostRow> GetMaterialCostList(string projectID)
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            try
+            {
+                db.CommandText = @"
+                SELECT
+                    m.ProjectID,
+                    m.ItemName,
+                    m.Description,
+                    m.Unit,
+                    c.Descname AS UnitDesc,
+                    m.PreNum,
+                    m.UnitPrice,
+                    (m.PreNum * m.UnitPrice) AS TotalPrice
+                FROM
+                    OFS_SCI_PersonnelCost_Material m
+                LEFT JOIN
+                    Sys_ZgsCode c
+                    ON m.Unit = c.Code
+                       AND c.CodeGroup IN ('SCIMaterialUnit')
+                WHERE
+                    m.ProjectID = @ProjectID
+                ORDER BY m.ItemName";
+
+                db.Parameters.Clear();
+                db.Parameters.Add("@ProjectID", projectID);
+
+                DataTable dt = db.GetTable();
+                List<MaterialCostRow> materialList = new List<MaterialCostRow>();
+
+                foreach (DataRow row in dt.Rows)
+                {
+                    var material = new MaterialCostRow
+                    {
+                        ProjectID = row["ProjectID"]?.ToString() ?? "",
+                        ItemName = row["ItemName"]?.ToString() ?? "",
+                        Description = row["Description"]?.ToString() ?? "",
+                        Unit = row["Unit"]?.ToString() ?? "",
+                        UnitDesc = row["UnitDesc"]?.ToString() ?? "",
+                        PreNum = row["PreNum"] != DBNull.Value ? Convert.ToDecimal(row["PreNum"]) : 0,
+                        UnitPrice = row["UnitPrice"] != DBNull.Value ? Convert.ToDecimal(row["UnitPrice"]) : 0,
+                        TotalPrice = row["TotalPrice"] != DBNull.Value ? Convert.ToDecimal(row["TotalPrice"]) : 0
+                    };
+                    materialList.Add(material);
+                }
+
+                return materialList;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"取得消耗性器材及原材料費明細表資料時發生錯誤: {ex.Message}", ex);
             }
         }
     }

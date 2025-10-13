@@ -298,7 +298,8 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
         }
 
         /// <summary>
-        /// 取得階段審查狀態 (查詢最新版本)
+        /// 取得階段審查狀態
+        /// 邏輯：若有任何一筆記錄 Status = '通過'，則返回「通過」；否則返回最新版本的狀態
         /// </summary>
         /// <param name="projectID">專案ID</param>
         /// <param name="stage">階段</param>
@@ -309,7 +310,30 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
             {
                 try
                 {
-                    // 查詢最新版本的審查狀態
+                    // 1. 先檢查是否有任何一筆記錄的 Status = '通過'
+                    db.CommandText = @"
+                        SELECT TOP 1 [Status], [ReviewMethod], [Reviewer], [Account]
+                        FROM [OFS_SCI_StageExam]
+                        WHERE [ProjectID] = @ProjectID AND [Stage] = @Stage AND [Status] = N'通過'";
+                    db.Parameters.Clear();
+                    db.Parameters.Add("@ProjectID", projectID);
+                    db.Parameters.Add("@Stage", stage);
+
+                    DataTable dt = db.GetTable();
+                    if (dt.Rows.Count > 0)
+                    {
+                        // 找到至少一筆「通過」的記錄，直接返回
+                        DataRow row = dt.Rows[0];
+                        return new StageExamStatus
+                        {
+                            Status = "通過",
+                            ReviewMethod = row["ReviewMethod"]?.ToString() ?? "",
+                            Reviewer = row["Reviewer"]?.ToString() ?? "",
+                            Account = row["Account"]?.ToString() ?? ""
+                        };
+                    }
+
+                    // 2. 沒有「通過」記錄，查詢最新版本的審查狀態
                     db.CommandText = @"
                         SELECT TOP 1 [Status], [ReviewMethod], [Reviewer], [Account]
                         FROM [OFS_SCI_StageExam]
@@ -319,7 +343,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                     db.Parameters.Add("@ProjectID", projectID);
                     db.Parameters.Add("@Stage", stage);
 
-                    DataTable dt = db.GetTable();
+                    dt = db.GetTable();
                     if (dt.Rows.Count > 0)
                     {
                         DataRow row = dt.Rows[0];

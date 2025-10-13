@@ -11,11 +11,11 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
 {
     
     /// <summary>
-    ///  ()
+    /// 科專類-階段審核人員 ()
     /// </summary>
     [DataContract]
     [Serializable()]
-    [GisTableAttribute("OFS_SCI_StageExam_ReviewerList", "", false)]
+    [GisTableAttribute("OFS_SCI_StageExam_ReviewerList", "科專類-階段審核人員", false)]
     public class IOFS_SCI_StageExam_ReviewerList : IMeta
     {
         
@@ -264,6 +264,111 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
         
+        protected string _BankCode = "";
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("BankCode", "BankCode", DataSource.TABLE, "", false)]
+        public virtual string BankCode
+        {
+            get
+            {
+                return _BankCode;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_BankCode == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_BankCode.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("BankCode") == -1)
+                    {
+                        UPDATE_COLUMN.Add("BankCode");
+                    }
+                    _BankCode = value;
+                }
+            }
+        }
+        
+        protected string _BankAccount = "";
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("BankAccount", "BankAccount", DataSource.TABLE, "", false)]
+        public virtual string BankAccount
+        {
+            get
+            {
+                return _BankAccount;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_BankAccount == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_BankAccount.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("BankAccount") == -1)
+                    {
+                        UPDATE_COLUMN.Add("BankAccount");
+                    }
+                    _BankAccount = value;
+                }
+            }
+        }
+        
+        protected string _RegistrationAddress = "";
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("RegistrationAddress", "RegistrationAddress", DataSource.TABLE, "", false)]
+        public virtual string RegistrationAddress
+        {
+            get
+            {
+                return _RegistrationAddress;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_RegistrationAddress == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_RegistrationAddress.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("RegistrationAddress") == -1)
+                    {
+                        UPDATE_COLUMN.Add("RegistrationAddress");
+                    }
+                    _RegistrationAddress = value;
+                }
+            }
+        }
+        
     }
 
     
@@ -276,7 +381,7 @@ namespace GS.OCA_OceanSubsidy.Entity
     using GS.OCA_OceanSubsidy.Entity.Base;
     
     /// <summary>
-    ///  ()
+    /// 科專類-階段審核人員 ()
     /// </summary>
     [DataContract]
     [Serializable()]

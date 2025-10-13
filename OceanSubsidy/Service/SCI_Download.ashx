@@ -5,6 +5,7 @@ using System;
 using System.Web;
 using System.IO;
 using System.Collections.Generic;
+using System.Data;
 using System.Globalization;
 using System.Linq;
 using System.IO.Compression;
@@ -67,7 +68,7 @@ public class SCI_Download : IHttpHandler
         var projectID = context.Request.QueryString["projectID"];
         var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
         string ProjectName = applicationMain.ProjectNameTw ?? "";
-                        
+
         // 驗證參數
         if (string.IsNullOrEmpty(projectID))
         {
@@ -75,7 +76,7 @@ public class SCI_Download : IHttpHandler
             context.Response.Write("Missing projectID parameter.");
             return;
         }
-        
+
         // 構建檔案路徑
         string fileName = $"{projectID}_科專_{ProjectName}_送審版.pdf";
         string relativePath = $"~/UploadFiles/OFS/SCI/{projectID}/SciApplication/{fileName}";
@@ -102,7 +103,7 @@ public class SCI_Download : IHttpHandler
         var projectID = context.Request.QueryString["projectID"];
         var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
         string ProjectName = applicationMain.ProjectNameTw ?? "";
-                        
+
         // 驗證參數
         if (string.IsNullOrEmpty(projectID))
         {
@@ -515,8 +516,8 @@ public class SCI_Download : IHttpHandler
                 placeholder.Add("ProjectNameTw", applicationMain.ProjectNameTw ?? "");
                 placeholder.Add("ProjectNameEn", applicationMain.ProjectNameEn ?? "");
                 placeholder.Add("OrgName", applicationMain.OrgName ?? "");
-                
-                 // 取得當前日期（民國年月日）
+
+                // 取得當前日期（民國年月日）
                 DateTime currentDate = DateTime.Now;
                 int year = DateTimeHelper.GregorianYearToMinguo(currentDate.Year);
                 int month = currentDate.Month;
@@ -527,7 +528,7 @@ public class SCI_Download : IHttpHandler
                 //加入地址
                 placeholder.Add("RegisteredAddress", applicationMain.RegisteredAddress ?? "");
                 placeholder.Add("CorrespondenceAddress", applicationMain.CorrespondenceAddress ?? "");
-                
+
                 // 處理 OrgCategory 欄位勾選（機構類別）
                 string orgCategory = applicationMain.OrgCategory ?? "";
                 placeholder.Add("Academic", orgCategory == "Academic" ? "☒" : "☐");
@@ -556,6 +557,7 @@ public class SCI_Download : IHttpHandler
                     sMonth = startTime.Month;
                     sDay = startTime.Day;
                 }
+
                 placeholder.Add("SYear", sYear.ToString());
                 placeholder.Add("SMonth", sMonth.ToString());
                 placeholder.Add("SDay", sDay.ToString());
@@ -569,21 +571,23 @@ public class SCI_Download : IHttpHandler
                     eMonth = endTime.Month;
                     eDay = endTime.Day;
                 }
+
                 placeholder.Add("EYear", eYear.ToString());
                 placeholder.Add("EMonth", eMonth.ToString());
                 placeholder.Add("EDay", eDay.ToString());
-                
+
                 // 先算總月數差
                 int totalMonths = (eYear - sYear) * 12 + (eMonth - sMonth);
-                
+
                 // 如果結束日的日數比開始日小，代表還沒滿一個月，要減 1
                 if (eDay < sDay)
                 {
                     totalMonths--;
                 }
-                placeholder.Add("TotalMonths", totalMonths.ToString());       
-                
-                
+
+                placeholder.Add("TotalMonths", totalMonths.ToString());
+
+
                 // 取得經費總計資料
                 var totalFeeSum = OFS_SciFundingHelper.GetTotalFeeSum(projectID);
 
@@ -602,7 +606,7 @@ public class SCI_Download : IHttpHandler
                 var host = personnelList?.FirstOrDefault(p => p.Role == "計畫主持人");
                 var contact = personnelList?.FirstOrDefault(p => p.Role == "計畫聯絡人");
                 var Accounting = personnelList?.FirstOrDefault(p => p.Role == "會計聯絡人");
-                
+
                 // 加入主持人資料
                 placeholder.Add("HostName", host?.Name ?? "");
                 placeholder.Add("HostMPhone", host?.MobilePhone ?? "");
@@ -616,14 +620,14 @@ public class SCI_Download : IHttpHandler
                 placeholder.Add("ContactPhone", contact?.Phone ?? "");
                 placeholder.Add("ContactExt", contact?.PhoneExt ?? "");
                 placeholder.Add("ContactJobTitle", contact?.JobTitle ?? "");
-                
+
                 // 加入會計聯絡人資料
                 placeholder.Add("AccountingName", Accounting?.Name ?? "");
                 placeholder.Add("AccountingMPhone", Accounting?.MobilePhone ?? "");
                 placeholder.Add("AccountingPhone", Accounting?.Phone ?? "");
                 placeholder.Add("AccountingExt", Accounting?.PhoneExt ?? "");
                 placeholder.Add("AccountingJobTitle", Accounting?.JobTitle ?? "");
-                
+
                 //*計畫內容摘要、關鍵字
                 placeholder.Add("Summary", applicationMain?.Summary ?? "");
 
@@ -691,15 +695,15 @@ public class SCI_Download : IHttpHandler
                 }
 
                 List<OFS_SCI_UploadFile> L_TechnologyDiagram = OFS_SciUploadAttachmentsHelper.GetAttachmentsByFileCodeAndProject(projectID, "TechnologyDiagram");
-                string relativePath = L_TechnologyDiagram[0].TemplatePath;  // 或 FilePath，看你模型欄位名稱
+                string relativePath = L_TechnologyDiagram[0].TemplatePath; // 或 FilePath，看你模型欄位名稱
                 string absolutePath = HttpContext.Current.Server.MapPath("~/" + relativePath);
-                helper.InsertImageAtBookmark("TechnologyDiagram", absolutePath,6400800, 4257567 );
+                helper.InsertImageAtBookmark("TechnologyDiagram", absolutePath, 6400800, 4257567);
 
                 List<OFS_SCI_UploadFile> L_WorkSchStructure = OFS_SciUploadAttachmentsHelper.GetAttachmentsByFileCodeAndProject(projectID, "WorkSchStructure");
                 relativePath = L_WorkSchStructure[0].TemplatePath;
                 absolutePath = HttpContext.Current.Server.MapPath("~/" + relativePath);
                 // 插入圖片：TechnologyDiagram 和 WorkSchStructure
-                helper.InsertImageAtBookmark("WorkSchStructure", absolutePath,6400800, 4257567);
+                helper.InsertImageAtBookmark("WorkSchStructure", absolutePath, 6400800, 4257567);
 
                 helper.CloseAsSave();
             }
@@ -728,8 +732,68 @@ public class SCI_Download : IHttpHandler
 
                 string sheetName = sheetNames[0];
 
-                // TODO: 根據實際需求設定儲存格值
-                // 範例：excel.WriteRange(sheetName, data, startRow, startColumn);
+                // 從資料庫讀取查核標準資料
+                var StandardList = OFS_SciWorkSchHelper.GetWorkScheduleWithCheckStandard(projectID);
+
+                if (StandardList != null && StandardList.Rows.Count > 0)
+                {
+                    // 資料插入在第2行和第3行之間，所以從第3行開始插入
+                    int insertPosition = 3;
+
+                    // 先插入需要的行數 (資料筆數)
+                    if (StandardList.Rows.Count > 0)
+                    {
+                        excel.InsertRows(sheetName, insertPosition, StandardList.Rows.Count);
+                    }
+
+                    // 填入資料 (從第3行開始)
+                    for (int i = 0; i < StandardList.Rows.Count; i++)
+                    {
+                        DataRow row = StandardList.Rows[i];
+
+                        // 取欄位值
+                        string serialNumber = row["SerialNumber"]?.ToString();
+                        DateTime? PlannedFinishDate = row["PlannedFinishDate"] != DBNull.Value 
+                        ? Convert.ToDateTime(row["PlannedFinishDate"])
+                        : (DateTime?)null;
+                        String MinguoFinishDate = DateTimeHelper.ToMinguoDate(PlannedFinishDate);
+                        string checkDescription = row["CheckDescription"]?.ToString();
+                        bool isOutsourced = row["IsOutsourced"] != DBNull.Value 
+                                            && Convert.ToBoolean(row["IsOutsourced"]);
+                        int currentRow = insertPosition + i;
+
+                        // A欄: 序號
+                        var dataA = new List<List<object>>
+                        {
+                            new List<object> { serialNumber ?? "" }
+                        };
+                        excel.WriteRange(sheetName, dataA, currentRow, 1);
+
+                        // B欄: 預定完成時間
+                        var dataB = new List<List<object>>
+                        {
+                            new List<object> { MinguoFinishDate ?? "" }
+                        };
+                        excel.WriteRange(sheetName, dataB, currentRow, 2);
+
+                        // C欄: 查核標準
+                        var dataC = new List<List<object>>
+                        {
+                            new List<object> { checkDescription }
+                        };
+                        excel.WriteRange(sheetName, dataC, currentRow, 3);
+
+                        // D欄: 是否委外
+                      string OrgName = (!isOutsourced) ? applicationMain.OrgName : "";
+
+                        var dataD = new List<List<object>>
+                        {
+                            new List<object> { OrgName }
+                        };
+                        excel.WriteRange(sheetName, dataD, currentRow, 4);
+
+                    }
+                }
 
                 excel.Save();
             }
@@ -757,7 +821,24 @@ public class SCI_Download : IHttpHandler
 
                 string sheetName = sheetNames[0];
 
-                // TODO: 根據實際需求設定儲存格值
+                // 取得開始和結束日期
+                DateTime? startTime = applicationMain.StartTime;
+                DateTime? endTime = applicationMain.EndTime;
+
+                if (startTime.HasValue && endTime.HasValue)
+                {
+                    // 渲染年度到 Excel
+                    RenderYearHeaders(excel, sheetName, startTime.Value, endTime.Value);
+
+                    // 渲染月份到 Excel，並取得月份與欄位的對應關係
+                    var monthColumnMap = RenderMonthHeaders(excel, sheetName, startTime.Value, endTime.Value);
+
+                    // 取得工作項目資料
+                    var workItems = OFS_SciWorkSchHelper.GetWorkItemsByProjectID(projectID);
+
+                    // 渲染工作項目與進度
+                    RenderWorkItemsSchedule(excel, sheetName, workItems, monthColumnMap, applicationMain);
+                }
 
                 excel.Save();
             }
@@ -766,6 +847,343 @@ public class SCI_Download : IHttpHandler
         {
             System.Diagnostics.Debug.WriteLine($"ProcessTemplate_AC2_File2_Schedule Error: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// 根據 StartTime 和 EndTime 渲染年度到 Excel
+    /// 從 D3 開始,根據實際月份數動態計算每個年度標題的位置
+    /// </summary>
+    private void RenderYearHeaders(ExcelHelper excel, string sheetName, DateTime startTime, DateTime endTime)
+    {
+        // 起始欄位是 D 欄 (column 4)
+        int currentColumn = 4;
+        DateTime currentYearStart = startTime;
+
+        // 逐年渲染
+        while (currentYearStart <= endTime)
+        {
+            int minguoYear = DateTimeHelper.GregorianYearToMinguo(currentYearStart.Year);
+            string yearText = $"{minguoYear}年度";
+
+            // 寫入到第3行 (row 3)
+            var data = new List<List<object>>
+            {
+                new List<object> { yearText }
+            };
+            excel.WriteRange(sheetName, data, 3, currentColumn);
+
+            // 計算該年還有多少個月
+            int monthsInCurrentYear;
+            if (currentYearStart.Year == endTime.Year)
+            {
+                // 如果是最後一年,只計算到 endTime.Month
+                monthsInCurrentYear = endTime.Month - currentYearStart.Month + 1;
+            }
+            else
+            {
+                // 否則計算到該年12月
+                monthsInCurrentYear = 12 - currentYearStart.Month + 1;
+            }
+
+            // 移動到下一年度標題的欄位位置
+            currentColumn += monthsInCurrentYear;
+
+            // 移動到下一年的1月
+            currentYearStart = new DateTime(currentYearStart.Year + 1, 1, 1);
+        }
+    }
+
+    /// <summary>
+    /// 根據 StartTime 和 EndTime 渲染月份到 Excel
+    /// 從 D4 開始,顯示 1~12 的數字
+    /// </summary>
+    /// <returns>月份與欄位的對應字典，key 為 "年_月" 格式（民國年），value 為欄位編號</returns>
+    private Dictionary<string, int> RenderMonthHeaders(ExcelHelper excel, string sheetName, DateTime startTime, DateTime endTime)
+    {
+        // 建立月份與欄位的對應字典
+        var monthColumnMap = new Dictionary<string, int>();
+
+        // 起始欄位是 D 欄 (column 4)
+        int currentColumn = 4;
+
+        // 從 startTime 開始,逐月渲染到 endTime
+        DateTime currentDate = new DateTime(startTime.Year, startTime.Month, 1);
+        DateTime endDate = new DateTime(endTime.Year, endTime.Month, 1);
+
+        while (currentDate <= endDate)
+        {
+            // 寫入月份數字 (1~12)
+            var data = new List<List<object>>
+            {
+                new List<object> { currentDate.Month }
+            };
+            excel.WriteRange(sheetName, data, 4, currentColumn);
+
+            // 紀錄月份與欄位的對應關係（使用民國年）
+            int minguoYear = DateTimeHelper.GregorianYearToMinguo(currentDate.Year);
+            string key = $"{minguoYear}_{currentDate.Month}";
+            monthColumnMap[key] = currentColumn;
+
+            // 移動到下一個月
+            currentDate = currentDate.AddMonths(1);
+            currentColumn++;
+        }
+
+        return monthColumnMap;
+    }
+
+    /// <summary>
+    /// 渲染工作項目與進度到 Excel
+    /// </summary>
+    /// <param name="excel">Excel Helper</param>
+    /// <param name="sheetName">工作表名稱</param>
+    /// <param name="workItems">工作項目列表</param>
+    /// <param name="monthColumnMap">月份與欄位的對應字典</param>
+    /// <param name="applicationMain">申請主檔資料</param>
+    private void RenderWorkItemsSchedule(ExcelHelper excel, string sheetName, List<OFS_SCI_WorkSch_Main> workItems, Dictionary<string, int> monthColumnMap, OFS_SCI_Application_Main applicationMain)
+    {
+        if (workItems == null || workItems.Count == 0)
+            return;
+
+        try
+        {
+            // 1. 根據資料筆數插入行數（插入在第4~5行之間）
+            excel.InsertRows(sheetName, 5, workItems.Count);
+
+            // 統計變數（只統計子項）
+            decimal totalWeighting = 0;
+            decimal totalInvestMonth = 0;
+
+            // 建立 WorkItem_id 與行號的對應字典（用於後續檢查點渲染）
+            var workItemRowMap = new Dictionary<string, int>();
+
+            // 2. 填入 WorkDisplayName 和渲染灰色格子
+            for (int i = 0; i < workItems.Count; i++)
+            {
+                var item = workItems[i];
+                int currentRow = 5 + i;
+
+                // 記錄 WorkItem_id 與行號的對應關係
+                workItemRowMap[item.WorkItem_id] = currentRow;
+
+                // 取得 WorkCode (底線後的部分)
+                string workCode = OFS_SciWorkSchHelper.ExtractItemCodeFromWorkItemId(item.WorkItem_id);
+
+                // 註記：StartYear 或 StartMonth 為 NULL 者，代表工作項目母項，由子項組成
+                bool isParentItem = !item.StartYear.HasValue || !item.StartMonth.HasValue;
+
+                // 組合顯示文字
+                string workDisplayName;
+                if (isParentItem)
+                {
+                    // 母項：只顯示工作代碼和名稱，不顯示執行單位
+                    workDisplayName = $"{workCode}.{item.WorkName}";
+                }
+                else
+                {
+                    // 子項：判斷執行單位
+                    string orgName = "";
+                    if (item.IsOutsourced.HasValue && !item.IsOutsourced.Value)
+                    {
+                        // 非委外，使用 applicationMain 的 OrgName
+                        orgName = applicationMain?.OrgName ?? "";
+                    }
+                    // 如果是委外（IsOutsourced = true），orgName 保持為空字串
+
+                    // 組合顯示文字（同一單元格內換行）
+                    workDisplayName = $"{workCode}.{item.WorkName}\n(執行單位：{orgName})";
+                }
+
+                // 寫入 A 欄（工作項目名稱與執行單位）
+                var dataA = new List<List<object>>
+                {
+                    new List<object> { workDisplayName }
+                };
+                excel.WriteRange(sheetName, dataA, currentRow, 1);
+
+                // 寫入 B 欄（計畫權重）
+                var dataB = new List<List<object>>
+                {
+                    new List<object> { item.Weighting.HasValue ? (object)item.Weighting.Value : "" }
+                };
+                excel.WriteRange(sheetName, dataB, currentRow, 2);
+
+                // 寫入 C 欄（投入人月數）
+                var dataC = new List<List<object>>
+                {
+                    new List<object> { item.InvestMonth.HasValue ? (object)item.InvestMonth.Value : "" }
+                };
+                excel.WriteRange(sheetName, dataC, currentRow, 3);
+
+                // 累加統計（只統計子項）
+                if (!isParentItem)
+                {
+                    if (item.Weighting.HasValue)
+                        totalWeighting += item.Weighting.Value;
+
+                    if (item.InvestMonth.HasValue)
+                        totalInvestMonth += item.InvestMonth.Value;
+                }
+
+                // 3. 渲染灰色格子
+                if (item.StartYear.HasValue && item.StartMonth.HasValue && item.InvestMonth.HasValue)
+                {
+                    // 注意：資料庫中的 StartYear 是西元年，需要轉換為民國年來查找欄位對應
+                    int minguoYear = DateTimeHelper.GregorianYearToMinguo(item.StartYear.Value);
+                    string key = $"{minguoYear}_{item.StartMonth.Value}";
+
+                    if (monthColumnMap.ContainsKey(key))
+                    {
+                        int startColumn = monthColumnMap[key];
+                        int investMonths = (int)item.InvestMonth.Value;
+
+                        // 從該欄位開始向右渲染灰色格子 InvestMonth 格
+                        for (int j = 0; j < investMonths; j++)
+                        {
+                            excel.SetCellBackgroundColor(sheetName, currentRow, startColumn + j, "FFD3D3D3");
+                        }
+                    }
+                }
+            }
+
+            // 4. 渲染檢查點（SerialNumber）到對應格子
+            RenderCheckPoints(excel, sheetName, applicationMain.ProjectID, workItemRowMap, monthColumnMap);
+
+            // 5. 寫入統計行（X = 5 + N，N 為工作項目數）
+            int summaryRow = 5 + workItems.Count;
+
+            // 寫入 B 欄：計畫權重總計
+            var summaryB = new List<List<object>>
+            {
+                new List<object> { totalWeighting }
+            };
+            excel.WriteRange(sheetName, summaryB, summaryRow, 2);
+
+            // 寫入 C 欄：投入人月數總計
+            var summaryC = new List<List<object>>
+            {
+                new List<object> { totalInvestMonth }
+            };
+            excel.WriteRange(sheetName, summaryC, summaryRow +1 , 3);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"RenderWorkItemsSchedule Error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 渲染檢查點（SerialNumber）到對應格子
+    /// </summary>
+    /// <param name="excel">Excel Helper</param>
+    /// <param name="sheetName">工作表名稱</param>
+    /// <param name="projectID">專案ID</param>
+    /// <param name="workItemRowMap">WorkItem_id 與行號的對應字典</param>
+    /// <param name="monthColumnMap">月份與欄位的對應字典</param>
+    private void RenderCheckPoints(ExcelHelper excel, string sheetName, string projectID,
+        Dictionary<string, int> workItemRowMap, Dictionary<string, int> monthColumnMap)
+    {
+        try
+        {
+            // 取得檢查點資料
+            var checkStandards = OFS_SciWorkSchHelper.GetCheckStandardsByProjectID(projectID);
+
+            if (checkStandards == null || checkStandards.Count == 0)
+                return;
+
+            // 建立格子與 SerialNumber 的對應字典（用於合併同一格子的多個檢查點）
+            // Key: "{row}_{column}", Value: List of SerialNumbers
+            var cellCheckPointsMap = new Dictionary<string, List<string>>();
+
+            foreach (var checkStandard in checkStandards)
+            {
+                // 檢查必要欄位
+                if (string.IsNullOrEmpty(checkStandard.WorkItem) ||
+                    !checkStandard.PlannedFinishDate.HasValue)
+                    continue;
+
+                // 根據 WorkItem 找到對應的 WorkItem_id
+                // WorkItem 可能是 "A" 或 "A1"，需要找到對應的完整 WorkItem_id（例如：114SCI0036_A）
+                string fullWorkItemId = FindFullWorkItemId(workItemRowMap, projectID, checkStandard.WorkItem);
+
+                if (string.IsNullOrEmpty(fullWorkItemId) || !workItemRowMap.ContainsKey(fullWorkItemId))
+                    continue;
+
+                int row = workItemRowMap[fullWorkItemId];
+
+                // 根據 PlannedFinishDate 找到對應的欄位
+                DateTime plannedDate = checkStandard.PlannedFinishDate.Value;
+                int minguoYear = DateTimeHelper.GregorianYearToMinguo(plannedDate.Year);
+                string key = $"{minguoYear}_{plannedDate.Month}";
+
+                if (!monthColumnMap.ContainsKey(key))
+                    continue;
+
+                int column = monthColumnMap[key];
+
+                // 建立格子的 key
+                string cellKey = $"{row}_{column}";
+
+                // 將 SerialNumber 加入到對應格子的列表中
+                if (!cellCheckPointsMap.ContainsKey(cellKey))
+                {
+                    cellCheckPointsMap[cellKey] = new List<string>();
+                }
+                cellCheckPointsMap[cellKey].Add(checkStandard.SerialNumber ?? "");
+            }
+
+            // 將所有檢查點寫入對應格子（用逗號分隔）
+            foreach (var kvp in cellCheckPointsMap)
+            {
+                var parts = kvp.Key.Split('_');
+                int row = int.Parse(parts[0]);
+                int column = int.Parse(parts[1]);
+
+                // 將 SerialNumbers 用逗號分隔
+                string serialNumbers = string.Join(",", kvp.Value);
+
+                // 寫入格子
+                var data = new List<List<object>>
+                {
+                    new List<object> { serialNumbers }
+                };
+                excel.WriteRange(sheetName, data, row, column);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"RenderCheckPoints Error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 根據 WorkItem 片段找到完整的 WorkItem_id
+    /// </summary>
+    /// <param name="workItemRowMap">WorkItem_id 與行號的對應字典</param>
+    /// <param name="projectID">專案ID</param>
+    /// <param name="workItem">WorkItem 片段（例如："A" 或 "A1"）</param>
+    /// <returns>完整的 WorkItem_id（例如："114SCI0036_A"）</returns>
+    private string FindFullWorkItemId(Dictionary<string, int> workItemRowMap, string projectID, string workItem)
+    {
+        // 構建完整的 WorkItem_id
+        string fullWorkItemId = $"{projectID}_{workItem}";
+
+        // 檢查是否存在
+        if (workItemRowMap.ContainsKey(fullWorkItemId))
+        {
+            return fullWorkItemId;
+        }
+
+        // 如果找不到，嘗試在所有 key 中尋找包含該 workItem 的
+        foreach (var key in workItemRowMap.Keys)
+        {
+            if (key.EndsWith($"_{workItem}"))
+            {
+                return key;
+            }
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -783,17 +1201,13 @@ public class SCI_Download : IHttpHandler
                 var sheetNames = excel.GetWorksheetNames();
                 if (!sheetNames.Any()) return;
 
-                string sheetName = sheetNames[0];
-
-                // TODO: 根據實際需求設定儲存格值
-                // 範例：
-                // var data = new List<List<object>>
-                // {
-                //     new List<object> { "計畫編號", projectID },
-                //     new List<object> { "計畫名稱", applicationMain.ProjectNameTw },
-                //     new List<object> { "申請單位", applicationMain.OrgName }
-                // };
-                // excel.WriteRange(sheetName, data, 1, 1);
+                // 經費概算彙總表
+                FillBudgetSummarySheet(excel, sheetNames, projectID);
+                FillPersonnelCostSheet(excel, sheetNames, projectID); // 人事費明細表
+                FillMaterialCostSheet(excel, sheetNames, projectID); // 消耗性器材及原材料費
+                FillResearchFeeSheet(excel, sheetNames, projectID); // 技術移轉及委託研究費用
+                FillTravelExpenseSheet(excel, sheetNames, projectID); // 國內差旅費
+                FillOtherExpenseSheet(excel, sheetNames, projectID); // 其他業務費
 
                 excel.Save();
             }
@@ -804,12 +1218,565 @@ public class SCI_Download : IHttpHandler
         }
     }
 
+    #region 附件-02-4-0 經費概算彙總表 - Sheet 填寫方法
+
+    /// <summary>
+    /// 填寫經費概算彙總表 sheet
+    /// </summary>
+    private void FillBudgetSummarySheet(ExcelHelper excel, List<string> sheetNames, string projectID)
+    {
+        try
+        {
+            // 找到 '經費概算彙總表' sheet
+            string targetSheet = "經費概算彙總表";
+            if (!sheetNames.Contains(targetSheet))
+            {
+                // 如果沒有找到目標 sheet，使用第一個 sheet
+                targetSheet = sheetNames[0];
+            }
+
+            // 取得 applicationMain 來判斷 OrgCategory
+            var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
+            bool isOceanTech = applicationMain?.OrgCategory == "OceanTech";
+
+            // 從資料庫讀取經費概算彙總表資料 (包含百分比計算)
+            var budgetSummaryList = OFS_SciFundingHelper.GetBudgetSummaryList(projectID);
+
+            if (budgetSummaryList != null && budgetSummaryList.Count > 0)
+            {
+                // 固定有8筆資料（前6筆為費用項目，後2筆為總計）
+                // 一般情況：填入 B6~B13, C6~C13, D6~D13
+                // OceanTech：跳過第6筆（索引5），填入 B6~B10, B12~B13（第11行空白）
+                int startRow = 6; // 從第6行開始
+                int rowOffset = 0; // 用於調整行號（當跳過某筆時）
+
+                for (int i = 0; i < budgetSummaryList.Count && i < 8; i++)
+                {
+                    // 如果是 OceanTech 且為第 6 筆（索引 5），跳過不列印（固定為 0）
+                    if (isOceanTech && i == 5)
+                    {
+                        rowOffset = -1; // 後續行號往上移一行
+                        continue;
+                    }
+
+                    var item = budgetSummaryList[i];
+                    int currentRow = startRow + i + rowOffset;
+
+                    // 判斷是否為最後1筆  因為最後顯示為百分比欄位
+                    bool isLastTwoRows = (i >= 7);
+
+                    // B欄: 補助款 (單位:千元)
+                    if (isLastTwoRows)
+                    {
+                        var dataB = new List<List<object>>
+                        {
+                            new List<object> { item.SubsidyAmount.ToString() + "%" }
+                        };
+                        excel.WriteRange(targetSheet, dataB, currentRow, 2);
+                    }
+                    else
+                    {
+                        var dataB = new List<List<object>>
+                        {
+                            new List<object> { item.SubsidyAmount }
+                        };
+                        excel.WriteRange(targetSheet, dataB, currentRow, 2);
+                    }
+
+                    // C欄: 配合款 (單位:千元)
+                    if (isLastTwoRows)
+                    {
+                        var dataC = new List<List<object>>
+                        {
+                            new List<object> { item.CoopAmount.ToString() + "%" }
+                        };
+                        excel.WriteRange(targetSheet, dataC, currentRow, 3);
+                    }
+                    else
+                    {
+                        var dataC = new List<List<object>>
+                        {
+                            new List<object> { item.CoopAmount }
+                        };
+                        excel.WriteRange(targetSheet, dataC, currentRow, 3);
+                    }
+
+                    // D欄: 總計 (單位:千元)
+                    // D12, D13 加上 '%' 符號
+                    if (isLastTwoRows)
+                    {
+                        var dataD = new List<List<object>>
+                        {
+                            new List<object> { item.TotalAmount.ToString() + "%" }
+                        };
+                        excel.WriteRange(targetSheet, dataD, currentRow, 4);
+                    }
+                    else
+                    {
+                        var dataD = new List<List<object>>
+                        {
+                            new List<object> { item.TotalAmount }
+                        };
+                        excel.WriteRange(targetSheet, dataD, currentRow, 4);
+                    }
+
+                    // E欄: 占總經費比率(C)/(II) - 只填寫前6筆 (E6~E11)，加上 '%' 符號
+                    // E12, E13 固定為NULL，不寫入
+                    if (i < 6 && item.RatioOfTotalBudget.HasValue)
+                    {
+                        var dataE = new List<List<object>>
+                        {
+                            new List<object> { item.RatioOfTotalBudget.Value.ToString() + "%" }
+                        };
+                        excel.WriteRange(targetSheet, dataE, currentRow, 5);
+                    }
+
+                    // F欄: 各科目補助比率(A)/(I) - 只填寫前6筆 (F6~F11)，加上 '%' 符號
+                    // F12, F13 固定為NULL，不寫入
+                    if (i < 6 && item.RatioOfSubsidy.HasValue)
+                    {
+                        var dataF = new List<List<object>>
+                        {
+                            new List<object> { item.RatioOfSubsidy.Value.ToString() + "%" }
+                        };
+                        excel.WriteRange(targetSheet, dataF, currentRow, 6);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"FillBudgetSummarySheet Error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 填寫人事費明細表 sheet
+    /// </summary>
+    private void FillPersonnelCostSheet(ExcelHelper excel, List<string> sheetNames, string projectID)
+    {
+        try
+        {
+            // 找到 '人事費明細表' sheet
+            string targetSheet = "人事費明細表";
+            if (!sheetNames.Contains(targetSheet))
+            {
+                // 如果沒有找到目標 sheet，使用第一個 sheet
+                targetSheet = sheetNames[1];
+            }
+
+            // 從資料庫讀取人事費明細表資料
+            var personnelList = OFS_SciFundingHelper.GetPersonnelCostList(projectID);
+
+            if (personnelList != null && personnelList.Count > 0)
+            {
+                // 資料插入在第4行和第5行之間，所以從第5行開始插入
+                int insertPosition = 5;
+
+                // 先插入需要的行數 (資料筆數)
+                if (personnelList.Count > 0)
+                {
+                    excel.InsertRows(targetSheet, insertPosition, personnelList.Count);
+                }
+
+                // 填入資料 (從第5行開始)
+                for (int i = 0; i < personnelList.Count; i++)
+                {
+                    var item = personnelList[i];
+                    int currentRow = insertPosition + i;
+
+                    // A欄: 姓名
+                    var dataA = new List<List<object>>
+                    {
+                        new List<object> { item.Name ?? "" }
+                    };
+                    excel.WriteRange(targetSheet, dataA, currentRow, 1);
+
+                    // B欄: 職稱 (顯示中文名稱)
+                    var dataB = new List<List<object>>
+                    {
+                        new List<object> { item.JobTitleDesc ?? "" }
+                    };
+                    excel.WriteRange(targetSheet, dataB, currentRow, 2);
+
+                    // C欄: 平均月薪 (單位: 千元)
+                    var dataC = new List<List<object>>
+                    {
+                        new List<object> { item.AvgSalary / 1000 }
+                    };
+                    excel.WriteRange(targetSheet, dataC, currentRow, 3);
+
+                    // D欄: 月份
+                    var dataD = new List<List<object>>
+                    {
+                        new List<object> { item.Month }
+                    };
+                    excel.WriteRange(targetSheet, dataD, currentRow, 4);
+
+                    // E欄: 小計 (平均月薪 * 月份，單位: 千元)
+                    var dataE = new List<List<object>>
+                    {
+                        new List<object> { item.Subtotal / 1000 }
+                    };
+                    excel.WriteRange(targetSheet, dataE, currentRow, 5);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"FillPersonnelCostSheet Error: {ex.Message}");
+        }
+    }
+
+    // 例如：
+    private void FillMaterialCostSheet(ExcelHelper excel, List<string> sheetNames, string projectID)
+    {
+        try
+        {
+            // 找到 '消耗性器材及原材料費' sheet
+            string targetSheet = "消耗性器材及原材料費";
+            if (!sheetNames.Contains(targetSheet))
+            {
+                // 如果沒有找到目標 sheet，使用第2個 sheet
+                targetSheet = sheetNames[2];
+            }
+
+            // 從資料庫讀取材料明細表資料
+            var MaterialList = OFS_SciFundingHelper.GetMaterialCostList(projectID);
+
+            if (MaterialList != null && MaterialList.Count > 0)
+            {
+                // 資料插入在第3行和第4行之間，所以從第4行開始插入
+                int insertPosition = 4;
+
+                // 先插入需要的行數 (資料筆數)
+                if (MaterialList.Count > 0)
+                {
+                    excel.InsertRows(targetSheet, insertPosition, MaterialList.Count);
+                }
+
+                // 填入資料 (從第4行開始)
+                for (int i = 0; i < MaterialList.Count; i++)
+                {
+                    var item = MaterialList[i];
+                    int currentRow = insertPosition + i;
+
+                    // A欄: 品名
+                    var dataA = new List<List<object>>
+                    {
+                        new List<object> { item.ItemName ?? "" }
+                    };
+                    excel.WriteRange(targetSheet, dataA, currentRow, 1);
+
+                    // B欄: 說明 
+                    var dataB = new List<List<object>>
+                    {
+                        new List<object> { item.Description ?? "" }
+                    };
+                    excel.WriteRange(targetSheet, dataB, currentRow, 2);
+
+                    // C欄: 單位
+                    var dataC = new List<List<object>>
+                    {
+                        new List<object> { item.UnitDesc }
+                    };
+                    excel.WriteRange(targetSheet, dataC, currentRow, 3);
+
+                    // D欄: 預估需求數量
+                    var dataD = new List<List<object>>
+                    {
+                        new List<object> { item.PreNum }
+                    };
+                    excel.WriteRange(targetSheet, dataD, currentRow, 4);
+
+                    // E欄: 單價 (單位: 千元)
+                    var dataE = new List<List<object>>
+                    {
+                        new List<object> { item.UnitPrice / 1000 }
+                    };
+                    excel.WriteRange(targetSheet, dataE, currentRow, 5);
+
+                    // F欄: 總價 (單位: 千元)
+                    var dataF = new List<List<object>>
+                    {
+                        new List<object> { item.TotalPrice / 1000 }
+                    };
+                    excel.WriteRange(targetSheet, dataF, currentRow, 6);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"FillMaterialCostSheet Error: {ex.Message}");
+        }
+    }
+
+
+    private void FillResearchFeeSheet(ExcelHelper excel, List<string> sheetNames, string projectID)
+    {
+        // 遺珠: 原先規劃之文件 並沒有讓使用者可以新增多筆的需求， 所以 這邊寫入到 EXCEL 屬於 直接塞入 非動態產生
+        // 直接先寫死兩筆資料，待之後進行修改，如果經費/人事的 技術移轉、委託研究或驗證費 有修改成動態 ，這邊要一同修改。
+        try
+        {
+            // 找到 '技術移轉及委託研究費用' sheet
+            string targetSheet = "技術移轉及委託研究費用";
+            if (!sheetNames.Contains(targetSheet))
+            {
+                // 如果沒有找到目標 sheet，使用第3個 sheet
+                targetSheet = sheetNames[3];
+            }
+
+            // 從資料庫讀取技術移轉及委託研究費用資料
+            var ResearchFeesList = OFS_SciFundingHelper.GetResearchFeesList(projectID);
+
+
+            if (ResearchFeesList != null && ResearchFeesList.Count > 0)
+            {
+                // 只取第一筆資料
+                var item = ResearchFeesList[0];
+
+                // ==== 第一次寫入：第4行 ====
+                int targetRow1 = 4;
+
+                // A欄: 費用類別
+                excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { item.category ?? "" } }, targetRow1, 1);
+                // B欄: 起訖日期 (StartDate ~ EndDate)
+                DateTime? startDate = DateTime.TryParse(item.dateStart, out var s) ? s : (DateTime?)null;
+                DateTime? endDate = DateTime.TryParse(item.dateEnd, out var e) ? e : (DateTime?)null;
+                // 轉成民國日期
+                string startMinguo = startDate.HasValue ? DateTimeHelper.ToMinguoDate(startDate.Value) : "";
+                string endMinguo = endDate.HasValue ? DateTimeHelper.ToMinguoDate(endDate.Value) : "";
+
+                string dateRange = $"{startMinguo} ~ {endMinguo}";
+                excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { dateRange } }, targetRow1, 2);
+                // C欄: 名稱
+                excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { item.projectName ?? "" } }, targetRow1, 3);
+                // D欄: 負責人
+                excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { item.targetPerson ?? "" } }, targetRow1, 4);
+                // E欄: 金額 (單位: 千元)
+                excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { item.price / 1000 } }, targetRow1, 5);
+
+                // ==== 第二次寫入：第7行 ====
+                if (ResearchFeesList.Count > 1)
+                {
+                    var item2 = ResearchFeesList[1];
+                    int targetRow2 = 7;
+                    DateTime? startDate2 = DateTime.TryParse(item2.dateStart, out var s2) ? s2 : (DateTime?)null;
+                    DateTime? endDate2 = DateTime.TryParse(item2.dateEnd, out var e2) ? e2 : (DateTime?)null;
+                    // 轉成民國日期
+                    string startMinguo2 = startDate2.HasValue ? DateTimeHelper.ToMinguoDate(startDate2.Value) : "";
+                    string endMinguo2 = endDate2.HasValue ? DateTimeHelper.ToMinguoDate(endDate2.Value) : "";
+
+                    string dateRange2 = $"{startMinguo2} ~ {endMinguo2}";
+                    excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { item2.category ?? "" } }, targetRow2, 1);
+                    excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { dateRange2 } }, targetRow2, 2);
+                    excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { item2.projectName ?? "" } }, targetRow2, 3);
+                    excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { item2.targetPerson ?? "" } }, targetRow2, 4);
+                    excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { item2.price / 1000 } }, targetRow2, 5);
+
+                    // 計算總和：ResearchFeesList[0].price + ResearchFeesList[1].price (單位: 千元)
+                    decimal totalAmount = (item.price + item2.price) / 1000;
+
+                    // 總和位置：E9
+                    int totalRow = 9;
+                    excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { totalAmount } }, totalRow, 5);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"FillResearchFeeSheet Error: {ex.Message}");
+        }
+    }
+
+    private void FillTravelExpenseSheet(ExcelHelper excel, List<string> sheetNames, string projectID)
+    {
+        try
+        {
+            // 找到 '消耗性器材及原材料費' sheet
+            string targetSheet = "國內差旅費";
+            if (!sheetNames.Contains(targetSheet))
+            {
+                // 如果沒有找到目標 sheet，使用第4個 sheet
+                targetSheet = sheetNames[4];
+            }
+
+            // 從資料庫讀取材料明細表資料
+            var TripFormList = OFS_SciFundingHelper.GetTripFormList(projectID);
+
+            if (TripFormList != null && TripFormList.Count > 0)
+            {
+                // 資料插入在第3行和第4行之間，所以從第4行開始插入
+                int insertPosition = 4;
+
+                // 先插入需要的行數 (資料筆數)
+                if (TripFormList.Count > 0)
+                {
+                    excel.InsertRows(targetSheet, insertPosition, TripFormList.Count);
+                }
+
+                // 填入資料 (從第4行開始)
+                for (int i = 0; i < TripFormList.Count; i++)
+                {
+                    var item = TripFormList[i];
+                    int currentRow = insertPosition + i;
+
+                    // A欄: 出差事由
+                    var dataA = new List<List<object>>
+                    {
+                        new List<object> { item.reason ?? "" }
+                    };
+                    excel.WriteRange(targetSheet, dataA, currentRow, 1);
+
+                    // B欄: 地區 
+                    var dataB = new List<List<object>>
+                    {
+                        new List<object> { item.area ?? "" }
+                    };
+                    excel.WriteRange(targetSheet, dataB, currentRow, 2);
+
+                    // C欄: 天數
+                    var dataC = new List<List<object>>
+                    {
+                        new List<object> { item.days }
+                    };
+                    excel.WriteRange(targetSheet, dataC, currentRow, 3);
+
+                    // D欄: 人次
+                    var dataD = new List<List<object>>
+                    {
+                        new List<object> { item.people }
+                    };
+                    excel.WriteRange(targetSheet, dataD, currentRow, 4);
+
+                    // E欄: 金額 (單位: 千元)
+                    var dataE = new List<List<object>>
+                    {
+                        new List<object> { item.price / 1000 }
+                    };
+                    excel.WriteRange(targetSheet, dataE, currentRow, 5);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"FillTravelExpenseSheet Error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 填寫其他業務費 sheet
+    /// </summary>
+    private void FillOtherExpenseSheet(ExcelHelper excel, List<string> sheetNames, string projectID)
+    {
+        try
+        {
+            // 找到 '其他業務費' sheet
+            string targetSheet = "其他業務費";
+            if (!sheetNames.Contains(targetSheet))
+            {
+                // 如果沒有找到目標 sheet，使用第5個 sheet
+                targetSheet = sheetNames[5];
+            }
+
+            // 從資料庫讀取其他業務費資料
+            var otherExpenseList = OFS_SciFundingHelper.GetOtherObjectFeeList(projectID);
+
+            if (otherExpenseList != null && otherExpenseList.Count > 0)
+            {
+                // 第一筆資料
+                var firstItem = otherExpenseList[0];
+
+                // B4: LIST[0].Price (金額，單位: 千元)
+                var dataB4 = new List<List<object>>
+                {
+                    new List<object> { firstItem.amount / 1000 }
+                };
+                excel.WriteRange(targetSheet, dataB4, 4, 2);
+
+                // C4: LIST[0].CalDescription (計算說明)
+                var dataC4 = new List<List<object>>
+                {
+                    new List<object> { firstItem.note ?? "" }
+                };
+                excel.WriteRange(targetSheet, dataC4, 4, 3);
+
+                // 如果有第二筆資料
+                if (otherExpenseList.Count > 1)
+                {
+                    var secondItem = otherExpenseList[1];
+
+                    // B5: LIST[1].Price (金額，單位: 千元)
+                    var dataB5 = new List<List<object>>
+                    {
+                        new List<object> { secondItem.amount / 1000 }
+                    };
+                    excel.WriteRange(targetSheet, dataB5, 5, 2);
+
+                    // C5: LIST[1].CalDescription 根據「,」切割，取第一段
+                    int remainingCount = 0;
+                    if (!string.IsNullOrEmpty(secondItem.note))
+                    {
+                        string[] segments = secondItem.note.Split(',');
+
+                        if (segments.Length > 0)
+                        {
+                            // C5: 第一段
+                            string firstSegment = segments[0];
+                            var dataC5 = new List<List<object>>
+                            {
+                                new List<object> { firstSegment }
+                            };
+                            excel.WriteRange(targetSheet, dataC5, 5, 3);
+
+                            // 如果有剩余的 segments (segments.Length - 1)
+                            remainingCount = segments.Length - 1;
+                            if (remainingCount > 0)
+                            {
+                                // 插入新行（從第6行開始插入 remainingCount 行）
+                                excel.InsertRows(targetSheet, 6, remainingCount);
+
+                                // 填入剩余的 segments 到 C 列（從 C6 開始）
+                                for (int i = 1; i < segments.Length; i++)
+                                {
+                                    int rowIndex = 5 + i; // C6 = row 6, C7 = row 7, ...
+                                    var dataC = new List<List<object>>
+                                    {
+                                        new List<object> { segments[i] }
+                                    };
+                                    excel.WriteRange(targetSheet, dataC, rowIndex, 3);
+                                }
+                            }
+                        }
+                    }
+
+                    // 計算總和：LIST[0].Price + LIST[1].Price (單位: 千元)
+                    decimal totalAmount = (firstItem.amount + secondItem.amount) / 1000;
+
+                    // 總和位置：B{6 + segments.length - 1} = B{6 + remainingCount}
+                    int totalRow = 6 + remainingCount;
+                    var dataTotalB = new List<List<object>>
+                    {
+                        new List<object> { totalAmount }
+                    };
+                    excel.WriteRange(targetSheet, dataTotalB, totalRow, 2);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"FillOtherExpenseSheet Error: {ex.Message}");
+        }
+    }
+
+    #endregion
+
     /// <summary>
     /// 處理需要動態內容的範本檔案
     /// </summary>
     private string ProcessDynamicTemplate(string fileCode, string originalFilePath, string projectID)
     {
-         // 從資料庫取得申請主檔資料
+        // 從資料庫取得申請主檔資料
 
 
         switch (fileCode)
@@ -820,24 +1787,24 @@ public class SCI_Download : IHttpHandler
             case "FILE_OTech3":
                 return ApplyProjectDataToWord_FILE_OTech3(originalFilePath, projectID);
             case "FILE_OTech4":
-                return ApplyProjectDataToWord_FILE_OTech4(originalFilePath,projectID);
+                return ApplyProjectDataToWord_FILE_OTech4(originalFilePath, projectID);
             case "FILE_OTech8":
-                return ApplyProjectDataToWord_FILE_OTech8(originalFilePath,projectID); 
+                return ApplyProjectDataToWord_FILE_OTech8(originalFilePath, projectID);
             case "FILE_OTech11":
-                return ApplyProjectDataToWord_FILE_OTech11(originalFilePath,projectID);
+                return ApplyProjectDataToWord_FILE_OTech11(originalFilePath, projectID);
             //---------------以下為學界、法人----------------
             case "FILE_AC1":
                 return ApplyProjectDataToWord_FILE_AC1(originalFilePath, projectID);
             case "FILE_AC3":
                 return ApplyProjectDataToWord_FILE_OTech3(originalFilePath, projectID); // 檔案相同 借用
             case "FILE_AC4":
-                return ApplyProjectDataToWord_FILE_OTech4(originalFilePath,projectID); // 檔案相同 借用
+                return ApplyProjectDataToWord_FILE_OTech4(originalFilePath, projectID); // 檔案相同 借用
             case "FILE_AC9":
-                return ApplyProjectDataToWord_FILE_OTech11(originalFilePath,projectID); //替換文字與OTech11相同 借用
+                return ApplyProjectDataToWord_FILE_OTech11(originalFilePath, projectID); //替換文字與OTech11相同 借用
             case "FILE_AC11":
-                return ApplyProjectDataToWord_FILE_AC11(originalFilePath,projectID); //替換文字與OTech11相同 借用
+                return ApplyProjectDataToWord_FILE_AC11(originalFilePath, projectID); //替換文字與OTech11相同 借用
             case "FILE_AC13":
-                return ApplyProjectDataToWord_FILE_OTech11(originalFilePath,projectID); //檔案相同 借用
+                return ApplyProjectDataToWord_FILE_OTech11(originalFilePath, projectID); //檔案相同 借用
             default:
                 return originalFilePath; // 不需要動態處理的範本直接返回原路徑
         }
@@ -957,6 +1924,7 @@ public class SCI_Download : IHttpHandler
             {
                 return originalFilePath; // 如果原檔案不存在，返回原路徑
             }
+
             OFS_SCI_Application_Main applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
 
             // 取得迴避名單資料
@@ -1045,7 +2013,6 @@ public class SCI_Download : IHttpHandler
     {
         try
         {
-
             if (!File.Exists(originalFilePath))
             {
                 return originalFilePath; // 如果原檔案不存在，返回原路徑
@@ -1069,7 +2036,7 @@ public class SCI_Download : IHttpHandler
                 int month = currentDate.Month;
                 int day = currentDate.Day;
 
-               
+
                 // 建立替換字典
                 var placeholder = new Dictionary<string, string>();
                 placeholder.Add("year", year.ToString());
@@ -1109,7 +2076,7 @@ public class SCI_Download : IHttpHandler
             {
                 return originalFilePath; // 如果原檔案不存在，返回原路徑
             }
-        
+
             // 取得專案資料
             OFS_SCI_Application_Main applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
             var projectData = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
@@ -1196,7 +2163,7 @@ public class SCI_Download : IHttpHandler
                 var helper = new OpenXmlHelper(fs);
                 // 建立替換字典
                 var placeholder = new Dictionary<string, string>();
- 
+
                 // 加入計畫資料
                 placeholder.Add("ProjectID", projectID ?? "");
                 placeholder.Add("ProjectNameTw", applicationMain?.ProjectNameTw ?? "");
@@ -1291,7 +2258,7 @@ public class SCI_Download : IHttpHandler
                 // 加入主持人資料
                 placeholder.Add("HostName", host?.Name ?? "");
                 placeholder.Add("HostMPhone", host?.MobilePhone ?? "");
-                
+
                 // 加入聯絡人資料
                 placeholder.Add("ContactName", contact?.Name ?? "");
                 placeholder.Add("ContactMPhone", contact?.MobilePhone ?? "");

@@ -31,7 +31,15 @@ class TaiwanDateHandler {
 
         // 初始化計畫期程日期選擇器
         $('input[id*="startDate"], input[id*="endDate"]').daterangepicker(datePickerConfig)
-            .on('apply.daterangepicker', handleDateSelection);
+            .on('apply.daterangepicker', function(ev, picker) {
+                handleDateSelection.call(this, ev, picker);
+                // 當計畫期程變更時，更新年份下拉選單
+                if (window.sciWorkSchManager && window.sciWorkSchManager.workItems) {
+                    setTimeout(() => {
+                        window.sciWorkSchManager.workItems.updateAllYearSelects();
+                    }, 100);
+                }
+            });
 
         // 初始化查核標準的預定完成日期選擇器
         $(document).on('focus', '.taiwan-date-picker', function() {
@@ -43,10 +51,7 @@ class TaiwanDateHandler {
             }
         });
     }
-
-
-    // 直接使用前端已有的民國年日期，無需額外處理
-    // 因為後端已經使用 ToMinguoDate() 處理並設定 data-gregorian-date 屬性
+    
 }
 //#endregion
 
@@ -214,6 +219,8 @@ class WorkItemTableManager {
     init() {
         this.bindEvents();
         this.updatePlusButtonVisibility();
+        // 初始化年份下拉選單
+        setTimeout(() => this.updateAllYearSelects(), 500);
     }
 
     bindEvents() {
@@ -401,19 +408,91 @@ class WorkItemTableManager {
         return `
             <div class="input-group">
                 <span class="input-group-text">開始</span>
+                <select name="" class="form-select year-select me-1" style="max-width: 80px;">
+                    <option value="" selected disabled>年</option>
+                </select>
                 <select name="" class="form-select month-select">
-                    <option value="" selected disabled>請選擇</option>
+                    <option value="" selected disabled>月</option>
                     ${monthOptions}
                 </select>
             </div>
             <div class="input-group mt-2">
                 <span class="input-group-text">結束</span>
+                <select name="" class="form-select year-select me-1" style="max-width: 80px;">
+                    <option value="" selected disabled>年</option>
+                </select>
                 <select name="" class="form-select month-select">
-                    <option value="" selected disabled>請選擇</option>
+                    <option value="" selected disabled>月</option>
                     ${monthOptions}
                 </select>
             </div>
         `;
+    }
+
+    // 獲取計畫期程的起訖年份
+    getProjectYearRange() {
+        const startDateInput = document.querySelector('input[id*="startDate"]');
+        const endDateInput = document.querySelector('input[id*="endDate"]');
+
+        if (!startDateInput || !endDateInput || !startDateInput.value || !endDateInput.value) {
+            return null;
+        }
+
+        // 解析民國年日期（格式：114/02/01）
+        const startParts = startDateInput.value.split('/');
+        const endParts = endDateInput.value.split('/');
+
+        if (startParts.length < 3 || endParts.length < 3) {
+            return null;
+        }
+
+        const startYear = parseInt(startParts[0]);
+        const endYear = parseInt(endParts[0]);
+
+        if (isNaN(startYear) || isNaN(endYear)) {
+            return null;
+        }
+
+        return { startYear, endYear };
+    }
+
+    // 更新所有年份下拉選單
+    updateAllYearSelects() {
+        const yearRange = this.getProjectYearRange();
+
+        if (!yearRange) {
+            // 如果沒有計畫期程，清空所有年份下拉選單
+            const yearSelects = document.querySelectorAll('.sub-table .year-select');
+            yearSelects.forEach(select => {
+                select.innerHTML = '<option value="" selected disabled>年</option>';
+            });
+            return;
+        }
+
+        // 生成年份選項
+        const years = [];
+        for (let year = yearRange.startYear; year <= yearRange.endYear; year++) {
+            years.push(year);
+        }
+
+        // 更新所有年份下拉選單
+        const yearSelects = document.querySelectorAll('.sub-table .year-select');
+        yearSelects.forEach(select => {
+            const currentValue = select.value;
+            select.innerHTML = '<option value="" selected disabled>年</option>';
+
+            years.forEach(year => {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                select.appendChild(option);
+            });
+
+            // 恢復之前的選擇值
+            if (currentValue && years.includes(parseInt(currentValue))) {
+                select.value = currentValue;
+            }
+        });
     }
 
     addSubItem(event) {
@@ -599,6 +678,13 @@ class WorkItemTableManager {
 
             this.clearWorkItemsTable();
             this.buildWorkItemsFromData(workItemsData);
+
+            // 先更新年份下拉選單選項，然後再設定年份值
+            this.updateAllYearSelects();
+
+            // 重新設定所有年份值（因為現在選項已經生成）
+            this.reapplyYearValues(workItemsData);
+
             this.rebindAllEvents();
 
             setTimeout(() => {
@@ -609,6 +695,44 @@ class WorkItemTableManager {
         } catch (error) {
             // 靜默處理錯誤
         }
+    }
+
+    // 重新套用年份值
+    reapplyYearValues(workItemsData) {
+        const allRows = document.querySelectorAll('.sub-table tbody tr');
+
+        allRows.forEach(row => {
+            const cell = row.cells[0];
+            if (!cell) return;
+
+            const code = cell.textContent.trim();
+
+            // 只處理子項目（格式: A1, B2, etc.）
+            if (!/^[A-Z]\d+$/.test(code)) return;
+
+            // 從 workItemsData 找到對應的項目
+            const itemData = workItemsData.find(item => item.code === code);
+            if (!itemData) return;
+
+            const yearSelects = row.cells[2]?.querySelectorAll('.year-select');
+            const monthSelects = row.cells[2]?.querySelectorAll('.month-select');
+
+            // 設定開始年份和月份
+            if (yearSelects && yearSelects[0] && itemData.startYear) {
+                yearSelects[0].value = itemData.startYear.toString();
+            }
+            if (monthSelects && monthSelects[0] && itemData.startMonth) {
+                monthSelects[0].value = itemData.startMonth.toString();
+            }
+
+            // 設定結束年份和月份
+            if (yearSelects && yearSelects[1] && itemData.endYear) {
+                yearSelects[1].value = itemData.endYear.toString();
+            }
+            if (monthSelects && monthSelects[1] && itemData.endMonth) {
+                monthSelects[1].value = itemData.endMonth.toString();
+            }
+        });
     }
 
     clearWorkItemsTable() {
@@ -721,17 +845,6 @@ class WorkItemTableManager {
         const nameInput = row.cells[1].querySelector('input[type="text"]');
         if (nameInput && subItem.itemName) {
             nameInput.value = subItem.itemName;
-        }
-
-        const startMonthSelect = row.cells[2].querySelectorAll('select')[0];
-        const endMonthSelect = row.cells[2].querySelectorAll('select')[1];
-
-        if (startMonthSelect && subItem.startMonth) {
-            startMonthSelect.value = subItem.startMonth.toString();
-        }
-
-        if (endMonthSelect && subItem.endMonth) {
-            endMonthSelect.value = subItem.endMonth.toString();
         }
 
         const weightInput = row.cells[3].querySelector('input[type="text"]');
@@ -1247,22 +1360,13 @@ class DataManager {
         const startDateInput = document.querySelector('input[id*="startDate"]');
         const endDateInput = document.querySelector('input[id*="endDate"]');
 
-        // 參考 CLB 的方式：優先從隱藏欄位或 data-gregorian-date 屬性取得西元年格式
         let startDate = '';
         let endDate = '';
 
         if (startDateInput) {
-            // 嘗試從隱藏欄位取得
-            const startHiddenField = document.querySelector(`input[name="${startDateInput.name}_gregorian"]`);
-            if (startHiddenField && startHiddenField.value) {
-                startDate = startHiddenField.value;
-            } else {
-                // 從 data-gregorian-date 屬性取得
-                startDate = startDateInput.getAttribute('data-gregorian-date') || '';
-            }
+      
 
-            // 如果還是沒有，且有輸入值，使用 moment-taiwan 解析
-            if (!startDate && startDateInput.value) {
+            if (startDateInput.value) {
                 const momentDate = moment(startDateInput.value, 'tYY/MM/DD');
                 if (momentDate.isValid()) {
                     startDate = momentDate.format('YYYY-MM-DD');
@@ -1271,17 +1375,8 @@ class DataManager {
         }
 
         if (endDateInput) {
-            // 嘗試從隱藏欄位取得
-            const endHiddenField = document.querySelector(`input[name="${endDateInput.name}_gregorian"]`);
-            if (endHiddenField && endHiddenField.value) {
-                endDate = endHiddenField.value;
-            } else {
-                // 從 data-gregorian-date 屬性取得
-                endDate = endDateInput.getAttribute('data-gregorian-date') || '';
-            }
-
-            // 如果還是沒有，且有輸入值，使用 moment-taiwan 解析
-            if (!endDate && endDateInput.value) {
+    
+            if (endDateInput.value) {
                 const momentDate = moment(endDateInput.value, 'tYY/MM/DD');
                 if (momentDate.isValid()) {
                     endDate = momentDate.format('YYYY-MM-DD');
@@ -1343,10 +1438,13 @@ class DataManager {
                 const workNameInput = row.cells[1] ? row.cells[1].querySelector('input[type="text"]') : null;
                 const workName = workNameInput ? workNameInput.value : '';
 
-                const startMonthSelect = row.cells[2] ? row.cells[2].querySelectorAll('select')[0] : null;
-                const endMonthSelect = row.cells[2] ? row.cells[2].querySelectorAll('select')[1] : null;
-                const startMonth = startMonthSelect && startMonthSelect.value ? parseInt(startMonthSelect.value) : null;
-                const endMonth = endMonthSelect && endMonthSelect.value ? parseInt(endMonthSelect.value) : null;
+                const yearSelects = row.cells[2] ? row.cells[2].querySelectorAll('.year-select') : [];
+                const monthSelects = row.cells[2] ? row.cells[2].querySelectorAll('.month-select') : [];
+
+                const startYear = yearSelects[0] && yearSelects[0].value ? parseInt(yearSelects[0].value) : null;
+                const startMonth = monthSelects[0] && monthSelects[0].value ? parseInt(monthSelects[0].value) : null;
+                const endYear = yearSelects[1] && yearSelects[1].value ? parseInt(yearSelects[1].value) : null;
+                const endMonth = monthSelects[1] && monthSelects[1].value ? parseInt(monthSelects[1].value) : null;
 
                 const weightInput = row.cells[3] ? row.cells[3].querySelector('input[type="text"]') : null;
                 const weightStr = weightInput ? weightInput.value.replace('%', '').trim() : '';
@@ -1362,7 +1460,9 @@ class DataManager {
                 workItems.push({
                     code: code,
                     itemName: workName,
+                    startYear: startYear,
                     startMonth: startMonth,
+                    endYear: endYear,
                     endMonth: endMonth,
                     weight: weight,
                     personMonth: personMonth,
@@ -1393,17 +1493,8 @@ class DataManager {
                 let plannedFinishDate = '';
 
                 if (dateInput) {
-                    // 嘗試從隱藏欄位取得
-                    const hiddenField = document.querySelector(`input[name="${dateInput.name}_gregorian"]`);
-                    if (hiddenField && hiddenField.value) {
-                        plannedFinishDate = hiddenField.value;
-                    } else {
-                        // 從 data-gregorian-date 屬性取得
-                        plannedFinishDate = dateInput.getAttribute('data-gregorian-date') || '';
-                    }
 
-                    // 如果還是沒有，且有輸入值，使用 moment-taiwan 解析
-                    if (!plannedFinishDate && dateInput.value) {
+                    if (dateInput.value) {
                         const momentDate = moment(dateInput.value, 'tYY/MM/DD');
                         if (momentDate.isValid()) {
                             plannedFinishDate = momentDate.format('YYYY-MM-DD');

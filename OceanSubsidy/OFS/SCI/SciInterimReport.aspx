@@ -988,16 +988,21 @@
                         var status = response.d.Data.Status;
                         var submitButton = document.getElementById('submitButton');
 
-                        // 只有狀態為「審核中」時才顯示審核面板
                         if (status === '審核中') {
+                            // 審核中：顯示審核面板，隱藏提送按鈕
                             $('#reviewPanel').show();
-                            // 審核中時隱藏提送按鈕
+                            if (submitButton) {
+                                submitButton.classList.add('d-none');
+                            }
+                        } else if (status === '通過') {
+                            // 通過：隱藏審核面板，隱藏提送按鈕
+                            $('#reviewPanel').hide();
                             if (submitButton) {
                                 submitButton.classList.add('d-none');
                             }
                         } else {
+                            // 其他狀態：隱藏審核面板，顯示提送按鈕
                             $('#reviewPanel').hide();
-                            // 非審核中時顯示提送按鈕
                             if (submitButton) {
                                 submitButton.classList.remove('d-none');
                             }

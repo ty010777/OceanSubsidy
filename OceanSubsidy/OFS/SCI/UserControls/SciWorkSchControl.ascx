@@ -92,8 +92,11 @@
                                         <td>
                                             <div class="input-group">
                                                 <span class="input-group-text">開始</span>
+                                                <select name="" class="form-select year-select me-1" style="max-width: 80px;">
+                                                    <option value="" selected disabled>年</option>
+                                                </select>
                                                 <select name="" class="form-select month-select">
-                                                    <option value="" selected disabled>請選擇</option>
+                                                    <option value="" selected disabled>月</option>
                                                     <option value="1">01</option>
                                                     <option value="2">02</option>
                                                     <option value="3">03</option>
@@ -110,8 +113,11 @@
                                             </div>
                                             <div class="input-group mt-2">
                                                 <span class="input-group-text">結束</span>
+                                                <select name="" class="form-select year-select me-1" style="max-width: 80px;">
+                                                    <option value="" selected disabled>年</option>
+                                                </select>
                                                 <select name="" class="form-select month-select">
-                                                    <option value="" selected disabled>請選擇</option>
+                                                    <option value="" selected disabled>月</option>
                                                     <option value="1">01</option>
                                                     <option value="2">02</option>
                                                     <option value="3">03</option>
@@ -151,8 +157,11 @@
                                         <td>
                                             <div class="input-group">
                                                 <span class="input-group-text">開始</span>
+                                                <select name="" class="form-select year-select me-1" style="max-width: 80px;">
+                                                    <option value="" selected disabled>年</option>
+                                                </select>
                                                 <select name="" class="form-select month-select">
-                                                    <option value="" selected disabled>請選擇</option>
+                                                    <option value="" selected disabled>月</option>
                                                     <option value="1">01</option>
                                                     <option value="2">02</option>
                                                     <option value="3">03</option>
@@ -169,8 +178,11 @@
                                             </div>
                                             <div class="input-group mt-2">
                                                 <span class="input-group-text">結束</span>
+                                                <select name="" class="form-select year-select me-1" style="max-width: 80px;">
+                                                    <option value="" selected disabled>年</option>
+                                                </select>
                                                 <select name="" class="form-select month-select">
-                                                    <option value="" selected disabled>請選擇</option>
+                                                    <option value="" selected disabled>月</option>
                                                     <option value="1">01</option>
                                                     <option value="2">02</option>
                                                     <option value="3">03</option>
@@ -239,8 +251,11 @@
                                         <td>
                                             <div class="input-group">
                                                 <span class="input-group-text">開始</span>
+                                                <select name="" class="form-select year-select me-1" style="max-width: 80px;">
+                                                    <option value="" selected disabled>年</option>
+                                                </select>
                                                 <select name="" class="form-select month-select">
-                                                    <option value="" selected disabled>請選擇</option>
+                                                    <option value="" selected disabled>月</option>
                                                     <option value="1">01</option>
                                                     <option value="2">02</option>
                                                     <option value="3">03</option>
@@ -257,8 +272,11 @@
                                             </div>
                                             <div class="input-group mt-2">
                                                 <span class="input-group-text">結束</span>
+                                                <select name="" class="form-select year-select me-1" style="max-width: 80px;">
+                                                    <option value="" selected disabled>年</option>
+                                                </select>
                                                 <select name="" class="form-select month-select">
-                                                    <option value="" selected disabled>請選擇</option>
+                                                    <option value="" selected disabled>月</option>
                                                     <option value="1">01</option>
                                                     <option value="2">02</option>
                                                     <option value="3">03</option>

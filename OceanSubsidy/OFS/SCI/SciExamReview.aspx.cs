@@ -300,9 +300,9 @@ public partial class OFS_SCI_SciExamReview : System.Web.UI.Page
             
             var files = OFS_SciExamReviewHelper.GetReportFiles(projectID, stage);
             
-            return new 
-            { 
-                Success = true, 
+            return new
+            {
+                Success = true,
                 Data = new
                 {
                     ProjectID = projectID,
@@ -313,6 +313,10 @@ public partial class OFS_SCI_SciExamReview : System.Web.UI.Page
                     Field = examData["Field"].ToString(),
                     OrgName = examData["OrgName"].ToString(),
                     Reviewer = examData["Reviewer"].ToString(),
+                    Account = examData["Account"]?.ToString() ?? "",
+                    BankCode = examData["BankCode"]?.ToString() ?? "",
+                    BankAccount = examData["BankAccount"]?.ToString() ?? "",
+                    RegistrationAddress = examData["RegistrationAddress"]?.ToString() ?? "",
                     Files = files
                 }
             };
@@ -465,14 +469,15 @@ public partial class OFS_SCI_SciExamReview : System.Web.UI.Page
     }
 
     /// <summary>
-    /// 新增：提交審查結果
+    /// 新增：提交審查結果（包含儲存銀行資訊）
     /// </summary>
     /// <param name="token">Token</param>
-    /// <param name="reviewResult">審查結果</param>
-    /// <param name="reviewComment">審查意見</param>
+    /// <param name="bankCode">銀行代碼</param>
+    /// <param name="bankAccount">銀行帳號</param>
+    /// <param name="registrationAddress">戶籍地址</param>
     /// <returns></returns>
     [WebMethod]
-    public static object SubmitReviewResult(string token)
+    public static object SubmitReviewResult(string token, string bankCode, string bankAccount, string registrationAddress)
     {
         try
         {
@@ -481,10 +486,60 @@ public partial class OFS_SCI_SciExamReview : System.Web.UI.Page
                 return new { Success = false, Message = "Token不可為空" };
             }
 
+            // 先儲存銀行資訊
+            OFS_SciExamReviewHelper.UpdateReviewerBankInfo(token, bankCode, bankAccount, registrationAddress);
+
+            // 再提交審查結果
             OFS_SciExamReviewHelper.SubmitReviewResult(token);
-        
+
             return new { Success = true, Message = "審查結果提交成功" };
-          
+
+        }
+        catch (Exception ex)
+        {
+            return new { Success = false, Message = "系統錯誤: " + ex.Message };
+        }
+    }
+
+    /// <summary>
+    /// 取得銀行代碼清單
+    /// </summary>
+    /// <returns></returns>
+    [WebMethod]
+    public static object GetBankCodeList()
+    {
+        try
+        {
+            var bankCodes = OFS_SciExamReviewHelper.GetBankCodeList();
+            return new { Success = true, Data = bankCodes };
+        }
+        catch (Exception ex)
+        {
+            return new { Success = false, Message = "系統錯誤: " + ex.Message };
+        }
+    }
+
+    /// <summary>
+    /// 儲存審查委員銀行資訊
+    /// </summary>
+    /// <param name="token">Token</param>
+    /// <param name="bankCode">銀行代碼</param>
+    /// <param name="bankAccount">銀行帳號</param>
+    /// <param name="registrationAddress">戶籍地址</param>
+    /// <returns></returns>
+    [WebMethod]
+    public static object SaveReviewerBankInfo(string token, string bankCode, string bankAccount, string registrationAddress)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(token))
+            {
+                return new { Success = false, Message = "Token不可為空" };
+            }
+
+            OFS_SciExamReviewHelper.UpdateReviewerBankInfo(token, bankCode, bankAccount, registrationAddress);
+
+            return new { Success = true, Message = "銀行資訊儲存成功" };
         }
         catch (Exception ex)
         {
