@@ -353,12 +353,15 @@ SELECT O.[Year]
         db.CommandText = @"
             SELECT T.[Year]
                   ,T.[TypeCode]
+                  ,T.[BudgetFees]
                   ,ISNULL(SUM(O.[ApprovedAmount]), 0) AS [ApprovedAmount]
                   ,ISNULL(SUM(O.[SpendAmount]), 0) AS [SpendAmount]
                   ,ISNULL(SUM(O.[PaymentAmount]), 0) AS [PaymentAmount]
-                  ,COUNT(*) AS [Count]
-                  ,ISNULL(T.[BudgetFees], 0) AS [BudgetFees]
-              FROM [OFS_GrantType] AS T
+                  ,SUM(CASE WHEN O.Year IS NOT NULL THEN 1 ELSE 0 END) AS [Count]
+              FROM (SELECT [Year]
+                          ,[TypeCode]
+                          ,ISNULL([BudgetFees], 0) AS [BudgetFees]
+                      FROM [OFS_GrantType]) AS T
          LEFT JOIN (SELECT [Year]
                           ,'CUL' AS [Category]
                           ,ISNULL([ApprovedAmount], 0) AS [ApprovedAmount]
