@@ -25,6 +25,8 @@ public class AccessibilityService : BaseService
             Reason = param["Reason"].ToString()
         });
 
+        // TODO: 請完成計畫變更
+
         return new {};
     }
 
@@ -288,12 +290,18 @@ public class AccessibilityService : BaseService
             {
                 apply.Status = 4; //退回修改
                 apply.RejectReason = param["Reason"].ToString();
+
+                NotificationHelper.G3("無障礙", data.ProjectName, "計畫變更申請", apply.RejectReason, data.UserAccount);
             }
             else
             {
                 apply.Status = 3; //審核通過
 
                 OFS_AccProjectHelper.setProjectChanged(id, false);
+
+                NotificationHelper.G4("無障礙", data.ProjectName, "計畫變更申請", data.UserAccount);
+
+                // TODO: 計畫變更已通過
             }
 
             OFSProjectChangeRecordHelper.update(apply);
@@ -315,7 +323,9 @@ public class AccessibilityService : BaseService
             throw new Exception("查無資料");
         }
 
-        if (int.Parse(param["Result"].ToString()) == 1)
+        var result = int.Parse(param["Result"].ToString());
+
+        if (result == 1)
         {
             payment.Status = "通過";
             payment.CurrentActualPaidAmount = int.Parse(param["Amount"].ToString());
@@ -336,6 +346,19 @@ public class AccessibilityService : BaseService
 
         OFSPaymentHelper.review(payment);
 
+        var setting = OFS_SciReimbursementHelper.GetPaymentPhaseSettings("ACC").FirstOrDefault(d => d.PhaseOrder == payment.Stage);
+
+        if (result == 1)
+        {
+            NotificationHelper.G6("無障礙", data.ProjectName, setting.PhaseName, payment.CurrentActualPaidAmount, payment.ReviewerComment, data.UserAccount);
+
+            // TODO: 第一期請款已完成 / 第二期請款已完成
+        }
+        else
+        {
+            NotificationHelper.G3("無障礙", data.ProjectName, setting.PhaseName, payment.ReviewerComment, data.UserAccount);
+        }
+
         return new {};
     }
 
@@ -353,14 +376,28 @@ public class AccessibilityService : BaseService
 
         var comment = "";
         var status = "通過";
+        var result = int.Parse(param["Result"].ToString());
 
-        if (int.Parse(param["Result"].ToString()) == 2)
+        if (result == 2)
         {
             comment = param["Reason"].ToString();
             status = "退回修正";
         }
 
-        OFS_SciInterimReportHelper.ReviewStageExam(data.ProjectID, stage, stage == 1 ? "期中報告" : "期末報告", status, comment, CurrentUser.UserName, CurrentUser.Account);
+        var eventName = stage == 1 ? "期中報告" : "成果報告";
+
+        OFS_SciInterimReportHelper.ReviewStageExam(data.ProjectID, stage, eventName, status, comment, CurrentUser.UserName, CurrentUser.Account);
+
+        if (result == 2)
+        {
+            NotificationHelper.G3("無障礙", data.ProjectName, eventName, comment, data.UserAccount);
+        }
+        else
+        {
+            NotificationHelper.G5("無障礙", data.ProjectName, eventName, data.UserAccount);
+
+            // TODO: 期中報告已通過 / 成果報告已通過
+        }
 
         return new {};
     }
@@ -467,6 +504,11 @@ public class AccessibilityService : BaseService
                 }
 
                 OFSProjectChangeRecordHelper.update(apply);
+
+                if (data.IsProjChanged)
+                {
+                    NotificationHelper.G2("無障礙", data.ProjectName, "計畫變更申請", data.Organizer);
+                }
             }
         }
 
@@ -666,10 +708,12 @@ public class AccessibilityService : BaseService
             model.Stage = payment.Stage;
         }
 
+        var submit = bool.Parse(param["Submit"].ToString());
+
         model.ActDisbursementRatioPct = payment.ActDisbursementRatioPct;
         model.TotalSpentAmount = payment.TotalSpentAmount;
         model.CurrentRequestAmount = payment.TotalSpentAmount - prev;
-        model.Status = bool.Parse(param["Submit"].ToString()) ? "審核中" : "請款中";
+        model.Status = submit ? "審核中" : "請款中";
 
         OFSPaymentHelper.submit(model);
 
@@ -692,6 +736,13 @@ public class AccessibilityService : BaseService
             }
         }
 
+        if (submit)
+        {
+            var setting = OFS_SciReimbursementHelper.GetPaymentPhaseSettings("ACC").FirstOrDefault(d => d.PhaseOrder == model.Stage);
+
+            NotificationHelper.G2("無障礙", data.ProjectName, setting.PhaseName, data.Organizer);
+        }
+
         return new {};
     }
 
@@ -700,7 +751,10 @@ public class AccessibilityService : BaseService
         var id = getID(param["ID"].ToString());
         var data = getProject(id, new int[] {51}); //執行階段-審核中
 
-        OFS_SciInterimReportHelper.SubmitStageExam(data.ProjectID, int.Parse(param["Stage"].ToString()), bool.Parse(param["Submit"].ToString()) ? "審核中" : "暫存");
+        var stage = int.Parse(param["Stage"].ToString());
+        var submit = bool.Parse(param["Submit"].ToString());
+
+        OFS_SciInterimReportHelper.SubmitStageExam(data.ProjectID, stage, submit ? "審核中" : "暫存");
 
         var attachments = param["Attachments"].ToObject<List<OFS_AccAttachment>>();
 
@@ -717,6 +771,11 @@ public class AccessibilityService : BaseService
 
                 OFS_AccAttachmentHelper.insert(item);
             }
+        }
+
+        if (submit)
+        {
+            NotificationHelper.G2("無障礙", data.ProjectName, stage == 1 ? "期中報告" : "成果報告", data.Organizer);
         }
 
         return new {};
