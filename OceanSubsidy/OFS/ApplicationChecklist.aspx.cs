@@ -981,17 +981,21 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
                 SupervisoryUnit = item.SupervisoryUnit ?? ""
             }).ToList();
 
-            // 統計各類別數量
+            // 統計各類別數量（基於篩選後的資料，不含標籤類別篩選）
+            // 先取得排除標籤類別篩選的資料
+            var dataForCounting = FilterDataStatic(originalData, searchText, contentKeyword, year,
+                                                   status, stage, department, reviewer, waitingReply, "");
+
             var categoryCounts = new Dictionary<string, int>
             {
-                ["總申請"] = originalData.Count,
-                ["科專"] = originalData.Count(x => x.ProjectID?.Contains("SCI") == true),
-                ["文化"] = originalData.Count(x => x.ProjectID?.Contains("CUL") == true),
-                ["學校民間"] = originalData.Count(x => x.ProjectID?.Contains("EDC") == true),
-                ["學校社團"] = originalData.Count(x => x.ProjectID?.Contains("CLB") == true),
-                ["多元"] = originalData.Count(x => x.ProjectID?.Contains("MUL") == true),
-                ["素養"] = originalData.Count(x => x.ProjectID?.Contains("LIT") == true),
-                ["無障礙"] = originalData.Count(x => x.ProjectID?.Contains("ACC") == true)
+                ["總申請"] = dataForCounting.Count,
+                ["科專"] = dataForCounting.Count(x => x.ProjectID?.Contains("SCI") == true),
+                ["文化"] = dataForCounting.Count(x => x.ProjectID?.Contains("CUL") == true),
+                ["學校民間"] = dataForCounting.Count(x => x.ProjectID?.Contains("EDC") == true),
+                ["學校社團"] = dataForCounting.Count(x => x.ProjectID?.Contains("CLB") == true),
+                ["多元"] = dataForCounting.Count(x => x.ProjectID?.Contains("MUL") == true),
+                ["素養"] = dataForCounting.Count(x => x.ProjectID?.Contains("LIT") == true),
+                ["無障礙"] = dataForCounting.Count(x => x.ProjectID?.Contains("ACC") == true)
             };
 
             return new {

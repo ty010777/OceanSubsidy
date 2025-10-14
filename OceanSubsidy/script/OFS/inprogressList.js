@@ -10,6 +10,8 @@ $(document).ready(function() {
         totalPages: 1,
         data: [],
         originalData: [], // 保存原始資料用於搜尋過濾
+        currentFilter: 'all', // 當前篩選狀態
+        overdueProjectIDs: new Set(), // 儲存進度落後的 ProjectID
 
         // 初始化
         init: function() {
@@ -20,6 +22,20 @@ $(document).ready(function() {
         // 綁定事件
         bindEvents: function() {
             const self = this;
+
+            // Tab 點擊事件 - 篩選資料
+            $(document).on('click', '#statusTabsList .total-item', function(e) {
+                e.preventDefault();
+                const status = $(this).data('status');
+
+                // 更新 active 狀態
+                $('#statusTabsList .total-item').removeClass('active');
+                $(this).addClass('active');
+
+                // 應用篩選
+                self.currentFilter = status;
+                self.applyFilter();
+            });
 
             // 移除搜尋按鈕點擊事件處理，由後端處理
 
@@ -84,6 +100,55 @@ $(document).ready(function() {
         setData: function(data) {
             this.originalData = data || [];
             this.data = [...this.originalData];
+            this.currentPage = 1;
+            this.currentFilter = 'all'; // 重設篩選狀態
+            this.calculateTotalPages();
+            this.renderPage();
+            this.updateTotalRecords();
+        },
+
+        // 應用篩選
+        applyFilter: function() {
+            if (this.currentFilter === 'all') {
+                // 顯示全部資料
+                this.data = [...this.originalData];
+            } else if (this.currentFilter === 'inprogress') {
+                // 執行中: StatusName = '' 或 '審核中'
+                this.data = this.originalData.filter(item => {
+                    const status = (item.StatusName || '').trim();
+                    return status === '' || status === '審核中';
+                });
+            } else if (this.currentFilter === 'closed') {
+                // 已結案: StatusName = '已結案'
+                this.data = this.originalData.filter(item => {
+                    const status = (item.StatusName || '').trim();
+                    return status === '已結案';
+                });
+            } else if (this.currentFilter === 'terminated') {
+                // 已終止: StatusName = '已終止'
+                this.data = this.originalData.filter(item => {
+                    const status = (item.StatusName || '').trim();
+                    return status === '已終止';
+                });
+            } else if (this.currentFilter === 'overdue') {
+                // 進度落後: 執行中 + 有逾期待辦事項
+                // 方法1: 使用後端提供的 IsOverdue 標記
+                this.data = this.originalData.filter(item => {
+                    const status = (item.StatusName || '').trim();
+                    const isInProgress = (status === '' || status === '審核中');
+                    const isOverdue = (item.IsOverdue === '1' || item.IsOverdue === 1 || item.IsOverdue === true);
+                    return isInProgress && isOverdue;
+                });
+
+                // 方法2: 使用 overdueProjectIDs 集合（與方法1擇一使用）
+                // this.data = this.originalData.filter(item => {
+                //     const status = (item.StatusName || '').trim();
+                //     const isInProgress = (status === '' || status === '審核中');
+                //     return isInProgress && this.overdueProjectIDs.has(item.ProjectID);
+                // });
+            }
+
+            // 重設到第一頁
             this.currentPage = 1;
             this.calculateTotalPages();
             this.renderPage();
@@ -448,4 +513,48 @@ function updatePaginationData(jsonData) {
             window.pendingPaginationData = [];
         }
     }
+}
+
+// 提供給後端呼叫的全域函式 - 更新統計數字
+function updateStatistics(statsData) {
+    try {
+        const stats = typeof statsData === 'string' ? JSON.parse(statsData) : statsData;
+
+        // 更新各 Tab 的數量顯示
+        $('#countTotal').text(stats.Total || 0);
+        $('#countInProgress').text(stats.InProgress || 0);
+        $('#countOverdue').text(stats.Overdue || 0);
+        $('#countClosed').text(stats.Closed || 0);
+        $('#countTerminated').text(stats.Terminated || 0);
+
+        // 從後端取得進度落後的 ProjectID 列表
+        // 注意: 這部分需要後端提供完整的 ProjectID 列表,而不只是數量
+        // 目前我們透過前端檢查 TaskQueue 的邏輯來判定
+        if (window.inprogressPaginationManager && window.inprogressPaginationManager.originalData) {
+            updateOverdueProjects(window.inprogressPaginationManager.originalData);
+        }
+
+    } catch (error) {
+        console.error('更新統計數字時發生錯誤:', error);
+    }
+}
+
+// 更新進度落後的 ProjectID 集合
+function updateOverdueProjects(data) {
+    if (!window.inprogressPaginationManager) return;
+
+    // 清空現有集合
+    window.inprogressPaginationManager.overdueProjectIDs.clear();
+
+    // 透過資料中的標記來判斷是否為進度落後
+    // 條件: 執行中 (StatusName = '' 或 '審核中') + IsOverdue = 1
+    data.forEach(item => {
+        const status = (item.StatusName || '').trim();
+        const isInProgress = (status === '' || status === '審核中');
+        const isOverdue = (item.IsOverdue === '1' || item.IsOverdue === 1 || item.IsOverdue === true);
+
+        if (isInProgress && isOverdue) {
+            window.inprogressPaginationManager.overdueProjectIDs.add(item.ProjectID);
+        }
+    });
 }

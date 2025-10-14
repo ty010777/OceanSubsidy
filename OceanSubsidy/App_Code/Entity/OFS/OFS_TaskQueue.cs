@@ -11,11 +11,11 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
 {
     
     /// <summary>
-    ///  ()
+    /// OFS專案待辦紀錄 ()
     /// </summary>
     [DataContract]
     [Serializable()]
-    [GisTableAttribute("OFS_TaskQueue", "", false)]
+    [GisTableAttribute("OFS_TaskQueue", "OFS專案待辦紀錄", false)]
     public class IOFS_TaskQueue : IMeta
     {
         
@@ -50,6 +50,41 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
                         UPDATE_COLUMN.Add("ProjectID");
                     }
                     _ProjectID = value;
+                }
+            }
+        }
+        
+        protected string _TaskNameEn = "";
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("TaskNameEn", "TaskNameEn", DataSource.TABLE, "", false)]
+        public virtual string TaskNameEn
+        {
+            get
+            {
+                return _TaskNameEn;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_TaskNameEn == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_TaskNameEn.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("TaskNameEn") == -1)
+                    {
+                        UPDATE_COLUMN.Add("TaskNameEn");
+                    }
+                    _TaskNameEn = value;
                 }
             }
         }
@@ -194,6 +229,41 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
         
+        protected DateTime? _OverdueDate = null;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("OverdueDate", "OverdueDate", DataSource.TABLE, "", false)]
+        public virtual DateTime? OverdueDate
+        {
+            get
+            {
+                return _OverdueDate;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_OverdueDate == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_OverdueDate.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("OverdueDate") == -1)
+                    {
+                        UPDATE_COLUMN.Add("OverdueDate");
+                    }
+                    _OverdueDate = value;
+                }
+            }
+        }
+        
     }
 
     
@@ -206,7 +276,7 @@ namespace GS.OCA_OceanSubsidy.Entity
     using GS.OCA_OceanSubsidy.Entity.Base;
     
     /// <summary>
-    ///  ()
+    /// OFS專案待辦紀錄 ()
     /// </summary>
     [DataContract]
     [Serializable()]

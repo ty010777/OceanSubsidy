@@ -312,3 +312,213 @@ ALTER TABLE [OCA_OceanSubsidy].[dbo].[OFS_SCI_StageExam_ReviewerList]
     [BankAccount] VARCHAR(30),
     [RegistrationAddress] NVARCHAR(300);
 --------------------------------
+-- 10/14  新增 V_OFS_InprogressList StatusName 欄位
+USE [OCA_OceanSubsidy]
+GO
+
+/****** Object:  View [dbo].[V_OFS_InprogressList]    Script Date: 2025/10/14 下午 01:39:15 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+
+
+
+
+-- V_OFS_InprogressList
+
+ALTER VIEW [dbo].[V_OFS_InprogressList]
+AS
+WITH O AS (
+    -- 其他類別先組好單位
+    SELECT 
+        P.Year,
+        P.Category,
+        P.ProjectID,
+		P.StatusName,
+        P.ProjectName AS ProjectNameTw,
+        P.OrgName,
+        U.UnitName AS SupervisoryUnit,
+        P.LastOperation,
+        P.ProjectContent,
+        '' AS KeyWords
+    FROM (
+        -- CUL
+        SELECT 
+            Year,
+            'CUL' AS Category,
+            ProjectID,
+			S.Descname AS StatusName,
+            ProjectName,
+            OrgName,
+            Organizer,
+            LastOperation,
+            CONCAT_WS(' , ', Target, Summary, Quantified, Qualitative) AS ProjectContent
+        FROM OFS_CUL_Project
+		LEFT JOIN Sys_ZgsCode AS S
+		ON OFS_CUL_Project.Status = S.Code and S.CodeGroup = 'ProjectStatus'
+
+        WHERE ProgressStatus = 5
+
+        UNION ALL
+
+        -- EDC
+        SELECT 
+            Year,
+            'EDC' AS Category,
+            ProjectID,
+			S.Descname AS StatusName,
+            ProjectName,
+            OrgName,
+            Organizer,
+            LastOperation,
+            CONCAT_WS(' , ', Target, Summary, Quantified) AS ProjectContent
+        FROM OFS_EDC_Project
+		LEFT JOIN Sys_ZgsCode AS S
+		ON OFS_EDC_Project.Status = S.Code and S.CodeGroup = 'ProjectStatus'
+
+        WHERE ProgressStatus = 5
+
+        UNION ALL
+
+        -- MUL
+        SELECT 
+            Year,
+            'MUL' AS Category,
+            ProjectID,
+			S.Descname AS StatusName,
+            ProjectName,
+            OrgName,
+            Organizer,
+            LastOperation,
+            CONCAT_WS(' , ', Target, Summary, Quantified, Qualitative) AS ProjectContent
+        FROM OFS_MUL_Project
+				LEFT JOIN Sys_ZgsCode AS S
+		ON OFS_MUL_Project.Status = S.Code and S.CodeGroup = 'ProjectStatus'
+
+        WHERE ProgressStatus = 5
+
+        UNION ALL
+
+        -- LIT
+        SELECT 
+            Year,
+            'LIT' AS Category,
+            ProjectID,
+			S.Descname as StatusesName,
+            ProjectName,
+            OrgName,
+            Organizer,
+            LastOperation,
+            CONCAT_WS(' , ', Target, Summary, Quantified, Qualitative) AS ProjectContent
+        FROM OFS_LIT_Project
+		LEFT JOIN Sys_ZgsCode AS S
+		ON OFS_LIT_Project.Status = S.Code and S.CodeGroup = 'ProjectStatus'
+
+        WHERE ProgressStatus = 5
+
+        UNION ALL
+
+        -- ACC
+        SELECT 
+            Year,
+            'ACC' AS Category,
+            ProjectID,
+			S.Descname AS StatusesName,
+            ProjectName,
+            OrgName,
+            Organizer,
+            LastOperation,
+            CONCAT_WS(' , ', Target, Summary, Quantified, Qualitative) AS ProjectContent
+        FROM OFS_ACC_Project
+		LEFT JOIN Sys_ZgsCode AS S
+		ON OFS_ACC_Project.Status = S.Code and S.CodeGroup = 'ProjectStatus'
+		WHERE ProgressStatus = 5
+	
+		   
+    ) AS P
+    LEFT JOIN Sys_User AS R 
+           ON R.UserID = P.Organizer
+    LEFT JOIN Sys_Unit AS U 
+           ON U.UnitID = R.UnitID
+
+
+
+    UNION ALL
+
+    -- SCI 專案
+    SELECT 
+        AM.Year,
+        'SCI' AS Category,
+        PM.ProjectID,
+		PM.StatusesName,
+        AM.ProjectNameTw AS ProjectNameTw,
+        AM.OrgName,
+        PM.SupervisoryUnit,
+        PM.LastOperation,
+        CONCAT_WS(' , ', AM.Target, AM.Summary, AM.Innovation) AS ProjectContent,
+        KW.KeyWords
+    FROM OFS_SCI_Project_Main AS PM
+    LEFT JOIN OFS_SCI_Application_Main AS AM 
+           ON PM.ProjectID = AM.ProjectID
+    LEFT JOIN (
+        SELECT 
+            KeywordID AS ProjectID,
+            STRING_AGG(KeyWordTw, ', ') AS KeyWords
+        FROM OFS_SCI_Application_KeyWord
+        GROUP BY KeywordID
+    ) AS KW 
+           ON PM.ProjectID = KW.ProjectID
+    WHERE PM.Statuses = N'計畫執行' and PM.isExist = 1 and isWithdrawal = 0
+
+    UNION ALL
+
+    -- CLB 社團專案（直接取得 SupervisoryUnit）
+    SELECT
+        CLB_AB.Year,
+        'CLB' AS Category,
+        CLB_PM.ProjectID,
+		CLB_PM.StatusesName,
+        CLB_AB.ProjectNameTW AS ProjectNameTw,
+        CLB_AB.SchoolName + CLB_AB.ClubName AS OrgName,
+        CLB_PM.SupervisoryUnit,
+        CLB_PM.LastOperation,
+        CONCAT_WS(' , ', CLB_AP.Purpose, CLB_AP.PlanContent, CLB_AP.PreBenefits) AS ProjectContent,
+        '' AS KeyWords
+    FROM OFS_CLB_Project_Main CLB_PM
+    LEFT JOIN OFS_CLB_Application_Basic CLB_AB 
+           ON CLB_PM.ProjectID = CLB_AB.ProjectID
+    LEFT JOIN OFS_CLB_Application_Plan CLB_AP 
+           ON CLB_PM.ProjectID = CLB_AP.ProjectID
+	where CLB_PM.Statuses = N'計畫執行'  and CLB_PM.isExist = 1 and isWithdrawal = 0
+)
+SELECT
+    Ｏ.Year,
+    O.Category,
+    O.ProjectID,
+    O.StatusName,
+    O.ProjectNameTw,
+    O.OrgName,
+    O.SupervisoryUnit,
+    O.LastOperation,
+    Q.TaskNameEn,
+    Q.TaskName,
+    O.ProjectContent,
+    O.KeyWords
+FROM O
+    OUTER APPLY (
+    SELECT TOP 1 TaskNameEn, TaskName
+    FROM OFS_TaskQueue T
+    WHERE T.ProjectID = O.ProjectID
+      AND T.IsTodo = 1
+      AND T.IsCompleted = 0
+    ORDER BY T.PriorityLevel ASC
+) AS Q;
+
+
+GO
+
+

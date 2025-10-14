@@ -389,8 +389,8 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
         {
             // 載入年度選項
             ddlYear_Type3.Items.Add(new ListItem("全部", ""));
-            ddlYear_Type3.Items.Add(new ListItem("113", "113年"));
-            ddlYear_Type3.Items.Add(new ListItem("114", "114年"));
+            ddlYear_Type3.Items.Add(new ListItem("113年", "113"));
+            ddlYear_Type3.Items.Add(new ListItem("114年", "114"));
             ddlYear_Type3.DataTextField = "Text";
             ddlYear_Type3.DataValueField = "Value";
             ddlYear_Type3.DataBind();
@@ -2597,6 +2597,40 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             {
                 success = false,
                 message = $"匯出時發生錯誤: {ex.Message}"
+            });
+        }
+    }
+
+    #endregion
+
+    #region 統計功能
+
+    /// <summary>
+    /// 取得各審查類型的統計數量
+    /// </summary>
+    /// <returns>包含各類型統計數量的 JSON 字串</returns>
+    [WebMethod]
+    public static string GetReviewTypeStatistics()
+    {
+        try
+        {
+            // 呼叫 Helper 取得統計資料
+            var statistics = ReviewCheckListHelper.GetReviewTypeStatistics();
+
+            return JsonConvert.SerializeObject(new
+            {
+                success = true,
+                data = statistics,
+                message = "成功取得統計資料"
+            });
+        }
+        catch (Exception ex)
+        {
+            return JsonConvert.SerializeObject(new
+            {
+                success = false,
+                message = $"取得統計資料時發生錯誤: {ex.Message}",
+                error = ex.ToString()
             });
         }
     }

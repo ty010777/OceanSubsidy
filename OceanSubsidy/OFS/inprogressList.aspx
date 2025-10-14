@@ -90,48 +90,48 @@
     </div>
 
     <!-- 總計列表 -->
-    <ul class="total-list">
-        <li class="total-item active">
-            <a href="#">
+    <ul class="total-list" id="statusTabsList">
+        <li class="total-item active" data-status="all">
+            <a href="javascript:void(0);">
                 <div class="total-item-title">總核定計畫</div>
                 <div class="total-item-content">
-                    <span class="count">27</span>
+                    <span class="count" id="countTotal">0</span>
                     <span class="unit">件</span>
                 </div>
             </a>
         </li>
-        <li class="total-item">
-            <a href="#">
+        <li class="total-item" data-status="inprogress">
+            <a href="javascript:void(0);">
                 <div class="total-item-title">執行中</div>
                 <div class="total-item-content">
-                    <span class="count">9</span>
+                    <span class="count" id="countInProgress">0</span>
                     <span class="unit">件</span>
                 </div>
             </a>
         </li>
-        <li class="total-item">
-            <a href="#">
+        <li class="total-item" data-status="overdue">
+            <a href="javascript:void(0);">
                 <div class="total-item-title">進度落後</div>
                 <div class="total-item-content">
-                    <span class="count">6</span>
+                    <span class="count" id="countOverdue">0</span>
                     <span class="unit">件</span>
                 </div>
             </a>
         </li>
-        <li class="total-item">
-            <a href="#">
+        <li class="total-item" data-status="closed">
+            <a href="javascript:void(0);">
                 <div class="total-item-title">已結案</div>
                 <div class="total-item-content">
-                    <span class="count">6</span>
+                    <span class="count" id="countClosed">0</span>
                     <span class="unit">件</span>
                 </div>
             </a>
         </li>
-        <li class="total-item">
-            <a href="#">
+        <li class="total-item" data-status="terminated">
+            <a href="javascript:void(0);">
                 <div class="total-item-title">已終止</div>
                 <div class="total-item-content">
-                    <span class="count">6</span>
+                    <span class="count" id="countTerminated">0</span>
                     <span class="unit">件</span>
                 </div>
             </a>

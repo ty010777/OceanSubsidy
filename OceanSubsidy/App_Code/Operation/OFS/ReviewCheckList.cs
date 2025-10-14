@@ -4286,4 +4286,238 @@ SELECT [FinalReviewOrder] AS '排序'
     }
 
     #endregion
+
+    #region 審查類型統計功能
+
+    /// <summary>
+    /// 取得所有審查類型的統計數量
+    /// </summary>
+    /// <returns>包含各類型統計數量的字典</returns>
+    public static Dictionary<string, int> GetReviewTypeStatistics()
+    {
+        var statistics = new Dictionary<string, int>();
+
+        try
+        {
+            // Type1: 資格審查/內容審查
+            statistics["Type1"] = GetType1Count();
+
+            // Type2: 領域審查/初審
+            statistics["Type2"] = GetType2Count();
+
+            // Type3: 技術審查/複審
+            statistics["Type3"] = GetType3Count();
+
+            // Type4: 決審核定
+            statistics["Type4"] = GetType4Count();
+
+            // Type5: 計畫變更審核
+            statistics["Type5"] = GetType5Count();
+
+            // Type6: 執行計畫審核
+            statistics["Type6"] = GetType6Count();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"取得審查類型統計時發生錯誤：{ex.Message}", ex);
+        }
+
+        return statistics;
+    }
+
+    /// <summary>
+    /// 取得 Type1 (資格審查/內容審查) 的數量
+    /// </summary>
+    private static int GetType1Count()
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            db.CommandText = @"
+                SELECT COUNT(*) AS CountNum
+                FROM [OCA_OceanSubsidy].[dbo].[V_OFS_ReviewChecklist_type1]
+            ";
+
+            try
+            {
+                db.Parameters.Clear();
+                DataTable dt = db.GetTable();
+                if (dt.Rows.Count > 0)
+                {
+                    return Convert.ToInt32(dt.Rows[0]["CountNum"]);
+                }
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"取得 Type1 統計數量時發生錯誤：{ex.Message}", ex);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 取得 Type2 (領域審查/初審) 的數量
+    /// </summary>
+    private static int GetType2Count()
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            db.CommandText = @"
+                SELECT COUNT(*) AS CountNum
+                FROM (
+                    SELECT ProjectID
+                    FROM [OFS_SCI_Project_Main] PM
+                    WHERE [Statuses] LIKE '%領域審查%' AND isExist = 1
+
+                    UNION ALL
+
+                    SELECT ProjectID
+                    FROM [OFS_CUL_Project]
+                    WHERE [ProgressStatus] = 2 AND isExists = 1
+                ) AS Type2Data
+            ";
+
+            try
+            {
+                db.Parameters.Clear();
+                DataTable dt = db.GetTable();
+                if (dt.Rows.Count > 0)
+                {
+                    return Convert.ToInt32(dt.Rows[0]["CountNum"]);
+                }
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"取得 Type2 統計數量時發生錯誤：{ex.Message}", ex);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 取得 Type3 (技術審查/複審) 的數量
+    /// </summary>
+    private static int GetType3Count()
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            db.CommandText = @"
+                  SELECT COUNT(*) AS CountNum
+                FROM (
+                    SELECT ProjectID
+                    FROM [OFS_SCI_Project_Main] PM
+                    WHERE [Statuses] LIKE '%技術審查%'  AND isExist = 1
+
+                    UNION ALL
+
+                    SELECT ProjectID
+                    FROM [OFS_CUL_Project]
+                    WHERE [ProgressStatus] = 3　AND isExists = 1
+                ) AS Type3Data
+            ";
+
+            try
+            {
+                db.Parameters.Clear();
+                DataTable dt = db.GetTable();
+                if (dt.Rows.Count > 0)
+                {
+                    return Convert.ToInt32(dt.Rows[0]["CountNum"]);
+                }
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"取得 Type3 統計數量時發生錯誤：{ex.Message}", ex);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 取得 Type4 (決審核定) 的數量
+    /// </summary>
+    private static int GetType4Count()
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            db.CommandText = @"
+                SELECT COUNT(*) AS CountNum
+                FROM [OCA_OceanSubsidy].[dbo].[V_OFS_ReviewChecklist_type4]
+            ";
+
+            try
+            {
+                db.Parameters.Clear();
+                DataTable dt = db.GetTable();
+                if (dt.Rows.Count > 0)
+                {
+                    return Convert.ToInt32(dt.Rows[0]["CountNum"]);
+                }
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"取得 Type4 統計數量時發生錯誤：{ex.Message}", ex);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 取得 Type5 (計畫變更審核) 的數量
+    /// </summary>
+    private static int GetType5Count()
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            db.CommandText = @"
+                SELECT COUNT(*) AS CountNum
+                FROM [OCA_OceanSubsidy].[dbo].[V_OFS_ReviewChecklist_type5]
+            ";
+
+            try
+            {
+                db.Parameters.Clear();
+                DataTable dt = db.GetTable();
+                if (dt.Rows.Count > 0)
+                {
+                    return Convert.ToInt32(dt.Rows[0]["CountNum"]);
+                }
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"取得 Type5 統計數量時發生錯誤：{ex.Message}", ex);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 取得 Type6 (執行計畫審核) 的數量
+    /// </summary>
+    private static int GetType6Count()
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            db.CommandText = @"
+                SELECT COUNT(*) AS CountNum
+                FROM [OCA_OceanSubsidy].[dbo].[V_OFS_ReviewChecklist_type6]
+            ";
+
+            try
+            {
+                db.Parameters.Clear();
+                DataTable dt = db.GetTable();
+                if (dt.Rows.Count > 0)
+                {
+                    return Convert.ToInt32(dt.Rows[0]["CountNum"]);
+                }
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"取得 Type6 統計數量時發生錯誤：{ex.Message}", ex);
+            }
+        }
+    }
+
+    #endregion
 }

@@ -116,14 +116,10 @@ public partial class inprogressList : System.Web.UI.Page
         {
             ddlApplyUnit.Items.Clear();
             ddlApplyUnit.Items.Add(new ListItem("全部", ""));
-            
-            // 從資料庫取得申請單位清單
-            DbHelper db = new DbHelper();
-            db.CommandText = @"SELECT DISTINCT OrgName FROM V_OFS_InprogressList 
-                              WHERE OrgName IS NOT NULL AND OrgName <> ''
-                              ORDER BY OrgName";
-            DataTable dt = db.GetTable();
-            
+
+            // 從 Helper 取得申請單位清單
+            DataTable dt = InprogressListHelper.GetApplyUnits();
+
             foreach (DataRow row in dt.Rows)
             {
                 string orgName = row["OrgName"].ToString();
@@ -147,15 +143,10 @@ public partial class inprogressList : System.Web.UI.Page
         {
             ddlSupervisoryUnit.Items.Clear();
             ddlSupervisoryUnit.Items.Add(new ListItem("全部", ""));
-            
-            // 從資料庫取得主管單位清單，參考 Type6 的實作方式
-            DbHelper db = new DbHelper();
-            db.CommandText = @"SELECT DISTINCT SupervisoryUnit 
-                              FROM V_OFS_InprogressList 
-                              WHERE SupervisoryUnit IS NOT NULL AND SupervisoryUnit <> ''
-                              ORDER BY SupervisoryUnit";
-            DataTable dt = db.GetTable();
-            
+
+            // 從 Helper 取得主管單位清單
+            DataTable dt = InprogressListHelper.GetSupervisoryUnits();
+
             foreach (DataRow row in dt.Rows)
             {
                 if (row["SupervisoryUnit"] != DBNull.Value)
@@ -167,14 +158,12 @@ public partial class inprogressList : System.Web.UI.Page
                     }
                 }
             }
-            
-            db.Dispose();
         }
         catch (Exception ex)
         {
             // 載入失敗時使用預設選項
             ddlSupervisoryUnit.Items.Clear();
-           
+
         }
     }
 
@@ -202,64 +191,18 @@ public partial class inprogressList : System.Web.UI.Page
     {
         try
         {
-            // 建構查詢條件
-            string whereClause = "WHERE 1=1";
-            List<KeyValuePair<string, object>> parameters = new List<KeyValuePair<string, object>>();
-            
-            if (!string.IsNullOrEmpty(ddlYear.SelectedValue))
-            {
-                whereClause += " AND [Year] = @Year";
-                parameters.Add(new KeyValuePair<string, object>("@Year", ddlYear.SelectedValue));
-            }
-            
-            if (!string.IsNullOrEmpty(ddlCategory.SelectedValue))
-            {
-                whereClause += " AND Category = @Category";
-                parameters.Add(new KeyValuePair<string, object>("@Category", ddlCategory.SelectedValue));
-            }
-            
-            if (!string.IsNullOrEmpty(ddlApplyUnit.SelectedValue))
-            {
-                whereClause += " AND OrgName = @OrgName";
-                parameters.Add(new KeyValuePair<string, object>("@OrgName", ddlApplyUnit.SelectedValue));
-            }
-            
-            if (!string.IsNullOrEmpty(ddlSupervisoryUnit.SelectedValue))
-            {
-                whereClause += " AND SupervisoryUnit = @SupervisoryUnit";
-                parameters.Add(new KeyValuePair<string, object>("@SupervisoryUnit", ddlSupervisoryUnit.SelectedValue));
-            }
-            
-            if (!string.IsNullOrEmpty(txtProjectKeyword.Text.Trim()))
-            {
-                whereClause += " AND (ProjectID LIKE @Keyword OR ProjectNameTw LIKE @Keyword)";
-                parameters.Add(new KeyValuePair<string, object>("@Keyword", $"%{txtProjectKeyword.Text.Trim()}%"));
-            }
-            
-            if (!string.IsNullOrEmpty(txtContentKeyword.Text.Trim()))
-            {
-                whereClause += " AND (ProjectContent LIKE @ContentKeyword OR KeyWords LIKE @ContentKeyword)";
-                parameters.Add(new KeyValuePair<string, object>("@ContentKeyword", $"%{txtContentKeyword.Text.Trim()}%"));
-            }
-            
-            // 取得全部資料
-            DbHelper dataDb = new DbHelper();
-            dataDb.CommandText = $@"
-                SELECT [Year], Category, ProjectID, ProjectNameTw, OrgName, 
-                       SupervisoryUnit, LastOperation,TaskNameEn, TaskName, ProjectContent, KeyWords
-                FROM V_OFS_InprogressList
-                {whereClause}
-                ORDER BY [Year] DESC, ProjectID";
-            
-            foreach (var param in parameters)
-            {
-                dataDb.Parameters.Add(param.Key, param.Value);
-            }
-            
-            DataTable result = dataDb.GetTable();
+            // 從 Helper 取得進度清單資料
+            DataTable result = InprogressListHelper.GetInprogressListData(
+                ddlYear.SelectedValue,
+                ddlCategory.SelectedValue,
+                ddlApplyUnit.SelectedValue,
+                ddlSupervisoryUnit.SelectedValue,
+                txtProjectKeyword.Text.Trim(),
+                txtContentKeyword.Text.Trim()
+            );
+
             totalRecords = result.Rows.Count; // 設定總記錄數
-            dataDb.Dispose();
-            
+
             return result;
         }
         catch (Exception ex)
@@ -276,11 +219,27 @@ public partial class inprogressList : System.Web.UI.Page
     {
         // 轉換 DataTable 為 JSON 格式供前端使用
         var jsonData = ConvertDataTableToJson(data);
-        
-        // 透過 JavaScript 更新前端資料
-        string script = $"updatePaginationData({jsonData});"; 
+
+        // 取得統計資訊
+        DataRow statistics = InprogressListHelper.GetInprogressStatistics(
+            ddlYear.SelectedValue,
+            ddlCategory.SelectedValue,
+            ddlApplyUnit.SelectedValue,
+            ddlSupervisoryUnit.SelectedValue,
+            txtProjectKeyword.Text.Trim(),
+            txtContentKeyword.Text.Trim()
+        );
+
+        // 建立統計資訊的 JSON 物件
+        var statsJson = ConvertStatisticsToJson(statistics);
+
+        // 透過 JavaScript 更新前端資料和統計數字
+        string script = $@"
+            updatePaginationData({jsonData});
+            updateStatistics({statsJson});
+        ";
         ScriptManager.RegisterStartupScript(this, GetType(), "updateData", script, true);
-        
+
         lblTotalRecords.Text = totalRecords.ToString();
     }
     
@@ -292,7 +251,7 @@ public partial class inprogressList : System.Web.UI.Page
     private string ConvertDataTableToJson(DataTable dataTable)
     {
         var jsonList = new List<Dictionary<string, object>>();
-        
+
         foreach (DataRow row in dataTable.Rows)
         {
             var dict = new Dictionary<string, object>();
@@ -302,8 +261,39 @@ public partial class inprogressList : System.Web.UI.Page
             }
             jsonList.Add(dict);
         }
-        
+
         return JsonConvert.SerializeObject(jsonList);
+    }
+
+    /// <summary>
+    /// 將統計資訊 DataRow 轉換為 JSON 字串
+    /// </summary>
+    /// <param name="statisticsRow">統計資訊的 DataRow</param>
+    /// <returns>JSON 字串</returns>
+    private string ConvertStatisticsToJson(DataRow statisticsRow)
+    {
+        if (statisticsRow == null)
+        {
+            return JsonConvert.SerializeObject(new
+            {
+                Total = 0,
+                InProgress = 0,
+                Overdue = 0,
+                Closed = 0,
+                Terminated = 0
+            });
+        }
+
+        var stats = new Dictionary<string, object>
+        {
+            { "Total", statisticsRow["Total"] != DBNull.Value ? Convert.ToInt32(statisticsRow["Total"]) : 0 },
+            { "InProgress", statisticsRow["InProgress"] != DBNull.Value ? Convert.ToInt32(statisticsRow["InProgress"]) : 0 },
+            { "Overdue", statisticsRow["Overdue"] != DBNull.Value ? Convert.ToInt32(statisticsRow["Overdue"]) : 0 },
+            { "Closed", statisticsRow["Closed"] != DBNull.Value ? Convert.ToInt32(statisticsRow["Closed"]) : 0 },
+            { "Terminated", statisticsRow["Terminated"] != DBNull.Value ? Convert.ToInt32(statisticsRow["Terminated"]) : 0 }
+        };
+
+        return JsonConvert.SerializeObject(stats);
     }
 
 

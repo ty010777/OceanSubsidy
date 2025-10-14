@@ -27,7 +27,11 @@ public class OFS_ScienceTaskHelper
                 SELECT DISTINCT [ProjectID]
                 FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main]
                 WHERE [isExist] = 1 
-                AND [isWithdrawal] = 0 and Statuses ='計畫執行'";
+                  AND [isWithdrawal] = 0
+                  AND [Statuses] = '計畫執行'
+                  AND [StatusesName] NOT LIKE '%終止%'
+                  AND [StatusesName] NOT LIKE '%結案%'
+            ";
             
             var dt = db.GetTable();
             foreach (DataRow row in dt.Rows)
@@ -83,22 +87,25 @@ public class OFS_ScienceTaskHelper
     /// <param name="projectId">專案ID</param>
     /// <param name="taskNameEn">任務英文名稱</param>
     /// <param name="isTodo">是否為待辦</param>
-    public static void UpdateTaskStatus(string projectId, string taskNameEn, bool isTodo)
+    /// <param name="overdueDate">逾期日期（可選）</param>
+    public static void UpdateTaskStatus(string projectId, string taskNameEn, bool isTodo, DateTime? overdueDate = null)
     {
         DbHelper db = new DbHelper();
         try
         {
             db.CommandText = @"
                 UPDATE [OCA_OceanSubsidy].[dbo].[OFS_TaskQueue]
-                SET [IsTodo] = @IsTodo
-                WHERE [ProjectID] = @ProjectID 
+                SET [IsTodo] = @IsTodo,
+                    [OverdueDate] = @OverdueDate
+                WHERE [ProjectID] = @ProjectID
                 AND [TaskNameEn] = @TaskNameEn";
-            
+
             db.Parameters.Clear();
             db.Parameters.Add("@ProjectID", projectId);
             db.Parameters.Add("@TaskNameEn", taskNameEn);
             db.Parameters.Add("@IsTodo", isTodo ? 1 : 0);
-            
+            db.Parameters.Add("@OverdueDate", overdueDate.HasValue ? (object)overdueDate.Value : DBNull.Value);
+
             db.ExecuteNonQuery();
         }
         finally
@@ -111,8 +118,8 @@ public class OFS_ScienceTaskHelper
     /// 檢查期中報告期限
     /// </summary>
     /// <param name="projectId">專案ID</param>
-    /// <returns>是否需要填寫期中報告</returns>
-    public static bool CheckMidReportDeadline(string projectId)
+    /// <returns>Tuple(是否需要填寫期中報告, 期中審查預定日期)</returns>
+    public static Tuple<bool, DateTime?> CheckMidReportDeadline(string projectId)
     {
         DbHelper db = new DbHelper();
         try
@@ -120,21 +127,22 @@ public class OFS_ScienceTaskHelper
             db.CommandText = @"
                 SELECT [MidtermExamDate]
                 FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main]
-                WHERE [ProjectID] = @ProjectID 
+                WHERE [ProjectID] = @ProjectID
                 AND [isExist] = 1";
-            
+
             db.Parameters.Clear();
             db.Parameters.Add("@ProjectID", projectId);
-            
+
             var dt = db.GetTable();
             if (dt.Rows.Count > 0 && dt.Rows[0]["MidtermExamDate"] != DBNull.Value)
             {
                 var midtermExamDate = Convert.ToDateTime(dt.Rows[0]["MidtermExamDate"]);
                 var oneMonthBefore = midtermExamDate.AddMonths(-1);
-                return DateTime.Now >= oneMonthBefore;
+                bool isTodo = DateTime.Now >= oneMonthBefore;
+                return Tuple.Create(isTodo, (DateTime?)midtermExamDate);
             }
-            
-            return false;
+
+            return Tuple.Create(false, (DateTime?)null);
         }
         finally
         {
@@ -146,8 +154,8 @@ public class OFS_ScienceTaskHelper
     /// 檢查期末報告期限
     /// </summary>
     /// <param name="projectId">專案ID</param>
-    /// <returns>是否需要填寫期末報告</returns>
-    public static bool CheckFinalReportDeadline(string projectId)
+    /// <returns>Tuple(是否需要填寫期末報告, 期末審查預定日期)</returns>
+    public static Tuple<bool, DateTime?> CheckFinalReportDeadline(string projectId)
     {
         DbHelper db = new DbHelper();
         try
@@ -155,21 +163,22 @@ public class OFS_ScienceTaskHelper
             db.CommandText = @"
                 SELECT [FinalExamDate]
                 FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main]
-                WHERE [ProjectID] = @ProjectID 
+                WHERE [ProjectID] = @ProjectID
                 AND [isExist] = 1";
-            
+
             db.Parameters.Clear();
             db.Parameters.Add("@ProjectID", projectId);
-            
+
             var dt = db.GetTable();
             if (dt.Rows.Count > 0 && dt.Rows[0]["FinalExamDate"] != DBNull.Value)
             {
                 var finalExamDate = Convert.ToDateTime(dt.Rows[0]["FinalExamDate"]);
                 var oneMonthBefore = finalExamDate.AddMonths(-1);
-                return DateTime.Now >= oneMonthBefore;
+                bool isTodo = DateTime.Now >= oneMonthBefore;
+                return Tuple.Create(isTodo, (DateTime?)finalExamDate);
             }
-            
-            return false;
+
+            return Tuple.Create(false, (DateTime?)null);
         }
         finally
         {
@@ -266,6 +275,83 @@ public class OFS_ScienceTaskHelper
     }
 
     /// <summary>
+    /// 取得每月進度報告逾期日期
+    /// 邏輯：檢查所有應填寫且小於今天月份的月份，找出第一個未填寫的月份，逾期日期為該月份的下個月10號
+    /// </summary>
+    /// <param name="projectId">專案ID</param>
+    /// <returns>逾期日期（如果有未填寫的月份）</returns>
+    public static DateTime? GetMonthlyReportOverdueDate(string projectId)
+    {
+        DbHelper db = new DbHelper();
+        try
+        {
+            // 取得專案的期間資料
+            db.CommandText = @"
+                SELECT [StartTime], [EndTime]
+                FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Application_Main]
+                WHERE [ProjectID] = @ProjectID";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@ProjectID", projectId);
+
+            var dt = db.GetTable();
+            if (dt.Rows.Count == 0 || dt.Rows[0]["StartTime"] == DBNull.Value || dt.Rows[0]["EndTime"] == DBNull.Value)
+            {
+                return null; // 沒有期間資料，無法檢查
+            }
+
+            DateTime startTime = Convert.ToDateTime(dt.Rows[0]["StartTime"]);
+            DateTime endTime = Convert.ToDateTime(dt.Rows[0]["EndTime"]);
+            DateTime today = DateTime.Today;
+
+            // 計算檢查範圍
+            DateTime startMonth = new DateTime(startTime.Year, startTime.Month, 1);
+            DateTime endMonth = new DateTime(endTime.Year, endTime.Month, 1);
+            DateTime currentMonth = new DateTime(today.Year, today.Month, 1);
+
+            // 檢查每個月份（只檢查 < 今天月份的月份）
+            DateTime checkMonth = startMonth;
+            while (checkMonth < currentMonth) // 只檢查小於當月的月份
+            {
+                if (checkMonth > endMonth) break; // 超過專案結束月份
+
+                // 將月份轉換為民國年月格式
+                int minguoYear = checkMonth.Year - 1911;
+                string monthString = $"{minguoYear}年{checkMonth.Month}月";
+
+                // 查詢該月份的進度資料
+                db.CommandText = @"
+                    SELECT [ActProgress]
+                    FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_PreMonthProgress]
+                    WHERE [ProjectID] = @ProjectID
+                    AND [Month] = @Month";
+
+                db.Parameters.Clear();
+                db.Parameters.Add("@ProjectID", projectId);
+                db.Parameters.Add("@Month", monthString);
+
+                var progressDt = db.GetTable();
+
+                // 如果沒有資料或 ActProgress 為 null，表示未填寫
+                if (progressDt.Rows.Count == 0 || progressDt.Rows[0]["ActProgress"] == DBNull.Value)
+                {
+                    // 找到第一個未填寫的月份，逾期日期為下個月10號
+                    DateTime nextMonth = checkMonth.AddMonths(1);
+                    return new DateTime(nextMonth.Year, nextMonth.Month, 10);
+                }
+
+                checkMonth = checkMonth.AddMonths(1);
+            }
+
+            return null; // 所有應檢查的月份都已填寫
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
     /// 完成月報任務
     /// </summary>
     /// <param name="projectId">專案ID</param>
@@ -276,7 +362,8 @@ public class OFS_ScienceTaskHelper
         {
             db.CommandText = @"
                 UPDATE [OCA_OceanSubsidy].[dbo].[OFS_TaskQueue]
-                SET [IsCompleted] = 1
+                SET [IsCompleted] = 1,
+                    [OverdueDate] = NULL
                 WHERE [ProjectID] = @ProjectID 
                 AND [TaskNameEn] = 'MonthlyReport'";
             

@@ -56,6 +56,9 @@ window.ReviewChecklist = (function() {
             // 設定初始狀態
             setActiveType(currentType);
 
+            // 載入統計資料
+            loadStatistics();
+
             isInitialized = true;
         } catch (error) {
             console.error('初始化ReviewChecklist模組時發生錯誤:', error);
@@ -248,6 +251,76 @@ window.ReviewChecklist = (function() {
 
         } catch (error) {
             console.error('更新 checkbox 目標時發生錯誤:', error);
+        }
+    }
+
+    /**
+     * 載入各審查類型的統計數量
+     */
+    function loadStatistics() {
+        try {
+            // 呼叫後端 WebMethod 取得統計資料
+            $.ajax({
+                type: 'POST',
+                url: 'ReviewChecklist.aspx/GetReviewTypeStatistics',
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                success: function(response) {
+                    try {
+                        var result = JSON.parse(response.d);
+                        if (result.success && result.data) {
+                            updateStatisticsDisplay(result.data);
+                        } else {
+                            console.error('取得統計資料失敗:', result.message);
+                        }
+                    } catch (error) {
+                        console.error('解析統計資料時發生錯誤:', error);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('取得統計資料時發生錯誤:', error);
+                    console.error('狀態:', status);
+                    console.error('回應:', xhr.responseText);
+                }
+            });
+        } catch (error) {
+            console.error('載入統計資料時發生錯誤:', error);
+        }
+    }
+
+    /**
+     * 更新頁面上的統計數量顯示
+     * @param {Object} data - 包含各類型統計數量的物件
+     */
+    function updateStatisticsDisplay(data) {
+        try {
+            // 更新每個類型的統計數量
+            for (var i = 1; i <= 6; i++) {
+                var typeKey = 'Type' + i;
+                var count = data[typeKey] || 0;
+
+                // 更新對應的 HTML 元素
+                $('#total-item-' + i + ' .count').text(count);
+            }
+
+            console.log('統計資料更新成功:', data);
+        } catch (error) {
+            console.error('更新統計顯示時發生錯誤:', error);
+        }
+    }
+
+    /**
+     * 更新指定類型按鈕的數字
+     * @param {number} type - 審查類型 (1-6)
+     * @param {number} count - 數量
+     */
+    function updateTypeButtonCount(type, count) {
+        try {
+            // 更新對應的 HTML 元素
+            $('#total-item-' + type + ' .count').text(count);
+            console.log(`已更新 Type${type} 按鈕數字為: ${count}`);
+        } catch (error) {
+            console.error('更新類型按鈕數字時發生錯誤:', error);
         }
     }
 
@@ -1630,6 +1703,7 @@ window.ReviewChecklist = (function() {
         updateCheckboxTargets: updateCheckboxTargets,
         updateReviewGroupType4: updateReviewGroupType4,
         updateSortingReviewGroup: updateSortingReviewGroup,
+        updateTypeButtonCount: updateTypeButtonCount,
     };
 
     /**
@@ -1673,8 +1747,6 @@ function handlePlanChangeReview(projectId) {
             });
             return;
         }
-
-        // TODO: 導向到計畫變更審核頁面
         // 根據計畫編號的類型決定跳轉到對應的審核頁面
         let reviewUrl = '';
 
@@ -1689,6 +1761,7 @@ function handlePlanChangeReview(projectId) {
             reviewUrl = `EDC/Audit.aspx?ID=${projectId}`;
         } else if (projectId.includes('CLB')) {
             // 學校社團計畫變更審核頁面
+            reviewUrl = `Clb/ClbApproved.aspx?ProjectID=${projectId}`;
 
         } else if (projectId.includes('MUL')) {
             // 多元計畫變更審核頁面
@@ -1704,14 +1777,8 @@ function handlePlanChangeReview(projectId) {
         if (reviewUrl) {
             // 跳轉到對應的審核頁面
             window.location.href = reviewUrl;
-        } else {
-            Swal.fire({
-                title: '功能開發中',
-                text: `該類型計畫 (${projectId}) 的變更審核功能尚未開放`,
-                icon: 'info',
-                confirmButtonText: '確定'
-            });
-        }
+        } 
+        
 
     } catch (error) {
         console.error('處理計畫變更審核時發生錯誤:', error);
@@ -3211,6 +3278,10 @@ function handleSearchResponse(response, searchType) {
             // 使用現有的renderSearchResults方法渲染結果 (所有類型統一處理)
             if (typeof window.ReviewChecklistManager !== 'undefined') {
                 window.ReviewChecklistManager.renderSearchResults(result.data, searchType);
+
+                // 更新對應類型按鈕的數字
+                const count = result.data ? result.data.length : 0;
+                window.ReviewChecklistManager.updateTypeButtonCount(searchType, count);
             }
 
             // 延遲執行分頁功能初始化
@@ -3300,6 +3371,10 @@ function performType4Search() {
                 if (result.success) {
                     // 渲染搜尋結果
                     window.ReviewChecklist.renderSearchResults(result.data, 4);
+
+                    // 更新對應類型按鈕的數字
+                    const count = result.data ? result.data.length : 0;
+                    window.ReviewChecklist.updateTypeButtonCount(4, count);
 
                     // 顯示成功訊息
                     console.log(`Type4 搜尋成功: ${result.count} 筆資料`);

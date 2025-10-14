@@ -113,10 +113,11 @@ public class ScienceDayTask : IHttpHandler
     /// <param name="taskList">任務清單</param>
     private static void CheckMidReportTask(string projectId, Dictionary<string, string> taskList)
     {
-        // 檢查期中報告期限：如果 MidtermExamDate 的前一個月已到，設為待辦
-        bool isTodo = OFS_ScienceTaskHelper.CheckMidReportDeadline(projectId);
-        
-        UpdateOrInsertTask(projectId, "MidReport", taskList["MidReport"], isTodo);
+        var result = OFS_ScienceTaskHelper.CheckMidReportDeadline(projectId);
+        bool isTodo = result.Item1;
+        DateTime? overdueDate = result.Item2; // 期中審查預定日期直接作為逾期日期
+
+        UpdateOrInsertTask(projectId, "MidReport", taskList["MidReport"], isTodo, overdueDate);
     }
 
     /// <summary>
@@ -126,10 +127,11 @@ public class ScienceDayTask : IHttpHandler
     /// <param name="taskList">任務清單</param>
     private static void CheckFinalReportTask(string projectId, Dictionary<string, string> taskList)
     {
-        // 檢查期末報告期限：如果 FinalExamDate 的前一個月已到，設為待辦
-        bool isTodo = OFS_ScienceTaskHelper.CheckFinalReportDeadline(projectId);
-        
-        UpdateOrInsertTask(projectId, "FinalReport", taskList["FinalReport"], isTodo);
+        var result = OFS_ScienceTaskHelper.CheckFinalReportDeadline(projectId);
+        bool isTodo = result.Item1;
+        DateTime? overdueDate = result.Item2; // 期末審查預定日期直接作為逾期日期
+
+        UpdateOrInsertTask(projectId, "FinalReport", taskList["FinalReport"], isTodo, overdueDate);
     }
 
     /// <summary>
@@ -141,8 +143,11 @@ public class ScienceDayTask : IHttpHandler
     {
         // 檢查每月進度報告：如果有任何應填寫而尚未填寫的月份，設為待辦
         bool isTodo = OFS_ScienceTaskHelper.CheckMonthlyReportDeadline(projectId);
-        
-        UpdateOrInsertTask(projectId, "MonthlyReport", taskList["MonthlyReport"], isTodo);
+
+        // 取得月報逾期日期（第一個未填寫月份的下個月10號）
+        DateTime? overdueDate = OFS_ScienceTaskHelper.GetMonthlyReportOverdueDate(projectId);
+
+        UpdateOrInsertTask(projectId, "MonthlyReport", taskList["MonthlyReport"], isTodo, overdueDate);
     }
 
    
@@ -155,9 +160,10 @@ public class ScienceDayTask : IHttpHandler
     /// <param name="taskNameEn">任務英文名稱</param>
     /// <param name="taskName">任務中文名稱</param>
     /// <param name="isTodo">是否為待辦</param>
-    private static void UpdateOrInsertTask(string projectId, string taskNameEn, string taskName, bool isTodo)
+    /// <param name="overdueDate">逾期日期（可選）</param>
+    private static void UpdateOrInsertTask(string projectId, string taskNameEn, string taskName, bool isTodo, DateTime? overdueDate = null)
     {
-        OFS_ScienceTaskHelper.UpdateTaskStatus(projectId, taskNameEn, isTodo);
+        OFS_ScienceTaskHelper.UpdateTaskStatus(projectId, taskNameEn, isTodo, overdueDate);
     }
     public bool IsReusable
     {
