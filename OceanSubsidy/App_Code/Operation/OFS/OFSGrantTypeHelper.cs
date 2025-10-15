@@ -98,6 +98,45 @@ public class OFSGrantTypeHelper
         model.TypeID = int.Parse(db.GetTable().Rows[0]["TypeID"].ToString());
     }
 
+    public static List<GrantType> query(string code)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            SELECT [TypeID]
+                  ,[Year]
+                  ,[TypeCode]
+                  ,[ShortName]
+                  ,[FullName]
+                  ,[BudgetFees]
+                  ,[TargetTags]
+                  ,[ApplyStartDate]
+                  ,[ApplyEndDate]
+                  ,[PlanEndDate]
+                  ,[Review1Title]
+                  ,[Review1Enabled]
+                  ,[Review2Title]
+                  ,[Review2Enabled]
+                  ,[Review3Title]
+                  ,[Review3Enabled]
+                  ,[Review4Title]
+                  ,[Review4Enabled]
+                  ,[OverduePeriod]
+                  ,[MidtermDeadline]
+                  ,[FinalDeadline]
+                  ,[FinalOneMonth]
+                  ,[AdminUnit]
+              FROM [OFS_GrantType]
+             WHERE [TypeCode] = @TypeCode
+        ";
+
+        db.Parameters.Add("@TypeCode", code);
+
+        var table = db.GetTable();
+
+        return db.GetTable().Rows.Cast<DataRow>().Select(r => toModel(r)).ToList();
+    }
+
     public static List<GrantType> query(bool published = false)
     {
         DbHelper db = new DbHelper();

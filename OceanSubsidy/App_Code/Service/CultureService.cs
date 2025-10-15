@@ -25,7 +25,7 @@ public class CultureService : BaseService
             Reason = param["Reason"].ToString()
         });
 
-        // TODO: 請完成計畫變更
+        OFS_TaskQueueHelper.UpdateTaskStatus(data.ProjectID, "Change", 1, 0);
 
         return new {};
     }
@@ -407,7 +407,7 @@ public class CultureService : BaseService
 
                 NotificationHelper.G4("文化", data.ProjectName, "計畫變更申請", data.UserAccount);
 
-                // TODO: 計畫變更已通過
+                OFS_TaskQueueHelper.UpdateTaskStatus(data.ProjectID, "Change", 1, 1);
             }
 
             OFSProjectChangeRecordHelper.update(apply);
@@ -458,7 +458,7 @@ public class CultureService : BaseService
         {
             NotificationHelper.G6("文化", data.ProjectName, setting.PhaseName, payment.CurrentActualPaidAmount, payment.ReviewerComment, data.UserAccount);
 
-            // TODO: 第一期請款已完成 / 第二期請款已完成
+            OFS_TaskQueueHelper.UpdateTaskStatus(data.ProjectID, $"Payment{payment.Stage}", 1, 1);
         }
         else
         {
@@ -500,9 +500,14 @@ public class CultureService : BaseService
         }
         else
         {
+            OFS_TaskQueueHelper.UpdateTaskStatus(data.ProjectID, stage == 1 ? "MidReport" : "FinalReport", 1, 1);
+            OFS_TaskQueueHelper.UpdateTaskStatus(data.ProjectID, $"Payment{stage}", 1, 0);
+
             NotificationHelper.G5("文化", data.ProjectName, eventName, data.UserAccount);
 
-            // TODO: 期中報告已通過 / 期末報告已通過
+            var setting = OFS_SciReimbursementHelper.GetPaymentPhaseSettings("CUL").FirstOrDefault(d => d.PhaseOrder == stage);
+
+            NotificationHelper.F12("文化", data.ProjectName, setting.PhaseName, data.UserAccount);
         }
 
         return new {};
@@ -763,7 +768,9 @@ public class CultureService : BaseService
             }
 
             var data = getProject(progress.PID);
-            
+
+            OFS_TaskQueueHelper.UpdateTaskStatus(data.ProjectID, "MonthlyReport", 1, 1);
+
             NotificationHelper.G1("文化", data.ProjectName, $"{progress.Month}月進度回報", data.Organizer);
         }
 

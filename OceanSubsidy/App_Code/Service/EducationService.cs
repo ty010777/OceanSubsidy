@@ -25,7 +25,7 @@ public class EducationService : BaseService
             Reason = param["Reason"].ToString()
         });
 
-        // TODO: 請完成計畫變更
+        OFS_TaskQueueHelper.UpdateTaskStatus(data.ProjectID, "Change", 1, 0);
 
         return new {};
     }
@@ -173,7 +173,7 @@ public class EducationService : BaseService
 
                 NotificationHelper.G4("學校民間", data.ProjectName, "計畫變更申請", data.UserAccount);
 
-                // TODO: 計畫變更已通過
+                OFS_TaskQueueHelper.UpdateTaskStatus(data.ProjectID, "Change", 1, 1);
             }
 
             OFSProjectChangeRecordHelper.update(apply);
@@ -221,7 +221,7 @@ public class EducationService : BaseService
         {
             NotificationHelper.G6("學校民間", data.ProjectName, setting.PhaseName, payment.CurrentActualPaidAmount, payment.ReviewerComment, data.UserAccount);
 
-            // TODO: 請款已完成
+            OFS_TaskQueueHelper.UpdateTaskStatus(data.ProjectID, "Payment", 1, 1);
         }
         else
         {
@@ -263,9 +263,14 @@ public class EducationService : BaseService
         }
         else
         {
+            OFS_TaskQueueHelper.UpdateTaskStatus(data.ProjectID, "Report", 1, 1);
+            OFS_TaskQueueHelper.UpdateTaskStatus(data.ProjectID, "Payment", 1, 0);
+
             NotificationHelper.G5("學校民間", data.ProjectName, eventName, data.UserAccount);
 
-            // TODO: 成果報告已通過
+            var setting = OFS_SciReimbursementHelper.GetPaymentPhaseSettings("EDC").FirstOrDefault(d => d.PhaseOrder == 1);
+
+            NotificationHelper.F12("學校民間", data.ProjectName, setting.PhaseName, data.UserAccount);
         }
 
         return new {};

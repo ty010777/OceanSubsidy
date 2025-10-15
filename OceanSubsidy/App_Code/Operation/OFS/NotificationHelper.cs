@@ -1,10 +1,39 @@
 using GS.Data.Sql;
+using System;
 using System.Configuration;
 using System.Data;
 using System.Linq;
 
 public class NotificationHelper
 {
+    public static void F2(string category, string projectName, string eventName, string account, int? organizer)
+    {
+        toAll(
+            "［海洋委員會］執行計畫案 進度落後提醒",
+            $"您好：<br><br>{category}類執行計畫「{projectName}」，<br>「{eventName}」已逾期未完成，請盡速至［計畫執行］內填報資料並完成提送。",
+            account,
+            organizer
+        );
+    }
+
+    public static void F11(string category, string projectName, string eventName, DateTime deadline, string account)
+    {
+        toUser(
+            "［海洋委員會］執行計畫案 資料填報提醒",
+            $"您好：<br><br>{category}類執行計畫「{projectName}」，<br>提醒您於 {deadline.Year - 1911}/{deadline.Month:D2}/{deadline.Day:D2} 前至［計畫執行］填報「{eventName}」資料並提送，感謝配合。<br><br>（若已提送資料，請忽略此通知）",
+            account
+        );
+    }
+
+    public static void F12(string category, string projectName, string eventName, string account)
+    {
+        toUser(
+            "［海洋委員會］執行計畫案 資料填報提醒",
+            $"您好：<br><br>{category}類執行計畫「{projectName}」，<br>提醒您至［計畫執行］填報「{eventName}」資料並提送，感謝配合。<br><br>（若已提送資料，請忽略此通知）",
+            account
+        );
+    }
+
     public static void G1(string category, string projectName, string eventName, int? organizer)
     {
         toOrganizer(
@@ -97,6 +126,11 @@ public class NotificationHelper
         ";
 
         return string.Join(",", db.GetTable().Rows.Cast<DataRow>().Select(row => row.Field<string>("Account")).ToList());
+    }
+
+    private static void toAll(string subject, string content, string account, int? organizer)
+    {
+        EmailApiHelper.Send(account + "," + queryOrganizers(organizer), subject, content + getFooter(), querySysAdmin());
     }
 
     private static void toOrganizer(string subject, string content, int? organizer)

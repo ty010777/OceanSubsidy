@@ -1,6 +1,8 @@
 using GS.Data.Sql;
 using System;
+using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 
 public class OFS_EdcProjectHelper
 {
@@ -70,6 +72,24 @@ public class OFS_EdcProjectHelper
         var table = db.GetTable();
 
         return table.Rows.Count == 1 ? toModel(table.Rows[0]) : null;
+    }
+
+    public static List<string> GetInprogressProjectIds(int year)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            SELECT [ProjectID]
+              FROM [OFS_EDC_Project]
+             WHERE [Year] = @Year
+               AND [IsExists] = 1
+               AND [IsWithdrawal] = 0
+               AND [ProgressStatus] = 5
+        ";
+
+        db.Parameters.Add("@Year", year);
+
+        return db.GetTable().Rows.Cast<DataRow>().Select(row => row.Field<string>("ProjectID")).ToList();
     }
 
     public static string getUserAccount(string projectID)
