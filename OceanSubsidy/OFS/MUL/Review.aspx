@@ -9,10 +9,10 @@
         <div class="top-wrapper">
             <div class="top-block">
                 <project-organizer :id="id" type="multiple"></project-organizer>
-                <button class="btn btn-teal-dark" type="button">
+                <a class="btn btn-teal-dark" download :href="`../../Service/OFS/DownloadPdf.ashx?Type=MUL&ProjectID=${id}&Version=1`">
                     <i class="fa-solid fa-download"></i>
                     下載計劃書
-                </button>
+                </a>
             </div>
         </div>
         <multiple-progress-bar class="scroll-sticky-top" @click="change" :id="id" review :step="current"></multiple-progress-bar>

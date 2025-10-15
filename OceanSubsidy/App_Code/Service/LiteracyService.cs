@@ -1,10 +1,12 @@
 ﻿using GS.OCA_OceanSubsidy.Entity;
 using GS.OCA_OceanSubsidy.Model.OFS;
 using GS.OCA_OceanSubsidy.Operation.OFS;
+using GS.OCA_OceanSubsidy.Operation.OSI.OpenXml;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Web;
 
@@ -452,6 +454,7 @@ public class LiteracyService : BaseService
     {
         var id = getID(param["ID"].ToString());
         var data = getProject(id, new int[] {1,14}, true); //編輯中,補正補件 | 變更申請
+        bool submit = bool.Parse(param["Submit"].ToString());
 
         if (data.IsProjChanged)
         {
@@ -462,18 +465,21 @@ public class LiteracyService : BaseService
                 apply.Form5Before = param["Before"].ToString();
                 apply.Form5After = param["After"].ToString();
 
-                if (bool.Parse(param["Submit"].ToString()))
+                if (submit)
                 {
                     apply.Status = 2; //待審核
                 }
 
                 OFSProjectChangeRecordHelper.update(apply);
 
-                NotificationHelper.G2("素養", data.ProjectName, "計畫變更申請", data.Organizer);
+                if (apply.Status == 2)
+                {
+                    NotificationHelper.G2("素養", data.ProjectName, "計畫變更申請", data.Organizer);
+                }
             }
         }
 
-        if (bool.Parse(param["Submit"].ToString()))
+        if (submit)
         {
             if (data.Status == 1)
             {
@@ -505,6 +511,19 @@ public class LiteracyService : BaseService
                 item.PID = id;
 
                 OFS_LitAttachmentHelper.insert(item);
+            }
+        }
+
+        if (submit)
+        {
+            if (data.Status == 1 || data.Status == 14)
+            {
+                mergePdfFiles(data, "送審版", context);
+                mergePdfFiles(data, "核定版", context);
+            }
+            else if (data.IsProjChanged)
+            {
+                mergePdfFiles(data, "計畫變更最新版", context);
             }
         }
 
@@ -852,6 +871,22 @@ public class LiteracyService : BaseService
         snapshot = project.ProgressStatus >= 5 && bool.Parse(param["Apply"].ToString()) ? getSnapshot("LIT", project.ID) : null;
 
         return project;
+    }
+
+    private void mergePdfFiles(OFS_LitProject data, string version, HttpContext context)
+    {
+        var prefix = Path.GetFullPath(Path.Combine(context.Server.MapPath("~"), ".."));
+        var paths = OFS_LitAttachmentHelper.query(data.ID).Select(d => Path.Combine(prefix, "UploadFiles", "files", d.Path)).ToList();
+
+        string filename = $"{data.ProjectID}_{version}.pdf";
+        string folder = Path.Combine(prefix, "UploadFiles", "OFS", "LIT", data.ProjectID);
+
+        if (!Directory.Exists(folder))
+        {
+            Directory.CreateDirectory(folder);
+        }
+
+        PdfHelper.MergePdfs(paths, Path.Combine(folder, filename));
     }
 
     private void snapshot(int id)
