@@ -8,7 +8,7 @@
                     <tr>
                         <th width="70" class="text-center">附件編號</th>
                         <th>附件名稱</th>
-                        <th class="text-center">狀態</th>
+                        <th class="text-center" v-if="editable">狀態</th>
                         <th>上傳附件</th>
                     </tr>
                 </thead>
@@ -90,7 +90,7 @@
                 doc.Uploaded = computed(() => doc.Files.filter((file) => !file.Deleted).length);
             });
 
-            editable.value = !report.value.Status || report.value.Status === "暫存";
+            editable.value = !report.value.Status || report.value.Status === "暫存" || report.value.Status === "退回修正";
 
             version = report.value?.Reviewer ? "修訂版" : "初版";
 

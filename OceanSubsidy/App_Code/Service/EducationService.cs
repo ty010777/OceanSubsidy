@@ -585,7 +585,7 @@ public class EducationService : BaseService
 
     private OFS_EdcProject getProject(JObject param, out JObject snapshot)
     {
-        var project = OFS_EdcProjectHelper.get(getID(param["ID"].ToString()));
+        var project = getProject(getID(param["ID"].ToString()));
 
         snapshot = project.ProgressStatus >= 5 && bool.Parse(param["Apply"].ToString()) ? getSnapshot("EDC", project.ID) : null;
 

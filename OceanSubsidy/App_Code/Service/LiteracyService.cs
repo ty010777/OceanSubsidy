@@ -847,7 +847,7 @@ public class LiteracyService : BaseService
 
     private OFS_LitProject getProject(JObject param, out JObject snapshot)
     {
-        var project = OFS_LitProjectHelper.get(getID(param["ID"].ToString()));
+        var project = getProject(getID(param["ID"].ToString()));
 
         snapshot = project.ProgressStatus >= 5 && bool.Parse(param["Apply"].ToString()) ? getSnapshot("LIT", project.ID) : null;
 

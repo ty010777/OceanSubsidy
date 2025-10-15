@@ -904,7 +904,7 @@ public class AccessibilityService : BaseService
 
     private OFS_AccProject getProject(JObject param, out JObject snapshot)
     {
-        var project = OFS_AccProjectHelper.get(getID(param["ID"].ToString()));
+        var project = getProject(getID(param["ID"].ToString()));
 
         snapshot = project.ProgressStatus >= 5 && bool.Parse(param["Apply"].ToString()) ? getSnapshot("ACC", project.ID) : null;
 
