@@ -47,7 +47,7 @@
             return;
         }
 
-        form.Stage = props.stage;
+        form.value.Stage = props.stage;
 
         api[props.type]("reviewReport", form.value).subscribe((res) => {
             if (res) {

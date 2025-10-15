@@ -897,7 +897,7 @@ public class MultipleService : BaseService
 
     private OFS_MulProject getProject(JObject param, out JObject snapshot)
     {
-        var project = OFS_MulProjectHelper.get(getID(param["ID"].ToString()));
+        var project = getProject(getID(param["ID"].ToString()));
 
         snapshot = project.ProgressStatus >= 5 && bool.Parse(param["Apply"].ToString()) ? getSnapshot("MUL", project.ID) : null;
 

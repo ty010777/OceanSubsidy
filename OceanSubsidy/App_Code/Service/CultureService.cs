@@ -1106,7 +1106,7 @@ public class CultureService : BaseService
 
     private OFS_CulProject getProject(JObject param, out JObject snapshot)
     {
-        var project = OFS_CulProjectHelper.get(getID(param["ID"].ToString()));
+        var project = getProject(getID(param["ID"].ToString()));
 
         snapshot = project.ProgressStatus >= 5 && bool.Parse(param["Apply"].ToString()) ? getSnapshot("CUL", project.ID) : null;
 

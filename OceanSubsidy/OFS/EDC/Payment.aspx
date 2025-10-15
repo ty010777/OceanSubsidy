@@ -13,7 +13,7 @@
 </asp:Content>
 
 <asp:Content ContentPlaceHolderID="FloatContent" runat="server">
-    <project-payment-review type="education"></project-payment-review>
+    <project-payment-review :id="id" type="education"></project-payment-review>
     <script>
         setupVueApp({
             setup() {
