@@ -307,6 +307,8 @@ public partial class OFS_CLB_ClbApproved : System.Web.UI.Page
                 ShowSweetAlert("錯誤", "找不到計畫變更記錄", "error");
                 return;
             }
+            var basicData = OFS_ClbApplicationHelper.GetBasicData(ProjectID);
+            var projectMainData = OFS_ClbApplicationHelper.GetProjectMainData(ProjectID);
 
             // 根據審核結果更新狀態
             if (reviewResult == "approve")
@@ -330,7 +332,30 @@ public partial class OFS_CLB_ClbApproved : System.Web.UI.Page
 
             // 更新變更記錄
             OFSProjectChangeRecordHelper.update(changeRecord);
-
+            
+            // 根據審核結果寄送通知信
+            if (reviewResult == "approve")
+            {
+                
+                if (basicData != null && projectMainData != null)
+                {
+                    string projectName = basicData.ProjectNameTw;
+                    string UserAccount = projectMainData.UserAccount;
+                    
+                    // 寄送通知信
+                    NotificationHelper.G4("社團", projectName, "計畫變更申請", UserAccount);
+                }
+            }
+            else if (reviewResult == "reject")
+            {
+                if (basicData != null && projectMainData != null)
+                {
+                    string projectName = basicData.ProjectNameTw;
+                    string UserAccount = projectMainData.UserAccount;
+                    // 寄送通知信
+                    NotificationHelper.G3("社團", projectName, "計畫變更申請", reviewNotes,UserAccount);
+                }
+            }
             // 顯示成功訊息並重新載入頁面
             string successMessage = reviewResult == "approve" ? "計畫變更已通過審核" : "計畫變更已退回修改";
             ShowSweetAlert("成功", successMessage, "success");

@@ -763,7 +763,7 @@ public class CultureService : BaseService
             }
 
             var data = getProject(progress.PID);
-
+            
             NotificationHelper.G1("文化", data.ProjectName, $"{progress.Month}月進度回報", data.Organizer);
         }
 

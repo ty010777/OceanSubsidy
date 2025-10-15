@@ -13,9 +13,7 @@ public class OSIActivityFilesHelper
 {
     public OSIActivityFilesHelper()
     {
-        //
-        // TODO: 在這裡新增建構函式邏輯
-        //
+       
     }
 
     /// <summary>

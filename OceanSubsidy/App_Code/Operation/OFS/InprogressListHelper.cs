@@ -13,9 +13,7 @@ public class InprogressListHelper
 {
     public InprogressListHelper()
     {
-        //
-        // TODO: 在這裡新增建構函式邏輯
-        //
+       
     }
 
    

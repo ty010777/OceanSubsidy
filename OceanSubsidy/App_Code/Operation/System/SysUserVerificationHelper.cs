@@ -12,9 +12,7 @@ public class SysUserVerificationHelper
 {
     public SysUserVerificationHelper()
     {
-        //
-        // TODO: 在這裡新增建構函式邏輯
-        //
+       
     }
 
     /// <summary>

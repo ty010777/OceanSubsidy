@@ -1100,6 +1100,30 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
                     }
                     ExecuteProjectChange(projectID, ProjectName);
 
+                    // 取得計畫資料並寄信
+                    try
+                    {
+                        // 取得計畫名稱
+                        // var basicData = OFS_ClbApplicationHelper.GetBasicData(projectID);
+                        var projectMainData = OFS_ClbApplicationHelper.GetProjectMainData(projectID);
+
+                        if (basicData != null && projectMainData != null)
+                        {
+                            string projectName = basicData.ProjectNameTw;
+                            string supervisoryAccount = projectMainData.SupervisoryPersonAccount;
+
+                            // 根據承辦人帳號取得 UserID
+                            int? organizer = SysUserHelper.GetUserIDByAccount(supervisoryAccount);
+
+                            // 寄送通知信
+                            NotificationHelper.G2("社團", projectName, "計畫變更申請", organizer);
+                        }
+                    }
+                    catch (Exception emailEx)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"寄送通知信時發生錯誤: {emailEx.Message}");
+                        // 寄信失敗不影響主要流程
+                    }
                 }
                 else
                 {

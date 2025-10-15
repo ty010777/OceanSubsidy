@@ -21,9 +21,7 @@ public class ReviewCheckListHelper
 {
     public ReviewCheckListHelper()
     {
-        //
-        // TODO: 在這裡新增建構函式邏輯
-        //
+       
     }
 
     #region 批次匯出簡報功能

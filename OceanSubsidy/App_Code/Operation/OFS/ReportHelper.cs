@@ -192,7 +192,7 @@ SELECT O.[Year]
 						'學校社團' AS Category,
 						ProjectNameTw AS [ProjectName],
 						UserOrg ,
-						PM.ApprovedSubsidy AS ApprovedAmount,
+						ISNULL(PM.ApprovedSubsidy,0) AS ApprovedAmount,
 						ISNULL(AF.SubsidyFunds,0) AS ApplyAmount,
 						ISNULL(SelfFunds,0) + ISNULL(OtherGovFunds,0) + ISNULL(OtherUnitFunds,0) AS [OtherAmount],
 						ISNULL(CP.TotalSpentAmount,0) AS SpendAmount,
@@ -226,19 +226,19 @@ SELECT O.[Year]
 
         return db.GetTable().Rows.Cast<DataRow>().Select(row => new ApplyPlan
         {
-            Year = row.Field<int>("Year"),
+            Year = Convert.ToInt32(row["Year"]),
             ProjectID = row.Field<string>("ProjectID"),
             Category = row.Field<string>("Category"),
             ProjectName = row.Field<string>("ProjectName"),
             UserOrg = row.Field<string>("UserOrg"),
-            ApprovedAmount = row.Field<int>("ApprovedAmount"),
-            ApplyAmount = row.Field<int>("ApplyAmount"),
-            OtherAmount = row.Field<int>("OtherAmount"),
-            SpendAmount = row.Field<int>("SpendAmount"),
-            PaymentAmount = row.Field<int>("PaymentAmount"),
+            ApprovedAmount = Convert.ToInt32(row["ApprovedAmount"]),
+            ApplyAmount = Convert.ToInt32(row["ApplyAmount"]),
+            OtherAmount = Convert.ToInt32(row["OtherAmount"]),
+            SpendAmount = Convert.ToInt32(row["SpendAmount"]),
+            PaymentAmount = Convert.ToInt32(row["PaymentAmount"]),
             SupervisoryUnit = row.Field<string>("SupervisoryUnit"),
             StageName = row.Field<string>("StageName"),
-            Status = row.Field<int>("Status"),
+            Status = Convert.ToInt32(row["Status"]),
             StatusName = row.Field<string>("StatusName")
         }).ToList();
     }
@@ -341,7 +341,7 @@ SELECT O.[Year]
         return db.GetTable().Rows.Cast<DataRow>().Select(row => new ApplyPlan
         {
             ProjectID = row.Field<string>("ProjectID"),
-            Status = row.Field<int>("Status")
+            Status = Convert.ToInt32(row["Status"])
         }).ToList();
     }
 
@@ -442,13 +442,13 @@ SELECT O.[Year]
 
         return db.GetTable().Rows.Cast<DataRow>().Select(row => new ApplyPlan
         {
-            Year = row.Field<int>("Year"),
+            Year = Convert.ToInt32(row["Year"]),
             Category = row.Field<string>("TypeCode"),
-            ApprovedAmount = row.Field<int>("ApprovedAmount"),
-            SpendAmount = row.Field<int>("SpendAmount"),
-            PaymentAmount = row.Field<int>("PaymentAmount"),
-            Count = row.Field<int>("Count"),
-            BudgetFees = row.Field<int>("BudgetFees")
+            ApprovedAmount = Convert.ToInt32(row["ApprovedAmount"]),
+            SpendAmount = Convert.ToInt32(row["SpendAmount"]),
+            PaymentAmount = Convert.ToInt32(row["PaymentAmount"]),
+            Count = Convert.ToInt32(row["Count"]),
+            BudgetFees = Convert.ToInt32(row["BudgetFees"])
         }).ToList();
     }
 }

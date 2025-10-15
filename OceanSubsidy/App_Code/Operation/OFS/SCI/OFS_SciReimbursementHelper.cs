@@ -220,7 +220,7 @@ public class OFS_SciReimbursementHelper
     /// <param name="projectID">專案ID</param>
     /// <param name="phaseOrder">期別序號</param>
     /// <returns>是否成功</returns>
-    public static void SubmitReimbursement(string projectID, int phaseOrder)
+    public static void SubmitReimbursement(string projectID)
     {
         if (string.IsNullOrEmpty(projectID))
             throw new ArgumentException("專案ID不可為空");

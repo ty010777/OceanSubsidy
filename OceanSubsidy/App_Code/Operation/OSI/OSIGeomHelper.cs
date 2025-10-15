@@ -13,9 +13,7 @@ public class OSIGeomHelper
 {
     public OSIGeomHelper()
     {
-        //
-        // TODO: 在這裡新增建構函式邏輯
-        //
+        
     }
 
 

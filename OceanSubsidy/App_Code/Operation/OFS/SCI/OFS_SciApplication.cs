@@ -15,9 +15,7 @@ public class OFS_SciApplicationHelper
 {
     public OFS_SciApplicationHelper()
     {
-        //
-        // TODO: 在這裡新增建構函式邏輯
-        //
+       
     }
 
 

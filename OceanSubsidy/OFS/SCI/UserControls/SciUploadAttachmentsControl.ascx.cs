@@ -608,6 +608,23 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
 
                     // 3.4 產生新的「計畫變更最新版」PDF
                     MergePdfFiles(ProjectID, orgCategory, ProjectName, latestFileNameSuffix);
+                    
+                    // 4. 寄信通知相關人員
+                    var projectMain = OFS_SciApplicationHelper.getVersionByProjectID(ProjectID);
+
+                    if (applicationMain != null && projectMain != null)
+                    {
+                        string projectName = applicationMain.ProjectNameTw;
+                        string supervisoryAccount = projectMain.SupervisoryPersonAccount;
+
+                        // 根據承辦人帳號取得 UserID
+                        int? organizer = SysUserHelper.GetUserIDByAccount(supervisoryAccount);
+
+                        // 寄送通知信
+                        NotificationHelper.G2("科專", projectName, "計畫變更申請", organizer);
+                    }
+
+                    
                 }
                 else //申請階段
                 {
@@ -619,11 +636,12 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
                     MergePdfFiles(ProjectID, orgCategory,ProjectName, "送審版");
                     MergePdfFiles(ProjectID, orgCategory,ProjectName, "核定版");
                 }
+                
+                
             }
-            catch (Exception pdfEx)
+            catch (Exception Ex)
             {
-                // PDF 合併錯誤不影響主要流程，但會記錄錯誤
-                System.Diagnostics.Debug.WriteLine($"PDF 合併錯誤：{pdfEx.Message}");
+                System.Diagnostics.Debug.WriteLine($"{Ex.Message}");
             }
 
             // 判斷當前頁面是否為 SciInprogress_Approved.aspx

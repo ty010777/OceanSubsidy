@@ -595,12 +595,34 @@ public partial class OFS_SCI_SciMonthlyExecutionReport : System.Web.UI.Page
                 OFS_ScienceTaskHelper.CompleteMonthlyReportTask(projectID);
             }
 
-            // TODO: 實作寄信功能
-            // 目前暫時跳過寄信，直接回傳成功並附上寄信提示
-            
-            return new { 
-                success = true, 
-                message = "資料提送成功", 
+            // 取得計畫資料並寄信
+            try
+            {
+                // 取得計畫名稱
+                var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
+                var projectMain = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
+
+                if (applicationMain != null && projectMain != null)
+                {
+                    string projectName = applicationMain.ProjectNameTw;
+                    string supervisoryAccount = projectMain.SupervisoryPersonAccount;
+
+                    // 根據承辦人帳號取得 UserID
+                    int? organizer = SysUserHelper.GetUserIDByAccount(supervisoryAccount);
+
+                    // 寄送通知信
+                    NotificationHelper.G1("科專", projectName, $"{month}月進度回報", organizer);
+                }
+            }
+            catch (Exception emailEx)
+            {
+                System.Diagnostics.Debug.WriteLine($"寄送通知信時發生錯誤: {emailEx.Message}");
+                // 寄信失敗不影響主要流程
+            }
+
+            return new {
+                success = true,
+                message = "資料提送成功",
                 emailNotification = "系統將自動寄送通知信給相關人員",
                 shouldReload = true  // 告訴前端需要重新載入頁面
             };

@@ -15,9 +15,7 @@ public class OFS_SciRecusedList : System.Web.UI.Page
 {
     public OFS_SciRecusedList()
     {
-        //
-        // TODO: 在這裡新增建構函式邏輯
-        //
+       
     }
         public static void ReplaceRecusedList(List<OFS_SCI_Other_Recused> recusedList, string ProjectID, bool chkNoAvoidance)
         {

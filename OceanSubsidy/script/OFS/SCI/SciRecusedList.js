@@ -440,7 +440,7 @@ class TechDiagramManager {
         uploadBtn.disabled = true;
 
         // 使用 fetch 進行上傳
-        fetch('/Service/SCI_Upload.ashx', {
+        fetch(window.AppRootPath+'/Service/SCI_Upload.ashx', {
             method: 'POST',
             body: formData
         })

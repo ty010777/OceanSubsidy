@@ -228,12 +228,32 @@ public partial class OFS_SCI_SciReimbursement : System.Web.UI.Page
             if (!isDraft)
             {
                 // 只有提送時才更新專案狀態為審核中
-                OFS_SciReimbursementHelper.SubmitReimbursement(projectID, phaseOrder);
+                OFS_SciReimbursementHelper.SubmitReimbursement(projectID);
             }
             
             // 處理OFS_SCI_Payment資料
             string status = isDraft ? "請款中" : "審核中";
             OFS_SciReimbursementHelper.ProcessPaymentData(projectID, phaseOrder, currentRequestAmount, accumulatedAmount, status);
+            
+            
+            // 寄信通知審核
+            if (!isDraft)
+            {
+                var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
+                var projectMain = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
+
+                if (applicationMain != null && projectMain != null)
+                {
+                    string projectName = applicationMain.ProjectNameTw;
+                    string supervisoryAccount = projectMain.SupervisoryPersonAccount;
+
+                    // 根據承辦人帳號取得 UserID
+                    int? organizer = SysUserHelper.GetUserIDByAccount(supervisoryAccount);
+
+                    // 寄送通知信
+                    NotificationHelper.G2("科專", projectName, $"第{phaseOrder}期請款", organizer);
+                }
+            }
             
             string message = isDraft ? "請款資料暫存成功" : "請款提送成功";
             return new { Success = true, Message = message };
@@ -274,6 +294,27 @@ public partial class OFS_SCI_SciReimbursement : System.Web.UI.Page
                 InprogressListHelper.UpdateLastOperation(projectID, $"已完成第{phaseOrder}期請款");
                 InprogressListHelper.UpdateTaskCompleted(projectID, $"Payment{phaseOrder}", true);
             }
+            
+            //根據是否通過寄信
+            var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
+            var projectMain = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
+
+            if (applicationMain != null && projectMain != null)
+            {
+                string projectName = applicationMain.ProjectNameTw;
+                string UserAccount = projectMain.UserAccount;
+                if (reviewResult == "pass")
+                {
+                    // 寄送通知信
+                    NotificationHelper.G6("科專", projectName, $"第{phaseOrder}期請款", currentPayment, reviewComment, UserAccount);
+                }
+                else
+                {
+                    NotificationHelper.G3("科專", projectName, $"第{phaseOrder}期請款", reviewComment, UserAccount);
+                }
+            
+            }
+            
             return new { Success = true, Message = "審查結果已成功儲存" };
         }
         catch (Exception ex)

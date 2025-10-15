@@ -12,9 +12,7 @@ public class OSIExecutorCategoriesHelper
 {
     public OSIExecutorCategoriesHelper()
     {
-        //
-        // TODO: 在這裡新增建構函式邏輯
-        //
+        
     }
 
     /// <summary>

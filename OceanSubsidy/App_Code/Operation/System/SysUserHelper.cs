@@ -19,9 +19,7 @@ public class SysUserHelper
 {
     public SysUserHelper()
     {
-        //
-        // TODO: 在這裡新增建構函式邏輯
-        //
+       
     }
 
     /// <summary>
@@ -1345,5 +1343,41 @@ VALUES (@UserID,@RoleID)";
             return false;
         }
 
+    }
+
+    /// <summary>
+    /// 根據帳號取得 UserID
+    /// </summary>
+    /// <param name="account">使用者帳號</param>
+    /// <returns>UserID，若查無資料則回傳 null</returns>
+    public static int? GetUserIDByAccount(string account)
+    {
+        if (string.IsNullOrEmpty(account))
+        {
+            return null;
+        }
+
+        DbHelper db = new DbHelper();
+        db.CommandText = "SELECT UserID FROM [Sys_User] WHERE [Account] = @Account";
+        db.Parameters.Add("@Account", account);
+
+        try
+        {
+            DataTable dt = db.GetTable();
+            if (dt != null && dt.Rows.Count > 0 && dt.Rows[0]["UserID"] != DBNull.Value)
+            {
+                return Convert.ToInt32(dt.Rows[0]["UserID"]);
+            }
+            return null;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"GetUserIDByAccount 發生錯誤: {ex.Message}");
+            return null;
+        }
+        finally
+        {
+            db.Dispose();
+        }
     }
 }

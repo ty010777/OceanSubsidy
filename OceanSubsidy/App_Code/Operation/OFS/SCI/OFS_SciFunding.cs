@@ -14,9 +14,7 @@ public class OFS_SciFundingHelper
 {
     public OFS_SciFundingHelper()
     {
-        //
-        // TODO: 在這裡新增建構函式邏輯
-        //
+      
     }
 
 

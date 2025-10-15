@@ -15,9 +15,7 @@ public class OSIVesselRiskCategoryHelper
 {
     public OSIVesselRiskCategoryHelper()
     {
-        //
-        // TODO: 在這裡新增建構函式邏輯
-        //
+       
     }
 
     /// <summary>

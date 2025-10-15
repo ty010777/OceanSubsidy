@@ -14,9 +14,7 @@ public class OFS_SciOutcomeHelper : System.Web.UI.Page
 {
     public OFS_SciOutcomeHelper()
     {
-        //
-        // TODO: 在這裡新增建構函式邏輯
-        //
+     
     }
 public static OFS_SCI_Outcomes GetOutcomeData(string ProjectID)
 {

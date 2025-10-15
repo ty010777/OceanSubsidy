@@ -154,17 +154,43 @@ public partial class OFS_SCI_SciInprogress_Contract : System.Web.UI.Page
                     contractDate = parsedDate;
                 }
             }
-
+            
             // 儲存到資料庫
             OFS_SciApplicationHelper.updateContractData(ProjectID, txtDocumentNumber.Text.Trim(), contractDate);
             if (isSubmit)
             {
                 InprogressListHelper.UpdateLastOperation(ProjectID, "已完成契約資料");
                 InprogressListHelper.UpdateTaskCompleted(ProjectID,"Contract", true);
+
+                // 取得計畫資料並寄信
+                try
+                {
+                    // 取得計畫名稱
+                    var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(ProjectID);
+
+                    if (applicationMain != null && projectMain != null)
+                    {
+                        string projectName = applicationMain.ProjectNameTw;
+                        string supervisoryAccount = projectMain.SupervisoryPersonAccount;
+
+                        // 根據承辦人帳號取得 UserID
+                        int? organizer = SysUserHelper.GetUserIDByAccount(supervisoryAccount);
+
+                        // 寄送通知信
+                        NotificationHelper.G1("科專", projectName, "契約資料階段", organizer);
+                    }
+                }
+                catch (Exception emailEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"寄送通知信時發生錯誤: {emailEx.Message}");
+                    // 寄信失敗不影響主要流程
+                }
             }
+
+
             // 顯示成功訊息
             string message = isSubmit ? "契約資料提送成功" : "契約資料暫存成功";
-            ScriptManager.RegisterStartupScript(this, GetType(), "success", 
+            ScriptManager.RegisterStartupScript(this, GetType(), "success",
                 $"alert('{message}');", true);
 
             return true;

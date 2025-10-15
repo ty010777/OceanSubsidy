@@ -12,9 +12,7 @@ public class OSIMapCountyHelper
 {
     public OSIMapCountyHelper()
     {
-        //
-        // TODO: 在這裡新增建構函式邏輯
-        //
+        
     }
 
     public static GisTable QueryAll()

@@ -10,9 +10,7 @@ public class SessionHelper
 {
     public SessionHelper()
     {
-        //
-        // TODO: 在這裡新增建構函式邏輯
-        //
+      
     }
 
     // ── 一、所有的 Key 常數 ──────────────────────────

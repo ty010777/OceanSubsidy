@@ -257,7 +257,22 @@ public partial class OFS_SCI_SciInterimReport : System.Web.UI.Page
             // 呼叫 Helper 方法處理資料庫操作
             OFS_SciInterimReportHelper.SubmitStageExam(projectID, stage, status);
             InprogressListHelper.UpdateTaskCompleted(projectID, TaskNameEn, true);
+           
+            // 寄信通知審核
+            var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
+            var projectMain = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
 
+            if (applicationMain != null && projectMain != null)
+            {
+                string projectName = applicationMain.ProjectNameTw;
+                string supervisoryAccount = projectMain.SupervisoryPersonAccount;
+
+                // 根據承辦人帳號取得 UserID
+                int? organizer = SysUserHelper.GetUserIDByAccount(supervisoryAccount);
+
+                // 寄送通知信
+                NotificationHelper.G2("科專", projectName, $"{stageName}", organizer);
+            }
             return new { Success = true, Message = $"{stageName}提送成功" };
         }
         catch (Exception ex)
@@ -358,6 +373,29 @@ public partial class OFS_SCI_SciInterimReport : System.Web.UI.Page
             {
                 InprogressListHelper.UpdateTaskCompleted(projectID, TaskNameEn, false);
             }
+            
+            // 寄信通知結果
+            var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
+            var projectMain = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
+            if (applicationMain != null && projectMain != null)
+            {
+                string projectName = applicationMain.ProjectNameTw;
+                string UserAccount = projectMain.UserAccount;
+                if (reviewResult == "pass")
+                {
+
+                    NotificationHelper.G5("科專", projectName, $"{stageName}報告階段", UserAccount);
+                }
+                else
+                {
+                    NotificationHelper.G3("科專", projectName, $"{stageName}報告階段", reviewComment,UserAccount);
+
+                }
+            }
+
+            
+
+            
             return new { Success = true, Message = $"{stageName}審核完成" };
         }
         catch (Exception ex)

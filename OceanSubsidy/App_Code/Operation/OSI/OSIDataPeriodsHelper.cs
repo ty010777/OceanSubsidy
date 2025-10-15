@@ -15,9 +15,7 @@ public class OSIDataPeriodsHelper
 {
     public OSIDataPeriodsHelper()
     {
-        //
-        // TODO: 在這裡新增建構函式邏輯
-        //
+       
     }
 
     /// <summary>

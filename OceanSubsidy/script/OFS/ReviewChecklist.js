@@ -802,7 +802,8 @@ window.ReviewChecklist = (function() {
         const formattedReq_SubsidyAmount = formatAmount(item.Req_SubsidyAmount);
         const year = item.Year || '';
         const totalScore = item.TotalScore || '';
-        const approvedSubsidy = item.ApprovedSubsidy || '';
+        // 將核定金費轉換為整數，移除小數點
+        const approvedSubsidy = item.ApprovedSubsidy ? parseInt(item.ApprovedSubsidy, 10) : '';
         const finalReviewNotes = item.FinalReviewNotes || '';
         const statusesName = item.StatusesName || '';
 
@@ -834,7 +835,7 @@ window.ReviewChecklist = (function() {
                 <td data-th="總分:" nowrap>${totalScore}</td>
                 <td data-th="申請經費:" width="120" style="text-align: center; text-wrap: nowrap;">${formattedReq_SubsidyAmount}</td>
                 <td data-th="核定經費:">
-                    <input type="text" class="form-control" value="${approvedSubsidy}" style="width: 160px;" data-project-id="${item.ProjectID || ''}" data-field="ApprovedSubsidy">
+                    <input type="text" class="form-control" value="${approvedSubsidy}" style="width: 160px;" data-project-id="${item.ProjectID || ''}" data-field="ApprovedSubsidy" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                 </td>
                 <td data-th="備註:">
                     <input type="text" class="form-control" value="${finalReviewNotes}" data-project-id="${item.ProjectID || ''}" data-field="FinalReviewNotes">

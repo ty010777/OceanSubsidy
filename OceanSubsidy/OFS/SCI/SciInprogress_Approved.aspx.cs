@@ -522,94 +522,94 @@ public partial class OFS_SCI_SciInprogress_Approved : System.Web.UI.Page
     /// <summary>
     /// 渲染變更說明到 UserControl 的 ucChangeDescription 元件
     /// </summary>
-    private void RenderChangeDescriptionToControl(Control userControl, string changeBefore, string changeAfter, string controlName)
-    {
-        try
-        {
-            // 根據 controlName 取得對應的 ChangeDescriptionControl ID
-            string changeDescriptionControlID = GetChangeDescriptionControlID(controlName);
+    // private void RenderChangeDescriptionToControl(Control userControl, string changeBefore, string changeAfter, string controlName)
+    // {
+    //     try
+    //     {
+    //         // 根據 controlName 取得對應的 ChangeDescriptionControl ID
+    //         string changeDescriptionControlID = GetChangeDescriptionControlID(controlName);
+    //
+    //         // 在 UserControl 中尋找 ChangeDescriptionControl 元件
+    //         Control changeDescriptionControl = userControl.FindControl(changeDescriptionControlID);
+    //
+    //         if (changeDescriptionControl != null)
+    //         {
+    //             // 根據 controlName 設定對應的 SourcePage
+    //             string sourcePage = GetSourcePageByControlName(controlName);
+    //
+    //             // 使用反射設定 SourcePage 屬性
+    //             var sourcePageProperty = changeDescriptionControl.GetType().GetProperty("SourcePage");
+    //             if (sourcePageProperty != null)
+    //             {
+    //                 sourcePageProperty.SetValue(changeDescriptionControl, sourcePage);
+    //             }
+    //
+    //             // 使用反射設定 ChangeBefore 和 ChangeAfter 屬性
+    //             var changeBeforeProperty = changeDescriptionControl.GetType().GetProperty("ChangeBefore");
+    //             var changeAfterProperty = changeDescriptionControl.GetType().GetProperty("ChangeAfter");
+    //
+    //             if (changeBeforeProperty != null && changeAfterProperty != null)
+    //             {
+    //                 changeBeforeProperty.SetValue(changeDescriptionControl, changeBefore ?? "");
+    //                 changeAfterProperty.SetValue(changeDescriptionControl, changeAfter ?? "");
+    //
+    //                 System.Diagnostics.Debug.WriteLine($"已渲染 {controlName} ({sourcePage}) 的變更說明: Before={changeBefore}, After={changeAfter}");
+    //             }
+    //         }
+    //         else
+    //         {
+    //             System.Diagnostics.Debug.WriteLine($"找不到 ChangeDescriptionControl: {changeDescriptionControlID}");
+    //         }
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         HandleException(ex, $"渲染 {controlName} 變更說明時發生錯誤");
+    //     }
+    // }
 
-            // 在 UserControl 中尋找 ChangeDescriptionControl 元件
-            Control changeDescriptionControl = userControl.FindControl(changeDescriptionControlID);
-
-            if (changeDescriptionControl != null)
-            {
-                // 根據 controlName 設定對應的 SourcePage
-                string sourcePage = GetSourcePageByControlName(controlName);
-
-                // 使用反射設定 SourcePage 屬性
-                var sourcePageProperty = changeDescriptionControl.GetType().GetProperty("SourcePage");
-                if (sourcePageProperty != null)
-                {
-                    sourcePageProperty.SetValue(changeDescriptionControl, sourcePage);
-                }
-
-                // 使用反射設定 ChangeBefore 和 ChangeAfter 屬性
-                var changeBeforeProperty = changeDescriptionControl.GetType().GetProperty("ChangeBefore");
-                var changeAfterProperty = changeDescriptionControl.GetType().GetProperty("ChangeAfter");
-
-                if (changeBeforeProperty != null && changeAfterProperty != null)
-                {
-                    changeBeforeProperty.SetValue(changeDescriptionControl, changeBefore ?? "");
-                    changeAfterProperty.SetValue(changeDescriptionControl, changeAfter ?? "");
-
-                    System.Diagnostics.Debug.WriteLine($"已渲染 {controlName} ({sourcePage}) 的變更說明: Before={changeBefore}, After={changeAfter}");
-                }
-            }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine($"找不到 ChangeDescriptionControl: {changeDescriptionControlID}");
-            }
-        }
-        catch (Exception ex)
-        {
-            HandleException(ex, $"渲染 {controlName} 變更說明時發生錯誤");
-        }
-    }
+    // /// <summary>
+    // /// 根據 UserControl 名稱取得對應的 ChangeDescriptionControl ID
+    // /// </summary>
+    // private string GetChangeDescriptionControlID(string controlName)
+    // {
+    //     switch (controlName)
+    //     {
+    //         case "ucSciApplication":
+    //             return "tab1_ucChangeDescription";
+    //         case "ucSciWorkSch":
+    //             return "tab2_ucChangeDescription";
+    //         case "ucSciFunding":
+    //             return "tab3_ucChangeDescription";
+    //         case "ucSciRecusedList":
+    //             return "tab4_ucChangeDescription";
+    //         case "ucSciUploadAttachments":
+    //             return "tab5_ucChangeDescription";
+    //         default:
+    //             return "tab1_ucChangeDescription";
+    //     }
+    // }
 
     /// <summary>
-    /// 根據 UserControl 名稱取得對應的 ChangeDescriptionControl ID
-    /// </summary>
-    private string GetChangeDescriptionControlID(string controlName)
-    {
-        switch (controlName)
-        {
-            case "ucSciApplication":
-                return "tab1_ucChangeDescription";
-            case "ucSciWorkSch":
-                return "tab2_ucChangeDescription";
-            case "ucSciFunding":
-                return "tab3_ucChangeDescription";
-            case "ucSciRecusedList":
-                return "tab4_ucChangeDescription";
-            case "ucSciUploadAttachments":
-                return "tab5_ucChangeDescription";
-            default:
-                return "tab1_ucChangeDescription";
-        }
-    }
-
-    /// <summary>
-    /// 根據 UserControl 名稱取得對應的 SourcePage
-    /// </summary>
-    private string GetSourcePageByControlName(string controlName)
-    {
-        switch (controlName)
-        {
-            case "ucSciApplication":
-                return "SciApplication";
-            case "ucSciWorkSch":
-                return "SciWorkSch";
-            case "ucSciFunding":
-                return "SciFunding";
-            case "ucSciRecusedList":
-                return "SciRecusedList";
-            case "ucSciUploadAttachments":
-                return "SciUploadAttachments";
-            default:
-                return "SciApplication";
-        }
-    }
+    // /// 根據 UserControl 名稱取得對應的 SourcePage
+    // /// </summary>
+    // private string GetSourcePageByControlName(string controlName)
+    // {
+    //     switch (controlName)
+    //     {
+    //         case "ucSciApplication":
+    //             return "SciApplication";
+    //         case "ucSciWorkSch":
+    //             return "SciWorkSch";
+    //         case "ucSciFunding":
+    //             return "SciFunding";
+    //         case "ucSciRecusedList":
+    //             return "SciRecusedList";
+    //         case "ucSciUploadAttachments":
+    //             return "SciUploadAttachments";
+    //         default:
+    //             return "SciApplication";
+    //     }
+    // }
 
     /// <summary>
     /// PostBack 時重新載入「非當前操作」的 UserControl
@@ -759,6 +759,7 @@ public partial class OFS_SCI_SciInprogress_Approved : System.Web.UI.Page
             // 3. 更新 OFS_TaskQueue - 將 Change 任務設為待辦
             OFS_TaskQueueHelper.UpdateTaskStatus(projectID, "Change", 1,0);
 
+     
             // 4. TODO: 進行快照 (未來實作)
             // 這裡需要呼叫快照功能
 
@@ -792,6 +793,8 @@ public partial class OFS_SCI_SciInprogress_Approved : System.Web.UI.Page
             {
                 return new { success = false, message = "不通過時請輸入退回原因" };
             }
+            var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
+            var projectMain = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
 
             if (isPass)
             {
@@ -807,6 +810,16 @@ public partial class OFS_SCI_SciInprogress_Approved : System.Web.UI.Page
 
                 // 4. 更新 OFS_TaskQueue: IsCompleted = 1, isToDo = 0
                 OFS_TaskQueueHelper.UpdateTaskStatus(projectID, "Change", 0, 1);
+                
+                //5. 寄信通知申請人計畫變更已通過
+                if (applicationMain != null && projectMain != null)
+                {
+                    string projectName = applicationMain.ProjectNameTw;
+                    string UserAccount = projectMain.UserAccount;
+
+                    // 寄送通知信
+                    NotificationHelper.G4("科專", projectName, "計畫變更申請", UserAccount);
+                }
 
                 return new { success = true, message = "計畫變更審查通過" };
             }
@@ -818,6 +831,15 @@ public partial class OFS_SCI_SciInprogress_Approved : System.Web.UI.Page
 
                 // 2. 更新最新一筆 OFS_ProjectChangeRecord.Status = 1, RejectReason = 退回原因
                 OFS_SciApplicationHelper.UpdateProjectChangeRecordStatus(projectID, 1, rejectReason);
+                // 3.寄信通知承辦人計畫變更不通過，已退回申請人修正
+                if (applicationMain != null && projectMain != null)
+                {
+                    string projectName = applicationMain.ProjectNameTw;
+                    string UserAccount = projectMain.UserAccount;
+                    
+                    // 寄送通知信
+                    NotificationHelper.G3("科專", projectName, "計畫變更申請", rejectReason,UserAccount);
+                }
 
                 return new { success = true, message = "計畫變更審查不通過，已退回申請人修正" };
             }

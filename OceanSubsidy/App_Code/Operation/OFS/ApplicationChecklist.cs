@@ -17,9 +17,7 @@ public class ApplicationChecklistHelper
 {
     public ApplicationChecklistHelper()
     {
-        //
-        // TODO: 在這裡新增建構函式邏輯
-        //
+       
     }
     public static List<ReviewChecklistItem> GetLatestApplicationChecklist()
     {
