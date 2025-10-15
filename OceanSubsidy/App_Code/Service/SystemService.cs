@@ -512,7 +512,7 @@ public class SystemService : BaseService
                         Result = result
                     });
 
-                    res = (JObject) res["ResultData"];
+                    res = (JObject) ((JArray) res["ResultData"])[0];
 
                     return new { ID = id, Success = bool.Parse(res["Success"].ToString()), Message = res["Message"].ToString() };
                 }
