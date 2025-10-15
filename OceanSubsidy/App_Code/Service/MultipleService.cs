@@ -25,7 +25,7 @@ public class MultipleService : BaseService
             Reason = param["Reason"].ToString()
         });
 
-        // TODO: 請完成計畫變更
+        OFS_TaskQueueHelper.UpdateTaskStatus(data.ProjectID, "Change", 1, 0);
 
         return new {};
     }
@@ -301,7 +301,7 @@ public class MultipleService : BaseService
 
                 NotificationHelper.G4("多元", data.ProjectName, "計畫變更申請", data.UserAccount);
 
-                // TODO: 計畫變更已通過
+                OFS_TaskQueueHelper.UpdateTaskStatus(data.ProjectID, "Change", 1, 1);
             }
 
             OFSProjectChangeRecordHelper.update(apply);
@@ -352,7 +352,7 @@ public class MultipleService : BaseService
         {
             NotificationHelper.G6("多元", data.ProjectName, setting.PhaseName, payment.CurrentActualPaidAmount, payment.ReviewerComment, data.UserAccount);
 
-            // TODO: 第一期請款已完成 / 第二期請款已完成 / 結案核銷已完成
+            OFS_TaskQueueHelper.UpdateTaskStatus(data.ProjectID, $"Payment{payment.Stage}", 1, 1);
         }
         else
         {
@@ -394,9 +394,14 @@ public class MultipleService : BaseService
         }
         else
         {
+            OFS_TaskQueueHelper.UpdateTaskStatus(data.ProjectID, "Report", 1, 1);
+            OFS_TaskQueueHelper.UpdateTaskStatus(data.ProjectID, "Payment3", 1, 0);
+
             NotificationHelper.G5("多元", data.ProjectName, eventName, data.UserAccount);
 
-            // TODO: 成果報告已通過
+            var setting = OFS_SciReimbursementHelper.GetPaymentPhaseSettings("MUL").FirstOrDefault(d => d.PhaseOrder == 3);
+
+            NotificationHelper.F12("多元", data.ProjectName, setting.PhaseName, data.UserAccount);
         }
 
         return new {};

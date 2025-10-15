@@ -25,14 +25,14 @@ public class OFS_TaskQueueHelper
             db.CommandText = @"
                 SELECT [TaskNameEn], [TaskName]
                 FROM [OCA_OceanSubsidy].[dbo].[OFS_TaskQueue]
-                WHERE [ProjectID] = @ProjectID 
-                AND [IsTodo] = 1 
+                WHERE [ProjectID] = @ProjectID
+                AND [IsTodo] = 1
                 AND ([IsCompleted] = 0 OR [IsCompleted] IS NULL)
                 ORDER BY [PriorityLevel], [TaskNameEn]";
-            
+
             db.Parameters.Clear();
             db.Parameters.Add("@ProjectID", projectId);
-            
+
             return db.GetTable();
         }
         finally
@@ -75,4 +75,43 @@ public class OFS_TaskQueueHelper
             db.Dispose();
         }
     }
+
+    public static OFS_TaskQueue Get(string projectId, string taskNameEn)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            SELECT [ProjectID]
+                  ,[TaskNameEn]
+                  ,[TaskName]
+                  ,[PriorityLevel]
+                  ,[IsTodo]
+                  ,[IsCompleted]
+              FROM [OFS_TaskQueue]
+             WHERE [ProjectID] = @ProjectID
+               AND [TaskNameEn] = @TaskNameEn
+        ";
+
+        db.Parameters.Add("@ProjectID", projectId);
+        db.Parameters.Add("@TaskNameEn", taskNameEn);
+
+        var table = db.GetTable();
+
+        if (table.Rows.Count != 1)
+        {
+            return null;
+        }
+
+        var row = table.Rows[0];
+
+        return new OFS_TaskQueue
+        {
+            ProjectID = row.Field<string>("ProjectID"),
+            TaskName = row.Field<string>("TaskName"),
+            PriorityLevel = row.Field<int?>("PriorityLevel"),
+            IsTodo = row.Field<bool?>("IsTodo"),
+            IsCompleted = row.Field<bool?>("IsCompleted")
+        };
+    }
+
 }
