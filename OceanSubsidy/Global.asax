@@ -7,6 +7,10 @@
 
     void Application_Start(object sender, EventArgs e)
     {
+		// 啟用 TLS 1.2 和 TLS 1.3
+		System.Net.ServicePointManager.SecurityProtocol = 
+        System.Net.SecurityProtocolType.Tls12 | 
+        System.Net.SecurityProtocolType.Tls13;
         // 應用程式啟動時執行的程式碼        
 
         // 設定 log4net 的全域變數
