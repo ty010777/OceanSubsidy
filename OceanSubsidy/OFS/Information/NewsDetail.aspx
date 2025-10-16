@@ -1,5 +1,12 @@
 ﻿<%@ Page Language="C#" AutoEventWireup="true" CodeFile="NewsDetail.aspx.cs" Inherits="Information_NewsDetail" Culture="zh-TW" UICulture="zh-TW" MasterPageFile="~/OFS/CUL/Layout.master" %>
 
+<asp:Content ContentPlaceHolderID="BackUrl" runat="server">
+    <a class="text-teal-dark text-decoration-none" href="NewsList.aspx">
+        <i class="fas fa-angle-left"></i>
+        返回列表
+    </a>
+</asp:Content>
+
 <asp:Content ContentPlaceHolderID="MainIcon" runat="server"><%= ResolveUrl("~/assets/img/information-system-title-icon02.svg") %></asp:Content>
 
 <asp:Content ContentPlaceHolderID="MainTitle" runat="server">資訊公告欄</asp:Content>
