@@ -33,10 +33,10 @@
                     <i class="fas fa-exchange"></i>
                     計畫變更申請
                 </button>
-                <button class="btn btn-teal-dark" type="button" data-bs-toggle="modal" data-bs-target="#changePlanRecordModal">
+                <a href='<%= ResolveUrl("~/OFS/PlanChangeRecords.aspx?ProjectID=" + Request.QueryString["ProjectID"]) %>' class="btn btn-teal-dark">
                     <i class="fas fa-history"></i>
                     計畫變更紀錄
-                </button>
+                </a>
                 <button type="button" id="btnDownloadPlan" class="btn btn-teal-dark">
                     <i class="fa-solid fa-download"></i>
                     下載核定計畫書
@@ -197,49 +197,6 @@
                             Text="確認移轉"
                             CssClass="btn btn-teal"
                             OnClick="btnConfirmTransfer_Click" />
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal 計畫變更紀錄 -->
-    <div class="modal fade" id="changePlanRecordModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="changePlanRecordModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="fs-24 fw-bold text-green-light">計畫變更紀錄</h4>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
-                        <i class="fa-solid fa-circle-xmark"></i>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="table-responsive">
-                        <table class="table align-middle gray-table">
-                            <thead>
-                                <tr>
-                                    <th width="80">項次</th>
-                                    <th width="150">變更日期</th>
-                                    <th>變更原因</th>
-                                    <th width="100">狀態</th>
-                                </tr>
-                            </thead>
-                            <tbody id="changePlanRecordTable">
-                                <!-- 靜態展示範例 -->
-                                <tr>
-                                    <td class="text-center">1</td>
-                                    <td>2025-01-10</td>
-                                    <td>因應實驗設備延遲到貨，調整執行進度</td>
-                                    <td><span class="badge bg-success">已核定</span></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-center">2</td>
-                                    <td>2024-12-15</td>
-                                    <td>研究範圍擴大，增加經費需求</td>
-                                    <td><span class="badge bg-warning">審核中</span></td>
-                                </tr>
-                            </tbody>
-                        </table>
                     </div>
                 </div>
             </div>

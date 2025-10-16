@@ -42,50 +42,35 @@
             <!-- 計畫變更紀錄區塊 -->
             <div class="row">
                 <div class="col-12">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="square-title">計畫變更紀錄</h5>
-                        <asp:Button ID="btnExportRecords" runat="server" Text="匯出變更紀錄" CssClass="btn btn-teal-dark" />
-                    </div>
+                    <h5 class="square-title mb-3">計畫變更紀錄</h5>
 
                     <div class="table-responsive">
                         <table id="ChangeRecordsTable" class="table table-bordered align-middle gray-table">
                             <thead class="table-light">
                                 <tr>
-                                    <th width="8%" class="text-center">版次</th>
-                                    <th width="12%" class="text-center">變更時間</th>
-                                    <th width="10%" class="text-center">變更者</th>
-                                    <th width="15%" class="text-center">變更原因</th>
-                                    <th width="27%" class="text-center">變更前</th>
-                                    <th width="27%" class="text-center">變更後</th>
+                                    <th width="11%" class="text-center">版次</th>
+                                    <th width="8%" class="text-center">變更時間</th>
+                                    <th width="6%" class="text-center">變更者</th>
+                                    <th width="12%" class="text-center">變更原因</th>
+                                    <th width="31%" class="text-center">變更前</th>
+                                    <th width="32%" class="text-center">變更後</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <asp:Repeater ID="rptChangeRecords" runat="server">
                                     <ItemTemplate>
                                         <tr>
-                                            <td class="text-center">
-                                                <%# Eval("Version") %>
-                                            </td>
-                                            <td class="text-center">
-                                                <%# Eval("ChangeDate") %>
-                                            </td>
-                                            <td class="text-center">
-                                                <%# Eval("ChangedBy") %>
+                                            <td class="text-center" style="white-space: pre-line;"><%# Eval("Version") %></td>
+                                            <td class="text-center"><%# Eval("ChangeDate") %></td>
+                                            <td class="text-center"><%# Eval("ChangedBy") %></td>
+                                            <td class="text-start">
+                                                <div style="white-space: pre-wrap;"><%# Eval("ChangeReason") %></div>
                                             </td>
                                             <td class="text-start">
-                                                <div style="max-height: 150px; overflow-y: auto; white-space: pre-wrap;">
-                                                    <%# Eval("ChangeReason") %>
-                                                </div>
+                                                <div style="white-space: pre-wrap;"><%# Eval("BeforeChange") %></div>
                                             </td>
                                             <td class="text-start">
-                                                <div style="max-height: 150px; overflow-y: auto; white-space: pre-wrap;">
-                                                    <%# Eval("BeforeChange") %>
-                                                </div>
-                                            </td>
-                                            <td class="text-start">
-                                                <div style="max-height: 150px; overflow-y: auto; white-space: pre-wrap;">
-                                                    <%# Eval("AfterChange") %>
-                                                </div>
+                                                <div style="white-space: pre-wrap;"><%# Eval("AfterChange") %></div>
                                             </td>
                                         </tr>
                                     </ItemTemplate>

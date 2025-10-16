@@ -81,10 +81,10 @@
                 <i class="fas fa-exchange"></i>
                 計畫變更申請
             </button>
-            <button class="btn btn-teal-dark" type="button" onclick="showChangeHistory()">
+            <a href='<%= ResolveUrl("~/OFS/PlanChangeRecords.aspx?ProjectID=" + Request.QueryString["ProjectID"]) %>' class="btn btn-teal-dark">
                 <i class="fas fa-history"></i>
                 計畫變更紀錄
-            </button>
+            </a>
          
             <button class="btn btn-teal-dark" type="button" onclick="downloadApprovedPlan()">
                 <i class="fa-solid fa-download"></i>
