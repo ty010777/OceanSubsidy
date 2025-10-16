@@ -266,6 +266,19 @@ public class CultureService : BaseService
         };
     }
 
+    public object getReviewInfo(JObject param, HttpContext context)
+    {
+        var id = getID(param["ID"].ToString());
+        var data = getProject(id);
+
+        return new {
+            Year = data.Year,
+            OrgName = data.OrgName,
+            OtherCount = OFS_CulProjectHelper.count(data.Year, data.OrgName) - 1,
+            AuditRecords = AuditRecordsHelper.GetAuditRecordsByOrgName(data.OrgName)
+        };
+    }
+
     public object getWorkSchedule(JObject param, HttpContext context)
     {
         List<OFS_CulGoal> goals;

@@ -180,6 +180,19 @@ public class AccessibilityService : BaseService
         };
     }
 
+    public object getReviewInfo(JObject param, HttpContext context)
+    {
+        var id = getID(param["ID"].ToString());
+        var data = getProject(id);
+
+        return new {
+            Year = data.Year,
+            OrgName = data.OrgName,
+            OtherCount = OFS_AccProjectHelper.count(data.Year, data.OrgName) - 1,
+            AuditRecords = AuditRecordsHelper.GetAuditRecordsByOrgName(data.OrgName)
+        };
+    }
+
     public object getWorkSchedule(JObject param, HttpContext context)
     {
         var data = getProject(param, out JObject snapshot);
