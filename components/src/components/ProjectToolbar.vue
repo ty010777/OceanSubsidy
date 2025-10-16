@@ -11,10 +11,10 @@
                 <i class="fas fa-history"></i>
                 計畫變更紀錄
             </button>
-            <button class="btn btn-teal-dark" type="button">
+            <a class="btn btn-teal-dark" download :href="download">
                 <i class="fa-solid fa-download"></i>
                 下載核定計畫書
-            </button>
+            </a>
         </div>
         <div class="d-flex gap-2">
             <project-organizer :id="id" :type="type"></project-organizer>
@@ -140,6 +140,30 @@
     const logModal = ref();
     const terminateForm = ref({});
     const terminateModal = ref();
+
+    const download = computed(() => {
+        let type = "";
+
+        switch (props.type) {
+            case "culture":
+                type = "CUL";
+                break;
+            case "education":
+                type = "EDC";
+                break;
+            case "multiple":
+                type = "MUL";
+                break;
+            case "literacy":
+                type = "LIT";
+                break;
+            case "accessibility":
+                type = "ACC";
+                break;
+        }
+
+        return `../../Service/OFS/DownloadPdf.ashx?Type=${type}&ProjectID=${props.id}&Version=2`;
+    });
 
     const apply = () => {
         const rules = {

@@ -1,5 +1,6 @@
 ﻿using GS.OCA_OceanSubsidy.Entity;
 using GS.OCA_OceanSubsidy.Model.OFS;
+using GS.OCA_OceanSubsidy.Operation.OFS;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -216,6 +217,30 @@ public class SystemService : BaseService
         };
     }
 
+    public object getReviewCommittee(JObject param, HttpContext context)
+    {
+        var token = param["Token"].ToString();
+        var data = OFSReviewCommitteeHelper.getByToken(token);
+
+        if (data != null)
+        {
+            return new { Data = data };
+        }
+
+        var row = OFS_SciExamReviewHelper.GetExamDataByToken(token);
+
+        return new {
+            Data = new
+            {
+                CommitteeUser = row["Reviewer"].ToString(),
+                Email = row["Account"].ToString(),
+                BankCode = row["BankCode"].ToString(),
+                BankAccount = row["BankAccount"].ToString(),
+                RegistrationAddress = row["RegistrationAddress"].ToString()
+            }
+        };
+    }
+
     public object getReviewCommitteeList(JObject param, HttpContext context)
     {
         var id = param["ID"].ToString();
@@ -401,6 +426,27 @@ public class SystemService : BaseService
         return new {};
     }
 
+    public object saveReviewCommittee(JObject param, HttpContext context)
+    {
+        var token = param["Token"].ToString();
+        var bankCode = param["BankCode"].ToString();
+        var bankAccount = param["BankAccount"].ToString();
+        var registrationAddress = param["RegistrationAddress"].ToString();
+
+        var data = OFSReviewCommitteeHelper.getByToken(token);
+
+        if (data != null)
+        {
+            OFSReviewCommitteeHelper.updateBankInfo(token, bankCode, bankAccount, registrationAddress);
+        }
+        else
+        {
+            OFS_SciExamReviewHelper.UpdateReviewerBankInfo(token, bankCode, bankAccount, registrationAddress);
+        }
+
+        return new {};
+    }
+
     public object saveReviewCommitteeList(JObject param, HttpContext context)
     {
         var id = param["ID"].ToString();
@@ -417,6 +463,8 @@ public class SystemService : BaseService
                 item.SubjectTypeID = id;
 
                 OFSReviewCommitteeHelper.insert(item);
+
+                NotificationHelper.ReviewCommittee(item.Token, item.Email);
             }
             else
             {

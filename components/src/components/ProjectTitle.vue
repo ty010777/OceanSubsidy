@@ -7,9 +7,9 @@
                 <span class="tag tag-pale-green">待辦事項：請填寫契約資料</span>
 -->
             </div>
-            <button class="btn btn-teal-dark" type="button">
+            <a class="btn btn-teal-dark" :href="`../AuditRecords.aspx?ProjectID=${id}`" target="_blank">
                 查核紀錄
-            </button>
+            </a>
         </div>
     </div>
 </template>

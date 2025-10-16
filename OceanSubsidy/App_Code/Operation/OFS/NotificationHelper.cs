@@ -368,5 +368,15 @@ public class NotificationHelper
     {
         EmailApiHelper.Send(querySupervisor(type), subject, content + getFooter());
     }
+    public static void ReviewCommittee(string token, string account)
+    {
+        var url = ConfigurationManager.AppSettings["Host"] + ConfigurationManager.AppSettings["AppRootPath"] + $"/OFS/ReviewCommitteeInfo?Token={token}";
+
+        toUser(
+            "［海洋委員會］補助申請案 請進行審查及評分",
+            $"您好：<br><br>海洋委員會已邀請您參與計畫申請階段之審查。<br>為能讓後續作業順利進行，<br>請<a href=\"{url}\">進入此連結</a>提供您的銀行帳戶與戶籍地址資料，非常感謝！",
+            account
+        );
+    }
 
 }

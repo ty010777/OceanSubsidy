@@ -70,6 +70,7 @@ import ReportMixChart from "./components/Report/MixChart.vue";
 import ReportPieChart from "./components/Report/PieChart.vue";
 import ReportRecusedList from "./components/Report/RecusedList.vue";
 import RequiredLabel from "./components/RequiredLabel.vue";
+import ReviewCommitteeInfo from "./components/ReviewCommitteeInfo.vue";
 import SystemGrantForm1 from "./components/System/GrantForm1.vue";
 import SystemGrantForm2 from "./components/System/GrantForm2.vue";
 import SystemGrantForm3 from "./components/System/GrantForm3.vue";
@@ -156,6 +157,7 @@ const components = {
     ReportPieChart,
     ReportRecusedList,
     RequiredLabel,
+    ReviewCommitteeInfo,
     SystemGrantForm1,
     SystemGrantForm2,
     SystemGrantForm3,
