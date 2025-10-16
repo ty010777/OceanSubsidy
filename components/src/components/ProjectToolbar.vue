@@ -7,10 +7,10 @@
             <button class="btn btn-teal-dark" @click="showApplyModal" type="button" v-else>
                 計畫變更申請
             </button>
-            <button class="btn btn-teal-dark" @click="showLogModal" type="button">
+            <a class="btn btn-teal-dark" :href="logUrl" target="_blank">
                 <i class="fas fa-history"></i>
                 計畫變更紀錄
-            </button>
+            </a>
             <a class="btn btn-teal-dark" download :href="download">
                 <i class="fa-solid fa-download"></i>
                 下載核定計畫書
@@ -165,6 +165,8 @@
         return `../../Service/OFS/DownloadPdf.ashx?Type=${type}&ProjectID=${props.id}&Version=2`;
     });
 
+    const logUrl = computed(() => api.toUrl(`/OFS/PlanChangeRecords.aspx?ProjectID=${props.id}`));
+
     const apply = () => {
         const rules = {
             Reason: "計畫變更原因"
@@ -186,10 +188,6 @@
     const showApplyModal = () => {
         applyForm.value = { ID: props.id };
         bootstrap.Modal.getOrCreateInstance(applyModal.value).show();
-    };
-
-    const showLogModal = () => {
-        bootstrap.Modal.getOrCreateInstance(logModal.value).show();
     };
 
     const showTerminateModal = () => {

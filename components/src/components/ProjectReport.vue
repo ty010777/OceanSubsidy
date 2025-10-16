@@ -68,7 +68,7 @@
     const report = ref({});
 
     const add = (item, file) => {
-        if (file.Type === "application/zip") {
+        if (file.Type === "application/zip" || file.Type === "application/x-zip-compressed") {
             item.Files.push({
                 Type: item.Type,
                 Path: file.Path,
