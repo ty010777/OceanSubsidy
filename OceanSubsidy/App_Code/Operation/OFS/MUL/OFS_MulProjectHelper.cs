@@ -6,7 +6,7 @@ using System.Linq;
 
 public class OFS_MulProjectHelper
 {
-    public static int count(int year)
+    public static int count(int year, string orgName = "")
     {
         DbHelper db = new DbHelper();
 
@@ -17,6 +17,12 @@ public class OFS_MulProjectHelper
         ";
 
         db.Parameters.Add("@Year", year);
+
+        if (!string.IsNullOrWhiteSpace(orgName))
+        {
+            db.CommandText += " AND [OrgName] = @OrgName AND IsExists = 1 AND IsWithdrawal = 0";
+            db.Parameters.Add("@OrgName", orgName);
+        }
 
         return int.Parse(db.GetTable().Rows[0]["Count"].ToString());
     }
@@ -75,7 +81,7 @@ public class OFS_MulProjectHelper
         return table.Rows.Count == 1 ? toModel(table.Rows[0]) : null;
     }
 
-    public static List<string> GetInprogressProjectIds(int year)
+    public static List<string> getInprogressProjectIds(int year)
     {
         DbHelper db = new DbHelper();
 

@@ -4,12 +4,12 @@
         <ul class="d-flex flex-column gap-3 mb-3">
             <li class="d-flex gap-2">
                 <span class="text-gray">同單位申請計畫數 :</span>
-                <a class="link-teal fw-bold" @click="showOther" href="javascript:void(0)">3</a>
+                <a class="link-teal fw-bold" @click="showOther" href="javascript:void(0)">{{ info.OtherCount }}</a>
             </li>
             <li class="d-flex gap-2">
                 <span class="text-gray">風險評估 :</span>
-                <span class="text-pink">中風險</span>
-                <span>( <a class="link-teal fw-bold" @click="showRisk" href="javascript:void(0)">1</a> 筆記錄 )</span>
+                <span class="text-pink">{{ risks[risk] }}</span>
+                <span>( <a class="link-teal fw-bold" @click="showRisk" href="javascript:void(0)">{{ info.AuditRecords.length }}</a> 筆記錄 )</span>
             </li>
             <li class="d-flex gap-2">
                 <span class="text-gray mt-2">審查結果：</span>
@@ -41,10 +41,15 @@
         { value: 3, text: "退回補正補件" }
     ];
 
+    const risks = ["無", "低風險", "中風險", "高風險"];
+
     const errors = ref({});
     const form = ref({ ID: props.id, Result: 1 });
+    const info = ref({});
+    const risk = ref(0);
 
     const showOther = () => {
+        window.open(api.toUrl(`/OFS/ApplicationChecklist.aspx?Year=${info.value.Year}&OrgName=${encodeURIComponent(info.value.OrgName)}`), "_blank");
     };
 
     const showRisk = () => {
@@ -76,6 +81,32 @@
     };
 
     const toButtom = () => setTimeout(() => document.querySelector(".mis-content").scrollTop = 1000000);
+
+    onMounted(() => {
+        api[props.type]("getReviewInfo", { ID: props.id }).subscribe((res) => {
+            info.value = res;
+
+            info.value.AuditRecords.forEach((record) => {
+                switch (record.Risk) {
+                    case "Low":
+                        if (risk.value < 1) {
+                            risk.value = 1;
+                        }
+                        break;
+                    case "Medium":
+                        if (risk.value < 2) {
+                            risk.value = 2;
+                        }
+                        break;
+                    case "High":
+                        if (risk.value < 3) {
+                            risk.value = 3;
+                        }
+                        break;
+                }
+            });
+        });
+    });
 
     watch(() => form.value.Result, (value) => {
         if (value > 1) {

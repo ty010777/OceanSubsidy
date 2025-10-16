@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Web;
 using GS.Data;
@@ -13,10 +14,10 @@ public class AuditRecordsHelper
 {
     public AuditRecordsHelper()
     {
-       
+
     }
 
-    
+
     /// <summary>
     /// 根據 ProjectID 取得 CLB 計畫基本資料
     /// </summary>
@@ -34,9 +35,9 @@ public class AuditRecordsHelper
                  ,StartDate AS [StartTime]
                  ,EndDate AS [EndTime]
             FROM [OCA_OceanSubsidy].[dbo].[OFS_CLB_Application_Basic] AB
-            LEFT JOIN OFS_CLB_Application_Plan AP on AB.ProjectID = AP.ProjectID 
+            LEFT JOIN OFS_CLB_Application_Plan AP on AB.ProjectID = AP.ProjectID
             WHERE AB.[ProjectID] = @ProjectID";
-        
+
         db.Parameters.Clear();
         db.Parameters.Add("@ProjectID", projectID);
 
@@ -52,7 +53,7 @@ public class AuditRecordsHelper
     {
         DbHelper db = new DbHelper();
         db.CommandText = @"
-            SELECT TOP 1 
+            SELECT TOP 1
                 [ProjectID],
                 [ProjectNameTw],
                 [OrgName],
@@ -60,7 +61,7 @@ public class AuditRecordsHelper
                 [EndTime]
             FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Application_Main]
             WHERE [ProjectID] = @ProjectID";
-        
+
         db.Parameters.Clear();
         db.Parameters.Add("@ProjectID", projectID);
 
@@ -76,7 +77,7 @@ public class AuditRecordsHelper
     {
         DbHelper db = new DbHelper();
         db.CommandText = @"
-            SELECT 
+            SELECT
                 [idx],
                 [ProjectID],
                 [ReviewerName],
@@ -162,5 +163,48 @@ public class AuditRecordsHelper
         db.Parameters.Add("@idx", idx);
 
         db.ExecuteNonQuery();
+    }
+
+    public static List<OFS_AuditRecords> GetAuditRecordsByOrgName(string name)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            SELECT A.[idx]
+                  ,A.[ProjectID]
+                  ,A.[ReviewerName]
+                  ,A.[CheckDate]
+                  ,A.[Risk]
+                  ,A.[ReviewerComment]
+                  ,A.[ExecutorComment]
+              FROM [OFS_AuditRecords] AS A
+              JOIN (SELECT [ProjectID], [OrgName] FROM [OFS_SCI_Application_Main]
+                    UNION
+                    SELECT [ProjectID], [OrgName] FROM [OFS_CUL_Project]
+                    UNION
+                    SELECT [ProjectID], [OrgName] FROM [OFS_EDC_Project]
+                    UNION
+                    SELECT [ProjectID], [SchoolName] + [ClubName] AS [OrgName] FROM [OFS_CLB_Application_Basic]
+                    UNION
+                    SELECT [ProjectID], [OrgName] FROM [OFS_MUL_Project]
+                    UNION
+                    SELECT [ProjectID], [OrgName] FROM [OFS_LIT_Project]
+                    UNION
+                    SELECT [ProjectID], [OrgName] FROM [OFS_ACC_Project]) AS B ON (B.ProjectID = A.ProjectID)
+              WHERE B.OrgName = @OrgName
+        ";
+
+        db.Parameters.Add("@OrgName", name);
+
+        return db.GetTable().Rows.Cast<DataRow>().Select(row => new OFS_AuditRecords
+        {
+            idx = row.Field<int>("idx"),
+            ProjectID = row.Field<string>("ProjectID"),
+            ReviewerName = row.Field<string>("ReviewerName"),
+            CheckDate = row.Field<DateTime?>("ReviewerName"),
+            Risk = row.Field<string>("Risk"),
+            ReviewerComment = row.Field<string>("ReviewerComment"),
+            ExecutorComment = row.Field<string>("ExecutorComment")
+        }).ToList();
     }
 }
