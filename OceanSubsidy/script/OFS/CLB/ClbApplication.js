@@ -665,9 +665,9 @@ function handleFileUpload(fileCode, fileInput) {
     if (projectID) {
         formData.append('projectID', projectID);
     }
-
+    var  upPath= window.location.origin+window.AppRootPath+'/Service/CLB_Upload.ashx';
     // 發送 AJAX 請求到 CLB_Upload.ashx
-    fetch('../../../Service/CLB_Upload.ashx', {
+    fetch(upPath, {
         method: 'POST',
         body: formData
     })
@@ -750,7 +750,8 @@ function performFileDelete(fileCode) {
     formData.append('projectID', projectID);
 
     // 發送 AJAX 請求到 CLB_Upload.ashx
-    fetch('../../../Service/CLB_Upload.ashx', {
+    var  deletePath= window.location.origin+window.AppRootPath+'/Service/CLB_Upload.ashx';
+    fetch(deletePath, {
         method: 'POST',
         body: formData
     })
@@ -852,16 +853,16 @@ function showInfoMessage(message) {
 function downloadTemplate(templateType) {
     // 取得當前的 ProjectID
     const projectID = getProjectID();
-    
-    // 取得網站根路徑
-    const baseUrl = window.location.origin + '/';
-    
+
+    // 取得網站根路徑，確保與上傳、刪除使用相同的路徑格式
+    const downloadPath = window.location.origin + (window.AppRootPath || '') + '/Service/CLB_download.ashx';
+
     // 構建下載 URL
-    let downloadUrl = baseUrl + 'Service/CLB_download.ashx?action=template&type=' + templateType;
+    let downloadUrl = downloadPath + '?action=template&type=' + templateType;
     if (projectID) {
         downloadUrl += '&projectID=' + encodeURIComponent(projectID);
     }
-    
+
     // 開啟下載
     window.open(downloadUrl, '_blank');
 }
@@ -877,13 +878,13 @@ function downloadUploadedFile(fileCode) {
         return;
     }
 
-    // 取得網站根路徑
-    const baseUrl = window.location.origin + '/';
-    
+    // 取得網站根路徑，確保與上傳、刪除使用相同的路徑格式
+    const downloadPath = window.location.origin + (window.AppRootPath || '') + '/Service/CLB_download.ashx';
+
     // 構建下載 URL
-    const downloadUrl = baseUrl + 'Service/CLB_download.ashx?action=file&projectID=' + 
+    const downloadUrl = downloadPath + '?action=file&projectID=' +
                        encodeURIComponent(projectID) + '&fileCode=' + encodeURIComponent(fileCode);
-    
+
     // 開啟下載
     window.open(downloadUrl, '_blank');
 }

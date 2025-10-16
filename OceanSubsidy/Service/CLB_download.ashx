@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Web;
 using System.IO;
 using GS.OCA_OceanSubsidy.Entity;
@@ -119,10 +120,15 @@ public class CLB_download : IHttpHandler
 
         // 處理路徑格式
         string templatePath = uploadedFile.TemplatePath;
+
+        // 如果路徑不是以 ~/ 開頭，則加上
         if (!templatePath.StartsWith("~/"))
         {
+            // 移除開頭的 / 或 \ 避免重複
+            templatePath = templatePath.TrimStart('/', '\\');
             templatePath = "~/" + templatePath;
         }
+
         string filePath = context.Server.MapPath(templatePath);
         
         if (!File.Exists(filePath))
@@ -178,8 +184,6 @@ public class CLB_download : IHttpHandler
     private void DownloadApprovedPlan(HttpContext context)
     {
         var projectID = context.Request.QueryString["projectID"];
-        var basicData = OFS_ClbApplicationHelper.GetBasicData(projectID);
-        string ProjectName = basicData.ProjectNameTw; 
 
         // 驗證參數
         if (string.IsNullOrEmpty(projectID))
@@ -189,23 +193,65 @@ public class CLB_download : IHttpHandler
             return;
         }
 
-      
-
-        // 構建檔案路徑
-        string fileName = $"{projectID}_社團_{ProjectName}_核定版.pdf";
-        string relativePath = $"~/UploadFiles/OFS/CLB/{projectID}/{fileName}";
-        string filePath = context.Server.MapPath(relativePath);
-
-        // 檢查檔案是否存在
-        if (!File.Exists(filePath))
+        try
         {
-            context.Response.StatusCode = 404;
-            context.Response.Write($"Approved plan file not found: {fileName}");
-            return;
-        }
+            var basicData = OFS_ClbApplicationHelper.GetBasicData(projectID);
 
-        // 下載檔案
-        DownloadFile(context, filePath, fileName, "application/pdf");
+            if (basicData == null)
+            {
+                context.Response.StatusCode = 404;
+                context.Response.Write($"Project not found in database: {projectID}");
+                return;
+            }
+
+            string ProjectName = basicData.ProjectNameTw;
+
+            // 構建檔案路徑 - 使用與 SCI 相同的標準格式（不使用 AppRootPath）
+            string fileName = $"{projectID}_社團_{ProjectName}_核定版.pdf";
+            string relativePath = $"~/UploadFiles/OFS/CLB/{projectID}/{fileName}";
+            string filePath = context.Server.MapPath(relativePath);
+
+            // 詳細的錯誤診斷
+            if (!File.Exists(filePath))
+            {
+                context.Response.StatusCode = 404;
+                context.Response.ContentType = "text/plain; charset=utf-8";
+                context.Response.Write($"File not found\n");
+                context.Response.Write($"ProjectID: {projectID}\n");
+                context.Response.Write($"ProjectName: {ProjectName}\n");
+                context.Response.Write($"Expected file name: {fileName}\n");
+                context.Response.Write($"Relative path: {relativePath}\n");
+                context.Response.Write($"Physical path: {filePath}\n");
+                context.Response.Write($"\n");
+
+                // 列出目錄中的檔案
+                string dirPath = Path.GetDirectoryName(filePath);
+                if (Directory.Exists(dirPath))
+                {
+                    context.Response.Write($"Directory exists. Files in directory:\n");
+                    foreach (string file in Directory.GetFiles(dirPath))
+                    {
+                        context.Response.Write($"  - {Path.GetFileName(file)}\n");
+                    }
+                }
+                else
+                {
+                    context.Response.Write($"Directory does not exist: {dirPath}\n");
+                }
+
+                return;
+            }
+
+            // 下載檔案
+            DownloadFile(context, filePath, fileName, "application/pdf");
+        }
+        catch (Exception ex)
+        {
+            context.Response.StatusCode = 500;
+            context.Response.ContentType = "text/plain; charset=utf-8";
+            context.Response.Write($"Error: {ex.Message}\n");
+            context.Response.Write($"Stack trace: {ex.StackTrace}");
+        }
     }
     
 

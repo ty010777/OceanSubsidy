@@ -975,7 +975,7 @@ function downloadApprovedPlan() {
     }
 
     // 構建下載 URL
-    const downloadUrl = '../../../Service/CLB_download.ashx?action=downloadApprovedPlan&projectID=' + encodeURIComponent(projectID);
+    const downloadUrl = window.location.origin + window.AppRootPath +'/Service/CLB_download.ashx?action=downloadApprovedPlan&projectID=' + encodeURIComponent(projectID);
 
     // 直接開啟新視窗下載檔案
     window.open(downloadUrl, '_blank');

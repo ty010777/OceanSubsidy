@@ -88,7 +88,7 @@ function handleFileUpload(fileCode, fileInput) {
     formData.append('uploadedFile', file);  // ✅ 修正：改為 'uploadedFile'
 
     // 發送 AJAX 請求
-    fetch('../../../Service/CLB_Upload.ashx', {
+    fetch(window.location.origin + window.AppRootPath +'/Service/CLB_Upload.ashx', {
         method: 'POST',
         body: formData
     })
@@ -263,7 +263,7 @@ function deleteUploadedFile(fileType) {
             formData.append('projectID', projectID);
 
             // 發送 AJAX 請求到 CLB_Upload.ashx
-            fetch('../../../Service/CLB_Upload.ashx', {
+            fetch(window.location.origin + window.AppRootPath +'/Service/CLB_Upload.ashx', {
                 method: 'POST',
                 body: formData
             })

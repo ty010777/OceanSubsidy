@@ -41,7 +41,8 @@ public class SCI_Upload : IHttpHandler
         }
         catch (Exception ex)
         {
-            context.Response.Write($"{{\"success\":false,\"message\":\"Error processing request: {ex.Message}\"}}");
+            string escapedMessage = EscapeJsonString(ex.Message);
+            context.Response.Write($"{{\"success\":false,\"message\":\"Error processing request: {escapedMessage}\"}}");
         }
 
         context.Response.End();
@@ -95,11 +96,16 @@ public class SCI_Upload : IHttpHandler
             // 儲存到資料庫
             SaveFileToDatabase(projectID, fileCode, fileName, relativePath);
 
-            context.Response.Write($"{{\"success\":true,\"message\":\"檔案上傳成功\",\"fileName\":\"{fileName}\",\"relativePath\":\"{relativePath}\"}}");
+            // 跳脫 JSON 字串中的特殊字元
+            string escapedFileName = EscapeJsonString(fileName);
+            string escapedRelativePath = EscapeJsonString(relativePath);
+
+            context.Response.Write($"{{\"success\":true,\"message\":\"檔案上傳成功\",\"fileName\":\"{escapedFileName}\",\"relativePath\":\"{escapedRelativePath}\"}}");
         }
         catch (Exception ex)
         {
-            context.Response.Write($"{{\"success\":false,\"message\":\"檔案上傳失敗：{ex.Message}\"}}");
+            string escapedMessage = EscapeJsonString(ex.Message);
+            context.Response.Write($"{{\"success\":false,\"message\":\"檔案上傳失敗：{escapedMessage}\"}}");
         }
     }
 
@@ -127,7 +133,8 @@ public class SCI_Upload : IHttpHandler
         }
         catch (Exception ex)
         {
-            context.Response.Write($"{{\"success\":false,\"message\":\"檔案刪除失敗：{ex.Message}\"}}");
+            string escapedMessage = EscapeJsonString(ex.Message);
+            context.Response.Write($"{{\"success\":false,\"message\":\"檔案刪除失敗：{escapedMessage}\"}}");
         }
     }
 
@@ -257,11 +264,16 @@ public class SCI_Upload : IHttpHandler
             // 儲存到資料庫
             SaveTechDiagramToDatabase(projectID, fileName, relativePath);
 
-            context.Response.Write($"{{\"success\":true,\"message\":\"檔案上傳成功\",\"fileName\":\"{fileName}\",\"relativePath\":\"{relativePath}\"}}");
+            // 跳脫 JSON 字串中的特殊字元
+            string escapedFileName = EscapeJsonString(fileName);
+            string escapedRelativePath = EscapeJsonString(relativePath);
+
+            context.Response.Write($"{{\"success\":true,\"message\":\"檔案上傳成功\",\"fileName\":\"{escapedFileName}\",\"relativePath\":\"{escapedRelativePath}\"}}");
         }
         catch (Exception ex)
         {
-            context.Response.Write($"{{\"success\":false,\"message\":\"檔案上傳失敗：{ex.Message}\"}}");
+            string escapedMessage = EscapeJsonString(ex.Message);
+            context.Response.Write($"{{\"success\":false,\"message\":\"檔案上傳失敗：{escapedMessage}\"}}");
         }
     }
 
@@ -365,6 +377,21 @@ public class SCI_Upload : IHttpHandler
         {
             throw new Exception($"儲存檔案資訊失敗：{ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// 跳脫 JSON 字串中的特殊字元
+    /// </summary>
+    private string EscapeJsonString(string str)
+    {
+        if (string.IsNullOrEmpty(str))
+            return str;
+
+        return str.Replace("\\", "\\\\")    // 反斜線
+                  .Replace("\"", "\\\"")    // 雙引號
+                  .Replace("\n", "\\n")     // 換行
+                  .Replace("\r", "\\r")     // 回車
+                  .Replace("\t", "\\t");    // Tab
     }
 
     public bool IsReusable => false;

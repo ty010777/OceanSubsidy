@@ -30,11 +30,11 @@ public partial class OFS_AuditRecords : System.Web.UI.Page
             // }
 
             // 檢查使用者是否有權限訪問此頁面
-            if (!CheckAuditPermission())
-            {
-                // ShowErrorAndRedirect("您沒有訪問此頁面的權限");
-                return;
-            }
+            // if (!CheckAuditPermission())
+            // {
+            //     // ShowErrorAndRedirect("您沒有訪問此頁面的權限");
+            //     // return;
+            // }
 
             if (!IsPostBack)
             {
