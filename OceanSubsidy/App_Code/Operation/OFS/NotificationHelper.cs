@@ -1,4 +1,4 @@
-using GS.Data.Sql;
+﻿using GS.Data.Sql;
 using System;
 using System.Configuration;
 using System.Data;
@@ -84,6 +84,17 @@ public class NotificationHelper
         toUser(
             "［海洋委員會］執行計畫案 請款核銷已通過",
             $"您好：<br><br>貴單位{category}類執行計畫「{projectName}」，<br>{eventName}已通過。<br><br>撥付金額：{amount}<br>審核備註：{remark}",
+            account
+        );
+    }
+
+    public static void ReviewCommittee(string token, string account)
+    {
+        var url = ConfigurationManager.AppSettings["Host"] + ConfigurationManager.AppSettings["AppRootPath"] + $"/OFS/ReviewCommitteeInfo?Token={token}";
+
+        toUser(
+            "［海洋委員會］補助申請案 請進行審查及評分",
+            $"您好：<br><br>海洋委員會已邀請您參與計畫申請階段之審查。<br>為能讓後續作業順利進行，<br>請<a href=\"{url}\">進入此連結</a>提供您的銀行帳戶與戶籍地址資料，非常感謝！",
             account
         );
     }
