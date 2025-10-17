@@ -238,6 +238,7 @@ public class LiteracyService : BaseService
                 project.RejectReason = param["Reason"].ToString();
                 project.CorrectionDeadline = DateTime.Parse(param["CorrectionDeadline"].ToString()); //補正期限
                 saveApplyReviewLog(project.ProjectID, "資格審查-補正補件", project.RejectReason, project.CorrectionDeadline);
+                NotificationHelper.B1("素養", project.ProjectName, project.Year.ToString(), project.RejectReason, toTwDate(project.CorrectionDeadline.Value), project.UserAccount);
                 break;
             default:
                 project.Status = 12; //通過
@@ -533,6 +534,8 @@ public class LiteracyService : BaseService
             {
                 mergePdfFiles(data, "送審版", context);
                 mergePdfFiles(data, "核定版", context);
+
+                NotificationHelper.A1("素養", data.ProjectName, "LIT");
             }
             else if (data.IsProjChanged)
             {
@@ -881,7 +884,7 @@ public class LiteracyService : BaseService
     {
         var project = getProject(getID(param["ID"].ToString()));
 
-        snapshot = project.ProgressStatus >= 5 && bool.Parse(param["Apply"].ToString()) ? getSnapshot("LIT", project.ID) : null;
+        snapshot = project.ProgressStatus >= 5 && bool.TryParse(param["Apply"]?.ToString(), out bool apply) && apply ? getSnapshot("LIT", project.ID) : null;
 
         return project;
     }

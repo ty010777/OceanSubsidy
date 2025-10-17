@@ -240,6 +240,7 @@ public class MultipleService : BaseService
                     project.RejectReason = param["Reason"].ToString();
                     project.CorrectionDeadline = DateTime.Parse(param["CorrectionDeadline"].ToString()); //補正期限
                     saveApplyReviewLog(project.ProjectID, "資格審查-補正補件", project.RejectReason, project.CorrectionDeadline);
+                    NotificationHelper.B1("多元", project.ProjectName, project.Year.ToString(), project.RejectReason, toTwDate(project.CorrectionDeadline.Value), project.UserAccount);
                     break;
                 default:
                     project.Status = 12; //通過
@@ -580,6 +581,8 @@ public class MultipleService : BaseService
             {
                 mergePdfFiles(data, "送審版", context);
                 mergePdfFiles(data, "核定版", context);
+
+                NotificationHelper.A1("多元", data.ProjectName, "MUL");
             }
             else if (data.Status == 42)
             {
@@ -932,7 +935,7 @@ public class MultipleService : BaseService
     {
         var project = getProject(getID(param["ID"].ToString()));
 
-        snapshot = project.ProgressStatus >= 5 && bool.Parse(param["Apply"].ToString()) ? getSnapshot("MUL", project.ID) : null;
+        snapshot = project.ProgressStatus >= 5 && bool.TryParse(param["Apply"]?.ToString(), out bool apply) && apply ? getSnapshot("MUL", project.ID) : null;
 
         return project;
     }
