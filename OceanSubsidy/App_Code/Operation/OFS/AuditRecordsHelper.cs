@@ -68,6 +68,28 @@ public class AuditRecordsHelper
         return db.GetTable();
     }
 
+    public static GisTable Other_GetProjectBasicData(string projectID)
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText = @"
+            SELECT [ProjectID], [ProjectName] AS [ProjectNameTw], [OrgName], [StartTime], [EndTime] FROM [OFS_CUL_Project]
+            UNION
+            SELECT [ProjectID], [ProjectName] AS [ProjectNameTw], [OrgName], [StartTime], [EndTime] FROM [OFS_EDC_Project]
+            UNION
+            SELECT [ProjectID], [ProjectName] AS [ProjectNameTw], [OrgName], [StartTime], [EndTime] FROM [OFS_MUL_Project]
+            UNION
+            SELECT [ProjectID], [ProjectName] AS [ProjectNameTw], [OrgName], [StartTime], [EndTime] FROM [OFS_LIT_Project]
+            UNION
+            SELECT [ProjectID], [ProjectName] AS [ProjectNameTw], [OrgName], [StartTime], [EndTime] FROM [OFS_ACC_Project]
+             WHERE [ProjectID] = @ProjectID
+        ";
+
+        db.Parameters.Clear();
+        db.Parameters.Add("@ProjectID", projectID);
+
+        return db.GetTable();
+    }
+
     /// <summary>
     /// 根據 ProjectID 取得查核紀錄列表
     /// </summary>

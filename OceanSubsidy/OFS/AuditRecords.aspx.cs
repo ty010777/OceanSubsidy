@@ -132,14 +132,17 @@ public partial class OFS_AuditRecords : System.Web.UI.Page
         try
         {
             GisTable projectTable;
-            if(ProjectID.Contains("SCI")){
+            if (ProjectID.Contains("SCI"))
+            {
                 projectTable = AuditRecordsHelper.SCI_GetProjectBasicData(ProjectID);
-            }else if (ProjectID.Contains("CLB"))
+            }
+            else if (ProjectID.Contains("CLB"))
             {
                 projectTable = AuditRecordsHelper.CLB_GetProjectBasicData(ProjectID);
             }
-            else{
-                projectTable = AuditRecordsHelper.SCI_GetProjectBasicData(ProjectID);
+            else
+            {
+                projectTable = AuditRecordsHelper.Other_GetProjectBasicData(ProjectID);
             }
             if (projectTable.Rows.Count == 0)
             {
@@ -173,11 +176,11 @@ public partial class OFS_AuditRecords : System.Web.UI.Page
 
         // 使用 Literal 控件來顯示基本資料
         var projectInfoHtml = new StringBuilder();
-        
+
         projectInfoHtml.AppendLine($"<li><span class=\"text-gray fw-bold\">計畫編號：</span><span>{ProjectData.ProjectID}</span></li>");
         projectInfoHtml.AppendLine($"<li><span class=\"text-gray fw-bold\">計畫名稱：</span><span>{ProjectData.ProjectNameTw}</span></li>");
         projectInfoHtml.AppendLine($"<li><span class=\"text-gray fw-bold\">執行單位：</span><span>{ProjectData.OrgName}</span></li>");
-        
+
         string periodText = "";
         if (ProjectData.StartTime.HasValue && ProjectData.EndTime.HasValue)
         {
@@ -194,9 +197,9 @@ public partial class OFS_AuditRecords : System.Web.UI.Page
         try
         {
             var auditTable = AuditRecordsHelper.GetAuditRecordsByProjectID(ProjectID);
-            
+
             AuditRecords = new List<AuditRecordsModel.AuditRecordData>();
-            
+
             foreach (System.Data.DataRow row in auditTable.Rows)
             {
                 var record = new AuditRecordsModel.AuditRecordData
@@ -260,7 +263,7 @@ public partial class OFS_AuditRecords : System.Web.UI.Page
             btnExportRecords.Visible = true;
             btnSubmitAuditResult.Visible = true;
             btnSubmitReply.Visible = false;
-            
+
             // 顯示查核作業欄位
             txtAuditorName.Visible = true;
             txtAuditDate.Visible = true;
@@ -273,16 +276,16 @@ public partial class OFS_AuditRecords : System.Web.UI.Page
             btnExportRecords.Visible = false;
             btnSubmitAuditResult.Visible = false;
             btnSubmitReply.Visible = true;
-            
+
             // 隱藏查核作業欄位
             txtAuditorName.Visible = false;
             txtAuditDate.Visible = false;
             ddlRiskAssessment.Visible = false;
             txtAuditComment.Visible = false;
-            
+
             // 添加 CSS 類別來隱藏 General-view 元素
             SetGeneralViewElementsHidden();
-            
+
             // 為查核紀錄表格添加隱藏欄位的 CSS 類別
             SetRecordsTableColumnHidden();
         }
@@ -335,7 +338,7 @@ public partial class OFS_AuditRecords : System.Web.UI.Page
             string comment = txtAuditComment.Text.Trim();
 
             // 驗證必填欄位
-            if (string.IsNullOrEmpty(auditorName) || string.IsNullOrEmpty(auditDateStr) || 
+            if (string.IsNullOrEmpty(auditorName) || string.IsNullOrEmpty(auditDateStr) ||
                 string.IsNullOrEmpty(risk) || string.IsNullOrEmpty(comment))
             {
                 ShowErrorMessage("請填寫所有必填欄位");
@@ -351,7 +354,7 @@ public partial class OFS_AuditRecords : System.Web.UI.Page
 
             AuditRecordsHelper.InsertAuditRecord(ProjectID, auditorName, auditDate, risk, comment);
 
-           
+
             // 顯示成功訊息並延遲重新載入頁面
             string script = @"
                 Swal.fire({
@@ -365,7 +368,7 @@ public partial class OFS_AuditRecords : System.Web.UI.Page
                     window.location.href = window.location.href;
                 });";
             ClientScript.RegisterStartupScript(this.GetType(), "SuccessAndReload", script, true);
-            
+
         }
         catch (Exception ex)
         {
@@ -536,7 +539,7 @@ public partial class OFS_AuditRecords : System.Web.UI.Page
         try
         {
             // 取得當前使用者資訊
-            var currentUser = GetCurrentUserInfo(); 
+            var currentUser = GetCurrentUserInfo();
             if (currentUser == null || currentUser.OFS_RoleName == null)
             {
                 return AuditRecordsModel.UserPermissionType.GeneralUser;
@@ -544,7 +547,7 @@ public partial class OFS_AuditRecords : System.Web.UI.Page
 
             // 檢查是否為主管單位或系統管理員角色
             var adminRoles = new[] { "主管單位人員", "主管單位窗口", "系統管理者" };
-            
+
             foreach (string roleName in currentUser.OFS_RoleName)
             {
                 if (!string.IsNullOrEmpty(roleName) && adminRoles.Contains(roleName))
