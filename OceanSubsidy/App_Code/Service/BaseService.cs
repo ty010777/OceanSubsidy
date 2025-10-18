@@ -9,6 +9,11 @@ using System.Web.SessionState;
 
 public class BaseService : IHttpHandler, IRequiresSessionState
 {
+    public static string toTwDate(DateTime date)
+    {
+        return $"{date.Year - 1911}/{date.Month:D2}/{date.Day:D2}";
+    }
+
     public bool IsReusable => false;
 
     public void ProcessRequest(HttpContext context)
@@ -111,11 +116,6 @@ public class BaseService : IHttpHandler, IRequiresSessionState
         var desc = string.IsNullOrWhiteSpace(note) ? "" : $"因{note}原因「{after}」";
 
         saveLog(pID, "決審核定-計畫書審核中", after, desc);
-    }
-
-    protected string toTwDate(DateTime date)
-    {
-        return $"{date.Year - 1911}/{date.Month:D2}/{date.Day:D2}";
     }
 
     private void saveLog(string pID, string before, string after, string desc)

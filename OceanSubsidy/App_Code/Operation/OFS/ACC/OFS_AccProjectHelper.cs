@@ -29,74 +29,7 @@ public class OFS_AccProjectHelper
 
     public static OFS_AccProject get(int id)
     {
-        DbHelper db = new DbHelper();
-
-        db.CommandText = @"
-            SELECT P.[ID]
-                  ,P.[Year]
-                  ,P.[ProjectID]
-                  ,P.[SubsidyPlanType]
-                  ,P.[ProjectName]
-                  ,P.[OrgName]
-                  ,P.[OrgCategory]
-                  ,P.[RegisteredNum]
-                  ,P.[TaxID]
-                  ,P.[Address]
-                  ,P.[Target]
-                  ,P.[Summary]
-                  ,P.[Quantified]
-                  ,P.[Qualitative]
-                  ,P.[StartTime]
-                  ,P.[EndTime]
-                  ,P.[ApplyAmount]
-                  ,P.[SelfAmount]
-                  ,P.[OtherAmount]
-                  ,P.[ApprovedAmount]
-                  ,P.[RecoveryAmount]
-                  ,P.[Benefit]
-                  ,P.[FormStep]
-                  ,P.[Status]
-                  ,P.[ProgressStatus]
-                  ,P.[Organizer]
-                  ,U.[Name] AS [OrganizerName]
-                  ,P.[RejectReason]
-                  ,P.[CorrectionDeadline]
-                  ,P.[UserAccount]
-                  ,P.[UserName]
-                  ,P.[UserOrg]
-                  ,P.[IsProjChanged]
-                  ,P.[IsWithdrawal]
-                  ,P.[IsExists]
-                  ,P.[FinalReviewNotes]
-                  ,P.[FinalReviewOrder]
-              FROM [OFS_ACC_Project] AS P
-         LEFT JOIN [Sys_User] AS U ON (U.UserID = P.Organizer)
-             WHERE P.[ID] = @ID
-        ";
-
-        db.Parameters.Add("@ID", id);
-
-        var table = db.GetTable();
-
-        return table.Rows.Count == 1 ? toModel(table.Rows[0]) : null;
-    }
-
-    public static List<string> getInprogressProjectIds(int year)
-    {
-        DbHelper db = new DbHelper();
-
-        db.CommandText = @"
-            SELECT [ProjectID]
-              FROM [OFS_ACC_Project]
-             WHERE [Year] = @Year
-               AND [IsExists] = 1
-               AND [IsWithdrawal] = 0
-               AND [ProgressStatus] = 5
-        ";
-
-        db.Parameters.Add("@Year", year);
-
-        return db.GetTable().Rows.Cast<DataRow>().Select(row => row.Field<string>("ProjectID")).ToList();
+        return query(new OFS_AccProject { ID = id }, false).FirstOrDefault();
     }
 
     public static string getUserAccount(string projectID)
@@ -165,6 +98,93 @@ public class OFS_AccProjectHelper
         db.Parameters.Add("@CreateUser", CurrentUser.ID);
 
         model.ID = int.Parse(db.GetTable().Rows[0]["ID"].ToString());
+    }
+
+    public static List<OFS_AccProject> query(OFS_AccProject conditions, bool valid = true)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            SELECT P.[ID]
+                  ,P.[Year]
+                  ,P.[ProjectID]
+                  ,P.[SubsidyPlanType]
+                  ,P.[ProjectName]
+                  ,P.[OrgName]
+                  ,P.[OrgCategory]
+                  ,P.[RegisteredNum]
+                  ,P.[TaxID]
+                  ,P.[Address]
+                  ,P.[Target]
+                  ,P.[Summary]
+                  ,P.[Quantified]
+                  ,P.[Qualitative]
+                  ,P.[StartTime]
+                  ,P.[EndTime]
+                  ,P.[ApplyAmount]
+                  ,P.[SelfAmount]
+                  ,P.[OtherAmount]
+                  ,P.[ApprovedAmount]
+                  ,P.[RecoveryAmount]
+                  ,P.[Benefit]
+                  ,P.[FormStep]
+                  ,P.[Status]
+                  ,P.[ProgressStatus]
+                  ,P.[Organizer]
+                  ,U.[Name] AS [OrganizerName]
+                  ,P.[RejectReason]
+                  ,P.[CorrectionDeadline]
+                  ,P.[UserAccount]
+                  ,P.[UserName]
+                  ,P.[UserOrg]
+                  ,P.[IsProjChanged]
+                  ,P.[IsWithdrawal]
+                  ,P.[IsExists]
+                  ,P.[FinalReviewNotes]
+                  ,P.[FinalReviewOrder]
+              FROM [OFS_ACC_Project] AS P
+         LEFT JOIN [Sys_User] AS U ON (U.UserID = P.Organizer)
+        ";
+
+        db.CommandText += valid ? " WHERE [IsExists] = 1 AND [IsWithdrawal] = 0" : " WHERE 1 = 1";
+
+        if (conditions.ID > 0)
+        {
+            db.CommandText += " AND P.[ID] = @ID";
+            db.Parameters.Add("@ID", conditions.ID);
+        }
+
+        if (conditions.Year > 0)
+        {
+            db.CommandText += " AND P.[Year] = @Year";
+            db.Parameters.Add("@Year", conditions.Year);
+        }
+
+        if (conditions.Status > 0)
+        {
+            db.CommandText += " AND P.[Status] = @Status";
+            db.Parameters.Add("@Status", conditions.Status);
+        }
+
+        if (conditions.ProgressStatus > 0)
+        {
+            db.CommandText += " AND P.[ProgressStatus] = @ProgressStatus";
+            db.Parameters.Add("@ProgressStatus", conditions.ProgressStatus);
+        }
+
+        if (conditions.EndTime.HasValue)
+        {
+            db.CommandText += " AND P.[EndTime] = @EndTime";
+            db.Parameters.Add("@EndTime", conditions.EndTime.Value);
+        }
+
+        if (conditions.CorrectionDeadline.HasValue)
+        {
+            db.CommandText += " AND P.[CorrectionDeadline] = @CorrectionDeadline";
+            db.Parameters.Add("@CorrectionDeadline", conditions.CorrectionDeadline.Value);
+        }
+
+        return db.GetTable().Rows.Cast<DataRow>().Select(r => toModel(r)).ToList();
     }
 
     public static void reviewApplication(OFS_AccProject model)

@@ -132,8 +132,6 @@ public class OFSGrantTypeHelper
 
         db.Parameters.Add("@TypeCode", code);
 
-        var table = db.GetTable();
-
         return db.GetTable().Rows.Cast<DataRow>().Select(r => toModel(r)).ToList();
     }
 
