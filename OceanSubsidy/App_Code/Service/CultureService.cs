@@ -693,6 +693,8 @@ public class CultureService : BaseService
             else if (data.Status == 42)
             {
                 mergePdfFiles(data, "核定版", context);
+
+                NotificationHelper.A2("文化", data.ProjectName, data.Organizer);
             }
             else if (data.IsProjChanged)
             {

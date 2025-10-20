@@ -15,6 +15,16 @@ public class NotificationHelper
             type
         );
     }
+
+    public static void A2(string category, string projectName, int? organizer)
+    {
+        toOrganizer(
+            "［海洋委員會］補助申請案 修正計畫書提送通知",
+            $"您好：<br><br>{category}計畫「{projectName}」已提送修正計畫書，敬請至［計畫審查＞決審核定］進行修正計畫書確認。",
+            organizer
+        );
+    }
+
     public static void B1(string category, string projectName,string year, string reason,string deadline, string account)
     {
         toUser(
@@ -95,7 +105,7 @@ public class NotificationHelper
             account
         );
     }
-    
+
 
     public static void F2(string category, string projectName, string eventName, string account, int? organizer)
     {
@@ -201,8 +211,8 @@ public class NotificationHelper
             $"您好：<br><br>{category}類執行計畫「{projectName}」，<br>已登錄查核意見，請至［計畫執行＞查核紀錄］查閱並進行改善及回覆。",
             account
         );
-    } 
-    
+    }
+
     public static void J1( string projectName, string eventName,string url, string account)
     {
         toSomeOne(
@@ -210,7 +220,7 @@ public class NotificationHelper
             $"審查委員您好：<br><br> 海洋委員會以下執行計畫案，請協助「{eventName}」 之審查意見：<br> <a href=\"{url}\">{projectName}</a>",
             account
         );
-    } 
+    }
     public static void J2(string projectID,string projectName,string ReviewerName,string eventName, int? organizer)
     {
         toOrganizer(
@@ -222,14 +232,14 @@ public class NotificationHelper
             $"審查報告：{eventName}<br>",
             organizer
         );
-    } 
+    }
     public static void Z1(string category, string type,string projectName,  string reson,string account,int? organizer)
     {
-        
+
         if (organizer == null || organizer == 0)
         {
             toSupervisor(
-                "［海洋委員會］補助申請案 已撤案通知", 
+                "［海洋委員會］補助申請案 已撤案通知",
                 $"您好：<br><br> {category}類計畫「{projectName}」已進行撤案申請。<br>撤案原因：{reson}",
                 type
                 );
@@ -248,14 +258,14 @@ public class NotificationHelper
             account
         );
 
-        
-    } 
+
+    }
     public static void Z2(string category, string type, string projectName, string reson,string account,int? organizer)
     {
         if (organizer == null || organizer == 0)
         {
             toSupervisor(
-                "［海洋委員會］補助申請案 撤案已恢復通知", 
+                "［海洋委員會］補助申請案 撤案已恢復通知",
                 $"您好：<br><br>原已撤案之 {category}類計畫「{projectName}」，目前已恢復案件至原審查階段。<br>恢復案件原因：{reson}",
                 type
             );
@@ -263,13 +273,13 @@ public class NotificationHelper
         else
         {
             toOrganizer(
-                "［海洋委員會］補助申請案 撤案已恢復通知", 
+                "［海洋委員會］補助申請案 撤案已恢復通知",
                 $"您好：<br><br>原已撤案之 {category}類計畫「{projectName}」，目前已恢復案件至原審查階段。<br>恢復案件原因：{reson}",
                 organizer
             );
         }
         toSomeOne(
-            "［海洋委員會］補助申請案 撤案已恢復通知", 
+            "［海洋委員會］補助申請案 撤案已恢復通知",
             $"您好：<br><br>原已撤案之 {category}類計畫「{projectName}」，目前已恢復案件至原審查階段。<br>恢復案件原因：{reson}",
             account
         );
@@ -308,12 +318,12 @@ public class NotificationHelper
         -- 取得目前有效 XX 補助類型對應單位下的特定角色使用者
         SELECT Account
         FROM Sys_User AS u
-        LEFT JOIN Sys_UserOFSRole AS ur 
+        LEFT JOIN Sys_UserOFSRole AS ur
                ON u.UserID = ur.UserID
-        WHERE 
+        WHERE
             -- 篩選角色 ID 5 或 6
             (ur.RoleID = '5' OR ur.RoleID = '6')
-            AND 
+            AND
             -- 篩選使用者所屬單位
             u.UnitID = (
                 SELECT s.UnitID
