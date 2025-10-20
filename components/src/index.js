@@ -6,6 +6,7 @@ import AccessibilityPayment1 from "./components/Accessibility/Payment1.vue";
 import AccessibilityPayment2 from "./components/Accessibility/Payment2.vue";
 import AccessibilityProgressBar from "./components/Accessibility/ProgressBar.vue";
 import AccessibilityWorkSchedule from "./components/Accessibility/WorkSchedule.vue";
+import AuditHistory from "./components/AuditHistory.vue";
 import ConfirmModal from "./components/ConfirmModal.vue";
 import CommonProgressBar from "./components/CommonProgressBar.vue";
 import CultureApplication from "./components/Culture/Application.vue";
@@ -96,6 +97,7 @@ const components = {
     AccessibilityPayment2,
     AccessibilityProgressBar,
     AccessibilityWorkSchedule,
+    AuditHistory,
     ConfirmModal,
     CommonProgressBar,
     CultureApplication,

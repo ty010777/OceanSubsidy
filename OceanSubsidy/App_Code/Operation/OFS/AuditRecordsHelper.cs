@@ -194,26 +194,28 @@ public class AuditRecordsHelper
         db.CommandText = @"
             SELECT A.[idx]
                   ,A.[ProjectID]
+                  ,B.[ProjectName]
                   ,A.[ReviewerName]
                   ,A.[CheckDate]
                   ,A.[Risk]
                   ,A.[ReviewerComment]
                   ,A.[ExecutorComment]
               FROM [OFS_AuditRecords] AS A
-              JOIN (SELECT [ProjectID], [OrgName] FROM [OFS_SCI_Application_Main]
+              JOIN (SELECT [ProjectID], [ProjectNameTw] AS [ProjectName], [OrgName] FROM [OFS_SCI_Application_Main]
                     UNION
-                    SELECT [ProjectID], [OrgName] FROM [OFS_CUL_Project]
+                    SELECT [ProjectID], [ProjectName], [OrgName] FROM [OFS_CUL_Project]
                     UNION
-                    SELECT [ProjectID], [OrgName] FROM [OFS_EDC_Project]
+                    SELECT [ProjectID], [ProjectName], [OrgName] FROM [OFS_EDC_Project]
                     UNION
-                    SELECT [ProjectID], [SchoolName] + [ClubName] AS [OrgName] FROM [OFS_CLB_Application_Basic]
+                    SELECT [ProjectID], [ProjectNameTw] AS [ProjectName], [SchoolName] + [ClubName] AS [OrgName] FROM [OFS_CLB_Application_Basic]
                     UNION
-                    SELECT [ProjectID], [OrgName] FROM [OFS_MUL_Project]
+                    SELECT [ProjectID], [ProjectName], [OrgName] FROM [OFS_MUL_Project]
                     UNION
-                    SELECT [ProjectID], [OrgName] FROM [OFS_LIT_Project]
+                    SELECT [ProjectID], [ProjectName], [OrgName] FROM [OFS_LIT_Project]
                     UNION
-                    SELECT [ProjectID], [OrgName] FROM [OFS_ACC_Project]) AS B ON (B.ProjectID = A.ProjectID)
+                    SELECT [ProjectID], [ProjectName], [OrgName] FROM [OFS_ACC_Project]) AS B ON (B.ProjectID = A.ProjectID)
               WHERE B.OrgName = @OrgName
+           ORDER BY A.[CheckDate] DESC
         ";
 
         db.Parameters.Add("@OrgName", name);
@@ -222,8 +224,9 @@ public class AuditRecordsHelper
         {
             idx = row.Field<int>("idx"),
             ProjectID = row.Field<string>("ProjectID"),
+            ProjectName = row.Field<string>("ProjectName"),
             ReviewerName = row.Field<string>("ReviewerName"),
-            CheckDate = row.Field<DateTime?>("ReviewerName"),
+            CheckDate = row.Field<DateTime?>("CheckDate"),
             Risk = row.Field<string>("Risk"),
             ReviewerComment = row.Field<string>("ReviewerComment"),
             ExecutorComment = row.Field<string>("ExecutorComment")

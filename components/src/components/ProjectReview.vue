@@ -53,6 +53,7 @@
     };
 
     const showRisk = () => {
+        window.open(api.toUrl(`/OFS/AuditHistory.aspx?Name=${encodeURIComponent(info.value.OrgName)}`), "_blank");
     };
 
     const submit = () => {

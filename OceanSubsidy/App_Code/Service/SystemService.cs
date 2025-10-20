@@ -144,6 +144,15 @@ public class SystemService : BaseService
         };
     }
 
+    public object getAuditHistory(JObject param, HttpContext context)
+    {
+        var name = param["Name"].ToString();
+
+        return new {
+            List = AuditRecordsHelper.GetAuditRecordsByOrgName(name)
+        };
+    }
+
     public object getEmptyNews(JObject param, HttpContext context)
     {
         return new
