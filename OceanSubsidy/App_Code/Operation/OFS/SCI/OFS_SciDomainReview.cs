@@ -18,7 +18,7 @@ public class OFS_SciDomainReviewHelper
     }
 
     /// <summary>
-    /// 根據 ProjectID 取得計畫基本資料
+    /// 根據 ProjectID 取得計畫基本資料（支援科專與文化補助案）
     /// </summary>
     /// <param name="projectID">計畫編號</param>
     /// <returns>計畫資料 DataRow，如果找不到則回傳 null</returns>
@@ -28,19 +28,47 @@ public class OFS_SciDomainReviewHelper
             return null;
 
         DbHelper db = new DbHelper();
-        db.CommandText = @"SELECT TOP (1) 
-            [ProjectID],
-            [Year],
-            [SubsidyPlanType],
-            [ProjectNameTw] as ProjectName,
-            (SELECT Descname 
-             FROM Sys_ZgsCode 
-             WHERE Code = AM.[Field]
-            ) as Field,
-            [OrgName],
-            [updated_at]
-        FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Application_Main] AM
-        WHERE ProjectID = @ProjectID";
+
+        if (projectID.Contains("SCI"))
+        {
+            // 科專資料查詢
+            db.CommandText = @"SELECT TOP (1)
+                [ProjectID],
+                [Year],
+                [SubsidyPlanType],
+                [ProjectNameTw] as ProjectName,
+                (SELECT Descname
+                 FROM Sys_ZgsCode
+                 WHERE Code = AM.[Field]
+                ) as Field,
+                [OrgName],
+                [updated_at],
+                '科專' as ProjectCategory
+            FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Application_Main] AM
+            WHERE ProjectID = @ProjectID";
+        }
+        else if (projectID.Contains("CUL"))
+        {
+            // 文化補助案資料查詢
+            db.CommandText = @"SELECT TOP (1)
+                [ProjectID],
+                [Year],
+                [SubsidyPlanType],
+                [ProjectName],
+                (SELECT Descname
+                 FROM Sys_ZgsCode
+                 WHERE Code = CP.[Field] and CodeGroup = 'CULField'
+                ) as Field,
+                [OrgName],
+                [UpdateTime] as updated_at,
+                '文化' as ProjectCategory
+            FROM [OCA_OceanSubsidy].[dbo].[OFS_CUL_Project] CP
+            WHERE ProjectID = @ProjectID";
+        }
+        else
+        {
+            return null;
+        }
 
         db.Parameters.Clear();
         db.Parameters.Add("@ProjectID", projectID);
@@ -64,6 +92,8 @@ public class OFS_SciDomainReviewHelper
             db.Dispose();
         }
     }
+
+   
 
 
     /// <summary>

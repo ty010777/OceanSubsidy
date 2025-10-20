@@ -450,57 +450,192 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
                 // 取得操作前的狀態
                 string beforeStatus = GetProjectCurrentStatus(projectId);
 
+                // 取得專案資料
+                var projectMain = OFS_SciApplicationHelper.getVersionByProjectID(projectId);
+                var projectBasic = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectId);
+
+                // 取得承辦人的 UserID
+                int? organizerUserId = null;
+                if (!string.IsNullOrEmpty(projectMain.SupervisoryPersonAccount))
+                {
+                    var supervisoryUser = SysUserHelper.QueryUserByAccount(projectMain.SupervisoryPersonAccount);
+                    if (supervisoryUser != null && supervisoryUser.Rows.Count > 0)
+                    {
+                        organizerUserId = Convert.ToInt32(supervisoryUser.Rows[0]["UserID"]);
+                    }
+                }
+
+                // 更新撤案狀態
                 ApplicationChecklistHelper.UpdateWithdrawalStatus(projectId, true, reason);
 
                 // 記錄操作到案件歷程
                 LogCaseOperation(projectId, "撤案", reason, beforeStatus, "已撤案");
 
-            }
-            else if (projectId.Contains("CUL"))
-            {
-                string beforeStatus = GetProjectCurrentStatus(projectId);
-                OFS_CulProjectHelper.updateWithdrawalStatus(projectId, true);
+                // 發送撤案通知
+                NotificationHelper.Z1("科專", "SCI", projectBasic.ProjectNameTw, reason,
+                    projectMain.UserAccount, organizerUserId);
 
-                LogCaseOperation(projectId, "撤案", reason, beforeStatus, "已撤案");
-            }
-            else if (projectId.Contains("EDC"))
-            {
-                string beforeStatus = GetProjectCurrentStatus(projectId);
-                OFS_EdcProjectHelper.updateWithdrawalStatus(projectId, true);
-
-                LogCaseOperation(projectId, "撤案", reason, beforeStatus, "已撤案");
             }
             else if (projectId.Contains("CLB"))
             {
                 // 取得操作前的狀態
                 string beforeStatus = GetProjectCurrentStatus(projectId);
 
+                // 取得專案資料
+                var projectMain = OFS_ClbApplicationHelper.GetProjectMainData(projectId);
+                var projectBasic = OFS_ClbApplicationHelper.GetBasicData(projectId);
+
+                // 取得承辦人的 UserID
+                int? organizerUserId = null;
+                if (!string.IsNullOrEmpty(projectMain.SupervisoryPersonAccount))
+                {
+                    var supervisoryUser = SysUserHelper.QueryUserByAccount(projectMain.SupervisoryPersonAccount);
+                    if (supervisoryUser != null && supervisoryUser.Rows.Count > 0)
+                    {
+                        organizerUserId = Convert.ToInt32(supervisoryUser.Rows[0]["UserID"]);
+                    }
+                }
+
+                // 更新撤案狀態
                 ApplicationChecklistHelper.CLB_UpdateWithdrawalStatus(projectId, true, reason);
 
                 // 記錄操作到案件歷程
                 LogCaseOperation(projectId, "撤案", reason, beforeStatus, "已撤案");
 
+                // 發送撤案通知
+                NotificationHelper.Z1("社團", "CLB", projectBasic.ProjectNameTw, reason,
+                    projectMain.UserAccount, organizerUserId);
+
+            }
+            else if (projectId.Contains("CUL"))
+            {
+                // 取得操作前的狀態
+                string beforeStatus = GetProjectCurrentStatus(projectId);
+
+                // 取得專案資料
+                int projectIntId = OFS_CulProjectHelper.getID(projectId);
+                var project = OFS_CulProjectHelper.get(projectIntId);
+
+                // 取得承辦人的 UserID
+                int? organizerUserId = null;
+                if (project.Organizer.HasValue && project.Organizer.Value > 0)
+                {
+                    organizerUserId = project.Organizer.Value;
+                }
+
+                // 更新撤案狀態
+                OFS_CulProjectHelper.updateWithdrawalStatus(projectId, true);
+
+                // 記錄操作到案件歷程
+                LogCaseOperation(projectId, "撤案", reason, beforeStatus, "已撤案");
+
+                // 發送撤案通知
+                NotificationHelper.Z1("文化", "CUL", project.ProjectName, reason,
+                    project.UserAccount, organizerUserId);
+            }
+            else if (projectId.Contains("EDC"))
+            {
+                // 取得操作前的狀態
+                string beforeStatus = GetProjectCurrentStatus(projectId);
+
+                // 取得專案資料
+                int projectIntId = OFS_EdcProjectHelper.getID(projectId);
+                var project = OFS_EdcProjectHelper.get(projectIntId);
+
+                // 取得承辦人的 UserID
+                int? organizerUserId = null;
+                if (project.Organizer.HasValue && project.Organizer.Value > 0)
+                {
+                    organizerUserId = project.Organizer.Value;
+                }
+
+                // 更新撤案狀態
+                OFS_EdcProjectHelper.updateWithdrawalStatus(projectId, true);
+
+                // 記錄操作到案件歷程
+                LogCaseOperation(projectId, "撤案", reason, beforeStatus, "已撤案");
+
+                // 發送撤案通知
+                NotificationHelper.Z1("學校民間", "EDC", project.ProjectName, reason,
+                    project.UserAccount, organizerUserId);
             }
             else if (projectId.Contains("MUL"))
             {
+                // 取得操作前的狀態
                 string beforeStatus = GetProjectCurrentStatus(projectId);
+
+                // 取得專案資料
+                int projectIntId = OFS_MulProjectHelper.getID(projectId);
+                var project = OFS_MulProjectHelper.get(projectIntId);
+
+                // 取得承辦人的 UserID
+                int? organizerUserId = null;
+                if (project.Organizer.HasValue && project.Organizer.Value > 0)
+                {
+                    organizerUserId = project.Organizer.Value;
+                }
+
+                // 更新撤案狀態
                 OFS_MulProjectHelper.updateWithdrawalStatus(projectId, true);
 
+                // 記錄操作到案件歷程
                 LogCaseOperation(projectId, "撤案", reason, beforeStatus, "已撤案");
+
+                // 發送撤案通知
+                NotificationHelper.Z1("多元", "MUL", project.ProjectName, reason,
+                    project.UserAccount, organizerUserId);
             }
             else if (projectId.Contains("LIT"))
             {
+                // 取得操作前的狀態
                 string beforeStatus = GetProjectCurrentStatus(projectId);
+
+                // 取得專案資料
+                int projectIntId = OFS_LitProjectHelper.getID(projectId);
+                var project = OFS_LitProjectHelper.get(projectIntId);
+
+                // 取得承辦人的 UserID
+                int? organizerUserId = null;
+                if (project.Organizer.HasValue && project.Organizer.Value > 0)
+                {
+                    organizerUserId = project.Organizer.Value;
+                }
+
+                // 更新撤案狀態
                 OFS_LitProjectHelper.updateWithdrawalStatus(projectId, true);
 
+                // 記錄操作到案件歷程
                 LogCaseOperation(projectId, "撤案", reason, beforeStatus, "已撤案");
+
+                // 發送撤案通知
+                NotificationHelper.Z1("素養", "LIT", project.ProjectName, reason,
+                    project.UserAccount, organizerUserId);
             }
             else if (projectId.Contains("ACC"))
             {
+                // 取得操作前的狀態
                 string beforeStatus = GetProjectCurrentStatus(projectId);
+
+                // 取得專案資料
+                int projectIntId = OFS_AccProjectHelper.getID(projectId);
+                var project = OFS_AccProjectHelper.get(projectIntId);
+
+                // 取得承辦人的 UserID
+                int? organizerUserId = null;
+                if (project.Organizer.HasValue && project.Organizer.Value > 0)
+                {
+                    organizerUserId = project.Organizer.Value;
+                }
+
+                // 更新撤案狀態
                 OFS_AccProjectHelper.updateWithdrawalStatus(projectId, true);
 
+                // 記錄操作到案件歷程
                 LogCaseOperation(projectId, "撤案", reason, beforeStatus, "已撤案");
+
+                // 發送撤案通知
+                NotificationHelper.Z1("無障礙", "ACC", project.ProjectName, reason,
+                    project.UserAccount, organizerUserId);
             }
             else
             {
@@ -651,6 +786,13 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
         try
         {
             string projectId = hdnRestoreProjectId.Value;
+            string reason = txtRestoreReason.Text.Trim();
+
+            if (string.IsNullOrEmpty(reason))
+            {
+                ShowMessage("請輸入恢復案件原因", false);
+                return;
+            }
 
             if (string.IsNullOrEmpty(projectId))
             {
@@ -661,63 +803,220 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             {
                 // 取得操作前的狀態
                 string beforeStatus = GetProjectCurrentStatus(projectId);
+
+                // 取得專案資料
+                var projectMain = OFS_SciApplicationHelper.getVersionByProjectID(projectId);
+                var projectBasic = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectId);
+
+                // 取得承辦人的 UserID
+                int? organizerUserId = null;
+                if (!string.IsNullOrEmpty(projectMain.SupervisoryPersonAccount))
+                {
+                    var supervisoryUser = SysUserHelper.QueryUserByAccount(projectMain.SupervisoryPersonAccount);
+                    if (supervisoryUser != null && supervisoryUser.Rows.Count > 0)
+                    {
+                        organizerUserId = Convert.ToInt32(supervisoryUser.Rows[0]["UserID"]);
+                    }
+                }
+
+                // 更新撤案狀態為 false（恢復案件）
                 ApplicationChecklistHelper.UpdateWithdrawalStatus(projectId, false);
+
                 // 取得操作後的狀態（從重新載入的資料中取得）
                 string afterStatus = GetProjectCurrentStatus(projectId);
-                // 記錄操作到案件歷程
-                LogCaseOperation(projectId, "恢復案件", "恢復已撤案的案件", beforeStatus, afterStatus);
 
-            }
-            else if (projectId.Contains("CUL"))
-            {
-                string beforeStatus = GetProjectCurrentStatus(projectId);
-                OFS_CulProjectHelper.updateWithdrawalStatus(projectId, false);
-                string afterStatus = GetProjectCurrentStatus(projectId);
-                LogCaseOperation(projectId, "恢復案件", "恢復已撤案的案件", beforeStatus, afterStatus);
-            }
-            else if (projectId.Contains("EDC"))
-            {
-                string beforeStatus = GetProjectCurrentStatus(projectId);
-                OFS_EdcProjectHelper.updateWithdrawalStatus(projectId, false);
-                string afterStatus = GetProjectCurrentStatus(projectId);
-                LogCaseOperation(projectId, "恢復案件", "恢復已撤案的案件", beforeStatus, afterStatus);
+                // 記錄操作到案件歷程
+                LogCaseOperation(projectId, "恢復案件", reason, beforeStatus, afterStatus);
+
+                // 發送恢復案件通知
+                NotificationHelper.Z2("科專", "SCI", projectBasic.ProjectNameTw, reason,
+                    projectMain.UserAccount, organizerUserId);
             }
             else if (projectId.Contains("CLB"))
             {
                 // 取得操作前的狀態
                 string beforeStatus = GetProjectCurrentStatus(projectId);
+
+                // 取得專案資料
+                var projectMain = OFS_ClbApplicationHelper.GetProjectMainData(projectId);
+                var projectBasic = OFS_ClbApplicationHelper.GetBasicData(projectId);
+
+                // 取得承辦人的 UserID
+                int? organizerUserId = null;
+                if (!string.IsNullOrEmpty(projectMain.SupervisoryPersonAccount))
+                {
+                    var supervisoryUser = SysUserHelper.QueryUserByAccount(projectMain.SupervisoryPersonAccount);
+                    if (supervisoryUser != null && supervisoryUser.Rows.Count > 0)
+                    {
+                        organizerUserId = Convert.ToInt32(supervisoryUser.Rows[0]["UserID"]);
+                    }
+                }
+
+                // 更新撤案狀態為 false（恢復案件）
                 ApplicationChecklistHelper.CLB_UpdateWithdrawalStatus(projectId, false);
+
                 // 取得操作後的狀態（從重新載入的資料中取得）
                 string afterStatus = GetProjectCurrentStatus(projectId);
+
                 // 記錄操作到案件歷程
-                LogCaseOperation(projectId, "恢復案件", "恢復已撤案的案件", beforeStatus, afterStatus);
+                LogCaseOperation(projectId, "恢復案件", reason, beforeStatus, afterStatus);
+
+                // 發送恢復案件通知
+                NotificationHelper.Z2("社團", "CLB", projectBasic.ProjectNameTw, reason,
+                    projectMain.UserAccount, organizerUserId);
+            }
+            else if (projectId.Contains("CUL"))
+            {
+                // 取得操作前的狀態
+                string beforeStatus = GetProjectCurrentStatus(projectId);
+
+                // 取得專案資料
+                int projectIntId = OFS_CulProjectHelper.getID(projectId);
+                var project = OFS_CulProjectHelper.get(projectIntId);
+
+                // 取得承辦人的 UserID
+                int? organizerUserId = null;
+                if (project.Organizer.HasValue && project.Organizer.Value > 0)
+                {
+                    organizerUserId = project.Organizer.Value;
+                }
+
+                // 更新撤案狀態為 false（恢復案件）
+                OFS_CulProjectHelper.updateWithdrawalStatus(projectId, false);
+
+                // 取得操作後的狀態
+                string afterStatus = GetProjectCurrentStatus(projectId);
+
+                // 記錄操作到案件歷程
+                LogCaseOperation(projectId, "恢復案件", reason, beforeStatus, afterStatus);
+
+                // 發送恢復案件通知
+                NotificationHelper.Z2("文化", "CUL", project.ProjectName, reason,
+                    project.UserAccount, organizerUserId);
+            }
+            else if (projectId.Contains("EDC"))
+            {
+                // 取得操作前的狀態
+                string beforeStatus = GetProjectCurrentStatus(projectId);
+
+                // 取得專案資料
+                int projectIntId = OFS_EdcProjectHelper.getID(projectId);
+                var project = OFS_EdcProjectHelper.get(projectIntId);
+
+                // 取得承辦人的 UserID
+                int? organizerUserId = null;
+                if (project.Organizer.HasValue && project.Organizer.Value > 0)
+                {
+                    organizerUserId = project.Organizer.Value;
+                }
+
+                // 更新撤案狀態為 false（恢復案件）
+                OFS_EdcProjectHelper.updateWithdrawalStatus(projectId, false);
+
+                // 取得操作後的狀態
+                string afterStatus = GetProjectCurrentStatus(projectId);
+
+                // 記錄操作到案件歷程
+                LogCaseOperation(projectId, "恢復案件", reason, beforeStatus, afterStatus);
+
+                // 發送恢復案件通知
+                NotificationHelper.Z2("學校民間", "EDC", project.ProjectName, reason,
+                    project.UserAccount, organizerUserId);
             }
             else if (projectId.Contains("MUL"))
             {
+                // 取得操作前的狀態
                 string beforeStatus = GetProjectCurrentStatus(projectId);
+
+                // 取得專案資料
+                int projectIntId = OFS_MulProjectHelper.getID(projectId);
+                var project = OFS_MulProjectHelper.get(projectIntId);
+
+                // 取得承辦人的 UserID
+                int? organizerUserId = null;
+                if (project.Organizer.HasValue && project.Organizer.Value > 0)
+                {
+                    organizerUserId = project.Organizer.Value;
+                }
+
+                // 更新撤案狀態為 false（恢復案件）
                 OFS_MulProjectHelper.updateWithdrawalStatus(projectId, false);
+
+                // 取得操作後的狀態
                 string afterStatus = GetProjectCurrentStatus(projectId);
-                LogCaseOperation(projectId, "恢復案件", "恢復已撤案的案件", beforeStatus, afterStatus);
+
+                // 記錄操作到案件歷程
+                LogCaseOperation(projectId, "恢復案件", reason, beforeStatus, afterStatus);
+
+                // 發送恢復案件通知
+                NotificationHelper.Z2("多元", "MUL", project.ProjectName, reason,
+                    project.UserAccount, organizerUserId);
             }
             else if (projectId.Contains("LIT"))
             {
+                // 取得操作前的狀態
                 string beforeStatus = GetProjectCurrentStatus(projectId);
+
+                // 取得專案資料
+                int projectIntId = OFS_LitProjectHelper.getID(projectId);
+                var project = OFS_LitProjectHelper.get(projectIntId);
+
+                // 取得承辦人的 UserID
+                int? organizerUserId = null;
+                if (project.Organizer.HasValue && project.Organizer.Value > 0)
+                {
+                    organizerUserId = project.Organizer.Value;
+                }
+
+                // 更新撤案狀態為 false（恢復案件）
                 OFS_LitProjectHelper.updateWithdrawalStatus(projectId, false);
+
+                // 取得操作後的狀態
                 string afterStatus = GetProjectCurrentStatus(projectId);
-                LogCaseOperation(projectId, "恢復案件", "恢復已撤案的案件", beforeStatus, afterStatus);
+
+                // 記錄操作到案件歷程
+                LogCaseOperation(projectId, "恢復案件", reason, beforeStatus, afterStatus);
+
+                // 發送恢復案件通知
+                NotificationHelper.Z2("素養", "LIT", project.ProjectName, reason,
+                    project.UserAccount, organizerUserId);
             }
             else if (projectId.Contains("ACC"))
             {
+                // 取得操作前的狀態
                 string beforeStatus = GetProjectCurrentStatus(projectId);
+
+                // 取得專案資料
+                int projectIntId = OFS_AccProjectHelper.getID(projectId);
+                var project = OFS_AccProjectHelper.get(projectIntId);
+
+                // 取得承辦人的 UserID
+                int? organizerUserId = null;
+                if (project.Organizer.HasValue && project.Organizer.Value > 0)
+                {
+                    organizerUserId = project.Organizer.Value;
+                }
+
+                // 更新撤案狀態為 false（恢復案件）
                 OFS_AccProjectHelper.updateWithdrawalStatus(projectId, false);
+
+                // 取得操作後的狀態
                 string afterStatus = GetProjectCurrentStatus(projectId);
-                LogCaseOperation(projectId, "恢復案件", "恢復已撤案的案件", beforeStatus, afterStatus);
+
+                // 記錄操作到案件歷程
+                LogCaseOperation(projectId, "恢復案件", reason, beforeStatus, afterStatus);
+
+                // 發送恢復案件通知
+                NotificationHelper.Z2("無障礙", "ACC", project.ProjectName, reason,
+                    project.UserAccount, organizerUserId);
             }
 
 
             // 重新載入資料以取得最新狀態
             LoadData();
-            // 清空 HiddenField
+
+            // 清空輸入欄位
+            txtRestoreReason.Text = "";
             hdnRestoreProjectId.Value = "";
 
             ShowMessage("恢復案件成功", true);
@@ -816,8 +1115,8 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
 
             if (projectId.Contains("SCI"))
             {
-                 Stage1 = "領域審查";
-                 Stage2 = "技術審查";
+                 Stage1 = "2";
+                 Stage2 = "3";
                  // 查詢領域/初審 審查意見
                  var domainCommentsTable = ReviewCheckListHelper.GetSciReviewComments(projectId, Stage1);
                  if (domainCommentsTable != null && domainCommentsTable.Rows.Count > 0)

@@ -552,7 +552,7 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
                         System.Diagnostics.Debug.WriteLine($"專案 {ProjectID} 計畫變更記錄狀態更新成功：Status=2");
                     }
                     MergePdfFiles(ProjectID, orgCategory,ProjectName, "核定版");
-
+                    
                 }else if (projectData?.IsProjChanged == 1)//計畫變更
                 {
                     tab5_ucChangeDescription.SaveChangeDescription(ProjectID);
@@ -635,6 +635,8 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
                     // 產生送審版與核定版 PDF
                     MergePdfFiles(ProjectID, orgCategory,ProjectName, "送審版");
                     MergePdfFiles(ProjectID, orgCategory,ProjectName, "核定版");
+                    NotificationHelper.A1("科專", ProjectName,  "SCI");
+
                 }
                 
                 
@@ -660,17 +662,17 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
     /// <summary>
     /// 更新專案狀態為暫存 - 設定 Form5Status 為 '暫存'
     /// </summary>
-    private void UpdateProjectSaveStatus()
-    {
-        try
-        {
-            OFS_SciUploadAttachmentsHelper.UpdateProjectSaveStatus(ProjectID);
-        }
-        catch (Exception ex)
-        {
-            throw new Exception($"更新專案暫存狀態時發生錯誤：{ex.Message}");
-        }
-    }
+    // private void UpdateProjectSaveStatus()
+    // {
+    //     try
+    //     {
+    //         OFS_SciUploadAttachmentsHelper.UpdateProjectSaveStatus(ProjectID);
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         throw new Exception($"更新專案暫存狀態時發生錯誤：{ex.Message}");
+    //     }
+    // }
 
     /// <summary>
     /// 更新專案狀態 - 設定 Form5Status 為 '完成'，CurrentStep 為 6 
@@ -690,42 +692,42 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
     /// <summary>
     /// 記錄暫存的操作歷程
     /// </summary>
-    private void LogSaveHistory()
-    {
-        try
-        {
-            var currentUser = GetCurrentUserInfo();
-            string userName = currentUser?.UserName ?? "系統";
-
-            // 建立案件歷程記錄
-            var caseHistoryLog = new OFS_CaseHistoryLog
-            {
-                ProjectID = ProjectID,
-                ChangeTime = DateTime.Now,
-                UserName = userName,
-                StageStatusBefore = "編輯中",
-                StageStatusAfter = "暫存",
-                Description = "暫存附件上傳頁面"
-            };
-
-            // 儲存到資料庫
-            bool success = ApplicationChecklistHelper.InsertCaseHistoryLog(caseHistoryLog);
-
-            if (success)
-            {
-                System.Diagnostics.Debug.WriteLine($"暫存歷程記錄已儲存：{ProjectID}");
-            }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine($"暫存歷程記錄儲存失敗：{ProjectID}");
-            }
-        }
-        catch (Exception ex)
-        {
-            // 歷程記錄失敗不影響主要流程，只記錄錯誤
-            System.Diagnostics.Debug.WriteLine($"記錄暫存歷程失敗：{ex.Message}");
-        }
-    }
+    // private void LogSaveHistory()
+    // {
+    //     try
+    //     {
+    //         var currentUser = GetCurrentUserInfo();
+    //         string userName = currentUser?.UserName ?? "系統";
+    //
+    //         // 建立案件歷程記錄
+    //         var caseHistoryLog = new OFS_CaseHistoryLog
+    //         {
+    //             ProjectID = ProjectID,
+    //             ChangeTime = DateTime.Now,
+    //             UserName = userName,
+    //             StageStatusBefore = "編輯中",
+    //             StageStatusAfter = "暫存",
+    //             Description = "暫存附件上傳頁面"
+    //         };
+    //
+    //         // 儲存到資料庫
+    //         bool success = ApplicationChecklistHelper.InsertCaseHistoryLog(caseHistoryLog);
+    //
+    //         if (success)
+    //         {
+    //             System.Diagnostics.Debug.WriteLine($"暫存歷程記錄已儲存：{ProjectID}");
+    //         }
+    //         else
+    //         {
+    //             System.Diagnostics.Debug.WriteLine($"暫存歷程記錄儲存失敗：{ProjectID}");
+    //         }
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         // 歷程記錄失敗不影響主要流程，只記錄錯誤
+    //         System.Diagnostics.Debug.WriteLine($"記錄暫存歷程失敗：{ex.Message}");
+    //     }
+    // }
 
     /// <summary>
     /// 記錄提送申請的操作歷程
@@ -775,14 +777,14 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
     #region 輔助方法
 
     /// <summary>
-    /// 顯示訊息 (傳統 alert)
-    /// </summary>
-    private void ShowMessage(string message, bool isSuccess)
-    {
-        string alertType = isSuccess ? "success" : "error";
-        string script = $"alert('{message}');";
-        Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowMessage", script, true);
-    }
+    // /// 顯示訊息 (傳統 alert)
+    // /// </summary>
+    // private void ShowMessage(string message, bool isSuccess)
+    // {
+    //     string alertType = isSuccess ? "success" : "error";
+    //     string script = $"alert('{message}');";
+    //     Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowMessage", script, true);
+    // }
 
 
     /// <summary>
@@ -822,28 +824,28 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
     /// 檢查是否為決審核定+審核中狀態
     /// </summary>
     /// <returns>true: 決審核定+審核中, false: 其他狀態</returns>
-    private bool IsDecisionReviewMode()
-    {
-        try
-        {
-            // 取得最新版本的狀態
-            var projectData = OFS_SciApplicationHelper.getVersionByProjectID(ProjectID);
-            if (projectData == null)
-            {
-                return false;
-            }
-
-            string statuses = projectData.Statuses ?? "";
-            string statusesName = projectData.StatusesName ?? "";
-
-            return statusesName == "計畫書修正中";
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"檢查決審核定狀態時發生錯誤：{ex.Message}");
-            return false;
-        }
-    }
+    // private bool IsDecisionReviewMode()
+    // {
+    //     try
+    //     {
+    //         // 取得最新版本的狀態
+    //         var projectData = OFS_SciApplicationHelper.getVersionByProjectID(ProjectID);
+    //         if (projectData == null)
+    //         {
+    //             return false;
+    //         }
+    //
+    //         string statuses = projectData.Statuses ?? "";
+    //         string statusesName = projectData.StatusesName ?? "";
+    //
+    //         return statusesName == "計畫書修正中";
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         System.Diagnostics.Debug.WriteLine($"檢查決審核定狀態時發生錯誤：{ex.Message}");
+    //         return false;
+    //     }
+    // }
 
   
 

@@ -1133,11 +1133,11 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
                     // 產生送審版與核定版 PDF
                     MergePdfFiles(projectID, ProjectName,"送審版");
                     MergePdfFiles(projectID, ProjectName,"核定版");
-
-
+                    NotificationHelper.A1("社團", ProjectName,  "CLB");
+                    //提送歷史紀錄
+                    InsertClbHistory(projectID);
                 }
-                //提送歷史紀錄
-                InsertClbHistory(projectID);
+                
 
                 var successResult = new { success = true, message = "儲存成功！", projectID = projectID, enableUpload = true };
                 Response.Write(JsonConvert.SerializeObject(successResult));

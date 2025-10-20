@@ -305,7 +305,7 @@ public class DownloadApplicationChecklistFile : IHttpHandler
                 }
                 else
                 {
-                    reviewStageTypeName = reviewType == "domain" ? "領域審查" : "技術審查"; // 預設值
+                    reviewStageTypeName = reviewType == "domain" ? "2" : "3"; // 預設值
                 }
 
                 context.Response.StatusCode = 404;
@@ -376,8 +376,8 @@ public class DownloadApplicationChecklistFile : IHttpHandler
 
             if (projectId.Contains("SCI"))
             {
-                stage1 = "領域審查";
-                stage2 = "技術審查";
+                stage1 = "2";
+                stage2 = "3";
 
                 // 根據 reviewType 決定查詢哪種審查意見
                 if (reviewType == "domain")

@@ -1946,25 +1946,26 @@ function submitSendToApplicant(selectedIds) {
 }
 
 /**
- * Type2 和 Type3 的提送至申請者功能 - 全域函數供按鈕直接調用
+ * 提送審查意見至申請者功能 (Type2、Type3、Type4) - 全域函數供按鈕直接調用
+ * 僅支援科專和文化補助案
  */
-function handleSendToApplicantType2Type3() {
+function handleSendReviewComments() {
     try {
         // 取得當前審查類型
         const currentType = window.ReviewChecklist ? window.ReviewChecklist.getCurrentType() : '2';
 
-        // 檢查是否為 Type2 或 Type3
-        if (currentType !== '2' && currentType !== '3') {
+        // 檢查是否為 Type2、Type3 或 Type4
+        if (currentType !== '2' && currentType !== '3' && currentType !== '4') {
             Swal.fire({
                 title: '權限錯誤',
-                text: '提送至申請者功能只適用於領域審查(Type2)和技術審查(Type3)',
+                text: '提送審查意見功能只適用於領域審查(Type2)、技術審查(Type3)和決審(Type4)',
                 icon: 'error',
                 confirmButtonText: '確定'
             });
             return;
         }
 
-        // 1. 收集選中的專案 (參考 handleBatchApproval 的邏輯)
+        // 1. 收集選中的專案
         const currentContent = $('#content-type-' + currentType);
         const selectedCheckboxes = currentContent.find('.checkPlan:checked');
 
@@ -1979,19 +1980,57 @@ function handleSendToApplicantType2Type3() {
         }
 
         const selectedIds = [];
+        const invalidProjects = []; // 不符合條件的專案（非科專或文化）
+
         selectedCheckboxes.each(function() {
             const projectId = $(this).val();
             if (projectId && projectId.trim() !== '') {
-                selectedIds.push(projectId);
+                // 擋控：只有科專和文化可用
+                const subsidyType = extractSubsidyType(projectId);
+                if (subsidyType === 'SCI' || subsidyType === 'CUL') {
+                    selectedIds.push(projectId);
+                } else {
+                    invalidProjects.push({
+                        projectId: projectId,
+                        type: subsidyType || '未知'
+                    });
+                }
             }
         });
+
+        // 檢查是否有不符合條件的專案
+        if (invalidProjects.length > 0) {
+            let errorMessage = '以下計畫不支援此功能（僅科專和文化補助案可使用）：\n\n';
+            invalidProjects.forEach(item => {
+                errorMessage += `${item.projectId} (${item.type})\n`;
+            });
+
+            Swal.fire({
+                title: '擋控提示',
+                html: errorMessage.replace(/\n/g, '<br>'),
+                icon: 'warning',
+                confirmButtonText: '確定'
+            });
+            return;
+        }
+
+        // 如果沒有有效的科專或文化專案
+        if (selectedIds.length === 0) {
+            Swal.fire({
+                title: '提醒',
+                text: '沒有可提送的科專或文化計畫',
+                icon: 'warning',
+                confirmButtonText: '確定'
+            });
+            return;
+        }
 
         console.log('選中的計畫ID:', selectedIds);
 
         // SweetAlert2 確認提示
         Swal.fire({
-            title: '確定提送申請者？',
-            text: `選中 ${selectedIds.length} 件計畫，確定要提送給申請者嗎？`,
+            title: '確定提送審查意見至申請者？',
+            text: `選中 ${selectedIds.length} 件計畫（科專/文化），確定要提送審查意見給申請者嗎？`,
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
@@ -2001,12 +2040,12 @@ function handleSendToApplicantType2Type3() {
         }).then((result) => {
             if (result.isConfirmed) {
                 // 執行提送動作
-                submitSendToApplicantType2Type3(selectedIds, currentType);
+                submitSendReviewComments(selectedIds, currentType);
             }
         });
 
     } catch (error) {
-        console.error('提送至申請者處理時發生錯誤:', error);
+        console.error('提送審查意見至申請者處理時發生錯誤:', error);
         Swal.fire({
             title: '系統錯誤',
             text: '處理提送操作時發生錯誤',
@@ -2017,9 +2056,29 @@ function handleSendToApplicantType2Type3() {
 }
 
 /**
- * 提交提送申請者的動作（Type2 和 Type3）
+ * 從 ProjectID 中提取補助類型
+ * @param {string} projectId - 專案編號 (例如: 114SCI0005)
+ * @returns {string} 補助類型 (例如: SCI)
  */
-function submitSendToApplicantType2Type3(selectedIds, reviewType) {
+function extractSubsidyType(projectId) {
+    if (!projectId) return '';
+
+    const supportedTypes = ['SCI', 'CUL', 'EDC', 'CLB', 'MUL', 'LIT', 'ACC'];
+    const upperProjectId = projectId.toUpperCase();
+
+    for (let type of supportedTypes) {
+        if (upperProjectId.includes(type)) {
+            return type;
+        }
+    }
+
+    return '';
+}
+
+/**
+ * 提交提送審查意見至申請者的動作（Type2、Type3、Type4）
+ */
+function submitSendReviewComments(selectedIds, reviewType) {
     // 顯示載入中
     Swal.fire({
         title: '處理中...',

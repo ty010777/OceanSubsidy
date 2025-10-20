@@ -280,12 +280,13 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
     {
         try
         {
-            // 載入年度選項
+            // 載入年度選項（動態）
             ddlYear_Type1.Items.Add(new ListItem("全部", ""));
-            ddlYear_Type1.Items.Add(new ListItem("114年", "114"));
-            ddlYear_Type1.DataTextField = "Text";
-            ddlYear_Type1.DataValueField = "Value";
-            ddlYear_Type1.DataBind();
+            var years = ReviewCheckListHelper.GetType1YearOptions();
+            foreach (var year in years)
+            {
+                ddlYear_Type1.Items.Add(new ListItem($"{year}年", year));
+            }
 
             // 載入類別選項
             var categoryOptions = LoadGrantTypeOptions(true);
@@ -330,13 +331,13 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
     {
         try
         {
-            // 載入科專年度選項
+            // 載入年度選項（動態）
             ddlYear_Type2.Items.Add(new ListItem("全部", ""));
-            ddlYear_Type2.Items.Add(new ListItem("113年", "113"));
-            ddlYear_Type2.Items.Add(new ListItem("114年", "114"));
-            ddlYear_Type2.DataTextField = "Text";
-            ddlYear_Type2.DataValueField = "Value";
-            ddlYear_Type2.DataBind();
+            var years = ReviewCheckListHelper.GetType2YearOptions();
+            foreach (var year in years)
+            {
+                ddlYear_Type2.Items.Add(new ListItem($"{year}年", year));
+            }
 
             // 載入類別選項
             var categoryOptions = LoadGrantTypeOptions(true);
@@ -387,13 +388,13 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
     {
         try
         {
-            // 載入年度選項
+            // 載入年度選項（動態）
             ddlYear_Type3.Items.Add(new ListItem("全部", ""));
-            ddlYear_Type3.Items.Add(new ListItem("113年", "113"));
-            ddlYear_Type3.Items.Add(new ListItem("114年", "114"));
-            ddlYear_Type3.DataTextField = "Text";
-            ddlYear_Type3.DataValueField = "Value";
-            ddlYear_Type3.DataBind();
+            var years = ReviewCheckListHelper.GetType3YearOptions();
+            foreach (var year in years)
+            {
+                ddlYear_Type3.Items.Add(new ListItem($"{year}年", year));
+            }
 
             // 載入類別選項
             var categoryOptions = LoadGrantTypeOptions(true);
@@ -445,12 +446,9 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
     {
         try
         {
-            // 載入年度選項（移除「全部」選項）
-            var yearList = new List<object>
-            {
-                new { Text = "113年", Value = "113" },
-                new { Text = "114年", Value = "114" }
-            };
+            // 載入年度選項（動態，不含「全部」選項）
+            var years = ReviewCheckListHelper.GetType4YearOptions();
+            var yearList = years.Select(y => new { Text = $"{y}年", Value = y }).ToList();
             ddlYear_Type4.DataSource = yearList;
             ddlYear_Type4.DataTextField = "Text";
             ddlYear_Type4.DataValueField = "Value";
@@ -502,10 +500,13 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
     {
         try
         {
-            // 載入年度選項
+            // 載入年度選項（動態）
             ddlYear_Type5.Items.Add(new ListItem("全部", ""));
-            ddlYear_Type5.Items.Add(new ListItem("113年", "113"));
-            ddlYear_Type5.Items.Add(new ListItem("114年", "114"));
+            var years = ReviewCheckListHelper.GetType5YearOptions();
+            foreach (var year in years)
+            {
+                ddlYear_Type5.Items.Add(new ListItem($"{year}年", year));
+            }
 
             // 載入類別選項
             var categoryOptions = LoadGrantTypeOptions(true);
@@ -542,10 +543,13 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
     {
         try
         {
-            // 載入年度選項
+            // 載入年度選項（動態）
             ddlYear_Type6.Items.Add(new ListItem("全部", ""));
-            ddlYear_Type6.Items.Add(new ListItem("113年", "113"));
-            ddlYear_Type6.Items.Add(new ListItem("114年", "114"));
+            var years = ReviewCheckListHelper.GetType6YearOptions();
+            foreach (var year in years)
+            {
+                ddlYear_Type6.Items.Add(new ListItem($"{year}年", year));
+            }
 
             // 載入類別選項
             var categoryOptions = LoadGrantTypeOptions(true);
@@ -840,15 +844,15 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                         {
                             case "SCI":
                                 ReviewCheckListHelper.ProcessSciPostApproval(groupResult.SuccessProjectIds, toStatus, actionType, currentUser.Account);
+
                                 break;
                             case "CUL":
                                 ReviewCheckListHelper.ProcessCulPostApproval(groupResult.SuccessProjectIds, toStatus, actionType, currentUser.Account);
+
                                 break;
                             default:
                                 break;
                         }
-                        // TODO 寄信 正文 (先至少有這個) 可以讓審查人員可以藉由寄信到審查頁面
-                        // TODO http://localhost:50929/OFS/SCI/SciDomainReview.aspx?ProjectID=114SCI0005&Token=c420d7d6-d045-4ced-b71e-6cd60a5ebf66
                     }
                 }
 
@@ -860,6 +864,20 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                     {
                         allErrorMessages.AddRange(groupResult.ErrorMessages);
                     }
+                }
+            }
+
+            // 寄送審查通知給審查人員（只在資格審→領域審、領域審→技術審時寄信，不包含進入決審）
+            if (totalSuccess > 0 && allSuccessIds.Count > 0 && actionType != "進入決審")
+            {
+                // 只有資格審(1)→領域審(2) 或 領域審(2)→技術審(3)  或資格審(1)→決審(4) 需要寄信
+                if (reviewType == "1" || reviewType == "2")
+                {
+                    SendReviewNotifications(allSuccessIds, reviewType);
+                }
+                else if (reviewType == "3")
+                {
+                    SendFinalReviewNotifications(allSuccessIds);
                 }
             }
 
@@ -1144,11 +1162,11 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
 
         try
         {
-            // 權限檢查：只有 Type2(領域審查) 和 Type3(技術審查) 可以使用
-            if (reviewType != "2" && reviewType != "3")
+            // 權限檢查：只有 Type2(領域審查)、Type3(技術審查) 和 Type4(決審) 可以使用
+            if (reviewType != "2" && reviewType != "3" && reviewType != "4")
             {
                 result.Success = false;
-                result.Message = "提送至申請者功能只適用於領域審查(Type2)和技術審查(Type3)";
+                result.Message = "提送至申請者功能只適用於領域審查(Type2)、技術審查(Type3)和決審(Type4)";
                 return result;
             }
 
@@ -1187,30 +1205,90 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                 return result;
             }
 
-            // 2. 組成ID,帳號的清單
-            var projectAccountInfo = new List<string>();
-            foreach (var item in projectAccountList)
-            {
-                projectAccountInfo.Add($"ProjectID: {item.Key}, Account: {item.Value}");
-            }
+            // 3. 使用 NotificationHelper.C2 寄信給申請者
+            int successEmailCount = 0;
+            var failedProjects = new List<string>();
 
-            // 3. TODO: 正文 根據email寄信
-            // TODO: 實作寄信功能
-            // - 取得申請者的 email 地址
-            // - 產生寄信內容（告知審查結果需要補件或修正）
-            // - 寄送通知信件給申請者
             foreach (var item in projectAccountList)
             {
                 string projectId = item.Key;
                 string account = item.Value;
-                System.Diagnostics.Debug.WriteLine($"TODO: 寄信給申請者 - ProjectID: {projectId}, Account: {account}");
+
+                try
+                {
+                    // 從 ProjectID 中提取補助類型
+                    string subsidyType = ExtractSubsidyTypeFromProjectId(projectId);
+
+                    // 取得計畫資訊（計畫名稱、類別名稱）
+                    DataRow projectInfoRow = null;
+
+                    if (subsidyType == "SCI")
+                    {
+                        projectInfoRow = ReviewCheckListHelper.GetSciProjectInfo(projectId);
+                    }
+                    else if (subsidyType == "CUL")
+                    {
+                        projectInfoRow = ReviewCheckListHelper.GetCulProjectInfo(projectId);
+                    }
+                    else
+                    {
+                        failedProjects.Add($"{projectId} (不支援的補助類型: {subsidyType})");
+                        System.Diagnostics.Debug.WriteLine($"不支援的補助類型 - ProjectID: {projectId}, Type: {subsidyType}");
+                        continue;
+                    }
+
+                    if (projectInfoRow != null)
+                    {
+                        string projectName = projectInfoRow["ProjectName"]?.ToString() ?? "";
+
+                        if (!string.IsNullOrEmpty(projectName))
+                        {
+                            // 根據補助類型決定 categoryName
+                            string categoryName = subsidyType == "SCI" ? "科專" : "文化";
+
+                            // 使用 NotificationHelper.C2 寄信
+                            NotificationHelper.C2(
+                                categoryName,
+                                projectName,
+                                account
+                            );
+
+                            successEmailCount++;
+                            System.Diagnostics.Debug.WriteLine($"已寄信給申請者 - ProjectID: {projectId}, Account: {account}, ProjectName: {projectName}");
+                        }
+                        else
+                        {
+                            failedProjects.Add($"{projectId} (計畫名稱為空)");
+                            System.Diagnostics.Debug.WriteLine($"計畫名稱為空 - ProjectID: {projectId}");
+                        }
+                    }
+                    else
+                    {
+                        failedProjects.Add($"{projectId} (無法取得計畫資訊)");
+                        System.Diagnostics.Debug.WriteLine($"無法取得計畫資訊 - ProjectID: {projectId}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    failedProjects.Add($"{projectId} (寄信失敗: {ex.Message})");
+                    System.Diagnostics.Debug.WriteLine($"寄信給申請者時發生錯誤 - ProjectID: {projectId}, Error: {ex.Message}");
+                }
             }
 
             // 設定處理結果
-            result.Success = true;
-            result.SuccessCount = projectAccountList.Count;
-            result.SuccessProjectIds = projectAccountList.Keys.ToList();
-            result.Message = $"成功提送 {projectAccountList.Count} 筆計畫給申請者";
+            result.Success = successEmailCount > 0;
+            result.SuccessCount = successEmailCount;
+            result.SuccessProjectIds = projectAccountList.Keys.Where(pid => !failedProjects.Any(f => f.StartsWith(pid))).ToList();
+
+            if (failedProjects.Count > 0)
+            {
+                result.Message = $"成功提送 {successEmailCount} 筆計畫給申請者，{failedProjects.Count} 筆失敗";
+                result.ErrorMessages.AddRange(failedProjects);
+            }
+            else
+            {
+                result.Message = $"成功提送 {successEmailCount} 筆計畫給申請者";
+            }
 
             // 不再將詳細清單加入 ErrorMessages，前端只顯示筆數即可
 
@@ -1466,14 +1544,8 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
 
             if (projectId.Contains("SCI"))
             {
-                if (reviewType == "2")
-                {
-                    reviewStage = "領域審查";
-                }
-                else if (reviewType == "3")
-                {
-                    reviewStage = "技術審查";
-                }
+                reviewStage = reviewType =="2"? "2" : "3";
+               
                 planData = ReviewCheckListHelper.GetSciPlanDetail(projectId);
                 reviewData = ReviewCheckListHelper.GetSciReviewComments(projectId, reviewStage);
             }
@@ -1913,8 +1985,73 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                             OFSProjectChangeRecordHelper.insert(changeRecord);
                             break;
                     }
-                    // TODO: 寄信 實作寄信給申請者功能
-                    // SendNotificationEmail(projectId);
+
+                    // 使用 NotificationHelper.E1 寄信給申請者
+                    try
+                    {
+                        string applicantEmail = "";
+                        string projectName = "";
+                        string categoryName = "";
+
+                        // 根據專案類型轉換類別名稱
+                        switch (projectType)
+                        {
+                            case "SCI":
+                                categoryName = "科專";
+                                applicantEmail = OFS_SciApplicationHelper.GetApplicantAccountByProjectId(projectId);
+                                var sciProjectInfo = ReviewCheckListHelper.GetSciProjectInfo(projectId);
+                                if (sciProjectInfo != null)
+                                {
+                                    projectName = sciProjectInfo["ProjectName"]?.ToString() ?? "";
+                                }
+                                break;
+
+                            case "CUL":
+                                categoryName = "文化";
+                                applicantEmail = OFS_CulProjectHelper.getUserAccount(projectId);
+                                var culProjectInfo = ReviewCheckListHelper.GetCulProjectInfo(projectId);
+                                if (culProjectInfo != null)
+                                {
+                                    projectName = culProjectInfo["ProjectName"]?.ToString() ?? "";
+                                }
+                                break;
+
+                            case "MUL":
+                                categoryName = "多元";
+                                applicantEmail = OFS_MulProjectHelper.getUserAccount(projectId);
+                                var mulProject = OFS_MulProjectHelper.query(new OFS_MulProject { ProjectID = projectId }, false).FirstOrDefault();
+                                if (mulProject != null)
+                                {
+                                    projectName = mulProject.ProjectName ?? "";
+                                }
+                                break;
+
+                            case "ACC":
+                                categoryName = "無障礙";
+                                applicantEmail = OFS_AccProjectHelper.getUserAccount(projectId);
+                                var accProject = OFS_AccProjectHelper.query(new OFS_AccProject { ProjectID = projectId }, false).FirstOrDefault();
+                                if (accProject != null)
+                                {
+                                    projectName = accProject.ProjectName ?? "";
+                                }
+                                break;
+                        }
+
+                        // 如果有取得申請者Email，則使用 E1 發送郵件
+                        if (!string.IsNullOrEmpty(applicantEmail) && !string.IsNullOrEmpty(projectName))
+                        {
+                            NotificationHelper.E1(categoryName, projectName, applicantEmail);
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine($"專案 {projectId} 無法取得申請者Email或計畫名稱");
+                        }
+                    }
+                    catch (Exception emailEx)
+                    {
+                        // 郵件發送失敗不影響主流程，僅記錄錯誤
+                        System.Diagnostics.Debug.WriteLine($"專案 {projectId} 寄信時發生錯誤: {emailEx.Message}");
+                    }
 
                     successCount++;
                 }
@@ -2450,12 +2587,12 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             string sciType, culType;
             if (exportType == "Type3")
             {
-                sciType = "技術審查";
+                sciType = "3";
                 culType = "3";//複審
             }
             else // Type2 或預設值
             {
-                sciType = "領域審查";
+                sciType = "2";
                 culType = "2";//初審
             }
 
@@ -2599,6 +2736,561 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                 message = $"匯出時發生錯誤: {ex.Message}"
             });
         }
+    }
+
+    #endregion
+
+    #region 審查通知功能
+
+    /// <summary>
+    /// 發送審查通知給審查人員
+    /// </summary>
+    /// <param name="projectIds">專案ID清單</param>
+    /// <param name="reviewType">審查類型 (1:資格審查, 2:領域審查)</param>
+    private static void SendReviewNotifications(List<string> projectIds, string reviewType)
+    {
+        try
+        {
+            if (projectIds == null || projectIds.Count == 0)
+                return;
+
+            // 依補助類型分組專案
+            //科專、文化 --> 領域審核、初審 寄信
+            //其他 --> 決審 寄信
+            var sciProjects = projectIds.Where(p => p.Contains("SCI")).ToList();
+            var culProjects = projectIds.Where(p => p.Contains("CUL")).ToList();
+          
+            // 處理科專審查通知
+            if (sciProjects.Count > 0)
+            {
+                SendSciReviewNotifications(sciProjects, reviewType);
+            }
+
+            // 處理文化審查通知
+            if (culProjects.Count > 0)
+            {
+                SendCulReviewNotifications(culProjects, reviewType);
+            }
+
+         
+
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"發送審查通知時發生錯誤：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 發送科專審查通知
+    /// </summary>
+    private static void SendSciReviewNotifications(List<string> projectIds, string reviewType)
+    {
+        try
+        {
+            // 取得審查階段
+            string reviewStage = GetReviewStageByType(reviewType);
+     
+
+            // 取得事件名稱
+            string eventName = GetSCIEventNameByReviewType(reviewType);
+
+            // 從資料庫取得審查記錄
+            var reviewRecords = GetReviewRecordsByProjects(projectIds, reviewStage);
+
+            if (reviewRecords.Count == 0)
+                return;
+
+            // 依照審查人員的 Email 分組
+            var reviewerGroups = reviewRecords
+                .Where(r => !string.IsNullOrEmpty(r.Email))
+                .GroupBy(r => r.Email);
+
+            // 對每個審查人員發送通知
+            foreach (var reviewerGroup in reviewerGroups)
+            {
+                string reviewerEmail = reviewerGroup.Key;
+
+                // 組成該審查人員的專案清單 (ProjectName -> URL)
+                var projectList = new Dictionary<string, string>();
+
+                foreach (var record in reviewerGroup)
+                {
+                    string url = BuildReviewUrl(record.ProjectID, record.Token);
+                    projectList[record.ProjectName] = url;
+                }
+
+                // 發送 C1 通知
+                NotificationHelper.C1("科專", projectList, eventName, reviewerEmail);
+            }
+
+            System.Diagnostics.Debug.WriteLine($"已發送審查通知給 {reviewerGroups.Count()} 位審查人員");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"發送科專審查通知時發生錯誤：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 發送文化審查通知
+    /// </summary>
+    private static void SendCulReviewNotifications(List<string> projectIds, string reviewType)
+    {
+        try
+        {
+            // 取得審查階段
+            string reviewStage = GetReviewStageByType(reviewType);
+            if (string.IsNullOrEmpty(reviewStage))
+                return;
+
+            // 取得事件名稱
+            string eventName = GetCULEventNameByReviewType(reviewType);
+
+            // 從資料庫取得審查記錄
+            var reviewRecords = GetReviewRecordsByProjects(projectIds, reviewStage);
+
+            if (reviewRecords.Count == 0)
+                return;
+
+            // 依照審查人員的 Email 分組
+            var reviewerGroups = reviewRecords
+                .Where(r => !string.IsNullOrEmpty(r.Email))
+                .GroupBy(r => r.Email);
+
+            // 對每個審查人員發送通知
+            foreach (var reviewerGroup in reviewerGroups)
+            {
+                string reviewerEmail = reviewerGroup.Key;
+
+                // 組成該審查人員的專案清單 (ProjectName -> URL)
+                var projectList = new Dictionary<string, string>();
+
+                foreach (var record in reviewerGroup)
+                {
+                    string url = BuildReviewUrl(record.ProjectID, record.Token);
+                    projectList[record.ProjectName] = url;
+                }
+
+                // 發送 C1 通知
+                NotificationHelper.C1("文化", projectList, eventName, reviewerEmail);
+            }
+
+            System.Diagnostics.Debug.WriteLine($"已發送文化審查通知給 {reviewerGroups.Count()} 位審查人員");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"發送文化審查通知時發生錯誤：{ex.Message}");
+        }
+    }
+
+  
+
+    /// <summary>
+    /// 發送進入決審通知（SCI 和 CUL）
+    /// 技術審查通過後進入決審，寄信通知申請者，使用 G5 通知
+    /// </summary>
+    private static void SendFinalReviewNotifications(List<string> projectIds)
+    {
+        try
+        {
+            if (projectIds == null || projectIds.Count == 0)
+                return;
+
+            // 事件名稱固定為「技術審查」
+            string eventName = "技術審查";
+
+            // 依補助類型分組專案（只處理 SCI 和 CUL）
+            var sciProjects = projectIds.Where(p => p.Contains("SCI")).ToList();
+            var culProjects = projectIds.Where(p => p.Contains("CUL")).ToList();
+
+            // 處理科專專案
+            if (sciProjects.Count > 0)
+            {
+                SendFinalReviewNotificationsForGrantType(sciProjects, "SCI", "科專", eventName);
+            }
+
+            // 處理文化專案
+            if (culProjects.Count > 0)
+            {
+                SendFinalReviewNotificationsForGrantType(culProjects, "CUL", "文化", eventName);
+            }
+
+            System.Diagnostics.Debug.WriteLine($"已完成發送進入決審通知，共 {projectIds.Count} 個專案");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"發送進入決審通知時發生錯誤：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 發送特定補助類型的進入決審通知
+    /// </summary>
+    private static void SendFinalReviewNotificationsForGrantType(List<string> projectIds, string subsidyType, string grantTypeName, string eventName)
+    {
+        foreach (string projectId in projectIds)
+        {
+            try
+            {
+                // 取得專案名稱和使用者帳號
+                var projectInfo = GetProjectInfoForFinalReview(projectId, subsidyType);
+
+                if (projectInfo != null &&
+                    !string.IsNullOrEmpty(projectInfo.ProjectName) &&
+                    !string.IsNullOrEmpty(projectInfo.UserAccount))
+                {
+                    // 使用 G5 寄信通知申請者
+                    NotificationHelper.G5(grantTypeName, projectInfo.ProjectName, eventName, projectInfo.UserAccount);
+
+                    System.Diagnostics.Debug.WriteLine(
+                        $"已發送 {grantTypeName} 進入決審通知 - ProjectID: {projectId}, " +
+                        $"ProjectName: {projectInfo.ProjectName}, UserAccount: {projectInfo.UserAccount}");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine(
+                        $"無法取得專案資訊或使用者帳號 - ProjectID: {projectId}, SubsidyType: {subsidyType}");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"發送 {grantTypeName} 進入決審通知時發生錯誤 - ProjectID: {projectId}, 錯誤: {ex.Message}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// 取得進入決審專案資訊
+    /// </summary>
+    private static ProjectNotificationInfo GetProjectInfoForFinalReview(string projectId, string subsidyType)
+    {
+        try
+        {
+            using (var db = new GS.Data.Sql.DbHelper())
+            {
+                if (subsidyType?.ToUpper() == "SCI")
+                {
+                    db.CommandText = @"
+                        SELECT
+                            AM.ProjectNameTw AS ProjectName,
+                            PM.UserAccount
+                        FROM OFS_SCI_Application_Main AM
+                        INNER JOIN OFS_SCI_Project_Main PM ON AM.ProjectID = PM.ProjectID
+                        WHERE AM.ProjectID = @ProjectID
+                    ";
+                }
+                else if (subsidyType?.ToUpper() == "CUL")
+                {
+                    db.CommandText = @"
+                        SELECT
+                            ProjectName,
+                            UserAccount
+                        FROM OFS_CUL_Project
+                        WHERE ProjectID = @ProjectID
+                    ";
+                }
+                else
+                {
+                    return null;
+                }
+
+                db.Parameters.Add("@ProjectID", projectId);
+
+                var table = db.GetTable();
+
+                if (table.Rows.Count > 0)
+                {
+                    var row = table.Rows[0];
+                    return new ProjectNotificationInfo
+                    {
+                        ProjectID = projectId,
+                        ProjectName = row["ProjectName"]?.ToString() ?? "",
+                        UserAccount = row["UserAccount"]?.ToString() ?? ""
+                    };
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得進入決審專案資訊時發生錯誤 - ProjectID: {projectId}, 錯誤: {ex.Message}");
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// 取得補助類型的中文名稱
+    /// </summary>
+    private static string GetGrantTypeChineseName(string typeCode)
+    {
+        switch (typeCode?.ToUpper())
+        {
+            case "ACC":
+                return "無障礙";
+            case "LIT":
+                return "素養";
+            case "MUL":
+                return "多元";
+            case "EDC":
+                return "學校民間";
+            case "CLB":
+                return "學校社團";
+            default:
+                return typeCode;
+        }
+    }
+
+    /// <summary>
+    /// 取得專案資訊用於發送通知
+    /// </summary>
+    private static ProjectNotificationInfo GetProjectInfoForNotification(string projectId, string subsidyType)
+    {
+        try
+        {
+            using (var db = new GS.Data.Sql.DbHelper())
+            {
+                // CLB 需要 JOIN 兩個表
+                if (subsidyType?.ToUpper() == "CLB")
+                {
+                    db.CommandText = @"
+                        SELECT
+                            AB.ProjectNameTw AS ProjectName,
+                            PM.UserAccount
+                        FROM OFS_CLB_Application_Basic AB
+                        INNER JOIN OFS_CLB_Project_Main PM ON AB.ProjectID = PM.ProjectID
+                        WHERE AB.ProjectID = @ProjectID
+                    ";
+                }
+                else
+                {
+                    string tableName = GetProjectTableName(subsidyType);
+                    string projectNameColumn = GetProjectNameColumn(subsidyType);
+
+                    if (string.IsNullOrEmpty(tableName) || string.IsNullOrEmpty(projectNameColumn))
+                        return null;
+
+                    db.CommandText = $@"
+                        SELECT {projectNameColumn} AS ProjectName, UserAccount
+                        FROM {tableName}
+                        WHERE ProjectID = @ProjectID
+                    ";
+                }
+
+                db.Parameters.Add("@ProjectID", projectId);
+
+                var table = db.GetTable();
+
+                if (table.Rows.Count > 0)
+                {
+                    var row = table.Rows[0];
+                    return new ProjectNotificationInfo
+                    {
+                        ProjectID = projectId,
+                        ProjectName = row["ProjectName"]?.ToString() ?? "",
+                        UserAccount = row["UserAccount"]?.ToString() ?? ""
+                    };
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得專案資訊時發生錯誤 - ProjectID: {projectId}, 錯誤: {ex.Message}");
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// 取得專案表名稱
+    /// </summary>
+    private static string GetProjectTableName(string subsidyType)
+    {
+        switch (subsidyType?.ToUpper())
+        {
+            case "ACC":
+                return "OFS_ACC_Project";
+            case "LIT":
+                return "OFS_LIT_Project";
+            case "MUL":
+                return "OFS_MUL_Project";
+            case "EDC":
+                return "OFS_EDC_Project";
+            case "CLB":
+                return "OFS_CLB_Project_Main";
+            default:
+                return "";
+        }
+    }
+
+    /// <summary>
+    /// 取得專案名稱欄位名稱
+    /// </summary>
+    private static string GetProjectNameColumn(string subsidyType)
+    {
+        switch (subsidyType?.ToUpper())
+        {
+            case "ACC":
+            case "LIT":
+            case "MUL":
+            case "EDC":
+                return "ProjectName";
+            case "CLB":
+                return "ProjectNameTw";
+            default:
+                return "";
+        }
+    }
+
+    /// <summary>
+    /// 專案通知資訊
+    /// </summary>
+    private class ProjectNotificationInfo
+    {
+        public string ProjectID { get; set; }
+        public string ProjectName { get; set; }
+        public string UserAccount { get; set; }
+    }
+
+    /// <summary>
+    /// 從資料庫取得審查記錄
+    /// </summary>
+    private static List<ReviewRecordInfo> GetReviewRecordsByProjects(List<string> projectIds, string reviewStage)
+    {
+        var records = new List<ReviewRecordInfo>();
+
+        try
+        {
+            using (var db = new GS.Data.Sql.DbHelper())
+            {
+                // 建立 ProjectID 的 IN 查詢條件
+                var projectIdParams = string.Join(",", projectIds.Select((p, i) => $"@ProjectID{i}"));
+
+                db.CommandText = $@"
+                    SELECT
+                        rr.ProjectID,
+                        rr.Email,
+                        rr.ReviewerName,
+                        rr.Token,
+                        CASE
+                            WHEN rr.ProjectID LIKE '%SCI%' THEN am.ProjectNameTw
+                            WHEN rr.ProjectID LIKE '%CUL%' THEN cp.ProjectName
+                            ELSE rr.ProjectID
+                        END AS ProjectName
+                    FROM OFS_ReviewRecords rr
+                    LEFT JOIN OFS_SCI_Application_Main am ON rr.ProjectID = am.ProjectID
+                    LEFT JOIN OFS_SCI_Project_Main pm ON am.ProjectID = pm.ProjectID
+                    LEFT JOIN OFS_CUL_Project cp ON rr.ProjectID = cp.ProjectID
+                    WHERE rr.ProjectID IN ({projectIdParams})
+                      AND rr.ReviewStage = @ReviewStage
+                      AND rr.IsSubmit = 0
+                ";
+
+                // 加入 ProjectID 參數
+                for (int i = 0; i < projectIds.Count; i++)
+                {
+                    db.Parameters.Add($"@ProjectID{i}", projectIds[i]);
+                }
+
+                db.Parameters.Add("@ReviewStage", reviewStage);
+
+                var table = db.GetTable();
+
+                foreach (DataRow row in table.Rows)
+                {
+                    records.Add(new ReviewRecordInfo
+                    {
+                        ProjectID = row["ProjectID"]?.ToString() ?? "",
+                        Email = row["Email"]?.ToString() ?? "",
+                        ReviewerName = row["ReviewerName"]?.ToString() ?? "",
+                        Token = row["Token"]?.ToString() ?? "",
+                        ProjectName = row["ProjectName"]?.ToString() ?? ""
+                    });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得審查記錄時發生錯誤：{ex.Message}");
+        }
+
+        return records;
+    }
+
+    /// <summary>
+    /// 組成審查 URL（統一使用 SciDomainReview.aspx）
+    /// </summary>
+    private static string BuildReviewUrl(string projectId, string token)
+    {
+        string host = HttpContext.Current?.Request?.Url?.GetLeftPart(UriPartial.Authority)
+                      ?? "http://localhost:50929";
+
+        string appRootPath = System.Configuration.ConfigurationManager.AppSettings["AppRootPath"] ?? "";
+        string baseUrl = host + appRootPath;
+
+        // 所有補助案類型、所有審查階段都導向 SciDomainReview.aspx
+        string reviewPage = "/OFS/SCI/SciDomainReview.aspx";
+
+        return $"{baseUrl}{reviewPage}?ProjectID={projectId}&Token={token}";
+    }
+
+    /// <summary>
+    /// 根據審查類型取得審查階段代碼
+    /// </summary>
+    private static string GetReviewStageByType(string reviewType)
+    {
+        switch (reviewType)
+        {
+            case "1":
+                return "2"; // 資格審查 --> 找 領域審
+            case "2":
+                return "3"; // 領域審查/初審 -->找技術審
+            default:
+                return "";
+        }
+    }
+
+    /// <summary>
+    /// 根據審查階段取得事件名稱
+    /// </summary>
+    private static string GetSCIEventNameByReviewType(string reviewStage)
+    {
+        switch (reviewStage)
+        {
+            case "1":
+                return "領域審查";
+            case "2":
+                return "技術審查";
+            default:
+                return "審查";
+        }
+    }
+    /// <summary>
+    /// 根據審查階段取得事件名稱
+    /// </summary>
+    private static string GetCULEventNameByReviewType(string reviewStage)
+    {
+        switch (reviewStage)
+        {
+            case "1":
+                return "初審";
+            case "2":
+                return "複審";
+            default:
+                return "審查";
+        }
+    }
+    /// <summary>
+    /// 審查記錄資訊類別
+    /// </summary>
+    private class ReviewRecordInfo
+    {
+        public string ProjectID { get; set; }
+        public string Email { get; set; }
+        public string ReviewerName { get; set; }
+        public string Token { get; set; }
+        public string ProjectName { get; set; }
     }
 
     #endregion

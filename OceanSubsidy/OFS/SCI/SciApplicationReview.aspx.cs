@@ -671,7 +671,17 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
 
             // 儲存歷史記錄
             ApplicationChecklistHelper.InsertCaseHistoryLog(historyLog);
-            //TODO 寄信通知
+
+            // 取得申請表基本資料
+            var projectBasic = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectId);
+            if (reviewResult == "return")
+            {
+                NotificationHelper.B2("科專", projectBasic.ProjectNameTw, projectBasic.Year.ToString(), reviewNotes, returnDate,
+                    projectMain.UserAccount);
+
+            }
+     
+
             return new { success = true, message = $"審查結果已設定為：{updateProjectMain.StatusesName}" };
         }
         catch (Exception ex)

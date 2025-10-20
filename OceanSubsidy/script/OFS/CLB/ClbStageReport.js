@@ -6,24 +6,24 @@ function downloadTemplate() {
         // 取得 ProjectID 參數
         const urlParams = new URLSearchParams(window.location.search);
         const projectID = urlParams.get('ProjectID') || '';
-        
-        // 取得網站根路徑 (從當前路徑往上三層到根目錄)
-        const baseUrl = '../../../';
-        
+
+        // 使用 window.AppRootPath 處理虛擬路徑
+        const appRootPath = window.AppRootPath || '';
+
         // 建立下載連結
-        let downloadUrl = baseUrl + 'Service/CLB_download.ashx?action=template&type=report';
+        let downloadUrl = appRootPath + '/Service/CLB_download.ashx?action=template&type=report';
         if (projectID) {
             downloadUrl += '&projectID=' + encodeURIComponent(projectID);
         }
-        
+
         // 使用 window.open 開啟下載
         window.open(downloadUrl, '_blank');
-        
+
     } catch (error) {
         console.error('下載範本時發生錯誤:', error);
         Swal.fire({
             title: '下載失敗！',
-            text: '下載範本失敗，請稍後再試',
+            text: '下載範本失敗,請稍後再試',
             icon: 'error',
             confirmButtonText: '確定'
         });
@@ -87,8 +87,11 @@ function handleFileUpload(fileCode, fileInput) {
     formData.append('projectID', projectID);
     formData.append('uploadedFile', file);
 
+    // 使用 window.AppRootPath 處理虛擬路徑
+    const appRootPath = window.AppRootPath || '';
+
     // 發送 AJAX 請求
-    fetch('../../../Service/CLB_Upload.ashx', {
+    fetch(appRootPath + '/Service/CLB_Upload.ashx', {
         method: 'POST',
         body: formData
     })
@@ -193,11 +196,14 @@ function downloadUploadedFile(fileType) {
                 return;
         }
 
+        // 使用 window.AppRootPath 處理虛擬路徑
+        const appRootPath = window.AppRootPath || '';
+
         // 建立下載連結
-        const downloadUrl = '../../../Service/CLB_download.ashx' + 
-                           '?action=file&projectID=' + encodeURIComponent(projectID) + 
+        const downloadUrl = appRootPath + '/Service/CLB_download.ashx' +
+                           '?action=file&projectID=' + encodeURIComponent(projectID) +
                            '&fileCode=' + encodeURIComponent(fileCode);
-        
+
         // 使用 window.open 開啟下載
         window.open(downloadUrl, '_blank');
         
@@ -231,21 +237,46 @@ function deleteUploadedFile(fileType) {
             // 取得 ProjectID
             const urlParams = new URLSearchParams(window.location.search);
             const projectID = urlParams.get('ProjectID');
-            
+
             if (!projectID) {
-                alert('計畫編號不存在，請確認 URL 參數');
+                Swal.fire({
+                    title: '錯誤！',
+                    text: '計畫編號不存在，請確認 URL 參數',
+                    icon: 'error',
+                    confirmButtonText: '確定'
+                });
                 return;
+            }
+
+            // 將 fileType (1) 轉換為正確的 fileCode (StageReport1)
+            let fileCode = '';
+            switch(fileType) {
+                case 1:
+                case '1':
+                    fileCode = 'StageReport1';
+                    break;
+                default:
+                    Swal.fire({
+                        title: '錯誤！',
+                        text: '無效的檔案類型',
+                        icon: 'error',
+                        confirmButtonText: '確定'
+                    });
+                    return;
             }
 
             // 建立 FormData
             const formData = new FormData();
             formData.append('action', 'delete');
             formData.append('fileType', 'StageReport');
-            formData.append('fileCode', fileType);  // 對於 StageReport，fileType 就是 fileCode
+            formData.append('fileCode', fileCode);
             formData.append('projectID', projectID);
 
+            // 使用 window.AppRootPath 處理虛擬路徑
+            const appRootPath = window.AppRootPath || '';
+
             // 發送 AJAX 請求
-            fetch('../../../Service/CLB_Upload.ashx', {
+            fetch(appRootPath + '/Service/CLB_Upload.ashx', {
                 method: 'POST',
                 body: formData
             })

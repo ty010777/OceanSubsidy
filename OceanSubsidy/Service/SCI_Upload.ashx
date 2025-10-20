@@ -184,14 +184,44 @@ public class SCI_Upload : IHttpHandler
             // 完整檔案路徑
             string fullPath = Path.Combine(physicalPath, fileName);
 
-            // 如果檔案已存在，先刪除
+            // 如果檔案已存在，先嘗試刪除（加入權限檢查）
             if (File.Exists(fullPath))
             {
-                File.Delete(fullPath);
+                try
+                {
+                    // 移除唯讀屬性（如果有的話）
+                    FileInfo fileInfo = new FileInfo(fullPath);
+                    if (fileInfo.IsReadOnly)
+                    {
+                        fileInfo.IsReadOnly = false;
+                    }
+                    File.Delete(fullPath);
+                }
+                catch (Exception deleteEx)
+                {
+                    throw new Exception($"無法刪除現有檔案：{deleteEx.Message}");
+                }
             }
 
-            // 儲存檔案
-            file.SaveAs(fullPath);
+            // 儲存檔案（確保使用 UTF-8 編碼處理路徑）
+            try
+            {
+                file.SaveAs(fullPath);
+
+                // 驗證檔案是否成功寫入
+                if (!File.Exists(fullPath))
+                {
+                    throw new Exception("檔案寫入後無法找到，可能是權限問題");
+                }
+            }
+            catch (UnauthorizedAccessException)
+            {
+                throw new Exception($"沒有權限寫入檔案到目錄：{physicalPath}，請檢查 IIS 應用程式池的權限設定");
+            }
+            catch (IOException ioEx)
+            {
+                throw new Exception($"檔案寫入錯誤：{ioEx.Message}");
+            }
 
             // 回傳相對路徑
             return $"UploadFiles/OFS/SCI/{projectID}/SciApplication/{fileName}";

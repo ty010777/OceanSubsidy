@@ -7,6 +7,7 @@ using System.Web.UI.WebControls;
 using GS.OCA_OceanSubsidy.Entity;
 using GS.OCA_OceanSubsidy.Entity.Base;
 using GS.App;
+using GS.Extension;
 
 /// <summary>
 /// 社團計畫申請表審核頁面
@@ -151,9 +152,16 @@ public partial class OFS_CLB_Review_ClbApplicationReview : System.Web.UI.Page
             
             // 儲存歷史記錄
             ApplicationChecklistHelper.InsertCaseHistoryLog(historyLog);
-            //TODO 寄信
+            var projectBasic = OFS_ClbApplicationHelper.GetBasicData(ProjectID);
+            var projectMain = OFS_ClbApplicationHelper.GetProjectMainData(ProjectID);
+            //通過,不通過之寄信  在列表執行
+            if (reviewResult == "return")
+            {
+                NotificationHelper.B2("社團", projectBasic.ProjectNameTw, projectBasic.Year.ToString(), reviewNotes, returnDate,
+                    projectMain.UserAccount);
+            }
+           
             
-            // 送出成功後直接跳轉，避免 PostBack 問題
             string script = $@"
                 Swal.fire({{
                     title: '成功',

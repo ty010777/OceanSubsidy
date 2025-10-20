@@ -1622,7 +1622,7 @@ SELECT TOP (1000) [ProjectID]
     public static List<ProgressData> GetSciProgressData(List<string> projectIds , string status)
     {
         if (projectIds.Count == 0) return new List<ProgressData>();
-
+        status = status == "領域審查" ? "2" : "3";
         // 建立 IN 子句的參數
         var projectIdParams = projectIds.Select((id, index) => $"@projectId{index}").ToList();
         string inClause = "(" + string.Join(",", projectIdParams) + ")";
@@ -2369,13 +2369,15 @@ SELECT TOP (1000) [ProjectID]
     /// <param name="reviewStage">審查階段</param>
     /// <param name="actionType">操作類型</param>
     /// <param name="userAccount">操作者帳號</param>
-    public static void ProcessSciPostApproval(List<string> projectIds, string reviewStage, string actionType, string userAccount)
+    public static void ProcessSciPostApproval(List<string> projectIds, string toStatus, string actionType, string userAccount)
     {
+        string reviewStage = toStatus == "領域審查" ? "2" : "3";
         DbHelper db = new DbHelper();
 
         foreach (string projectId in projectIds)
         {
             // 1. 從 OFS_SCI_Application_Main 取得 Field
+            
             db.CommandText = "SELECT Field FROM OFS_SCI_Application_Main WHERE ProjectID = @ProjectID";
             db.Parameters.Add("@ProjectID", projectId);
             string field = db.GetTable().Rows[0]["Field"]?.ToString();
@@ -2400,7 +2402,7 @@ SELECT TOP (1000) [ProjectID]
                     WHERE SubsidyProjects = 'SCI'";
 
                 DataTable templates = db.GetTable();
-
+                db.Parameters.Clear();
                 // 4. 為每位審查委員建立完整的審核記錄
                 foreach (DataRow reviewer in reviewers.Rows)
                 {
@@ -2437,7 +2439,7 @@ SELECT TOP (1000) [ProjectID]
                         db.Parameters.Add("@token", token);
 
                         int reviewId = Convert.ToInt32(db.GetTable().Rows[0]["ReviewID"]);
-
+                        db.Parameters.Clear();
                         // 4.2 為此審查委員建立所有評審項目記錄
                         foreach (DataRow template in templates.Rows)
                         {
@@ -2461,11 +2463,11 @@ SELECT TOP (1000) [ProjectID]
                                         NULL
                                     )";
 
-                                db.Parameters.Clear();
                                 db.Parameters.Add("@reviewId", reviewId);
                                 db.Parameters.Add("@templateName", templateName);
                                 db.Parameters.Add("@templateWeight", templateWeight);
                                 db.ExecuteNonQuery();
+                                db.Parameters.Clear();
                             }
                         }
 
@@ -2759,31 +2761,14 @@ SELECT TOP (1000) [ProjectID]
             if (projectId.Contains("SCI"))
             {
                 planData = GetSciPlanDetail(projectId);
-
-                if (reviewType == "2")
-                {
-                    reviewStage = "領域審查";
-                }
-                else if (reviewType == "3")
-                {
-                    reviewStage = "技術審查";
-                }
-
+                reviewStage = reviewType == "2"? "2" : "3";
                 reviewData = GetSciReviewComments(projectId, reviewStage);
             }
             else if (projectId.Contains("CUL"))
             {
                 planData = GetCulturalPlanDetail(projectId);
                 reviewData = GetCulturalReviewComments(projectId, reviewType);
-
-                if (reviewType == "2")
-                {
-                    reviewStage = "初審";
-                }
-                else if (reviewType == "3")
-                {
-                    reviewStage = "複審";
-                }
+                
             }
 
             if (planData == null || planData.Rows.Count == 0)
@@ -3466,22 +3451,18 @@ SELECT TOP (1000) [ProjectID]
             }
             List<string> SciList = new List<string> { "Information", "Environment", "Material", "Mechanical" };
             string reviewStage = "";
-
+            string Status = reviewType == "2"? "領域審查" : "技術審查";
             if (SciList.Contains(reviewGroup))
             {
-                reviewStage = reviewType == "2" ? "領域審查" : "技術審查";
-
+                reviewStage = reviewType == "2" ? "2" : "3";
             }
-            else
-            {
-                reviewStage = reviewType == "2" ? "2" : "3"; //初審、複審
-            }
+          
             // 根據審查類型設定審查階段
             using (var db = new DbHelper())
             {
                 // 執行SQL查詢 - 使用參數化查詢防止SQL注入
                 // 查詢特定審查組別
-                if(reviewStage == "領域審查" || reviewStage == "技術審查")
+                if(SciList.Contains(reviewGroup))
                 {
                     db.CommandText = @"
                     -- 先算每個專案的平均分與總分
@@ -3494,7 +3475,7 @@ SELECT TOP (1000) [ProjectID]
                         FROM OFS_ReviewRecords RR
                         LEFT JOIN OFS_SCI_Application_Main AM ON RR.ProjectID = AM.ProjectID
                         LEFT JOIN OFS_SCI_Project_Main PM ON PM.ProjectID = AM.ProjectID
-                        WHERE PM.Statuses = @ReviewStage
+                        WHERE PM.Statuses = @Status
                           AND RR.ReviewStage = @ReviewStage
                           AND IsSubmit = 1 AND PM.isExist != 0
                           AND AM.Field = @ReviewGroup
@@ -3510,7 +3491,7 @@ SELECT TOP (1000) [ProjectID]
                         FROM OFS_ReviewRecords RR
                         LEFT JOIN OFS_SCI_Application_Main AM ON RR.ProjectID = AM.ProjectID
                         LEFT JOIN OFS_SCI_Project_Main PM ON PM.ProjectID = AM.ProjectID
-                        WHERE PM.Statuses = @ReviewStage
+                        WHERE PM.Statuses = @Status
                           AND RR.ReviewStage = @ReviewStage
                           AND IsSubmit = 1 AND PM.isExist != 0
                           AND AM.Field = @ReviewGroup
@@ -3578,6 +3559,7 @@ SELECT TOP (1000) [ProjectID]
                 }
 
 
+                db.Parameters.Add("@Status", Status);
                 db.Parameters.Add("@ReviewStage", reviewStage);
                 db.Parameters.Add("@ReviewGroup", reviewGroup);
 
@@ -4515,6 +4497,251 @@ SELECT [FinalReviewOrder] AS '排序'
                 throw new Exception($"取得 Type6 統計數量時發生錯誤：{ex.Message}", ex);
             }
         }
+    }
+
+    #endregion
+
+    #region 提送至申請者 - 取得計畫資訊
+
+    /// <summary>
+    /// 取得 SCI 計畫資訊（計畫名稱）
+    /// </summary>
+    /// <param name="projectId">專案編號</param>
+    /// <returns>包含 ProjectName 的 DataRow，找不到則返回 null</returns>
+    public static DataRow GetSciProjectInfo(string projectId)
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText = @"
+            SELECT
+                AM.ProjectNameTw AS ProjectName
+            FROM OFS_SCI_Application_Main AM
+            INNER JOIN OFS_SCI_Project_Main PM ON AM.ProjectID = PM.ProjectID
+            WHERE AM.ProjectID = @ProjectID
+        ";
+        db.Parameters.Add("@ProjectID", projectId);
+
+        var dt = db.GetTable();
+        if (dt != null && dt.Rows.Count > 0)
+        {
+            return dt.Rows[0];
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// 取得 CUL 計畫資訊（計畫名稱）
+    /// </summary>
+    /// <param name="projectId">專案編號</param>
+    /// <returns>包含 ProjectName 的 DataRow，找不到則返回 null</returns>
+    public static DataRow GetCulProjectInfo(string projectId)
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText = @"
+            SELECT
+                ProjectName
+            FROM OFS_CulProject
+            WHERE ProjectID = @ProjectID
+        ";
+        db.Parameters.Add("@ProjectID", projectId);
+
+        var dt = db.GetTable();
+        if (dt != null && dt.Rows.Count > 0)
+        {
+            return dt.Rows[0];
+        }
+        return null;
+    }
+
+    #endregion
+
+    #region 年度選項動態載入
+
+    /// <summary>
+    /// 取得 Type1 的年度選項
+    /// </summary>
+    /// <returns>年度選項列表</returns>
+    public static List<string> GetType1YearOptions()
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText = @"
+            SELECT DISTINCT Year
+            FROM V_OFS_ReviewChecklist_type1
+            WHERE Year IS NOT NULL
+            ORDER BY Year DESC
+        ";
+
+        var dt = db.GetTable();
+        var years = new List<string>();
+
+        foreach (var row in dt.Rows.Cast<DataRow>())
+        {
+            var year = row["Year"]?.ToString();
+            if (!string.IsNullOrEmpty(year))
+            {
+                years.Add(year);
+            }
+        }
+
+        return years;
+    }
+
+    /// <summary>
+    /// 取得 Type2 的年度選項（領域審查/初審）
+    /// </summary>
+    /// <returns>年度選項列表</returns>
+    public static List<string> GetType2YearOptions()
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText = @"
+            SELECT DISTINCT AM.[Year]
+            FROM [OFS_SCI_Project_Main] PM
+            LEFT JOIN [OFS_SCI_Application_Main] AM ON (AM.[ProjectID] = PM.[ProjectID])
+            WHERE AM.[Year] IS NOT NULL
+              AND PM.[Statuses] LIKE '領域審查'
+            UNION
+            SELECT DISTINCT [Year]
+            FROM [OFS_CUL_Project]
+            WHERE [Status] = 21
+              AND [Year] IS NOT NULL
+            ORDER BY [Year] DESC
+        ";
+
+        var dt = db.GetTable();
+        var years = new List<string>();
+
+        foreach (var row in dt.Rows.Cast<DataRow>())
+        {
+            var year = row["Year"]?.ToString();
+            if (!string.IsNullOrEmpty(year))
+            {
+                years.Add(year);
+            }
+        }
+
+        return years;
+    }
+
+    /// <summary>
+    /// 取得 Type3 的年度選項（技術審查/複審）
+    /// </summary>
+    /// <returns>年度選項列表</returns>
+    public static List<string> GetType3YearOptions()
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText = @"
+            SELECT DISTINCT AM.[Year]
+            FROM [OFS_SCI_Project_Main] PM
+            LEFT JOIN [OFS_SCI_Application_Main] AM ON (AM.[ProjectID] = PM.[ProjectID])
+            WHERE AM.[Year] IS NOT NULL
+              AND PM.[Statuses] LIKE '技術審查'
+            UNION
+            SELECT DISTINCT [Year]
+            FROM [OFS_CUL_Project]
+            WHERE [Status] = 31
+              AND [Year] IS NOT NULL
+            ORDER BY [Year] DESC
+        ";
+
+        var dt = db.GetTable();
+        var years = new List<string>();
+
+        foreach (var row in dt.Rows.Cast<DataRow>())
+        {
+            var year = row["Year"]?.ToString();
+            if (!string.IsNullOrEmpty(year))
+            {
+                years.Add(year);
+            }
+        }
+
+        return years;
+    }
+
+    /// <summary>
+    /// 取得 Type4 的年度選項
+    /// </summary>
+    /// <returns>年度選項列表</returns>
+    public static List<string> GetType4YearOptions()
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText = @"
+            SELECT DISTINCT Year
+            FROM V_OFS_ReviewChecklist_type4
+            WHERE Year IS NOT NULL
+            ORDER BY Year DESC
+        ";
+
+        var dt = db.GetTable();
+        var years = new List<string>();
+
+        foreach (var row in dt.Rows.Cast<DataRow>())
+        {
+            var year = row["Year"]?.ToString();
+            if (!string.IsNullOrEmpty(year))
+            {
+                years.Add(year);
+            }
+        }
+
+        return years;
+    }
+
+    /// <summary>
+    /// 取得 Type5 的年度選項
+    /// </summary>
+    /// <returns>年度選項列表</returns>
+    public static List<string> GetType5YearOptions()
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText = @"
+            SELECT DISTINCT Year
+            FROM V_OFS_ReviewChecklist_type5
+            WHERE Year IS NOT NULL
+            ORDER BY Year DESC
+        ";
+
+        var dt = db.GetTable();
+        var years = new List<string>();
+
+        foreach (var row in dt.Rows.Cast<DataRow>())
+        {
+            var year = row["Year"]?.ToString();
+            if (!string.IsNullOrEmpty(year))
+            {
+                years.Add(year);
+            }
+        }
+
+        return years;
+    }
+
+    /// <summary>
+    /// 取得 Type6 的年度選項
+    /// </summary>
+    /// <returns>年度選項列表</returns>
+    public static List<string> GetType6YearOptions()
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText = @"
+            SELECT DISTINCT Year
+            FROM V_OFS_ReviewChecklist_type6
+            WHERE Year IS NOT NULL
+            ORDER BY Year DESC
+        ";
+
+        var dt = db.GetTable();
+        var years = new List<string>();
+
+        foreach (var row in dt.Rows.Cast<DataRow>())
+        {
+            var year = row["Year"]?.ToString();
+            if (!string.IsNullOrEmpty(year))
+            {
+                years.Add(year);
+            }
+        }
+
+        return years;
     }
 
     #endregion

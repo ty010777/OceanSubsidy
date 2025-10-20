@@ -65,7 +65,9 @@ public class OFS_ReviewResultExportHelper
                     {
                         worksheetData.Add((sheetName, reviewerData));
                     }
-                }            }
+                }
+                
+            }
         }
 
         if (!worksheetData.Any())
@@ -131,6 +133,7 @@ public class OFS_ReviewResultExportHelper
     /// </summary>
     private static DataTable SCI_BuildReviewResultQuery(string field, string reviewStage)
     {
+        string Statuses = reviewStage == "2" ? "領域審查" : "技術審查";
         DbHelper db = new DbHelper();
         string sql = @"
            -- 建立臨時表存 Pivoted 資料
@@ -149,7 +152,7 @@ public class OFS_ReviewResultExportHelper
               AND RR.IsSubmit = 1
               AND AM.Field = @Field
               AND RR.TotalScore IS NOT NULL
-              AND PM.Statuses = @ReviewStage;
+              AND PM.Statuses = @Statuses;
 
             -- 取得有分數的 ReviewerName
             DECLARE @cols NVARCHAR(MAX);
@@ -195,6 +198,7 @@ public class OFS_ReviewResultExportHelper
         db.CommandText = sql;
         db.Parameters.Clear();
         db.Parameters.Add("@Field", field);
+        db.Parameters.Add("@Statuses", Statuses);
         db.Parameters.Add("@ReviewStage", reviewStage);
         DataTable dt = db.GetTable();
         int a = dt.Rows.Count;

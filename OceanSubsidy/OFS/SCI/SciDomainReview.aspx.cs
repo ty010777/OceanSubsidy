@@ -51,18 +51,18 @@ public partial class OFS_SCI_SciDomainReview : System.Web.UI.Page
     {
         // 使用 Helper 取得計畫資料
         DataRow projectData = OFS_SciDomainReviewHelper.GetProjectData(projectID);
-        
+
         if (projectData != null)
         {
             lblProjectNumber.Text = projectData["ProjectID"].ToString();
             lblYear.Text = projectData["Year"].ToString();
-            lblProjectCategory.Text = "科專"; // 寫死為科專
+            lblProjectCategory.Text = projectData["ProjectCategory"].ToString(); // 從資料庫讀取補助案類別
             lblReviewGroup.Text = projectData["Field"].ToString();
             lblProjectName.Text = projectData["ProjectName"].ToString();
             lblApplicantUnit.Text = projectData["OrgName"].ToString();
-            lblDocumentName.Text =  projectID + "_申請書_計畫書.pdf";
+            lblDocumentName.Text =  projectID + "_送審版_計畫書.pdf";
         }
-        
+
         // 初始化風險評估等其他資料
         InitializeOtherData(projectID);
     }
@@ -192,7 +192,41 @@ public partial class OFS_SCI_SciDomainReview : System.Web.UI.Page
 
     protected void btnDownloadDocument_Click(object sender, EventArgs e)
     {
-        
+        try
+        {
+            if (string.IsNullOrEmpty(ProjectID))
+            {
+                ShowMessage("無法取得計畫編號", false);
+                return;
+            }
+
+            string downloadUrl = "";
+
+            // 判斷補助案類型並使用對應的下載服務
+            if (ProjectID.Contains("CUL"))
+            {
+                // CUL 使用 DownloadPdf.ashx
+                downloadUrl = $"/Service/OFS/DownloadPdf.ashx?Type=CUL&ProjectID={ProjectID}&Version=1";
+            }
+            else if (ProjectID.Contains("SCI"))
+            {
+                // SCI 使用 SCI_Download.ashx 的 DownloadPlan
+                downloadUrl = $"/Service/SCI_Download.ashx?action=downloadPlan&projectID={ProjectID}";
+            }
+            else
+            {
+                ShowMessage("無法識別補助案類型", false);
+                return;
+            }
+
+            // 重導向至下載服務
+            Response.Redirect(downloadUrl, false);
+            Context.ApplicationInstance.CompleteRequest();
+        }
+        catch (Exception ex)
+        {
+            ShowMessage($"下載檔案時發生錯誤：{ex.Message}", false);
+        }
     }
 
     protected void btnSaveDraft_Click(object sender, EventArgs e)

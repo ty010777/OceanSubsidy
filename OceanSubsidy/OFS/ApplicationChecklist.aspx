@@ -431,8 +431,10 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <div class="text-center">
-                        <p class="fs-16 text-gray mb-4">確定要恢復此案件嗎？</p>
+                    <div class="">
+                        <div class="fs-16 text-gray mb-2">恢復原因</div>
+                        <asp:TextBox ID="txtRestoreReason" runat="server" TextMode="MultiLine"
+                                    Rows="3" CssClass="form-control" placeholder="請輸入恢復案件原因"></asp:TextBox>
                         <asp:HiddenField ID="hdnRestoreProjectId" runat="server" />
                     </div>
 
@@ -441,7 +443,8 @@
                             取消
                         </button>
                         <asp:Button ID="btnConfirmRestore" runat="server" Text="確認恢復"
-                                   CssClass="btn btn-teal" OnClick="btnConfirmRestore_Click" />
+                                   CssClass="btn btn-teal" OnClick="btnConfirmRestore_Click"
+                                   OnClientClick="return validateRestoreReason();" />
                     </div>
                 </div>
             </div>
@@ -523,6 +526,18 @@
             // 顯示恢復案件模態框
             const modal = new bootstrap.Modal(document.getElementById('planRestoreModal'));
             modal.show();
+            // 清空原因輸入框
+            document.getElementById('<%= txtRestoreReason.ClientID %>').value = '';
+        }
+
+        // 客戶端驗證恢復原因
+        function validateRestoreReason() {
+            const reason = document.getElementById('<%= txtRestoreReason.ClientID %>').value.trim();
+            if (!reason) {
+                alert('請輸入恢復案件原因');
+                return false;
+            }
+            return true;
         }
 
         // 設定恢復案件的 ProjectID（當開啟恢復 Modal 時呼叫）
