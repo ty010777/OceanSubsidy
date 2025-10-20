@@ -69,6 +69,8 @@ import ReportInprogressList from "./components/Report/InprogressList.vue";
 import ReportMixChart from "./components/Report/MixChart.vue";
 import ReportPieChart from "./components/Report/PieChart.vue";
 import ReportRecusedList from "./components/Report/RecusedList.vue";
+import ReportReviewerDetails from "./components/Report/ReviewerDetails.vue";
+import ReportReviewerList from "./components/Report/ReviewerList.vue";
 import RequiredLabel from "./components/RequiredLabel.vue";
 import ReviewCommitteeInfo from "./components/ReviewCommitteeInfo.vue";
 import SystemGrantForm1 from "./components/System/GrantForm1.vue";
@@ -80,6 +82,7 @@ import SystemNewsList from "./components/System/NewsList.vue";
 import SystemNewsForm from "./components/System/NewsForm.vue";
 import Tooltip from "./components/Tooltip.vue";
 import TwDate from "./components/TwDate.vue";
+import TwDateTime from "./components/TwDateTime.vue";
 import { api } from "./composables/api";
 import { useGrantStore } from "./stores/grant";
 import { useProgressStore } from "./stores/progress";
@@ -156,6 +159,8 @@ const components = {
     ReportMixChart,
     ReportPieChart,
     ReportRecusedList,
+    ReportReviewerDetails,
+    ReportReviewerList,
     RequiredLabel,
     ReviewCommitteeInfo,
     SystemGrantForm1,
@@ -166,7 +171,8 @@ const components = {
     SystemNewsList,
     SystemNewsForm,
     Tooltip,
-    TwDate
+    TwDate,
+    TwDateTime
 };
 
 export default {

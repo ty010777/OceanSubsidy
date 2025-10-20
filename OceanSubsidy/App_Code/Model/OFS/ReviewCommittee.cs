@@ -1,3 +1,5 @@
+using System;
+
 namespace GS.OCA_OceanSubsidy.Model.OFS
 {
     public class ReviewCommittee
@@ -12,5 +14,9 @@ namespace GS.OCA_OceanSubsidy.Model.OFS
         public string RegistrationAddress { get; set; }
 
         public bool Deleted { get; set; }
+        public int Type { get; set; }
+        public int Count { get; set; }
+        public string BankName { get; set; }
+        public DateTime? UpdateTime { get; set; }
     }
 }
