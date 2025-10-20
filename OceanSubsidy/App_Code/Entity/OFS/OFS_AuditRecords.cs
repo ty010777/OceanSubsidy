@@ -9,7 +9,7 @@ using GS.Extension;
 
 namespace GS.OCA_OceanSubsidy.Entity.Base
 {
-    
+
     /// <summary>
     ///  ()
     /// </summary>
@@ -18,7 +18,7 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
     [GisTableAttribute("OFS_AuditRecords", "", false)]
     public class IOFS_AuditRecords : IMeta
     {
-        
+
         protected int _idx = 0;
         ///<summary>
         ///  ()
@@ -53,7 +53,7 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
                 }
             }
         }
-        
+
         protected string _ProjectID = "";
         ///<summary>
         ///  ()
@@ -88,7 +88,7 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
                 }
             }
         }
-        
+
         protected string _ReviewerName = "";
         ///<summary>
         ///  ()
@@ -123,7 +123,7 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
                 }
             }
         }
-        
+
         protected DateTime? _CheckDate = null;
         ///<summary>
         ///  ()
@@ -158,7 +158,7 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
                 }
             }
         }
-        
+
         protected string _Risk = "";
         ///<summary>
         ///  ()
@@ -193,7 +193,7 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
                 }
             }
         }
-        
+
         protected string _ReviewerComment = "";
         ///<summary>
         ///  ()
@@ -228,7 +228,7 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
                 }
             }
         }
-        
+
         protected string _ExecutorComment = "";
         ///<summary>
         ///  ()
@@ -263,7 +263,7 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
                 }
             }
         }
-        
+
         protected DateTime? _create_at = null;
         ///<summary>
         ///  ()
@@ -298,7 +298,7 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
                 }
             }
         }
-        
+
         protected DateTime? _update_at = null;
         ///<summary>
         ///  ()
@@ -333,18 +333,18 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
                 }
             }
         }
-        
+
     }
 
-    
-    
-    
+
+
+
 }
 
 namespace GS.OCA_OceanSubsidy.Entity
 {
     using GS.OCA_OceanSubsidy.Entity.Base;
-    
+
     /// <summary>
     ///  ()
     /// </summary>
@@ -352,6 +352,8 @@ namespace GS.OCA_OceanSubsidy.Entity
     [Serializable()]
     public partial class OFS_AuditRecords : IOFS_AuditRecords
     {
+        [DataMember]
+        public string ProjectName { get; set; }
     }
-    
+
 }

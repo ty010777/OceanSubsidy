@@ -64,31 +64,68 @@ public class SystemService : BaseService
             rows.Add(new List<string>() { row.Year.ToString(), row.ProjectNameTw, row.OrgName, row.RecusedName, row.EmploymentUnit, row.JobTitle, row.RecusedReason });
         }
 
-        var content = NPOIHelper.CreateExcel("迴避審查委員名單", headers, rows).ToArray();
+        return downloadExcel("迴避審查委員名單", headers, rows, context);
+    }
 
-        //--
+    public object downloadReviewerDetails(JObject param, HttpContext context)
+    {
+        var headers = new List<string>() { "委員姓名", "審查階段", "類別", "計畫編號", "計畫名稱" };
+        var rows = new List<List<string>>();
 
-        var date = DateTime.Now.ToString("yyMMdd");
-        var folder = Path.Combine(Path.GetFullPath(Path.Combine(context.Server.MapPath("~"), "..")), "UploadFiles", "files", date);
+        var id = int.Parse(param["ID"].ToString());
+        var type = int.Parse(param["Type"].ToString());
+        var typeName = type == 1 ? "申請計畫" : "執行計畫";
 
-        if (!Directory.Exists(folder))
+        foreach (var row in OFSReviewCommitteeHelper.queryReviewerDetails(type, id))
         {
-            Directory.CreateDirectory(folder);
+            rows.Add(new List<string>()
+            {
+                row.CommitteeUser,
+                $"{typeName}／{row.ReviewStage}",
+                row.FieldName,
+                row.ProjectID,
+                row.ProjectName
+            });
         }
 
-        var filename = Path.GetRandomFileName() + ".xlsx";
+        return downloadExcel("審查計畫", headers, rows, context);
+    }
 
-        File.WriteAllBytes(Path.Combine(folder, filename), content);
+    public object downloadReviewerList(JObject param, HttpContext context)
+    {
+        var headers = new List<string>() { "委員姓名", "Email", "審查階段", "審查計畫件數", "銀行帳戶", "戶籍地址", "更新時間" };
+        var rows = new List<List<string>>();
 
-        OFSBaseFileHelper.insert(new BaseFile
+        var type = int.Parse(param["Type"].ToString());
+        var keyword = param["Keyword"].ToString();
+        DateTime? begin = null;
+        DateTime? end = null;
+
+        if (DateTime.TryParse(param["Begin"].ToString(), out DateTime date1))
         {
-            Name = filename,
-            Path = Path.Combine(date, filename),
-            Size = content.Length,
-            Type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        });
+            begin = date1;
+        }
 
-        return new { filename = Path.Combine(date, filename) };
+        if (DateTime.TryParse(param["End"].ToString(), out DateTime date2))
+        {
+            end = date2;
+        }
+
+        foreach (var row in OFSReviewCommitteeHelper.queryReviewerList(type, keyword, begin, end))
+        {
+            rows.Add(new List<string>()
+            {
+                row.CommitteeUser,
+                row.Email,
+                row.Type == 1 ? "申請計畫" : "執行計畫",
+                row.Count.ToString(),
+                $"{row.BankCode} {row.BankName} {row.BankAccount}",
+                row.RegistrationAddress,
+                row.UpdateTime.ToString()
+            });
+        }
+
+        return downloadExcel("審查委員名單", headers, rows, context);
     }
 
     public object getApplyList(JObject param, HttpContext context)
@@ -104,6 +141,15 @@ public class SystemService : BaseService
         return new
         {
             List = ReportHelper.queryApplyList(1)
+        };
+    }
+
+    public object getAuditHistory(JObject param, HttpContext context)
+    {
+        var name = param["Name"].ToString();
+
+        return new {
+            List = AuditRecordsHelper.GetAuditRecordsByOrgName(name)
         };
     }
 
@@ -214,6 +260,40 @@ public class SystemService : BaseService
         return new
         {
             List = OFS_SciRecusedList.queryRecusedList(year, keyword, name, org)
+        };
+    }
+
+    public object getReviewerDetails(JObject param, HttpContext context)
+    {
+        var id = int.Parse(param["ID"].ToString());
+        var type = int.Parse(param["Type"].ToString());
+
+        return new
+        {
+            List = OFSReviewCommitteeHelper.queryReviewerDetails(type, id)
+        };
+    }
+
+    public object getReviewerList(JObject param, HttpContext context)
+    {
+        var type = int.Parse(param["Type"].ToString());
+        var keyword = param["Keyword"].ToString();
+        DateTime? begin = null;
+        DateTime? end = null;
+
+        if (DateTime.TryParse(param["Begin"].ToString(), out DateTime date1))
+        {
+            begin = date1;
+        }
+
+        if (DateTime.TryParse(param["End"].ToString(), out DateTime date2))
+        {
+            end = date2;
+        }
+
+        return new
+        {
+            List = OFSReviewCommitteeHelper.queryReviewerList(type, keyword, begin, end)
         };
     }
 
@@ -473,6 +553,33 @@ public class SystemService : BaseService
         }
 
         return new {};
+    }
+
+    private object downloadExcel(string name, List<string> headers, List<List<string>> rows, HttpContext context)
+    {
+        var content = NPOIHelper.CreateExcel(name, headers, rows).ToArray();
+
+        var date = DateTime.Now.ToString("yyMMdd");
+        var folder = Path.Combine(Path.GetFullPath(Path.Combine(context.Server.MapPath("~"), "..")), "UploadFiles", "files", date);
+
+        if (!Directory.Exists(folder))
+        {
+            Directory.CreateDirectory(folder);
+        }
+
+        var filename = Path.GetRandomFileName() + ".xlsx";
+
+        File.WriteAllBytes(Path.Combine(folder, filename), content);
+
+        OFSBaseFileHelper.insert(new BaseFile
+        {
+            Name = filename,
+            Path = Path.Combine(date, filename),
+            Size = content.Length,
+            Type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        });
+
+        return new { filename = Path.Combine(date, filename) };
     }
 
     private object syncGrantTypeContent(int id)

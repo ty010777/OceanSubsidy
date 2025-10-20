@@ -17,7 +17,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
     {
         public OFS_SciExamReviewHelper()
         {
-           
+
         }
 
         /// <summary>
@@ -48,10 +48,10 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                 LEFT JOIN OFS_SCI_StageExam_ReviewerList srl ON se.id = srl.ExamID
                 LEFT JOIN OFS_SCI_Application_Main am ON se.ProjectID = am.ProjectID
                 WHERE srl.token = @token";
-            
+
             db.Parameters.Clear();
             db.Parameters.Add("@token", token);
-            
+
             try
             {
                 DataTable dt = db.GetTable();
@@ -91,7 +91,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
             }
 
             DbHelper db = new DbHelper();
-            
+
             // 建立參數化的 FileCode 參數
             var fileCodeParams = new List<string>();
             for (int i = 0; i < fileCodes.Length; i++)
@@ -99,30 +99,30 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                 fileCodeParams.Add("@fileCode" + i);
             }
             string fileCodeList = string.Join(",", fileCodeParams);
-            
+
             db.CommandText = $@"
-                SELECT 
+                SELECT
                     FileCode,
                     FileName,
                     TemplatePath
-                FROM OFS_SCI_UploadFile 
-                WHERE ProjectID = @projectID 
+                FROM OFS_SCI_UploadFile
+                WHERE ProjectID = @projectID
                 AND FileCode IN ({fileCodeList})
                   ";
-            
+
             db.Parameters.Clear();
             db.Parameters.Add("@projectID", projectID);
-            
+
             // 新增每個 FileCode 參數
             for (int i = 0; i < fileCodes.Length; i++)
             {
                 db.Parameters.Add("@fileCode" + i, fileCodes[i]);
             }
-            
+
             try
             {
                 DataTable dt = db.GetTable();
-                
+
                 foreach (DataRow row in dt.Rows)
                 {
                     result.Add(new ReportFileInfo
@@ -133,7 +133,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                         FileType = row["FileCode"].ToString().Contains("_revise") ? "修訂版" : "初版"
                     });
                 }
-                
+
                 return result;
             }
             catch (Exception ex)
@@ -161,7 +161,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
             db.CommandText = "SELECT COUNT(*) FROM OFS_SCI_StageExam_ReviewerList WHERE token = @token";
             db.Parameters.Clear();
             db.Parameters.Add("@token", token);
-            
+
             try
             {
                 DataTable dt = db.GetTable();
@@ -197,7 +197,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
             db.CommandText = "SELECT ISNULL(isSubmit, 0) FROM OFS_SCI_StageExam_ReviewerList WHERE token = @token";
             db.Parameters.Clear();
             db.Parameters.Add("@token", token);
-            
+
             try
             {
                 DataTable dt = db.GetTable();
@@ -232,7 +232,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
             db.CommandText = "SELECT ReviewFilePath FROM OFS_SCI_StageExam_ReviewerList WHERE token = @token";
             db.Parameters.Clear();
             db.Parameters.Add("@token", token);
-            
+
             try
             {
                 DataTable dt = db.GetTable();
@@ -287,20 +287,20 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
             // 產生儲存路徑
             string relativePath = $"UploadFiles/OFS/SCI/{projectID}/ReviewFiles/{fileName}";
             string physicalPath = System.Web.HttpContext.Current.Server.MapPath("~/" + relativePath);
-            
+
             // 確保目錄存在
             string directory = System.IO.Path.GetDirectoryName(physicalPath);
             if (!System.IO.Directory.Exists(directory))
             {
                 System.IO.Directory.CreateDirectory(directory);
             }
-            
+
             // 儲存檔案
             uploadedFile.SaveAs(physicalPath);
-            
+
             // 更新資料庫記錄審查檔案路徑
             UpdateReviewerFilePath(token, relativePath);
-            
+
             return fileName;
         }
 
@@ -313,14 +313,14 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
         {
             DbHelper db = new DbHelper();
             db.CommandText = @"
-                UPDATE OFS_SCI_StageExam_ReviewerList 
-                SET ReviewFilePath = @filePath 
+                UPDATE OFS_SCI_StageExam_ReviewerList
+                SET ReviewFilePath = @filePath
                 WHERE token = @token";
-            
+
             db.Parameters.Clear();
             db.Parameters.Add("@filePath", filePath);
             db.Parameters.Add("@token", token);
-            
+
             try
             {
                 db.ExecuteNonQuery();
@@ -346,22 +346,22 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
         /// <returns>是否提交成功</returns>
         public static void SubmitReviewResult(string token)
         {
-            
+
 
             DbHelper db = new DbHelper();
             db.CommandText = @"
-                UPDATE OFS_SCI_StageExam_ReviewerList 
-                SET 
+                UPDATE OFS_SCI_StageExam_ReviewerList
+                SET
                     isSubmit = 1
                 WHERE token = @token";
-            
+
             db.Parameters.Clear();
             db.Parameters.Add("@token", token);
-            
+
             try
             {
                 db.ExecuteNonQuery();
-               
+
             }
             catch (Exception ex)
             {
@@ -387,15 +387,15 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
 
             DbHelper db = new DbHelper();
             db.CommandText = @"
-                SELECT TemplatePath 
-                FROM OFS_SCI_UploadFile 
+                SELECT TemplatePath
+                FROM OFS_SCI_UploadFile
                 WHERE ProjectID = @projectID AND FileCode = @fileCode
                 ";
-            
+
             db.Parameters.Clear();
             db.Parameters.Add("@projectID", projectID);
             db.Parameters.Add("@fileCode", fileCode);
-            
+
             try
             {
                 DataTable dt = db.GetTable();
@@ -427,7 +427,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                 return null;
 
             DataRow examData = GetExamDataByToken(token);
-            
+
             if (examData == null)
                 return null;
 
@@ -517,6 +517,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
             db.CommandText = @"
                 UPDATE OFS_SCI_StageExam_ReviewerList
                 SET
+                    UpdateTime = GETDATE(),
                     BankCode = @BankCode,
                     BankAccount = @BankAccount,
                     RegistrationAddress = @RegistrationAddress

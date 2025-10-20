@@ -2,6 +2,7 @@
     <input
         class="form-control"
         :disabled="!editable"
+        :placeholder="editable ? placeholder : ''"
         ref="element"
         type="text"
         v-bind="$attrs"
@@ -20,7 +21,8 @@
         format: { default: "YYYY-MM-DD", type: String },
         maxDate: { type: String },
         modelValue: { default: "", type: String },
-        noFuture: { default: false, type: Boolean }
+        noFuture: { default: false, type: Boolean },
+        placeholder: { default: "請輸入", type: String }
     });
 
     const datetime = ref();
