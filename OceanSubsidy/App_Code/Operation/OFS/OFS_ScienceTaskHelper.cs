@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Web;
+using DocumentFormat.OpenXml.Drawing.Charts;
 using GS.Data;
 using GS.Data.Sql;
 using GS.OCA_OceanSubsidy.Entity;
+using DataTable = DocumentFormat.OpenXml.Drawing.Charts.DataTable;
 
 /// <summary>
 /// 科專排程任務處理 Helper - 僅處理 SQL 操作
@@ -80,7 +82,50 @@ public class OFS_ScienceTaskHelper
             db.Dispose();
         }
     }
+    /// <summary>
+    /// gets the task 
+    /// </summary>
+    /// <param name="projectId">專案ID</param>
+    /// <param name="taskNameEn">任務英文名稱</param>
+    /// <returns>是否存在</returns>
+    public static OFS_TaskQueue getTask(string projectId, string taskNameEn)
+    {
+        DbHelper db = new DbHelper();
+        try
+        {
+            db.CommandText = @"
+                SELECT TOP(1)*
+                FROM [OCA_OceanSubsidy].[dbo].[OFS_TaskQueue]
+                WHERE [ProjectID] = @ProjectID 
+                AND [TaskNameEn] = @TaskNameEn";
+            
+            db.Parameters.Clear();
+            db.Parameters.Add("@ProjectID", projectId);
+            db.Parameters.Add("@TaskNameEn", taskNameEn);
 
+            var TaskQueue = new OFS_TaskQueue();
+            var countResult = db.GetTable();
+
+            if (countResult != null && countResult.Rows.Count > 0)
+            {
+                DataRow row = countResult.Rows[0];
+
+                TaskQueue.ProjectID = row["ProjectID"]?.ToString();
+                TaskQueue.TaskNameEn = row["TaskNameEn"]?.ToString();
+                TaskQueue.TaskName = row["TaskName"]?.ToString();
+                TaskQueue.PriorityLevel = row["PriorityLevel"] == DBNull.Value ? null : (int?)Convert.ToInt32(row["PriorityLevel"]);
+                TaskQueue.IsTodo = row["IsTodo"] == DBNull.Value ? null : (bool?)Convert.ToBoolean(row["IsTodo"]);
+                TaskQueue.IsCompleted = row["IsCompleted"] == DBNull.Value ? null : (bool?)Convert.ToBoolean(row["IsCompleted"]);
+                TaskQueue.OverdueDate = row["OverdueDate"] == DBNull.Value ? null : (DateTime?)Convert.ToDateTime(row["OverdueDate"]);
+            }
+            
+            return TaskQueue;
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
     /// <summary>
     /// 更新現有任務狀態
     /// </summary>
@@ -394,8 +439,86 @@ public class OFS_ScienceTaskHelper
                   AND [ExpirationDate] IS NOT NULL
                   AND [ExpirationDate] < GETDATE()
                   AND [isExist] = 1";
-            
+
             db.ExecuteNonQuery();
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 取得專案資訊（用於郵件通知）
+    /// </summary>
+    /// <param name="projectId">專案ID</param>
+    /// <returns>Tuple(計畫名稱, 申請人帳號, 主辦人ID)</returns>
+    public static Tuple<string, string, int?> GetProjectInfo(string projectId)
+    {
+        DbHelper db = new DbHelper();
+        try
+        {
+            db.CommandText = @"
+                SELECT AM.ProjectNameTw, PM.UserAccount, SU.UserID as Organizer
+                FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main] PM
+                LEFT JOIN [OCA_OceanSubsidy].[dbo].[OFS_SCI_Application_Main] AM
+                  ON PM.ProjectID = AM.ProjectID
+                LEFT JOIN [OCA_OceanSubsidy].[dbo].[Sys_User] SU
+                  ON PM.SupervisoryPersonAccount = SU.Account
+                WHERE PM.ProjectID = @ProjectID
+                  AND PM.isExist = 1";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@ProjectID", projectId);
+
+            var dt = db.GetTable();
+            if (dt.Rows.Count > 0)
+            {
+                string projectName = dt.Rows[0]["ProjectNameTw"]?.ToString() ?? "";
+                string account = dt.Rows[0]["UserAccount"]?.ToString() ?? "";
+                int? organizer = dt.Rows[0]["Organizer"] != DBNull.Value
+                    ? Convert.ToInt32(dt.Rows[0]["Organizer"])
+                    : (int?)null;
+
+                return Tuple.Create(projectName, account, organizer);
+            }
+
+            return Tuple.Create("", "", (int?)null);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 檢查任務是否已完成
+    /// </summary>
+    /// <param name="projectId">專案ID</param>
+    /// <param name="taskNameEn">任務英文名稱</param>
+    /// <returns>任務是否已完成</returns>
+    public static bool IsTaskCompleted(string projectId, string taskNameEn)
+    {
+        DbHelper db = new DbHelper();
+        try
+        {
+            db.CommandText = @"
+                SELECT IsCompleted
+                FROM [OCA_OceanSubsidy].[dbo].[OFS_TaskQueue]
+                WHERE ProjectID = @ProjectID
+                  AND TaskNameEn = @TaskNameEn";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@ProjectID", projectId);
+            db.Parameters.Add("@TaskNameEn", taskNameEn);
+
+            var dt = db.GetTable();
+            if (dt.Rows.Count > 0 && dt.Rows[0]["IsCompleted"] != DBNull.Value)
+            {
+                return Convert.ToInt32(dt.Rows[0]["IsCompleted"]) == 1;
+            }
+
+            return false;
         }
         finally
         {

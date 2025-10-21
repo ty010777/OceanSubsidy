@@ -28,7 +28,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
     /// <summary>
     /// 是否為檢視模式
     /// </summary>
-    public bool IsViewMode { get; set; } 
+    public bool IsViewMode { get; set; }
 
     /// <summary>
     /// 人事費資料
@@ -54,8 +54,6 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             }
             else
             {
-       
-            
             }
 
             BindDropDown();
@@ -79,27 +77,147 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
     {
         try
         {
-
             if (!string.IsNullOrEmpty(projectID))
             {
                 LoadExistingData(projectID);
                 // 載入變更說明控制項
-                tab3_ucChangeDescription.LoadData(projectID );
+                tab3_ucChangeDescription.LoadData(projectID);
                 CheckFormStatusAndHideTempSaveButton();
-
             }
+
             // 套用檢視模式
             if (IsViewMode)
             {
                 ApplyViewMode();
             }
-
         }
         catch (Exception ex)
         {
             HandleException(ex, "載入資料時發生錯誤");
         }
     }
+
+    /// <summary>
+    /// 從快照資料載入（用於快照檢視頁面）
+    /// </summary>
+    /// <param name="snapshotData">快照的 JSON 資料物件</param>
+    public void LoadFromSnapshot(dynamic snapshotData)
+    {
+        try
+        {
+            var serializer = new JavaScriptSerializer();
+            var jsBuilder = new StringBuilder();
+
+            // 解析各類經費資料（安全版）
+            List<PersonRow> personnelData = snapshotData.PersonnelCostPersonForm != null
+                ? snapshotData.PersonnelCostPersonForm.ToObject<List<PersonRow>>()
+                : new List<PersonRow>();
+
+            List<MaterialRow> materialData = snapshotData.PersonnelCostMaterial != null
+                ? snapshotData.PersonnelCostMaterial.ToObject<List<MaterialRow>>()
+                : new List<MaterialRow>();
+
+            List<ResearchFeeRow> researchData = snapshotData.PersonnelCostResearchFees != null
+                ? snapshotData.PersonnelCostResearchFees.ToObject<List<ResearchFeeRow>>()
+                : new List<ResearchFeeRow>();
+
+            List<TravelRow> travelData = snapshotData.PersonnelCostTripForm != null
+                ? snapshotData.PersonnelCostTripForm.ToObject<List<TravelRow>>()
+                : new List<TravelRow>();
+
+            List<OtherFeeRow> otherData = snapshotData.PersonnelCostOtherPersonFee != null
+                ? snapshotData.PersonnelCostOtherPersonFee.ToObject<List<OtherFeeRow>>()
+                : new List<OtherFeeRow>();
+
+            List<OtherRent> otherRentData = snapshotData.PersonnelCostOtherObjectFee != null
+                ? snapshotData.PersonnelCostOtherObjectFee.ToObject<List<OtherRent>>()
+                : new List<OtherRent>();
+
+            List<TotalFeeRow> totalFeesData = snapshotData.PersonnelCostTotalFee != null
+                ? snapshotData.PersonnelCostTotalFee.ToObject<List<TotalFeeRow>>()
+                : new List<TotalFeeRow>();
+
+            // 取得 OrgCategory
+            string orgCategory = "";
+            if (snapshotData.ApplicationMain != null)
+            {
+                var applicationMain = snapshotData.ApplicationMain.ToObject<OFS_SCI_Application_Main>();
+                orgCategory = applicationMain?.OrgCategory ?? "";
+            }
+
+            // 如果是 OceanTech，將 totalFeesData 中的行政管理費歸零
+            if (orgCategory.Equals("OceanTech", StringComparison.OrdinalIgnoreCase) && totalFeesData != null)
+            {
+                var adminFee = totalFeesData.FirstOrDefault(t => t.accountingItem?.Contains("行政管理費") == true);
+                if (adminFee != null)
+                {
+                    adminFee.subsidyAmount = 0;
+                    adminFee.coopAmount = 0;
+                }
+            }
+
+            // 產生 JavaScript 載入資料
+            jsBuilder.AppendLine("window.loadedData = {");
+            jsBuilder.AppendLine($"    personnel: {serializer.Serialize(personnelData)},");
+            jsBuilder.AppendLine($"    material: {serializer.Serialize(materialData)},");
+            jsBuilder.AppendLine($"    research: {serializer.Serialize(researchData)},");
+            jsBuilder.AppendLine($"    travel: {serializer.Serialize(travelData)},");
+            jsBuilder.AppendLine($"    other: {serializer.Serialize(otherData)},");
+            jsBuilder.AppendLine($"    otherRent: {serializer.Serialize(otherRentData)},");
+            jsBuilder.AppendLine($"    totalFees: {serializer.Serialize(totalFeesData)},");
+            jsBuilder.AppendLine($"    orgCategory: '{orgCategory}'");
+            jsBuilder.AppendLine("};");
+
+            // 載入固定欄位資料到 ASP.NET 控件
+            LoadFormControls(researchData, otherRentData, totalFeesData);
+
+            // 觸發前端載入函數
+            jsBuilder.AppendLine();
+            jsBuilder.AppendLine("if (document.readyState === 'loading') {");
+            jsBuilder.AppendLine("    document.addEventListener('DOMContentLoaded', function() {");
+            jsBuilder.AppendLine("        setTimeout(function() {");
+            jsBuilder.AppendLine("            if (typeof loadExistingDataToForm === 'function') {");
+            jsBuilder.AppendLine("                loadExistingDataToForm();");
+            jsBuilder.AppendLine("            }");
+            jsBuilder.AppendLine("        }, 150);");
+            jsBuilder.AppendLine("    });");
+            jsBuilder.AppendLine("} else {");
+            jsBuilder.AppendLine("    setTimeout(function() {");
+            jsBuilder.AppendLine("        if (typeof loadExistingDataToForm === 'function') {");
+            jsBuilder.AppendLine("            loadExistingDataToForm();");
+            jsBuilder.AppendLine("        }");
+            jsBuilder.AppendLine("    }, 150);");
+            jsBuilder.AppendLine("}");
+
+            Page.ClientScript.RegisterStartupScript(
+                this.GetType(),
+                "LoadedDataScript",
+                jsBuilder.ToString(),
+                true
+            );
+
+            // 設定為檢視模式
+            IsViewMode = true;
+            ApplyViewMode();
+
+            // 隱藏變更說明控制項（快照檢視不需要）
+            if (tab3_ucChangeDescription != null)
+            {
+                tab3_ucChangeDescription.Visible = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "載入快照資料時發生錯誤");
+            Page.ClientScript.RegisterStartupScript(
+                this.GetType(),
+                "LoadDataError",
+                $"console.error('載入快照資料失敗: {ex.Message}');",
+                true
+            );
+        }
+    }
+
     /// <summary>
     /// 檢查表單狀態並控制暫存按鈕顯示
     /// </summary>
@@ -112,8 +230,9 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                 var lastVersion = OFS_SciApplicationHelper.getVersionByProjectID(ProjectID);
                 if (lastVersion != null)
                 {
-                    var formStatus = OFS_SciWorkSchHelper.GetFormStatusByProjectID(lastVersion.ProjectID, "Form3Status");
-                    
+                    var formStatus =
+                        OFS_SciWorkSchHelper.GetFormStatusByProjectID(lastVersion.ProjectID, "Form3Status");
+
                     if (formStatus == "完成")
                     {
                         // 隱藏暫存按鈕
@@ -159,16 +278,19 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                         result.AddError("請輸入人員姓名");
                         break;
                     }
+
                     if (string.IsNullOrWhiteSpace(person.title))
                     {
                         result.AddError("請選擇職稱");
                         break;
                     }
+
                     if (person.salary <= 0)
                     {
                         result.AddError("請輸入有效的平均月薪");
                         break;
                     }
+
                     if (person.months <= 0)
                     {
                         result.AddError("請輸入有效的參與人月");
@@ -182,22 +304,25 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             {
                 foreach (var other in otherData)
                 {
-                   
                     if (string.IsNullOrWhiteSpace(other.title))
                     {
                         result.AddError("其他業務費：請選擇職稱");
                         break;
                     }
+
                     if (other.avgSalary <= 0)
                     {
                         result.AddError("其他業務費：請輸入有效的平均月薪");
                         break;
                     }
+
                     if (other.months <= 0)
                     {
                         result.AddError("其他業務費：請輸入有效的參與人月");
                         break;
-                    } if (other.people <= 0)
+                    }
+
+                    if (other.people <= 0)
                     {
                         result.AddError("其他業務費：請輸入有效的參與人數");
                         break;
@@ -210,7 +335,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             {
                 result.AddError("請輸入有效的補助金額或合作金額");
             }
-           
+
 
             // 驗證行政管理費（可選）
         }
@@ -227,7 +352,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
     /// </summary>
     /// <returns>儲存是否成功</returns>
     public bool SaveData()
-    { 
+    {
         try
         {
             // 取得表單資料
@@ -317,7 +442,8 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             foreach (var item in personList)
             {
                 // 將 MaxPriceLimit 也輸出成 JS 物件屬性
-                jsBuilder.AppendLine($"    {{ text: \"{item.Descname}\", value: \"{item.Code}\", maxLimit: {item.MaxPriceLimit} }},");
+                jsBuilder.AppendLine(
+                    $"    {{ text: \"{item.Descname}\", value: \"{item.Code}\", maxLimit: {item.MaxPriceLimit} }},");
             }
 
             jsBuilder.AppendLine("];");
@@ -327,8 +453,10 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             jsBuilder.AppendLine("const ddlMaterialOptions = [");
             foreach (var item in materialUnitList)
             {
-                jsBuilder.AppendLine($"    {{ text: \"{item.Descname}\", value: \"{item.Code}\", maxLimit: {item.MaxPriceLimit} }},");
+                jsBuilder.AppendLine(
+                    $"    {{ text: \"{item.Descname}\", value: \"{item.Code}\", maxLimit: {item.MaxPriceLimit} }},");
             }
+
             jsBuilder.AppendLine("];");
 
             // 其他業務費職稱下拉選單 - 修正參數名稱
@@ -336,8 +464,10 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             jsBuilder.AppendLine("const ddlOtherOptions = [");
             foreach (var item in otherJobList)
             {
-                jsBuilder.AppendLine($"    {{ text: \"{item.Descname}\", value: \"{item.Code}\", maxLimit: {item.MaxPriceLimit} }},");
+                jsBuilder.AppendLine(
+                    $"    {{ text: \"{item.Descname}\", value: \"{item.Code}\", maxLimit: {item.MaxPriceLimit} }},");
             }
+
             jsBuilder.AppendLine("];");
 
             // 註冊到頁面
@@ -440,7 +570,8 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
     /// <summary>
     /// 載入表單控制項資料
     /// </summary>
-    private void LoadFormControls(List<ResearchFeeRow> researchData, List<OtherRent> otherRentData, List<TotalFeeRow> totalFeesData)
+    private void LoadFormControls(List<ResearchFeeRow> researchData, List<OtherRent> otherRentData,
+        List<TotalFeeRow> totalFeesData)
     {
         try
         {
@@ -508,7 +639,6 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
     }
 
 
-    
     protected void btnTempSave_Click(object sender, EventArgs e)
     {
         try
@@ -536,27 +666,26 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             ShowErrorMessage($"暫存失敗：{ex.Message}");
         }
     }
-    
+
     protected void btnSaveAndNext_Click(object sender, EventArgs e)
     {
         try
         {
             // PostBack 時，檢查是否是驗證按鈕觸發的 PostBack
             // 如果是「完成本頁，下一步」按鈕觸發，在按鈕事件執行前先保存當前資料
-            SaveDataToSessionBeforeValidation();    
+            SaveDataToSessionBeforeValidation();
             // 驗證 UserControl 資料
             var validationResult = ValidateForm();
             if (!validationResult.IsValid)
             {
-                
                 ShowErrorMessage($"請修正以下錯誤：{validationResult.GetErrorsAsString()}");
                 RestoreDataFromSession();
                 return;
             }
+
             // 儲存 UserControl 資料
             if (SaveData())
             {
-            
                 UpdateVersionStatusBasedOnAction(ProjectID, true);
                 // 儲存變更說明
                 tab3_ucChangeDescription.SaveChangeDescription(ProjectID);
@@ -581,8 +710,8 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             ShowErrorMessage($"儲存失敗：{ex.Message}");
         }
     }
-    
-    
+
+
     /// <summary>
     /// 從隱藏欄位取得人事費資料
     /// </summary>
@@ -644,8 +773,13 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                         var totalFee = new TotalFeeRow
                         {
                             accountingItem = item["accountingItem"]?.ToString() ?? "",
-                            subsidyAmount = decimal.TryParse(item["subsidyAmount"]?.ToString(), out decimal subsidyAmount) ? subsidyAmount : 0,
-                            coopAmount = decimal.TryParse(item["coopAmount"]?.ToString(), out decimal coopAmount) ? coopAmount : 0
+                            subsidyAmount =
+                                decimal.TryParse(item["subsidyAmount"]?.ToString(), out decimal subsidyAmount)
+                                    ? subsidyAmount
+                                    : 0,
+                            coopAmount = decimal.TryParse(item["coopAmount"]?.ToString(), out decimal coopAmount)
+                                ? coopAmount
+                                : 0
                         };
 
                         totalFeesList.Add(totalFee);
@@ -697,6 +831,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
 
         return totalFeesList;
     }
+
     /// <summary>
     /// 根據動作類型更新版本狀態
     /// </summary>
@@ -711,14 +846,14 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                 // 點擊「完成本頁，下一步」按鈕
                 // 1. Form3Status 設為 "完成" 
                 // 2. 檢查 CurrentStep，如果 <= 3 則改成 4
-                
+
                 string currentStep = OFS_SciWorkSchHelper.GetCurrentStepByProjectID(ProjectID);
                 int currentStepNum = 1;
                 int.TryParse(currentStep, out currentStepNum);
-                
+
                 bool shouldUpdateCurrentStep = currentStepNum <= 3;
                 string newCurrentStep = shouldUpdateCurrentStep ? "4" : currentStep;
-                
+
                 // 更新 Form3Status 為 "完成" 和 CurrentStep (如果需要)
                 // 使用通用的版本狀態更新方法，針對 Form3
                 if (shouldUpdateCurrentStep)
@@ -734,17 +869,17 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             {
                 // 點擊「暫存」按鈕
                 // 只更新 Form3Status 為 "暫存"，CurrentStep 不變
-                
+
                 OFS_SciFundingHelper.UpdateForm3Status(ProjectID, "暫存");
             }
         }
         catch (Exception ex)
         {
-         
             // 記錄錯誤但不中斷流程
             System.Diagnostics.Debug.WriteLine($"更新狀態失敗: {ex.Message}");
         }
     }
+
     /// <summary>
     /// 從隱藏欄位取得材料費資料
     /// </summary>
@@ -756,13 +891,15 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             if (!string.IsNullOrEmpty(hdnMaterialData.Value))
             {
                 var serializer = new JavaScriptSerializer();
-                materialList = serializer.Deserialize<List<MaterialRow>>(hdnMaterialData.Value) ?? new List<MaterialRow>();
+                materialList = serializer.Deserialize<List<MaterialRow>>(hdnMaterialData.Value) ??
+                               new List<MaterialRow>();
             }
         }
         catch (Exception ex)
         {
             HandleException(ex, "解析材料費資料時發生錯誤");
         }
+
         return materialList;
     }
 
@@ -778,7 +915,9 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             if (!string.IsNullOrEmpty(ResearchFeesPrice1.Text))
             {
                 // 從隱藏欄位讀取西元年日期，如果沒有則使用顯示欄位的值
-                string date1Start = !string.IsNullOrEmpty(hdnDate1Start.Value) ? hdnDate1Start.Value : txtDate1Start.Text;
+                string date1Start = !string.IsNullOrEmpty(hdnDate1Start.Value)
+                    ? hdnDate1Start.Value
+                    : txtDate1Start.Text;
                 string date1End = !string.IsNullOrEmpty(hdnDate1End.Value) ? hdnDate1End.Value : txtDate1End.Text;
 
                 researchList.Add(new ResearchFeeRow
@@ -795,7 +934,9 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             if (!string.IsNullOrEmpty(ResearchFeesPrice2.Text))
             {
                 // 從隱藏欄位讀取西元年日期，如果沒有則使用顯示欄位的值
-                string date2Start = !string.IsNullOrEmpty(hdnDate2Start.Value) ? hdnDate2Start.Value : txtDate2Start.Text;
+                string date2Start = !string.IsNullOrEmpty(hdnDate2Start.Value)
+                    ? hdnDate2Start.Value
+                    : txtDate2Start.Text;
                 string date2End = !string.IsNullOrEmpty(hdnDate2End.Value) ? hdnDate2End.Value : txtDate2End.Text;
 
                 researchList.Add(new ResearchFeeRow
@@ -813,6 +954,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
         {
             HandleException(ex, "解析研究費資料時發生錯誤");
         }
+
         return researchList;
     }
 
@@ -834,6 +976,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
         {
             HandleException(ex, "解析差旅費資料時發生錯誤");
         }
+
         return travelList;
     }
 
@@ -855,6 +998,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
         {
             HandleException(ex, "解析其他人事費資料時發生錯誤");
         }
+
         return otherList;
     }
 
@@ -869,7 +1013,8 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             if (!string.IsNullOrEmpty(hdnOtherRentData.Value))
             {
                 var serializer = new JavaScriptSerializer();
-                otherRentList = serializer.Deserialize<List<OtherRent>>(hdnOtherRentData.Value) ?? new List<OtherRent>();
+                otherRentList = serializer.Deserialize<List<OtherRent>>(hdnOtherRentData.Value) ??
+                                new List<OtherRent>();
             }
             else
             {
@@ -889,6 +1034,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
         {
             HandleException(ex, "解析其他租金資料時發生錯誤");
         }
+
         return otherRentList;
     }
 
@@ -1031,7 +1177,8 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             ";
         }
 
-        Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowSuccessMessage" + Guid.NewGuid().ToString(), script, true);
+        Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowSuccessMessage" + Guid.NewGuid().ToString(),
+            script, true);
     }
 
     /// <summary>
@@ -1059,7 +1206,8 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
 
         script += ";";
 
-        Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowErrorMessage" + Guid.NewGuid().ToString(), script, true);
+        Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowErrorMessage" + Guid.NewGuid().ToString(), script,
+            true);
     }
 
     /// <summary>
@@ -1087,7 +1235,8 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
 
         script += ";";
 
-        Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowWarningMessage" + Guid.NewGuid().ToString(), script, true);
+        Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowWarningMessage" + Guid.NewGuid().ToString(),
+            script, true);
     }
 
     /// <summary>
@@ -1170,20 +1319,27 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                 if (tempDataDynamic != null)
                 {
                     // 重建實際資料物件
-                    var personnelData = (tempDataDynamic.PersonnelData != null) ?
-                        JsonConvert.DeserializeObject<List<PersonRow>>(tempDataDynamic.PersonnelData.ToString()) : new List<PersonRow>();
-                    var materialData = (tempDataDynamic.MaterialData != null) ?
-                        JsonConvert.DeserializeObject<List<MaterialRow>>(tempDataDynamic.MaterialData.ToString()) : new List<MaterialRow>();
-                    var researchData = (tempDataDynamic.ResearchData != null) ?
-                        JsonConvert.DeserializeObject<List<ResearchFeeRow>>(tempDataDynamic.ResearchData.ToString()) : new List<ResearchFeeRow>();
-                    var travelData = (tempDataDynamic.TravelData != null) ?
-                        JsonConvert.DeserializeObject<List<TravelRow>>(tempDataDynamic.TravelData.ToString()) : new List<TravelRow>();
-                    var otherData = (tempDataDynamic.OtherData != null) ?
-                        JsonConvert.DeserializeObject<List<OtherFeeRow>>(tempDataDynamic.OtherData.ToString()) : new List<OtherFeeRow>();
-                    var otherRentData = (tempDataDynamic.OtherRentData != null) ?
-                        JsonConvert.DeserializeObject<List<OtherRent>>(tempDataDynamic.OtherRentData.ToString()) : new List<OtherRent>();
-                    var totalFeesData = (tempDataDynamic.TotalFeesData != null) ?
-                        JsonConvert.DeserializeObject<List<TotalFeeRow>>(tempDataDynamic.TotalFeesData.ToString()) : new List<TotalFeeRow>();
+                    var personnelData = (tempDataDynamic.PersonnelData != null)
+                        ? JsonConvert.DeserializeObject<List<PersonRow>>(tempDataDynamic.PersonnelData.ToString())
+                        : new List<PersonRow>();
+                    var materialData = (tempDataDynamic.MaterialData != null)
+                        ? JsonConvert.DeserializeObject<List<MaterialRow>>(tempDataDynamic.MaterialData.ToString())
+                        : new List<MaterialRow>();
+                    var researchData = (tempDataDynamic.ResearchData != null)
+                        ? JsonConvert.DeserializeObject<List<ResearchFeeRow>>(tempDataDynamic.ResearchData.ToString())
+                        : new List<ResearchFeeRow>();
+                    var travelData = (tempDataDynamic.TravelData != null)
+                        ? JsonConvert.DeserializeObject<List<TravelRow>>(tempDataDynamic.TravelData.ToString())
+                        : new List<TravelRow>();
+                    var otherData = (tempDataDynamic.OtherData != null)
+                        ? JsonConvert.DeserializeObject<List<OtherFeeRow>>(tempDataDynamic.OtherData.ToString())
+                        : new List<OtherFeeRow>();
+                    var otherRentData = (tempDataDynamic.OtherRentData != null)
+                        ? JsonConvert.DeserializeObject<List<OtherRent>>(tempDataDynamic.OtherRentData.ToString())
+                        : new List<OtherRent>();
+                    var totalFeesData = (tempDataDynamic.TotalFeesData != null)
+                        ? JsonConvert.DeserializeObject<List<TotalFeeRow>>(tempDataDynamic.TotalFeesData.ToString())
+                        : new List<TotalFeeRow>();
 
                     // 使用與 LoadExistingData 相同的方式輸出前端資料
                     var serializer = new JavaScriptSerializer();
@@ -1248,7 +1404,8 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
     /// <summary>
     /// 恢復 ASP.NET 控制項資料（仿照 LoadFormControls 的方式）
     /// </summary>
-    private void RestoreFormControls(List<ResearchFeeRow> researchData, List<OtherRent> otherRentData, List<TotalFeeRow> totalFeesData, dynamic tempDataDynamic)
+    private void RestoreFormControls(List<ResearchFeeRow> researchData, List<OtherRent> otherRentData,
+        List<TotalFeeRow> totalFeesData, dynamic tempDataDynamic)
     {
         try
         {
@@ -1368,6 +1525,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             {
                 return tab3_ucChangeDescription.GetChangeDescriptionBySourcePage(ProjectID, "SciFunding");
             }
+
             return ("", "");
         }
         catch (Exception ex)

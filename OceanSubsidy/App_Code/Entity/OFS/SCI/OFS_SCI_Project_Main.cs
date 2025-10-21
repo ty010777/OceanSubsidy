@@ -11,13 +11,48 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
 {
     
     /// <summary>
-    /// 科專-專案版本對應表 ()
+    /// 科專類-專案主表 ()
     /// </summary>
     [DataContract]
     [Serializable()]
-    [GisTableAttribute("OFS_SCI_Project_Main", "科專-專案版本對應表", false)]
+    [GisTableAttribute("OFS_SCI_Project_Main", "科專類-專案主表", false)]
     public class IOFS_SCI_Project_Main : IMeta
     {
+        
+        protected int _ID = 0;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("ID", "ID", DataSource.UN_OPERATE, "", false)]
+        public virtual int ID
+        {
+            get
+            {
+                return _ID;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_ID == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_ID.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("ID") == -1)
+                    {
+                        UPDATE_COLUMN.Add("ID");
+                    }
+                    _ID = value;
+                }
+            }
+        }
         
         protected string _ProjectID = null;
         ///<summary>
@@ -1116,7 +1151,7 @@ namespace GS.OCA_OceanSubsidy.Entity
     using GS.OCA_OceanSubsidy.Entity.Base;
     
     /// <summary>
-    /// 科專-專案版本對應表 ()
+    /// 科專類-專案主表 ()
     /// </summary>
     [DataContract]
     [Serializable()]

@@ -149,4 +149,82 @@ public class OFS_ClubTaskHelper
             db.Dispose();
         }
     }
+
+    /// <summary>
+    /// 取得專案資訊（用於郵件通知）
+    /// </summary>
+    /// <param name="projectId">專案ID</param>
+    /// <returns>Tuple(計畫名稱, 申請人帳號, 主辦人ID)</returns>
+    public static Tuple<string, string, int?> GetProjectInfo(string projectId)
+    {
+        DbHelper db = new DbHelper();
+        try
+        {
+            db.CommandText = @"
+                SELECT AB.ProjectNameTw, PM.UserAccount, SU.UserID as Organizer
+                FROM [OCA_OceanSubsidy].[dbo].[OFS_CLB_Project_Main] PM
+                LEFT JOIN [OCA_OceanSubsidy].[dbo].[OFS_CLB_Application_Basic] AB
+                  ON PM.ProjectID = AB.ProjectID
+                LEFT JOIN [OCA_OceanSubsidy].[dbo].[Sys_User] SU
+                  ON PM.SupervisoryPersonAccount = SU.Account
+                WHERE PM.ProjectID = @ProjectID
+                  AND PM.isExist = 1";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@ProjectID", projectId);
+
+            var dt = db.GetTable();
+            if (dt.Rows.Count > 0)
+            {
+                string projectName = dt.Rows[0]["ProjectNameTw"]?.ToString() ?? "";
+                string account = dt.Rows[0]["UserAccount"]?.ToString() ?? "";
+                int? organizer = dt.Rows[0]["Organizer"] != DBNull.Value
+                    ? Convert.ToInt32(dt.Rows[0]["Organizer"])
+                    : (int?)null;
+
+                return Tuple.Create(projectName, account, organizer);
+            }
+
+            return Tuple.Create("", "", (int?)null);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 檢查任務是否已完成
+    /// </summary>
+    /// <param name="projectId">專案ID</param>
+    /// <param name="taskNameEn">任務英文名稱</param>
+    /// <returns>任務是否已完成</returns>
+    public static bool IsTaskCompleted(string projectId, string taskNameEn)
+    {
+        DbHelper db = new DbHelper();
+        try
+        {
+            db.CommandText = @"
+                SELECT IsCompleted
+                FROM [OCA_OceanSubsidy].[dbo].[OFS_TaskQueue]
+                WHERE ProjectID = @ProjectID
+                  AND TaskNameEn = @TaskNameEn";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@ProjectID", projectId);
+            db.Parameters.Add("@TaskNameEn", taskNameEn);
+
+            var dt = db.GetTable();
+            if (dt.Rows.Count > 0 && dt.Rows[0]["IsCompleted"] != DBNull.Value)
+            {
+                return Convert.ToInt32(dt.Rows[0]["IsCompleted"]) == 1;
+            }
+
+            return false;
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
 }

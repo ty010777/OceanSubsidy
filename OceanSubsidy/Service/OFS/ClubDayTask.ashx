@@ -88,6 +88,31 @@ public class ClubDayTask : IHttpHandler
         bool isTodo = result.Item1;
         DateTime? overdueDate = result.Item2;
 
+        // 檢查任務是否已完成
+        bool isCompleted = OFS_ClubTaskHelper.IsTaskCompleted(projectId, "Report");
+
+        // 如果需要填報、有截止日期、且任務尚未完成，發送郵件通知
+        if (isTodo && overdueDate.HasValue && !isCompleted)
+        {
+            var projectInfo = OFS_ClubTaskHelper.GetProjectInfo(projectId);
+            string projectName = projectInfo.Item1;
+            string account = projectInfo.Item2;
+            int? organizer = projectInfo.Item3;
+
+            if (!string.IsNullOrEmpty(account))
+            {
+                // 如果今天日期已經大於逾期日期，使用 F2（進度落後提醒），否則使用 F11（資料填報提醒）
+                if (DateTime.Today > overdueDate.Value)
+                {
+                    NotificationHelper.F2("社團", projectName, "成果報告", account, organizer);
+                }
+                else
+                {
+                    NotificationHelper.F11("社團", projectName, "成果報告", overdueDate.Value, account);
+                }
+            }
+        }
+
         UpdateOrInsertTask(projectId, "Report", taskList["Report"], isTodo, overdueDate);
     }
 

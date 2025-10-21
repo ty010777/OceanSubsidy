@@ -133,7 +133,7 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
     {
         try
         {
-            
+
             // 確保下拉選單已初始化
             LoadDropDownLists();
             if (!string.IsNullOrEmpty(projectID))
@@ -151,12 +151,77 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
             {
                 LoadDefaultData();
             }
-            
+
 
         }
         catch (Exception ex)
         {
             HandleException(ex, "載入資料時發生錯誤");
+        }
+    }
+
+    /// <summary>
+    /// 從快照資料載入（用於快照檢視頁面）
+    /// </summary>
+    /// <param name="snapshotData">快照的 JSON 資料物件</param>
+    public void LoadFromSnapshot(dynamic snapshotData)
+    {
+        try
+        {
+            // 確保下拉選單已初始化
+            LoadDropDownLists();
+
+            // 載入申請主檔資料
+            if (snapshotData.ApplicationMain != null)
+            {
+                ApplicationData = Newtonsoft.Json.JsonConvert.DeserializeObject<OFS_SCI_Application_Main>(
+                    snapshotData.ApplicationMain.ToString()
+                );
+                if (ApplicationData != null)
+                {
+                    PopulateApplicationData(ApplicationData);
+                }
+            }
+
+            // 載入人員資料
+            if (snapshotData.ApplicationPersonnel != null)
+            {
+                PersonnelData = Newtonsoft.Json.JsonConvert.DeserializeObject<List<OFS_SCI_Application_Personnel>>(
+                    snapshotData.ApplicationPersonnel.ToString()
+                );
+                if (PersonnelData != null && PersonnelData.Count > 0)
+                {
+                    PopulatePersonnelData(PersonnelData);
+                }
+            }
+
+            // 載入關鍵字資料
+            if (snapshotData.ApplicationKeyWord != null)
+            {
+                KeywordsData = Newtonsoft.Json.JsonConvert.DeserializeObject<List<OFS_SCI_Application_KeyWord>>(
+                    snapshotData.ApplicationKeyWord.ToString()
+                );
+            }
+
+            if (KeywordsData == null)
+            {
+                KeywordsData = new List<OFS_SCI_Application_KeyWord>();
+            }
+            PopulateKeywordsData(KeywordsData);
+
+            // 設定為檢視模式
+            IsViewMode = true;
+            SetViewMode();
+
+            // 隱藏變更說明控制項（快照檢視不需要）
+            if (tab1_ucChangeDescription != null)
+            {
+                tab1_ucChangeDescription.Visible = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "從快照載入資料時發生錯誤");
         }
     }
 

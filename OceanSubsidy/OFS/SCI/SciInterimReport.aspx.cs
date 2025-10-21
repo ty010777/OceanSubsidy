@@ -366,7 +366,11 @@ public partial class OFS_SCI_SciInterimReport : System.Web.UI.Page
                 if (stage == 2)
                 {
                     // 開啟第二次請款待辦事項檢查
+                    string UserAccount = OFS_SciApplicationHelper.GetApplicantAccountByProjectId(projectID);
+                    var application = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
                     InprogressListHelper.UpdateTaskTodo(projectID, "Payment2", true);
+                    NotificationHelper.F12("科專", application.ProjectNameTw, "第二期請款", UserAccount);
+
                 }
             }
             else

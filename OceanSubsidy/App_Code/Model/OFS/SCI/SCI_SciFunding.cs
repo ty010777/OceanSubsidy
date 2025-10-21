@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using Newtonsoft.Json;
+
 public class SciFundingDataSave
 {
     public string projectId { get; set; }
@@ -12,53 +14,99 @@ public class SciFundingDataSave
 }
 public class PersonRow
 {
+    [JsonProperty("Name")]
     public string name { get; set; }
+    [JsonProperty("IsPending")]
     public bool stay { get; set; }
+    [JsonProperty("JobTitle")]
     public string title { get; set; }
+    [JsonProperty("AvgSalary")]
     public decimal salary { get; set; }
+    [JsonProperty("Month")]
     public decimal months { get; set; }
 }
 
 public class MaterialRow
 {
+    [JsonProperty("ItemName")]       // JSON 欄位名稱
     public string name { get; set; }
+
+    [JsonProperty("Description")]
     public string description { get; set; }
+
+    [JsonProperty("Unit")]
     public string unit { get; set; }
+
+    [JsonProperty("PreNum")]         // JSON 裡對應數量
     public decimal quantity { get; set; }
+
+    [JsonProperty("UnitPrice")]
     public decimal unitPrice { get; set; }
 }
 
+
 public class ResearchFeeRow
 {
+    [JsonProperty("FeeCategory")]
     public string category { get; set; }
+
+    [JsonProperty("StartDate")]
     public string dateStart { get; set; }
+
+    [JsonProperty("EndDate")]
     public string dateEnd { get; set; }
+
+    [JsonProperty("Name")]
     public string projectName { get; set; }
+
+    [JsonProperty("PersonName")]
     public string targetPerson { get; set; }
+
+    [JsonProperty("Price")]
     public decimal price { get; set; }
 }
 
 public class TravelRow
 {
+    [JsonProperty("TripReason")]
     public string reason { get; set; }
+
+    [JsonProperty("Area")]
     public string area { get; set; }
+
+    [JsonProperty("Days")]
     public decimal days { get; set; }
+
+    [JsonProperty("Times")]
     public decimal people { get; set; }
+
+    [JsonProperty("Price")]
     public decimal price { get; set; }
 }
 
 public class OtherFeeRow
 {
+    [JsonProperty("JobTitle")]
     public string title { get; set; }
+
+    [JsonProperty("AvgSalary")]
     public decimal avgSalary { get; set; }
+
+    [JsonProperty("Month")]
     public decimal months { get; set; }
+
+    [JsonProperty("PeopleNum")]
     public decimal people { get; set; }
 }
-
 public class OtherRent
 {
+    [JsonProperty("Name")]
     public string item { get; set; }
+    
+    [JsonProperty("Price")]
     public decimal amount { get; set; }
+    
+    [JsonProperty("CalDescription")]
     public string note { get; set; }
 }
 

@@ -94,6 +94,76 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
     }
 
     /// <summary>
+    /// 從快照資料載入（用於快照檢視頁面）
+    /// </summary>
+    /// <param name="snapshotData">快照的 JSON 資料物件</param>
+    public void LoadFromSnapshot(dynamic snapshotData)
+    {
+        try
+        {
+            // 載入迴避委員清單資料
+            if (snapshotData.OtherRecused != null)
+            {
+                var recusedList = Newtonsoft.Json.JsonConvert.DeserializeObject<List<OFS_SCI_Other_Recused>>(
+                    snapshotData.OtherRecused.ToString()
+                );
+                if (recusedList != null && recusedList.Count > 0)
+                {
+                    hdnCommitteeData.Value = Newtonsoft.Json.JsonConvert.SerializeObject(recusedList);
+                }
+            }
+
+            // 載入技術能力資料
+            if (snapshotData.OtherTechReadiness != null)
+            {
+                var techReadinessList = Newtonsoft.Json.JsonConvert.DeserializeObject<List<OFS_SCI_Other_TechReadiness>>(
+                    snapshotData.OtherTechReadiness.ToString()
+                );
+                if (techReadinessList != null && techReadinessList.Count > 0)
+                {
+                    hdnTechData.Value = Newtonsoft.Json.JsonConvert.SerializeObject(techReadinessList);
+                }
+            }
+
+            // 載入技術架構圖檔案
+            if (snapshotData.UploadFile != null)
+            {
+                List<OFS_SCI_UploadFile> uploadFiles = Newtonsoft.Json.JsonConvert.DeserializeObject<List<OFS_SCI_UploadFile>>(
+                    snapshotData.UploadFile.ToString()
+                );
+                if (uploadFiles != null && uploadFiles.Count > 0)
+                {
+                    OFS_SCI_UploadFile techDiagramFile = uploadFiles.FirstOrDefault(f => f.FileCode == "F06");
+                    if (techDiagramFile != null && !string.IsNullOrEmpty(techDiagramFile.TemplatePath))
+                    {
+                        // 將檔案資訊序列化到 hdnUploadedFile
+                        var fileInfo = new
+                        {
+                            fileName = techDiagramFile.FileName,
+                            filePath = techDiagramFile.TemplatePath
+                        };
+                        hdnUploadedFile.Value = Newtonsoft.Json.JsonConvert.SerializeObject(fileInfo);
+                    }
+                }
+            }
+
+            // 設定為檢視模式
+            IsViewMode = true;
+            ApplyViewMode();
+
+            // 隱藏變更說明控制項（快照檢視不需要）
+            if (tab4_ucChangeDescription != null)
+            {
+                tab4_ucChangeDescription.Visible = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "從快照載入資料時發生錯誤");
+        }
+    }
+
+    /// <summary>
     /// 驗證表單資料
     /// </summary>
     /// <returns>驗證結果</returns>

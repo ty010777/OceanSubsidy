@@ -734,14 +734,16 @@ namespace GS.OCA_OceanSubsidy.Model.OFS
         public int PriorityLevel { get; set; }
         public bool IsTodo { get; set; }
         public bool IsCompleted { get; set; }
+        public DateTime? OverdueDate { get; set; }
 
-        public TaskTemplate(string taskNameEn, string taskName, int priorityLevel, bool isTodo, bool isCompleted)
+        public TaskTemplate(string taskNameEn, string taskName, int priorityLevel, bool isTodo, bool isCompleted, DateTime? overdueDate = null)
         {
             TaskNameEn = taskNameEn;
             TaskName = taskName;
             PriorityLevel = priorityLevel;
             IsTodo = isTodo;
             IsCompleted = isCompleted;
+            OverdueDate = overdueDate;
         }
     }
 

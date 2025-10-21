@@ -3225,7 +3225,7 @@ SELECT TOP (1000) [ProjectID]
             {
                 taskTemplates = new List<TaskTemplate>
                 {
-                    new TaskTemplate("Contract", "簽訂契約資料", 1, true, false),
+                    new TaskTemplate("Contract", "簽訂契約資料", 1, true, false,DateTime.Today.AddDays(20)),
                     new TaskTemplate("Payment1", "第一次請款(預撥)", 2, true, false),
                     new TaskTemplate("Change", "計畫變更", 3, false, false),
                     new TaskTemplate("Schedule", "填寫預定進度", 4, true, false),
@@ -3326,9 +3326,16 @@ SELECT TOP (1000) [ProjectID]
                     // 使用參數化查詢預防 SQL 注入攻擊
                     db.Parameters.Clear();
 
+                    // 如果是契約資料任務，設定 OverdueDate 為當下日期+20天
+                    DateTime? overdueDate = null;
+                    if (template.TaskNameEn == "Contract")
+                    {
+                        overdueDate = DateTime.Today.AddDays(20);
+                    }
+
                     db.CommandText = @"
-                        INSERT INTO OFS_TaskQueue (ProjectID, TaskNameEn, TaskName, PriorityLevel, IsTodo, IsCompleted)
-                        VALUES (@ProjectID, @TaskNameEn, @TaskName, @PriorityLevel, @IsTodo, @IsCompleted)";
+                        INSERT INTO OFS_TaskQueue (ProjectID, TaskNameEn, TaskName, PriorityLevel, IsTodo, IsCompleted, OverdueDate)
+                        VALUES (@ProjectID, @TaskNameEn, @TaskName, @PriorityLevel, @IsTodo, @IsCompleted, @OverdueDate)";
 
                     // 加入參數並防止 SQL 注入
                     db.Parameters.Add("@ProjectID", projectId);
@@ -3337,6 +3344,7 @@ SELECT TOP (1000) [ProjectID]
                     db.Parameters.Add("@PriorityLevel", template.PriorityLevel);
                     db.Parameters.Add("@IsTodo", template.IsTodo ? 1 : 0);
                     db.Parameters.Add("@IsCompleted", template.IsCompleted ? 1 : 0);
+                    db.Parameters.Add("@OverdueDate", overdueDate.HasValue ? (object)overdueDate.Value : DBNull.Value);
                     db.ExecuteNonQuery();
                 }
 
@@ -4538,7 +4546,8 @@ SELECT [FinalReviewOrder] AS '排序'
         DbHelper db = new DbHelper();
         db.CommandText = @"
             SELECT
-                ProjectName
+                ProjectName,
+                Year
             FROM OFS_CulProject
             WHERE ProjectID = @ProjectID
         ";
@@ -4742,6 +4751,97 @@ SELECT [FinalReviewOrder] AS '排序'
         }
 
         return years;
+    }
+
+    #endregion
+
+    #region 決審核定資訊查詢
+
+    /// <summary>
+    /// 取得科專 (SCI) 決審核定資訊
+    /// </summary>
+    /// <param name="projectId">專案編號</param>
+    /// <returns>包含 Year, ProjectName, UserAccount, ApprovedSubsidy 的 DataRow</returns>
+    public static DataRow GetSciApprovalInfo(string projectId)
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText = @"
+            SELECT
+                AM.Year,
+                AM.ProjectNameTw AS ProjectName,
+                PM.UserAccount,
+                PM.ApprovedSubsidy
+            FROM OFS_SCI_Project_Main PM
+            INNER JOIN OFS_SCI_Application_Main AM ON PM.ProjectID = AM.ProjectID
+            WHERE PM.ProjectID = @ProjectID
+        ";
+        db.Parameters.Add("@ProjectID", projectId);
+
+        var dt = db.GetTable();
+        if (dt != null && dt.Rows.Count > 0)
+        {
+            return dt.Rows[0];
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// 取得社團 (CLB) 決審核定資訊
+    /// </summary>
+    /// <param name="projectId">專案編號</param>
+    /// <returns>包含 Year, ProjectName, UserAccount, ApprovedSubsidy 的 DataRow</returns>
+    public static DataRow GetClbApprovalInfo(string projectId)
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText = @"
+            SELECT
+                AB.Year,
+                AB.ProjectNameTw AS ProjectName,
+                PM.UserAccount,
+                PM.ApprovedSubsidy
+            FROM OFS_CLB_Project_Main PM
+            INNER JOIN OFS_CLB_Application_Basic AB ON PM.ProjectID = AB.ProjectID
+            WHERE PM.ProjectID = @ProjectID
+        ";
+        db.Parameters.Add("@ProjectID", projectId);
+
+        var dt = db.GetTable();
+        if (dt != null && dt.Rows.Count > 0)
+        {
+            return dt.Rows[0];
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// 取得其他類型 (CUL, EDC, LIT, MUL, ACC) 決審核定資訊
+    /// </summary>
+    /// <param name="projectId">專案編號</param>
+    /// <param name="typeCode">補助類型代碼 (CUL, EDC, LIT, MUL, ACC)</param>
+    /// <returns>包含 Year, ProjectName, UserAccount, ApprovedAmount 的 DataRow</returns>
+    public static DataRow GetOtherTypeApprovalInfo(string projectId, string typeCode)
+    {
+        DbHelper db = new DbHelper();
+
+        string tableName = $"OFS_{typeCode}_Project";
+
+        db.CommandText = $@"
+            SELECT
+                Year,
+                ProjectName,
+                UserAccount,
+                ApprovedAmount
+            FROM {tableName}
+            WHERE ProjectID = @ProjectID
+        ";
+        db.Parameters.Add("@ProjectID", projectId);
+
+        var dt = db.GetTable();
+        if (dt != null && dt.Rows.Count > 0)
+        {
+            return dt.Rows[0];
+        }
+        return null;
     }
 
     #endregion

@@ -72,7 +72,8 @@ public class NotificationHelper
             $"您好：<br><br>{category}類計畫「{projectName}」，<br>審查委員已提供審查意見，<br>請至［計畫申請］查看審查意見及回覆。",
             account
         );
-    }
+    } 
+   
     public static void E1(string category, string projectName, string account)
     {
         toUser(
@@ -89,7 +90,7 @@ public class NotificationHelper
             account
         );
     }
-    public static void E3(string category,int year, string projectName, string eventName,string account)
+    public static void E31(string category,int year, string projectName, string eventName,string account)
     {
         toUser(
             "［海洋委員會］補助申請案 審查通過通知",
@@ -97,7 +98,17 @@ public class NotificationHelper
             account
         );
     }
-    public static void E5(string category,int year, string projectName, string approveAmount,string account)
+    public static void E32(string category, string projectName,string eventName,string eventName2, string account)
+    {
+        toUser(
+            "［海洋委員會］補助申請案 審查通過通知",
+            $"您好：<br><br>{category}類計畫「{projectName}」，<br>" +
+            $"{eventName}階段已通過，相關配合事項本會另函通知，請查照。<br>" +
+            $"敬請提供{eventName2}所需簡報資料，請至［計畫申請］上傳簡報。",
+            account
+        );
+    }
+    public static void E5(int year, string projectName, string approveAmount,string account)
     {
         toUser(
             "［海洋委員會］補助申請案 計畫核定通知",

@@ -451,8 +451,20 @@ public class OFS_ClbPaymentHelper
             // 如果是提送，觸發寄信功能
             if (!isDraft)
             {
-                // TODO: send mail
-                // SendPaymentNotificationMail(projectID, currentAmount, totalSpentAmount);
+                var basicData = OFS_ClbApplicationHelper.GetBasicData(projectID);
+                var projectMainData = OFS_ClbApplicationHelper.GetProjectMainData(projectID);
+
+                if (basicData != null && projectMainData != null)
+                {
+                    string projectName = basicData.ProjectNameTw;
+                    string supervisoryAccount = projectMainData.SupervisoryPersonAccount;
+
+                    // 根據承辦人帳號取得 UserID
+                    int? organizer = SysUserHelper.GetUserIDByAccount(supervisoryAccount);
+
+                    // 寄送通知信
+                    NotificationHelper.G2("社團", projectName, "請款", organizer);
+                }            
             }
 
             string actionText = isDraft ? "暫存" : "提送";
@@ -642,11 +654,25 @@ public class OFS_ClbPaymentHelper
             UpdateReviewResult(projectID, 1, newStatus, reviewComment, reviewUser, actualPaidAmount);
 
             // 寄送通知信件
+            var basicData = OFS_ClbApplicationHelper.GetBasicData(projectID);
+            var projectMainData = OFS_ClbApplicationHelper.GetProjectMainData(projectID);
+            string projectName = basicData.ProjectNameTw;
+            string UserAccount = projectMainData.UserAccount;
+
             if (reviewResult == "return")
             {
-                // TODO: send mail
-                // SendRejectNotificationMail(projectID, reviewComment);
+                
+                // 寄送通知信
+                NotificationHelper.G3("社團", projectName, "請款", reviewComment,UserAccount);
+            
             }
+            else
+            {
+                // 寄送通知信
+                NotificationHelper.G6("社團", projectName, "請款",actualPaidAmount, reviewComment,UserAccount);
+            }
+
+            
 
             string resultText = reviewResult == "pass" ? "通過" : "退回修改";
             return (true, $"審查結果已提交：{resultText}");

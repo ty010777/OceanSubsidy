@@ -68,6 +68,7 @@ public class ScienceDayTask : IHttpHandler
             {
                 //檢查期中、期末、每月報告是否逾期
              
+                { "Contract", "簽訂契約資料" },
                 { "MidReport", "填寫期中報告" },
                 { "FinalReport", "填寫期末報告" },
                 { "MonthlyReport", "填寫每月進度報告" },
@@ -97,6 +98,7 @@ public class ScienceDayTask : IHttpHandler
         if (string.IsNullOrEmpty(projectId)) return;
 
         // 依序檢查 3 個任務
+        CheckContractTask(projectId, taskList);
         CheckMidReportTask(projectId, taskList);
         CheckFinalReportTask(projectId, taskList);
         CheckMonthlyReportTask(projectId, taskList);
@@ -104,6 +106,34 @@ public class ScienceDayTask : IHttpHandler
 
     #region 任務檢查函數
 
+    /// <summary>
+    /// 檢查簽訂契約資料
+    /// </summary>
+    /// <param name="projectId">專案ID</param>
+    /// <param name="taskList">任務清單</param>
+    private static void CheckContractTask(string projectId, Dictionary<string, string> taskList)
+    {
+        var result = OFS_ScienceTaskHelper.getTask(projectId, "Contract");
+        
+        // 如果需要填報、有截止日期、且任務尚未完成，發送郵件通知
+        if (result.IsTodo == true && result.OverdueDate.HasValue && result.IsCompleted != true)
+        {
+            var projectInfo = OFS_ScienceTaskHelper.GetProjectInfo(projectId);
+            string projectName = projectInfo.Item1;
+            string account = projectInfo.Item2;
+            int? organizer = projectInfo.Item3;
+
+            if (!string.IsNullOrEmpty(account))
+            {
+                // 如果今天日期已經大於逾期日期，使用 F2（進度落後提醒），否則使用 F11（資料填報提醒）
+                if (DateTime.Today > result.OverdueDate.Value)
+                {
+                    NotificationHelper.F2("科專", projectName, "簽訂契約資料", account, organizer);
+                }
+               
+            }
+        }
+    }
 
 
     /// <summary>
@@ -116,6 +146,31 @@ public class ScienceDayTask : IHttpHandler
         var result = OFS_ScienceTaskHelper.CheckMidReportDeadline(projectId);
         bool isTodo = result.Item1;
         DateTime? overdueDate = result.Item2; // 期中審查預定日期直接作為逾期日期
+
+        // 檢查任務是否已完成
+        bool isCompleted = OFS_ScienceTaskHelper.IsTaskCompleted(projectId, "MidReport");
+
+        // 如果需要填報、有截止日期、且任務尚未完成，發送郵件通知
+        if (isTodo && overdueDate.HasValue && !isCompleted)
+        {
+            var projectInfo = OFS_ScienceTaskHelper.GetProjectInfo(projectId);
+            string projectName = projectInfo.Item1;
+            string account = projectInfo.Item2;
+            int? organizer = projectInfo.Item3;
+
+            if (!string.IsNullOrEmpty(account))
+            {
+                // 如果今天日期已經大於逾期日期，使用 F2（進度落後提醒），否則使用 F11（資料填報提醒）
+                if (DateTime.Today > overdueDate.Value)
+                {
+                    NotificationHelper.F2("科專", projectName, "期中報告", account, organizer);
+                }
+                else
+                {
+                    NotificationHelper.F11("科專", projectName, "期中報告", overdueDate.Value, account);
+                }
+            }
+        }
 
         UpdateOrInsertTask(projectId, "MidReport", taskList["MidReport"], isTodo, overdueDate);
     }
@@ -130,6 +185,31 @@ public class ScienceDayTask : IHttpHandler
         var result = OFS_ScienceTaskHelper.CheckFinalReportDeadline(projectId);
         bool isTodo = result.Item1;
         DateTime? overdueDate = result.Item2; // 期末審查預定日期直接作為逾期日期
+
+        // 檢查任務是否已完成
+        bool isCompleted = OFS_ScienceTaskHelper.IsTaskCompleted(projectId, "FinalReport");
+
+        // 如果需要填報、有截止日期、且任務尚未完成，發送郵件通知
+        if (isTodo && overdueDate.HasValue && !isCompleted)
+        {
+            var projectInfo = OFS_ScienceTaskHelper.GetProjectInfo(projectId);
+            string projectName = projectInfo.Item1;
+            string account = projectInfo.Item2;
+            int? organizer = projectInfo.Item3;
+
+            if (!string.IsNullOrEmpty(account))
+            {
+                // 如果今天日期已經大於逾期日期，使用 F2（進度落後提醒），否則使用 F11（資料填報提醒）
+                if (DateTime.Today > overdueDate.Value)
+                {
+                    NotificationHelper.F2("科專", projectName, "期末報告", account, organizer);
+                }
+                else
+                {
+                    NotificationHelper.F11("科專", projectName, "期末報告", overdueDate.Value, account);
+                }
+            }
+        }
 
         UpdateOrInsertTask(projectId, "FinalReport", taskList["FinalReport"], isTodo, overdueDate);
     }
@@ -146,6 +226,35 @@ public class ScienceDayTask : IHttpHandler
 
         // 取得月報逾期日期（第一個未填寫月份的下個月10號）
         DateTime? overdueDate = OFS_ScienceTaskHelper.GetMonthlyReportOverdueDate(projectId);
+
+        // 檢查任務是否已完成
+        bool isCompleted = OFS_ScienceTaskHelper.IsTaskCompleted(projectId, "MonthlyReport");
+
+        // 如果需要填報、有截止日期、且任務尚未完成，發送郵件通知
+        if (isTodo && overdueDate.HasValue && !isCompleted)
+        {
+            var projectInfo = OFS_ScienceTaskHelper.GetProjectInfo(projectId);
+            string projectName = projectInfo.Item1;
+            string account = projectInfo.Item2;
+            int? organizer = projectInfo.Item3;
+
+            if (!string.IsNullOrEmpty(account))
+            {
+                // overdueDate 是未填寫月份的下個月10號，所以往前推一個月取得未填寫的月份
+                DateTime missingMonth = overdueDate.Value.AddMonths(-1);
+                string eventName = $"{missingMonth.Month}月進度回報";
+
+                // 如果今天日期已經大於逾期日期，使用 F2（進度落後提醒），否則使用 F11（資料填報提醒）
+                if (DateTime.Today > overdueDate.Value)
+                {
+                    NotificationHelper.F2("科專", projectName, eventName, account, organizer);
+                }
+                else
+                {
+                    NotificationHelper.F11("科專", projectName, eventName, overdueDate.Value, account);
+                }
+            }
+        }
 
         UpdateOrInsertTask(projectId, "MonthlyReport", taskList["MonthlyReport"], isTodo, overdueDate);
     }

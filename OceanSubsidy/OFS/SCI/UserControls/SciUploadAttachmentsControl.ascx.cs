@@ -48,14 +48,14 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
                 // 根據OrgCategory決定顯示哪個表單
                 DetermineFormType(projectID);
                 LoadExistingData(projectID);
-                
+
 
                 // 載入變更說明控制項
                 tab5_ucChangeDescription.LoadData(projectID,IsViewMode );
 
 
             }
-       
+
             // 套用檢視模式
             if (IsViewMode)
             {
@@ -66,6 +66,87 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
         catch (Exception ex)
         {
             HandleException(ex, "載入資料時發生錯誤");
+        }
+    }
+
+    /// <summary>
+    /// 從快照資料載入（用於快照檢視頁面）
+    /// </summary>
+    /// <param name="snapshotData">快照的 JSON 資料物件</param>
+    public void LoadFromSnapshot(dynamic snapshotData)
+    {
+        try
+        {
+            string orgCategory = "";
+
+            // 先確定表單類型（從 ApplicationMain 的 OrgCategory）
+            if (snapshotData.ApplicationMain != null)
+            {
+                var applicationMain = Newtonsoft.Json.JsonConvert.DeserializeObject<OFS_SCI_Application_Main>(
+                    snapshotData.ApplicationMain.ToString()
+                );
+                if (applicationMain != null && !string.IsNullOrEmpty(applicationMain.OrgCategory))
+                {
+                    orgCategory = applicationMain.OrgCategory;
+                }
+            }
+
+            // 載入上傳附件資料
+            if (snapshotData.UploadFile != null)
+            {
+                List<OFS_SCI_UploadFile> uploadFiles = Newtonsoft.Json.JsonConvert.DeserializeObject<List<OFS_SCI_UploadFile>>(
+                    snapshotData.UploadFile.ToString()
+                );
+                if (uploadFiles != null && uploadFiles.Count > 0)
+                {
+                    UpdateAttachmentStatus(uploadFiles);
+                    // hdnAttachmentData.Value = Newtonsoft.Json.JsonConvert.SerializeObject(uploadFiles);
+                }
+            }
+
+            // 根據 OrgCategory 決定顯示的表單
+            DetermineFormTypeFromOrgCategory(orgCategory);
+
+            // 設定為檢視模式
+            IsViewMode = true;
+            ApplyViewMode();
+
+            // 隱藏變更說明控制項（快照檢視不需要）
+            if (tab5_ucChangeDescription != null)
+            {
+                tab5_ucChangeDescription.Visible = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "從快照載入資料時發生錯誤");
+        }
+    }
+
+    /// <summary>
+    /// 根據 OrgCategory 決定表單類型
+    /// </summary>
+    private void DetermineFormTypeFromOrgCategory(string orgCategory)
+    {
+        try
+        {
+            // 根據 OrgCategory 設定表單類型
+            if (orgCategory.Equals("OceanTech", StringComparison.OrdinalIgnoreCase))
+            {
+                // 顯示業者表單
+                oceanTechForm.Attributes["class"] = "table-responsive mt-3 mb-0";
+                academicForm.Attributes["class"] = "table-responsive mt-3 mb-0 d-none";
+            }
+            else
+            {
+                // 顯示學術單位表單
+                academicForm.Attributes["class"] = "table-responsive mt-3 mb-0";
+                oceanTechForm.Attributes["class"] = "table-responsive mt-3 mb-0 d-none";
+            }
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "決定表單類型時發生錯誤");
         }
     }
 
@@ -552,7 +633,13 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
                         System.Diagnostics.Debug.WriteLine($"專案 {ProjectID} 計畫變更記錄狀態更新成功：Status=2");
                     }
                     MergePdfFiles(ProjectID, orgCategory,ProjectName, "核定版");
-                    
+                    string supervisoryAccount = projectData.SupervisoryPersonAccount;
+
+                    // 根據承辦人帳號取得 UserID
+                    int? organizer = SysUserHelper.GetUserIDByAccount(supervisoryAccount);
+
+                    NotificationHelper.A2("科專", ProjectName,  organizer);
+
                 }else if (projectData?.IsProjChanged == 1)//計畫變更
                 {
                     tab5_ucChangeDescription.SaveChangeDescription(ProjectID);
@@ -623,7 +710,7 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
                         // 寄送通知信
                         NotificationHelper.G2("科專", projectName, "計畫變更申請", organizer);
                     }
-
+                    
                     
                 }
                 else //申請階段
@@ -638,7 +725,7 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
                     NotificationHelper.A1("科專", ProjectName,  "SCI");
 
                 }
-                
+                OFS_SciSnapshotHelper.CreateSnapshot(ProjectID);
                 
             }
             catch (Exception Ex)

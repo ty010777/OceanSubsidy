@@ -1082,7 +1082,7 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
 
                 }
                 //這是計畫變更
-                else if(lastProjectMain.Statuses== "計畫執行")
+                else if(lastProjectMain.IsProjChanged == 1)
                 {
                     // 儲存變更說明記錄
                     string changeBefore  = Request.Form["txtChangeBefore"] ?? "";
@@ -1137,7 +1137,9 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
                     //提送歷史紀錄
                     InsertClbHistory(projectID);
                 }
-                
+                //快照 ， 送審版 status = 11 , 計劃書修正 = 43  , 計畫變更 51 
+                // 核定版 如果 沒有計畫書修正 就是 11 有計畫書修正 就是 43 (最新) 
+                OFS_ClbSnapshotHelper.CreateSnapshot(projectID);
 
                 var successResult = new { success = true, message = "儲存成功！", projectID = projectID, enableUpload = true };
                 Response.Write(JsonConvert.SerializeObject(successResult));
@@ -1173,6 +1175,8 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
 
         // 產生並合併送審版與核定版 PDF
         MergePdfFiles(projectID, projectName, "計畫變更最新版");
+        
+        // 
     }
 
     /// <summary>

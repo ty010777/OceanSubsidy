@@ -641,6 +641,7 @@ VALUES
                 var projectMain = new OFS_SCI_Project_Main();
                 
                 // 基本欄位
+                projectMain.ID= Convert.ToInt32(row["ID"]);
                 projectMain.ProjectID = row["ProjectID"]?.ToString();
                 projectMain.Statuses = row["Statuses"]?.ToString();
                 projectMain.StatusesName = row["StatusesName"]?.ToString();
@@ -673,7 +674,6 @@ VALUES
                 projectMain.Form5Status = row["Form5Status"]?.ToString();
                 projectMain.CurrentStep = row["CurrentStep"]?.ToString();
 
-                // 新增欄位 - 檢查是否存在
                 if (dt.Columns.Contains("isWithdrawal") && row["isWithdrawal"] != DBNull.Value)
                     projectMain.isWithdrawal = Convert.ToBoolean(row["isWithdrawal"]);
 

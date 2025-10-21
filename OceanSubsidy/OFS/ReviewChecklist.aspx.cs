@@ -867,10 +867,16 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                 }
             }
 
-            // 寄送審查通知給審查人員（只在資格審→領域審、領域審→技術審時寄信，不包含進入決審）
+            // 寄送審查通知給審查人員（只在資格審→領域審、領域審→技術審時寄信）
             if (totalSuccess > 0 && allSuccessIds.Count > 0 && actionType != "進入決審")
             {
-                // 只有資格審(1)→領域審(2) 或 領域審(2)→技術審(3)  或資格審(1)→決審(4) 需要寄信
+                //統計哪些地方會寄信
+                //1.只有資格審(1)→領域審(2) 會寄信給 審查委員(沒有寄給使用者)
+                //2.領域審(2)→技術審(3) 會寄信給 審查委員 也會寄信給 使用者 因為技術審核需要PPT上傳
+                //2.1 文化 初審可以直接進入決審，會寄信給使用者
+                //3.技術審(3)→決審核定(4) 會寄信給 使用者 告知結果
+                //4.決審核定(4)→執行階段 寄信 告知核定金額
+                
                 if (reviewType == "1" || reviewType == "2")
                 {
                     SendReviewNotifications(allSuccessIds, reviewType);
@@ -879,6 +885,17 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                 {
                     SendFinalReviewNotifications(allSuccessIds);
                 }
+                else if (reviewType == "4")
+                {
+                    // 決審核定，使用 E5 通知申請者
+                    SendApprovalNotifications(allSuccessIds);
+                }
+            }
+
+            // 如果是「進入決審」，寄送 E31 通知給申請者（只有文化會有，從複審進入決審）
+            if (totalSuccess > 0 && allSuccessIds.Count > 0 && reviewType == "2" && actionType == "進入決審")
+            {
+                SendEnterFinalReviewNotifications(allSuccessIds);
             }
 
             // 設定最終結果
@@ -967,6 +984,12 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                 if (batchResult.Success)
                 {
                     result.Message = $"成功處理 {batchResult.SuccessCount} 件計畫";
+
+                    // 發送 E2 審查不通過通知給申請者
+                    if (batchResult.SuccessProjectIds != null && batchResult.SuccessProjectIds.Count > 0)
+                    {
+                        SendRejectNotifications(batchResult.SuccessProjectIds);
+                    }
                 }
                 else
                 {
@@ -1745,7 +1768,6 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                         // 如果是進入計畫執行階段，建立待辦事項模板
                         if (toStatus == "計畫執行")
                         {
-                            //TODO 計畫執行的 社團代辦事項
                              ReviewCheckListHelper.CreateTaskQueueTemplate(projectId);
                         }
                     }
@@ -2788,30 +2810,22 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
     {
         try
         {
-            // 取得審查階段
+            // 取得審查階段與事件名稱
             string reviewStage = GetReviewStageByType(reviewType);
-     
-
-            // 取得事件名稱
             string eventName = GetSCIEventNameByReviewType(reviewType);
 
             // 從資料庫取得審查記錄
             var reviewRecords = GetReviewRecordsByProjects(projectIds, reviewStage);
-
             if (reviewRecords.Count == 0)
                 return;
 
-            // 依照審查人員的 Email 分組
+            // ===== 1. 發送 C1 通知給審查委員 =====
             var reviewerGroups = reviewRecords
                 .Where(r => !string.IsNullOrEmpty(r.Email))
                 .GroupBy(r => r.Email);
 
-            // 對每個審查人員發送通知
             foreach (var reviewerGroup in reviewerGroups)
             {
-                string reviewerEmail = reviewerGroup.Key;
-
-                // 組成該審查人員的專案清單 (ProjectName -> URL)
                 var projectList = new Dictionary<string, string>();
 
                 foreach (var record in reviewerGroup)
@@ -2820,11 +2834,64 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                     projectList[record.ProjectName] = url;
                 }
 
-                // 發送 C1 通知
-                NotificationHelper.C1("科專", projectList, eventName, reviewerEmail);
+                NotificationHelper.C1("科專", projectList, eventName, reviewerGroup.Key);
             }
 
-            System.Diagnostics.Debug.WriteLine($"已發送審查通知給 {reviewerGroups.Count()} 位審查人員");
+            System.Diagnostics.Debug.WriteLine($"已發送 C1 審查通知給 {reviewerGroups.Count()} 位審查委員");
+
+            // ===== 2. 發送 E32 通知給申請者（領域審查→技術審查）=====
+            if (reviewType == "2")
+            {
+                int SuccessCount = 0;
+
+                foreach (string projectId in projectIds)
+                {
+                    try
+                    {
+                        string applicantEmail = OFS_SciApplicationHelper.GetApplicantAccountByProjectId(projectId);
+                        var projectInfo = ReviewCheckListHelper.GetSciProjectInfo(projectId);
+                        string projectName = projectInfo?["ProjectName"]?.ToString() ?? "";
+
+                        if (!string.IsNullOrEmpty(applicantEmail) && !string.IsNullOrEmpty(projectName))
+                        {
+                            NotificationHelper.E32("科專", projectName, "領域審查", "技術審查", applicantEmail);
+                            SuccessCount++;
+                        }
+                    }
+                    catch (Exception c3Ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"專案 {projectId} 發送 E32 通知失敗：{c3Ex.Message}");
+                    }
+                }
+
+                System.Diagnostics.Debug.WriteLine($"已發送 E32 通知給 {SuccessCount} 位申請者");
+            }
+            else
+            {
+                int SuccessCount = 0;
+
+                foreach (string projectId in projectIds)
+                {
+                    try
+                    {
+                        string applicantEmail = OFS_SciApplicationHelper.GetApplicantAccountByProjectId(projectId);
+                        var projectInfo = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectId);
+                        string projectName = projectInfo.ProjectNameTw;
+                        int year = projectInfo.Year??0;
+                        if (!string.IsNullOrEmpty(applicantEmail) && !string.IsNullOrEmpty(projectName))
+                        {
+                            NotificationHelper.E31("科專", year, projectName, "技術審查", applicantEmail);
+                            SuccessCount++;
+                        }
+                    }
+                    catch (Exception Ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"專案 {projectId} 發送 E32 通知失敗：{Ex.Message}");
+                    }
+                }
+
+                System.Diagnostics.Debug.WriteLine($"已發送 E32 通知給 {SuccessCount} 位申請者");
+            }
         }
         catch (Exception ex)
         {
@@ -2877,6 +2944,52 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             }
 
             System.Diagnostics.Debug.WriteLine($"已發送文化審查通知給 {reviewerGroups.Count()} 位審查人員");
+
+            // 當 reviewType == "2" 時（初審進入複審），發送 E32 通知給申請者
+            //當 reviewType == "3" 時（複審進入決審），發送 E31 通知給申請者
+            if (reviewType == "2")
+            {
+                foreach (string projectId in projectIds)
+                {
+                    try
+                    {
+                        string applicantEmail = OFS_CulProjectHelper.getUserAccount(projectId);
+                        var culProjectInfo = ReviewCheckListHelper.GetCulProjectInfo(projectId);
+                        string projectName = culProjectInfo != null ? culProjectInfo["ProjectName"]?.ToString() ?? "" : "";
+
+                        if (!string.IsNullOrEmpty(applicantEmail) && !string.IsNullOrEmpty(projectName))
+                        {
+                            NotificationHelper.E32("文化", projectName, "初審", "複審", applicantEmail);
+                        }
+                    }
+                    catch (Exception Ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"發送 E32 通知給專案 {projectId} 時發生錯誤：{Ex.Message}");
+                    }
+                }
+            }
+            else
+            {
+                foreach (string projectId in projectIds)
+                {
+                    try
+                    {
+                        string applicantEmail = OFS_CulProjectHelper.getUserAccount(projectId);
+                        var culProjectInfo = ReviewCheckListHelper.GetCulProjectInfo(projectId);
+                        string projectName = culProjectInfo != null ? culProjectInfo["ProjectName"]?.ToString() ?? "" : "";
+                        int year = culProjectInfo != null ? Convert.ToInt32(culProjectInfo["Year"]) : 0;
+
+                        if (!string.IsNullOrEmpty(applicantEmail) && !string.IsNullOrEmpty(projectName))
+                        {
+                            NotificationHelper.E31("文化", year, projectName,  "複審", applicantEmail);
+                        }
+                    }
+                    catch (Exception Ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"發送 E32 通知給專案 {projectId} 時發生錯誤：{Ex.Message}");
+                    }
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -3325,6 +3438,395 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                 error = ex.ToString()
             });
         }
+    }
+
+    /// <summary>
+    /// 發送「進入決審」E31 通知給申請者（只有文化會有）
+    /// 複審通過後進入決審，寄信通知申請者
+    /// </summary>
+    private static void SendEnterFinalReviewNotifications(List<string> projectIds)
+    {
+        try
+        {
+            if (projectIds == null || projectIds.Count == 0)
+                return;
+
+            // 只處理文化專案
+            var culProjects = projectIds.Where(p => p.Contains("CUL")).ToList();
+
+            if (culProjects.Count == 0)
+            {
+                System.Diagnostics.Debug.WriteLine("進入決審通知: 沒有文化專案需要處理");
+                return;
+            }
+
+            int successCount = 0;
+            foreach (string projectId in culProjects)
+            {
+                try
+                {
+                    string applicantEmail = OFS_CulProjectHelper.getUserAccount(projectId);
+                    var culProjectInfo = ReviewCheckListHelper.GetCulProjectInfo(projectId);
+                    string projectName = culProjectInfo != null ? culProjectInfo["ProjectName"]?.ToString() ?? "" : "";
+                    int year = culProjectInfo != null ? Convert.ToInt32(culProjectInfo["Year"]) : 0;
+
+                    if (!string.IsNullOrEmpty(applicantEmail) && !string.IsNullOrEmpty(projectName) && year > 0)
+                    {
+                        NotificationHelper.E31("文化", year, projectName, "複審", applicantEmail);
+                        successCount++;
+                        System.Diagnostics.Debug.WriteLine($"已發送進入決審 E31 通知 - ProjectID: {projectId}, Year: {year}, ProjectName: {projectName}, Email: {applicantEmail}");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"進入決審通知資料不完整 - ProjectID: {projectId}, Email: {applicantEmail}, Name: {projectName}, Year: {year}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"發送進入決審 E31 通知給專案 {projectId} 時發生錯誤：{ex.Message}");
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine($"已完成發送進入決審 E31 通知，成功 {successCount}/{culProjects.Count} 件");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"發送進入決審 E31 通知時發生錯誤：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 發送「決審核定」E5 通知給申請者
+    /// 決審核定後，寄信通知申請者核定金額
+    /// </summary>
+    private static void SendApprovalNotifications(List<string> projectIds)
+    {
+        try
+        {
+            if (projectIds == null || projectIds.Count == 0)
+                return;
+
+            // 依補助類型分組專案
+            var sciProjects = projectIds.Where(p => p.Contains("SCI")).ToList();
+            var clbProjects = projectIds.Where(p => p.Contains("CLB")).ToList();
+            var culProjects = projectIds.Where(p => p.Contains("CUL")).ToList();
+            var edcProjects = projectIds.Where(p => p.Contains("EDC")).ToList();
+            var litProjects = projectIds.Where(p => p.Contains("LIT")).ToList();
+            var mulProjects = projectIds.Where(p => p.Contains("MUL")).ToList();
+            var accProjects = projectIds.Where(p => p.Contains("ACC")).ToList();
+
+            int totalSuccess = 0;
+
+            // 處理科專 (SCI)
+            if (sciProjects.Count > 0)
+            {
+                totalSuccess += SendApprovalNotificationsForSCI(sciProjects);
+            }
+
+            // 處理社團 (CLB)
+            if (clbProjects.Count > 0)
+            {
+                totalSuccess += SendApprovalNotificationsForCLB(clbProjects);
+            }
+
+            // 處理其他 5 類 (CUL, EDC, LIT, MUL, ACC)
+            if (culProjects.Count > 0)
+            {
+                totalSuccess += SendApprovalNotificationsForOtherTypes(culProjects, "CUL", "文化");
+            }
+            if (edcProjects.Count > 0)
+            {
+                totalSuccess += SendApprovalNotificationsForOtherTypes(edcProjects, "EDC", "學校民間");
+            }
+            if (litProjects.Count > 0)
+            {
+                totalSuccess += SendApprovalNotificationsForOtherTypes(litProjects, "LIT", "素養");
+            }
+            if (mulProjects.Count > 0)
+            {
+                totalSuccess += SendApprovalNotificationsForOtherTypes(mulProjects, "MUL", "多元");
+            }
+            if (accProjects.Count > 0)
+            {
+                totalSuccess += SendApprovalNotificationsForOtherTypes(accProjects, "ACC", "無障礙");
+            }
+
+            System.Diagnostics.Debug.WriteLine($"已完成發送決審核定 E5 通知，成功 {totalSuccess}/{projectIds.Count} 件");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"發送決審核定 E5 通知時發生錯誤：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 發送科專 (SCI) 決審核定 E5 通知
+    /// </summary>
+    private static int SendApprovalNotificationsForSCI(List<string> projectIds)
+    {
+        int successCount = 0;
+        foreach (string projectId in projectIds)
+        {
+            try
+            {
+                var projectInfo = ReviewCheckListHelper.GetSciApprovalInfo(projectId);
+                if (projectInfo != null)
+                {
+                    string applicantEmail = projectInfo["UserAccount"]?.ToString() ?? "";
+                    string projectName = projectInfo["ProjectName"]?.ToString() ?? "";
+                    int year = projectInfo["Year"] != null ? Convert.ToInt32(projectInfo["Year"]) : 0;
+                    decimal approvedAmount = projectInfo["ApprovedSubsidy"] != null ? Convert.ToDecimal(projectInfo["ApprovedSubsidy"]) : 0;
+
+                    if (!string.IsNullOrEmpty(applicantEmail) && !string.IsNullOrEmpty(projectName) && year > 0 && approvedAmount > 0)
+                    {
+                        NotificationHelper.E5( year, projectName, approvedAmount.ToString("N0"), applicantEmail);
+                        NotificationHelper.F12( "科專", projectName, "契約資料", applicantEmail);
+                        NotificationHelper.F12( "科專", projectName, "第一次請款", applicantEmail);
+                        successCount++;
+                        System.Diagnostics.Debug.WriteLine($"已發送科專決審核定 E5 通知 - ProjectID: {projectId}, Amount: {approvedAmount}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"發送科專決審核定 E5 通知給專案 {projectId} 時發生錯誤：{ex.Message}");
+            }
+        }
+        return successCount;
+    }
+
+    /// <summary>
+    /// 發送社團 (CLB) 決審核定 E5 通知
+    /// </summary>
+    private static int SendApprovalNotificationsForCLB(List<string> projectIds)
+    {
+        int successCount = 0;
+        foreach (string projectId in projectIds)
+        {
+            try
+            {
+                var projectInfo = ReviewCheckListHelper.GetClbApprovalInfo(projectId);
+                if (projectInfo != null)
+                {
+                    string applicantEmail = projectInfo["UserAccount"]?.ToString() ?? "";
+                    string projectName = projectInfo["ProjectName"]?.ToString() ?? "";
+                    int year = projectInfo["Year"] != null ? Convert.ToInt32(projectInfo["Year"]) : 0;
+                    decimal approvedAmount = projectInfo["ApprovedSubsidy"] != null ? Convert.ToDecimal(projectInfo["ApprovedSubsidy"]) : 0;
+
+                    if (!string.IsNullOrEmpty(applicantEmail) && !string.IsNullOrEmpty(projectName) && year > 0 && approvedAmount > 0)
+                    {
+                        NotificationHelper.E5(year, projectName, approvedAmount.ToString("N0"), applicantEmail);
+                        successCount++;
+                        System.Diagnostics.Debug.WriteLine($"已發送社團決審核定 E5 通知 - ProjectID: {projectId}, Amount: {approvedAmount}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"發送社團決審核定 E5 通知給專案 {projectId} 時發生錯誤：{ex.Message}");
+            }
+        }
+        return successCount;
+    }
+
+    /// <summary>
+    /// 發送其他類型 (CUL, EDC, LIT, MUL, ACC) 決審核定 E5 通知
+    /// </summary>
+    private static int SendApprovalNotificationsForOtherTypes(List<string> projectIds, string typeCode, string typeName)
+    {
+        int successCount = 0;
+        foreach (string projectId in projectIds)
+        {
+            try
+            {
+                var projectInfo = ReviewCheckListHelper.GetOtherTypeApprovalInfo(projectId, typeCode);
+                if (projectInfo != null)
+                {
+                    string applicantEmail = projectInfo["UserAccount"]?.ToString() ?? "";
+                    string projectName = projectInfo["ProjectName"]?.ToString() ?? "";
+                    int year = projectInfo["Year"] != null ? Convert.ToInt32(projectInfo["Year"]) : 0;
+                    decimal approvedAmount = projectInfo["ApprovedAmount"] != null ? Convert.ToDecimal(projectInfo["ApprovedAmount"]) : 0;
+
+                    if (!string.IsNullOrEmpty(applicantEmail) && !string.IsNullOrEmpty(projectName) && year > 0 && approvedAmount > 0)
+                    {
+                        NotificationHelper.E5(year, projectName, approvedAmount.ToString("N0"), applicantEmail);
+                        
+                        if(typeCode == "LIT" || typeCode == "MUL"){
+                            NotificationHelper.F12(typeName, projectName, "第一期請款", applicantEmail);
+                        }
+                        successCount++;
+                        System.Diagnostics.Debug.WriteLine($"已發送{typeName}決審核定 E5 通知 - ProjectID: {projectId}, Amount: {approvedAmount}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"發送{typeName}決審核定 E5 通知給專案 {projectId} 時發生錯誤：{ex.Message}");
+            }
+        }
+        return successCount;
+    }
+
+    /// <summary>
+    /// 發送「審查不通過」E2 通知給申請者
+    /// </summary>
+    private static void SendRejectNotifications(List<string> projectIds)
+    {
+        try
+        {
+            if (projectIds == null || projectIds.Count == 0)
+                return;
+
+            // 依補助類型分組專案
+            var sciProjects = projectIds.Where(p => p.Contains("SCI")).ToList();
+            var clbProjects = projectIds.Where(p => p.Contains("CLB")).ToList();
+            var culProjects = projectIds.Where(p => p.Contains("CUL")).ToList();
+            var edcProjects = projectIds.Where(p => p.Contains("EDC")).ToList();
+            var litProjects = projectIds.Where(p => p.Contains("LIT")).ToList();
+            var mulProjects = projectIds.Where(p => p.Contains("MUL")).ToList();
+            var accProjects = projectIds.Where(p => p.Contains("ACC")).ToList();
+
+            int totalSuccess = 0;
+
+            // 處理科專 (SCI)
+            if (sciProjects.Count > 0)
+            {
+                totalSuccess += SendRejectNotificationsForSCI(sciProjects);
+            }
+
+            // 處理社團 (CLB)
+            if (clbProjects.Count > 0)
+            {
+                totalSuccess += SendRejectNotificationsForCLB(clbProjects);
+            }
+
+            // 處理其他 5 類 (CUL, EDC, LIT, MUL, ACC)
+            if (culProjects.Count > 0)
+            {
+                totalSuccess += SendRejectNotificationsForOtherTypes(culProjects, "CUL", "文化");
+            }
+            if (edcProjects.Count > 0)
+            {
+                totalSuccess += SendRejectNotificationsForOtherTypes(edcProjects, "EDC", "學校民間");
+            }
+            if (litProjects.Count > 0)
+            {
+                totalSuccess += SendRejectNotificationsForOtherTypes(litProjects, "LIT", "素養");
+            }
+            if (mulProjects.Count > 0)
+            {
+                totalSuccess += SendRejectNotificationsForOtherTypes(mulProjects, "MUL", "多元");
+            }
+            if (accProjects.Count > 0)
+            {
+                totalSuccess += SendRejectNotificationsForOtherTypes(accProjects, "ACC", "無障礙");
+            }
+
+            System.Diagnostics.Debug.WriteLine($"已完成發送審查不通過 E2 通知，成功 {totalSuccess}/{projectIds.Count} 件");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"發送審查不通過 E2 通知時發生錯誤：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 發送科專 (SCI) 審查不通過 E2 通知
+    /// </summary>
+    private static int SendRejectNotificationsForSCI(List<string> projectIds)
+    {
+        int successCount = 0;
+        foreach (string projectId in projectIds)
+        {
+            try
+            {
+                var projectInfo = ReviewCheckListHelper.GetSciApprovalInfo(projectId);
+                if (projectInfo != null)
+                {
+                    string applicantEmail = projectInfo["UserAccount"]?.ToString() ?? "";
+                    string projectName = projectInfo["ProjectName"]?.ToString() ?? "";
+                    int year = projectInfo["Year"] != null ? Convert.ToInt32(projectInfo["Year"]) : 0;
+
+                    if (!string.IsNullOrEmpty(applicantEmail) && !string.IsNullOrEmpty(projectName) && year > 0)
+                    {
+                        NotificationHelper.E2("科專", year, projectName, applicantEmail);
+                        successCount++;
+                        System.Diagnostics.Debug.WriteLine($"已發送科專審查不通過 E2 通知 - ProjectID: {projectId}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"發送科專審查不通過 E2 通知給專案 {projectId} 時發生錯誤：{ex.Message}");
+            }
+        }
+        return successCount;
+    }
+
+    /// <summary>
+    /// 發送社團 (CLB) 審查不通過 E2 通知
+    /// </summary>
+    private static int SendRejectNotificationsForCLB(List<string> projectIds)
+    {
+        int successCount = 0;
+        foreach (string projectId in projectIds)
+        {
+            try
+            {
+                var projectInfo = ReviewCheckListHelper.GetClbApprovalInfo(projectId);
+                if (projectInfo != null)
+                {
+                    string applicantEmail = projectInfo["UserAccount"]?.ToString() ?? "";
+                    string projectName = projectInfo["ProjectName"]?.ToString() ?? "";
+                    int year = projectInfo["Year"] != null ? Convert.ToInt32(projectInfo["Year"]) : 0;
+
+                    if (!string.IsNullOrEmpty(applicantEmail) && !string.IsNullOrEmpty(projectName) && year > 0)
+                    {
+                        NotificationHelper.E2("學校社團", year, projectName, applicantEmail);
+                        successCount++;
+                        System.Diagnostics.Debug.WriteLine($"已發送社團審查不通過 E2 通知 - ProjectID: {projectId}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"發送社團審查不通過 E2 通知給專案 {projectId} 時發生錯誤：{ex.Message}");
+            }
+        }
+        return successCount;
+    }
+
+    /// <summary>
+    /// 發送其他類型 (CUL, EDC, LIT, MUL, ACC) 審查不通過 E2 通知
+    /// </summary>
+    private static int SendRejectNotificationsForOtherTypes(List<string> projectIds, string typeCode, string typeName)
+    {
+        int successCount = 0;
+        foreach (string projectId in projectIds)
+        {
+            try
+            {
+                var projectInfo = ReviewCheckListHelper.GetOtherTypeApprovalInfo(projectId, typeCode);
+                if (projectInfo != null)
+                {
+                    string applicantEmail = projectInfo["UserAccount"]?.ToString() ?? "";
+                    string projectName = projectInfo["ProjectName"]?.ToString() ?? "";
+                    int year = projectInfo["Year"] != null ? Convert.ToInt32(projectInfo["Year"]) : 0;
+
+                    if (!string.IsNullOrEmpty(applicantEmail) && !string.IsNullOrEmpty(projectName) && year > 0)
+                    {
+                        NotificationHelper.E2(typeName, year, projectName, applicantEmail);
+                        successCount++;
+                        System.Diagnostics.Debug.WriteLine($"已發送{typeName}審查不通過 E2 通知 - ProjectID: {projectId}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"發送{typeName}審查不通過 E2 通知給專案 {projectId} 時發生錯誤：{ex.Message}");
+            }
+        }
+        return successCount;
     }
 
     #endregion

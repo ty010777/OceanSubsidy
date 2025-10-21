@@ -28,21 +28,48 @@ public class OFSSnapshotHelper
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
-            SELECT TOP 1 [ID]
+            SELECT TOP (1) [ID]
                   ,[Type]
                   ,[DataID]
                   ,[Status]
                   ,[Data]
+                  ,[CreateTime]
+                  ,[CreateUser]
               FROM [OFS_Snapshot]
              WHERE [Type] = @Type
                AND [DataID] = @DataID
-          ORDER BY CreateTime DESC
+          ORDER BY [CreateTime] DESC
         ";
 
         db.Parameters.Add("@Type", type);
         db.Parameters.Add("@DataID", dataID);
 
         var table = db.GetTable();
+        db.Parameters.Clear();
+
+        return table.Rows.Count == 1 ? toModel(table.Rows[0]) : null;
+    }
+
+    public static Snapshot GetByID(int snapshotID)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            SELECT [ID]
+                  ,[Type]
+                  ,[DataID]
+                  ,[Status]
+                  ,[Data]
+                  ,[CreateTime]
+                  ,[CreateUser]
+              FROM [OFS_Snapshot]
+             WHERE [ID] = @ID
+        ";
+
+        db.Parameters.Add("@ID", snapshotID);
+
+        var table = db.GetTable();
+        db.Parameters.Clear();
 
         return table.Rows.Count == 1 ? toModel(table.Rows[0]) : null;
     }
@@ -55,7 +82,9 @@ public class OFSSnapshotHelper
             Type = row.Field<string>("Type"),
             DataID = row.Field<int>("DataID"),
             Status = row.Field<int>("Status"),
-            Data = row.Field<string>("Data")
+            Data = row.Field<string>("Data"),
+            CreateTime = row.Field<DateTime>("CreateTime"),
+            CreateUser = row.Field<string>("CreateUser")
         };
     }
 }

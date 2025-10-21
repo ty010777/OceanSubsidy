@@ -64,10 +64,6 @@ public partial class OFS_CLB_ClbStageReport : System.Web.UI.Page
             {
                 return;
             }
-            
-            // TODO: 實作載入 CLB 階段報告資料的邏輯
-            // 這裡先留空，等後續實作具體功能時再填入
-            
         }
         catch (Exception ex)
         {
@@ -236,10 +232,10 @@ public partial class OFS_CLB_ClbStageReport : System.Web.UI.Page
     /// </summary>
     /// <param name="projectID">計畫編號</param>
     /// <param name="reviewResult">審查結果 (pass/reject)</param>
-    /// <param name="reviewComment">審查意見</param>
+    /// <param name="ReviewCommit">審查意見</param>
     /// <returns>操作結果</returns>
     [WebMethod]
-    public static object SubmitReview(string projectID, string reviewResult, string reviewComment)
+    public static object SubmitReview(string projectID, string reviewResult, string ReviewCommit)
     {
         try
         {
@@ -254,7 +250,7 @@ public partial class OFS_CLB_ClbStageReport : System.Web.UI.Page
             }
 
             // 呼叫 Helper 處理審查結果提交
-            bool result = OFS_ClbStageReportHelper.SubmitReviewResult(projectID, reviewResult, reviewComment);
+            bool result = OFS_ClbStageReportHelper.SubmitReviewResult(projectID, reviewResult, ReviewCommit);
             
             if (result)
             {

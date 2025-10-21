@@ -248,14 +248,206 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
                 // 載入變更說明控制項
                 tab2_ucChangeDescription.LoadData(ProjectID, IsViewMode);
             }
-            
 
-  
+
+
 
         }
         catch (Exception ex)
         {
             HandleException(ex, "載入資料時發生錯誤");
+        }
+    }
+
+    /// <summary>
+    /// 從快照資料載入（用於快照檢視頁面）
+    /// </summary>
+    /// <param name="snapshotData">快照的 JSON 資料物件</param>
+    public void LoadFromSnapshot(dynamic snapshotData)
+    {
+        try
+        {
+            // 載入計畫期程（從 ApplicationMain）
+            if (snapshotData.ApplicationMain != null)
+            {
+                OFS_SCI_Application_Main applicationMain = Newtonsoft.Json.JsonConvert.DeserializeObject<OFS_SCI_Application_Main>(
+                    snapshotData.ApplicationMain.ToString()
+                );
+                if (applicationMain != null && applicationMain.StartTime.HasValue)
+                {
+                    startDate.Value = applicationMain.StartTime.Value.ToMinguoDate();
+                }
+                if (applicationMain != null && applicationMain.EndTime.HasValue)
+                {
+                    endDate.Value = applicationMain.EndTime.Value.ToMinguoDate();
+                }
+            }
+
+            // 載入工作項目（WorkSchMain）- 參考 LoadWorkItems 方法
+            if (snapshotData.WorkSchMain != null)
+            {
+                var workSchMain = Newtonsoft.Json.JsonConvert.DeserializeObject<List<OFS_SCI_WorkSch_Main>>(
+                    snapshotData.WorkSchMain.ToString()
+                );
+                if (workSchMain != null && workSchMain.Count > 0)
+                {
+                    WorkItemsData = workSchMain;
+
+                    // 轉換成前端需要的格式（參考 LoadWorkItems 方法的邏輯）
+                    var workItemsJson = JsonConvert.SerializeObject(WorkItemsData.Select(w => new
+                    {
+                        projectId = w.ProjectID,
+                        workItemId = w.WorkItem_id,
+                        code = OFS_SciWorkSchHelper.ExtractItemCodeFromWorkItemId(w.WorkItem_id),
+                        itemName = w.WorkName,
+                        // 將西元年轉換為民國年供前端顯示
+                        startYear = w.StartYear.HasValue ? DateTimeHelper.GregorianYearToMinguo(w.StartYear.Value) : (int?)null,
+                        startMonth = w.StartMonth,
+                        // 將西元年轉換為民國年供前端顯示
+                        endYear = w.EndYear.HasValue ? DateTimeHelper.GregorianYearToMinguo(w.EndYear.Value) : (int?)null,
+                        endMonth = w.EndMonth,
+                        weight = w.Weighting,
+                        personMonth = w.InvestMonth,
+                        isOutsourced = w.IsOutsourced ?? false
+                    }));
+
+                    hiddenWorkItemsData.Value = workItemsJson;
+
+                    // 註冊 JavaScript 腳本來載入資料到前端
+                    string script = $@"
+                        function loadWorkItemsDataFromSnapshot() {{
+                            if (window.sciWorkSchManager) {{
+                                window.sciWorkSchManager.loadWorkItems({workItemsJson});
+                                console.log('已載入工作項目資料（從快照）：', {workItemsJson});
+                            }} else {{
+                                console.log('sciWorkSchManager 未初始化，延遲重試...');
+                                setTimeout(loadWorkItemsDataFromSnapshot, 500);
+                            }}
+                        }}
+
+                        if (document.readyState === 'loading') {{
+                            document.addEventListener('DOMContentLoaded', loadWorkItemsDataFromSnapshot);
+                        }} else {{
+                            loadWorkItemsDataFromSnapshot();
+                        }}
+                    ";
+
+                    Page.ClientScript.RegisterStartupScript(this.GetType(), "LoadWorkItemsFromSnapshot", script, true);
+                }
+            }
+
+            // 載入查核標準（WorkSchCheckStandard）- 參考 LoadCheckStandards 方法
+            if (snapshotData.WorkSchCheckStandard != null)
+            {
+                var checkStandards = Newtonsoft.Json.JsonConvert.DeserializeObject<List<OFS_SCI_WorkSch_CheckStandard>>(
+                    snapshotData.WorkSchCheckStandard.ToString()
+                );
+                if (checkStandards != null && checkStandards.Count > 0)
+                {
+                    CheckStandardsData = checkStandards;
+
+                    // HiddenField 儲存西元年格式（供後端解析使用）
+                    var checkStandardsForHidden = JsonConvert.SerializeObject(CheckStandardsData.Select(c => new
+                    {
+                        id = c.Id,
+                        projectId = c.ProjectID,
+                        workItem = c.WorkItem,
+                        serialNumber = c.SerialNumber,
+                        plannedFinishDate = c.PlannedFinishDate?.ToString("yyyy-MM-dd") ?? "",  // 西元年
+                        description = c.CheckDescription
+                    }));
+
+                    hiddenCheckStandardsData.Value = checkStandardsForHidden;
+
+                    // JavaScript 顯示用的資料（民國年格式）
+                    var checkStandardsJson = JsonConvert.SerializeObject(CheckStandardsData.Select(c => new
+                    {
+                        id = c.Id,
+                        projectId = c.ProjectID,
+                        workItem = c.WorkItem,
+                        serialNumber = c.SerialNumber,
+                        plannedFinishDate = c.PlannedFinishDate?.ToMinguoDate() ?? "",  // 民國年（僅供前端顯示）
+                        description = c.CheckDescription
+                    }));
+
+                    // 註冊 JavaScript 腳本來載入資料到前端
+                    var script = $@"
+                        function loadCheckStandardsDataFromSnapshot() {{
+                            if (window.sciWorkSchManager) {{
+                                window.sciWorkSchManager.loadCheckStandards({checkStandardsJson});
+                                console.log('已載入查核標準資料（從快照）：', {checkStandardsJson});
+                            }} else {{
+                                console.log('sciWorkSchManager 未初始化，延遲重試...');
+                                setTimeout(loadCheckStandardsDataFromSnapshot, 1000);
+                            }}
+                        }}
+
+                        if (document.readyState === 'loading') {{
+                            document.addEventListener('DOMContentLoaded', loadCheckStandardsDataFromSnapshot);
+                        }} else {{
+                            loadCheckStandardsDataFromSnapshot();
+                        }}
+                    ";
+
+                    Page.ClientScript.RegisterStartupScript(this.GetType(), "LoadCheckStandardsFromSnapshot", script, true);
+                }
+            }
+
+            // 載入計畫架構圖（UploadFile）- 設定為控制項屬性
+            if (snapshotData.UploadFile != null)
+            {
+                List<OFS_SCI_UploadFile> uploadFiles = JsonConvert.DeserializeObject<List<OFS_SCI_UploadFile>>(
+                    snapshotData.UploadFile.ToString()
+                );
+                if (uploadFiles != null && uploadFiles.Count > 0)
+                {
+                    OFS_SCI_UploadFile diagramFile = uploadFiles.FirstOrDefault(f => f.FileCode == "WorkSchStructure");
+                    if (diagramFile != null && !string.IsNullOrEmpty(diagramFile.TemplatePath))
+                    {
+                        DiagramFile = diagramFile;
+
+                        // 設定 ImageUrl
+                        string resolvedPath = ResolveUrl($"~/{diagramFile.TemplatePath}");
+                        DiagramFile.TemplatePath = resolvedPath;
+                        diagramPreview.ImageUrl = resolvedPath;
+                        System.Diagnostics.Debug.WriteLine($"快照 TemplatePath: {diagramFile.TemplatePath}");
+
+                        // 顯示容器
+                        diagramPreviewContainer.Style["display"] = "block";
+
+                        // 註冊 JavaScript 腳本以在前端載入檔案（參考 LoadDiagramFile 方法）
+                        var script = $@"
+                            if (window.sciWorkSchManager) {{
+                                window.sciWorkSchManager.loadDiagramFile('{resolvedPath}', '{System.Web.HttpUtility.JavaScriptStringEncode(diagramFile.FileName)}');
+                                console.log('已載入計畫架構圖（從快照）：', '{resolvedPath}');
+                            }} else {{
+                                setTimeout(function() {{
+                                    if (window.sciWorkSchManager) {{
+                                        window.sciWorkSchManager.loadDiagramFile('{resolvedPath}', '{System.Web.HttpUtility.JavaScriptStringEncode(diagramFile.FileName)}');
+                                        console.log('已載入計畫架構圖（從快照，延遲）：', '{resolvedPath}');
+                                    }}
+                                }}, 1000);
+                            }}
+                        ";
+
+                        Page.ClientScript.RegisterStartupScript(this.GetType(), "LoadDiagramFileFromSnapshot", script, true);
+                    }
+                }
+            }
+
+            // 設定為檢視模式
+            IsViewMode = true;
+            SetViewMode();
+
+            // 隱藏變更說明控制項（快照檢視不需要）
+            if (tab2_ucChangeDescription != null)
+            {
+                tab2_ucChangeDescription.Visible = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "從快照載入資料時發生錯誤");
         }
     }
 

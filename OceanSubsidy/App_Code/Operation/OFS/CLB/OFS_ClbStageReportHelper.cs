@@ -33,6 +33,27 @@ public class OFS_ClbStageReportHelper
             
             // 新增新的記錄
             InsertStageExamRecord(projectID, isDraft);
+            
+            // 若非暫存，則寄送通知信
+            if (isDraft != true)
+            {
+                var basicData = OFS_ClbApplicationHelper.GetBasicData(projectID);
+                var projectMainData = OFS_ClbApplicationHelper.GetProjectMainData(projectID);
+
+                if (basicData != null && projectMainData != null)
+                {
+                    string projectName = basicData.ProjectNameTw;
+                    string supervisoryAccount = projectMainData.SupervisoryPersonAccount;
+
+                    // 根據承辦人帳號取得 UserID
+                    int? organizer = SysUserHelper.GetUserIDByAccount(supervisoryAccount);
+
+                    // 寄送通知信
+                    NotificationHelper.G2("社團", projectName, "成果報告", organizer);
+                }      
+            }
+                
+               
         }
         catch (Exception ex)
         {
@@ -182,7 +203,8 @@ public class OFS_ClbStageReportHelper
     /// <param name="status">審查狀態</param>
     /// <param name="reviewer">審查委員</param>
     /// <param name="account">審查帳號</param>
-    public static void UpdateStageExamResult(string projectID, string status, string reviewer = null, string account = null)
+    /// <param name="reviewComment">評論</param>
+    public static void UpdateStageExamResult(string projectID, string status,string ReviewCommit, string reviewer = null, string account = null)
     {
         try
         {
@@ -192,6 +214,7 @@ public class OFS_ClbStageReportHelper
                 SET [Status] = @Status,
                     [Reviewer] = @Reviewer,
                     [Account] = @Account,
+                    ReviewCommit = @ReviewCommit,
                     [update_at] = GETDATE()
                 WHERE [ProjectID] = @ProjectID";
 
@@ -200,6 +223,7 @@ public class OFS_ClbStageReportHelper
             db.Parameters.Add("@Status", status ?? "");
             db.Parameters.Add("@Reviewer", string.IsNullOrEmpty(reviewer) ? DBNull.Value : (object)reviewer);
             db.Parameters.Add("@Account", string.IsNullOrEmpty(account) ? DBNull.Value : (object)account);
+            db.Parameters.Add("@ReviewCommit", string.IsNullOrEmpty(ReviewCommit) ? DBNull.Value : (object)ReviewCommit);
 
             db.ExecuteNonQuery();
         }
@@ -397,7 +421,7 @@ public class OFS_ClbStageReportHelper
     /// <param name="reviewResult">審查結果 (pass/reject)</param>
     /// <param name="reviewComment">審查意見</param>
     /// <returns>處理結果</returns>
-    public static bool SubmitReviewResult(string projectID, string reviewResult, string reviewComment = "")
+    public static bool SubmitReviewResult(string projectID, string reviewResult, string ReviewCommit = "")
     {
         try
         {
@@ -418,10 +442,20 @@ public class OFS_ClbStageReportHelper
             string newStatus = reviewResult == "pass" ? "通過" : "暫存";
             
             // 更新階段審查記錄
-            UpdateStageExamResult(projectID, newStatus, userInfo.UserName, userInfo.Account);
-            
-            // TODO: 寄送通知信件
-            // SendNotificationEmail(projectID, newStatus, reviewComment);
+            UpdateStageExamResult(projectID, newStatus,ReviewCommit, userInfo.UserName, userInfo.Account);
+            var projectBasic = GetProjectBasicData(projectID);
+            var projectMain = GetProjectMainData(projectID);
+            if (reviewResult == "pass")
+            {
+                NotificationHelper.G5( "社團", projectBasic.ProjectNameTw, "成果報告", projectMain.UserAccount);
+                NotificationHelper.F12( "社團", projectBasic.ProjectNameTw, "請款", projectMain.UserAccount);
+
+            }
+            else
+            {
+                NotificationHelper.G3( "社團", projectBasic.ProjectNameTw, "成果報告",ReviewCommit, projectMain.UserAccount);
+
+            }
             
             return true;
         }

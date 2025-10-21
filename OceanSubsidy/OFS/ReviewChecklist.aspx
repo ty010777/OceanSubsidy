@@ -654,7 +654,7 @@
              <div class="bg-light-teal-100 mb-5 checkPlanBtnPanel checkPlanBtnPanel-type3" style="display: none;">
                  <div class="p-3 d-flex justify-content-between align-items-start gap-3 flex-wrap">
                      <div class="d-flex gap-3 flex-wrap">
-                         <button class="btn btn-royal-blue" type="button" onclick="handleSendToApplicantType2Type3()"><i class="fa-solid fa-check"></i>提送審查意見至申請者</button>
+                         <button class="btn btn-royal-blue" type="button" onclick="handleSendReviewComments()"><i class="fa-solid fa-check"></i>提送審查意見至申請者</button>
                          <button class="btn btn-teal" type="button" onclick="handleBatchApproval('轉入下一階段')"><i class="fa-solid fa-check"></i>批次通過，轉入下一階段</button>
                          <button class="btn btn-pink" type="button" onclick="handleBatchReject('批次不通過')"><i class="fa-solid fa-xmark"></i>批次不通過</button>
                      </div>
