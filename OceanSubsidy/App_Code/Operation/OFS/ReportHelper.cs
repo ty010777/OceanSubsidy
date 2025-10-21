@@ -143,7 +143,7 @@ SELECT O.[Year]
                           ,[Status]
                       FROM OFS_ACC_Project
                      WHERE IsExists = 1 AND IsWithdrawal <> 1
-					
+
 
 					 ) AS O
          LEFT JOIN Sys_User AS R ON (R.UserID = O.Organizer)
@@ -151,14 +151,14 @@ SELECT O.[Year]
               JOIN Sys_ZgsCode AS S ON (S.CodeGroup = 'ProjectStatus' AND S.Code = O.Status)
               JOIN Sys_ZgsCode AS P ON (P.CodeGroup = 'ProjectProgressStatus' AND P.Code = O.ProgressStatus)
 
-			  UNION 
-			   
+			  UNION
+
 						 SELECT Year(PM.created_at)-1911 as Year,
 						 PM.ProjectID ,
 						  '科專' AS [Category],
 						  ProjectNameTw AS [ProjectName] ,
 						  PM.[UserOrg],
-						 ISNULL(PM.ApprovedSubsidy,0) AS ApprovedAmount, 
+						 ISNULL(PM.ApprovedSubsidy,0) AS ApprovedAmount,
 						  ISNULL(PT.ApplyAmount,0) AS ApplyAmount,
 						  ISNULL(PT.OtherAmount,0) AS OtherAmount,
 						  ISNULL(PP.SpendAmount,0) AS SpendAmount,
@@ -170,7 +170,7 @@ SELECT O.[Year]
 						  FROM OFS_SCI_Project_Main  PM
 						  LEFT JOIN OFS_SCI_Application_Main AM ON  PM.ProjectID = AM.ProjectID
 						  LEFT JOIN (
-						  SELECT ProjectID, 
+						  SELECT ProjectID,
 						  SUM(SubsidyAmount) AS ApplyAmount ,
 						  SUM(CoopAmount) AS OtherAmount
 						  FROM OFS_SCI_PersonnelCost_TotalFee
@@ -179,16 +179,16 @@ SELECT O.[Year]
 						  LEFT JOIN (
 						  SELECT ProjectID,
 						  SUM(TotalSpentAmount) AS SpendAmount,
-						  SUM(CurrentActualPaidAmount) AS PaymentAmount 
+						  SUM(CurrentActualPaidAmount) AS PaymentAmount
 						  FROM OFS_SCI_Payment
-						  Group by ProjectID 
+						  Group by ProjectID
 						  ) PP ON PP.ProjectID = PM.ProjectID
-						  LEFT JOIN StatusMapping SM 
+						  LEFT JOIN StatusMapping SM
 						  ON PM.Statuses = SM.Statuses and PM.StatusesName = SM.StatusesName
 						  WHERE PM.IsExist = 1 AND IsWithdrawal <> 1
 			UNION
 					 	SELECT  YEAR(PM.created_at) -1911 as Year ,
-						PM.ProjectID, 
+						PM.ProjectID,
 						'學校社團' AS Category,
 						ProjectNameTw AS [ProjectName],
 						UserOrg ,
@@ -209,7 +209,7 @@ SELECT O.[Year]
 						 WHERE PM.IsExist = 1 AND IsWithdrawal <> 1
 						 )
 						 SELECT * FROM FinalApplyList
-	
+
 ";
 
         switch (approved)
@@ -251,7 +251,7 @@ SELECT O.[Year]
         db.CommandText = @"
             SELECT O.ProjectID,
                -- 統一 Status
-               CASE 
+               CASE
                     -- 尚未提送
                     WHEN O.Statuses = '尚未提送' AND O.StatusesName = '編輯中' THEN 1
 
@@ -292,7 +292,7 @@ SELECT O.[Year]
                     WHEN O.Statuses = '計畫執行' AND O.StatusesName = '已終止' THEN 92
 
                     -- 其他專案保留原本 Status
-                    ELSE O.Status
+                    ELSE ISNULL(O.Status, 0)
                END AS Status,
                O.UserAccount
         FROM (
@@ -333,6 +333,7 @@ SELECT O.[Year]
             FROM OFS_ACC_Project
             WHERE IsExists = 1 AND IsWithdrawal <> 1
         ) AS O
+             WHERE O.[UserAccount] = @UserAccount
 
         ";
 
@@ -402,8 +403,8 @@ SELECT O.[Year]
                       FROM OFS_ACC_Project
                      WHERE IsExists = 1 AND IsWithdrawal <> 1 AND Status IN (51,52,91)
 					 UNION ALL
-					 SELECT 
-							YEAR(PM.created_at) - 1911 AS [Year],  
+					 SELECT
+							YEAR(PM.created_at) - 1911 AS [Year],
 							'SCI'  AS [Category],
 							ISNULL(PM.ApprovedSubsidy, 0) AS [ApprovedAmount],
 							ISNULL(SP.SpendAmount, 0) AS [SpendAmount],
@@ -414,23 +415,23 @@ SELECT O.[Year]
 							FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Payment]
 							GROUP BY ProjectID
 						) AS SP ON SP.ProjectID = PM.ProjectID
-						WHERE PM.IsExist = 1 
+						WHERE PM.IsExist = 1
 						  AND PM.Statuses = '計畫執行'
 					 UNION ALL
-						SELECT YEAR(PM.created_at) - 1911 AS [Year],  
+						SELECT YEAR(PM.created_at) - 1911 AS [Year],
 													'CLB'  AS [Category],
 													ISNULL(ApprovedSubsidy,0) AS [ApprovedAmount],
 													ISNULL(CP.SpendAmount,0) AS [SpendAmount],
-													ISNULL(CP.PaymentAmount,0) AS [PaymentAmount] 
+													ISNULL(CP.PaymentAmount,0) AS [PaymentAmount]
 													FROM OFS_CLB_Project_Main PM
 						LEFT JOIN (
 						 SELECT [ProjectID]
 							  ,SUM([TotalSpentAmount])  as [SpendAmount]
 							  ,SUM([CurrentActualPaidAmount])as [PaymentAmount]
 						  FROM [OCA_OceanSubsidy].[dbo].[OFS_CLB_Payment]
-						  Group by ProjectID 
+						  Group by ProjectID
 						  ) as CP on CP.ProjectID = PM.ProjectID
-							WHERE PM.IsExist = 1 
+							WHERE PM.IsExist = 1
 						  AND PM.Statuses = '計畫執行'
 
 					 ) AS O ON (T.[TypeCode] = O.[Category] AND T.[Year] = O.[Year])

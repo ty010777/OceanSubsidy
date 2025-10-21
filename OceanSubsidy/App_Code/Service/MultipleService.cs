@@ -17,6 +17,8 @@ public class MultipleService : BaseService
         var id = getID(param["ID"].ToString());
         var data = getProject(id, new int[] {51}); //執行階段-審核中
 
+        checkPermission(data, true);
+
         OFS_MulProjectHelper.setProjectChanged(id, true);
 
         OFSProjectChangeRecordHelper.insert(new ProjectChangeRecord
@@ -35,8 +37,9 @@ public class MultipleService : BaseService
     public object createItem(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
+        var data = getProject(id, new int[] {1,14,42}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
 
-        getProject(id, new int[] {1,14,42}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
+        checkPermission(data, true);
 
         var item = new OFS_MulItem {
             PID = id,
@@ -52,16 +55,18 @@ public class MultipleService : BaseService
     public object findApplication(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
+        var data = getProject(id);
 
-        return new
-        {
-            Project = getProject(id)
-        };
+        checkPermission(data);
+
+        return new { Project = data };
     }
 
     public object getApplication(JObject param, HttpContext context)
     {
         var data = getProject(param, out JObject snapshot);
+
+        checkPermission(data);
 
         if (snapshot != null)
         {
@@ -85,6 +90,8 @@ public class MultipleService : BaseService
     {
         var data = getProject(param, out JObject snapshot);
 
+        checkPermission(data);
+
         if (snapshot != null)
         {
             return new
@@ -104,6 +111,8 @@ public class MultipleService : BaseService
     public object getBenefit(JObject param, HttpContext context)
     {
         var data = getProject(param, out JObject snapshot);
+
+        checkPermission(data);
 
         if (snapshot != null)
         {
@@ -132,6 +141,8 @@ public class MultipleService : BaseService
     {
         var data = getProject(param, out JObject snapshot);
 
+        checkPermission(data);
+
         if (snapshot != null)
         {
             data = snapshot["Project"].ToObject<OFS_MulProject>();
@@ -159,6 +170,8 @@ public class MultipleService : BaseService
         var id = getID(param["ID"].ToString());
         var data = getProject(id);
 
+        checkPermission(data);
+
         return new
         {
             Project = data,
@@ -171,6 +184,9 @@ public class MultipleService : BaseService
     {
         var id = getID(param["ID"].ToString());
         var data = getProject(id);
+
+        checkPermission(data);
+
         var stage = int.Parse(param["Stage"].ToString());
 
         return new {
@@ -185,6 +201,8 @@ public class MultipleService : BaseService
         var id = getID(param["ID"].ToString());
         var data = getProject(id);
 
+        checkPermission(data);
+
         return new {
             Year = data.Year,
             OrgName = data.OrgName,
@@ -196,6 +214,8 @@ public class MultipleService : BaseService
     public object getWorkSchedule(JObject param, HttpContext context)
     {
         var data = getProject(param, out JObject snapshot);
+
+        checkPermission(data);
 
         if (snapshot != null)
         {
@@ -220,8 +240,9 @@ public class MultipleService : BaseService
     public object reviewApplication(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
-
         var project = getProject(id, new int[] {11,43}); //資格審查-審查中, 決審-計畫書審核中
+
+        checkReviewPermission(project);
 
         project.RejectReason = null;
         project.CorrectionDeadline = null;
@@ -296,6 +317,9 @@ public class MultipleService : BaseService
     {
         var id = getID(param["ID"].ToString());
         var data = getProject(id);
+
+        checkReviewPermission(data);
+
         var apply = data.changeApply;
 
         if (apply != null && apply.Status == 2) //待審核
@@ -330,6 +354,9 @@ public class MultipleService : BaseService
     {
         var id = getID(param["ID"].ToString());
         var data = getProject(id, new int[] {51}); //執行階段-審核中
+
+        checkReviewPermission(data);
+
         var stage = int.Parse(param["Stage"].ToString());
 
         var payment = OFSPaymentHelper.query(data.ProjectID).FirstOrDefault(d => d.Stage == stage && d.Status == "審核中");
@@ -382,6 +409,9 @@ public class MultipleService : BaseService
     {
         var id = getID(param["ID"].ToString());
         var data = getProject(id, new int[] {51}); //執行階段-審核中
+
+        checkReviewPermission(data);
+
         var stage = int.Parse(param["Stage"].ToString());
         var report = OFS_SciInterimReportHelper.GetStageExamStatus(data.ProjectID, stage);
 
@@ -442,6 +472,8 @@ public class MultipleService : BaseService
         else
         {
             var data = getProject(project.ID, new int[] {1,14}, true); //編輯中,補正補件 | 變更申請
+
+            checkPermission(data, true);
 
             project.ProjectID = data.ProjectID;
 
@@ -509,6 +541,9 @@ public class MultipleService : BaseService
     {
         var id = getID(param["ID"].ToString());
         var data = getProject(id, new int[] {1,14,42}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
+
+        checkPermission(data, true);
+
         bool submit = bool.Parse(param["Submit"].ToString());
 
         if (data.IsProjChanged || data.Status == 42)
@@ -604,6 +639,8 @@ public class MultipleService : BaseService
         var project = param["Project"].ToObject<OFS_MulProject>();
         var data = getProject(project.ID, new int[] {1,14,42}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
 
+        checkPermission(data, true);
+
         if (data.IsProjChanged || data.Status == 42)
         {
             var apply = data.changeApply;
@@ -651,6 +688,8 @@ public class MultipleService : BaseService
     {
         var project = param["Project"].ToObject<OFS_MulProject>();
         var data = getProject(project.ID, new int[] {1,14,42}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
+
+        checkPermission(data, true);
 
         OFS_MulProjectHelper.updateFunding(project);
 
@@ -717,9 +756,13 @@ public class MultipleService : BaseService
 
     public object saveOrganizer(JObject param, HttpContext context)
     {
-        var id = getID(param["ID"].ToString());
+        if (!CurrentUser.IsOrganizer && !CurrentUser.IsSupervisor && !CurrentUser.IsSysAdmin)
+        {
+            throw new InvalidOperationException();
+        }
 
-        getProject(id);
+        var id = getID(param["ID"].ToString());
+        var data = getProject(id);
 
         OFS_MulProjectHelper.updateOrganizer(id, int.Parse(param["Organizer"].ToString()));
 
@@ -731,6 +774,8 @@ public class MultipleService : BaseService
         var payment = param["Payment"].ToObject<OFS_SCI_Payment>();
         var id = getID(payment.ProjectID);
         var data = getProject(id, new int[] {51}); //執行階段-審核中
+
+        checkPermission(data, true);
 
         //--
 
@@ -787,6 +832,8 @@ public class MultipleService : BaseService
         var id = getID(param["ID"].ToString());
         var data = getProject(id, new int[] {51}); //執行階段-審核中
 
+        checkPermission(data, true);
+
         var stage = int.Parse(param["Stage"].ToString());
         var submit = bool.Parse(param["Submit"].ToString());
 
@@ -821,6 +868,8 @@ public class MultipleService : BaseService
     {
         var project = param["Project"].ToObject<OFS_MulProject>();
         var data = getProject(project.ID, new int[] {1,14,42}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
+
+        checkPermission(data, true);
 
         OFS_MulProjectHelper.updateSchedule(project);
 
@@ -882,12 +931,23 @@ public class MultipleService : BaseService
     public object terminate(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
+        var data = getProject(id);
 
-        getProject(id);
+        checkReviewPermission(data);
 
         OFS_MulProjectHelper.terminate(id, param["RejectReason"].ToString(), int.Parse(param["RecoveryAmount"].ToString()));
 
         return new {};
+    }
+
+    private void checkPermission(OFS_MulProject data, bool forUpdate = false)
+    {
+        checkProjectPermission("MUL", data.Year, data.Organizer, data.UserAccount, forUpdate);
+    }
+
+    private void checkReviewPermission(OFS_MulProject data)
+    {
+        checkReviewPermission("MUL", data.Organizer);
     }
 
     private int getID(string value)
@@ -926,6 +986,8 @@ public class MultipleService : BaseService
             {
                 project.changeApply = OFSProjectChangeRecordHelper.getApplying("MUL", 2, project.ProjectID);
             }
+
+            project.isOrganizer = getReviewPermission("MUL", project.Organizer);
 
             return project;
         }

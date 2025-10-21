@@ -1,5 +1,5 @@
 <template>
-    <div class="scroll-bottom-panel" v-if="store.status === '審核中'">
+    <div class="scroll-bottom-panel" v-if="store.status === '審核中' && progress[type].isOrganizer">
         <h5 class="text-pink fs-18 fw-bold mb-3">審查結果</h5>
         <ul class="d-flex flex-column gap-3 mb-3">
             <li class="d-flex gap-2 align-items-center" v-if="store.amount">
@@ -30,6 +30,7 @@
         type: { type: String }
     });
 
+    const progress = useProgressStore();
     const store = usePaymentStore();
 
     const options = [

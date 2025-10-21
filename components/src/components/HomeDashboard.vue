@@ -1,10 +1,10 @@
 <template>
-    <div class="search bg-gray rounded-4 mt-4">
+    <div class="search bg-gray rounded-4 mt-4" v-if="isOrganizer">
         <h3 class="text-teal">
             <i class="fa-solid fa-magnifying-glass"></i>
             查詢
         </h3>
-        <div class="search-form" action="">
+        <div class="search-form">
             <div class="row g-3">
                 <div class="col-12 col-lg-6">
                     <div class="fs-16 text-gray mb-2">年度</div>
@@ -149,7 +149,7 @@
             </table>
         </div>
     </div>
-    <ul class="total-list mt-4">
+    <ul class="total-list mt-4" v-if="isUser">
         <li class="total-item" :key="item" v-for="(item) in countList">
             <a :href="item.url">
                 <div class="total-item-title">{{ item.title }}</div>
@@ -175,6 +175,8 @@
 
     const applies = ref([]);
     const grants = ref([]);
+    const isOrganizer = ref();
+    const isUser = ref();
     const rank = ref("");
     const ranks = ref([]);
     const settings = ref([]);
@@ -240,6 +242,8 @@
             settings.value = res.Settings;
             applies.value = res.ApplyList;
             statList.value = res.StatList;
+            isOrganizer.value = res.IsOrganizer;
+            isUser.value = res.IsUser;
 
             grants.value.forEach((item) => {
                 item.tags = item.TargetTags?.split("\n").map((tag) => tag.trim());

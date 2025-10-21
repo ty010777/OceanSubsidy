@@ -110,4 +110,5 @@ public class OFS_LitProject
     public int? FinalReviewOrder { get; set; }
 
     public ProjectChangeRecord changeApply { get; set; }
+    public bool isOrganizer { get; set; }
 }

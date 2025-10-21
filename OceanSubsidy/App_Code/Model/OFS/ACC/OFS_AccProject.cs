@@ -113,4 +113,5 @@ public class OFS_AccProject
     public int? FinalReviewOrder { get; set; }
 
     public ProjectChangeRecord changeApply { get; set; }
+    public bool isOrganizer { get; set; }
 }

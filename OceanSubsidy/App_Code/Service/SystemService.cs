@@ -21,7 +21,9 @@ public class SystemService : BaseService
             GrantTypes = OFSGrantTypeHelper.query(true),
             Settings = OFSGrantTargetSettingHelper.query(),
             ApplyList = ReportHelper.queryApplyListByUser(CurrentUser.Account),
-            StatList = ReportHelper.queryApplyStat()
+            StatList = ReportHelper.queryApplyStat(),
+            IsOrganizer = CurrentUser.IsSysAdmin || CurrentUser.IsOrganizer || CurrentUser.IsSupervisor,
+            IsUser = CurrentUser.IsSysAdmin || CurrentUser.IsUser
         };
     }
 
@@ -345,6 +347,17 @@ public class SystemService : BaseService
             default:
                 return new {};
         }
+    }
+
+    public object getRoles(JObject param, HttpContext context)
+    {
+        return new
+        {
+            IsOrganizer = CurrentUser.IsOrganizer,
+            IsSupervisor = CurrentUser.IsSupervisor,
+            IsSysAdmin = CurrentUser.IsSysAdmin,
+            IsUser = CurrentUser.IsUser
+        };
     }
 
     public object saveGrantTargetSettings(JObject param, HttpContext context)

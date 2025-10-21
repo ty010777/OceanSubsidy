@@ -17,6 +17,8 @@ public class CultureService : BaseService
         var id = getID(param["ID"].ToString());
         var data = getProject(id, new int[] {51}); //執行階段-審核中
 
+        checkPermission(data, true);
+
         OFS_CulProjectHelper.setProjectChanged(id, true);
 
         OFSProjectChangeRecordHelper.insert(new ProjectChangeRecord
@@ -35,8 +37,9 @@ public class CultureService : BaseService
     public object createGoal(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
+        var data = getProject(id, new int[] {1,14,42}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
 
-        getProject(id, new int[] {1,14,42}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
+        checkPermission(data, true);
 
         var goal = new OFS_CulGoal
         {
@@ -51,8 +54,9 @@ public class CultureService : BaseService
     public object createGoalItem(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
+        var data = getProject(id, new int[] {1,14,42}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
 
-        getProject(id, new int[] {1,14,42}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
+        checkPermission(data, true);
 
         var item = new OFS_CulGoalItem
         {
@@ -68,8 +72,9 @@ public class CultureService : BaseService
     public object createGoalSchedule(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
+        var data = getProject(id, new int[] {1,14,42}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
 
-        getProject(id, new int[] {1,14,42}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
+        checkPermission(data, true);
 
         var schedule = new OFS_CulGoalSchedule
         {
@@ -88,8 +93,9 @@ public class CultureService : BaseService
     public object createGoalStep(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
+        var data = getProject(id, new int[] {1,14,42}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
 
-        getProject(id, new int[] {1,14,42}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
+        checkPermission(data, true);
 
         var step = new OFS_CulGoalStep
         {
@@ -107,16 +113,18 @@ public class CultureService : BaseService
     public object findApplication(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
+        var data = getProject(id);
 
-        return new
-        {
-            Project = getProject(id)
-        };
+        checkPermission(data);
+
+        return new { Project = data };
     }
 
     public object getApplication(JObject param, HttpContext context)
     {
         var data = getProject(param, out JObject snapshot);
+
+        checkPermission(data);
 
         if (snapshot != null)
         {
@@ -139,6 +147,8 @@ public class CultureService : BaseService
     public object getAttachment(JObject param, HttpContext context)
     {
         var data = getProject(param, out JObject snapshot);
+
+        checkPermission(data);
 
         if (snapshot != null)
         {
@@ -167,6 +177,8 @@ public class CultureService : BaseService
     {
         var data = getProject(param, out JObject snapshot);
 
+        checkPermission(data);
+
         if (snapshot != null)
         {
             data = snapshot["Project"].ToObject<OFS_CulProject>();
@@ -194,6 +206,10 @@ public class CultureService : BaseService
     public object getMonthlyProgress(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
+        var data = getProject(id);
+
+        checkPermission(data);
+
         var year = getID(param["Year"].ToString());
         var month = getID(param["Month"].ToString());
 
@@ -225,6 +241,8 @@ public class CultureService : BaseService
         var id = getID(param["ID"].ToString());
         var data = getProject(id);
 
+        checkPermission(data);
+
         return new
         {
             Project = data,
@@ -236,6 +254,8 @@ public class CultureService : BaseService
     public object getRelatedProject(JObject param, HttpContext context)
     {
         var data = getProject(param, out JObject snapshot);
+
+        checkPermission(data);
 
         if (snapshot != null)
         {
@@ -257,6 +277,9 @@ public class CultureService : BaseService
     {
         var id = getID(param["ID"].ToString());
         var data = getProject(id);
+
+        checkPermission(data);
+
         var stage = int.Parse(param["Stage"].ToString());
 
         return new {
@@ -270,6 +293,8 @@ public class CultureService : BaseService
     {
         var id = getID(param["ID"].ToString());
         var data = getProject(id);
+
+        checkReviewPermission(data);
 
         return new {
             Year = data.Year,
@@ -287,6 +312,8 @@ public class CultureService : BaseService
         List<OFS_CulGoalSchedule> schedules;
 
         var data = getProject(param, out JObject snapshot);
+
+        checkPermission(data);
 
         if (snapshot == null)
         {
@@ -326,8 +353,9 @@ public class CultureService : BaseService
     public object reviewApplication(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
-
         var project = getProject(id, new int[] {11,43}); //資格審查-審查中, 決審-計畫書審核中
+
+        checkReviewPermission(project);
 
         project.RejectReason = null;
         project.CorrectionDeadline = null;
@@ -402,6 +430,9 @@ public class CultureService : BaseService
     {
         var id = getID(param["ID"].ToString());
         var data = getProject(id);
+
+        checkReviewPermission(data);
+
         var apply = data.changeApply;
 
         if (apply != null && apply.Status == 2) //待審核
@@ -436,6 +467,9 @@ public class CultureService : BaseService
     {
         var id = getID(param["ID"].ToString());
         var data = getProject(id, new int[] {51}); //執行階段-審核中
+
+        checkReviewPermission(data);
+
         var stage = int.Parse(param["Stage"].ToString());
 
         var payment = OFSPaymentHelper.query(data.ProjectID).FirstOrDefault(d => d.Stage == stage && d.Status == "審核中");
@@ -488,6 +522,9 @@ public class CultureService : BaseService
     {
         var id = getID(param["ID"].ToString());
         var data = getProject(id, new int[] {51}); //執行階段-審核中
+
+        checkReviewPermission(data);
+
         var stage = int.Parse(param["Stage"].ToString());
         var report = OFS_SciInterimReportHelper.GetStageExamStatus(data.ProjectID, stage);
 
@@ -548,6 +585,8 @@ public class CultureService : BaseService
         else
         {
             var data = getProject(project.ID, new int[] {1,14}, true); //編輯中,補正補件 | 變更申請
+
+            checkPermission(data, true);
 
             project.ProjectID = data.ProjectID;
 
@@ -615,6 +654,9 @@ public class CultureService : BaseService
     {
         var id = getID(param["ID"].ToString());
         var data = getProject(id, new int[] {1,14,42}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
+
+        checkPermission(data, true);
+
         bool submit = bool.Parse(param["Submit"].ToString());
 
         if (data.IsProjChanged || data.Status == 42)
@@ -710,6 +752,8 @@ public class CultureService : BaseService
         var project = param["Project"].ToObject<OFS_CulProject>();
         var data = getProject(project.ID, new int[] {1,14,42}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
 
+        checkPermission(data, true);
+
         OFS_CulProjectHelper.updateFunding(project);
 
         if (data.IsProjChanged || data.Status == 42)
@@ -779,6 +823,10 @@ public class CultureService : BaseService
 
         if (progress != null)
         {
+            var data = getProject(progress.PID);
+
+            checkPermission(data, true);
+
             progress.Description = param["Description"].ToString();
             progress.Status = int.Parse(param["Status"].ToString());
 
@@ -805,8 +853,6 @@ public class CultureService : BaseService
                 OFS_CulGoalScheduleHelper.updateStatus(log.ScheduleID, log.Status);
             }
 
-            var data = getProject(progress.PID);
-
             OFS_TaskQueueHelper.UpdateTaskStatus(data.ProjectID, "MonthlyReport", 1, 1);
 
             NotificationHelper.G1("文化", data.ProjectName, $"{progress.Month}月進度回報", data.Organizer);
@@ -817,9 +863,13 @@ public class CultureService : BaseService
 
     public object saveOrganizer(JObject param, HttpContext context)
     {
-        var id = getID(param["ID"].ToString());
+        if (!CurrentUser.IsOrganizer && !CurrentUser.IsSupervisor && !CurrentUser.IsSysAdmin)
+        {
+            throw new InvalidOperationException();
+        }
 
-        getProject(id);
+        var id = getID(param["ID"].ToString());
+        var data = getProject(id);
 
         OFS_CulProjectHelper.updateOrganizer(id, int.Parse(param["Organizer"].ToString()));
 
@@ -831,6 +881,8 @@ public class CultureService : BaseService
         var payment = param["Payment"].ToObject<OFS_SCI_Payment>();
         var id = getID(payment.ProjectID);
         var data = getProject(id, new int[] {51}); //執行階段-審核中
+
+        checkPermission(data, true);
 
         //--
 
@@ -894,6 +946,8 @@ public class CultureService : BaseService
         var id = getID(param["ID"].ToString());
         var data = getProject(id, new int[] {1,14}, true); //編輯中,補正補件 | 變更申請
 
+        checkPermission(data, true);
+
         if (data.IsProjChanged)
         {
             var apply = data.changeApply;
@@ -940,6 +994,8 @@ public class CultureService : BaseService
         var id = getID(param["ID"].ToString());
         var data = getProject(id, new int[] {51}); //執行階段-審核中
 
+        checkPermission(data, true);
+
         var stage = int.Parse(param["Stage"].ToString());
         var submit = bool.Parse(param["Submit"].ToString());
 
@@ -974,6 +1030,8 @@ public class CultureService : BaseService
     {
         var project = param["Project"].ToObject<OFS_CulProject>();
         var data = getProject(project.ID, new int[] {1,14,42}, true); //編輯中,補正補件,計畫書修正中 | 變更申請
+
+        checkPermission(data, true);
 
         OFS_CulProjectHelper.updateSchedule(project);
 
@@ -1084,12 +1142,23 @@ public class CultureService : BaseService
     public object terminate(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
+        var data = getProject(id);
 
-        getProject(id);
+        checkReviewPermission(data);
 
         OFS_CulProjectHelper.terminate(id, param["RejectReason"].ToString(), int.Parse(param["RecoveryAmount"].ToString()));
 
         return new {};
+    }
+
+    private void checkPermission(OFS_CulProject data, bool forUpdate = false)
+    {
+        checkProjectPermission("CUL", data.Year, data.Organizer, data.UserAccount, forUpdate);
+    }
+
+    private void checkReviewPermission(OFS_CulProject data)
+    {
+        checkReviewPermission("CUL", data.Organizer);
     }
 
     private void deleteGoalItem(int id)
@@ -1135,6 +1204,8 @@ public class CultureService : BaseService
             {
                 project.changeApply = OFSProjectChangeRecordHelper.getApplying("CUL", 2, project.ProjectID);
             }
+
+            project.isOrganizer = getReviewPermission("CUL", project.Organizer);
 
             return project;
         }

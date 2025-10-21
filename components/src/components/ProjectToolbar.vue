@@ -1,7 +1,7 @@
 <template>
     <div class="block rounded-top-4 py-4 d-flex justify-content-between" style="position:sticky;top:180px;z-index:15">
         <div class="d-flex gap-2">
-            <button class="btn text-teal-dark" type="button" v-if="store[props.type].changeStatus">
+            <button class="btn text-teal-dark" type="button" v-if="store[type].changeStatus">
                 計畫變更申請中
             </button>
             <button class="btn btn-teal-dark" @click="showApplyModal" type="button" v-else>
@@ -18,7 +18,7 @@
         </div>
         <div class="d-flex gap-2">
             <project-organizer :id="id" :type="type"></project-organizer>
-            <button class="btn btn-pink" @click="showTerminateModal" type="button">
+            <button class="btn btn-pink" @click="showTerminateModal" type="button" v-if="store[type].isOrganizer">
                 計畫終止
             </button>
         </div>
