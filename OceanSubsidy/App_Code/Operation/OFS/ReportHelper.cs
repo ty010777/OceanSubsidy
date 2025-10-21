@@ -333,6 +333,7 @@ SELECT O.[Year]
             FROM OFS_ACC_Project
             WHERE IsExists = 1 AND IsWithdrawal <> 1
         ) AS O
+             WHERE O.[UserAccount] = @UserAccount
 
         ";
 
