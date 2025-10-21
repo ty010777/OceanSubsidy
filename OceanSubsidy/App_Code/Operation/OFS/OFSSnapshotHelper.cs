@@ -23,7 +23,7 @@ public class OFSSnapshotHelper
         model.ID = int.Parse(db.GetTable().Rows[0]["ID"].ToString());
     }
 
-    public static Snapshot get(string type, int dataID)
+    public static Snapshot get(string type, int dataID, int status = 11)
     {
         DbHelper db = new DbHelper();
 
@@ -36,11 +36,13 @@ public class OFSSnapshotHelper
               FROM [OFS_Snapshot]
              WHERE [Type] = @Type
                AND [DataID] = @DataID
+               AND [Status] = @Status
           ORDER BY CreateTime DESC
         ";
 
         db.Parameters.Add("@Type", type);
         db.Parameters.Add("@DataID", dataID);
+        db.Parameters.Add("@Status", status);
 
         var table = db.GetTable();
 
