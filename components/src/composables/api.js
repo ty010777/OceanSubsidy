@@ -1,5 +1,5 @@
 const { ajax } = rxjs.ajax;
-const { map } = rxjs;
+const { catchError, map } = rxjs;
 
 let base = "";
 
@@ -17,6 +17,12 @@ const download = (path) => {
 
 const education = (method, param = {}) => {
     return post("Service/OFS/Education.ashx", { method, param });
+};
+
+const error = (response) => {
+    if (response.status === 403) {
+        window.location.href = toUrl("/OFS/Home.aspx");
+    }
 };
 
 const literacy = (method, param = {}) => {
@@ -46,7 +52,7 @@ const post = (url, payload = {}) => {
 
     const options = { body: payload, headers, method: "POST", url: `${base}/${url}` };
 
-    return ajax(options).pipe(map(parse));
+    return ajax(options).pipe(map(parse), catchError(error));
 };
 
 const setBaseUrl = (url) => base = url;

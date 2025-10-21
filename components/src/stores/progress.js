@@ -11,7 +11,8 @@ export const useProgressStore = defineStore("progress", {
                 changeStatus: data.changeApply?.Status,
                 reportStatus: report?.Status,
                 organizer: data.Organizer,
-                organizerName: data.OrganizerName
+                organizerName: data.OrganizerName,
+                isOrganizer: data.isOrganizer
             };
         }
     },

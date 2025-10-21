@@ -21,7 +21,9 @@ public class SystemService : BaseService
             GrantTypes = OFSGrantTypeHelper.query(true),
             Settings = OFSGrantTargetSettingHelper.query(),
             ApplyList = ReportHelper.queryApplyListByUser(CurrentUser.Account),
-            StatList = ReportHelper.queryApplyStat()
+            StatList = ReportHelper.queryApplyStat(),
+            IsOrganizer = CurrentUser.IsSysAdmin || CurrentUser.IsOrganizer || CurrentUser.IsSupervisor,
+            IsUser = CurrentUser.IsSysAdmin || CurrentUser.IsUser
         };
     }
 

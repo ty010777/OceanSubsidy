@@ -1,5 +1,5 @@
 <template>
-    <div class="scroll-bottom-panel" v-if="store[type].organizer">
+    <div class="scroll-bottom-panel" v-if="store[type].organizer && store[type].isOrganizer">
         <h5 class="text-pink fs-18 fw-bold mb-3">審查結果</h5>
         <ul class="d-flex flex-column gap-3 mb-3">
             <li class="d-flex gap-2">

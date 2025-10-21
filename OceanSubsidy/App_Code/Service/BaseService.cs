@@ -4,6 +4,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Web;
 using System.Web.SessionState;
 
@@ -56,7 +57,14 @@ public class BaseService : IHttpHandler, IRequiresSessionState
         }
         catch (Exception ex)
         {
-            WriteJson(context, new { success = false, message = ex.InnerException?.Message, exception = ex.ToString() });
+            if (typeof(InvalidOperationException).IsInstanceOfType(ex.InnerException))
+            {
+                context.Response.StatusCode = 403;
+            }
+            else
+            {
+                WriteJson(context, new { success = false, message = ex.InnerException?.Message, exception = ex.ToString() });
+            }
         }
     }
 
@@ -83,6 +91,61 @@ public class BaseService : IHttpHandler, IRequiresSessionState
     public object queryReviewersByUnit(JObject param, HttpContext context)
     {
         return SysUserHelper.QueryReviewersByUnitID(param["ID"].ToString());
+    }
+
+    protected void checkProjectPermission(string type, int year, int? organizer, string account, bool forUpdate = false)
+    {
+        if (CurrentUser.Account == account || CurrentUser.IsSysAdmin)
+        {
+            return;
+        }
+
+        if (!forUpdate && (CurrentUser.IsOrganizer || CurrentUser.IsSupervisor))
+        {
+            if (organizer.HasValue && SysUserHelper.QueryUnitNameByUserID(organizer.Value.ToString()) == CurrentUser.UnitName)
+            {
+                return;
+            }
+            else
+            {
+                var grant = OFSGrantTypeHelper.query(type).FirstOrDefault(d => d.Year == year);
+
+                if (grant != null && grant.AdminUnit == CurrentUser.UnitName)
+                {
+                    return;
+                }
+            }
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    protected void checkReviewPermission(string type, int? organizer)
+    {
+        if (getReviewPermission(type, organizer))
+        {
+            return;
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    protected bool getReviewPermission(string type, int? organizer)
+    {
+        if (CurrentUser.IsSysAdmin)
+        {
+            return true;
+        }
+
+        if (CurrentUser.IsOrganizer || CurrentUser.IsSupervisor)
+        {
+            if (organizer.HasValue && SysUserHelper.QueryUnitNameByUserID(organizer.Value.ToString()) == CurrentUser.UnitName)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     protected JObject getSnapshot(string type, int id)

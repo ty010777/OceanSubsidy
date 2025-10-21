@@ -17,6 +17,8 @@ public class EducationService : BaseService
         var id = getID(param["ID"].ToString());
         var data = getProject(id, new int[] {51}); //執行階段-審核中
 
+        checkPermission(data, true);
+
         OFS_EdcProjectHelper.setProjectChanged(id, true);
 
         OFSProjectChangeRecordHelper.insert(new ProjectChangeRecord
@@ -35,16 +37,18 @@ public class EducationService : BaseService
     public object findApplication(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
+        var data = getProject(id);
 
-        return new
-        {
-            Project = getProject(id)
-        };
+        checkPermission(data);
+
+        return new { Project = data };
     }
 
     public object getApplication(JObject param, HttpContext context)
     {
         var data = getProject(param, out JObject snapshot);
+
+        checkPermission(data);
 
         if (snapshot != null)
         {
@@ -67,6 +71,8 @@ public class EducationService : BaseService
     public object getAttachment(JObject param, HttpContext context)
     {
         var data = getProject(param, out JObject snapshot);
+
+        checkPermission(data);
 
         if (snapshot != null)
         {
@@ -96,6 +102,8 @@ public class EducationService : BaseService
         var id = getID(param["ID"].ToString());
         var data = getProject(id);
 
+        checkPermission(data);
+
         return new
         {
             Project = data,
@@ -108,6 +116,9 @@ public class EducationService : BaseService
     {
         var id = getID(param["ID"].ToString());
         var data = getProject(id);
+
+        checkPermission(data);
+
         var stage = int.Parse(param["Stage"].ToString());
 
         return new {
@@ -122,6 +133,8 @@ public class EducationService : BaseService
         var id = getID(param["ID"].ToString());
         var data = getProject(id);
 
+        checkPermission(data);
+
         return new {
             Year = data.Year,
             OrgName = data.OrgName,
@@ -133,8 +146,9 @@ public class EducationService : BaseService
     public object reviewApplication(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
-
         var project = getProject(id, new int[] {11}); //資格審查-審查中
+
+        checkReviewPermission(project);
 
         project.RejectReason = null;
         project.CorrectionDeadline = null;
@@ -168,6 +182,9 @@ public class EducationService : BaseService
     {
         var id = getID(param["ID"].ToString());
         var data = getProject(id);
+
+        checkReviewPermission(data);
+
         var apply = data.changeApply;
 
         if (apply != null && apply.Status == 2) //待審核
@@ -202,6 +219,9 @@ public class EducationService : BaseService
     {
         var id = getID(param["ID"].ToString());
         var data = getProject(id, new int[] {51}); //執行階段-審核中
+
+        checkReviewPermission(data);
+
         var stage = int.Parse(param["Stage"].ToString());
 
         var payment = OFSPaymentHelper.query(data.ProjectID).FirstOrDefault(d => d.Stage == stage && d.Status == "審核中");
@@ -251,6 +271,9 @@ public class EducationService : BaseService
     {
         var id = getID(param["ID"].ToString());
         var data = getProject(id, new int[] {51}); //執行階段-審核中
+
+        checkReviewPermission(data);
+
         var stage = int.Parse(param["Stage"].ToString());
         var report = OFS_SciInterimReportHelper.GetStageExamStatus(data.ProjectID, stage);
 
@@ -311,6 +334,8 @@ public class EducationService : BaseService
         else
         {
             var data = getProject(project.ID, new int[] {1,14}, true); //編輯中,補正補件 | 變更申請
+
+            checkPermission(data, true);
 
             project.ProjectID = data.ProjectID;
 
@@ -378,6 +403,9 @@ public class EducationService : BaseService
     {
         var id = getID(param["ID"].ToString());
         var data = getProject(id, new int[] {1,14}, true); //編輯中,補正補件 | 變更申請
+
+        checkPermission(data, true);
+
         bool submit = bool.Parse(param["Submit"].ToString());
 
         if (data.IsProjChanged)
@@ -458,9 +486,13 @@ public class EducationService : BaseService
 
     public object saveOrganizer(JObject param, HttpContext context)
     {
-        var id = getID(param["ID"].ToString());
+        if (!CurrentUser.IsOrganizer && !CurrentUser.IsSupervisor && !CurrentUser.IsSysAdmin)
+        {
+            throw new InvalidOperationException();
+        }
 
-        getProject(id);
+        var id = getID(param["ID"].ToString());
+        var data = getProject(id);
 
         OFS_EdcProjectHelper.updateOrganizer(id, int.Parse(param["Organizer"].ToString()));
 
@@ -472,6 +504,8 @@ public class EducationService : BaseService
         var payment = param["Payment"].ToObject<OFS_SCI_Payment>();
         var id = getID(payment.ProjectID);
         var data = getProject(id, new int[] {51}); //執行階段-審核中
+
+        checkPermission(data, true);
 
         //--
 
@@ -534,6 +568,8 @@ public class EducationService : BaseService
         var id = getID(param["ID"].ToString());
         var data = getProject(id, new int[] {51}); //執行階段-審核中
 
+        checkPermission(data, true);
+
         var stage = int.Parse(param["Stage"].ToString());
         var submit = bool.Parse(param["Submit"].ToString());
 
@@ -567,12 +603,23 @@ public class EducationService : BaseService
     public object terminate(JObject param, HttpContext context)
     {
         var id = getID(param["ID"].ToString());
+        var data = getProject(id);
 
-        getProject(id);
+        checkReviewPermission(data);
 
         OFS_EdcProjectHelper.terminate(id, param["RejectReason"].ToString(), int.Parse(param["RecoveryAmount"].ToString()));
 
         return new {};
+    }
+
+    private void checkPermission(OFS_EdcProject data, bool forUpdate = false)
+    {
+        checkProjectPermission("EDC", data.Year, data.Organizer, data.UserAccount, forUpdate);
+    }
+
+    private void checkReviewPermission(OFS_EdcProject data)
+    {
+        checkReviewPermission("EDC", data.Organizer);
     }
 
     private int getID(string value)
@@ -611,6 +658,8 @@ public class EducationService : BaseService
             {
                 project.changeApply = OFSProjectChangeRecordHelper.getApplying("EDC", 2, project.ProjectID);
             }
+
+            project.isOrganizer = getReviewPermission("EDC", project.Organizer);
 
             return project;
         }
