@@ -1,7 +1,7 @@
 <template>
     <div class="d-flex align-items-center gap-3">
         <span>審核承辦人員：{{ name || "尚無" }}</span>
-        <button class="btn btn-teal" @click="open" type="button">{{ title }}</button>
+        <button class="btn btn-teal" @click="open" type="button" v-if="editable">{{ title }}</button>
     </div>
     <teleport to="body">
         <div aria-hidden="true" class="modal fade" data-bs-backdrop="static" ref="modal" tabindex="-1">
@@ -37,6 +37,7 @@
     });
 
     const disabled = computed(() => !reviewer.value || reviewer.value === store[props.type].organizer);
+    const editable = ref();
     const modal = ref();
     const name = computed(() => store[props.type].organizerName);
     const reviewer = ref(0);
@@ -71,6 +72,12 @@
             }
         });
     };
+
+    onMounted(() => {
+        api.system("getRoles").subscribe((res) => {
+            editable.value = res.IsOrganizer || res.IsSupervisor || res.IsSysAdmin;
+        });
+    });
 
     watch(name, () => reviewer.value = store[props.type].organizer);
 

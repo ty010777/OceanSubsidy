@@ -349,6 +349,17 @@ public class SystemService : BaseService
         }
     }
 
+    public object getRoles(JObject param, HttpContext context)
+    {
+        return new
+        {
+            IsOrganizer = CurrentUser.IsOrganizer,
+            IsSupervisor = CurrentUser.IsSupervisor,
+            IsSysAdmin = CurrentUser.IsSysAdmin,
+            IsUser = CurrentUser.IsUser
+        };
+    }
+
     public object saveGrantTargetSettings(JObject param, HttpContext context)
     {
         var settings = param["List"].ToObject<List<GrantTargetSetting>>();
