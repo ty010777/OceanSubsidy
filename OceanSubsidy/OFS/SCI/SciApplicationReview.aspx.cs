@@ -23,6 +23,11 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
     protected string ProjectID => Request.QueryString["ProjectID"];
     public bool IsViewMode { get; set; } = false;
 
+    /// <summary>
+    /// 執行單位名稱（用於風險評估連結）
+    /// </summary>
+    protected string OrgName { get; set; } = "";
+
     #endregion
 
     #region 頁面事件
@@ -312,24 +317,109 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
     {
         try
         {
-            // TODO: 從資料庫載入實際資料
-            
-            // 同單位申請計畫數
-            lblSameUnitProjectCount.Text = "0";
-            
-            // 風險評估資訊
-            lblRiskLevel.Text = "低風險";
-            lblRiskRecordCount.Text = "0";
-            
-            // 風險評估 Modal 資料
-            lblExecutingUnit.Text = "海洋委員會科技文教處科技科";
-            lblModalRiskLevel.Text = "低風險";
-            lblProjectInfo.Text = $"{ProjectID} / 計畫名稱";
-            lblCheckDate.Text = DateTime.Now.ToString("yyyy/MM/dd");
-            lblChecker.Text = "審查人員";
-            lblTableRiskLevel.Text = "低風險";
-            lblCheckOpinion.Text = "";
-            lblUnitReply.Text = "";
+            // 取得計畫基本資料
+            var projectData = OFS_SciApplicationHelper.getApplicationMainByProjectID(ProjectID);
+            if (projectData == null)
+            {
+                return;
+            }
+
+            string orgName = projectData.OrgName ?? "";
+            int year = projectData.Year ?? 0;
+
+            // 設定執行單位名稱供前端使用
+            OrgName = orgName;
+
+            // 同單位申請計畫數（使用 count 方法計算並扣掉當前計畫本身）
+            int sameUnitCount = OFS_SciApplicationHelper.count(year, orgName) - 1;
+            lblSameUnitProjectCount.Text = sameUnitCount.ToString();
+
+            // 使用 GetAuditRecordsByOrgName 取得風險評估記錄
+            var auditRecords = AuditRecordsHelper.GetAuditRecordsByOrgName(orgName);
+
+            // 統計筆數
+            int recordCount = auditRecords != null ? auditRecords.Count : 0;
+            lblRiskRecordCount.Text = recordCount.ToString();
+
+            // 計算最高風險等級
+            string riskLevel = "無";
+            int maxRiskLevel = 0;
+
+            if (auditRecords != null && auditRecords.Count > 0)
+            {
+                foreach (var record in auditRecords)
+                {
+                    switch (record.Risk)
+                    {
+                        case "Low":
+                            if (maxRiskLevel < 1) maxRiskLevel = 1;
+                            break;
+                        case "Medium":
+                            if (maxRiskLevel < 2) maxRiskLevel = 2;
+                            break;
+                        case "High":
+                            if (maxRiskLevel < 3) maxRiskLevel = 3;
+                            break;
+                    }
+                }
+
+                // 轉換風險等級顯示文字
+                switch (maxRiskLevel)
+                {
+                    case 1:
+                        riskLevel = "低風險";
+                        break;
+                    case 2:
+                        riskLevel = "中風險";
+                        break;
+                    case 3:
+                        riskLevel = "高風險";
+                        break;
+                    default:
+                        riskLevel = "無";
+                        break;
+                }
+            }
+
+            lblRiskLevel.Text = riskLevel;
+
+            // 風險評估 Modal 資料（保留原有 Modal 功能）
+            lblExecutingUnit.Text = orgName;
+            lblModalRiskLevel.Text = riskLevel;
+            lblProjectInfo.Text = $"{ProjectID} / {projectData.ProjectNameTw}";
+
+            // 如果有風險評估記錄，顯示第一筆資料
+            if (auditRecords != null && auditRecords.Count > 0)
+            {
+                var firstRecord = auditRecords[0];
+                lblCheckDate.Text = firstRecord.CheckDate?.ToString("yyyy/MM/dd") ?? "";
+                lblChecker.Text = firstRecord.ReviewerName ?? "";
+                switch (firstRecord.Risk)
+                {
+                    case "Low":
+                        lblTableRiskLevel.Text = "低風險";
+                        break;
+                    case "Medium":
+                        lblTableRiskLevel.Text = "中風險";
+                        break;
+                    case "High":
+                        lblTableRiskLevel.Text = "高風險";
+                        break;
+                    default:
+                        lblTableRiskLevel.Text = "";
+                        break;
+                }
+                lblCheckOpinion.Text = firstRecord.ReviewerComment ?? "";
+                lblUnitReply.Text = firstRecord.ExecutorComment ?? "";
+            }
+            else
+            {
+                lblCheckDate.Text = "";
+                lblChecker.Text = "";
+                lblTableRiskLevel.Text = "";
+                lblCheckOpinion.Text = "";
+                lblUnitReply.Text = "";
+            }
         }
         catch (Exception ex)
         {

@@ -38,6 +38,9 @@ public partial class OFS_SCI_SciInprogress : System.Web.UI.MasterPage
         // 設定階段狀態的 active class
         SetActiveStep();
         SetProjectInfoToMaster();
+
+        // 檢查並顯示計畫狀態提示
+        CheckAndShowStatusAlert();
     }
     
     /// <summary>
@@ -245,6 +248,47 @@ public partial class OFS_SCI_SciInprogress : System.Web.UI.MasterPage
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"檢查每月進度代辦事項時發生錯誤: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 檢查並顯示計畫狀態提示
+    /// </summary>
+    private void CheckAndShowStatusAlert()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(ProjectID))
+            {
+                return;
+            }
+
+            // 從資料庫取得計畫主資料
+            var projectMain = OFS_SciApplicationHelper.getVersionByProjectID(ProjectID);
+
+            if (projectMain == null)
+            {
+                return;
+            }
+
+            // 檢查 StatusesName 並顯示對應提示
+            if (!string.IsNullOrEmpty(projectMain.StatusesName))
+            {
+                if (projectMain.StatusesName == "已終止")
+                {
+                    pnlStatusAlert.Visible = true;
+                    lblStatusMessage.Text = "計畫已終止";
+                }
+                else if (projectMain.StatusesName == "已結案")
+                {
+                    pnlStatusAlert.Visible = true;
+                    lblStatusMessage.Text = "計畫已結案";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"檢查計畫狀態提示時發生錯誤: {ex.Message}");
         }
     }
 

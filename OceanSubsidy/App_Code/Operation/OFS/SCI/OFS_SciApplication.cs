@@ -15,9 +15,35 @@ public class OFS_SciApplicationHelper
 {
     public OFS_SciApplicationHelper()
     {
-       
+
     }
 
+    /// <summary>
+    /// 計算同單位申請計畫數
+    /// </summary>
+    /// <param name="year">年度</param>
+    /// <param name="orgName">執行單位名稱（選填）</param>
+    /// <returns>計畫總數</returns>
+    public static int count(int year, string orgName = "")
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            SELECT COUNT(*) AS Count
+              FROM [OFS_SCI_Application_Main]
+             WHERE [Year] = @Year
+        ";
+
+        db.Parameters.Add("@Year", year);
+
+        if (!string.IsNullOrWhiteSpace(orgName))
+        {
+            db.CommandText += " AND [OrgName] = @OrgName";
+            db.Parameters.Add("@OrgName", orgName);
+        }
+
+        return int.Parse(db.GetTable().Rows[0]["Count"].ToString());
+    }
 
     public static void insertApplicationMain(OFS_SCI_Application_Main applicationData)
     {
@@ -1344,6 +1370,41 @@ VALUES
         }
         finally
         {
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 更新計畫的追回金額並設定為結案(未通過)
+    /// </summary>
+    /// <param name="projectID">計畫ID</param>
+    /// <param name="recoveryAmount">追回金額</param>
+    public static void UpdateRecoveryAmount(string projectID, decimal recoveryAmount)
+    {
+        DbHelper db = new DbHelper();
+        try
+        {
+            db.CommandText = @"
+                UPDATE [OFS_SCI_Project_Main]
+                SET [RecoveryAmount] = @RecoveryAmount,
+                    [StatusesName] = @StatusesName,
+                    [updated_at] = GETDATE()
+                WHERE [ProjectID] = @ProjectID
+            ";
+
+            db.Parameters.Add("@ProjectID", projectID);
+            db.Parameters.Add("@RecoveryAmount", recoveryAmount);
+            db.Parameters.Add("@StatusesName", "已終止");
+
+            db.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"更新追回金額時發生錯誤: {ex.Message}", ex);
+        }
+        finally
+        {
+            db.Parameters.Clear();
             db.Dispose();
         }
     }

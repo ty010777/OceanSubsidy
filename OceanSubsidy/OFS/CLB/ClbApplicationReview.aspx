@@ -223,7 +223,7 @@
                 <span class="text-gray">風險評估 :</span>
                 <div>
                     <asp:Label ID="lblRiskLevel" runat="server" CssClass="text-pink" Text="低風險" />
-                    <span>( <a class="link-teal fw-bold" href="#" data-bs-toggle="modal" data-bs-target="#riskAssessmentModal">
+                    <span>( <a class="link-teal fw-bold" href="<%= ResolveUrl("~/OFS/AuditHistory.aspx?Name=" + Server.UrlEncode(OrgName)) %>" target="_blank">
                         <asp:Label ID="lblRiskRecordCount" runat="server" Text="0" />
                     </a> 筆記錄)</span>
                 </div>

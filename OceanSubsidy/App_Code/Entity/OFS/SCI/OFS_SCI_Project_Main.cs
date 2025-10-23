@@ -754,12 +754,47 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
         
-        protected string _QualReviewNotes = "";
+        protected double? _RecoveryAmount = null;
         ///<summary>
-        ///  ()
+        /// 已追回金額 (已追回金額)
         ///</summary>
         [DataMember]
-        [GisFieldAttribute("QualReviewNotes", "QualReviewNotes", DataSource.TABLE, "", false)]
+        [GisFieldAttribute("RecoveryAmount", "RecoveryAmount", DataSource.TABLE, "已追回金額", false)]
+        public virtual double? RecoveryAmount
+        {
+            get
+            {
+                return _RecoveryAmount;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_RecoveryAmount == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_RecoveryAmount.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("RecoveryAmount") == -1)
+                    {
+                        UPDATE_COLUMN.Add("RecoveryAmount");
+                    }
+                    _RecoveryAmount = value;
+                }
+            }
+        }
+        
+        protected string _QualReviewNotes = "";
+        ///<summary>
+        /// 資格審備註 (資格審備註)
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("QualReviewNotes", "QualReviewNotes", DataSource.TABLE, "資格審備註", false)]
         public virtual string QualReviewNotes
         {
             get

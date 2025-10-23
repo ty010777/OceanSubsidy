@@ -43,10 +43,10 @@ public partial class OFS_CLB_ClbApproved : System.Web.UI.Page
             {
                 master.ProjectInfoText = $"{ProjectID}/核定計畫";
             }
-            
+
             // 載入計畫資料
             LoadProjectData();
-            
+
             // 設定審核者資訊（從資料庫讀取）
             SetReviewerInfoFromDatabase();
 
@@ -55,6 +55,9 @@ public partial class OFS_CLB_ClbApproved : System.Web.UI.Page
 
             // 檢查並顯示計畫變更審核面板
             CheckAndShowChangeReviewPanel();
+
+            // 檢查計畫終止按鈕權限
+            CheckPlanStopButtonPermission();
         }
         catch (Exception ex)
         {
@@ -387,7 +390,7 @@ public partial class OFS_CLB_ClbApproved : System.Web.UI.Page
     #endregion
 
     #region 私有方法
-    
+
     /// <summary>
     /// 載入移轉案件的部門下拉選單
     /// </summary>
@@ -515,6 +518,153 @@ public partial class OFS_CLB_ClbApproved : System.Web.UI.Page
     {
         System.Diagnostics.Debug.WriteLine($"{context}: {ex.Message}");
         // 可以在這裡加入記錄或通知邏輯
+    }
+
+    /// <summary>
+    /// 檢查計畫終止按鈕權限
+    /// 規則：如果當前使用者不是主管機關，則隱藏計畫終止按鈕
+    /// </summary>
+    private void CheckPlanStopButtonPermission()
+    {
+        try
+        {
+            // 檢查是否為主管機關（主管單位人員、主管單位窗口、系統管理者）
+            bool hasPermission = CheckReviewPermission();
+
+            if (hasPermission)
+            {
+                // 有權限，顯示計畫終止按鈕
+                btnPlanStop.Style["display"] = "inline-block";
+            }
+            else
+            {
+                // 無權限，隱藏計畫終止按鈕
+                btnPlanStop.Style["display"] = "none";
+            }
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "檢查計畫終止按鈕權限時發生錯誤");
+            // 發生錯誤時，預設隱藏按鈕以確保安全
+            btnPlanStop.Style["display"] = "none";
+        }
+    }
+
+    /// <summary>
+    /// 檢查審核權限
+    /// </summary>
+    /// <returns>是否有審核權限</returns>
+    private bool CheckReviewPermission()
+    {
+        try
+        {
+            // 取得當前使用者資訊
+            var currentUser = GetCurrentUserInfo();
+            if (currentUser == null || currentUser.OFS_RoleName == null)
+            {
+                return false;
+            }
+
+            // 檢查是否為審核相關角色
+            var reviewRoles = new[] { "主管單位人員", "主管單位窗口", "系統管理者" };
+
+            foreach (string roleName in currentUser.OFS_RoleName)
+            {
+                if (!string.IsNullOrEmpty(roleName) && reviewRoles.Contains(roleName))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "檢查審核權限時發生錯誤");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 取得目前登入使用者資訊
+    /// </summary>
+    private SessionHelper.UserInfoClass GetCurrentUserInfo()
+    {
+        try
+        {
+            return SessionHelper.Get<SessionHelper.UserInfoClass>(SessionHelper.UserInfo);
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "取得使用者資訊時發生錯誤");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// 取得計畫的已撥款金額
+    /// </summary>
+    /// <param name="projectID">計畫ID</param>
+    [System.Web.Services.WebMethod]
+    public static object GetPaidAmount(string projectID)
+    {
+        try
+        {
+            // 驗證參數
+            if (string.IsNullOrEmpty(projectID))
+            {
+                return new { success = false, message = "計畫ID不能為空", paidAmount = 0 };
+            }
+
+            // 呼叫 Helper 查詢總撥款金額
+            decimal totalPaidAmount = OFS_ClbPaymentHelper.GetTotalPaidAmount(projectID);
+
+            return new { success = true, paidAmount = totalPaidAmount };
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得已撥款金額時發生錯誤: {ex.Message}");
+            return new { success = false, message = $"系統發生錯誤: {ex.Message}", paidAmount = 0 };
+        }
+    }
+
+    /// <summary>
+    /// 提交計畫終止
+    /// </summary>
+    /// <param name="projectID">計畫ID</param>
+    /// <param name="stopReason">終止原因</param>
+    /// <param name="recoveredAmount">已追回金額</param>
+    [System.Web.Services.WebMethod]
+    public static object SubmitPlanStop(string projectID, string stopReason, decimal recoveredAmount)
+    {
+        try
+        {
+            // 驗證參數
+            if (string.IsNullOrEmpty(projectID))
+            {
+                return new { success = false, message = "計畫ID不能為空" };
+            }
+
+            if (string.IsNullOrEmpty(stopReason))
+            {
+                return new { success = false, message = "請填寫計畫終止原因" };
+            }
+
+            if (recoveredAmount < 0)
+            {
+                return new { success = false, message = "已追回金額不能為負數" };
+            }
+
+            // 更新計畫的追回金額到 OFS_CLB_Project_Main.RecoveryAmount
+            OFS_ClbApplicationHelper.UpdateRecoveryAmount(projectID, recoveredAmount);
+
+            return new { success = true, message = "計畫終止資料已儲存" };
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"提交計畫終止時發生錯誤: {ex.Message}");
+            return new { success = false, message = $"系統發生錯誤: {ex.Message}" };
+        }
     }
 
 

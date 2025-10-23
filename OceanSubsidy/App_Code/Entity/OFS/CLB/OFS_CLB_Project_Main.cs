@@ -544,6 +544,41 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
         
+        protected double? _RecoveryAmount = null;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("RecoveryAmount", "RecoveryAmount", DataSource.TABLE, "", false)]
+        public virtual double? RecoveryAmount
+        {
+            get
+            {
+                return _RecoveryAmount;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_RecoveryAmount == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_RecoveryAmount.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("RecoveryAmount") == -1)
+                    {
+                        UPDATE_COLUMN.Add("RecoveryAmount");
+                    }
+                    _RecoveryAmount = value;
+                }
+            }
+        }
+        
         protected string _QualReviewNotes = "";
         ///<summary>
         ///  ()

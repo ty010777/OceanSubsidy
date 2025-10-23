@@ -561,7 +561,7 @@ public class OFS_SciReimbursementHelper
     {
         string extension = System.IO.Path.GetExtension(originalFileName);
         string fileName = "";
-        
+
         if (fileCode == "REIMBURSE_EXPENSE")
         {
             fileName = $"{projectID}_第二期請款_經費支用表及明細表{extension}";
@@ -574,8 +574,29 @@ public class OFS_SciReimbursementHelper
         {
             fileName = $"{projectID}_{fileCode}{extension}";
         }
-        
+
         return $"UploadFiles/OFS/SCI/{projectID}/{fileName}";
+    }
+
+    /// <summary>
+    /// 更新專案狀態為「已結案」
+    /// </summary>
+    /// <param name="projectID">計畫編號</param>
+    public static void UpdateProjectStatusToClosed(string projectID)
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText = @"
+            UPDATE [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main]
+            SET
+                [StatusesName] = @StatusesName,
+                [updated_at] = GETDATE()
+            WHERE [ProjectID] = @ProjectID";
+
+        db.Parameters.Clear();
+        db.Parameters.Add("@ProjectID", projectID);
+        db.Parameters.Add("@StatusesName", "已結案");
+
+        db.ExecuteNonQuery();
     }
 
 }

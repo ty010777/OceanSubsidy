@@ -293,6 +293,12 @@ public partial class OFS_SCI_SciReimbursement : System.Web.UI.Page
             {
                 InprogressListHelper.UpdateLastOperation(projectID, $"已完成第{phaseOrder}期請款");
                 InprogressListHelper.UpdateTaskCompleted(projectID, $"Payment{phaseOrder}", true);
+
+                // 如果是第二期請款通過，更新專案狀態為「已結案」
+                if (phaseOrder == "2")
+                {
+                    OFS_SciReimbursementHelper.UpdateProjectStatusToClosed(projectID);
+                }
             }
             
             //根據是否通過寄信

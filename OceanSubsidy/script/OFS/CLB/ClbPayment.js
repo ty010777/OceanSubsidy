@@ -449,7 +449,7 @@ function submitReview() {
     // 取得 ProjectID
     const urlParams = new URLSearchParams(window.location.search);
     const projectID = urlParams.get('ProjectID');
-    
+
     if (!projectID) {
         Swal.fire({
             title: '錯誤！',
@@ -463,17 +463,22 @@ function submitReview() {
     let currentPayment = parseFloat(document.getElementById('currentPayment').value) || 0;
     let reviewResult = document.getElementById('radio-pass').checked ? 'pass' : 'return';
     let reviewComment = document.getElementById('reviewComment').textContent.trim();
-    
+
     var resultText = reviewResult === 'pass' ? '通過' : '退回修改';
-    
+
+    // 如果是通過，顯示專案將設為「已結案」的警告
+    var confirmMessage = reviewResult === 'pass'
+        ? '請款通過後專案將設為「已結案」，是否通過請款？'
+        : `本期撥款: ${formatNumber(currentPayment)} 元\n審查結果: ${resultText}`;
+
     Swal.fire({
-        title: '確定提交審核結果？',
-        text: `本期撥款: ${formatNumber(currentPayment)} 元\n審查結果: ${resultText}`,
+        title: reviewResult === 'pass' ? '確認通過請款' : '確定提交審核結果？',
+        text: confirmMessage,
         icon: 'question',
         showCancelButton: true,
         confirmButtonColor: '#3085d6',
         cancelButtonColor: '#6c757d',
-        confirmButtonText: '提交',
+        confirmButtonText: reviewResult === 'pass' ? '通過' : '提交',
         cancelButtonText: '取消'
     }).then((result) => {
         if (result.isConfirmed) {
@@ -486,13 +491,13 @@ function submitReview() {
                     Swal.showLoading();
                 }
             });
-            
+
             // 呼叫後端 WebMethod
             $.ajax({
                 type: "POST",
                 url: "ClbPayment.aspx/SubmitReview",
-                data: JSON.stringify({ 
-                    projectID: projectID, 
+                data: JSON.stringify({
+                    projectID: projectID,
                     reviewResult: reviewResult,
                     reviewComment: reviewComment,
                     currentPayment: currentPayment

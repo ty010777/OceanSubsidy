@@ -378,15 +378,12 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
                                 console.log('已載入查核標準資料（從快照）：', {checkStandardsJson});
                             }} else {{
                                 console.log('sciWorkSchManager 未初始化，延遲重試...');
-                                setTimeout(loadCheckStandardsDataFromSnapshot, 1000);
+                                setTimeout(loadCheckStandardsDataFromSnapshot, 500);
                             }}
                         }}
 
-                        if (document.readyState === 'loading') {{
-                            document.addEventListener('DOMContentLoaded', loadCheckStandardsDataFromSnapshot);
-                        }} else {{
-                            loadCheckStandardsDataFromSnapshot();
-                        }}
+                        // 延遲 1500ms 確保工作項目已完全載入
+                        setTimeout(loadCheckStandardsDataFromSnapshot, 1500);
                     ";
 
                     Page.ClientScript.RegisterStartupScript(this.GetType(), "LoadCheckStandardsFromSnapshot", script, true);
@@ -843,17 +840,18 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
             }));
 
             var script = $@"
-                if (window.sciWorkSchManager) {{
-                    window.sciWorkSchManager.loadCheckStandards({checkStandardsJson});
-                    console.log('已載入查核標準資料：', {checkStandardsJson});
-                }} else {{
-                    setTimeout(function() {{
-                        if (window.sciWorkSchManager) {{
-                            window.sciWorkSchManager.loadCheckStandards({checkStandardsJson});
-                            console.log('已載入查核標準資料（延遲）：', {checkStandardsJson});
-                        }}
-                    }}, 1000);
+                function loadCheckStandardsData() {{
+                    if (window.sciWorkSchManager) {{
+                        window.sciWorkSchManager.loadCheckStandards({checkStandardsJson});
+                        console.log('已載入查核標準資料（延遲）：', {checkStandardsJson});
+                    }} else {{
+                        console.log('sciWorkSchManager 未初始化，延遲重試...');
+                        setTimeout(loadCheckStandardsData, 500);
+                    }}
                 }}
+
+                // 延遲 1500ms 確保工作項目已完全載入
+                setTimeout(loadCheckStandardsData, 1500);
             ";
 
             Page.ClientScript.RegisterStartupScript(this.GetType(), "LoadCheckStandards", script, true);
@@ -1445,7 +1443,8 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
                                 }}
                             }}
 
-                            setTimeout(restoreCheckStandardsData, 1000);
+                            // 延遲 1500ms 確保工作項目已完全載入
+                            setTimeout(restoreCheckStandardsData, 1500);
                         ";
 
                         Page.ClientScript.RegisterStartupScript(this.GetType(), "RestoreCheckStandards", script, true);

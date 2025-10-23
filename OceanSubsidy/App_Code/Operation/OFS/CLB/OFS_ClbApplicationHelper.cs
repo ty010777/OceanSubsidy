@@ -18,6 +18,40 @@ public class OFS_ClbApplicationHelper
     }
 
     /// <summary>
+    /// 計算同單位申請計畫數
+    /// </summary>
+    /// <param name="year">年度</param>
+    /// <param name="schoolName">學校名稱（選填）</param>
+    /// <param name="clubName">社團名稱（選填）</param>
+    /// <returns>計畫總數</returns>
+    public static int count(int year, string schoolName = "", string clubName = "")
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            SELECT COUNT(*) AS Count
+              FROM [OFS_CLB_Application_Basic]
+             WHERE [Year] = @Year
+        ";
+
+        db.Parameters.Add("@Year", year);
+
+        if (!string.IsNullOrWhiteSpace(schoolName))
+        {
+            db.CommandText += " AND [SchoolName] = @SchoolName";
+            db.Parameters.Add("@SchoolName", schoolName);
+        }
+
+        if (!string.IsNullOrWhiteSpace(clubName))
+        {
+            db.CommandText += " AND [ClubName] = @ClubName";
+            db.Parameters.Add("@ClubName", clubName);
+        }
+
+        return int.Parse(db.GetTable().Rows[0]["Count"].ToString());
+    }
+
+    /// <summary>
     /// 產生新的 ProjectID
     /// 格式：年份 + "CLB" + 序號（補零到3位數）
     /// 例如：114CLB001, 114CLB002
@@ -903,6 +937,7 @@ public class OFS_ClbApplicationHelper
                 DataRow row = dt.Rows[0];
                 return new OFS_CLB_Project_Main
                 {
+                    ID = row["ID"] != DBNull.Value ? Convert.ToInt32(row["ID"]) : 0,
                     ProjectID = row["ProjectID"]?.ToString(),
                     Statuses = row["Statuses"]?.ToString(),
                     StatusesName = row["StatusesName"]?.ToString(),
@@ -1323,6 +1358,41 @@ public class OFS_ClbApplicationHelper
         catch (Exception ex)
         {
             throw new Exception($"更新審查結果時發生錯誤: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 更新計畫的追回金額並設定為結案(未通過)
+    /// </summary>
+    /// <param name="projectID">計畫ID</param>
+    /// <param name="recoveryAmount">追回金額</param>
+    public static void UpdateRecoveryAmount(string projectID, decimal recoveryAmount)
+    {
+        DbHelper db = new DbHelper();
+        try
+        {
+            db.CommandText = @"
+                UPDATE [OFS_CLB_Project_Main]
+                SET [RecoveryAmount] = @RecoveryAmount,
+                    [StatusesName] = @StatusesName,
+                    [updated_at] = GETDATE()
+                WHERE [ProjectID] = @ProjectID
+            ";
+
+            db.Parameters.Add("@ProjectID", projectID);
+            db.Parameters.Add("@RecoveryAmount", recoveryAmount);
+            db.Parameters.Add("@StatusesName", "已終止");
+
+            db.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"更新追回金額時發生錯誤: {ex.Message}", ex);
+        }
+        finally
+        {
+            db.Parameters.Clear();
+            db.Dispose();
         }
     }
 

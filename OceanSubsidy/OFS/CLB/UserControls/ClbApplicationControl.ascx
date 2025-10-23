@@ -460,7 +460,7 @@
 <!-- 底部區塊 -->
 <div class="block-bottom bg-light-teal">
     <button type="button" id="btnTempSave"
-            class="btn btn-outline-teal"
+            class="btn btn-outline-teal view-mode"
             onclick="handleTempSave()">
         暫存
     </button>

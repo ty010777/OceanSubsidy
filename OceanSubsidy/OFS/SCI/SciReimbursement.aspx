@@ -405,7 +405,30 @@
             let currentPayment = parseFloat($('#currentPayment').val()) || 0;
             let reviewResult = $('#radio-pass').is(':checked') ? 'pass' : 'return';
             let reviewComment = $('#reviewComment').text().trim();
-        
+
+            // 如果是第二期請款且審核通過，顯示專案將設為「已結案」的警告
+            if (currentPhase === 2 && reviewResult === 'pass') {
+                Swal.fire({
+                    title: '確認通過請款',
+                    text: '請款通過後專案將設為「已結案」，是否通過請款？',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: '通過',
+                    cancelButtonText: '取消'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        executeReviewSubmit(currentPayment, reviewResult, reviewComment);
+                    }
+                });
+            } else {
+                executeReviewSubmit(currentPayment, reviewResult, reviewComment);
+            }
+        }
+
+        // 執行審核提交
+        function executeReviewSubmit(currentPayment, reviewResult, reviewComment) {
             $.ajax({
                 url: 'SciReimbursement.aspx/ReviewPayment',
                 type: 'POST',

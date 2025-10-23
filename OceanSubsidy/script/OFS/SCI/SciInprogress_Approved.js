@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initDownloadPlan();
     initProjectChangeModal();
     initChangeReviewPanel();
+    initPlanStopModal();
 });
 
 /**
@@ -397,6 +398,229 @@ function submitChangeReview() {
                         confirmButtonText: '確定'
                     });
                 }
+            });
+        }
+    });
+}
+
+/**
+ * 初始化計畫終止 Modal
+ */
+function initPlanStopModal() {
+    const planStopModal = document.getElementById('planStopModal');
+    const txtStopReason = document.getElementById('txtStopReason');
+    const txtPaidAmount = document.getElementById('txtPaidAmount');
+    const txtRecoveredAmount = document.getElementById('txtRecoveredAmount');
+    const btnConfirmPlanStop = document.getElementById('btnConfirmPlanStop');
+
+    if (!planStopModal) {
+        return;
+    }
+
+    // Modal 打開時載入已撥款金額
+    planStopModal.addEventListener('show.bs.modal', function() {
+        loadPaidAmount();
+    });
+
+    // Modal 關閉時清空內容
+    planStopModal.addEventListener('hidden.bs.modal', function() {
+        if (txtStopReason) {
+            txtStopReason.value = '';
+        }
+        if (txtRecoveredAmount) {
+            txtRecoveredAmount.value = '';
+        }
+        if (txtPaidAmount) {
+            txtPaidAmount.value = '載入中...';
+        }
+    });
+
+    // 送出按鈕點擊事件
+    if (btnConfirmPlanStop) {
+        btnConfirmPlanStop.addEventListener('click', function() {
+            handlePlanStop();
+        });
+    }
+}
+
+/**
+ * 載入已撥款金額
+ */
+function loadPaidAmount() {
+    const txtPaidAmount = document.getElementById('txtPaidAmount');
+    const projectID = getProjectIDFromUrl();
+
+    if (!projectID) {
+        if (txtPaidAmount) {
+            txtPaidAmount.value = '無法取得計畫ID';
+        }
+        return;
+    }
+
+    // 呼叫後端 API 取得已撥款金額
+    $.ajax({
+        type: 'POST',
+        url: 'SciInprogress_Approved.aspx/GetPaidAmount',
+        data: JSON.stringify({ projectID: projectID }),
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        success: function(response) {
+            if (response.d && response.d.success) {
+                // 格式化金額顯示（加上千分位）
+                txtPaidAmount.value = response.d.paidAmount.toLocaleString();
+            } else {
+                txtPaidAmount.value = '0';
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('載入已撥款金額失敗:', error);
+            txtPaidAmount.value = '載入失敗';
+        }
+    });
+}
+
+/**
+ * 處理計畫終止提交
+ */
+function handlePlanStop() {
+    const txtStopReason = document.getElementById('txtStopReason');
+    const txtPaidAmount = document.getElementById('txtPaidAmount');
+    const txtRecoveredAmount = document.getElementById('txtRecoveredAmount');
+
+    const stopReason = txtStopReason ? txtStopReason.value.trim() : '';
+    const paidAmount = txtPaidAmount ? txtPaidAmount.value : '';
+    const recoveredAmount = txtRecoveredAmount ? txtRecoveredAmount.value.trim() : '';
+
+    // 驗證必填欄位
+    if (!stopReason) {
+        Swal.fire({
+            title: '提醒',
+            text: '請填寫計畫終止原因',
+            icon: 'warning',
+            confirmButtonText: '確定'
+        });
+        return;
+    }
+
+    if (!recoveredAmount || recoveredAmount === '') {
+        Swal.fire({
+            title: '提醒',
+            text: '請填寫已追回金額',
+            icon: 'warning',
+            confirmButtonText: '確定'
+        });
+        return;
+    }
+
+    // 驗證已追回金額是否為有效數字
+    const recoveredAmountNum = parseFloat(recoveredAmount);
+    if (isNaN(recoveredAmountNum) || recoveredAmountNum < 0) {
+        Swal.fire({
+            title: '提醒',
+            text: '已追回金額必須為有效的正數',
+            icon: 'warning',
+            confirmButtonText: '確定'
+        });
+        return;
+    }
+
+    // 確認提交
+    Swal.fire({
+        title: '確認送出',
+        html: `
+            <div class="text-start">
+                <p><strong>計畫終止原因：</strong>${stopReason}</p>
+                <p><strong>已撥款金額：</strong>${paidAmount} 元</p>
+                <p><strong>已追回金額：</strong>${recoveredAmount} 元</p>
+                <p class="text-danger mt-3">確定要終止此計畫嗎？</p>
+            </div>
+        `,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: '確定送出',
+        cancelButtonText: '取消',
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            submitPlanStop(stopReason, paidAmount, recoveredAmount);
+        }
+    });
+}
+
+/**
+ * 提交計畫終止到後端
+ */
+function submitPlanStop(stopReason, paidAmount, recoveredAmount) {
+    const projectID = getProjectIDFromUrl();
+
+    if (!projectID) {
+        Swal.fire({
+            title: '錯誤',
+            text: '找不到計畫ID',
+            icon: 'error',
+            confirmButtonText: '確定'
+        });
+        return;
+    }
+
+    // 顯示載入中
+    Swal.fire({
+        title: '處理中...',
+        text: '正在提交計畫終止申請',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    // 呼叫 WebMethod
+    $.ajax({
+        type: 'POST',
+        url: 'SciInprogress_Approved.aspx/SubmitPlanStop',
+        data: JSON.stringify({
+            projectID: projectID,
+            stopReason: stopReason,
+            recoveredAmount: parseFloat(recoveredAmount)
+        }),
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        success: function(response) {
+            const data = response.d;
+
+            if (data.success) {
+                Swal.fire({
+                    title: '送出成功',
+                    text: '計畫終止資料已儲存',
+                    icon: 'success',
+                    confirmButtonText: '確定'
+                }).then(() => {
+                    // 關閉 modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('planStopModal'));
+                    if (modal) {
+                        modal.hide();
+                    }
+
+                    // 重新載入頁面
+                    location.reload();
+                });
+            } else {
+                Swal.fire({
+                    title: '送出失敗',
+                    text: data.message || '系統發生錯誤，請稍後再試',
+                    icon: 'error',
+                    confirmButtonText: '確定'
+                });
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error:', error);
+            Swal.fire({
+                title: '系統錯誤',
+                text: '無法連接到伺服器，請稍後再試',
+                icon: 'error',
+                confirmButtonText: '確定'
             });
         }
     });

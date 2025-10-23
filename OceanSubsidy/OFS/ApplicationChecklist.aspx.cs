@@ -20,7 +20,6 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
 {
     private List<ReviewChecklistItem> OriginalSciMainList;
 
-    // 已改為純前端分頁架構，移除 ViewState 快取相關屬性
 
     protected void Page_Load(object sender, EventArgs e)
     {

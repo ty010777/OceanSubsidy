@@ -26,27 +26,30 @@ class TaiwanDateHandler {
             const selectedMoment = moment(picker.startDate);
             // 顯示：民國年格式 - moment-taiwan.js 會自動處理轉換
             const displayDate = selectedMoment.format('tYY/MM/DD');
-            $(this).val(displayDate);
+            // 使用原生 JavaScript 設定值
+            this.value = displayDate;
+            this.setAttribute('value', displayDate);
+            // 觸發 change 事件
+            const event = new Event('change', { bubbles: true });
+            this.dispatchEvent(event);
         };
 
-        // 初始化計畫期程日期選擇器
-        $('input[id*="startDate"], input[id*="endDate"]').daterangepicker(datePickerConfig)
-            .on('apply.daterangepicker', function(ev, picker) {
-                handleDateSelection.call(this, ev, picker);
-                // 當計畫期程變更時，更新年份下拉選單
-                if (window.sciWorkSchManager && window.sciWorkSchManager.workItems) {
-                    setTimeout(() => {
-                        window.sciWorkSchManager.workItems.updateAllYearSelects();
-                    }, 100);
-                }
-            });
-
-        // 初始化查核標準的預定完成日期選擇器
+        // 統一初始化所有 taiwan-date-picker（包含計畫期程和查核標準）
         $(document).on('focus', '.taiwan-date-picker', function() {
             if (!$(this).hasClass('daterangepicker-initialized')) {
                 $(this).addClass('daterangepicker-initialized');
                 $(this).daterangepicker(datePickerConfig)
-                    .on('apply.daterangepicker', handleDateSelection);
+                    .on('apply.daterangepicker', function(ev, picker) {
+                        handleDateSelection.call(this, ev, picker);
+                        // 如果是計畫期程的日期，更新年份下拉選單
+                        if (this.id.includes('startDate') || this.id.includes('endDate')) {
+                            if (window.sciWorkSchManager && window.sciWorkSchManager.workItems) {
+                                setTimeout(() => {
+                                    window.sciWorkSchManager.workItems.updateAllYearSelects();
+                                }, 100);
+                            }
+                        }
+                    });
                 $(this).trigger('click'); // 觸發開啟日期選擇器
             }
         });
@@ -665,8 +668,7 @@ class WorkItemTableManager {
         this.domCache.clear();
         this.bindTableButtons(); // 使用統一的按鈕綁定方法
         this.bindAllRowInputs(); // 使用統一的綁定方法
-        // 更新查核標準的下拉選單選項
-        this.parent.checkStandards.updateCheckpointOptions();
+        // 注意：查核標準的下拉選單選項會在 loadCheckStandards 時統一更新
     }
 
     // 載入工作項目資料
@@ -686,10 +688,6 @@ class WorkItemTableManager {
             this.reapplyYearValues(workItemsData);
 
             this.rebindAllEvents();
-
-            setTimeout(() => {
-                this.parent.checkStandards.updateCheckpointOptions();
-            }, 100);
 
             this.parent.calculator.updateTotals();
         } catch (error) {
@@ -964,7 +962,6 @@ class CalculationManager {
     // 簡化的更新總計方法
     updateTotals() {
         this.calculateTotals();
-        this.parent.checkStandards.updateCheckpointOptions();
     }
 
 }
@@ -1190,9 +1187,13 @@ class CheckStandardManager {
 
             this.bindCheckpointButtons();
 
+            // 延遲執行，確保工作項目已完全載入
             setTimeout(() => {
+                // 再次更新所有下拉選單選項，確保選項正確
+                this.updateCheckpointOptions();
+                // 然後重新計算編號
                 this.recalculateAllCheckpointNumbers();
-            }, 100);
+            }, 200);
 
         } catch (error) {
             // 靜默處理錯誤

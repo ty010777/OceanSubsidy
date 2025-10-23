@@ -1768,24 +1768,7 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
         Page.ClientScript.RegisterStartupScript(this.GetType(), "InitializeTabSystem", script, true);
     }
     
-    private void snapshot(string Project )
-    {
-        
-
-        // OFSSnapshotHelper.insert(new Snapshot
-        // {
-        //     Type = "CLB",
-        //     DataID = Project,
-        //     Status = project.Status,
-        //     Data = JsonConvert.SerializeObject(new
-        //     {
-        //         Project = project,
-        //         Contacts = OFS_EdcContactHelper.query(id),
-        //         ReceivedSubsidies = OFS_EdcReceivedSubsidyHelper.query(id),
-        //         Attachments = OFS_EdcAttachmentHelper.query(id)
-        //     })
-        // });
-    }
+    
 
     #region 變更說明相關方法
 
@@ -2098,6 +2081,214 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
         {
             System.Diagnostics.Debug.WriteLine($"插入變更記錄時發生錯誤：{ex.Message}");
             return false;
+        }
+    }
+
+    #endregion
+
+    #region 快照功能
+
+    /// <summary>
+    /// 從快照資料載入（用於快照檢視頁面）
+    /// </summary>
+    /// <param name="snapshotData">快照的 JSON 資料物件</param>
+    public void LoadFromSnapshot(dynamic snapshotData)
+    {
+        try
+        {
+            // 載入基本資料
+            if (snapshotData.ApplicationBasic != null)
+            {
+                var basicData = JsonConvert.DeserializeObject<OFS_CLB_Application_Basic>(
+                    snapshotData.ApplicationBasic.ToString()
+                );
+                if (basicData != null)
+                {
+                    PopulateBasicData(basicData);
+                }
+            }
+
+            // 載入人員資料
+            if (snapshotData.ApplicationPersonnel != null)
+            {
+                var personnelList = JsonConvert.DeserializeObject<List<OFS_CLB_Application_Personnel>>(
+                    snapshotData.ApplicationPersonnel.ToString()
+                );
+                if (personnelList != null && personnelList.Count > 0)
+                {
+                    PopulatePersonnelData(personnelList);
+                }
+            }
+
+            // 載入計畫資訊
+            if (snapshotData.ApplicationPlan != null)
+            {
+                var planData = JsonConvert.DeserializeObject<OFS_CLB_Application_Plan>(
+                    snapshotData.ApplicationPlan.ToString()
+                );
+                if (planData != null)
+                {
+                    PopulatePlanData(planData);
+                }
+            }
+
+            // 載入經費資訊
+            if (snapshotData.ApplicationFunds != null)
+            {
+                var fundsData = JsonConvert.DeserializeObject<OFS_CLB_Application_Funds>(
+                    snapshotData.ApplicationFunds.ToString()
+                );
+                if (fundsData != null)
+                {
+                    PopulateFundsData(fundsData);
+                }
+            }
+
+            // 載入檔案上傳狀態
+            if (snapshotData.UploadFile != null)
+            {
+                var uploadFiles = JsonConvert.DeserializeObject<List<OFS_CLB_UploadFile>>(
+                    snapshotData.UploadFile.ToString()
+                );
+                if (uploadFiles != null && uploadFiles.Count > 0)
+                {
+                    PopulateUploadFileData(uploadFiles);
+                }
+            }
+
+            // 設定為檢視模式
+            IsReadOnly = true;
+            SetReadOnlyMode();
+            bool enableUploadStep = true;
+            InitializeTabSystem(enableUploadStep, "application", IsReadOnly);
+            // 隱藏變更說明控制項（快照檢視不需要）
+            if (changeDescriptionSection != null)
+            {
+                changeDescriptionSection.Visible = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"從快照載入資料時發生錯誤: {ex.Message}");
+            throw new Exception($"從快照載入資料時發生錯誤：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 填入基本資料到表單
+    /// </summary>
+    private void PopulateBasicData(OFS_CLB_Application_Basic basicData)
+    {
+        lblProjectID.Text = basicData.ProjectID;
+        hidProjectID.Value = basicData.ProjectID;
+        txtProjectNameTw.Text = basicData.ProjectNameTw;
+
+        // 設定申請補助類型
+        switch (basicData.SubsidyType)
+        {
+            case "Startup":
+                rbSubsidyTypeCreate.Checked = true;
+                break;
+            case "Admin":
+                rbSubsidyTypeOperation.Checked = true;
+                break;
+            case "Public":
+                rbSubsidyTypeActivity.Checked = true;
+                break;
+        }
+
+        txtSchoolName.Text = basicData.SchoolName;
+        txtClubName.Text = basicData.ClubName;
+        txtSchoolIDNumber.Text = basicData.School_IDNumber;
+        txtAddress.Text = basicData.Address;
+
+        // 設定成立日期
+        if (basicData.CreationDate.HasValue)
+        {
+            txtCreationDate.Text = basicData.CreationDate.Value.ToMinguoDate();
+            txtCreationDate.Attributes["data-gregorian-date"] = basicData.CreationDate.Value.ToString("yyyy/MM/dd");
+        }
+    }
+
+    /// <summary>
+    /// 填入人員資料到表單
+    /// </summary>
+    private void PopulatePersonnelData(List<OFS_CLB_Application_Personnel> personnelList)
+    {
+        foreach (var personnel in personnelList)
+        {
+            switch (personnel.Personnel)
+            {
+                case "社團指導老師":
+                    txtTeacherName.Text = personnel.Name;
+                    txtTeacherJobTitle.Text = personnel.JobTitle;
+                    txtTeacherPhone.Text = personnel.PhoneNum;
+                    break;
+                case "社團業務聯絡人":
+                    txtContactName.Text = personnel.Name;
+                    txtContactJobTitle.Text = personnel.JobTitle;
+                    txtContactPhone.Text = personnel.PhoneNum;
+                    break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 填入計畫資訊到表單
+    /// </summary>
+    private void PopulatePlanData(OFS_CLB_Application_Plan planData)
+    {
+        // 設定執行期間
+        if (planData.StartDate.HasValue)
+        {
+            txtStartDate.Text = planData.StartDate.Value.ToMinguoDate();
+            txtStartDate.Attributes["data-gregorian-date"] = planData.StartDate.Value.ToString("yyyy/MM/dd");
+        }
+        if (planData.EndDate.HasValue)
+        {
+            txtEndDate.Text = planData.EndDate.Value.ToMinguoDate();
+            txtEndDate.Attributes["data-gregorian-date"] = planData.EndDate.Value.ToString("yyyy/MM/dd");
+        }
+
+        txtPurpose.Text = planData.Purpose;
+        txtPlanContent.Text = planData.PlanContent;
+        txtPreBenefits.Text = planData.PreBenefits;
+        txtPlanLocation.Text = planData.PlanLocation;
+        txtEstimatedPeople.Text = planData.EstimatedPeople;
+        txtEmergencyPlan.Text = planData.EmergencyPlan;
+    }
+
+    /// <summary>
+    /// 填入經費資訊到表單
+    /// </summary>
+    private void PopulateFundsData(OFS_CLB_Application_Funds fundsData)
+    {
+        txtSubsidyFunds.Text = fundsData.SubsidyFunds?.ToString("0");
+        txtSelfFunds.Text = fundsData.SelfFunds?.ToString("0");
+        txtOtherGovFunds.Text = fundsData.OtherGovFunds?.ToString("0");
+        txtOtherUnitFunds.Text = fundsData.OtherUnitFunds?.ToString("0");
+
+        // 設定計畫總經費
+        lblTotalFunds.Text = fundsData.TotalFunds?.ToString("0") ?? "0";
+
+        // 設定曾申請政府補助
+        if (fundsData.PreviouslySubsidized.HasValue)
+        {
+            rbPreviouslySubsidizedYes.Checked = fundsData.PreviouslySubsidized.Value;
+            rbPreviouslySubsidizedNo.Checked = !fundsData.PreviouslySubsidized.Value;
+        }
+
+        txtFundingDescription.Text = fundsData.FundingDescription;
+    }
+
+    /// <summary>
+    /// 填入上傳檔案資料到表單
+    /// </summary>
+    private void PopulateUploadFileData(List<OFS_CLB_UploadFile> uploadFiles)
+    {
+        foreach (var file in uploadFiles)
+        {
+            UpdateFileStatusUI(file.FileCode, file.FileName, file.TemplatePath);
         }
     }
 

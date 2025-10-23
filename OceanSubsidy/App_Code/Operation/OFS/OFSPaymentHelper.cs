@@ -112,4 +112,35 @@ public class OFSPaymentHelper
 
         db.ExecuteNonQuery();
     }
+
+    /// <summary>
+    /// 查詢計畫的總撥款金額（僅計算狀態為「通過」的撥款）
+    /// </summary>
+    /// <param name="projectID">計畫ID</param>
+    /// <returns>總撥款金額，若無資料則回傳 0</returns>
+    public static decimal GetTotalPaidAmount(string projectID)
+    {
+        var db = new DbHelper();
+
+        db.CommandText = @"
+            SELECT SUM(CurrentActualPaidAmount) as TotalActualPaid
+            FROM [OFS_SCI_Payment]
+            WHERE [ProjectID] = @ProjectID
+              AND [Status] = @Status
+            GROUP BY ProjectID
+        ";
+
+        db.Parameters.Add("@ProjectID", projectID);
+        db.Parameters.Add("@Status", "通過");
+
+        var dt = db.GetTable();
+
+        if (dt.Rows.Count > 0)
+        {
+            var totalPaid = dt.Rows[0].Field<decimal?>("TotalActualPaid");
+            return totalPaid ?? 0;
+        }
+
+        return 0;
+    }
 }

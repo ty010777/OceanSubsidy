@@ -73,7 +73,7 @@
 
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" Runat="Server">
     <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePartialRendering="true" />
-    
+
     <!--  計畫變更紀錄 下載核定計畫書 -->
     <div class="block rounded-top-4 py-4 d-flex justify-content-between" style="position: sticky; top: 180px; z-index: 15;">
         <div>
@@ -98,7 +98,7 @@
             <button type="button" id="btnTransferProject" class="btn btn-teal" runat="server" data-bs-toggle="modal" data-bs-target="#transferCaseModal" ClientIDMode="Static">
                 移轉案件
             </button>
-            <button class="btn btn-pink" type="button" onclick="alert('計畫終止功能 (靜態展示)')">
+            <button class="btn btn-pink" type="button" id="btnPlanStop" runat="server" data-bs-toggle="modal" data-bs-target="#planStopModal" ClientIDMode="Static">
                 計畫終止
             </button>
         </div>
@@ -204,6 +204,66 @@
                         </button>
                         <button type="button" class="btn btn-teal" onclick="confirmTransfer()">
                             確認移轉
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 計畫終止 -->
+    <div class="modal fade" id="planStopModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="planStopModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-md">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="fs-24 fw-bold text-green-light">計畫終止</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- 計畫終止原因 -->
+                    <div class="mb-4">
+                        <label for="txtStopReason" class="form-label fs-16 text-gray mb-3">
+                            計畫終止原因 <span class="text-danger">*</span>
+                        </label>
+                        <textarea
+                            id="txtStopReason"
+                            class="form-control"
+                            rows="5"
+                            placeholder="請詳細說明計畫終止原因..."></textarea>
+                    </div>
+
+                    <!-- 已撥款金額 -->
+                    <div class="mb-4">
+                        <label class="form-label fs-16 text-gray mb-3">
+                            已撥款金額
+                        </label>
+                        <div class="input-group">
+                            <input type="text" id="txtPaidAmount" class="form-control" readonly value="載入中..." />
+                            <span class="input-group-text">元</span>
+                        </div>
+                        <small class="text-muted">此金額為系統自動計算</small>
+                    </div>
+
+                    <!-- 已追回金額 -->
+                    <div class="mb-4">
+                        <label for="txtRecoveredAmount" class="form-label fs-16 text-gray mb-3">
+                            已追回金額 <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <input type="number" id="txtRecoveredAmount" class="form-control" placeholder="請輸入已追回金額" min="0" step="1" />
+                            <span class="input-group-text">元</span>
+                        </div>
+                    </div>
+
+                    <!-- 按鈕群組 -->
+                    <div class="d-flex gap-4 flex-wrap justify-content-center mt-5">
+                        <button type="button" class="btn btn-gray" data-bs-dismiss="modal">
+                            取消
+                        </button>
+                        <button type="button" id="btnConfirmPlanStop" class="btn btn-pink">
+                            送出
                         </button>
                     </div>
                 </div>

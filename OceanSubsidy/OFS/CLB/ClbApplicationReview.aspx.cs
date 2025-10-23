@@ -21,6 +21,11 @@ public partial class OFS_CLB_Review_ClbApplicationReview : System.Web.UI.Page
     /// </summary>
     protected string ProjectID => Request.QueryString["ProjectID"];
 
+    /// <summary>
+    /// 執行單位名稱（用於風險評估連結）
+    /// </summary>
+    protected string OrgName { get; set; } = "";
+
     #endregion
 
     #region 頁面事件
@@ -380,24 +385,110 @@ public partial class OFS_CLB_Review_ClbApplicationReview : System.Web.UI.Page
     {
         try
         {
-            // TODO: 從資料庫載入實際資料
-            
-            // 同單位申請計畫數
-            lblSameUnitProjectCount.Text = "0";
-            
-            // 風險評估資訊
-            lblRiskLevel.Text = "低風險";
-            lblRiskRecordCount.Text = "0";
-            
-            // 風險評估 Modal 資料
-            lblExecutingUnit.Text = "申請單位名稱";
-            lblModalRiskLevel.Text = "低風險";
-            lblProjectInfo.Text = $"{ProjectID} / 計畫名稱";
-            lblCheckDate.Text = DateTime.Now.ToString("yyyy/MM/dd");
-            lblChecker.Text = "審查人員";
-            lblTableRiskLevel.Text = "低風險";
-            lblCheckOpinion.Text = "";
-            lblUnitReply.Text = "";
+            // 取得計畫基本資料
+            var projectData = OFS_ClbApplicationHelper.GetBasicData(ProjectID);
+            if (projectData == null)
+            {
+                return;
+            }
+
+            string schoolName = projectData.SchoolName ?? "";
+            string clubName = projectData.ClubName ?? "";
+            int year = projectData.Year ?? 0;
+
+            // 組合執行單位名稱供前端使用（用於風險評估連結）
+            OrgName = (schoolName + clubName).Trim();
+
+            // 同單位申請計畫數（使用 count 方法計算並扣掉當前計畫本身）
+            int sameUnitCount = OFS_ClbApplicationHelper.count(year, schoolName, clubName) - 1;
+            lblSameUnitProjectCount.Text = sameUnitCount.ToString();
+
+            // 使用 GetAuditRecordsByOrgName 取得風險評估記錄
+            var auditRecords = AuditRecordsHelper.GetAuditRecordsByOrgName(OrgName);
+
+            // 統計筆數
+            int recordCount = auditRecords != null ? auditRecords.Count : 0;
+            lblRiskRecordCount.Text = recordCount.ToString();
+
+            // 計算最高風險等級
+            string riskLevel = "無";
+            int maxRiskLevel = 0;
+
+            if (auditRecords != null && auditRecords.Count > 0)
+            {
+                foreach (var record in auditRecords)
+                {
+                    switch (record.Risk)
+                    {
+                        case "Low":
+                            if (maxRiskLevel < 1) maxRiskLevel = 1;
+                            break;
+                        case "Medium":
+                            if (maxRiskLevel < 2) maxRiskLevel = 2;
+                            break;
+                        case "High":
+                            if (maxRiskLevel < 3) maxRiskLevel = 3;
+                            break;
+                    }
+                }
+
+                // 轉換風險等級顯示文字
+                switch (maxRiskLevel)
+                {
+                    case 1:
+                        riskLevel = "低風險";
+                        break;
+                    case 2:
+                        riskLevel = "中風險";
+                        break;
+                    case 3:
+                        riskLevel = "高風險";
+                        break;
+                    default:
+                        riskLevel = "無";
+                        break;
+                }
+            }
+
+            lblRiskLevel.Text = riskLevel;
+
+            // 風險評估 Modal 資料（保留原有 Modal 功能）
+            lblExecutingUnit.Text = OrgName;
+            lblModalRiskLevel.Text = riskLevel;
+            lblProjectInfo.Text = $"{ProjectID} / {projectData.ProjectNameTw}";
+
+            // 如果有風險評估記錄，顯示第一筆資料
+            if (auditRecords != null && auditRecords.Count > 0)
+            {
+                var firstRecord = auditRecords[0];
+                lblCheckDate.Text = firstRecord.CheckDate?.ToString("yyyy/MM/dd") ?? "";
+                lblChecker.Text = firstRecord.ReviewerName ?? "";
+                switch (firstRecord.Risk)
+                {
+                    case "Low":
+                        lblTableRiskLevel.Text = "低風險";
+                        break;
+                    case "Medium":
+                        lblTableRiskLevel.Text = "中風險";
+                        break;
+                    case "High":
+                        lblTableRiskLevel.Text = "高風險";
+                        break;
+                    default:
+                        lblTableRiskLevel.Text = "";
+                        break;
+                }
+                lblCheckOpinion.Text = firstRecord.ReviewerComment ?? "";
+                lblUnitReply.Text = firstRecord.ExecutorComment ?? "";
+            }
+            else
+            {
+                lblCheckDate.Text = "";
+                lblChecker.Text = "";
+                lblTableRiskLevel.Text = "";
+                lblCheckOpinion.Text = "";
+                lblUnitReply.Text = "";
+            }
         }
         catch (Exception ex)
         {
@@ -487,20 +578,30 @@ public partial class OFS_CLB_Review_ClbApplicationReview : System.Web.UI.Page
             {
                 return;
             }
-            
+
             // 從 OFS_CLB_Project_Main 表中讀取承辦人員資訊
             var projectMain = OFS_ClbApplicationHelper.GetProjectMainData(ProjectID);
-            
+
+            // 取得當前使用者資訊
+            var currentUser = GetCurrentUserInfo();
+            string currentUserAccount = currentUser?.Account ?? "";
+
             if (projectMain != null && !string.IsNullOrEmpty(projectMain.SupervisoryPersonName))
             {
                 lblReviewerName.Text = projectMain.SupervisoryPersonName;
-                
+
                 // 將指派的審核承辦人員帳號存到 HiddenField
                 hdnAssignedReviewerAccount.Value = projectMain.SupervisoryPersonAccount ?? "";
-                
+
                 // 設定有指派審核人員的狀態
                 ViewState["HasAssignedReviewer"] = true;
-                scrollBottomPanel.Visible = true;
+
+                // 判斷當前使用者是否為指派的審核人員
+                bool isAssignedReviewer = !string.IsNullOrEmpty(projectMain.SupervisoryPersonAccount) &&
+                                          string.Equals(currentUserAccount, projectMain.SupervisoryPersonAccount, StringComparison.OrdinalIgnoreCase);
+
+                // 只有當前使用者與審核人員相同時才顯示 scrollBottomPanel
+                scrollBottomPanel.Visible = isAssignedReviewer;
             }
             else
             {
