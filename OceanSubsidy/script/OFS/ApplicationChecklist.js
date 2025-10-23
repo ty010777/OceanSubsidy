@@ -261,6 +261,9 @@ document.addEventListener('DOMContentLoaded', function() {
         initPaginationButtons();
         initDropdownToggle();
 
+        // 從表單讀取搜尋條件（可能來自 URL 參數）
+        loadSearchConditionsFromForm();
+
         // 載入初始篩選資料
         loadFilteredData();
     }, 100);
@@ -738,9 +741,8 @@ function changePageSize() {
     }
 }
 
-// 執行搜尋
-function performSearch() {
-    // 收集搜尋條件
+// 從表單載入搜尋條件到 currentPageState
+function loadSearchConditionsFromForm() {
     currentPageState.searchText = document.querySelector('input[id*="txtSearch"]')?.value || '';
     currentPageState.contentKeyword = document.querySelector('input[id*="txtContentKeyword"]')?.value || '';
     currentPageState.year = document.querySelector('select[id*="ddlYear"]')?.value || '';
@@ -749,6 +751,20 @@ function performSearch() {
     currentPageState.department = document.querySelector('input[id*="txtDepartment"]')?.value || '';
     currentPageState.reviewer = document.querySelector('select[id*="ddlReviewer"]')?.value || '';
     currentPageState.waitingReply = document.querySelector('input[id*="waitingReply"]')?.checked || false;
+
+    // 讀取隱藏欄位的選中標籤類別
+    const hidSelectedStage = document.querySelector('input[id*="hidSelectedStage"]')?.value;
+    if (hidSelectedStage) {
+        currentPageState.selectedStage = hidSelectedStage;
+    }
+
+    console.log('從表單載入搜尋條件:', currentPageState);
+}
+
+// 執行搜尋
+function performSearch() {
+    // 收集搜尋條件
+    loadSearchConditionsFromForm();
 
     // 重置到第一頁
     currentPageState.pageNumber = 1;

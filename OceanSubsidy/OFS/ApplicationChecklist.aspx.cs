@@ -35,6 +35,9 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
                 ddlYear.SelectedValue = currentYear.ToString();
             }
 
+            // 讀取 URL 參數並設定搜尋條件
+            LoadSearchParametersFromUrl();
+
             // 初始狀態顯示總申請的資料
             hidSelectedStage.Value = "總申請";
 
@@ -323,6 +326,81 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"載入申請計畫類別時發生錯誤：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 從 URL 參數讀取搜尋條件並設定到表單控制項
+    /// </summary>
+    private void LoadSearchParametersFromUrl()
+    {
+        try
+        {
+            // 讀取計畫編號或名稱關鍵字
+            string searchText = Request.QueryString["search"];
+            if (!string.IsNullOrEmpty(searchText))
+            {
+                txtSearch.Text = searchText;
+            }
+
+            // 讀取計畫內容關鍵字
+            string contentKeyword = Request.QueryString["contentKeyword"];
+            if (!string.IsNullOrEmpty(contentKeyword))
+            {
+                txtContentKeyword.Text = contentKeyword;
+            }
+
+            // 讀取年度
+            string year = Request.QueryString["year"];
+            if (!string.IsNullOrEmpty(year) && ddlYear.Items.FindByValue(year) != null)
+            {
+                ddlYear.SelectedValue = year;
+            }
+
+            // 讀取狀態
+            string status = Request.QueryString["status"];
+            if (!string.IsNullOrEmpty(status) && ddlStatus.Items.FindByValue(status) != null)
+            {
+                ddlStatus.SelectedValue = status;
+            }
+
+            // 讀取階段
+            string stage = Request.QueryString["stage"];
+            if (!string.IsNullOrEmpty(stage) && ddlStage.Items.FindByValue(stage) != null)
+            {
+                ddlStage.SelectedValue = stage;
+            }
+
+            // 讀取申請單位
+            string orgName = Request.QueryString["OrgName"];
+            if (!string.IsNullOrEmpty(orgName))
+            {
+                txtDepartment.Text = orgName;
+            }
+
+            // 讀取主管單位
+            string reviewer = Request.QueryString["reviewer"];
+            if (!string.IsNullOrEmpty(reviewer) && ddlReviewer.Items.FindByValue(reviewer) != null)
+            {
+                ddlReviewer.SelectedValue = reviewer;
+            }
+
+            // 讀取待回覆
+            string waitingReply = Request.QueryString["waitingReply"];
+            if (!string.IsNullOrEmpty(waitingReply))
+            {
+                waitingReply = waitingReply.ToLower();
+                if (waitingReply == "true" || waitingReply == "1")
+                {
+                    this.waitingReply.Checked = true;
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine("URL 參數已載入到搜尋表單");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"載入 URL 參數時發生錯誤：{ex.Message}");
         }
     }
 

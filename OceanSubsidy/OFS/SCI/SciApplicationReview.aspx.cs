@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Web;
 using System.Web.UI;
@@ -331,8 +332,13 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
             OrgName = orgName;
 
             // 同單位申請計畫數（使用 count 方法計算並扣掉當前計畫本身）
-            int sameUnitCount = OFS_SciApplicationHelper.count(year, orgName) - 1;
-            lblSameUnitProjectCount.Text = sameUnitCount.ToString();
+            int sameUnitCount = OFS_SciApplicationHelper.count(year, orgName);
+
+            // 建立超連結到申請案件清單頁面，帶入年度和單位名稱篩選
+            string appRootPath = ConfigurationManager.AppSettings["AppRootPath"] ?? "";
+            string encodedOrgName = Server.UrlEncode(orgName);
+            string linkUrl = $"{appRootPath}/OFS/ApplicationChecklist.aspx?year={year}&OrgName={encodedOrgName}";
+            lblSameUnitProjectCount.Text = $"<a href='{linkUrl}' class='link-teal fw-bold' target='_blank'>{sameUnitCount}</a>";
 
             // 使用 GetAuditRecordsByOrgName 取得風險評估記錄
             var auditRecords = AuditRecordsHelper.GetAuditRecordsByOrgName(orgName);
