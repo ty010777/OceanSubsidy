@@ -206,7 +206,7 @@ public class MultipleService : BaseService
         return new {
             Year = data.Year,
             OrgName = data.OrgName,
-            OtherCount = OFS_MulProjectHelper.count(data.Year, data.OrgName) - 1,
+            OtherCount = OFS_MulProjectHelper.count(data.Year, data.OrgName) ,
             AuditRecords = AuditRecordsHelper.GetAuditRecordsByOrgName(data.OrgName)
         };
     }
