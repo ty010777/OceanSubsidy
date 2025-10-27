@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>領域審查 | 海洋科學調查活動填報系統</title>
+    <title>海洋科學調查活動填報系統</title>
     
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="<%= ResolveUrl("~/assets/vendor/bootstrap-5.3.3/dist/css/bootstrap.min.css") %>">
@@ -88,7 +88,7 @@
                             </div>
 
                             <!-- 內容 -->
-                            <h5 class="square-title mb-3">審查作業 – 領域審查</h5>
+                            <h5 class="square-title mb-3">審查作業 – <asp:Label ID="lblReviewStatusName" runat="server" /></h5> 
                             <ul class="d-flex flex-column gap-2">
                                 <li>
                                     <span class="text-gray">審查委員 :</span>

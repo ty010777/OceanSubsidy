@@ -1142,8 +1142,8 @@ SELECT TOP (1000) [ProjectID]
     /// <returns>排序模式案件清單</returns>
     public static List<SortingModeItem> Search_ForSorting(
         string year = "",
-        string category = "",
-        string reviewGroupCode = "")
+        string category = ""
+        )
     {
         DbHelper db = new DbHelper();
         db.CommandText = @"
@@ -1151,13 +1151,20 @@ SELECT TOP (1000) [ProjectID]
       ,[Year]
       ,[ProjectNameTw]
       ,[OrgName]
+      ,[Field]
+	  ,[Descname] 
+	  ,[Category]
+      ,[SupervisoryPersonAccount]
+      ,[SupervisoryPersonName]
+      ,[TotalSubsidyPrice]
+      ,[StatusesName]
+      ,[ApprovedSubsidy]
       ,[FinalReviewNotes]
       ,[FinalReviewOrder]
       ,[TotalScore]
-      ,[Field]
-      ,[Category]
-  FROM [OCA_OceanSubsidy].[dbo].[V_OFS_ReviewChecklist_type4_Sort]
-    WHERE 1=1
+  FROM [OCA_OceanSubsidy].[dbo].[V_OFS_ReviewChecklist_type4]
+  LEFT JOIN Sys_ZgsCode ON CodeGroup in ('SCIField','CULField') and Code = Field
+  WHERE 1=1
 ";
 
         // 動態加入篩選條件
@@ -1165,11 +1172,7 @@ SELECT TOP (1000) [ProjectID]
         {
             db.CommandText += " AND Year = @year";
         }
-
-        if (!string.IsNullOrEmpty(reviewGroupCode))
-        {
-            db.CommandText += " AND Field = @reviewGroupCode";
-        }
+        
         if (!string.IsNullOrEmpty(category))
         {
             db.CommandText += " AND Category = @category";
@@ -1186,11 +1189,7 @@ SELECT TOP (1000) [ProjectID]
             {
                 db.Parameters.Add("@year", year);
             }
-
-            if (!string.IsNullOrEmpty(reviewGroupCode))
-            {
-                db.Parameters.Add("@reviewGroupCode", reviewGroupCode);
-            }
+            
             if (!string.IsNullOrEmpty(category))
             {
                 db.Parameters.Add("@category", category);
@@ -1206,6 +1205,7 @@ SELECT TOP (1000) [ProjectID]
                     ProjectID = row["ProjectID"].ToString(),
                     ProjectNameTw = row["ProjectNameTw"].ToString(),
                     OrgName = row["OrgName"].ToString(),
+                    Field_Descname = row["Descname"].ToString(),
                     // SupervisoryPersonName = row["SupervisoryPersonName"].ToString(),
                     // ApprovedSubsidy = row["ApprovedSubsidy"] != DBNull.Value ? row["ApprovedSubsidy"].ToString() : "0",
                     FinalReviewNotes = row["FinalReviewNotes"] != DBNull.Value ? row["FinalReviewNotes"].ToString() : "",

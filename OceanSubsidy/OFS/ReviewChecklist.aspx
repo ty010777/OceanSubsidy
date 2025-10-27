@@ -114,7 +114,7 @@
 	                   </div>
 	                   <div class="col-12 col-lg-5">
 	                       <div class="fs-16 text-gray mb-2">狀態</div>
-	                       <asp:DropDownList ID="ddlStage_Type1" runat="server" CssClass="form-select">
+	                       <asp:DropDownList ID="ddlStatus_Type1" runat="server" CssClass="form-select">
 	                       </asp:DropDownList>
 	                   </div>
 	               </div>
@@ -462,7 +462,7 @@
           <div class="bg-light-teal-100 mb-5 checkPlanBtnPanel checkPlanBtnPanel-type2" style="display: none;">
         	  <div class="p-3 d-flex justify-content-between align-items-start gap-3 flex-wrap">
         		  <div class="d-flex gap-3 flex-wrap">
-        			  <button class="btn btn-royal-blue" type="button" onclick="handleSendReviewComments()"><i class="fa-solid fa-check"></i>提送審查意見至申請者</button>
+        			  <button class="btn btn-royal-blue" type="button" onclick="handleSendReviewComments()"><i class="fa-solid fa-check"></i>審查意見 提送至申請者</button>
         			  <button class="btn btn-teal" type="button" onclick="handleBatchApproval('轉入下一階段')"><i class="fa-solid fa-check"></i>批次通過，轉入下一階段</button>
         			  <button class="btn btn-teal" type="button" onclick="handleBatchApproval('進入決審')"><i class="fa-solid fa-check"></i>批次通過，進入決審</button>
         			  <button class="btn btn-pink" type="button" onclick="handleBatchReject('批次不通過')"><i class="fa-solid fa-xmark"></i>批次不通過</button>
@@ -767,7 +767,7 @@
                         <img src="<%= ResolveUrl("~/assets/img/title-icon02-teal.svg") %>" alt="logo">
         			  <span>列表</span>
         		  </h4>
-        		  <span>共 <span class="text-teal">3</span> 筆資料</span>
+        		  <span>共 <span class="text-teal" id="total-count-type4">0</span> 筆資料</span>
 
         		  <button class="btn btn-sm btn-teal-dark mb-0" type="button" onclick="handleType4ApprovalSave()">
         			  <i class="fas fa-check"></i>
@@ -1266,14 +1266,14 @@
                     <div class="search bg-light-teal-100 rounded-3 mb-4">
                         <div class="search-form">
                             <div class="row g-3">
-                                <div class="col-12 col-md-3">
+                                <div class="col-12 col-md-4">
                                     <div class="fs-16 text-gray mb-2">年度</div>
                                     <select id="sortingYear" class="form-select">
                                         <option value="113">113年</option>
                                         <option value="114">114年</option>
                                     </select>
                                 </div>
-                                <div class="col-12 col-md-3">
+                                <div class="col-12 col-md-4">
                                     <div class="fs-16 text-gray mb-2">類別</div>
                                     <select id="sortingCategory" class="form-select" >
                                         <option value="SCI">科專</option>
@@ -1285,12 +1285,7 @@
                                         <option value="ACC">無障礙</option>
                                     </select>
                                 </div>
-                                <div class="col-12 col-md-3">
-                                    <div class="fs-16 text-gray mb-2">審查組別</div>
-                                    <select id="sortingReviewGroup" class="form-select">
-                                    </select>
-                                </div>
-                                <div class="col-12 col-md-3 d-flex align-items-end">
+                                <div class="col-12 col-md-4 d-flex align-items-end">
                                     <button id="btnSearchSorting" class="btn btn-teal-dark w-100" type="button" onclick="ReviewChecklist.searchSortingMode()">
                                         <i class="fas fa-search me-1"></i>查詢
                                     </button>
@@ -1322,6 +1317,7 @@
                                         <th width="120">計畫編號</th>
                                         <th width="200">計畫名稱</th>
                                         <th>申請單位</th>
+                                        <th width="120">審查組別</th>
                                         <th width="80">總分</th>
                                         <th width="200">備註</th>
                                         <th width="100">功能</th>

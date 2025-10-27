@@ -120,35 +120,6 @@ function initializeAllDatePickers() {
         .on('apply.daterangepicker', handleDateSelection);
 }
 
-// 使用 moment-taiwan 套件的輔助函數
-// function formatTaiwanDate(gregorianDateString) {
-//     if (!gregorianDateString) return '';
-//     try {
-//         const momentObj = moment(gregorianDateString);
-//         if (momentObj.isValid()) {
-//             return momentObj.format('tYY/MM/DD');
-//         }
-//         return gregorianDateString;
-//     } catch (error) {
-//         console.error('轉換民國年格式失敗:', error);
-//         return gregorianDateString;
-//     }
-// }
-
-// function formatGregorianDate(taiwanDateString) {
-//     if (!taiwanDateString) return '';
-//     try {
-//         const momentObj = moment(taiwanDateString, 'tYY/MM/DD');
-//         if (momentObj.isValid()) {
-//             return momentObj.format('YYYY/MM/DD');
-//         }
-//         return taiwanDateString;
-//     } catch (error) {
-//         console.error('轉換西元年格式失敗:', error);
-//         return taiwanDateString;
-//     }
-// }
-
 
 // 收集所有表單資料並填入隱藏欄位
 function collectAllFormData() {
@@ -453,8 +424,8 @@ function P_addNewRow() {
         <td><input type="text" id="personName${rowCount}" class="form-control" placeholder="請輸入姓名"></td>
         <td class="text-center"><input type="checkbox" id="stay${rowCount}" class="form-check-input check-teal" /></td>
         <td></td>
-        <td><input type="text" class="form-control text-end" id="personSalary${rowCount}" value="0" onblur="checkSalaryLimit(${rowCount}); calculateAndUpdateTotal()"></td>
-        <td><input type="text" class="form-control text-end" id="personMonths${rowCount}" value="0" onblur="calculateAndUpdateTotal()"></td>
+        <td><input  class="form-control text-end" id="personSalary${rowCount}" value="0" onkeypress="return event.charCode != 45" onblur="checkSalaryLimit(${rowCount}); calculateAndUpdateTotal()"></td>
+        <td><input  class="form-control text-end" id="personMonths${rowCount}" value="0" onkeypress="return event.charCode != 45" onblur="calculateAndUpdateTotal()"></td>
         <td class="text-end">0</td>
         <td>
             <button type="button" class="btn btn-sm btn-teal" onclick="P_deleteRow(this)"><i class="fas fa-trash-alt"></i></button>
@@ -563,8 +534,8 @@ function M_addNewRow() {
         <td><input type="text" id="MaterialName${rowCount}" class="form-control" placeholder="請輸入" /></td>
         <td><input type="text" id="MaterialDescription${rowCount}" class="form-control" placeholder="請輸入" /></td>
         <td></td>
-        <td><input type="text" id="MaterialNum${rowCount}" class="form-control text-end" placeholder="請輸入" onblur="calculateMaterial()" /></td>
-        <td><input type="text" id="MaterialUnitPrice${rowCount}" class="form-control text-end" placeholder="請輸入" onblur="checkMaterialLimit(${rowCount});calculateMaterial()" /></td>
+        <td><input id="MaterialNum${rowCount}" class="form-control text-end" placeholder="請輸入" onkeypress="return event.charCode != 45" onblur="calculateMaterial()" /></td>
+        <td><input id="MaterialUnitPrice${rowCount}" class="form-control text-end" placeholder="請輸入" onkeypress="return event.charCode != 45" onblur="checkMaterialLimit(${rowCount});calculateMaterial()" /></td>
         <td class="text-end">0</td>
         <td>
             <button type="button" class="btn btn-sm btn-teal" onclick="M_deleteRow(this)"><i class="fas fa-trash-alt"></i></button>
@@ -644,9 +615,9 @@ function T_addRow() {
     newRow.innerHTML = `
         <td><input type="text" ID="travelReason${rowCount}" class="form-control" /></td>
         <td><input type="text" ID="travelArea${rowCount}" class="form-control" /></td>
-        <td><input type="text" ID="travelDays${rowCount}" class="form-control days" /></td>
-        <td><input type="text" ID="travelPeople${rowCount}" class="form-control people" /></td>
-        <td><input type="text" ID="travelPrice${rowCount}" class="form-control text-end price" onblur="calculateTravel()" /></td>
+        <td><input  ID="travelDays${rowCount}" class="form-control days" onkeypress="return event.charCode != 45" /></td>
+        <td><input  ID="travelPeople${rowCount}" class="form-control people" onkeypress="return event.charCode != 45" /></td>
+        <td><input  ID="travelPrice${rowCount}" class="form-control text-end price" onkeypress="return event.charCode != 45" onblur="calculateTravel()" /></td>
         <td>
             <button type="button" class="btn btn-sm btn-teal" onclick="T_DeleteRow(this)"><i class="fas fa-trash-alt"></i></button>
             <button type="button" class="btn btn-sm btn-teal" onclick="T_addRow()"><i class="fas fa-plus"></i></button>
@@ -786,9 +757,9 @@ function O_addRow() {
     const newRow = document.createElement('tr');
     newRow.innerHTML = `
         <td></td>
-        <td><input type="text" ID="otherAvgSalary${rowCount}" class="form-control text-end" onblur="calculateOther()"/></td>
-        <td><input type="text" ID="otherMonth${rowCount}" class="form-control text-end" onblur="calculateOther()" /> </td>
-        <td><input type="text" ID="otherPeople${rowCount}" class="form-control text-end" onblur="calculateOther()" /></td>
+        <td><input ID="otherAvgSalary${rowCount}" class="form-control text-end" onkeypress="return event.charCode != 45" onblur="calculateOther()"/></td>
+        <td><input ID="otherMonth${rowCount}" class="form-control text-end" onkeypress="return event.charCode != 45" onblur="calculateOther()" /> </td>
+        <td><input ID="otherPeople${rowCount}" class="form-control text-end" onkeypress="return event.charCode != 45" onblur="calculateOther()" /></td>
         <td class="text-end">0</td>
         <td>
             <button type="button" class="btn btn-sm btn-teal" onclick="O_DeleteRow(this)"><i class="fas fa-trash-alt"></i></button>
@@ -869,12 +840,12 @@ function updateGrandTotals() {
     let totalA = 0;
     let totalB = 0;
     let totalC = 0;
-    
+
     $('.main-table tbody tr:not(.total-row):not(.percentage-row)').each(function() {
         const $amountACell = $(this).find('.amount-a');
         const $amountBCell = $(this).find('.amount-b');
         const $totalCell = $(this).find('.amount-total');
-        
+
         if ($amountACell.length && $amountBCell.length && $totalCell.length) {
             let amountA = 0;
             const $amountAInput = $amountACell.find('input');
@@ -883,22 +854,33 @@ function updateGrandTotals() {
             } else {
                 amountA = parseFloat($amountACell.text().replace(/,/g, '') || '0');
             }
-            
+
             const $amountBInput = $amountBCell.find('input');
             const amountB = parseFloat($amountBInput.val().replace(/,/g, '') || '0');
             const amountC = parseFloat($totalCell.text().replace(/,/g, '') || '0');
-            
+
             totalA += amountA;
             totalB += amountB;
             totalC += amountC;
         }
     });
-    
+
     $('.main-table tbody tr').each(function() {
         if ($(this).text().includes('經費總計')) {
             const $cells = $(this).find('.number-cell');
             if ($cells.length >= 3) {
-                $cells.eq(0).html(`${totalA.toLocaleString()}<br>(I)`);
+                // 檢查補助款是否超過上限
+                // grantLimit 單位：萬元，需要 * 10000 轉為元
+                const grantLimit = window.grantLimitSettings ? window.grantLimitSettings.grantLimit : 0;
+                const grantLimitInYuan = grantLimit * 10000; // 轉換為元
+
+                // 判斷是否超過上限，決定顏色
+                if (grantLimitInYuan > 0 && totalA > grantLimitInYuan) {
+                    $cells.eq(0).html(`<span style="color: red;">${totalA.toLocaleString()}</span><br>(I)`);
+                } else {
+                    $cells.eq(0).html(`${totalA.toLocaleString()}<br>(I)`);
+                }
+
                 $cells.eq(1).text(totalB.toLocaleString());
                 $cells.eq(2).html(`${totalC.toLocaleString()}<br>(II)`);
             }
@@ -1393,5 +1375,94 @@ function handleAdminFeeVisibility() {
         }
     } catch (error) {
         console.error('處理行政管理費顯示狀態時發生錯誤:', error);
+    }
+}
+
+// 處理「完成本頁，下一步」按鈕點擊
+function handleSaveAndNextClick() {
+    try {
+        // 先收集表單資料
+        collectAllFormData();
+        if (typeof syncAllChangeDescriptions === 'function') {
+            syncAllChangeDescriptions();
+        }
+
+        // 取得補助款總計 (I) 和配合款比例
+        const allRows = document.querySelectorAll('.main-table tbody tr');
+        let totalRow = null;
+        let percentageRow = null;
+
+        allRows.forEach(row => {
+            if (row.textContent.includes('經費總計')) {
+                totalRow = row;
+            }
+            if (row.textContent.includes('百分比')) {
+                percentageRow = row;
+            }
+        });
+
+        if (!totalRow || !percentageRow) {
+            return true; // 找不到資料，直接提交
+        }
+
+        // 取得補助款總計 (I)
+        const totalCells = totalRow.querySelectorAll('.number-cell');
+        const totalIText = totalCells[0]?.textContent || '';
+        const totalI = parseFloat(totalIText.replace(/,/g, '').replace(/\(I\)/g, '').replace(/<br>/g, '').replace(/<[^>]*>/g, '').replace(/\s/g, '') || '0');
+
+        // 取得配合款百分比
+        const percentageCells = percentageRow.querySelectorAll('.number-cell');
+        const coopPercentage = parseFloat(percentageCells[1]?.textContent?.replace(/%/g, '') || '0');
+
+        // 取得設定值
+        const grantLimit = window.grantLimitSettings ? window.grantLimitSettings.grantLimit : 0;
+        const matchingFund = window.grantLimitSettings ? window.grantLimitSettings.matchingFund : 0;
+        const grantLimitInYuan = grantLimit * 10000; // 轉換為元
+
+        let warningMessages = [];
+
+        // 檢查 1: 補助款是否超過上限
+        if (grantLimitInYuan > 0 && totalI > grantLimitInYuan) {
+            warningMessages.push(`總補助款以不超過${grantLimit}萬元為原則。`);
+        }
+
+        // 檢查 2: 配合款比例是否未達標準
+        if (matchingFund > 0 && coopPercentage < matchingFund) {
+            warningMessages.push(`配合款比例未達標準（應高於 ${matchingFund}%）。`);
+        }
+
+        // 組合訊息
+        let message = '';
+        if (warningMessages.length > 0) {
+            message = warningMessages.join('\n') + '\n\n是否提交下一步？';
+        } else {
+            message = '是否提交下一步？';
+        }
+
+        // 顯示確認對話框
+        Swal.fire({
+            title: warningMessages.length > 0 ? '提醒' : '確認',
+            text: message,
+            icon: warningMessages.length > 0 ? 'warning' : 'question',
+            showCancelButton: true,
+            confirmButtonText: '確定送出',
+            cancelButtonText: '取消',
+            customClass: {
+                popup: 'animated fadeInDown'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // 使用者確認後，觸發隱藏按鈕來執行實際的 PostBack
+                const hiddenBtn = document.querySelector('[id*="tab3_btnSaveAndNextHidden"]');
+                if (hiddenBtn) {
+                    hiddenBtn.click();
+                }
+            }
+        });
+
+        return false; // 阻止預設的提交行為
+    } catch (error) {
+        console.error('處理送出驗證時發生錯誤:', error);
+        return true; // 發生錯誤時直接提交
     }
 }

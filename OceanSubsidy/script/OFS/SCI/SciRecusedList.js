@@ -320,23 +320,29 @@ function collectTechData() {
 function validateForm() {
     var isValid = true;
     var errorMessages = [];
-    
+
     // 驗證委員清單
     var committeeData = collectCommitteeData();
     var noAvoidanceChecked = isNoAvoidanceChecked();
-    
+
     if (committeeData.length === 0 && !noAvoidanceChecked) {
         errorMessages.push('請填寫建議迴避之審查委員清單或勾選「無需迴避之審查委員」');
         isValid = false;
     }
-    
-    // 驗證技術能力
-    var techData = collectTechData();
-    if (techData.length === 0) {
-        errorMessages.push('請填寫技術能力相關資料');
-        isValid = false;
+
+    // 取得 OrgCategory 判斷是否需要驗證技術能力
+    var orgCategory = window.existingData && window.existingData.orgCategory ? window.existingData.orgCategory : '';
+    var isOceanTech = orgCategory === 'OceanTech';
+
+    // 當 OrgCategory != "OceanTech" 時才驗證技術能力資料
+    if (!isOceanTech) {
+        var techData = collectTechData();
+        if (techData.length === 0) {
+            errorMessages.push('請填寫技術能力相關資料');
+            isValid = false;
+        }
     }
-    
+
     // 顯示錯誤訊息
     if (!isValid) {
         Swal.fire({

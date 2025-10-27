@@ -62,30 +62,6 @@
                             <asp:ListItem Text="114年" Value="114"></asp:ListItem>
                         </asp:DropDownList>
                     </div>
-                    <%-- <div class="col-12 col-lg-4"> --%>
-                    <%--     <div class="fs-16 text-gray mb-2">類別</div> --%>
-                    <%--     <asp:DropDownList ID="ddlCategory" runat="server" CssClass="form-select"> --%>
-                    <%--         <asp:ListItem Text="全部" Value=""></asp:ListItem> --%>
-                    <%--         <asp:ListItem Text="科專" Value="SCI"></asp:ListItem> --%>
-                    <%--         <asp:ListItem Text="文化" Value="CUL"></asp:ListItem> --%>
-                    <%--         <asp:ListItem Text="學校民間" Value="EDC"></asp:ListItem> --%>
-                    <%--         <asp:ListItem Text="學校社團" Value="CLB"></asp:ListItem> --%>
-                    <%--         <asp:ListItem Text="多元" Value="MUL"></asp:ListItem> --%>
-                    <%--         <asp:ListItem Text="素養" Value="LIT"></asp:ListItem> --%>
-                    <%--         <asp:ListItem Text="無障礙" Value="ACC"></asp:ListItem> --%>
-                    <%--     </asp:DropDownList> --%>
-                    <%-- </div> --%>
-                    <div class="col-12 col-lg-4">
-                        <div class="fs-16 text-gray mb-2">狀態</div>
-                        <asp:DropDownList ID="ddlStatus" runat="server" CssClass="form-select">
-                            <asp:ListItem Text="全部" Value=""></asp:ListItem>
-                            <asp:ListItem Text="審核中" Value="審核中"></asp:ListItem>
-                            <asp:ListItem Text="補正補件" Value="補正補件"></asp:ListItem>
-                            <asp:ListItem Text="逾期未補" Value="逾期未補"></asp:ListItem>
-                            <asp:ListItem Text="未通過" Value="未通過"></asp:ListItem>
-                            <asp:ListItem Text="通過" Value="通過"></asp:ListItem>
-                        </asp:DropDownList>
-                    </div>
                     <div class="col-12 col-lg-4">
                         <div class="fs-16 text-gray mb-2">階段</div>
                         <asp:DropDownList ID="ddlStage" runat="server" CssClass="form-select">
@@ -96,6 +72,17 @@
                             <asp:ListItem Text="技術審查" Value="技術審查"></asp:ListItem>
                             <asp:ListItem Text="決審核定" Value="決審核定"></asp:ListItem>
                             <asp:ListItem Text="計畫執行" Value="計畫執行"></asp:ListItem>
+                        </asp:DropDownList>
+                    </div>
+                    <div class="col-12 col-lg-4">
+                        <div class="fs-16 text-gray mb-2">狀態</div>
+                        <asp:DropDownList ID="ddlStatus" runat="server" CssClass="form-select">
+                            <asp:ListItem Text="全部" Value=""></asp:ListItem>
+                            <asp:ListItem Text="審核中" Value="審核中"></asp:ListItem>
+                            <asp:ListItem Text="補正補件" Value="補正補件"></asp:ListItem>
+                            <asp:ListItem Text="逾期未補" Value="逾期未補"></asp:ListItem>
+                            <asp:ListItem Text="未通過" Value="未通過"></asp:ListItem>
+                            <asp:ListItem Text="通過" Value="通過"></asp:ListItem>
                         </asp:DropDownList>
                     </div>
                 </div>

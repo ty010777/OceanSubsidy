@@ -33,19 +33,20 @@ public class OFS_SciDomainReviewHelper
         {
             // 科專資料查詢
             db.CommandText = @"SELECT TOP (1)
-                [ProjectID],
+                AM.[ProjectID],
                 [Year],
                 [SubsidyPlanType],
                 [ProjectNameTw] as ProjectName,
+                 PM.Statuses as Status,
                 (SELECT Descname
                  FROM Sys_ZgsCode
                  WHERE Code = AM.[Field]
                 ) as Field,
                 [OrgName],
-                [updated_at],
                 '科專' as ProjectCategory
             FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Application_Main] AM
-            WHERE ProjectID = @ProjectID";
+			LEFT JOIN OFS_SCI_Project_Main PM ON  AM.ProjectID = PM.ProjectID 
+            WHERE AM.ProjectID = @ProjectID";
         }
         else if (projectID.Contains("CUL"))
         {
@@ -55,6 +56,7 @@ public class OFS_SciDomainReviewHelper
                 [Year],
                 [SubsidyPlanType],
                 [ProjectName],
+                [Status],
                 (SELECT Descname
                  FROM Sys_ZgsCode
                  WHERE Code = CP.[Field] and CodeGroup = 'CULField'

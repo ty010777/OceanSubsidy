@@ -56,10 +56,10 @@
                         <select id="ddlPerson1" class="form-select"></select>
                     </td>
                     <td>
-                        <asp:TextBox ID="personSalary1" runat="server" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onblur="checkSalaryLimit(1); calculateAndUpdateTotal()" />
+                        <asp:TextBox ID="personSalary1" runat="server" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onkeypress="return event.charCode != 45" onblur="checkSalaryLimit(1); calculateAndUpdateTotal()" />
                     </td>
                     <td>
-                        <asp:TextBox ID="personMonths1" runat="server" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onblur="calculateAndUpdateTotal()" />
+                        <asp:TextBox ID="personMonths1" runat="server" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onkeypress="return event.charCode != 45" onblur="calculateAndUpdateTotal()" />
                     </td>
                     <td class="text-end">0</td>
                     <td>
@@ -116,10 +116,10 @@
                         <select id="MaterialUnit1" class="form-select"></select>
                     </td>
                     <td>
-                        <asp:TextBox ID="MaterialNum1" runat="server" ClientIDMode="Static" CssClass="form-control text-end" placeholder="請輸入" onblur="calculateMaterial()" />
+                        <asp:TextBox ID="MaterialNum1" runat="server" ClientIDMode="Static" CssClass="form-control text-end" placeholder="請輸入" onkeypress="return event.charCode != 45" onblur="calculateMaterial()" />
                     </td>
                     <td>
-                        <asp:TextBox ID="MaterialUnitPrice1" runat="server" ClientIDMode="Static" CssClass="form-control text-end" placeholder="請輸入" onblur="checkMaterialLimit(1);calculateMaterial()" />
+                        <asp:TextBox ID="MaterialUnitPrice1" runat="server" ClientIDMode="Static" CssClass="form-control text-end" placeholder="請輸入" onkeypress="return event.charCode != 45" onblur="checkMaterialLimit(1);calculateMaterial()" />
                     </td>
                     <td class="text-end">0</td>
                     <td>
@@ -186,7 +186,7 @@
                         <asp:TextBox ID="ResearchFeesPersonName1" runat="server" ClientIDMode="Static" CssClass="form-control" placeholder="請輸入" />
                     </td>
                     <td>
-                        <asp:TextBox ID="ResearchFeesPrice1" runat="server" ClientIDMode="Static" CssClass="form-control text-end money" placeholder="請輸入" onblur="calculateResearch()" />
+                        <asp:TextBox ID="ResearchFeesPrice1" runat="server" ClientIDMode="Static" CssClass="form-control text-end money" placeholder="請輸入" onkeypress="return event.charCode != 45" onblur="calculateResearch()" />
                     </td>
                 </tr>
                 <tr>
@@ -211,7 +211,7 @@
                         <asp:TextBox ID="ResearchFeesPersonName2" runat="server" ClientIDMode="Static" CssClass="form-control" placeholder="請輸入" />
                     </td>
                     <td>
-                        <asp:TextBox ID="ResearchFeesPrice2" runat="server" ClientIDMode="Static" CssClass="form-control text-end money" placeholder="請輸入" onblur="calculateResearch()" />
+                        <asp:TextBox ID="ResearchFeesPrice2" runat="server" ClientIDMode="Static" CssClass="form-control text-end money" placeholder="請輸入" onkeypress="return event.charCode != 45" onblur="calculateResearch()" />
                     </td>
                 </tr>
                 <tr class="total-row">
@@ -258,13 +258,13 @@
                         <asp:TextBox ID="travelArea1" runat="server" CssClass="form-control" />
                     </td>
                     <td>
-                        <asp:TextBox ID="travelDays1" runat="server" CssClass="form-control days" Text="0" />
+                        <asp:TextBox ID="travelDays1" runat="server" CssClass="form-control days" Text="0" onkeypress="return event.charCode != 45" />
                     </td>
                     <td>
-                        <asp:TextBox ID="travelPeople1" runat="server" CssClass="form-control people" Text="0" />
+                        <asp:TextBox ID="travelPeople1" runat="server" CssClass="form-control people" Text="0" onkeypress="return event.charCode != 45" />
                     </td>
                     <td width="220">
-                        <asp:TextBox ID="travelPrice1" runat="server" ClientIDMode="Static" CssClass="form-control text-end price" Text="0" onblur="calculateTravel()" />
+                        <asp:TextBox ID="travelPrice1" runat="server" ClientIDMode="Static" CssClass="form-control text-end price" Text="0" onkeypress="return event.charCode != 45" onblur="calculateTravel()" />
                     </td>
                     <td>
                         <button type="button" class="btn btn-sm btn-teal" onclick="T_addRow()">
@@ -316,13 +316,13 @@
                         <select id="otherJobTitle1" class="form-select"></select>
                     </td>
                     <td>
-                        <asp:TextBox ID="otherAvgSalary1" runat="server" ClientIDMode="Static" CssClass="form-control text-end" onblur="calculateOther()" />
+                        <asp:TextBox ID="otherAvgSalary1" runat="server" ClientIDMode="Static" CssClass="form-control text-end" onkeypress="return event.charCode != 45" onblur="calculateOther()" />
                     </td>
                     <td>
-                        <asp:TextBox ID="otherMonth1" runat="server" ClientIDMode="Static" CssClass="form-control text-end Month" Text="0" onblur="calculateOther()" />
+                        <asp:TextBox ID="otherMonth1" runat="server" ClientIDMode="Static" CssClass="form-control text-end Month" Text="0" onkeypress="return event.charCode != 45" onblur="calculateOther()" />
                     </td>
                     <td>
-                        <asp:TextBox ID="otherPeople1" runat="server" ClientIDMode="Static" CssClass="form-control text-end people" Text="0" onblur="calculateOther()" />
+                        <asp:TextBox ID="otherPeople1" runat="server" ClientIDMode="Static" CssClass="form-control text-end people" Text="0" onkeypress="return event.charCode != 45" onblur="calculateOther()" />
                     </td>
                     <td class="text-end">0</td>
                     <td>
@@ -351,7 +351,7 @@
                 <tr>
                     <td class="text-end align-middle">租金</td>
                     <td class="align-middle">
-                        <asp:TextBox ID="rentCash" runat="server" ClientIDMode="Static" CssClass="form-control text-end" placeholder="請輸入" onblur="calculateOtherRentTotal()" />
+                        <asp:TextBox ID="rentCash" runat="server" ClientIDMode="Static" CssClass="form-control text-end" placeholder="請輸入" onkeypress="return event.charCode != 45" onblur="calculateOtherRentTotal()" />
                     </td>
                     <td class="align-middle">
                         <asp:TextBox ID="rentDescription" runat="server" ClientIDMode="Static" CssClass="form-control" TextMode="MultiLine" Rows="3" placeholder="請輸入" />
@@ -411,7 +411,7 @@
                     <th class="text-nowrap">1.人事費</th>
                     <td class="number-cell amount-a">0</td>
                     <td class="number-cell amount-b">
-                        <asp:TextBox runat="server" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onblur="updateBudgetSummary()" />
+                        <asp:TextBox runat="server" ClientIDMode="Static" CssClass="form-control text-end" Text="0"  onkeypress="return event.charCode != 45" onblur="updateBudgetSummary()" />
                     </td>
                     <td class="number-cell amount-total">0</td>
                     <td class="number-cell">0%</td>
@@ -421,7 +421,7 @@
                     <th class="text-nowrap">2.消耗性器材及原材料費</th>
                     <td class="number-cell amount-a">0</td>
                     <td class="number-cell amount-b">
-                        <asp:TextBox runat="server" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onblur="updateBudgetSummary()" />
+                        <asp:TextBox runat="server" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onkeypress="return event.charCode != 45" onblur="updateBudgetSummary()" />
                     </td>
                     <td class="number-cell amount-total">0</td>
                     <td class="number-cell">0%</td>
@@ -431,7 +431,7 @@
                     <th class="text-nowrap">3.技術移轉、委託研究或驗證費</th>
                     <td class="number-cell amount-a">0</td>
                     <td class="number-cell amount-b">
-                        <asp:TextBox runat="server" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onblur="updateBudgetSummary()" />
+                        <asp:TextBox runat="server" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onkeypress="return event.charCode != 45" onblur="updateBudgetSummary()" />
                     </td>
                     <td class="number-cell amount-total">0</td>
                     <td class="number-cell">0%</td>
@@ -441,7 +441,7 @@
                     <th class="text-nowrap">4.國內差旅費</th>
                     <td class="number-cell amount-a">0</td>
                     <td class="number-cell amount-b">
-                        <asp:TextBox runat="server" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onblur="updateBudgetSummary()" />
+                        <asp:TextBox runat="server" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onkeypress="return event.charCode != 45" onblur="updateBudgetSummary()" />
                     </td>
                     <td class="number-cell amount-total">0</td>
                     <td class="number-cell">0%</td>
@@ -451,7 +451,7 @@
                     <th class="text-nowrap">5.其他業務費</th>
                     <td class="number-cell amount-a">0</td>
                     <td class="number-cell amount-b">
-                        <asp:TextBox runat="server" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onblur="updateBudgetSummary()" />
+                        <asp:TextBox runat="server" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onkeypress="return event.charCode != 45" onblur="updateBudgetSummary()" />
                     </td>
                     <td class="number-cell amount-total">0</td>
                     <td class="number-cell">0%</td>
@@ -460,10 +460,10 @@
                 <tr>
                     <th class="text-nowrap">6.行政管理費</th>
                     <td class="number-cell amount-a">
-                        <asp:TextBox runat="server" ID="AdminFeeSubsidy" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onblur="updateBudgetSummary()" />
+                        <asp:TextBox runat="server" ID="AdminFeeSubsidy" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onkeypress="return event.charCode != 45" onblur="updateBudgetSummary()" />
                     </td>
                     <td class="number-cell amount-b">
-                        <asp:TextBox runat="server" ID="AdminFeeCoop" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onblur="updateBudgetSummary()" />
+                        <asp:TextBox runat="server" ID="AdminFeeCoop" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onkeypress="return event.charCode != 45" onblur="updateBudgetSummary()" />
                     </td>
                     <td class="number-cell amount-total">0</td>
                     <td class="number-cell">0%</td>
@@ -487,7 +487,7 @@
                 </tr>
                 </tbody>
             </table>
-        </div>
+        </div> 
         <ul class="list-unstyled lh-base">
             <li>1.請依海洋科技專案計畫會計科目編列與執行原則編列。</li>
             <li>2.經費撥付方式見契約第5條。</li>
@@ -511,6 +511,12 @@
         <asp:Button ID="tab3_btnSaveAndNext" runat="server"
             Text="完成本頁，下一步"
             CssClass="btn btn-teal"
+            OnClientClick="return handleSaveAndNextClick();"
+            OnClick="btnSaveAndNext_Click" />
+        <!-- 隱藏按鈕：用於驗證通過後實際執行 PostBack -->
+        <asp:Button ID="tab3_btnSaveAndNextHidden" runat="server"
+            Text="完成本頁，下一步"
+            CssClass="d-none"
             OnClientClick="collectAllFormData(); if (typeof syncAllChangeDescriptions === 'function') { syncAllChangeDescriptions(); } return true;"
             OnClick="btnSaveAndNext_Click" />
     </div>

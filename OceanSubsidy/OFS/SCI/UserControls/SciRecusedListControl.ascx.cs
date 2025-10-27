@@ -173,6 +173,15 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
 
         try
         {
+            // 取得 OrgCategory 判斷是否需要驗證技術能力
+            string orgCategory = "";
+            if (!string.IsNullOrEmpty(ProjectID))
+            {
+                var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(ProjectID);
+                orgCategory = applicationMain?.OrgCategory ?? "";
+            }
+            bool isOceanTech = orgCategory == "OceanTech";
+
             // 取得表單資料
             var committeeData = GetCommitteeDataFromForm();
 
@@ -203,21 +212,25 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
                 }
             }
 
-            // 驗證技術能力資料
-            var techData = GetTechDataFromForm();
-            if (techData.Count == 0)
+            // 當 OrgCategory != "OceanTech" 時才驗證技術能力資料
+            if (!isOceanTech)
             {
-                result.AddError("請至少填寫一筆技術能力資料");
-            }
-            foreach (var item in techData)
-            {
-                if (string.IsNullOrWhiteSpace(item.Name) ||
-                    string.IsNullOrWhiteSpace(item.Bef_TRLevel) ||
-                    string.IsNullOrWhiteSpace(item.Aft_TRLevel) ||
-                    string.IsNullOrWhiteSpace(item.Description))
+                // 驗證技術能力資料
+                var techData = GetTechDataFromForm();
+                if (techData.Count == 0)
                 {
-                    result.AddError("技術能力資料中有必填欄位未填寫");
-                    break;
+                    result.AddError("請至少填寫一筆技術能力資料");
+                }
+                foreach (var item in techData)
+                {
+                    if (string.IsNullOrWhiteSpace(item.Name) ||
+                        string.IsNullOrWhiteSpace(item.Bef_TRLevel) ||
+                        string.IsNullOrWhiteSpace(item.Aft_TRLevel) ||
+                        string.IsNullOrWhiteSpace(item.Description))
+                    {
+                        result.AddError("技術能力資料中有必填欄位未填寫");
+                        break;
+                    }
                 }
             }
 
@@ -318,7 +331,11 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
 
             // 載入 IsRecused 狀態
             bool isRecused = OFS_SciRecusedList.GetIsRecusedByProjectID(projectID);
-            
+
+            // 取得 OrgCategory
+            var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
+            string orgCategory = applicationMain?.OrgCategory ?? "";
+
             // 設定 checkbox 狀態
             chkNoAvoidance.Checked = isRecused;
 
@@ -327,29 +344,33 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
             {
                 recusedData = recusedData,
                 techData = techData,
-                isRecused = isRecused
+                isRecused = isRecused,
+                orgCategory = orgCategory
             };
 
             var dataJson = new JavaScriptSerializer().Serialize(dataToSend);
-            
+
             string script = $@"
                 window.existingData = {dataJson};
-                
+
                 // 延遲載入資料，確保 JavaScript 已初始化
                 setTimeout(function() {{
                     if (typeof loadExistingData === 'function') {{
                         loadExistingData();
                         console.log('已載入現有資料：', window.existingData);
-                        
+
                         // 如果 IsRecused 為 true，需要鎖定委員表格
                         if (window.existingData.isRecused && typeof clearAndLockCommitteeTable === 'function') {{
                             const $tbody = $('#committeeTableBody');
                             clearAndLockCommitteeTable($tbody);
                             console.log('已鎖定委員表格，因為 IsRecused 為 true');
                         }}
-                    }} else {{
-                        console.log('loadExistingData 函數未找到');
-                    }}
+
+                        // 如果 OrgCategory 是 OceanTech，隱藏技術能力表格
+                        if (window.existingData.orgCategory === 'OceanTech') {{
+                            $('#techTable').addClass('d-none');
+                        }}
+                    }} 
                 }}, 200);
             ";
 

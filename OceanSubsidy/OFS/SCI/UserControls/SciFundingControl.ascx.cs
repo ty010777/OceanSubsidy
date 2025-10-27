@@ -57,6 +57,12 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             }
 
             BindDropDown();
+
+            // 取得並傳遞補助款上限和配合款比例到前端
+            if (!string.IsNullOrEmpty(ProjectID))
+            {
+                LoadGrantLimitAndMatchingFund(ProjectID);
+            }
         }
         catch (Exception ex)
         {
@@ -310,23 +316,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                         break;
                     }
 
-                    if (other.avgSalary <= 0)
-                    {
-                        result.AddError("其他業務費：請輸入有效的平均月薪");
-                        break;
-                    }
-
-                    if (other.months <= 0)
-                    {
-                        result.AddError("其他業務費：請輸入有效的參與人月");
-                        break;
-                    }
-
-                    if (other.people <= 0)
-                    {
-                        result.AddError("其他業務費：請輸入有效的參與人數");
-                        break;
-                    }
+                    
                 }
             }
 
@@ -425,6 +415,63 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
         hdnOtherData.Value = "[]";
         hdnOtherRentData.Value = "[]";
         hdnTotalFeesData.Value = "[]";
+    }
+
+    /// <summary>
+    /// 取得並傳遞補助款上限和配合款比例到前端
+    /// </summary>
+    private void LoadGrantLimitAndMatchingFund(string projectID)
+    {
+        try
+        {
+            // 取得 OrgCategory
+            var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
+            if (applicationMain == null) return;
+
+            string orgCategory = applicationMain.OrgCategory ?? "";
+
+            // 根據 OrgCategory 決定 TargetTypeID
+            string targetTypeID = "";
+            switch (orgCategory)
+            {
+                case "Academic":
+                    targetTypeID = "SCI1";
+                    break;
+                case "Legal":
+                    targetTypeID = "SCI2";
+                    break;
+                case "OceanTech":
+                    targetTypeID = "SCI3";
+                    break;
+                default:
+                    return; // 無法判斷，不傳遞資料
+            }
+
+            // 取得補助款上限和配合款比例
+            var grantTargetSetting = OFSGrantTargetSettingHelper.getByTargetTypeID(targetTypeID);
+            if (grantTargetSetting == null) return;
+
+            decimal grantLimit = grantTargetSetting.GrantLimit ?? 0;
+            decimal matchingFund = grantTargetSetting.MatchingFund ?? 0;
+
+            // 將資料傳遞到前端 JavaScript
+            StringBuilder jsBuilder = new StringBuilder();
+            jsBuilder.AppendLine("window.grantLimitSettings = {");
+            jsBuilder.AppendLine($"    grantLimit: {grantLimit},"); // 單位：萬元
+            jsBuilder.AppendLine($"    matchingFund: {matchingFund}"); // 單位：百分比
+            jsBuilder.AppendLine("};");
+
+            Page.ClientScript.RegisterStartupScript(
+                this.GetType(),
+                "GrantLimitSettings",
+                jsBuilder.ToString(),
+                true
+            );
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "取得補助款上限和配合款比例時發生錯誤");
+        }
     }
 
     /// <summary>

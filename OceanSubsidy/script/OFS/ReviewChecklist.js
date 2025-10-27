@@ -1343,7 +1343,6 @@ window.ReviewChecklist = (function() {
         console.log('searchSortingMode 被呼叫');
         const year = $('#sortingYear').val();
         const category = $('#sortingCategory').val();
-        const reviewGroup = $('#sortingReviewGroup').val();
 
         // 顯示載入狀態
         showSortingLoading(true);
@@ -1353,8 +1352,7 @@ window.ReviewChecklist = (function() {
             url: "ReviewChecklist.aspx/SearchSortingMode",
             data: JSON.stringify({
                 year: year,
-                category: category,
-                reviewGroupCode: reviewGroup
+                category: category
             }),
             contentType: "application/json; charset=utf-8",
             dataType: "json"
@@ -1391,7 +1389,7 @@ window.ReviewChecklist = (function() {
         tableBody.empty();
 
         if (!data || data.length === 0) {
-            tableBody.append('<tr><td colspan="7" class="text-center">無資料</td></tr>');
+            tableBody.append('<tr><td colspan="8" class="text-center">無資料</td></tr>');
             return;
         }
 
@@ -1404,6 +1402,7 @@ window.ReviewChecklist = (function() {
                         <a href="#" class="link-black" target="_blank">${item.ProjectNameTw || ''}</a>
                     </td>
                     <td data-th="申請單位:" class="text-start">${item.OrgName || ''}</td>
+                    <td data-th="審查組別:">${item.Field_Descname || ''}</td>
                     <td data-th="總分:" nowrap>${item.TotalScore || '0'}</td>
                     <td data-th="備註:">
                         <input type="text" class="form-control sorting-notes"
@@ -2173,23 +2172,16 @@ function initializeReviewChecklistPage() {
     // 排序模式 Modal 開啟事件
     $('#sortModeModal').on('shown.bs.modal', function() {
         // 根據主要頁面的選項設定排序模式的預設值
-        if (window.ReviewChecklist && window.ReviewChecklist.updateSortingReviewGroup) {
-            // 設定預設年度
-            var mainYear = $('#ddlYear_Type4').val() ;
+        // 設定預設年度
+        var mainYear = $('#ddlYear_Type4').val();
+        if (mainYear) {
             $('#sortingYear').val(mainYear);
+        }
 
-            // 設定預設類別
-            var mainCategory = $('#ddlCategory_Type4').val() ;
+        // 設定預設類別
+        var mainCategory = $('#ddlCategory_Type4').val();
+        if (mainCategory) {
             $('#sortingCategory').val(mainCategory);
-
-            // 根據類別更新審查組別選項
-            window.ReviewChecklist.updateSortingReviewGroup(mainCategory);
-
-            // 延遲設定審查組別的預設值，等待選項載入完成
-            setTimeout(function() {
-                var mainReviewGroup = $('#ddlReviewGroup_Type4').val() || '';
-                $('#sortingReviewGroup').val(mainReviewGroup);
-            }, 500);
         }
 
         if (window.ReviewChecklist && window.ReviewChecklist.initSortingModal) {
@@ -2442,7 +2434,7 @@ function updateModalReviewTable(reviewComments) {
         // 顯示尚未回覆意見
         $tableBody.append(`
             <tr>
-                <td colspan="4" class="text-center text-muted">尚未回覆意見</td>
+                <td colspan="4" class="text-center text-muted">尚未提送審查意見</td>
             </tr>
         `);
         return;
@@ -3436,6 +3428,9 @@ function performType4Search() {
                     const count = result.data ? result.data.length : 0;
                     window.ReviewChecklist.updateTypeButtonCount(4, count);
 
+                    // 更新列表筆數顯示
+                    $('#total-count-type4').text(count);
+
                     // 顯示成功訊息
                     console.log(`Type4 搜尋成功: ${result.count} 筆資料`);
                 } else {
@@ -3849,7 +3844,7 @@ function exportType1ReviewingData() {
         // 取得當前的篩選條件
         const year = $('select[name$="ddlYear_Type1"]').val() || '';
         const category = $('select[name$="ddlCategory_Type1"]').val() || '';
-        const status = $('select[name$="ddlStage_Type1"]').val() || '';
+        const status = $('select[name$="ddlStatus_Type1"]').val() || '';
         const orgName = $('select[name$="ddlOrg_Type1"]').val() || '';
         const supervisor = $('select[name$="ddlSupervisor_Type1"]').val() || '';
         const keyword = $('input[name="txtKeyword_Type1"]').val() || '';

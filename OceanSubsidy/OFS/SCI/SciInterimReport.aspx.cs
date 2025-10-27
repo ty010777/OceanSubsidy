@@ -485,7 +485,9 @@ public partial class OFS_SCI_SciInterimReport : System.Web.UI.Page
             
             // 呼叫 Helper 方法處理審查委員資料
             OFS_SciInterimReportHelper.SubmitReviewers(projectID, stage, reviewers);
-            
+            // var ProjectData = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
+            // string EmailList = string.Join(",", reviewers.Select(r => r.email));
+            // NotificationHelper.J1(ProjectData.ProjectNameTw, stageName, EmailList);
             return new { Success = true, Message = $"{stageName}審查委員提送成功，共 {reviewers.Count} 位" };
         }
         catch (Exception ex)

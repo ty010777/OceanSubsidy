@@ -297,10 +297,10 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
 
             // 載入階段狀態選項
             var stageOptions = ReviewCheckListHelper.GetReviewStageStatusOptions();
-            ddlStage_Type1.DataSource = stageOptions;
-            ddlStage_Type1.DataTextField = "Text";
-            ddlStage_Type1.DataValueField = "Value";
-            ddlStage_Type1.DataBind();
+            ddlStatus_Type1.DataSource = stageOptions;
+            ddlStatus_Type1.DataTextField = "Text";
+            ddlStatus_Type1.DataValueField = "Value";
+            ddlStatus_Type1.DataBind();
 
 
             // 載入申請單位選項
@@ -477,9 +477,11 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             ddlCategory_Type4.DataValueField = "Value";
             ddlCategory_Type4.DataBind();
 
-            // // 初始化審查組別選項 (預設載入科專的審查組別)
+            // // 初始化審查組別選項 (預設載入科專的審查組別，並加入「全部」選項)
             ddlReviewGroup_Type4.Items.Clear();
-            var reviewGroupOptions = ReviewCheckListHelper.GetSciReviewGroupOptions();
+            var reviewGroupOptions = new List<DropdownItem>();
+            reviewGroupOptions.Add(new DropdownItem { Text = "全部", Value = "" });
+            reviewGroupOptions.AddRange(ReviewCheckListHelper.GetSciReviewGroupOptions());
             ddlReviewGroup_Type4.DataSource = reviewGroupOptions;
             ddlReviewGroup_Type4.DataTextField = "Text";
             ddlReviewGroup_Type4.DataValueField = "Value";
@@ -694,17 +696,15 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
     /// </summary>
     /// <param name="year">年度</param>
     /// <param name="category">計畫類別</param>
-    /// <param name="reviewGroupCode">審查組別代碼</param>
     /// <returns>排序模式查詢結果</returns>
     [WebMethod]
-    public static string SearchSortingMode(string year, string category, string reviewGroupCode)
+    public static string SearchSortingMode(string year, string category)
     {
         try
         {
             List<SortingModeItem> results = ReviewCheckListHelper.Search_ForSorting(
                 year: year,
-                category: category,
-                reviewGroupCode: reviewGroupCode
+                category: category
             );
 
             return JsonConvert.SerializeObject(new {
@@ -1634,18 +1634,19 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
         {
             List<DropdownItem> options = new List<DropdownItem>();
 
+            // 先加入「全部」選項
+            options.Add(new DropdownItem { Text = "全部", Value = "" });
+
             // 如果是科專類別，取得科專審查組別選項
             if (category == "SCI")
             {
-                options = ReviewCheckListHelper.GetSciReviewGroupOptions();
-            }else if (category == "CUL")
-            {
-                options = ReviewCheckListHelper.GetCulReviewGroupOptions();
+                var sciOptions = ReviewCheckListHelper.GetSciReviewGroupOptions();
+                options.AddRange(sciOptions);
             }
-            else
+            else if (category == "CUL")
             {
-                // 其他類別只顯示「全部」
-                options.Add(new DropdownItem { Text = "全部", Value = "" });
+                var culOptions = ReviewCheckListHelper.GetCulReviewGroupOptions();
+                options.AddRange(culOptions);
             }
 
             return JsonConvert.SerializeObject(new {
@@ -2866,7 +2867,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
 
                 System.Diagnostics.Debug.WriteLine($"已發送 E32 通知給 {SuccessCount} 位申請者");
             }
-            else
+            else //資格審查-->領域審查
             {
                 int SuccessCount = 0;
 
@@ -2880,7 +2881,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                         int year = projectInfo.Year??0;
                         if (!string.IsNullOrEmpty(applicantEmail) && !string.IsNullOrEmpty(projectName))
                         {
-                            NotificationHelper.E31("科專", year, projectName, "技術審查", applicantEmail);
+                            NotificationHelper.E31("科專", year, projectName, "資格審查", applicantEmail);
                             SuccessCount++;
                         }
                     }

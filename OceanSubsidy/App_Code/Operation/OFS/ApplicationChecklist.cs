@@ -109,9 +109,10 @@ public class ApplicationChecklistHelper
         try
         {
             db.CommandText = @"
-                SELECT*
+                SELECT *
                 FROM OFS_GrantType
-                ORDER BY TypeID";
+                WHERE GETDATE() BETWEEN ApplyStartDate AND ApplyEndDate
+                ORDER BY TypeID;";
 
             DataTable dt = db.GetTable();
 

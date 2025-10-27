@@ -175,14 +175,14 @@
                         <th>計畫地點</th>
                         <td>
                             <asp:TextBox ID="txtPlanLocation" runat="server" CssClass="form-control" 
-                                       placeholder="請輸入計畫執行地點" MaxLength="200" style="width: 400px;" />
+                                       placeholder="請輸入計畫執行地點" MaxLength="200" style="width: 100%;" />
                         </td>
                     </tr>
                     <tr>
                         <th>參加對象及預估人數</th>
                         <td>
                             <asp:TextBox ID="txtEstimatedPeople" runat="server" CssClass="form-control" 
-                                       placeholder="請輸入預估參與人數" MaxLength="50" style="width: 200px;" />
+                                       placeholder="請輸入預估參與人數" MaxLength="200" style="width: 100%;" />
                         </td>
                     </tr>
                     <tr class="public-view">
@@ -211,13 +211,13 @@
                                     <div class="d-flex align-items-center">
                                         <label class="mb-0 fw-medium" style="white-space: nowrap; width: 140px;">申請海委會補助:</label>
                                         <asp:TextBox ID="txtSubsidyFunds" runat="server" CssClass="form-control text-end"
-                                                   placeholder="0" style="width: 150px;" TextMode="Number" />
+                                                   placeholder="0" style="width: 150px;" TextMode="Number" step="any"  min="0" onkeypress="return event.charCode != 45 && event.charCode != 46"/>
                                         <span class="ms-2">元</span>
                                     </div>
                                     <div class="d-flex align-items-center">
                                         <label class="mb-0" style="white-space: nowrap; width: 140px;">自籌款:</label>
                                         <asp:TextBox ID="txtSelfFunds" runat="server" CssClass="form-control text-end"
-                                                   placeholder="0" style="width: 150px;" TextMode="Number" />
+                                                   placeholder="0" style="width: 150px;" TextMode="Number" step="any"  min="0" onkeypress="return event.charCode != 45 && event.charCode != 46"/>
                                         <span class="ms-2">元</span>
                                     </div>
                                 </div>
@@ -227,13 +227,13 @@
                                     <div class="d-flex align-items-center">
                                         <label class="mb-0" style="white-space: nowrap; width: 140px;">其他政府補助:</label>
                                         <asp:TextBox ID="txtOtherGovFunds" runat="server" CssClass="form-control text-end"
-                                                   placeholder="0" style="width: 150px;" TextMode="Number" />
+                                                   placeholder="0" style="width: 150px;" TextMode="Number" step="any"  min="0" onkeypress="return event.charCode != 45  && event.charCode != 46"/>
                                         <span class="ms-2">元</span>
                                     </div>
                                     <div class="d-flex align-items-center">
                                         <label class="mb-0" style="white-space: nowrap; width: 140px;">其他單位補助:</label>
                                         <asp:TextBox ID="txtOtherUnitFunds" runat="server" CssClass="form-control text-end"
-                                                   placeholder="0" style="width: 150px;" TextMode="Number" />
+                                                   placeholder="0" style="width: 150px;" TextMode="Number" step="any"  min="0" onkeypress="return event.charCode != 45  && event.charCode != 46"/>
                                         <span class="ms-2">元</span>
                                     </div>
                                 </div>

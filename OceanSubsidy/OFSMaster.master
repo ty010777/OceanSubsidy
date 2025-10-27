@@ -373,12 +373,12 @@
                                       </button>
                                       <ul class="dropdown-menu">
                                           <li>
-                                              <a class="dropdown-menu-item" href="#" tabindex="0">
+                                              <a class="dropdown-menu-item d-none" href="#" tabindex="0">
                                                   <span>編輯個人資料</span>
                                               </a>
                                           </li>
                                           <li>
-                                              <a class="dropdown-menu-item" href="#" tabindex="0">
+                                              <a class="dropdown-menu-item d-none" href="#" tabindex="0">
                                                   <span>變更密碼</span>
                                               </a>
                                           </li>

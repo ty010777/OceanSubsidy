@@ -295,7 +295,7 @@ public class SCI_Download : IHttpHandler
         {
             // OceanTech 業者範本檔案對應
             case "FILE_OTech1":
-                return "~/Template/SCI/OTech/附件-01海洋委員會海洋科技專案補助作業要點.docx";
+                return "~/Template/SCI/OTech/附件-01海洋委員會海洋科技專案補助作業要點.pdf";
             case "FILE_OTech2":
                 return "~/Template/SCI/OTech/附件-02海洋科技科專案計畫書";
             case "FILE_OTech3":
@@ -307,19 +307,19 @@ public class SCI_Download : IHttpHandler
             case "FILE_OTech6":
                 return "~/Template/SCI/OTech/附件-06申請人自我檢查表.docx";
             case "FILE_OTech7":
-                return "~/Template/SCI/OTech/附件-07簽約注意事項.docx";
+                return "~/Template/SCI/OTech/附件-07簽約注意事項.pdf";
             case "FILE_OTech8":
                 return "~/Template/SCI/OTech/附件-08海洋科技業界科專計畫補助契約書.docx";
             case "FILE_OTech9":
-                return "~/Template/SCI/OTech/附件-09研究紀錄簿使用原則.docx";
+                return "~/Template/SCI/OTech/附件-09研究紀錄簿使用原則.pdf";
             case "FILE_OTech10":
-                return "~/Template/SCI/OTech/附件-10海洋科技專案計畫會計科目編列與執行原則.docx";
+                return "~/Template/SCI/OTech/附件-10海洋科技專案計畫會計科目編列與執行原則.pdf";
             case "FILE_OTech11":
                 return "~/Template/SCI/OTech/附件-11計畫書書脊（側邊）格式.docx";
 
             // Academic 學研範本檔案對應
             case "FILE_AC1":
-                return "~/Template/SCI/Academic/附件-01海洋委員會海洋科技專案補助作業要點.docx";
+                return "~/Template/SCI/Academic/附件-01海洋委員會海洋科技專案補助作業要點.pdf";
             case "FILE_AC2":
                 return "~/Template/SCI/Academic/附件-02海洋科技科專案計畫書";
             case "FILE_AC3":
@@ -333,15 +333,15 @@ public class SCI_Download : IHttpHandler
             case "FILE_AC7":
                 return "~/Template/SCI/Academic/附件-07申請人自我檢查表.docx";
             case "FILE_AC8":
-                return "~/Template/SCI/Academic/附件-08簽約注意事項.docx";
+                return "~/Template/SCI/Academic/附件-08簽約注意事項.pdf";
             case "FILE_AC9":
                 return "~/Template/SCI/Academic/附件-09海洋委員會補助科技專案計畫契約書.docx";
             case "FILE_AC10":
-                return "~/Template/SCI/Academic/附件-10海洋科技專案計畫會計科目編列與執行原則.docx";
+                return "~/Template/SCI/Academic/附件-10海洋科技專案計畫會計科目編列與執行原則.pdf";
             case "FILE_AC11":
                 return "~/Template/SCI/Academic/附件-11海洋科技專案成效追蹤自評表.docx";
             case "FILE_AC12":
-                return "~/Template/SCI/Academic/附件-12研究紀錄簿使用原則.docx";
+                return "~/Template/SCI/Academic/附件-12研究紀錄簿使用原則.pdf";
             case "FILE_AC13":
                 return "~/Template/SCI/Academic/附件-13計畫書書脊（側邊）格式.docx";
 

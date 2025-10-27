@@ -51,16 +51,33 @@ public partial class OFS_SCI_SciDomainReview : System.Web.UI.Page
     {
         // 使用 Helper 取得計畫資料
         DataRow projectData = OFS_SciDomainReviewHelper.GetProjectData(projectID);
-
+        
         if (projectData != null)
         {
+            string Status = "";
+            switch (projectData["Status"].ToString())
+            {
+                case "領域審查":
+                    Status = "領域審查";
+                    break;
+                case "技術審查":
+                    Status = "技術審查";
+                    break;
+                case "21":
+                    Status= "初審";
+                    break;
+                case "31":
+                    Status= "複審";
+                    break;
+            }
             lblProjectNumber.Text = projectData["ProjectID"].ToString();
             lblYear.Text = projectData["Year"].ToString();
             lblProjectCategory.Text = projectData["ProjectCategory"].ToString(); // 從資料庫讀取補助案類別
             lblReviewGroup.Text = projectData["Field"].ToString();
             lblProjectName.Text = projectData["ProjectName"].ToString();
             lblApplicantUnit.Text = projectData["OrgName"].ToString();
-            lblDocumentName.Text =  projectID + "_送審版_計畫書.pdf";
+            lblDocumentName.Text =  projectID + "_申請版_計畫書.pdf";
+            lblReviewStatusName.Text =Status;
         }
 
         // 初始化風險評估等其他資料
