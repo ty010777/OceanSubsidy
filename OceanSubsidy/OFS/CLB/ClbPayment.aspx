@@ -204,9 +204,9 @@
             <table class="table align-middle gray-table">
                 <thead>
                     <tr>
-                        <th width="120" class="text-center">本期請款金額</th>
-                        <th width="120" class="text-center">前期已撥付金額</th>
-                        <th width="120" class="text-center">累積實支金額</th>
+                        <th width="120" class="text-center">本期請款金額(元)</th>
+                        <th width="120" class="text-center">前期已撥付金額(元)</th>
+                        <th width="120" class="text-center">累積實支金額(元)</th>
                         <th width="120" class="text-center">累積經費執行率</th>
                         <th width="120" class="text-center">支用比</th>
                     </tr>
@@ -216,7 +216,7 @@
                         <td class="text-center" id="currentAmount">--</td>
                         <td class="text-center" id="previousAmount">0</td>
                         <td class="text-center" id="accumulatedAmountCell">
-                            <input type="number" id="accumulatedAmountInput" class="form-control text-center" placeholder="請輸入累積實支金額" min="0" step="1" style="width: 200px; margin: 0 auto;" value="0">
+                            <input type="number" id="accumulatedAmountInput" class="form-control text-center" placeholder="請輸入累積實支金額" min="0" step="1" oninput="this.value = this.value.replace(/[^0-9]/g, '')" onkeypress="return event.charCode >= 48 && event.charCode <= 57" style="width: 200px; margin: 0 auto;" value="0">
                         </td>
                         <td class="text-center" id="executionRate">--</td>
                         <td class="text-center" id="usageRatio">--</td>
@@ -232,8 +232,8 @@
                 <table class="table align-middle gray-table">
                     <thead>
                         <tr>
-                            <th width="200" class="text-center">本期實際撥款</th>
-                            <th width="200" class="text-center">累積實際撥款</th>
+                            <th width="200" class="text-center">本期實際撥款(元)</th>
+                            <th width="200" class="text-center">累積實際撥款(元)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -269,9 +269,9 @@
                     <!-- 本期 -->
                     <div class="d-flex gap-2">
                         <span class="text-gray">本期撥款 :</span>
-                        <input type="number" id="currentPayment" 
-                               class="form-control text-center text-teal fw-bold" 
-                               value="0" min="0" step="1" style="width: 120px;">
+                        <input type="number" id="currentPayment"
+                               class="form-control text-center text-teal fw-bold"
+                               value="0" min="0" step="1" oninput="this.value = this.value.replace(/[^0-9]/g, '')" onkeypress="return event.charCode >= 48 && event.charCode <= 57" style="width: 120px;">
                     </div>
     
     

@@ -19,7 +19,7 @@ public class ApplicationChecklistHelper
     {
        
     }
-    public static List<ReviewChecklistItem> GetLatestApplicationChecklist()
+    public static List<ReviewChecklistItem> GetLatestApplicationChecklist(string userAccount = "")
     {
         DbHelper db = new DbHelper();
         db.CommandText = @"
@@ -47,6 +47,14 @@ public class ApplicationChecklistHelper
         try
         {
             db.CommandText += "WHERE isExist = 1 ";
+
+            // 如果提供了 userAccount，則只查詢該使用者的案件
+            if (!string.IsNullOrEmpty(userAccount))
+            {
+                db.CommandText += "AND UserAccount = @UserAccount ";
+                db.Parameters.Add("@UserAccount", userAccount);
+            }
+
             DataTable dt = db.GetTable();
             List<ReviewChecklistItem> resultList = new List<ReviewChecklistItem>();
 

@@ -163,11 +163,11 @@ public partial class OFS_SCI_SciInterimReport : System.Web.UI.Page
                 return;
             }
             
-            // 驗證檔案大小 (100MB)
-            const int maxSize = 100 * 1024 * 1024;
+            // 驗證檔案大小 (500MB)
+            const int maxSize = 500 * 1024 * 1024;
             if (uploadedFile.ContentLength > maxSize)
             {
-                Response.Write("ERROR:檔案大小不可超過 100MB");
+                Response.Write("ERROR:檔案大小不可超過 500MB");
                 Response.End();
                 return;
             }
@@ -464,7 +464,7 @@ public partial class OFS_SCI_SciInterimReport : System.Web.UI.Page
             {
                 return new { Success = false, Message = "無法取得使用者資訊" };
             }
-            
+
             // 檢查使用者權限
             if (!CheckUserPermissionForReview(currentUser))
             {
@@ -482,13 +482,24 @@ public partial class OFS_SCI_SciInterimReport : System.Web.UI.Page
             }
 
             string stageName = stage == 1 ? "期中報告" : "期末報告";
-            
-            // 呼叫 Helper 方法處理審查委員資料
-            OFS_SciInterimReportHelper.SubmitReviewers(projectID, stage, reviewers);
-            // var ProjectData = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
-            // string EmailList = string.Join(",", reviewers.Select(r => r.email));
-            // NotificationHelper.J1(ProjectData.ProjectNameTw, stageName, EmailList);
-            return new { Success = true, Message = $"{stageName}審查委員提送成功，共 {reviewers.Count} 位" };
+
+            // 呼叫 Helper 方法處理審查委員資料並取得 URL 列表
+            var reviewerUrls = OFS_SciInterimReportHelper.SubmitReviewers(projectID, stage, reviewers);
+
+            // 取得專案資料
+            var projectData = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
+            if (projectData != null && reviewerUrls.Count > 0)
+            {
+                string projectName = projectData.ProjectNameTw;
+
+                // 為每位審查委員發送郵件
+                foreach (var reviewerUrl in reviewerUrls)
+                {
+                    NotificationHelper.J1(projectName, stageName, reviewerUrl.Url, reviewerUrl.Email);
+                }
+            }
+
+            return new { Success = true, Message = $"{stageName}審查委員提送成功，共 {reviewerUrls.Count} 位" };
         }
         catch (Exception ex)
         {

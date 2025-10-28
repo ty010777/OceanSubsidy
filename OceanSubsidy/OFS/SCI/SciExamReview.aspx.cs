@@ -62,10 +62,10 @@ public partial class OFS_SCI_SciExamReview : System.Web.UI.Page
             }
             
             // 新增：如果有Token，則使用Token進行初始化
-            if (!string.IsNullOrEmpty(Token))
-            {
-                LoadExamDataByToken(Token);
-            }
+            // if (!string.IsNullOrEmpty(Token))
+            // {
+            //     LoadExamDataByToken(Token);
+            // }
         }
     }
 
@@ -312,8 +312,8 @@ public partial class OFS_SCI_SciExamReview : System.Web.UI.Page
                     Year = examData["Year"].ToString(),
                     Field = examData["Field"].ToString(),
                     OrgName = examData["OrgName"].ToString(),
-                    Reviewer = examData["Reviewer"].ToString(),
-                    Account = examData["Account"]?.ToString() ?? "",
+                    Reviewer = examData["Committee"].ToString(),
+                    Account = examData["committeeAccount"]?.ToString() ?? "",
                     BankCode = examData["BankCode"]?.ToString() ?? "",
                     BankAccount = examData["BankAccount"]?.ToString() ?? "",
                     RegistrationAddress = examData["RegistrationAddress"]?.ToString() ?? "",
@@ -486,11 +486,40 @@ public partial class OFS_SCI_SciExamReview : System.Web.UI.Page
                 return new { Success = false, Message = "Token不可為空" };
             }
 
+            // 取得審查資料
+            DataRow examData = OFS_SciExamReviewHelper.GetExamDataByToken(token);
+
+            if (examData == null)
+            {
+                return new { Success = false, Message = "找不到對應的審查資料" };
+            }
+
             // 先儲存銀行資訊
             OFS_SciExamReviewHelper.UpdateReviewerBankInfo(token, bankCode, bankAccount, registrationAddress);
 
             // 再提交審查結果
             OFS_SciExamReviewHelper.SubmitReviewResult(token);
+
+            // 寄送通知信
+            string projectID = examData["ProjectID"].ToString();
+            string projectName = examData["ProjectName"].ToString();
+            string reviewerName = examData["Committee"].ToString();
+            int stage = Convert.ToInt32(examData["Stage"]);
+            string eventName = stage == 1 ? "期中報告審查" : "期末報告審查";
+
+            // 取得承辦人資訊
+            var projectMain = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
+
+            if (projectMain != null)
+            {
+                string supervisoryAccount = projectMain.SupervisoryPersonAccount;
+
+                // 根據承辦人帳號取得 UserID
+                int? organizer = SysUserHelper.GetUserIDByAccount(supervisoryAccount);
+
+                // 寄送通知信給主管單位
+                NotificationHelper.J2(projectID, projectName, reviewerName, eventName, organizer);
+            }
 
             return new { Success = true, Message = "審查結果提交成功" };
 

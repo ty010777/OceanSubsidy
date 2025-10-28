@@ -314,8 +314,8 @@ public class SystemService : BaseService
         return new {
             Data = new
             {
-                CommitteeUser = row["Reviewer"].ToString(),
-                Email = row["Account"].ToString(),
+                CommitteeUser = row["Committee"].ToString(),
+                Email = row["committeeAccount"].ToString(),
                 BankCode = row["BankCode"].ToString(),
                 BankAccount = row["BankAccount"].ToString(),
                 RegistrationAddress = row["RegistrationAddress"].ToString()

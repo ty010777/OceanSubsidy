@@ -446,8 +446,11 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
         /// <param name="projectID">專案ID</param>
         /// <param name="stage">階段</param>
         /// <param name="reviewers">審查委員清單</param>
-        public static void SubmitReviewers(string projectID, int stage, List<ReviewerData> reviewers)
+        /// <returns>審查委員 URL 資訊列表</returns>
+        public static List<ReviewerUrlInfo> SubmitReviewers(string projectID, int stage, List<ReviewerData> reviewers)
         {
+            var reviewerUrls = new List<ReviewerUrlInfo>();
+
             using (DbHelper db = new DbHelper())
             {
                 try
@@ -478,7 +481,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                     // db.Parameters.Add("@ExamID", examID);
                     // db.ExecuteNonQuery();
 
-                    // 3. 批次寫入新的審查委員記錄
+                    // 3. 批次寫入新的審查委員記錄並生成 URL
                     foreach (var reviewer in reviewers)
                     {
                         // 跳過姓名或Email為空的記錄
@@ -501,6 +504,19 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                         db.Parameters.Add("@token", token);
 
                         db.ExecuteNonQuery();
+
+                        // 生成審查 URL
+                        string url = System.Configuration.ConfigurationManager.AppSettings["Host"] +
+                                     System.Configuration.ConfigurationManager.AppSettings["AppRootPath"] +
+                                     $"/OFS/SCI/SciExamReview.aspx?ProjectID={projectID}&token={token}";
+
+                        // 添加到返回列表
+                        reviewerUrls.Add(new ReviewerUrlInfo
+                        {
+                            Email = reviewer.email,
+                            Name = reviewer.name,
+                            Url = url
+                        });
                     }
                 }
                 catch (Exception ex)
@@ -509,6 +525,8 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                     throw;
                 }
             }
+
+            return reviewerUrls;
         }
 
         /// <summary>
@@ -641,6 +659,16 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
             public string ReviewFilePath { get; set; }
             public string Reviewer { get; set; }
             public bool IsSubmit { get; set; }
+        }
+
+        /// <summary>
+        /// 審查委員 URL 資訊類別
+        /// </summary>
+        public class ReviewerUrlInfo
+        {
+            public string Email { get; set; }
+            public string Name { get; set; }
+            public string Url { get; set; }
         }
     }
 }

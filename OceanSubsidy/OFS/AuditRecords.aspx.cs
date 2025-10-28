@@ -354,6 +354,8 @@ public partial class OFS_AuditRecords : System.Web.UI.Page
 
             AuditRecordsHelper.InsertAuditRecord(ProjectID, auditorName, auditDate, risk, comment);
 
+            // 寄送通知信
+            SendAuditNotification(ProjectID);
 
             // 顯示成功訊息並延遲重新載入頁面
             string script = @"
@@ -376,8 +378,146 @@ public partial class OFS_AuditRecords : System.Web.UI.Page
         }
     }
 
+    /// <summary>
+    /// 寄送查核通知信
+    /// </summary>
+    /// <param name="projectID">計畫編號</param>
+    private void SendAuditNotification(string projectID)
+    {
+        try
+        {
+            string category = "";
+            string projectName = "";
+            string supervisoryAccount = "";
+            string applicantAccount = "";
+            int? organizer = null;
+
+            // 根據 ProjectID 判斷計畫類型並取得相關資訊
+            if (projectID.Contains("SCI"))
+            {
+                category = "科專";
+                var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
+                var projectMain = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
+
+                if (applicationMain != null)
+                {
+                    projectName = applicationMain.ProjectNameTw;
+                    applicantAccount = projectMain.UserAccount;
+                }
+
+                if (projectMain != null)
+                {
+                    supervisoryAccount = projectMain.SupervisoryPersonAccount;
+                    organizer = SysUserHelper.GetUserIDByAccount(supervisoryAccount);
+                }
+            }
+            else if (projectID.Contains("CLB"))
+            {
+                category = "社團";
+                var applicationBasic = OFS_ClbApplicationHelper.GetBasicData(projectID);
+                var projectMain = OFS_ClbApplicationHelper.GetProjectMainData(projectID);
+
+                if (applicationBasic != null)
+                {
+                    projectName = applicationBasic.ProjectNameTw;
+                    applicantAccount = projectMain.UserAccount;
+                }
+
+                if (projectMain != null)
+                {
+                    supervisoryAccount = projectMain.SupervisoryPersonAccount;
+                    organizer = SysUserHelper.GetUserIDByAccount(supervisoryAccount);
+                }
+            }
+            else if (projectID.Contains("CUL"))
+            {
+                category = "文化";
+                var ID = OFS_CulProjectHelper.getID(projectID);
+                var project = OFS_CulProjectHelper.get(ID);
+
+                if (project != null)
+                {
+                    projectName = project.ProjectName;
+                    applicantAccount = project.UserAccount;
+                    organizer = project.Organizer;
+                }
+            }
+            else if (projectID.Contains("EDC"))
+            {
+                category = "民間";
+                var ID = OFS_EdcProjectHelper.getID(projectID);
+                var project = OFS_EdcProjectHelper.get(ID);
+
+                if (project != null)
+                {
+                    projectName = project.ProjectName;
+                    applicantAccount = project.UserAccount;
+                    organizer = project.Organizer;
+                }
+            }
+            else if (projectID.Contains("MUL"))
+            {
+                category = "多元";
+                var ID = OFS_MulProjectHelper.getID(projectID);
+                var project = OFS_MulProjectHelper.get(ID);
+
+                if (project != null)
+                {
+                    projectName = project.ProjectName;
+                    applicantAccount = project.UserAccount;
+                    organizer = project.Organizer;
+                }
+            }
+            else if (projectID.Contains("LIT"))
+            {
+                category = "素養";
+                var ID = OFS_LitProjectHelper.getID(projectID);
+                var project = OFS_LitProjectHelper.get(ID);
+
+                if (project != null)
+                {
+                    projectName = project.ProjectName;
+                    applicantAccount = project.UserAccount;
+                    organizer = project.Organizer;
+                }
+            }
+            else if (projectID.Contains("ACC"))
+            {
+                category = "無障礙";
+                var ID = OFS_AccProjectHelper.getID(projectID);
+                var project = OFS_AccProjectHelper.get(ID);
+
+                if (project != null)
+                {
+                    projectName = project.ProjectName;
+                    applicantAccount = project.UserAccount;
+                    organizer = project.Organizer;
+                }
+            }
+
+            // 寄送通知信給主管單位 (H11)
+            if (!string.IsNullOrEmpty(category) && !string.IsNullOrEmpty(projectName) && organizer.HasValue)
+            {
+                NotificationHelper.H11(category, projectName, organizer);
+            }
+
+            // 寄送通知信給申請單位 (H12)
+            if (!string.IsNullOrEmpty(category) && !string.IsNullOrEmpty(projectName) && !string.IsNullOrEmpty(applicantAccount))
+            {
+                NotificationHelper.H12(category, projectName, applicantAccount);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"寄送查核通知信時發生錯誤: {ex.Message}");
+            // 寄信失敗不影響主流程，只記錄錯誤
+        }
+    }
+
     protected void btnSubmitReply_Click(object sender, EventArgs e)
     {
+        string ProjectID = Request.QueryString["ProjectID"];
+
         try
         {
             bool hasUpdates = false;
@@ -405,6 +545,9 @@ public partial class OFS_AuditRecords : System.Web.UI.Page
 
             if (hasUpdates)
             {
+                // 寄送通知信給主管單位
+                SendReplyNotification(ProjectID);
+
                 // 顯示成功訊息並延遲重新載入頁面
                 string script = @"
                     Swal.fire({
@@ -427,6 +570,127 @@ public partial class OFS_AuditRecords : System.Web.UI.Page
         catch (Exception ex)
         {
             ShowErrorMessage("系統錯誤：" + ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// 寄送查核回覆通知信給主管單位
+    /// </summary>
+    /// <param name="projectID">計畫編號</param>
+    private void SendReplyNotification(string projectID)
+    {
+        try
+        {
+            string category = "";
+            string projectName = "";
+            int? organizer = null;
+
+            // 根據 ProjectID 判斷計畫類型並取得相關資訊
+            if (projectID.Contains("SCI"))
+            {
+                category = "科專";
+                var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
+                var projectMain = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
+
+                if (applicationMain != null)
+                {
+                    projectName = applicationMain.ProjectNameTw;
+                }
+
+                if (projectMain != null)
+                {
+                    string supervisoryAccount = projectMain.SupervisoryPersonAccount;
+                    organizer = SysUserHelper.GetUserIDByAccount(supervisoryAccount);
+                }
+            }
+            else if (projectID.Contains("CLB"))
+            {
+                category = "社團";
+                var applicationBasic = OFS_ClbApplicationHelper.GetBasicData(projectID);
+                var projectMain = OFS_ClbApplicationHelper.GetProjectMainData(projectID);
+
+                if (applicationBasic != null)
+                {
+                    projectName = applicationBasic.ProjectNameTw;
+                }
+
+                if (projectMain != null)
+                {
+                    string supervisoryAccount = projectMain.SupervisoryPersonAccount;
+                    organizer = SysUserHelper.GetUserIDByAccount(supervisoryAccount);
+                }
+            }
+            else if (projectID.Contains("CUL"))
+            {
+                category = "文化";
+                var ID = OFS_CulProjectHelper.getID(projectID);
+                var project = OFS_CulProjectHelper.get(ID);
+
+                if (project != null)
+                {
+                    projectName = project.ProjectName;
+                    organizer = project.Organizer;
+                }
+            }
+            else if (projectID.Contains("EDC"))
+            {
+                category = "民間";
+                var ID = OFS_EdcProjectHelper.getID(projectID);
+                var project = OFS_EdcProjectHelper.get(ID);
+
+                if (project != null)
+                {
+                    projectName = project.ProjectName;
+                    organizer = project.Organizer;
+                }
+            }
+            else if (projectID.Contains("MUL"))
+            {
+                category = "多元";
+                var ID = OFS_MulProjectHelper.getID(projectID);
+                var project = OFS_MulProjectHelper.get(ID);
+
+                if (project != null)
+                {
+                    projectName = project.ProjectName;
+                    organizer = project.Organizer;
+                }
+            }
+            else if (projectID.Contains("LIT"))
+            {
+                category = "素養";
+                var ID = OFS_LitProjectHelper.getID(projectID);
+                var project = OFS_LitProjectHelper.get(ID);
+
+                if (project != null)
+                {
+                    projectName = project.ProjectName;
+                    organizer = project.Organizer;
+                }
+            }
+            else if (projectID.Contains("ACC"))
+            {
+                category = "無障礙";
+                var ID = OFS_AccProjectHelper.getID(projectID);
+                var project = OFS_AccProjectHelper.get(ID);
+
+                if (project != null)
+                {
+                    projectName = project.ProjectName;
+                    organizer = project.Organizer;
+                }
+            }
+
+            // 寄送通知信給主管單位 (H2)
+            if (!string.IsNullOrEmpty(category) && !string.IsNullOrEmpty(projectName) && organizer.HasValue)
+            {
+                NotificationHelper.H2(category, projectName, organizer);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"寄送查核回覆通知信時發生錯誤: {ex.Message}");
+            // 寄信失敗不影響主流程，只記錄錯誤
         }
     }
 

@@ -33,10 +33,14 @@
                     <i class="fas fa-exchange"></i>
                     計畫變更申請
                 </button>
-                <a href='<%= ResolveUrl("~/OFS/PlanChangeRecords.aspx?ProjectID=" + Request.QueryString["ProjectID"]) %>' class="btn btn-teal-dark">
+                <a href='<%= ResolveUrl("~/OFS/PlanChangeRecords.aspx?ProjectID=" + Request.QueryString["ProjectID"]) %>' 
+                   class="btn btn-teal-dark"
+                   target="_blank"
+                   >
                     <i class="fas fa-history"></i>
                     計畫變更紀錄
                 </a>
+                
                 <button type="button" id="btnDownloadPlan" class="btn btn-teal-dark">
                     <i class="fa-solid fa-download"></i>
                     下載核定計畫書

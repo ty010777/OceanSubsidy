@@ -191,6 +191,20 @@ public partial class inprogressList : System.Web.UI.Page
     {
         try
         {
+            // 判斷當前使用者是否為主管機關人員
+            bool isSupervisoryUser = IsSupervisoryUser();
+            string userAccount = "";
+
+            // 如果不是主管機關人員，只載入自己的案件
+            if (!isSupervisoryUser)
+            {
+                var currentUser = GetCurrentUserInfo();
+                if (currentUser != null)
+                {
+                    userAccount = currentUser.Account;
+                }
+            }
+
             // 從 Helper 取得進度清單資料
             DataTable result = InprogressListHelper.GetInprogressListData(
                 ddlYear.SelectedValue,
@@ -198,7 +212,8 @@ public partial class inprogressList : System.Web.UI.Page
                 ddlApplyUnit.SelectedValue,
                 ddlSupervisoryUnit.SelectedValue,
                 txtProjectKeyword.Text.Trim(),
-                txtContentKeyword.Text.Trim()
+                txtContentKeyword.Text.Trim(),
+                userAccount
             );
 
             totalRecords = result.Rows.Count; // 設定總記錄數
@@ -220,6 +235,20 @@ public partial class inprogressList : System.Web.UI.Page
         // 轉換 DataTable 為 JSON 格式供前端使用
         var jsonData = ConvertDataTableToJson(data);
 
+        // 判斷當前使用者是否為主管機關人員
+        bool isSupervisoryUser = IsSupervisoryUser();
+        string userAccount = "";
+
+        // 如果不是主管機關人員，只載入自己的案件統計
+        if (!isSupervisoryUser)
+        {
+            var currentUser = GetCurrentUserInfo();
+            if (currentUser != null)
+            {
+                userAccount = currentUser.Account;
+            }
+        }
+
         // 取得統計資訊
         DataRow statistics = InprogressListHelper.GetInprogressStatistics(
             ddlYear.SelectedValue,
@@ -227,7 +256,8 @@ public partial class inprogressList : System.Web.UI.Page
             ddlApplyUnit.SelectedValue,
             ddlSupervisoryUnit.SelectedValue,
             txtProjectKeyword.Text.Trim(),
-            txtContentKeyword.Text.Trim()
+            txtContentKeyword.Text.Trim(),
+            userAccount
         );
 
         // 建立統計資訊的 JSON 物件
@@ -306,10 +336,61 @@ public partial class inprogressList : System.Web.UI.Page
     {
         // 記錄錯誤
         System.Diagnostics.Debug.WriteLine($"{message}: {ex.Message}");
-        
+
         // 顯示錯誤訊息給使用者
-        string script = $"alert('{message}');"; 
+        string script = $"alert('{message}');";
         ScriptManager.RegisterStartupScript(this, GetType(), "error", script, true);
+    }
+
+    /// <summary>
+    /// 判斷當前使用者是否為主管單位人員
+    /// </summary>
+    /// <returns>true: 是主管單位人員, false: 不是主管單位人員</returns>
+    private bool IsSupervisoryUser()
+    {
+        try
+        {
+            var currentUser = SessionHelper.Get<SessionHelper.UserInfoClass>(SessionHelper.UserInfo);
+
+            if (currentUser == null || currentUser.OFS_RoleName == null)
+            {
+                return false;
+            }
+
+            // 檢查角色名稱是否包含主管單位相關角色
+            var supervisoryRoles = new[] { "主管單位人員", "主管單位窗口", "系統管理者" };
+
+            foreach (var role in supervisoryRoles)
+            {
+                if (currentUser.OFS_RoleName.Contains(role))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"判斷使用者角色時發生錯誤：{ex.Message}");
+            return false; // 發生錯誤時預設為非主管單位人員
+        }
+    }
+
+    /// <summary>
+    /// 取得目前登入使用者資訊
+    /// </summary>
+    private SessionHelper.UserInfoClass GetCurrentUserInfo()
+    {
+        try
+        {
+            return SessionHelper.Get<SessionHelper.UserInfoClass>(SessionHelper.UserInfo);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得使用者資訊時發生錯誤: {ex.Message}");
+            return null;
+        }
     }
     #endregion
 

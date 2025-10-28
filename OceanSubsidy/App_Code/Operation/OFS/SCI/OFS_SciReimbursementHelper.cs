@@ -59,8 +59,8 @@ public class OFS_SciReimbursementHelper
                 throw new Exception("找不到專案資料");
             }
 
-            double approvedSubsidy = projectDt.Rows[0]["ApprovedSubsidy"] != DBNull.Value 
-                ? Convert.ToDouble(projectDt.Rows[0]["ApprovedSubsidy"]) 
+            double approvedSubsidy = projectDt.Rows[0]["ApprovedSubsidy"] != DBNull.Value
+                ? Math.Round(Convert.ToDouble(projectDt.Rows[0]["ApprovedSubsidy"]))
                 : 0;
 
             // 取得付款階段設定
@@ -92,7 +92,7 @@ public class OFS_SciReimbursementHelper
             db.CommandText = "SELECT ISNULL(SUM([CurrentActualPaidAmount]), 0) FROM [OFS_SCI_Payment] WHERE [ProjectID] = @ProjectID";
             db.Parameters.Clear();
             db.Parameters.Add("@ProjectID", projectID);
-            double totalActualPaidAmount = Convert.ToDouble(db.GetTable().Rows[0][0]);
+            double totalActualPaidAmount = Math.Round(Convert.ToDouble(db.GetTable().Rows[0][0]));
 
             // 初始化資料
             double currentAmount = 0;
@@ -115,21 +115,22 @@ public class OFS_SciReimbursementHelper
                 var result = db.GetTable();
                 if (result.Rows.Count > 0)
                 {
-                    previousAmount = Convert.ToDouble(result.Rows[0][0]).ToString("N0");
+                    previousAmount = Math.Round(Convert.ToDouble(result.Rows[0][0])).ToString("N0");
                 }
                 else
                 {
                     previousAmount = "0";
                 }
-                //第二期：累積實支金額	
+                //第二期：累積實支金額
                 db.CommandText = "SELECT TotalSpentAmount FROM [OFS_SCI_Payment] WHERE [ProjectID] = @ProjectID AND [Stage] = 2";
                 db.Parameters.Clear();
                 db.Parameters.Add("@ProjectID", projectID);
                 var TotalSpentAmount = db.GetTable();
                 if (TotalSpentAmount.Rows.Count > 0 && TotalSpentAmount.Rows[0][0] != DBNull.Value)
                 {
-                    accumulatedAmount = TotalSpentAmount.Rows[0][0].ToString();
-                    currentAmount = Convert.ToDouble(accumulatedAmount) - Convert.ToDouble(previousAmount);
+                    double totalSpent = Math.Round(Convert.ToDouble(TotalSpentAmount.Rows[0][0]));
+                    accumulatedAmount = totalSpent.ToString();
+                    currentAmount = Math.Round(totalSpent - Convert.ToDouble(previousAmount.Replace(",", "")));
                 }
                 else
                 {
@@ -156,7 +157,7 @@ public class OFS_SciReimbursementHelper
                 var currentPaymentResult = db.GetTable();
                 if (currentPaymentResult.Rows.Count > 0)
                 {
-                    currentActualPayment = Convert.ToDouble(currentPaymentResult.Rows[0][0]);
+                    currentActualPayment = Math.Round(Convert.ToDouble(currentPaymentResult.Rows[0][0]));
                 }
 
                 // 計算累積實際撥款金額（從第一期到當期）
@@ -167,7 +168,7 @@ public class OFS_SciReimbursementHelper
                 var cumulativePaymentResult = db.GetTable();
                 if (cumulativePaymentResult.Rows.Count > 0)
                 {
-                    cumulativeActualPayment = Convert.ToDouble(cumulativePaymentResult.Rows[0][0]);
+                    cumulativeActualPayment = Math.Round(Convert.ToDouble(cumulativePaymentResult.Rows[0][0]));
                 }
             }
 

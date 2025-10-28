@@ -348,36 +348,18 @@ public partial class OFSApplicationMaster : System.Web.UI.MasterPage
     }
     
     /// <summary>
-    /// 顯示警告訊息，使用者點選確認後導向到申請清單頁面
+    /// 直接導向到申請清單頁面（不顯示訊息）
     /// </summary>
-    /// <param name="message">要顯示的訊息</param>
+    /// <param name="message">錯誤訊息（記錄用，不顯示給使用者）</param>
     private void RedirectToApplicationChecklist(string message)
     {
-        string safeMessage = System.Web.HttpUtility.JavaScriptStringEncode(message);
+        // 記錄錯誤訊息到 Debug
+        System.Diagnostics.Debug.WriteLine($"RedirectToApplicationChecklist: {message}");
+
+        // 直接跳轉到申請清單頁面
         string redirectUrl = Page.ResolveUrl("~/OFS/ApplicationChecklist.aspx");
-        
-        // 顯示警告訊息，等待使用者點選確認按鈕後再跳轉
-        string script = $@"
-            Swal.fire({{
-                title: '存取權限',
-                text: '{safeMessage}',
-                icon: 'warning',
-                confirmButtonText: '確定',
-                allowOutsideClick: false,
-                allowEscapeKey: false,
-                customClass: {{
-                    popup: 'animated fadeInDown'
-                }}
-            }}).then((result) => {{
-                if (result.isConfirmed) {{
-                    window.location.href = '{redirectUrl}';
-                }}
-            }});
-        ";
-        
-        Page.ClientScript.RegisterStartupScript(this.GetType(), "RedirectWithConfirmation", script, true);
-        
-      
+        Response.Redirect(redirectUrl, false);
+        Context.ApplicationInstance.CompleteRequest();
     }
     
     /// <summary>

@@ -346,7 +346,7 @@ public class OFS_ClbPaymentHelper
                 var approvedSubsidy = dt.Rows[0]["ApprovedSubsidy"];
                 if (approvedSubsidy != DBNull.Value)
                 {
-                    return Convert.ToDecimal(approvedSubsidy);
+                    return Math.Round(Convert.ToDecimal(approvedSubsidy));
                 }
             }
 
@@ -506,9 +506,9 @@ public class OFS_ClbPaymentHelper
                     ID = row["ID"] != DBNull.Value ? Convert.ToInt32(row["ID"]) : 0,
                     ProjectID = row["ProjectID"]?.ToString(),
                     Stage = row["Stage"] != DBNull.Value ? Convert.ToInt32(row["Stage"]) : (int?)null,
-                    CurrentRequestAmount = row["CurrentRequestAmount"] != DBNull.Value ? Convert.ToDecimal(row["CurrentRequestAmount"]) : (decimal?)null,
-                    TotalSpentAmount = row["TotalSpentAmount"] != DBNull.Value ? Convert.ToDecimal(row["TotalSpentAmount"]) : (decimal?)null,
-                    CurrentActualPaidAmount = row["CurrentActualPaidAmount"] != DBNull.Value ? Convert.ToDecimal(row["CurrentActualPaidAmount"]) : (decimal?)null,
+                    CurrentRequestAmount = row["CurrentRequestAmount"] != DBNull.Value ? Math.Round(Convert.ToDecimal(row["CurrentRequestAmount"])) : (decimal?)null,
+                    TotalSpentAmount = row["TotalSpentAmount"] != DBNull.Value ? Math.Round(Convert.ToDecimal(row["TotalSpentAmount"])) : (decimal?)null,
+                    CurrentActualPaidAmount = row["CurrentActualPaidAmount"] != DBNull.Value ? Math.Round(Convert.ToDecimal(row["CurrentActualPaidAmount"])) : (decimal?)null,
                     Status = row["Status"]?.ToString(),
                     ReviewerComment = row["ReviewerComment"]?.ToString(),
                     ReviewUser = row["ReviewUser"]?.ToString(),
@@ -748,7 +748,7 @@ public class OFS_ClbPaymentHelper
         if (dt.Rows.Count > 0)
         {
             var totalPaid = dt.Rows[0].Field<decimal?>("TotalActualPaid");
-            return totalPaid ?? 0;
+            return totalPaid.HasValue ? Math.Round(totalPaid.Value) : 0;
         }
 
         return 0;

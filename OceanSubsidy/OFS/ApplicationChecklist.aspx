@@ -698,7 +698,7 @@
                         <table class="table align-middle gray-table lh-base">
                             <thead>
                                 <tr>
-                                    <th width="160"></th>
+                                    <th width="160">審查委員</th>
                                     <th>審查意見</th>
                                     <th width="50%">申請單位回覆</th>
                                 </tr>
@@ -717,7 +717,7 @@
                         <table class="table align-middle gray-table lh-base">
                             <thead>
                                 <tr>
-                                    <th width="160"></th>
+                                    <th width="160">審查委員</th>
                                     <th>審查意見</th>
                                     <th width="50%">申請單位回覆</th>
                                 </tr>

@@ -86,8 +86,22 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
     {
         try
         {
+            // 判斷當前使用者是否為主管機關人員
+            bool isSupervisoryUser = IsSupervisoryUser();
+            string userAccount = "";
+
+            // 如果不是主管機關人員，只載入自己的案件
+            if (!isSupervisoryUser)
+            {
+                var currentUser = GetCurrentUserInfo();
+                if (currentUser != null)
+                {
+                    userAccount = currentUser.Account;
+                }
+            }
+
             // 載入申請計畫清單資料
-            OriginalSciMainList = ApplicationChecklistHelper.GetLatestApplicationChecklist();
+            OriginalSciMainList = ApplicationChecklistHelper.GetLatestApplicationChecklist(userAccount);
 
             // 儲存到 ViewState
             SaveDataToViewState();
@@ -1174,6 +1188,9 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
                 return new { success = false, message = "ProjectID 不能為空" };
             }
 
+            // 判斷當前使用者是否為主管單位人員
+            bool isSupervisoryUser = IsSupervisoryUser();
+
             // 取得計畫基本資料
             var projectData = ApplicationChecklistHelper.GetProjectDataForReview(projectId);
             if (projectData == null)
@@ -1183,6 +1200,10 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
 
             var domainReviewComments = new List<object>();
             var technicalReviewComments = new List<object>();
+
+            // 用於審查委員名字對應代稱（統一管理兩個階段的代稱）
+            var reviewerAliasMap = new Dictionary<string, string>();
+            int aliasCounter = 0;
 
             // 根據 ProjectID 判斷計畫類型並取得審查意見
 
@@ -1200,10 +1221,18 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
                  {
                      foreach (DataRow row in domainCommentsTable.Rows)
                      {
+                         string reviewerName = row["ReviewerName"]?.ToString() ?? "";
+
+                         // 如果不是主管單位人員，替換審查委員名字
+                         if (!isSupervisoryUser && !string.IsNullOrEmpty(reviewerName))
+                         {
+                             reviewerName = GetReviewerAlias(reviewerName, reviewerAliasMap, ref aliasCounter);
+                         }
+
                          domainReviewComments.Add(new
                          {
                              reviewerReviewID = row["ReviewID"]?.ToString() ?? "",
-                             reviewerName = row["ReviewerName"]?.ToString() ?? "",
+                             reviewerName = reviewerName,
                              reviewComment = row["ReviewComment"]?.ToString() ?? "",
                              replyComment = row["ReplyComment"]?.ToString() ?? ""
                          });
@@ -1216,10 +1245,18 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
                  {
                      foreach (DataRow row in technicalCommentsTable.Rows)
                      {
+                         string reviewerName = row["ReviewerName"]?.ToString() ?? "";
+
+                         // 如果不是主管單位人員，替換審查委員名字
+                         if (!isSupervisoryUser && !string.IsNullOrEmpty(reviewerName))
+                         {
+                             reviewerName = GetReviewerAlias(reviewerName, reviewerAliasMap, ref aliasCounter);
+                         }
+
                          technicalReviewComments.Add(new
                          {
                              reviewerReviewID = row["ReviewID"]?.ToString() ?? "",
-                             reviewerName = row["ReviewerName"]?.ToString() ?? "",
+                             reviewerName = reviewerName,
                              reviewComment = row["ReviewComment"]?.ToString() ?? "",
                              replyComment = row["ReplyComment"]?.ToString() ?? ""
                          });
@@ -1237,10 +1274,18 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
                 {
                     foreach (DataRow row in domainCommentsTable.Rows)
                     {
+                        string reviewerName = row["ReviewerName"]?.ToString() ?? "";
+
+                        // 如果不是主管單位人員，替換審查委員名字
+                        if (!isSupervisoryUser && !string.IsNullOrEmpty(reviewerName))
+                        {
+                            reviewerName = GetReviewerAlias(reviewerName, reviewerAliasMap, ref aliasCounter);
+                        }
+
                         domainReviewComments.Add(new
                         {
                             reviewerReviewID = row["ReviewID"]?.ToString() ?? "",
-                            reviewerName = row["ReviewerName"]?.ToString() ?? "",
+                            reviewerName = reviewerName,
                             reviewComment = row["ReviewComment"]?.ToString() ?? "",
                             replyComment = row["ReplyComment"]?.ToString() ?? ""
                         });
@@ -1253,10 +1298,18 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
                 {
                     foreach (DataRow row in technicalCommentsTable.Rows)
                     {
+                        string reviewerName = row["ReviewerName"]?.ToString() ?? "";
+
+                        // 如果不是主管單位人員，替換審查委員名字
+                        if (!isSupervisoryUser && !string.IsNullOrEmpty(reviewerName))
+                        {
+                            reviewerName = GetReviewerAlias(reviewerName, reviewerAliasMap, ref aliasCounter);
+                        }
+
                         technicalReviewComments.Add(new
                         {
                             reviewerReviewID = row["ReviewID"]?.ToString() ?? "",
-                            reviewerName = row["ReviewerName"]?.ToString() ?? "",
+                            reviewerName = reviewerName,
                             reviewComment = row["ReviewComment"]?.ToString() ?? "",
                             replyComment = row["ReplyComment"]?.ToString() ?? ""
                         });
@@ -1334,8 +1387,22 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
     {
         try
         {
+            // 判斷當前使用者是否為主管機關人員
+            bool isSupervisoryUser = IsSupervisoryUser();
+            string userAccount = "";
+
+            // 如果不是主管機關人員，只載入自己的案件
+            if (!isSupervisoryUser)
+            {
+                var currentUser = SessionHelper.Get<SessionHelper.UserInfoClass>(SessionHelper.UserInfo);
+                if (currentUser != null)
+                {
+                    userAccount = currentUser.Account;
+                }
+            }
+
             // 載入原始資料
-            var originalData = ApplicationChecklistHelper.GetLatestApplicationChecklist();
+            var originalData = ApplicationChecklistHelper.GetLatestApplicationChecklist(userAccount);
 
 
             // 篩選資料
@@ -1692,6 +1759,63 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             return "CUL";
 
         return null; // 目前只支援 SCI 和 CUL
+    }
+
+    /// <summary>
+    /// 判斷當前使用者是否為主管單位人員
+    /// </summary>
+    /// <returns>true: 是主管單位人員, false: 不是主管單位人員</returns>
+    private static bool IsSupervisoryUser()
+    {
+        try
+        {
+            var currentUser = SessionHelper.Get<SessionHelper.UserInfoClass>(SessionHelper.UserInfo);
+
+            // 檢查角色名稱是否包含主管單位相關角色
+            var supervisoryRoles = new[] { "主管單位人員", "主管單位窗口", "系統管理者" };
+
+            foreach (var role in supervisoryRoles)
+            {
+                if (currentUser.OFS_RoleName.Contains(role))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"判斷使用者角色時發生錯誤：{ex.Message}");
+            return false; // 發生錯誤時預設為非主管單位人員
+        }
+    }
+
+    /// <summary>
+    /// 取得審查委員的代稱（委員A、委員B、委員C...）
+    /// </summary>
+    /// <param name="originalName">原始審查委員名字</param>
+    /// <param name="aliasMap">名字對應代稱的字典</param>
+    /// <param name="counter">代稱計數器</param>
+    /// <returns>審查委員代稱</returns>
+    private static string GetReviewerAlias(string originalName, Dictionary<string, string> aliasMap, ref int counter)
+    {
+        if (aliasMap.ContainsKey(originalName))
+        {
+            // 如果已經有對應的代稱，直接返回
+            return aliasMap[originalName];
+        }
+        else
+        {
+            // 產生新的代稱：委員A、委員B、委員C...
+            char aliasLetter = (char)('A' + counter);
+            string alias = $"委員{aliasLetter}";
+
+            aliasMap[originalName] = alias;
+            counter++;
+
+            return alias;
+        }
     }
 
 }

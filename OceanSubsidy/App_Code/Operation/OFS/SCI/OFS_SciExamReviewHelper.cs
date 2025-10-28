@@ -34,11 +34,11 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
             db.CommandText = @"
                 SELECT
                     se.*,
-                    srl.Reviewer,
-                    srl.Account,
+                    srl.Reviewer as Committee,
+                    srl.Account as committeeAccount,
                     srl.BankCode,
                     srl.BankAccount,
-                    srl.RegistrationAddress,
+                    srl.RegistrationAddress ,
                     srl.token,
                     am.ProjectNameTw AS ProjectName,
                     am.Field,
@@ -442,7 +442,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                     Year = examData["Year"]?.ToString() ?? "",
                     Field = examData["Field"]?.ToString() ?? "",
                     OrgName = examData["OrgName"]?.ToString() ?? "",
-                    Reviewer = examData["Reviewer"]?.ToString() ?? "",
+                    Reviewer = examData["Committee"]?.ToString() ?? "",
                     Status = examData["Status"]?.ToString() ?? "",
                     ReviewMethod = examData["ReviewMethod"]?.ToString() ?? ""
                 };

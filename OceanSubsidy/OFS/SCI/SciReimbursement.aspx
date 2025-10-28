@@ -46,7 +46,7 @@
                                         <i class="fas fa-file-upload me-1"></i>
                                         上傳
                                     </button>
-                                    <div id="uploadedFile1" style="display: none;" class="d-flex align-items-center gap-2">
+                                    <div id="uploadedFile1" style="display: none;" class=" align-items-center gap-2">
                                         <a href="#" id="downloadLink1" class="btn btn-sm btn-outline-teal" onclick="downloadUploadedFile(1)">
                                             <i class="fas fa-download me-1"></i>
                                             <span id="fileName1"></span>
@@ -68,7 +68,7 @@
                                         <i class="fas fa-file-upload me-1"></i>
                                         上傳
                                     </button>
-                                    <div id="uploadedFile2" style="display: none;" class="d-flex align-items-center gap-2">
+                                    <div id="uploadedFile2"  class=" align-items-center gap-2">
                                         <a href="#" id="downloadLink2" class="btn btn-sm btn-outline-teal" onclick="downloadUploadedFile(2)">
                                             <i class="fas fa-download me-1"></i>
                                             <span id="fileName2"></span>
@@ -93,9 +93,9 @@
             <table class="table align-middle gray-table">
                 <thead>
                     <tr>
-                        <th width="120" class="text-center">本期請款金額</th>
-                        <th width="120" class="text-center">前期已撥付金額</th>
-                        <th width="120" class="text-center">累積實支金額</th>
+                        <th width="120" class="text-center">本期請款金額(元)</th>
+                        <th width="120" class="text-center">前期已撥付金額(元)</th>
+                        <th width="120" class="text-center">累積實支金額(元)</th>
                         <th width="120" class="text-center">累積經費執行率</th>
                         <th width="120" class="text-center">支用比</th>
                     </tr>
@@ -106,7 +106,7 @@
                         <td class="text-center" id="previousAmount">--</td>
                         <td class="text-center" id="accumulatedAmountCell">
                             <span id="accumulatedAmount">--</span>
-                            <input type="number" id="accumulatedAmountInput" class="form-control text-center" placeholder="請輸入累積實支金額" min="0" step="1" style="width: 200px; margin: 0 auto;display: none">
+                            <input type="number" id="accumulatedAmountInput" class="form-control text-center" placeholder="請輸入累積實支金額" min="0" step="1" oninput="this.value = this.value.replace(/[^0-9]/g, '')" onkeypress="return event.charCode >= 48 && event.charCode <= 57" style="width: 200px; margin: 0 auto;display: none">
                         </td>
                         <td class="text-center" id="executionRate">--</td>
                         <td class="text-center" id="usageRatio">--</td>
@@ -122,7 +122,7 @@
                 <table class="table align-middle gray-table">
                     <thead>
                         <tr>
-                            <th width="200" class="text-center">本期實際撥款</th>
+                            <th width="200" class="text-center">本期實際撥款(元)</th>
                             <th width="200" class="text-center">累積實際撥款</th>
                         </tr>
                     </thead>
@@ -159,9 +159,9 @@
                 <!-- 本期 -->
                 <div class="d-flex gap-2">
                     <span class="text-gray">本期撥款 :</span>
-                    <input type="number" id="currentPayment" 
-                           class="form-control text-center text-teal fw-bold" 
-                           value="0" min="0" step="1" style="width: 120px;">
+                    <input type="number" id="currentPayment"
+                           class="form-control text-center text-teal fw-bold"
+                           value="0" min="0" step="1" oninput="this.value = this.value.replace(/[^0-9]/g, '')" onkeypress="return event.charCode >= 48 && event.charCode <= 57" style="width: 120px;">
                 </div>
 
                 <!-- 如果有上一期 -->
@@ -306,8 +306,8 @@
             var rate = approved > 0 ? (accumulated / approved * 100) : 0;
             $('#executionRate').text(rate.toFixed(2) + '%');
             
-            // 支用比 = 累積實支 ÷ 累計撥付 × 100% (最大100%)
-            var usage = totalPaid > 0 ? Math.min((accumulated / totalPaid * 100), 100) : 0;
+            // 支用比 = 累積實支 ÷ 累計撥付 × 100%
+            var usage = totalPaid > 0 ? (accumulated / totalPaid * 100) : 0;
             $('#usageRatio').text(usage.toFixed(2) + '%');
         }
         

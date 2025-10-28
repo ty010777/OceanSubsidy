@@ -11,7 +11,7 @@
         </ul>
         <h5 class="square-title mt-4" id="reportTitle">期中報告審查</h5>
         <p class="text-pink mt-3 lh-base">請下載報告書範本，填寫資料及公文用印後上傳。<br>
-            <span id="reportDescription">期中報告書</span>及相關檔案，請壓縮ZIP上傳（檔案100MB以內）。
+            <span id="reportDescription">期中報告書</span>及相關檔案，請壓縮ZIP上傳（檔案500MB以內）。
         </p>
         
         <div class="table-responsive mt-3">
@@ -46,7 +46,7 @@
                                     <i class="fas fa-file-upload me-1"></i>
                                     上傳
                                 </button>
-                                <div id="uploadedFile1" style="display: none;" class="d-flex align-items-center gap-2">
+                                <div id="uploadedFile1" class="d-flex align-items-center gap-2 d-none">
                                     <a href="#" id="downloadLink1" class="btn btn-sm btn-outline-teal" onclick="downloadUploadedFile(1)">
                                         <i class="fas fa-download me-1"></i>
                                         <span id="fileName1"></span>
@@ -77,7 +77,7 @@
                                     <i class="fas fa-file-upload me-1"></i>
                                     上傳
                                 </button>
-                                <div id="uploadedFile2" style="display: none;" class="d-flex align-items-center gap-2">
+                                <div id="uploadedFile2" class="d-flex align-items-center gap-2 d-none">
                                     <a href="#" id="downloadLink2" class="btn btn-sm btn-outline-teal" onclick="downloadUploadedFile(2)">
                                         <i class="fas fa-download me-1"></i>
                                         <span id="fileName2"></span>
@@ -285,10 +285,10 @@
                 return;
             }
             
-            // 檢查檔案大小 (100MB = 100 * 1024 * 1024 bytes)
-            const maxSize = 100 * 1024 * 1024;
+            // 檢查檔案大小 (500MB = 500 * 1024 * 1024 bytes)
+            const maxSize = 500 * 1024 * 1024;
             if (file.size > maxSize) {
-                Swal.fire('錯誤', '檔案大小不可超過 100MB', 'error');
+                Swal.fire('錯誤', '檔案大小不可超過 500MB', 'error');
                 fileInput.value = '';
                 return;
             }
@@ -397,27 +397,27 @@
             // 初始化狀態
             $('#uploadStatus1').text('尚未上傳').removeClass('text-success').addClass('text-pink');
             $('#uploadStatus2').text('尚未上傳').removeClass('text-success').addClass('text-pink');
-            $('#uploadedFile1').hide();
-            $('#uploadedFile2').hide();
-            
+            $('#uploadedFile1').addClass('d-none');
+            $('#uploadedFile2').addClass('d-none');
+
             // 重置檔案名稱
             $('#fileName1').text('');
             $('#fileName2').text('');
-            
+
             // 更新檔案狀態 - 後端已經根據 reportType 過濾了，直接處理
             files.forEach(function(file) {
                 let fileNum = 0;
-                
+
                 // 根據 FileCode 決定檔案編號
                 if (file.FileCode.endsWith('_revise')) {
                     fileNum = 2; // 修訂版
                 } else {
                     fileNum = 1; // 初版
                 }
-                
+
                 $(`#uploadStatus${fileNum}`).text('已上傳').removeClass('text-pink').addClass('text-success');
                 $(`#fileName${fileNum}`).text(file.FileName);
-                $(`#uploadedFile${fileNum}`).show();
+                $(`#uploadedFile${fileNum}`).removeClass('d-none');
             });
         }
         

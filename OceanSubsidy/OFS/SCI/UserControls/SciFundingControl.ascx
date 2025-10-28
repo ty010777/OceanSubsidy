@@ -38,9 +38,9 @@
                             <i class="fas fa-info-circle"></i>
                         </button>
                     </th>
-                    <th class="text-end"><span class="text-pink view-mode">*</span>平均月薪</th>
+                    <th class="text-end"><span class="text-pink view-mode">*</span>平均月薪(元)</th>
                     <th class="text-end"><span class="text-pink view-mode">*</span>參與人月</th>
-                    <th class="text-end"><span class="text-pink view-mode">*</span>人事費小計</th>
+                    <th class="text-end"><span class="text-pink view-mode">*</span>人事費小計(元)</th>
                     <th width="130">功能</th>
                 </tr>
                 </thead>
@@ -99,8 +99,8 @@
                     <th class="text-center">說明</th>
                     <th width="120">單位</th>
                     <th class="text-end">預估需求數量</th>
-                    <th class="text-end">單價</th>
-                    <th class="text-end">總價</th>
+                    <th class="text-end">單價(元)</th>
+                    <th class="text-end">總價(元)</th>
                     <th width="130">功能</th>
                 </tr>
                 </thead>
@@ -160,7 +160,7 @@
                     <th>期間</th>
                     <th class="text-end">委託項目名稱</th>
                     <th class="text-end">委託對象</th>
-                    <th class="text-end">金額</th>
+                    <th class="text-end">金額(元)</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -245,7 +245,7 @@
                     <th>地區</th>
                     <th width="120">天數</th>
                     <th class="text-center">人次</th>
-                    <th class="text-end">金額</th>
+                    <th class="text-end">金額(元)</th>
                     <th width="150">功能</th>
                 </tr>
                 </thead>
@@ -303,10 +303,10 @@
                             <i class="fas fa-info-circle"></i>
                         </button>
                     </th>
-                    <th class="text-end"><span class="text-pink view-mode">*</span>平均月薪</th>
+                    <th class="text-end"><span class="text-pink view-mode">*</span>平均月薪(元)</th>
                     <th class="text-end"><span class="text-pink view-mode">*</span>參與人月</th>
                     <th class="text-end"><span class="text-pink view-mode">*</span>人數</th>
-                    <th class="text-end"><span class="text-pink view-mode">*</span>人事費小計</th>
+                    <th class="text-end"><span class="text-pink view-mode">*</span>人事費小計(元)</th>
                     <th width="150">功能</th>
                 </tr>
                 </thead>
@@ -343,7 +343,7 @@
                 <thead>
                 <tr>
                     <th width="220" class="text-center">項目</th>
-                    <th width="220" class="text-end">金額</th>
+                    <th width="220" class="text-end">金額(元)</th>
                     <th>計算方式及說明</th>
                 </tr>
                 </thead>
@@ -392,12 +392,12 @@
                 <tr>
                     <th></th>
                     <th width="130" class="text-end">
-                        <span class="text-pink view-mode">*</span>補助款(A)
+                        <span class="text-pink view-mode">*</span>補助款(元)(A)
                     </th>
                     <th width="130" class="text-end">
-                        <span class="text-pink view-mode">*</span>配合款(B)
+                        <span class="text-pink view-mode">*</span>配合款(元)(B)
                     </th>
-                    <th width="130" class="text-end">合計(C)</th>
+                    <th width="130" class="text-end">合計(元)(C)</th>
                     <th width="130" class="text-end">佔總經費比率<br>
                         (C)/(II)
                     </th>

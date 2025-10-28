@@ -130,13 +130,21 @@ public class InprogressListHelper
     /// <param name="supervisoryUnit">主管單位</param>
     /// <param name="projectKeyword">計畫關鍵字</param>
     /// <param name="contentKeyword">內容關鍵字</param>
+    /// <param name="userAccount">使用者帳號（非主管機關人員時使用）</param>
     /// <returns>進度清單資料的 DataTable</returns>
     public static DataTable GetInprogressListData(string year, string category, string orgName,
-        string supervisoryUnit, string projectKeyword, string contentKeyword)
+        string supervisoryUnit, string projectKeyword, string contentKeyword, string userAccount = "")
     {
         // 建構查詢條件
         string whereClause = "WHERE 1=1";
         DbHelper db = new DbHelper();
+
+        // 如果提供了 userAccount，則強制篩選該使用者的案件
+        if (!string.IsNullOrEmpty(userAccount))
+        {
+            whereClause += " AND UserAccount = @UserAccount";
+            db.Parameters.Add("@UserAccount", userAccount);
+        }
 
         if (!string.IsNullOrEmpty(year))
         {
@@ -188,6 +196,7 @@ public class InprogressListHelper
                 V.TaskNameEn,
                 V.TaskName,
                 V.ProjectContent,
+                V.UserAccount,
                 V.KeyWords,
                 CASE
                     WHEN (V.StatusName = '' OR V.StatusName = '審核中')
@@ -220,13 +229,21 @@ public class InprogressListHelper
     /// <param name="supervisoryUnit">主管單位</param>
     /// <param name="projectKeyword">計畫關鍵字</param>
     /// <param name="contentKeyword">內容關鍵字</param>
+    /// <param name="userAccount">使用者帳號（非主管機關人員時使用）</param>
     /// <returns>包含統計數量的 DataRow (Total, InProgress, Overdue, Closed, Terminated)</returns>
     public static DataRow GetInprogressStatistics(string year, string category, string orgName,
-        string supervisoryUnit, string projectKeyword, string contentKeyword)
+        string supervisoryUnit, string projectKeyword, string contentKeyword, string userAccount = "")
     {
         // 建構查詢條件
         string whereClause = "WHERE 1=1";
         DbHelper db = new DbHelper();
+
+        // 如果提供了 userAccount，則強制篩選該使用者的案件
+        if (!string.IsNullOrEmpty(userAccount))
+        {
+            whereClause += " AND UserAccount = @UserAccount";
+            db.Parameters.Add("@UserAccount", userAccount);
+        }
 
         if (!string.IsNullOrEmpty(year))
         {

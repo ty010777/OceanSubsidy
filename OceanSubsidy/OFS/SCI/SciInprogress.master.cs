@@ -5,6 +5,8 @@ using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using GS.App;
+using GS.OCA_OceanSubsidy.Operation.OFS;
+using System.Data;
 
 public partial class OFS_SCI_SciInprogress : System.Web.UI.MasterPage
 {   
@@ -35,6 +37,12 @@ public partial class OFS_SCI_SciInprogress : System.Web.UI.MasterPage
 
     protected void Page_Load(object sender, EventArgs e)
     {
+        // 驗證專案擁有權
+        if (!ValidateProjectOwnership(ProjectID))
+        {
+            return; // 如果不是擁有者，已經導向到清單頁
+        }
+
         // 設定階段狀態的 active class
         SetActiveStep();
         SetProjectInfoToMaster();
@@ -290,6 +298,125 @@ public partial class OFS_SCI_SciInprogress : System.Web.UI.MasterPage
         {
             System.Diagnostics.Debug.WriteLine($"檢查計畫狀態提示時發生錯誤: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// 驗證專案擁有權 - 確認使用者是否為專案的擁有者
+    /// </summary>
+    /// <param name="projectID">專案ID</param>
+    /// <returns>true: 是擁有者或驗證通過, false: 不是擁有者</returns>
+    private bool ValidateProjectOwnership(string projectID)
+    {
+        try
+        {
+            // 如果沒有 projectID，導向回清單頁
+            if (string.IsNullOrEmpty(projectID))
+            {
+                RedirectToInprogressList("缺少專案編號");
+                return false;
+            }
+
+            // 取得當前使用者資訊
+            var currentUser = GetCurrentUserInfo();
+            if (currentUser == null || string.IsNullOrEmpty(currentUser.Account))
+            {
+                // 沒有登入資訊，導向回清單頁
+                RedirectToInprogressList("未找到使用者登入資訊");
+                return false;
+            }
+
+            // 取得專案資訊
+            var projectData = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
+            if (projectData == null)
+            {
+                // 專案不存在，導向回清單頁
+                RedirectToInprogressList("專案不存在");
+                return false;
+            }
+
+            // 比較使用者帳號，或檢查是否為主管單位人員
+            if (projectData.UserAccount != currentUser.Account && !IsSupervisorRole(currentUser))
+            {
+                // 不是專案擁有者且不是主管單位人員，導向回清單頁
+                RedirectToInprogressList("無法檢視不是自己的專案");
+                return false;
+            }
+
+            return true; // 驗證通過
+        }
+        catch (Exception ex)
+        {
+            // 發生錯誤時記錄並導向回清單頁
+            System.Diagnostics.Debug.WriteLine($"驗證專案擁有權時發生錯誤: {ex.Message}");
+            RedirectToInprogressList("系統錯誤，請稍後再試");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 取得目前登入使用者資訊
+    /// </summary>
+    private SessionHelper.UserInfoClass GetCurrentUserInfo()
+    {
+        try
+        {
+            return SessionHelper.Get<SessionHelper.UserInfoClass>(SessionHelper.UserInfo);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得使用者資訊時發生錯誤: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// 檢查使用者是否為主管單位人員（主管單位人員、主管單位窗口、系統管理者）
+    /// </summary>
+    /// <param name="userInfo">使用者資訊</param>
+    /// <returns>true: 是主管單位人員, false: 不是主管單位人員</returns>
+    private bool IsSupervisorRole(SessionHelper.UserInfoClass userInfo)
+    {
+        if (userInfo == null || userInfo.OFS_RoleName == null)
+        {
+            return false;
+        }
+
+        try
+        {
+            // 定義主管單位相關角色名稱
+            var supervisorRoles = new[] { "主管單位人員", "主管單位窗口", "系統管理者" };
+
+            // 檢查使用者的 OFS_RoleName 陣列中是否包含任一主管單位角色
+            foreach (string roleName in userInfo.OFS_RoleName)
+            {
+                if (!string.IsNullOrEmpty(roleName) && supervisorRoles.Contains(roleName))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"檢查主管單位角色時發生錯誤: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 直接導向到執行中清單頁面（不顯示訊息）
+    /// </summary>
+    /// <param name="message">錯誤訊息（記錄用，不顯示給使用者）</param>
+    private void RedirectToInprogressList(string message)
+    {
+        // 記錄錯誤訊息到 Debug
+        System.Diagnostics.Debug.WriteLine($"RedirectToInprogressList: {message}");
+
+        // 直接跳轉到執行中清單頁面
+        string redirectUrl = Page.ResolveUrl("~/OFS/inprogressList.aspx");
+        Response.Redirect(redirectUrl, false);
+        Context.ApplicationInstance.CompleteRequest();
     }
 
 }

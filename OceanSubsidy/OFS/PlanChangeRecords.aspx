@@ -15,10 +15,7 @@
                 <span>目前位置</span>
                 <div class="d-flex align-items-end gap-3">
                     <h2 class="text-dark-green2">計畫變更紀錄</h2>
-                    <a class="text-dark-green2 text-decoration-none" href="<%= ResolveUrl("~/OFS/inprogressList.aspx") %>" >
-                        <i class="fas fa-angle-left"></i>
-                        返回列表
-                    </a>
+                 
                 </div>
             </div>
         </div>
