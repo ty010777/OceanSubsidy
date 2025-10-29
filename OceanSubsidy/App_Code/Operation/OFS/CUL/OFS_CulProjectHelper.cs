@@ -49,6 +49,25 @@ public class OFS_CulProjectHelper
         return table.Rows.Count == 1 ? table.Rows[0].Field<string>("UserAccount") : "";
     }
 
+    public static string getFieldTitle(string projectID)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            SELECT C.[Descname] + ' - ' + B.[Descname] AS [title]
+              FROM [OFS_CUL_Project] AS A
+              JOIN [Sys_ZgsCode] AS B ON (B.[CodeGroup] = 'CULField' AND B.[Code] = A.[Field])
+              JOIN [Sys_ZgsCode] AS C ON (B.[CodeGroup] = 'CULField' AND C.[Code] = B.[ParentCode])
+             WHERE A.[ProjectID] = @ProjectID
+        ";
+
+        db.Parameters.Add("@ProjectID", projectID);
+
+        var table = db.GetTable();
+
+        return table.Rows.Count == 1 ? table.Rows[0].Field<string>("title") : "";
+    }
+
     public static int getID(string projectID)
     {
         DbHelper db = new DbHelper();
