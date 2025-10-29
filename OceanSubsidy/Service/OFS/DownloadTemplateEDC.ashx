@@ -8,8 +8,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Web;
+using System.Web.SessionState;
 
-public class DownloadTemplateEDC : IHttpHandler
+public class DownloadTemplateEDC : IHttpHandler, IRequiresSessionState
 {
     public void ProcessRequest(HttpContext context)
     {

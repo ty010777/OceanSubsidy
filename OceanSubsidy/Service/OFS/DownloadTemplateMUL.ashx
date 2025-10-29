@@ -1,4 +1,4 @@
-﻿<%@ WebHandler Language="C#" Class="DownloadTemplateEDC" %>
+﻿<%@ WebHandler Language="C#" Class="DownloadTemplateMUL" %>
 
 using GS.OCA_OceanSubsidy.Operation.OSI.OpenXml;
 using Newtonsoft.Json;
@@ -8,8 +8,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Web;
+using System.Web.SessionState;
 
-public class DownloadTemplateEDC : IHttpHandler
+public class DownloadTemplateMUL : IHttpHandler, IRequiresSessionState
 {
     public void ProcessRequest(HttpContext context)
     {
@@ -45,9 +46,20 @@ public class DownloadTemplateEDC : IHttpHandler
                 data = multipleService.getFunding(new JObject { ["ID"] = id }, context);
                 var jothers = JObject.Parse(JsonConvert.SerializeObject(data));
 
+                var baseService = new BaseService();
+                var orgCategory = baseService.getZgsCodes(new JObject { ["CodeGroup"] = "MULField" }, context);
+                foreach(var obj in JArray.Parse(JsonConvert.SerializeObject(orgCategory)))
+                {
+                    if (obj["Code"]?.ToString() == jobj["Project"]["Field"]?.ToString())
+                    {
+                        jobj["Project"]["FieldName"] = obj["Descname"]?.ToString() ?? "";
+                    }
+                }
+
                 var placeholder = new Dictionary<string, string>();
                 placeholder.Add("{{A1}}", jobj["Project"]["ProjectID"]?.ToString() ?? "");
                 placeholder.Add("{{A2}}", jobj["Project"]["ProjectName"]?.ToString() ?? "");
+                placeholder.Add("{{A3}}", jobj["Project"]["FieldName"]?.ToString() ?? "");
                 placeholder.Add("{{A4}}", jobj["Project"]["OrgName"]?.ToString() ?? "");
                 placeholder.Add("{{A6}}", jobj["Project"]["TaxID"]?.ToString() ?? "");
                 placeholder.Add("{{A7}}", jobj["Project"]["Address"]?.ToString() ?? "");
