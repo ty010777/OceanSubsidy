@@ -123,7 +123,7 @@
             docs.value = docs.value.filter((doc) => !doc.Excludes?.includes(project.value.OrgCategory));
 
             if (project.value.Status >= 42) {
-                docs.value.push({ Type: 6, Title: "著作權授權同意書", Template: "../../Template/LIT/5-著作權授權同意書.docx", Files: [] });
+                docs.value.push({ Type: 6, Title: "著作權授權同意書", Template: "../../Template/CUL/5.海洋委員會補助計畫著作權授權同意書.docx", Files: [] });
             }
 
             docs.value.forEach((doc) => {

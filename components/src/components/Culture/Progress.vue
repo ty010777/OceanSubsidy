@@ -206,8 +206,11 @@
     };
 
     onMounted(() => {
-        api.culture("getApplication", { ID: props.id }).subscribe((result) => {
-            form.value = result.Project;
+        rxjs.forkJoin([
+            api.culture("getApplication", { ID: props.id }),
+            api.culture("getSubmitedMonthlyProgress", { ID: props.id })
+        ]).subscribe((result) => {
+            form.value = result[0].Project;
 
             useProgressStore().init("culture", form.value);
 
@@ -238,6 +241,24 @@
                 }
 
                 start.setMonth(month + 1);
+            }
+
+            //--
+
+            let found = false;
+            const submited = result[1].List;
+
+            tabs.value.forEach((tab) => {
+                tab.months.forEach((data) => {
+                    if (!found && !submited.some((item) => item.Year === data.year - 1911 && item.Month === data.month)) {
+                        found = true;
+                        change(data);
+                    }
+                });
+            });
+
+            if (!found) {
+                change(tabs.value[0].months[0]);
             }
         });
     });

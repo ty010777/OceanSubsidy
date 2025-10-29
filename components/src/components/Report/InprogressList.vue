@@ -116,7 +116,7 @@
                         <td data-th="計畫名稱:" style="text-align:left">
                             <a class="link-black" :href="path(item)" target="_blank">{{ item.ProjectName }}</a>
                         </td>
-                        <td data-th="申請單位:" style="text-align:left">{{ item.UserOrg }}</td>
+                        <td data-th="申請單位:" style="text-align:left">{{ item.OrgName }}</td>
                         <td data-th="本會補助金額:" class="text-end">{{ item.ApprovedAmount.toLocaleString() }}</td>
                         <td data-th="配合款:" class="text-end">{{ item.OtherAmount.toLocaleString() }}</td>
                         <td data-th="實支金額:" class="text-end">{{ item.SpendAmount.toLocaleString() }}</td>
@@ -154,7 +154,7 @@
         }
 
         if (form.value.org) {
-            data = data.filter((i) => i.UserOrg?.includes(form.value.org));
+            data = data.filter((i) => i.OrgName?.includes(form.value.org));
         }
 
         if (form.value.name) {

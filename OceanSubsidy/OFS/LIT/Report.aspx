@@ -45,7 +45,7 @@
                     id: 1,
                     title: "成果報告",
                     subtitle: "成果報告審查",
-                    description: "請下載報告書範本，填寫資料及公文用印後上傳。<br>成果報告書及相關檔案，請壓縮ZIP上傳（檔案100MB以內）。",
+                    description: "請下載報告書範本，填寫資料及公文用印後上傳。<br>成果報告書及相關檔案，請壓縮ZIP上傳（檔案500MB以內）。",
                     docs: [
                         { Type: 1, Title: "成果報告書", Template: "../../Template/LIT/成果報告書.docx" }
                     ]

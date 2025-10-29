@@ -134,7 +134,7 @@ public class SystemService : BaseService
     {
         return new
         {
-            List = ReportHelper.queryApplyList()
+            List = ReportHelper.queryApplyList(CurrentUser.IsOrganizer || CurrentUser.IsSupervisor || CurrentUser.IsSysAdmin ? "" : CurrentUser.Account)
         };
     }
 
@@ -142,7 +142,7 @@ public class SystemService : BaseService
     {
         return new
         {
-            List = ReportHelper.queryApplyList(1)
+            List = ReportHelper.queryApplyList(CurrentUser.IsOrganizer || CurrentUser.IsSupervisor || CurrentUser.IsSysAdmin ? "" : CurrentUser.Account, 1)
         };
     }
 
@@ -219,7 +219,7 @@ public class SystemService : BaseService
     {
         return new
         {
-            List = ReportHelper.queryApplyList(2)
+            List = ReportHelper.queryApplyList(CurrentUser.IsOrganizer || CurrentUser.IsSupervisor || CurrentUser.IsSysAdmin ? "" : CurrentUser.Account, 2)
         };
     }
 

@@ -20,7 +20,7 @@
         <accessibility-application :id="id" @next="current++" v-if="current === 1"></accessibility-application>
         <accessibility-work-schedule :id="id" @next="current++" v-else-if="current === 2"></accessibility-work-schedule>
         <accessibility-funding :id="id" @next="current++" v-else-if="current === 3"></accessibility-funding>
-        <accessibility-other :id="id" @next="current++" v-else-if="current === 4"></accessibility-other>
+        <accessibility-benefit :id="id" @next="current++" v-else-if="current === 4"></accessibility-benefit>
         <accessibility-attachment :id="id" @next="next" v-else-if="current === 5"></accessibility-attachment>
     </div>
 </asp:Content>

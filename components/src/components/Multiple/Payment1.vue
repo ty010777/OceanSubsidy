@@ -6,9 +6,9 @@
             <table class="table align-middle gray-table">
                 <thead>
                     <tr>
-                        <th class="text-end">本期請款金額</th>
-                        <th class="text-end">前期已撥付金額</th>
-                        <th>累積實支金額</th>
+                        <th class="text-end">本期請款金額(元)</th>
+                        <th class="text-end">前期已撥付金額(元)</th>
+                        <th>累積實支金額(元)</th>
                         <th class="text-end">累積經費執行率</th>
                         <th class="text-end">支用比</th>
                     </tr>

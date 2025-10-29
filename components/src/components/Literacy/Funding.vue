@@ -6,10 +6,10 @@
                 <table class="table align-middle gray-table">
                     <thead>
                         <tr>
-                            <th class="text-end">申請海委會補助／合作金額 (A)</th>
-                            <th class="text-end">申請單位自籌款 (B)</th>
-                            <th class="text-end">其他機關補助／合作總金額 (C)</th>
-                            <th class="text-end">計畫總經費 (A+B+C)</th>
+                            <th class="text-end">申請海委會補助／合作金額(元) (A)</th>
+                            <th class="text-end">申請單位自籌款(元) (B)</th>
+                            <th class="text-end">其他機關補助／合作總金額(元) (C)</th>
+                            <th class="text-end">計畫總經費(元) (A+B+C)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -43,7 +43,7 @@
                         <tr>
                             <th width="1"></th>
                             <th>單位名稱</th>
-                            <th class="text-end">申請／分攤補助金額（含尚未核定者）</th>
+                            <th class="text-end">申請／分攤補助金額(元)（含尚未核定者）</th>
                             <th>比例</th>
                             <th>申請合作項目</th>
                             <th width="1" v-if="editable">功能</th>
@@ -84,9 +84,9 @@
                     <thead>
                         <tr>
                             <th>預算項目</th>
-                            <th class="text-end">預算金額<br />海洋委員會經費</th>
-                            <th class="text-end">預算金額<br />其他配合經費</th>
-                            <th class="text-end">預算金額小計</th>
+                            <th class="text-end">預算金額(元)<br />海洋委員會經費</th>
+                            <th class="text-end">預算金額(元)<br />其他配合經費</th>
+                            <th class="text-end">預算金額(元)<br />小計</th>
                             <th>計算方式及說明</th>
                             <th width="1" v-if="editable">功能</th>
                         </tr>

@@ -1,7 +1,7 @@
 ﻿<%@ Master Language="C#" MasterPageFile="~/OFSMaster.master" AutoEventWireup="true" CodeFile="Layout.master.cs" Inherits="OFSCulLayoutMaster" %>
 
 <asp:Content ContentPlaceHolderID="TitleContent" runat="server">
-    <asp:ContentPlaceHolder ID="TitleContent" runat="server" />
+    <asp:ContentPlaceHolder ID="TitleContent" runat="server">海洋領域補助計畫管理資訊系統</asp:ContentPlaceHolder>
 </asp:Content>
 
 <asp:Content ContentPlaceHolderID="HeadExtra" runat="server">

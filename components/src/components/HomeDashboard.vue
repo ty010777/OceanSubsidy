@@ -36,20 +36,16 @@
         </div>
         <div class="rounded-4 bg-white mt-4 py-4" v-if="stat">
             <div class="row">
-                <div class="col-12 col-lg-3">
+                <div class="col-12 col-lg-4">
                     <div class="text-center fs-4 fw-bold mb-4">經費執行率</div>
                     <report-pie-chart active="已執行" :color="0x8E44AD" inactive="未執行" :percent="toPercent(stat.SpendAmount, stat.ApprovedAmount, 1)" style="width:100%;height:300px"></report-pie-chart>
                 </div>
-                <div class="col-12 col-lg-3">
-                    <div class="text-center fs-4 fw-bold mb-4">支用比</div>
-                    <report-pie-chart active="已支用" :color="0x3498DB" inactive="未支用" :percent="Math.min(toPercent(stat.SpendAmount, stat.PaymentAmount, 1), 100)" style="width:100%;height:300px"></report-pie-chart>
-                </div>
-                <div class="col-12 col-lg-6">
+                <div class="col-12 col-lg-8">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <span class="fs-4 fw-bold">各類經費執行情形</span>
                     </div>
                     <div class="fs-6 text-end text-secondary me-5">單位：千元</div>
-                    <report-mix-chart :list="statList" style="width:100%;height:300px"></report-mix-chart>
+                    <report-mix-chart :list="statList" style="width:100%;height:300px" v-if="statList.length"></report-mix-chart>
                 </div>
             </div>
         </div>
@@ -95,7 +91,7 @@
                             <tbody>
                                 <tr :key="item" v-for="(item) in statList">
                                     <td class="text-center">{{ types.find((ty) => ty.code === item.Category).title }}</td>
-                                    <td class="text-center"><a href="Report/ApprovedList.aspx">{{ item.Count }}</a></td>
+                                    <td class="text-center"><a :href="`Report/ApprovedList.aspx?category=${item.Category}`">{{ item.Count }}</a></td>
                                     <td class="text-end">{{ item.ApprovedAmount.toLocaleString() }}</td>
                                     <td class="text-end">{{ toPercent(item.SpendAmount, item.ApprovedAmount) }}%</td>
                                 </tr>
@@ -107,7 +103,7 @@
         </div>
     </div>
     <div class="block rounded-4 mt-4">
-        <div class="table-responsive" style="min-height:400px">
+        <div class="table-responsive">
             <div class="row">
                 <div class="col">
                     <div class="fs-16 text-gray mb-2">依身分篩選適用規定</div>

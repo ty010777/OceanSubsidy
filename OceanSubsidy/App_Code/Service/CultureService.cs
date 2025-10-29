@@ -304,6 +304,15 @@ public class CultureService : BaseService
         };
     }
 
+    public object getSubmitedMonthlyProgress(JObject param, HttpContext context)
+    {
+        var id = getID(param["ID"].ToString());
+
+        return new {
+            List = OFS_CulMonthlyProgressHelper.querySubmited(id)
+        };
+    }
+
     public object getWorkSchedule(JObject param, HttpContext context)
     {
         List<OFS_CulGoal> goals;
