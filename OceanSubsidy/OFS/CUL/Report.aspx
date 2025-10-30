@@ -45,7 +45,7 @@
                     id: 1,
                     title: "期中報告",
                     subtitle: "期中報告審查",
-                    description: "請下載報告書範本，填寫資料及公文用印後上傳。<br>期中報告書及相關檔案，請壓縮ZIP上傳（檔案100MB以內）。",
+                    description: "請下載報告書範本，填寫資料及公文用印後上傳。<br>期中報告書及相關檔案，請壓縮ZIP上傳（檔案500MB以內）。",
                     docs: [
                         { Type: 1, Title: "期中報告書", Template: "../../Template/CUL/期中期末成果報告書.docx" }
                     ]
@@ -53,7 +53,7 @@
                     id: 2,
                     title: "期末報告",
                     subtitle: "期末報告審查",
-                    description: "請下載報告書範本，填寫資料及公文用印後上傳。<br>期末報告書及相關檔案（成果照片、影像等），請壓縮ZIP上傳（檔案100MB以內）。",
+                    description: "請下載報告書範本，填寫資料及公文用印後上傳。<br>期末報告書及相關檔案（成果照片、影像等），請壓縮ZIP上傳（檔案500MB以內）。",
                     docs: [
                         { Type: 2, Title: "期末報告書", Template: "../../Template/CUL/期中期末成果報告書.docx" }
                     ]

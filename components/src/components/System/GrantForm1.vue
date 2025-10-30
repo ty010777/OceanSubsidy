@@ -1,6 +1,7 @@
 <template>
     <div class="block">
-        <table class="table align-middle gray-table side-table">
+        <h5 class="square-title">基本資料</h5>
+        <table class="table align-middle gray-table side-table mt-4">
             <tbody>
                 <tr>
                     <th><required-label>補助類別(代碼)</required-label></th>
@@ -25,6 +26,34 @@
                     </td>
                 </tr>
                 <tr>
+                    <th><required-label>相關檔案<br>(顯示於首頁)</required-label></th>
+                    <td>
+                        <div class="tag-group mt-2 gap-1" v-if="file">
+                            <span class="tag tag-green-light">
+                                <a class="tag-link my-1" :download="file.Name" :href="download(file.Path)">{{ file.Name }}</a>
+                                <button class="tag-btn" @click="file = null" type="button">
+                                    <i class="fa-solid fa-circle-xmark"></i>
+                                </button>
+                            </span>
+                        </div>
+                        <div v-else>
+                            <input-file @file="(newFile) => file = newFile"></input-file>
+                        </div>
+                        <div class="invalid mt-0" v-if="errors.Filename">{{ errors.Filename }}</div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <h5 class="square-title mt-4">我的E政府</h5>
+        <table class="table align-middle gray-table side-table mt-4">
+            <tbody>
+                <tr>
+                    <th><required-label>補助類別全稱</required-label></th>
+                    <td>
+                        <input-text disabled v-model.trim="form.FullName"></input-text>
+                    </td>
+                </tr>
+                <tr>
                     <th><required-label>內容</required-label></th>
                     <td>
                         <input-textarea :error="errors.ServiceContent" v-model.trim="content.ServiceContent"></input-textarea>
@@ -45,24 +74,9 @@
                 <tr>
                     <th><required-label>申辦流程</required-label></th>
                     <td>
-                        <table class="table align-middle gray-table">
-                            <tbody>
-                                <tr :key="item" v-for="(item,idx) in filterProcedures">
-                                    <td width="1%">{{ idx + 1 }}</td>
-                                    <td><input-textarea :error="errors[`procedure-${idx}-Content`]" v-model.trim="item.Content"></input-textarea></td>
-                                    <td width="1%">
-                                        <div class="d-flex gap-2">
-                                            <button class="btn btn-sm btn-teal-dark m-0" @click="item.Deleted = true" type="button" v-if="filterProcedures.length > 1">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-teal-dark m-0" @click="procedures.push({})" type="button" v-if="idx + 1 === filterProcedures.length">
-                                                <i class="fas fa-plus"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <template :key="item" v-for="(item,idx) in filterProcedures">
+                            <input-textarea :error="errors[`procedure-${idx}-Content`]" v-model.trim="item.Content"></input-textarea>
+                        </template>
                     </td>
                 </tr>
                 <tr>
@@ -117,23 +131,6 @@
                         <button class="btn btn-teal-dark" @click="links.push({})" type="button"><i class="fas fa-plus"></i>新增</button>
                     </td>
                 </tr>
-                <tr>
-                    <th><required-label>相關檔案<br>(顯示於首頁)</required-label></th>
-                    <td>
-                        <div class="tag-group mt-2 gap-1" v-if="file">
-                            <span class="tag tag-green-light">
-                                <a class="tag-link my-1" :download="file.Name" :href="download(file.Path)">{{ file.Name }}</a>
-                                <button class="tag-btn" @click="file = null" type="button">
-                                    <i class="fa-solid fa-circle-xmark"></i>
-                                </button>
-                            </span>
-                        </div>
-                        <div v-else>
-                            <input-file @file="(newFile) => file = newFile"></input-file>
-                        </div>
-                        <div class="invalid mt-0" v-if="errors.Filename">{{ errors.Filename }}</div>
-                    </td>
-                </tr>
                 <tr v-if="content.Status === 1">
                     <th>申請下架</th>
                     <td>
@@ -184,13 +181,13 @@
                 return;
             }
 
-            switch (content.Status) {
+            switch (content.value.Status) {
                 case 0:
-                    content.Status = 1;
+                    content.value.Status = 1;
                     break;
                 case 1:
                     if (checked.value) {
-                        content.Status = 2;
+                        content.value.Status = 2;
                     }
                     break;
             }
@@ -269,7 +266,13 @@
                     file.value = { Name: content.value.Filename, Path: content.value.Path };
                 }
 
-                if (!procedures.value.length) {
+                if (procedures.value.length) {
+                    procedures.value.forEach((item, idx) => {
+                        if (idx) {
+                            item.Deleted = true;
+                        }
+                    });
+                } else {
                     procedures.value.push({});
                 }
 

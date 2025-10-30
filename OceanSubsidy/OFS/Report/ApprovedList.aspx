@@ -7,5 +7,14 @@
 <asp:Content ContentPlaceHolderID="MainTitle" runat="server">報表查詢 / 核定計畫報表</asp:Content>
 
 <asp:Content ContentPlaceHolderID="MainContent" runat="server">
-    <report-approved-list></report-approved-list>
+    <report-approved-list :category="category"></report-approved-list>
+    <script>
+        setupVueApp({
+            setup() {
+                const category = "<%= Request.QueryString["category"] %>";
+
+                return { category };
+            }
+        });
+    </script>
 </asp:Content>

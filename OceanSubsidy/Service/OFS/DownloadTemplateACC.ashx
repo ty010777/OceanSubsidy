@@ -1,4 +1,4 @@
-﻿<%@ WebHandler Language="C#" Class="DownloadTemplateEDC" %>
+﻿<%@ WebHandler Language="C#" Class="DownloadTemplateACC" %>
 
 using GS.OCA_OceanSubsidy.Operation.OSI.OpenXml;
 using Newtonsoft.Json;
@@ -8,8 +8,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Web;
+using System.Web.SessionState;
 
-public class DownloadTemplateEDC : IHttpHandler
+public class DownloadTemplateACC : IHttpHandler, IRequiresSessionState
 {
     public void ProcessRequest(HttpContext context)
     {

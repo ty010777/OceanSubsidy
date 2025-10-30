@@ -20,7 +20,7 @@
         <literacy-application :id="id" @next="current++" v-if="current === 1"></literacy-application>
         <literacy-work-schedule :id="id" @next="current++" v-else-if="current === 2"></literacy-work-schedule>
         <literacy-funding :id="id" @next="current++" v-else-if="current === 3"></literacy-funding>
-        <literacy-other :id="id" @next="current++" v-else-if="current === 4"></literacy-other>
+        <literacy-benefit :id="id" @next="current++" v-else-if="current === 4"></literacy-benefit>
         <literacy-attachment :id="id" @next="next" v-else-if="current === 5"></literacy-attachment>
     </div>
 </asp:Content>

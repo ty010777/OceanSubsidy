@@ -189,7 +189,7 @@
         return 0;
     };
 
-    watch(() => props.list, () => {
+    onMounted(() => {
         init(types.map((item) => {
             const data = { "category": item.title, "核定經費": 0, "實支金額": 0, "已撥付": 0, "經費執行率(%)": 0, "支用比(%)": 0 };
             const info = props.list.find((i) => i.Category === item.code);

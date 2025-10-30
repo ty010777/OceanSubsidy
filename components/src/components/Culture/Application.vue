@@ -159,7 +159,7 @@
                                         <tr>
                                             <th>計畫名稱</th>
                                             <th>補助單位</th>
-                                            <th class="text-end">補助金額</th>
+                                            <th class="text-end">補助金額(元)</th>
                                             <th v-if="editable">功能</th>
                                         </tr>
                                     </thead>

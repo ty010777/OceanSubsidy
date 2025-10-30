@@ -20,7 +20,7 @@
         <multiple-application :id="id" @next="current++" v-if="current === 1"></multiple-application>
         <multiple-work-schedule :id="id" @next="current++" v-else-if="current === 2"></multiple-work-schedule>
         <multiple-funding :id="id" @next="current++" v-else-if="current === 3"></multiple-funding>
-        <multiple-other :id="id" @next="current++" v-else-if="current === 4"></multiple-other>
+        <multiple-benefit :id="id" @next="current++" v-else-if="current === 4"></multiple-benefit>
         <multiple-attachment :id="id" @next="next" v-else-if="current === 5"></multiple-attachment>
     </div>
 </asp:Content>

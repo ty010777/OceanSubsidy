@@ -4,7 +4,7 @@
 
 <asp:Content ContentPlaceHolderID="MainIcon" runat="server"><%= ResolveUrl("~/assets/img/information-system-title-icon06.svg") %></asp:Content>
 
-<asp:Content ContentPlaceHolderID="MainTitle" runat="server">報表查詢 / 審查委員名單</asp:Content>
+<asp:Content ContentPlaceHolderID="MainTitle" runat="server">報表查詢 / 審查委員資料</asp:Content>
 
 <asp:Content ContentPlaceHolderID="MainContent" runat="server">
     <report-reviewer-list></report-reviewer-list>

@@ -98,7 +98,7 @@
                         <td data-th="計畫名稱:" style="text-align:left">
                             <a class="link-black" :href="path(item)" target="_blank">{{ item.ProjectName }}</a>
                         </td>
-                        <td data-th="申請單位:" style="text-align:left">{{ item.UserOrg }}</td>
+                        <td data-th="申請單位:" style="text-align:left">{{ item.OrgName }}</td>
                         <td data-th="本會補助金額:" class="text-end">{{ item.ApprovedAmount.toLocaleString() }}</td>
                         <td data-th="配合款:" class="text-end">{{ item.OtherAmount.toLocaleString() }}</td>
                     </tr>
@@ -110,6 +110,20 @@
 </template>
 
 <script setup>
+    const props = defineProps({
+        category: { type: String }
+    });
+
+    const mapping = {
+        ACC: "無障礙",
+        CLB: "學校社團",
+        CUL: "文化",
+        EDC: "學校／民間",
+        LIT: "素養",
+        MUL: "多元",
+        SCI: "科專"
+    };
+
     const categoryList = ref([]);
     const form = ref({});
     const list = ref([]);
@@ -131,7 +145,7 @@
         }
 
         if (form.value.org) {
-            data = data.filter((i) => i.UserOrg?.includes(form.value.org));
+            data = data.filter((i) => i.OrgName?.includes(form.value.org));
         }
 
         if (form.value.name) {
@@ -173,6 +187,14 @@
                     unitList.value.push(item.SupervisoryUnit);
                 }
             });
+
+            if (props.category) {
+                const category = mapping[props.category];
+
+                if (categoryList.value.includes(category)) {
+                    form.value.category = category;
+                }
+            }
         });
     });
 </script>

@@ -21,7 +21,17 @@ const education = (method, param = {}) => {
 
 const error = (response) => {
     if (response.status === 403) {
-        window.location.href = toUrl("/OFS/Home.aspx");
+        let to = "/OFS/Home.aspx";
+
+        if (/\/OFS\/(ACC|CUL|EDC|LIT|MUL)\/(Application|Attachment|Benefit|Funding|Other|WorkSchedule)\.aspx/.test(window.location.href)) {
+            to = "/OFS/ApplicationChecklist.aspx";
+        } else if (/\/OFS\/(ACC|CUL|EDC|LIT|MUL)\/(Review)\.aspx/.test(window.location.href)) {
+            to = "/OFS/ReviewChecklist.aspx";
+        } else if (/\/OFS\/(ACC|CUL|EDC|LIT|MUL)\/(Audit|Payment|Progress|Report)\.aspx/.test(window.location.href)) {
+            to = "/OFS/inprogressList.aspx";
+        }
+
+        window.location.href = toUrl(to);
     }
 };
 

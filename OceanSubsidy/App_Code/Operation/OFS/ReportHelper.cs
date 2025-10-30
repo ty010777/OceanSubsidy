@@ -8,7 +8,7 @@ using System.Linq;
 public class ReportHelper
 {
     // TODO 嘉良: approved=0 申請計畫報表, approved=1 核定計畫報表, approved=2 執行計畫報表
-    public static List<ApplyPlan> queryApplyList(int approved = 0)
+    public static List<ApplyPlan> queryApplyList(string account, int approved = 0)
     {
         DbHelper db = new DbHelper();
 
@@ -50,11 +50,11 @@ public class ReportHelper
     UNION ALL SELECT '計畫執行', '已終止', 92
 ), FinalApplyList as (
 
-SELECT O.[Year]
+            SELECT O.[Year]
                   ,O.[ProjectID]
                   ,O.[Category]
                   ,O.[ProjectName]
-                  ,O.[UserOrg]
+                  ,O.[OrgName]
                   ,O.[ApprovedAmount]
                   ,O.[ApplyAmount]
                   ,O.[OtherAmount]
@@ -64,11 +64,12 @@ SELECT O.[Year]
                   ,P.Descname AS [StageName]
                   ,O.[Status]
                   ,S.Descname AS [StatusName]
+                  ,O.[UserAccount]
               FROM (SELECT [Year]
                           ,[ProjectID]
                           ,'文化' AS [Category]
                           ,[ProjectName]
-                          ,[UserOrg]
+                          ,[OrgName]
                           ,[Organizer]
                           ,ISNULL([ApprovedAmount], 0) AS [ApprovedAmount]
                           ,ISNULL([ApplyAmount], 0) AS [ApplyAmount]
@@ -77,6 +78,7 @@ SELECT O.[Year]
                           ,ISNULL([PaymentAmount], 0) AS [PaymentAmount]
                           ,[ProgressStatus]
                           ,[Status]
+                          ,[UserAccount]
                       FROM OFS_CUL_Project
                      WHERE IsExists = 1 AND IsWithdrawal <> 1
                     UNION
@@ -84,7 +86,7 @@ SELECT O.[Year]
                           ,[ProjectID]
                           ,'學校／民間' AS [Category]
                           ,[ProjectName]
-                          ,[UserOrg]
+                          ,[OrgName]
                           ,[Organizer]
                           ,ISNULL([ApprovedAmount], 0) AS [ApprovedAmount]
                           ,ISNULL([ApplyAmount], 0) AS [ApplyAmount]
@@ -93,6 +95,7 @@ SELECT O.[Year]
                           ,ISNULL([PaymentAmount], 0) AS [PaymentAmount]
                           ,[ProgressStatus]
                           ,[Status]
+                          ,[UserAccount]
                       FROM OFS_EDC_Project
                      WHERE IsExists = 1 AND IsWithdrawal <> 1
                     UNION
@@ -100,7 +103,7 @@ SELECT O.[Year]
                           ,[ProjectID]
                           ,'多元' AS [Category]
                           ,[ProjectName]
-                          ,[UserOrg]
+                          ,[OrgName]
                           ,[Organizer]
                           ,ISNULL([ApprovedAmount], 0) AS [ApprovedAmount]
                           ,ISNULL([ApplyAmount], 0) AS [ApplyAmount]
@@ -109,6 +112,7 @@ SELECT O.[Year]
                           ,ISNULL([PaymentAmount], 0) AS [PaymentAmount]
                           ,[ProgressStatus]
                           ,[Status]
+                          ,[UserAccount]
                       FROM OFS_MUL_Project
                      WHERE IsExists = 1 AND IsWithdrawal <> 1
                     UNION
@@ -116,7 +120,7 @@ SELECT O.[Year]
                           ,[ProjectID]
                           ,'素養' AS [Category]
                           ,[ProjectName]
-                          ,[UserOrg]
+                          ,[OrgName]
                           ,[Organizer]
                           ,ISNULL([ApprovedAmount], 0) AS [ApprovedAmount]
                           ,ISNULL([ApplyAmount], 0) AS [ApplyAmount]
@@ -125,6 +129,7 @@ SELECT O.[Year]
                           ,ISNULL([PaymentAmount], 0) AS [PaymentAmount]
                           ,[ProgressStatus]
                           ,[Status]
+                          ,[UserAccount]
                       FROM OFS_LIT_Project
                      WHERE IsExists = 1 AND IsWithdrawal <> 1
                     UNION
@@ -132,7 +137,7 @@ SELECT O.[Year]
                           ,[ProjectID]
                           ,'無障礙' AS [Category]
                           ,[ProjectName]
-                          ,[UserOrg]
+                          ,[OrgName]
                           ,[Organizer]
                           ,ISNULL([ApprovedAmount], 0) AS [ApprovedAmount]
                           ,ISNULL([ApplyAmount], 0) AS [ApplyAmount]
@@ -141,6 +146,7 @@ SELECT O.[Year]
                           ,ISNULL([PaymentAmount], 0) AS [PaymentAmount]
                           ,[ProgressStatus]
                           ,[Status]
+                          ,[UserAccount]
                       FROM OFS_ACC_Project
                      WHERE IsExists = 1 AND IsWithdrawal <> 1
 
@@ -157,7 +163,7 @@ SELECT O.[Year]
 						 PM.ProjectID ,
 						  '科專' AS [Category],
 						  ProjectNameTw AS [ProjectName] ,
-						  PM.[UserOrg],
+						  AM.[OrgName],
 						 ISNULL(PM.ApprovedSubsidy,0) AS ApprovedAmount,
 						  ISNULL(PT.ApplyAmount,0) AS ApplyAmount,
 						  ISNULL(PT.OtherAmount,0) AS OtherAmount,
@@ -165,8 +171,9 @@ SELECT O.[Year]
 						  ISNULL(PP.PaymentAmount,0) AS PaymentAmount,
 						  PM.SupervisoryUnit,
 						  PM.Statuses as StageName,
-						  SM.Status AS Status,
-						  PM.StatusesName as StatusName
+						  ISNULL(SM.Status,0) AS Status,
+						  PM.StatusesName as StatusName,
+                          PM.[UserAccount]
 						  FROM OFS_SCI_Project_Main  PM
 						  LEFT JOIN OFS_SCI_Application_Main AM ON  PM.ProjectID = AM.ProjectID
 						  LEFT JOIN (
@@ -191,7 +198,7 @@ SELECT O.[Year]
 						PM.ProjectID,
 						'學校社團' AS Category,
 						ProjectNameTw AS [ProjectName],
-						UserOrg ,
+						AB.[SchoolName] + AB.[ClubName] AS [OrgName],
 						ISNULL(PM.ApprovedSubsidy,0) AS ApprovedAmount,
 						ISNULL(AF.SubsidyFunds,0) AS ApplyAmount,
 						ISNULL(SelfFunds,0) + ISNULL(OtherGovFunds,0) + ISNULL(OtherUnitFunds,0) AS [OtherAmount],
@@ -199,8 +206,9 @@ SELECT O.[Year]
 						ISNULL(CP.CurrentActualPaidAmount,0) AS PaymentAmount,
 						PM.SupervisoryUnit AS SupervisoryUnit,
 						PM.Statuses as StageName,
-						SM.Status AS Status,
-						PM.StatusesName as StatusName
+						ISNULL(SM.Status,0) AS Status,
+						PM.StatusesName as StatusName,
+                        PM.[UserAccount]
 						 FROM OFS_CLB_Project_Main PM
 						 LEFT JOIN OFS_CLB_Application_Basic AB ON PM.ProjectID = AB.ProjectID
 						 LEFT JOIN OFS_CLB_Application_Funds AF ON PM.ProjectID = AF.ProjectID
@@ -209,17 +217,23 @@ SELECT O.[Year]
 						 WHERE PM.IsExist = 1 AND IsWithdrawal <> 1
 						 )
 						 SELECT * FROM FinalApplyList
-
+                          WHERE 1 = 1
 ";
 
         switch (approved)
         {
             case 1:
-                db.CommandText += " WHERE [Status] IN (45,51,52,91)";
+                db.CommandText += " AND [Status] IN (45,51,52,91)";
                 break;
             case 2:
-                db.CommandText += " WHERE [Status] IN (51,52,91)";
+                db.CommandText += " AND [Status] IN (51,52,91)";
                 break;
+        }
+
+        if (!string.IsNullOrWhiteSpace(account))
+        {
+            db.CommandText += " AND [UserAccount] = @UserAccount";
+            db.Parameters.Add("@UserAccount", account);
         }
 
         db.CommandText += " ORDER BY ProjectID";
@@ -230,7 +244,7 @@ SELECT O.[Year]
             ProjectID = row.Field<string>("ProjectID"),
             Category = row.Field<string>("Category"),
             ProjectName = row.Field<string>("ProjectName"),
-            UserOrg = row.Field<string>("UserOrg"),
+            OrgName = row.Field<string>("OrgName"),
             ApprovedAmount = Convert.ToInt32(row["ApprovedAmount"]),
             ApplyAmount = Convert.ToInt32(row["ApplyAmount"]),
             OtherAmount = Convert.ToInt32(row["OtherAmount"]),
@@ -378,7 +392,7 @@ SELECT O.[Year]
                           ,ISNULL([PaymentAmount], 0) AS [PaymentAmount]
                       FROM OFS_EDC_Project
                      WHERE IsExists = 1 AND IsWithdrawal <> 1 AND Status IN (51,52,91)
-                    UNION
+                    UNION ALL
                     SELECT [Year]
                           ,'MUL' AS [Category]
                           ,ISNULL([ApprovedAmount], 0) AS [ApprovedAmount]

@@ -8,8 +8,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Web;
+using System.Web.SessionState;
 
-public class DownloadTemplateCUL : IHttpHandler
+public class DownloadTemplateCUL : IHttpHandler, IRequiresSessionState
 {
     public void ProcessRequest(HttpContext context)
     {
@@ -53,8 +54,9 @@ public class DownloadTemplateCUL : IHttpHandler
                 placeholder.Add("{{A1}}", jobj["Project"]["ProjectID"]?.ToString() ?? "");
                 placeholder.Add("{{A2}}", jobj["Project"]["ProjectName"]?.ToString() ?? "");
 
-                // TODO: A3 有三個類別，每個類別還有子項目
-                // placeholder.Add("{{A3}}", jobj["Project"]["OrgName"]?.ToString() ?? "");
+                // 取得申請補助單位
+                var fieldTitle = OFS_CulProjectHelper.getFieldTitle(id);
+                placeholder.Add("{{A3}}", fieldTitle?.ToString() ?? "");
 
                 placeholder.Add("{{A4}}", jobj["Project"]["OrgName"]?.ToString() ?? "");
                 placeholder.Add("{{A5}}", jobj["Project"]["RegisteredNum"]?.ToString() ?? "");

@@ -7,9 +7,9 @@
             <table class="table align-middle gray-table">
                 <thead>
                     <tr>
-                        <th class="text-end">本期請款金額</th>
-                        <th class="text-end">前期已撥付金額</th>
-                        <th>累積實支金額</th>
+                        <th class="text-end">本期請款金額(元)</th>
+                        <th class="text-end">前期已撥付金額(元)</th>
+                        <th>累積實支金額(元)</th>
                         <th class="text-end">累積經費執行率</th>
                         <th class="text-end">支用比</th>
                     </tr>
@@ -105,7 +105,7 @@
     const prevPaid = ref(0);
     const project = ref({});
     const rate = computed(() => project.value.ApprovedAmount ? Math.min(Math.round(amount.value * 100 / project.value.ApprovedAmount * 100) / 100, 100) : 0);
-    const rate2 = computed(() => prevPaid.value ? Math.min(Math.round(amount.value * 100 / prevPaid.value * 100) / 100, 100) : 0);
+    const rate2 = computed(() => prevPaid.value ? Math.round(amount.value * 100 / prevPaid.value * 100) / 100 : 0);
 
     const docs = ref([
         { Type: 31, Title: "領據", Template: "../../Template/MUL/1-領據.docx", Files: [] },

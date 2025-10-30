@@ -45,7 +45,7 @@
                     <tr>
                         <th><required-label>申請單位</required-label></th>
                         <td>
-                            <input-text :error="errors.OrgName" placeholder="請輸入名稱" v-model.trim="form.OrgName"></input-text>
+                            <input-text :error="errors.OrgName" placeholder="請輸入單位全銜" v-model.trim="form.OrgName"></input-text>
                         </td>
                     </tr>
                     <tr>
@@ -148,11 +148,11 @@
                 <table class="table align-middle gray-table">
                     <thead>
                         <tr>
-                            <th class="text-end"><required-label>申請海委會<br />補助經費</required-label></th>
-                            <th class="text-end"><required-label>申請單位<br />自籌款</required-label></th>
-                            <th class="text-end"><required-label>其他政府機關<br />補助經費</required-label></th>
-                            <th class="text-end"><required-label>其他單位<br />補助經費（含總收費）</required-label></th>
-                            <th class="text-end">計畫總經費</th>
+                            <th class="text-end"><required-label>申請海委會<br />補助經費(元)</required-label></th>
+                            <th class="text-end"><required-label>申請單位<br />自籌款(元)</required-label></th>
+                            <th class="text-end"><required-label>其他政府機關<br />補助經費(元)</required-label></th>
+                            <th class="text-end"><required-label>其他單位<br />補助經費(元) (含總收費)</required-label></th>
+                            <th class="text-end">計畫總經費(元)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -188,7 +188,7 @@
                                 <thead>
                                     <tr>
                                         <th>計畫名稱</th>
-                                        <th class="text-end">海委會補助經費</th>
+                                        <th class="text-end">海委會補助經費(元)</th>
                                         <th v-if="editable">功能</th>
                                     </tr>
                                 </thead>
