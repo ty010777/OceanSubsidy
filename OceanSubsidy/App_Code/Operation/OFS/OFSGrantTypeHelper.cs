@@ -55,6 +55,7 @@ public class OFSGrantTypeHelper
                   ,[FullName]
                   ,[ApplyStartDate]
                   ,[ApplyEndDate]
+                  ,[Year]
               FROM [OFS_GrantType]
              WHERE [TypeCode] = @TypeCode
                AND [ApplyStartDate] <= GETDATE()
@@ -77,7 +78,8 @@ public class OFSGrantTypeHelper
             ShortName = row.Field<string>("ShortName"),
             FullName = row.Field<string>("FullName"),
             StartDate = row.Field<DateTime>("ApplyStartDate"),
-            EndDate = row.Field<DateTime>("ApplyEndDate")
+            EndDate = row.Field<DateTime>("ApplyEndDate"),
+            Year = row.Field<int?>("Year")
         };
     }
 

@@ -94,7 +94,11 @@ public class EducationService : BaseService
     {
         var type = OFSGrantTypeHelper.getByCode("EDC");
 
-        return new { Year = type.StartDate.Value.Year - 1911, SubsidyPlanType = $"{type.ShortName} ({type.FullName})" };
+        return new
+        {
+            Year = type.Year.HasValue ? type.Year.Value : (type.StartDate.Value.Year - 1911),
+            SubsidyPlanType = $"{type.ShortName} ({type.FullName})"
+        };
     }
 
     public object getPayment(JObject param, HttpContext context)

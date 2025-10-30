@@ -41,6 +41,8 @@ namespace GS.OCA_OceanSubsidy.Model.OFS
         /// 結束日期
         /// </summary>
         public DateTime? EndDate { get; set; }
+
+        public int? Year { get; set; }
     }
 
     public class GrantType

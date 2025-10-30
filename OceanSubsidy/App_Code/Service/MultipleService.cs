@@ -134,7 +134,11 @@ public class MultipleService : BaseService
     {
         var type = OFSGrantTypeHelper.getByCode("MUL");
 
-        return new { Year = type.StartDate.Value.Year - 1911, SubsidyPlanType = $"{type.ShortName} ({type.FullName})" };
+        return new
+        {
+            Year = type.Year.HasValue ? type.Year.Value : (type.StartDate.Value.Year - 1911),
+            SubsidyPlanType = $"{type.ShortName} ({type.FullName})"
+        };
     }
 
     public object getFunding(JObject param, HttpContext context)
