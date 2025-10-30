@@ -162,15 +162,19 @@
 
     const path = (item) => {
         if (item.ProjectID.includes("CUL")) {
-            return `../CUL/Application.aspx?ID=${item.ProjectID}`;
+            return `../CUL/Audit.aspx?ID=${item.ProjectID}`;
         } else if (item.ProjectID.includes("EDC")) {
-            return `../EDC/Application.aspx?ID=${item.ProjectID}`;
+            return `../EDC/Audit.aspx?ID=${item.ProjectID}`;
         } else if (item.ProjectID.includes("MUL")) {
-            return `../MUL/Application.aspx?ID=${item.ProjectID}`;
+            return `../MUL/Audit.aspx?ID=${item.ProjectID}`;
         } else if (item.ProjectID.includes("LIT")) {
-            return `../LIT/Application.aspx?ID=${item.ProjectID}`;
+            return `../LIT/Audit.aspx?ID=${item.ProjectID}`;
         } else if (item.ProjectID.includes("ACC")) {
-            return `../ACC/Application.aspx?ID=${item.ProjectID}`;
+            return `../ACC/Audit.aspx?ID=${item.ProjectID}`;
+        } else if (item.ProjectID.includes("CLB")) {
+            return `../Clb/ClbApproved.aspx?ProjectID=${item.ProjectID}`;
+        } else if (item.ProjectID.includes("SCI")) {
+            return `../SCI/SciInprogress_Approved.aspx?ProjectID=${item.ProjectID}`;
         }
     };
 

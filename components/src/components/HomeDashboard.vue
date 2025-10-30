@@ -242,7 +242,7 @@
             isUser.value = res.IsUser;
 
             grants.value.forEach((item) => {
-                item.tags = item.TargetTags?.split("\n").map((tag) => tag.trim());
+                item.tags = item.TargetTags?.split("\n").map((tag) => tag.trim()).filter((tag) => tag) || [];
 
                 item.tags.forEach((tag) => {
                     if (!ranks.value.includes(tag)) {

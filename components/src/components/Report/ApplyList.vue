@@ -203,6 +203,10 @@
             return `../LIT/Application.aspx?ID=${item.ProjectID}`;
         } else if (item.ProjectID.includes("ACC")) {
             return `../ACC/Application.aspx?ID=${item.ProjectID}`;
+        } else if (item.ProjectID.includes("CLB")) {
+            return `../CLB/ClbApplication.aspx?ProjectID=${item.ProjectID}`;
+        } else if (item.ProjectID.includes("SCI")) {
+            return `../SCI/SciApplication.aspx?ProjectID=${item.ProjectID}`;
         }
     };
 

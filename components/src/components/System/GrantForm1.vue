@@ -181,16 +181,7 @@
                 return;
             }
 
-            switch (content.value.Status) {
-                case 0:
-                    content.value.Status = 1;
-                    break;
-                case 1:
-                    if (checked.value) {
-                        content.value.Status = 2;
-                    }
-                    break;
-            }
+            content.value.Status = checked.value ? 2 : 1;
         }
 
         form.value.ShortName = types.find((type) => type.code === form.value.TypeCode)?.title;
