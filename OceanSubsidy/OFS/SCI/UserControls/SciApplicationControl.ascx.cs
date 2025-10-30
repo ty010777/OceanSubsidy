@@ -364,15 +364,27 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
             {
                 result.AddError("請輸入計畫目標");
             }
+            else if (txtTarget.Text.Length > 500)
+            {
+                result.AddError("計畫目標超過500字，請修改後再提交");
+            }
 
             if (string.IsNullOrWhiteSpace(txtSummary.Text))
             {
                 result.AddError("請輸入計畫內容摘要");
             }
+            else if (txtSummary.Text.Length > 500)
+            {
+                result.AddError("計畫內容摘要超過500字，請修改後再提交");
+            }
 
             if (string.IsNullOrWhiteSpace(txtInnovation.Text))
             {
                 result.AddError("請輸入計畫創新重點");
+            }
+            else if (txtInnovation.Text.Length > 250)
+            {
+                result.AddError("計畫創新重點超過250字，請修改後再提交");
             }
 
             // 檢查關鍵字

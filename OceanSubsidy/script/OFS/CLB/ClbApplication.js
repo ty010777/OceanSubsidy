@@ -73,10 +73,19 @@ function switchTab(tabName) {
         updateButtonVisibility('application', isReadOnlyMode);
 
         // 更新狀態
+        // 取得 currentStepNumber，如果未定義則預設為 1
+        var currentStep = window.currentStepNumber || 1;
+
+        // 選擇「申請表」標籤時：
+        // - 申請表：永遠顯示「編輯中」
         updateStepStatus('application', '編輯中', 'edit');
-        if (enableUploadStep) {
+
+        // - 上傳附件：根據 currentStep 判斷
+        if (currentStep >= 3) {
+            // CurrentStep = 3：已提送，上傳附件已完成
             updateStepStatus('upload', '已完成');
-        }else{
+        } else {
+            // CurrentStep < 3：上傳附件未完成或未開始
             updateStepStatus('upload', '');
         }
 
@@ -87,9 +96,13 @@ function switchTab(tabName) {
 
         // 更新按鈕顯示
         updateButtonVisibility('upload', isReadOnlyMode);
+
         // 更新狀態
+        // 選擇「上傳附件」標籤時：
+        // - 申請表：顯示「已完成」（因為能進入上傳附件，表示申請表已完成）
         updateStepStatus('application', '已完成');
 
+        // - 上傳附件：顯示「編輯中」
         updateStepStatus('upload', '編輯中', 'edit');
     }
 }
@@ -295,6 +308,17 @@ function initializeNumberInputs() {
 
     // 初始化時執行一次，確保初始狀態正確
     handleSubsidyTypeChange();
+
+    // 綁定補助金額變更事件（檢查是否超過限制）
+    $('input[id*="txtSubsidyFunds"]').on('input', function() {
+        checkGrantLimit();
+    });
+
+    // 綁定「最近兩年曾獲本會補助」變更事件
+    bindPreviouslySubsidizedChange();
+
+    // 初始化經費說明欄位顯示狀態
+    handlePreviouslySubsidizedChange();
 }
 
 function initializeValidation() {
@@ -330,6 +354,8 @@ function bindSubsidyTypeChange() {
     // 綁定所有補助類型的 RadioButton change 事件
     $('[id*="rbSubsidyTypeCreate"], [id*="rbSubsidyTypeOperation"], [id*="rbSubsidyTypeActivity"]').on('change', function() {
         handleSubsidyTypeChange();
+        // 變更補助類型時也檢查金額限制
+        checkGrantLimit();
     });
 }
 
@@ -365,6 +391,81 @@ function handleSubsidyTypeChange() {
     } else {
         // 「創社補助」被選取：隱藏元素
         affairsViewElements.addClass('d-none');
+    }
+}
+
+/**
+ * 檢查補助金額是否超過限制
+ */
+function checkGrantLimit() {
+    // 檢查是否已載入補助額度限制資料
+    if (!window.grantLimitData) {
+        return;
+    }
+
+    // 取得當前選擇的補助類型
+    let targetTypeID = '';
+    if ($('[id*="rbSubsidyTypeCreate"]').prop('checked')) {
+        targetTypeID = 'CLB1'; // 創社補助
+    } else if ($('[id*="rbSubsidyTypeOperation"]').prop('checked')) {
+        targetTypeID = 'CLB2'; // 社務活動補助
+    } else if ($('[id*="rbSubsidyTypeActivity"]').prop('checked')) {
+        targetTypeID = 'CLB3'; // 公共活動費
+    }
+
+    // 如果沒有選擇補助類型，清除紅色提示
+    if (!targetTypeID) {
+        $('input[id*="txtSubsidyFunds"]').removeClass('text-danger');
+        return;
+    }
+
+    // 取得該補助類型的限制資料
+    const limitData = window.grantLimitData[targetTypeID];
+    if (!limitData || !limitData.GrantLimit) {
+        return;
+    }
+
+    // 取得申請補助金額
+    const subsidyFunds = parseFloatFromFormatted($('input[id*="txtSubsidyFunds"]').val()) || 0;
+
+    // 比較金額
+    if (subsidyFunds > limitData.GrantLimit) {
+        // 超過限制，顯示紅色文字
+        $('input[id*="txtSubsidyFunds"]').addClass('text-danger');
+    } else {
+        // 未超過限制，移除紅色文字
+        $('input[id*="txtSubsidyFunds"]').removeClass('text-danger');
+    }
+}
+
+/**
+ * 綁定「最近兩年曾獲本會補助」變更事件
+ */
+function bindPreviouslySubsidizedChange() {
+    // 綁定 RadioButton change 事件
+    $('[id*="rbPreviouslySubsidizedYes"], [id*="rbPreviouslySubsidizedNo"]').on('change', function() {
+        handlePreviouslySubsidizedChange();
+    });
+}
+
+/**
+ * 處理「最近兩年曾獲本會補助」變更
+ * - 選擇「是」時，顯示經費說明欄位
+ * - 選擇「否」時，隱藏經費說明欄位
+ */
+function handlePreviouslySubsidizedChange() {
+    // 檢查是否選擇「是」
+    const isPreviouslySubsidizedYes = $('[id*="rbPreviouslySubsidizedYes"]').prop('checked');
+
+    // 取得經費說明欄位的 row
+    const fundingDescriptionRow = $('.funding-description-row');
+
+    if (isPreviouslySubsidizedYes) {
+        // 選擇「是」：顯示經費說明欄位
+        fundingDescriptionRow.removeClass('d-none');
+    } else {
+        // 選擇「否」：隱藏經費說明欄位
+        fundingDescriptionRow.addClass('d-none');
     }
 }
 
@@ -1175,6 +1276,89 @@ function handleTempSave() {
  * 處理儲存並下一步按鈕點擊
  */
 function handleSaveAndNext() {
+    // 檢查是否超過補助金額限制
+    const exceedsLimit = checkIfExceedsGrantLimit();
+
+    if (exceedsLimit) {
+        // 計算補助上限的萬元單位
+        const grantLimitInWan = exceedsLimit.grantLimit / 10000;
+
+        // 如果超過限制，先顯示提示訊息（僅供確認，不擋控）
+        Swal.fire({
+            icon: 'warning',
+            title: '[提醒您]',
+            html: `您申請的補助款經費總計<span class="fw-bold">${exceedsLimit.subsidyFunds.toLocaleString()}</span>元<br>` +
+                  `已超過 ${exceedsLimit.targetName} 補助原則上限:<span class="fw-bold">${grantLimitInWan.toLocaleString()}</span>萬元<br><br>` +
+                  `繼續申請請按 【確定】<br>` +
+                  `返回調整請按 【取消】`,
+            showCancelButton: true,
+            confirmButtonText: '確定',
+            cancelButtonText: '取消',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // 使用者確認後，執行儲存
+                performSaveAndNext();
+            }
+        });
+    } else {
+        // 未超過限制，直接執行儲存
+        performSaveAndNext();
+    }
+}
+
+/**
+ * 檢查是否超過補助金額限制
+ * @returns {Object|null} 如果超過限制，回傳相關資訊；否則回傳 null
+ */
+function checkIfExceedsGrantLimit() {
+    // 檢查是否已載入補助額度限制資料
+    if (!window.grantLimitData) {
+        return null;
+    }
+
+    // 取得當前選擇的補助類型
+    let targetTypeID = '';
+    let targetName = '';
+
+    if ($('[id*="rbSubsidyTypeCreate"]').prop('checked')) {
+        targetTypeID = 'CLB1';
+    } else if ($('[id*="rbSubsidyTypeOperation"]').prop('checked')) {
+        targetTypeID = 'CLB2';
+    } else if ($('[id*="rbSubsidyTypeActivity"]').prop('checked')) {
+        targetTypeID = 'CLB3';
+    }
+
+    // 如果沒有選擇補助類型，不檢查
+    if (!targetTypeID) {
+        return null;
+    }
+
+    // 取得該補助類型的限制資料
+    const limitData = window.grantLimitData[targetTypeID];
+    if (!limitData || !limitData.GrantLimit) {
+        return null;
+    }
+
+    // 取得申請補助金額
+    const subsidyFunds = parseFloatFromFormatted($('input[id*="txtSubsidyFunds"]').val()) || 0;
+
+    // 比較金額
+    if (subsidyFunds > limitData.GrantLimit) {
+        return {
+            subsidyFunds: subsidyFunds,
+            grantLimit: limitData.GrantLimit,
+            targetName: limitData.TargetName
+        };
+    }
+
+    return null;
+}
+
+/**
+ * 執行儲存並下一步的實際操作
+ */
+function performSaveAndNext() {
     // 顯示載入中訊息
     Swal.fire({
         title: '儲存中...',
@@ -1211,7 +1395,7 @@ function handleSaveAndNext() {
                 if (currentPage == 'ClbApplication.aspx') {
                     // 只有當前頁面不是 ClbApplication.aspx 才跳轉
                     window.location.href = `ClbApplication.aspx?ProjectID=${data.projectID}`;
-                }            
+                }
             });
         } else {
             Swal.fire({

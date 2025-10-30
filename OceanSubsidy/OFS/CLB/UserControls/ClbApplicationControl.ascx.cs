@@ -34,7 +34,7 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
         if (!IsPostBack)
         {
             InitializeControl();
-            
+
             // 根據專案狀態控制按鈕顯示和上傳附件步驟開放
             bool enableUploadStep = false;
             SetButtonVisibilityAndStepAccess(ProjectID, out enableUploadStep);
@@ -46,7 +46,7 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
             {
                 projectIDToLoad = Page.Request.QueryString["ProjectID"];
             }
-            
+
 
             if (!string.IsNullOrEmpty(projectIDToLoad))
             {
@@ -73,6 +73,9 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
                     Page.ClientScript.RegisterStartupScript(this.GetType(), "LoadDataError", script, true);
                 }
             }
+
+            // 載入補助額度限制資料到前端
+            LoadGrantLimitDataToFrontend();
         }
     }
 
@@ -1706,7 +1709,8 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
         // 預設值
         enableUploadStep = false;
         bool showTempSaveButton = true; // 預設顯示暫存按鈕（當找不到 projectID 時）
-        
+        int currentStepNumber = 1; // 預設步驟為 1
+
         try
         {
             // 如果有 ProjectID，查詢 CurrentStep
@@ -1716,6 +1720,8 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
 
                 if (!string.IsNullOrEmpty(currentStep) && int.TryParse(currentStep, out int stepNumber))
                 {
+                    currentStepNumber = stepNumber;
+
                     // 控制暫存按鈕：CurrentStep > 1 時隱藏
                     showTempSaveButton = stepNumber <= 1;
 
@@ -1724,14 +1730,18 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
                 }
             }
 
-            // 設定按鈕可見性（使用 JavaScript）
+            // 設定按鈕可見性和步驟狀態（使用 JavaScript）
             string buttonScript = $@"
                 $(document).ready(function() {{
+                    // 設定暫存按鈕顯示
                     if ({showTempSaveButton.ToString().ToLower()}) {{
                         $('#btnTempSave').show();
                     }} else {{
                         $('#btnTempSave').hide();
                     }}
+
+                    // 將 currentStep 傳遞給全域變數供 JavaScript 使用
+                    window.currentStepNumber = {currentStepNumber};
                 }});
             ";
             Page.ClientScript.RegisterStartupScript(this.GetType(), "SetButtonVisibility", buttonScript, true);
@@ -1743,6 +1753,7 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
             string defaultButtonScript = @"
                 $(document).ready(function() {
                     $('#btnTempSave').show();
+                    window.currentStepNumber = 1;
                 });
             ";
             Page.ClientScript.RegisterStartupScript(this.GetType(), "SetDefaultButtonVisibility", defaultButtonScript, true);
@@ -1792,11 +1803,55 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
             {
                 ApplyChangeDescriptionViewMode();
             }
-           
+
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"初始化變更說明控制項時發生錯誤: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 載入補助額度限制資料到前端
+    /// </summary>
+    private void LoadGrantLimitDataToFrontend()
+    {
+        try
+        {
+            // 查詢 CLB 補助類型的額度限制
+            var grantLimits = OFSGrantTargetSettingHelper.query("CLB");
+
+            if (grantLimits != null && grantLimits.Count > 0)
+            {
+                // 建立 JSON 物件
+                var grantLimitData = new Dictionary<string, object>();
+
+                foreach (var limit in grantLimits)
+                {
+                    grantLimitData[limit.TargetTypeID] = new
+                    {
+                        TargetName = limit.TargetName,
+                        // 資料庫儲存單位為「萬」，需乘以 10000 轉換為「元」
+                        GrantLimit = limit.GrantLimit.HasValue ? limit.GrantLimit.Value * 10000 : 0,
+                        MatchingFund = limit.MatchingFund.HasValue ? limit.MatchingFund.Value * 10000 : 0
+                    };
+                }
+
+                // 將資料序列化為 JSON
+                string jsonData = JsonConvert.SerializeObject(grantLimitData);
+
+                // 註冊到前端 JavaScript
+                string script = $@"
+                    window.grantLimitData = {jsonData};
+                    console.log('補助額度限制資料已載入:', window.grantLimitData);
+                ";
+
+                Page.ClientScript.RegisterStartupScript(this.GetType(), "LoadGrantLimitData", script, true);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"載入補助額度限制資料時發生錯誤: {ex.Message}");
         }
     }
 

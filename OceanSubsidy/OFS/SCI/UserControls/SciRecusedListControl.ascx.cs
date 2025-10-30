@@ -336,6 +336,12 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
             var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
             string orgCategory = applicationMain?.OrgCategory ?? "";
 
+            // 如果 OrgCategory 是 OceanTech，在伺服器端隱藏技術能力表格
+            if (orgCategory == "OceanTech")
+            {
+                techTable.Attributes["class"] = (techTable.Attributes["class"] ?? "table-responsive mt-3 mb-0") + " d-none";
+            }
+
             // 設定 checkbox 狀態
             chkNoAvoidance.Checked = isRecused;
 
@@ -365,12 +371,7 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
                             clearAndLockCommitteeTable($tbody);
                             console.log('已鎖定委員表格，因為 IsRecused 為 true');
                         }}
-
-                        // 如果 OrgCategory 是 OceanTech，隱藏技術能力表格
-                        if (window.existingData.orgCategory === 'OceanTech') {{
-                            $('#techTable').addClass('d-none');
-                        }}
-                    }} 
+                    }}
                 }}, 200);
             ";
 

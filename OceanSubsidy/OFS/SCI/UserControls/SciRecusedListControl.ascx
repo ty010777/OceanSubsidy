@@ -58,8 +58,8 @@
 
     <h5 class="square-title mt-5">技術能力</h5>
     
-    <div class="table-responsive mt-3 mb-0">
-        <table class="table align-middle gray-table " id="techTable">
+    <div class="table-responsive mt-3 mb-0" id="techTable"  runat="server">
+        <table class="table align-middle gray-table " >
             <thead class="text-center">
                 <tr>
                     <th>

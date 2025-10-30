@@ -1115,7 +1115,7 @@
                                   <span>待審項目</span>
                               </div>
                           </th>
-                          <th width="130" class="review-progress-header" style="display: none;">
+                          <th width="130" class="review-progress-header" >
                               <div class="hstack align-items-center justify-content-center">
                                   <span>審查委員進度</span>
                               </div>

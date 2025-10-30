@@ -33,7 +33,7 @@
                         <td colspan="3">
                             <asp:TextBox ID="txtProjectNameTw" runat="server" CssClass="form-control" 
                                        placeholder="請輸入計畫名稱" MaxLength="200" style="width: 500px;" 
-                                       Text="海洋環境保護推廣活動計畫" />
+                                       Text="" />
                         </td>
                     </tr>
                     <tr>
@@ -249,18 +249,18 @@
                         <th>最近兩年曾獲本會補助</th>
                         <td>
                             <div class="form-check-input-group d-flex">
-                                <asp:RadioButton ID="rbPreviouslySubsidizedYes"  runat="server" GroupName="PreviouslySubsidized" 
+                                <asp:RadioButton ID="rbPreviouslySubsidizedYes"  runat="server" GroupName="PreviouslySubsidized"
                                                Text="是" Value="true" ClientIDMode="Static" />
-                                <asp:RadioButton ID="rbPreviouslySubsidizedNo" runat="server" GroupName="PreviouslySubsidized" 
+                                <asp:RadioButton ID="rbPreviouslySubsidizedNo" runat="server" GroupName="PreviouslySubsidized"
                                                Text="否" Value="false" Checked="true"  ClientIDMode="Static" />
                             </div>
                         </td>
                     </tr>
-                    <tr>
+                    <tr class="funding-description-row d-none">
                         <th>經費說明</th>
                         <td>
-                            <asp:TextBox ID="txtFundingDescription" runat="server" CssClass="form-control textarea-auto-resize" 
-                                       TextMode="MultiLine" Rows="4" placeholder="請說明經費用途規劃" 
+                            <asp:TextBox ID="txtFundingDescription" runat="server" CssClass="form-control textarea-auto-resize"
+                                       TextMode="MultiLine" Rows="4" placeholder="請說明經費用途規劃"
                                        MaxLength="1000" style="width: 100%;" />
                         </td>
                     </tr>

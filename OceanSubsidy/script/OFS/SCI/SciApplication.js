@@ -55,7 +55,61 @@ const SciApplication = {
             });
         }
     },
-    
+
+    //#endregion
+
+    //#region 表單驗證
+    validateSubmitForm: function () {
+        // 驗證計畫目標字數（限制500字）
+        const txtTarget = document.querySelector('textarea[id*="txtTarget"]');
+        if (txtTarget && txtTarget.value.length > 500) {
+            Swal.fire({
+                title: '錯誤',
+                html: '計畫目標超過500字，請修改後再提交',
+                icon: 'error',
+                confirmButtonText: '確定',
+                customClass: {
+                    popup: 'animated fadeInDown'
+                }
+            });
+            txtTarget.focus();
+            return false;
+        }
+
+        // 驗證計畫內容摘要字數（限制500字）
+        const txtSummary = document.querySelector('textarea[id*="txtSummary"]');
+        if (txtSummary && txtSummary.value.length > 500) {
+            Swal.fire({
+                title: '錯誤',
+                html: '計畫內容摘要超過500字，請修改後再提交',
+                icon: 'error',
+                confirmButtonText: '確定',
+                customClass: {
+                    popup: 'animated fadeInDown'
+                }
+            });
+            txtSummary.focus();
+            return false;
+        }
+
+        // 驗證計畫創新重點字數（限制250字）
+        const txtInnovation = document.querySelector('textarea[id*="txtInnovation"]');
+        if (txtInnovation && txtInnovation.value.length > 250) {
+            Swal.fire({
+                title: '錯誤',
+                html: '計畫創新重點超過250字，請修改後再提交',
+                icon: 'error',
+                confirmButtonText: '確定',
+                customClass: {
+                    popup: 'animated fadeInDown'
+                }
+            });
+            txtInnovation.focus();
+            return false;
+        }
+
+        return true;
+    },
     //#endregion
 
     //#region 載入狀態

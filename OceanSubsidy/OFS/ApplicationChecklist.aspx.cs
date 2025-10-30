@@ -1318,12 +1318,7 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
 
             }
 
-            // 檢查是否至少有一個階段有資料
-            if (domainReviewComments.Count == 0 && technicalReviewComments.Count == 0)
-            {
-                return new { success = false, message = "無資料，或尚未提送審查意見" };
-            }
-
+            // 即使沒有審查意見資料，仍然回傳計畫基本資料
             var result = new
             {
                 projectInfo = new

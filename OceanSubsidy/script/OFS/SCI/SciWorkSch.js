@@ -393,7 +393,7 @@ class WorkItemTableManager {
                 <input type="text" class="form-control person-month-input" placeholder="" data-letter="${letter}">
             </td>
             <td class="text-center">
-                <input class="form-check-input blue-green-check" type="checkbox" value="" checked>
+                <input class="form-check-input blue-green-check" type="checkbox" value="">
             </td>
             <td>
                 <button class="btn btn-sm btn-dark-green2" type="button"><i class="fas fa-trash-alt"></i></button>
