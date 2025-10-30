@@ -38,7 +38,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             // 檢查使用者權限
             if (!CheckUserPermission())
             {
-                ShowErrorAndRedirect("您沒有存取此頁面的權限");
+                ShowErrorAndRedirect();
                 return;
             }
 
@@ -246,21 +246,9 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
     /// <summary>
     /// 顯示錯誤訊息並跳轉
     /// </summary>
-    private void ShowErrorAndRedirect(string message)
+    private void ShowErrorAndRedirect()
     {
-        string script = $@"
-            Swal.fire({{
-                title: '存取權限',
-                text: '{message}',
-                icon: 'error',
-                confirmButtonText: '確定'
-            }}).then((result) => {{
-                if (result.isConfirmed) {{
-                    window.location.href = '~/Default.aspx';
-                }}
-            }});
-        ";
-        Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowErrorAndRedirect", script, true);
+        Response.Redirect("~/OFS/Home.aspx");
     }
 
     /// <summary>

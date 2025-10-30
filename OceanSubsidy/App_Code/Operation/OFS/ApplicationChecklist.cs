@@ -117,7 +117,7 @@ public class ApplicationChecklistHelper
         try
         {
             db.CommandText = @"
-                SELECT *
+                SELECT [TypeID], [TypeCode], [FullName]
                 FROM OFS_GrantType
                 WHERE GETDATE() BETWEEN ApplyStartDate AND ApplyEndDate
                 ORDER BY TypeID;";
@@ -126,12 +126,17 @@ public class ApplicationChecklistHelper
 
             foreach (DataRow row in dt.Rows)
             {
-                string grantTypeId = row["TypeCode"]?.ToString();
+                string typeId = row["TypeID"]?.ToString();
+                string typeCode = row["TypeCode"]?.ToString();
                 string fullName = row["FullName"]?.ToString();
 
-                if (!string.IsNullOrEmpty(grantTypeId) && !string.IsNullOrEmpty(fullName))
+                if (!string.IsNullOrEmpty(typeId) && !string.IsNullOrEmpty(typeCode) && !string.IsNullOrEmpty(fullName))
                 {
-                    result.Add(new ListItem(fullName, grantTypeId));
+                    // 建立 ListItem，Text 為顯示名稱，Value 為 TypeCode
+                    ListItem item = new ListItem(fullName, typeCode);
+                    // 使用 Attributes 來儲存 TypeID
+                    item.Attributes.Add("data-typeid", typeId);
+                    result.Add(item);
                 }
             }
         }

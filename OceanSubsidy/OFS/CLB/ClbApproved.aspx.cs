@@ -58,6 +58,9 @@ public partial class OFS_CLB_ClbApproved : System.Web.UI.Page
 
             // 檢查計畫終止按鈕權限
             CheckPlanStopButtonPermission();
+
+            // 檢查移轉案件按鈕權限
+            CheckTransferCaseButtonPermission();
         }
         catch (Exception ex)
         {
@@ -130,6 +133,12 @@ public partial class OFS_CLB_ClbApproved : System.Web.UI.Page
     {
         try
         {
+            // 後端權限驗證：檢查當前使用者是否有移轉權限
+            if (!CheckTransferPermissionStatic(ProjectID))
+            {
+                return new { success = false, message = "您沒有權限執行此操作" };
+            }
+
             // 驗證必填欄位
             if (string.IsNullOrEmpty(DepartmentID))
             {
@@ -167,6 +176,61 @@ public partial class OFS_CLB_ClbApproved : System.Web.UI.Page
         {
             System.Diagnostics.Debug.WriteLine($"移轉案件時發生錯誤: {ex.Message}");
             return new { success = false, message = "移轉案件時發生錯誤，請稍後再試" };
+        }
+    }
+
+    /// <summary>
+    /// 檢查移轉權限（靜態方法，供 WebMethod 使用）
+    /// </summary>
+    private static bool CheckTransferPermissionStatic(string projectID)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(projectID))
+            {
+                return false;
+            }
+
+            string currentUserAccount = CurrentUser.Account;
+
+            // 取得計畫資料
+            var projectMain = OFS_ClbApplicationHelper.GetProjectMainData(projectID);
+            if (projectMain == null)
+            {
+                return false;
+            }
+
+            string supervisorAccount = projectMain.SupervisoryPersonAccount;
+
+            // 檢查 1：是否為承辦人本身
+            bool isSupervisor = !string.IsNullOrEmpty(supervisorAccount) &&
+                                supervisorAccount.Equals(currentUserAccount, StringComparison.OrdinalIgnoreCase);
+
+            if (isSupervisor)
+            {
+                return true;
+            }
+
+            // 檢查 2：是否為同單位下具有「主管單位窗口」(RoleID = 6) 或「系統管理者」(RoleID = 7) 角色的使用者
+            if (!string.IsNullOrEmpty(supervisorAccount))
+            {
+                List<string> authorizedAccounts = SysUserHelper.GetSameUnitUsersByRoles(
+                    supervisorAccount,
+                    new List<int> { 6, 7 }  // 主管單位窗口 + 系統管理者
+                );
+
+                if (authorizedAccounts != null && authorizedAccounts.Contains(currentUserAccount, StringComparer.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"檢查移轉權限時發生錯誤: {ex.Message}");
+            return false;
         }
     }
 
@@ -547,6 +611,104 @@ public partial class OFS_CLB_ClbApproved : System.Web.UI.Page
             HandleException(ex, "檢查計畫終止按鈕權限時發生錯誤");
             // 發生錯誤時，預設隱藏按鈕以確保安全
             btnPlanStop.Style["display"] = "none";
+        }
+    }
+
+    /// <summary>
+    /// 檢查移轉案件按鈕權限
+    /// 規則：只有承辦人本身、同單位下具有「主管單位窗口」(RoleID = 6) 角色的使用者、或系統管理者才能使用移轉案件功能
+    /// </summary>
+    private void CheckTransferCaseButtonPermission()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(ProjectID))
+            {
+                // 無計畫ID，隱藏按鈕
+                btnTransferProject.Attributes["class"] = btnTransferProject.Attributes["class"] + " d-none";
+                return;
+            }
+
+            // 檢查權限
+            bool hasPermission = CheckTransferPermission();
+
+            if (hasPermission)
+            {
+                // 有權限，確保移除 d-none（防止 PostBack 時錯誤隱藏）
+                string currentClass = btnTransferProject.Attributes["class"] ?? "";
+                btnTransferProject.Attributes["class"] = currentClass.Replace("d-none", "").Trim();
+            }
+            else
+            {
+                // 無權限，加入 d-none
+                string currentClass = btnTransferProject.Attributes["class"] ?? "";
+                if (!currentClass.Contains("d-none"))
+                {
+                    btnTransferProject.Attributes["class"] = currentClass + " d-none";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "檢查移轉案件按鈕權限時發生錯誤");
+            // 發生錯誤時，預設隱藏按鈕以確保安全
+            btnTransferProject.Attributes["class"] = btnTransferProject.Attributes["class"] + " d-none";
+        }
+    }
+
+    /// <summary>
+    /// 檢查是否有移轉案件權限（供前端和後端共用）
+    /// </summary>
+    /// <returns>是否有移轉權限</returns>
+    private bool CheckTransferPermission()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(ProjectID))
+            {
+                return false;
+            }
+
+            string currentUserAccount = CurrentUser.Account;
+
+            // 取得計畫資料
+            var projectMain = OFS_ClbApplicationHelper.GetProjectMainData(ProjectID);
+            if (projectMain == null)
+            {
+                return false;
+            }
+
+            string supervisorAccount = projectMain.SupervisoryPersonAccount;
+
+            // 檢查 1：是否為承辦人本身
+            bool isSupervisor = !string.IsNullOrEmpty(supervisorAccount) &&
+                                supervisorAccount.Equals(currentUserAccount, StringComparison.OrdinalIgnoreCase);
+
+            if (isSupervisor)
+            {
+                return true;
+            }
+
+            // 檢查 2：是否為同單位下具有「主管單位窗口」(RoleID = 6) 或「系統管理者」(RoleID = 7) 角色的使用者
+            if (!string.IsNullOrEmpty(supervisorAccount))
+            {
+                List<string> authorizedAccounts = SysUserHelper.GetSameUnitUsersByRoles(
+                    supervisorAccount,
+                    new List<int> { 6, 7 }  // 主管單位窗口 + 系統管理者
+                );
+
+                if (authorizedAccounts != null && authorizedAccounts.Contains(currentUserAccount, StringComparer.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "檢查移轉權限時發生錯誤");
+            return false;
         }
     }
 

@@ -1380,4 +1380,92 @@ VALUES (@UserID,@RoleID)";
             db.Dispose();
         }
     }
+
+    /// <summary>
+    /// 根據帳號查詢同單位下具有指定 OFS 角色的使用者帳號列表
+    /// </summary>
+    /// <param name="account">要搜尋的帳號</param>
+    /// <param name="roleIDs">要查詢的 OFS 角色 ID 列表（可傳入多個）</param>
+    /// <returns>符合條件的使用者帳號列表</returns>
+    /// RoleID	RoleName
+    // 1	申請者
+    // 2	審查委員
+    // 4	查核人員
+    // 5	主管單位人員
+    // 6	主管單位窗口
+    // 7	系統管理者
+    public static List<string> GetSameUnitUsersByRoles(string account, List<int> roleIDs)
+    {
+        if (string.IsNullOrEmpty(account) || roleIDs == null || roleIDs.Count == 0)
+        {
+            return new List<string>();
+        }
+
+        DbHelper db = new DbHelper();
+
+        // 建立 IN 子句的參數
+        string roleIDParams = string.Join(",", roleIDs.Select((id, index) => $"@RoleID{index}"));
+
+        db.CommandText = $@"
+            -- 查詢與指定帳號同單位，且具有指定 OFS 角色的使用者帳號
+            SELECT DISTINCT u.Account
+            FROM Sys_User u
+            INNER JOIN Sys_UserOFSRole uor ON u.UserID = uor.UserID
+            WHERE u.UnitID = (
+                -- 取得指定帳號的 UnitID
+                SELECT UnitID
+                FROM Sys_User
+                WHERE Account = @Account
+                  AND IsValid = 1
+            )
+            AND uor.RoleID IN ({roleIDParams})
+            AND u.IsValid = 1
+            AND u.IsApproved = 1
+            ORDER BY u.Account
+        ";
+
+        db.Parameters.Clear();
+        db.Parameters.Add("@Account", account);
+
+        // 動態新增 RoleID 參數
+        for (int i = 0; i < roleIDs.Count; i++)
+        {
+            db.Parameters.Add($"@RoleID{i}", roleIDs[i]);
+        }
+
+        List<string> accounts = new List<string>();
+
+        try
+        {
+            DataTable dt = db.GetTable();
+            if (dt != null && dt.Rows.Count > 0)
+            {
+                foreach (DataRow row in dt.Rows)
+                {
+                    accounts.Add(row["Account"].ToString());
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"GetSameUnitUsersByRoles 發生錯誤: {ex.Message}");
+        }
+        finally
+        {
+            db.Dispose();
+        }
+
+        return accounts;
+    }
+
+    /// <summary>
+    /// 根據帳號查詢同單位下具有指定 OFS 角色的使用者帳號列表（單一角色版本）
+    /// </summary>
+    /// <param name="account">要搜尋的帳號</param>
+    /// <param name="roleID">要查詢的 OFS 角色 ID</param>
+    /// <returns>符合條件的使用者帳號列表</returns>
+    public static List<string> GetSameUnitUsersByRole(string account, int roleID)
+    {
+        return GetSameUnitUsersByRoles(account, new List<int> { roleID });
+    }
 }

@@ -12,8 +12,8 @@
                     <tr>
                         <th style="width: 15%;">年度</th>
                         <td style="width: 35%;">
-                            <asp:Label ID="lblYear" runat="server" Text="114" /> 
-                            <asp:HiddenField ID="hidYear" runat="server" Value="114" />
+                            <asp:Label ID="lblYear" runat="server"  /> 
+                            <asp:HiddenField ID="hidYear" runat="server" />
                         </td>
                         <th style="width: 15%; background-color: #f8f9fa; color: #6c757d; text-align: end; padding-right: 24px; vertical-align: middle;">計畫編號</th>
                         <td style="width: 35%;">
@@ -24,8 +24,8 @@
                     <tr>
                         <th>補助計畫類別 <span class="text-danger view-mode">*</span></th>
                         <td colspan="3">
-                            <asp:Label ID="lblSubsidyPlanType" runat="server" Text="學校社團（海洋委員會鼓勵各級學校社團辦理海洋活動補助原則）" />
-                            <asp:HiddenField ID="hidSubsidyPlanType" runat="server" Value="學校社團" />
+                            <asp:Label ID="lblSubsidyPlanType" runat="server" />
+                            <asp:HiddenField ID="hidSubsidyPlanType" runat="server" />
                         </td>
                     </tr>
                     <tr>

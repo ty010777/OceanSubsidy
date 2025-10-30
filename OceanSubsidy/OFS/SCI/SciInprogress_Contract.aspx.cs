@@ -55,7 +55,7 @@ public partial class OFS_SCI_SciInprogress_Contract : System.Web.UI.Page
             // 執行期程 (使用民國年格式)
             string startDateStr = applicationMain.StartTime.HasValue ? DateTimeHelper.ToMinguoDate(applicationMain.StartTime.Value) : "";
             string endDateStr = applicationMain.EndTime.HasValue ? DateTimeHelper.ToMinguoDate(applicationMain.EndTime.Value) : "";
-            
+
             if (!string.IsNullOrEmpty(startDateStr) && !string.IsNullOrEmpty(endDateStr))
             {
                 lblExecutionPeriod.Text = $"{startDateStr} ～ {endDateStr}";
@@ -65,6 +65,17 @@ public partial class OFS_SCI_SciInprogress_Contract : System.Web.UI.Page
                 lblExecutionPeriod.Text = "未設定執行期程";
             }
 
+            // 根據單位類別控制附件顯示
+            SetAttachmentVisibility(applicationMain.OrgCategory);
+
+            // 在頁面加入 data attribute，供 JavaScript 使用
+            Page.ClientScript.RegisterStartupScript(
+                this.GetType(),
+                "SetOrgCategory",
+                $"document.body.setAttribute('data-org-category', '{applicationMain.OrgCategory}');",
+                true
+            );
+
             // 載入契約資料
             LoadContractData();
 
@@ -73,6 +84,30 @@ public partial class OFS_SCI_SciInprogress_Contract : System.Web.UI.Page
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"初始化頁面時發生錯誤: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 根據單位類別設定附件顯示/隱藏
+    /// </summary>
+    /// <param name="orgCategory">單位類別</param>
+    private void SetAttachmentVisibility(string orgCategory)
+    {
+        try
+        {
+            // 學研單位 (Academic, Legal): 顯示保密切結書 + 個資同意書
+            // 業者 (OceanTech): 只顯示個資同意書
+            bool isAcademicOrLegal = orgCategory == "Academic" || orgCategory == "Legal";
+
+            // 控制保密切結書列的顯示
+            rowConfidentiality.Visible = isAcademicOrLegal;
+
+            // 調整個資同意書的編號（如果保密切結書隱藏，編號改為1）
+            litPrivacyNumber.Text = isAcademicOrLegal ? "2" : "1";
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"設定附件顯示時發生錯誤: {ex.Message}");
         }
     }
 

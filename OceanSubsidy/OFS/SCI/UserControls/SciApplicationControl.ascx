@@ -12,7 +12,7 @@
                         年度
                     </th>
                     <td>
-                        <asp:Label ID="txtYear" runat="server" Text="114"  /> 
+                        <asp:Label ID="txtYear" runat="server" Text=""  /> 
                     </td>
                 </tr>
                 <tr>
@@ -55,9 +55,7 @@
                         補助計畫類別
                     </th>
                     <td>
-                        <asp:Label ID="txtSubsidyPlanType" runat="server"  
-                         Text="科專（114年度補助學術機構、研究機關(構)及海洋科技業者執行海洋科技專案）" 
-                         />
+                        <asp:Label ID="txtSubsidyPlanType" runat="server" />
                     </td>
                 </tr>
                 <tr>

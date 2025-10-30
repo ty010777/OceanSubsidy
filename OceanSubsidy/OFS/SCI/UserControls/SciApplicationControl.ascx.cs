@@ -524,10 +524,22 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
     {
         try
         {
-            //TODO 改成從GrantType取資料
-            txtYear.Text = DateTimeHelper.GregorianYearToMinguo(DateTime.Now.Year).ToString();
-            txtSubsidyPlanType.Text = "科專（114年度補助學術機構、研究機關(構)及海洋科技業者執行海洋科技專案）";
-            
+            string TypeID  = Request.QueryString["TypeID"];
+            // 從 OFS_GrantType 取得目前有效的 SCI 補助案資料
+            var grantTypeInfo = OFSGrantTypeHelper.getByTypeID(TypeID);
+
+            if (grantTypeInfo != null)
+            {
+                txtYear.Text = grantTypeInfo.Year?.ToString() ?? DateTimeHelper.GregorianYearToMinguo(DateTime.Now.Year).ToString();
+                txtSubsidyPlanType.Text = grantTypeInfo.FullName ?? "";
+            }
+            else
+            {
+                // 如果沒有找到符合條件的資料，使用預設值
+                txtYear.Text = DateTimeHelper.GregorianYearToMinguo(DateTime.Now.Year).ToString();
+                txtSubsidyPlanType.Text = "科專（114年度補助學術機構、研究機關(構)及海洋科技業者執行海洋科技專案）";
+            }
+
             // 初始化空的關鍵字欄位
             KeywordsData = new List<OFS_SCI_Application_KeyWord>();
             PopulateKeywordsData(KeywordsData);
@@ -587,7 +599,7 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
         txtYear.Text = data.Year.ToString();
         txtProjectNameCh.Text = data.ProjectNameTw;
         txtProjectNameEn.Text = data.ProjectNameEn;
-        
+        txtSubsidyPlanType.Text = data.SubsidyPlanType;
         if (!string.IsNullOrEmpty(data.OrgCategory))
         {
             SetDropDownValue(ddlApplicationType, data.OrgCategory);
@@ -972,7 +984,7 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
     {
         try
         {
-            int currentYear = DateTimeHelper.GregorianYearToMinguo(DateTime.Now.Year);
+            int currentYear = int.Parse(txtYear.Text); ;
             var latestApplication = OFS_SciApplicationHelper.getLatestApplicationMain(currentYear.ToString());
 
             int nextSerial = 1;

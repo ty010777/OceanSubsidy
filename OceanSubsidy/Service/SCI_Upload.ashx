@@ -85,8 +85,8 @@ public class SCI_Upload : IHttpHandler
             // 使用 Helper 方法生成檔案名稱
             string fileName = OFS_SciUploadAttachmentsHelper.GenerateFileName(projectID, fileCode);
 
-            // 上傳檔案
-            string relativePath = SaveUploadedFile(context, uploadedFile, fileName, projectID);
+            // 上傳檔案（傳遞 fileCode 以判斷路徑）
+            string relativePath = SaveUploadedFile(context, uploadedFile, fileName, projectID, fileCode);
             if (string.IsNullOrEmpty(relativePath))
             {
                 context.Response.Write("{\"success\":false,\"message\":\"檔案上傳失敗\"}");
@@ -168,12 +168,19 @@ public class SCI_Upload : IHttpHandler
     /// <summary>
     /// 儲存上傳的檔案到指定路徑
     /// </summary>
-    private string SaveUploadedFile(HttpContext context, HttpPostedFile file, string fileName, string projectID)
+    private string SaveUploadedFile(HttpContext context, HttpPostedFile file, string fileName, string projectID, string fileCode = "")
     {
         try
         {
+            // 根據 fileCode 判斷上傳路徑
+            string subFolder = "SciApplication";
+            if (!string.IsNullOrEmpty(fileCode) && fileCode.StartsWith("CONTRACT_"))
+            {
+                subFolder = "ContractFiles";
+            }
+
             // 建立目錄路徑
-            string uploadDir = $"~/UploadFiles/OFS/SCI/{projectID}/SciApplication";
+            string uploadDir = $"~/UploadFiles/OFS/SCI/{projectID}/{subFolder}";
             string physicalPath = context.Server.MapPath(uploadDir);
 
             if (!Directory.Exists(physicalPath))
@@ -224,7 +231,7 @@ public class SCI_Upload : IHttpHandler
             }
 
             // 回傳相對路徑
-            return $"UploadFiles/OFS/SCI/{projectID}/SciApplication/{fileName}";
+            return $"UploadFiles/OFS/SCI/{projectID}/{subFolder}/{fileName}";
         }
         catch (Exception ex)
         {

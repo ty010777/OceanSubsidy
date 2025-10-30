@@ -46,9 +46,12 @@ public class SCI_Download : IHttpHandler
                 case "downloadreviewfile":
                     DownloadReviewFile(context);
                     break;
+                case "getcontractfiles":
+                    GetContractFiles(context);
+                    break;
                 default:
                     context.Response.StatusCode = 400;
-                    context.Response.Write("Invalid action. Use 'downloadPlan', 'downloadApprovedPlan', 'downloadTemplate', 'downloadFile', or 'downloadReviewFile'.");
+                    context.Response.Write("Invalid action. Use 'downloadPlan', 'downloadApprovedPlan', 'downloadTemplate', 'downloadFile', 'downloadReviewFile', or 'getContractFiles'.");
                     break;
             }
         }
@@ -344,6 +347,16 @@ public class SCI_Download : IHttpHandler
                 return "~/Template/SCI/Academic/附件-12研究紀錄簿使用原則.pdf";
             case "FILE_AC13":
                 return "~/Template/SCI/Academic/附件-13計畫書書脊（側邊）格式.docx";
+
+            // 契約書範本 - 學研單位
+            case "CONTRACT_AC_CONFIDENTIALITY":
+                return "~/Template/SCI/Academic/科專-學研-保密切結書.docx";
+            case "CONTRACT_AC_PRIVACY":
+                return "~/Template/SCI/Academic/科專-學研-個資同意書.docx";
+
+            // 契約書範本 - 業者
+            case "CONTRACT_OTECH_PRIVACY":
+                return "~/Template/SCI/OTech/科專-業者-個資同意書.docx";
 
             default:
                 return "";
@@ -2322,6 +2335,58 @@ public class SCI_Download : IHttpHandler
         {
             // 清理失敗不影響主要功能，只記錄錯誤
             System.Diagnostics.Debug.WriteLine($"清理暫存檔案失敗：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 取得契約檔案列表
+    /// </summary>
+    private void GetContractFiles(HttpContext context)
+    {
+        try
+        {
+            context.Response.ContentType = "application/json";
+
+            string projectID = context.Request.QueryString["projectID"];
+            string fileCode = context.Request.QueryString["fileCode"];
+
+            if (string.IsNullOrEmpty(projectID) || string.IsNullOrEmpty(fileCode))
+            {
+                context.Response.Write("{\"success\":false,\"message\":\"缺少必要參數\"}");
+                return;
+            }
+
+            // 從資料庫取得檔案列表
+            var files = OFS_SciUploadAttachmentsHelper.GetAttachmentsByFileCodeAndProject(projectID, fileCode);
+
+            if (files == null || files.Count == 0)
+            {
+                context.Response.Write("{\"success\":true,\"files\":[]}");
+                return;
+            }
+
+            // 組成 JSON 回應
+            var fileList = new System.Text.StringBuilder();
+            fileList.Append("{\"success\":true,\"files\":[");
+
+            for (int i = 0; i < files.Count; i++)
+            {
+                if (i > 0) fileList.Append(",");
+
+                var file = files[i];
+                string fileName = System.Web.HttpUtility.JavaScriptStringEncode(file.FileName ?? "");
+                string templatePath = System.Web.HttpUtility.JavaScriptStringEncode(file.TemplatePath ?? "");
+
+                fileList.Append($"{{\"FileName\":\"{fileName}\",\"TemplatePath\":\"{templatePath}\"}}");
+            }
+
+            fileList.Append("]}");
+            context.Response.Write(fileList.ToString());
+        }
+        catch (Exception ex)
+        {
+            string escapedMessage = System.Web.HttpUtility.JavaScriptStringEncode(ex.Message);
+            context.Response.Write($"{{\"success\":false,\"message\":\"取得檔案列表失敗：{escapedMessage}\"}}");
         }
     }
 

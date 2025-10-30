@@ -115,10 +115,18 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
 
     private void InitializeControl()
     {
-        // 設定年度
+        // 檢查是否為首次申請（沒有 ProjectID）
+        string projectIDToLoad = ProjectID;
+        if (string.IsNullOrEmpty(projectIDToLoad))
+        {
+            projectIDToLoad = Page.Request.QueryString["ProjectID"];
+        }
 
-        lblYear.Text = DateTimeHelper.GregorianYearToMinguo(DateTime.Now.Year).ToString();
-        hidYear.Value = DateTimeHelper.GregorianYearToMinguo(DateTime.Now.Year).ToString();
+        if (string.IsNullOrEmpty(projectIDToLoad))
+        {
+            // 首次申請：從 TypeID 取得年度和補助計畫類別
+            LoadDefaultDataFromGrantType();
+        }
 
         // 初始化變更說明控制項
         InitializeChangeDescriptionControl();
@@ -127,6 +135,39 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
         if (IsReadOnly)
         {
             SetReadOnlyMode();
+        }
+    }
+
+    /// <summary>
+    /// 首次申請：從 OFS_GrantType 載入預設資料
+    /// </summary>
+    private void LoadDefaultDataFromGrantType()
+    {
+        try
+        {
+            string typeId = Page.Request.QueryString["TypeID"];
+
+            if (!string.IsNullOrEmpty(typeId))
+            {
+                // 從 OFS_GrantType 取得資料
+                var grantTypeInfo = OFSGrantTypeHelper.getByTypeID(typeId);
+
+                if (grantTypeInfo != null)
+                {
+                    // 設定年度
+                    lblYear.Text = grantTypeInfo.Year?.ToString() ?? "";
+                    hidYear.Value = grantTypeInfo.Year?.ToString() ?? "";
+
+                    // 設定補助計畫類別
+                    lblSubsidyPlanType.Text = grantTypeInfo.FullName ?? "";
+                    hidSubsidyPlanType.Value = grantTypeInfo.FullName ?? "";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"載入預設資料時發生錯誤：{ex.Message}");
+            // 發生錯誤時留空白
         }
     }
 
@@ -607,7 +648,13 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
                 lblProjectID.Text = basicData.ProjectID;
                 hidProjectID.Value = basicData.ProjectID;
                 txtProjectNameTw.Text = basicData.ProjectNameTw;
-                
+
+                // 載入年度和補助計畫類別
+                lblYear.Text = basicData.Year?.ToString() ?? "";
+                hidYear.Value = basicData.Year?.ToString() ?? "";
+                lblSubsidyPlanType.Text = basicData.SubsidyPlanType ?? "";
+                hidSubsidyPlanType.Value = basicData.SubsidyPlanType ?? "";
+
                 // 設定申請補助類型
                 switch (basicData.SubsidyType)
                 {
@@ -1387,7 +1434,7 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
         // 基本資料
         data["ProjectID"] = Request.Form["projectID"] ?? Request.QueryString["ProjectID"] ?? "";
         data["Year"] = int.Parse(Request.Form["year"] ?? DateTime.Now.Year.ToString());
-        data["SubsidyPlanType"] = Request.Form["subsidyPlanType"] ?? "學校社團";
+        data["SubsidyPlanType"] = Request.Form["subsidyPlanType"] ?? "";
         data["ProjectNameTw"] = Request.Form["projectNameTw"] ?? "";
 
         // 申請補助類型

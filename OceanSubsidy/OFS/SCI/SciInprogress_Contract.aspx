@@ -1,6 +1,7 @@
 ﻿<%@ Page Language="C#" AutoEventWireup="true" CodeFile="SciInprogress_Contract.aspx.cs" Inherits="OFS_SCI_SciInprogress_Contract" Culture="zh-TW" UICulture="zh-TW" MasterPageFile="~/OFS/SCI/SciInprogress.master" EnableViewState="true" %>
 
 <asp:Content ID="HeadContent" ContentPlaceHolderID="HeadExtra" runat="server">
+    <script src="<%= ResolveUrl("~/script/OFS/SCI/SciInprogress_Contract.js") %>"></script>
     <!-- 契約資料頁面特定樣式 -->
     <style>
         .block {
@@ -128,47 +129,57 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
+                    <!-- 保密切結書 - 僅學研單位顯示 -->
+                    <tr id="rowConfidentiality" runat="server">
                         <td class="text-center">1</td>
                         <td>
                             <div><span class="text-pink">*</span>保密切結書（請包含共同執行單位）</div>
-                            <button class="btn btn-sm btn-teal-dark rounded-pill mt-2" type="button">
+                            <button class="btn btn-sm btn-teal-dark rounded-pill mt-2" type="button"
+                                    onclick="downloadTemplate('CONTRACT_CONFIDENTIALITY')">
                                 <i class="fas fa-file-download me-1"></i>
                                 範本下載
                             </button>
                         </td>
-                        <td class="text-center"><span class="text-pink">尚未上傳</span></td>
-                        <td>
-                            <button class="btn btn-sm btn-teal-dark" type="button">
-                                <i class="fas fa-file-upload me-1"></i>
-                                上傳
-                            </button>
+                        <td class="text-center">
+                            <span id="statusConfidentiality" class="text-pink">尚未上傳</span>
                         </td>
-                    </tr>
-                    <tr>
-                        <td class="text-center">2</td>
-                        <td>
-                            <div><span class="text-pink">*</span>個資同意書（請包含共同執行單位）</div>
-                            <button class="btn btn-sm btn-teal-dark rounded-pill mt-2" type="button">
-                                <i class="fas fa-file-download me-1"></i>
-                                範本下載
-                            </button>
-                        </td>
-                        <td class="text-center"><span>已上傳</span></td>
                         <td>
                             <div class="d-flex align-items-center gap-2">
-                                <button class="btn btn-sm btn-teal-dark" type="button">
+                                <input type="file" id="fileConfidentiality" accept=".pdf" style="display: none;"
+                                       onchange="handleFileSelect('CONTRACT_AC_CONFIDENTIALITY', this)" />
+                                <button class="btn btn-sm btn-teal-dark" type="button"
+                                        onclick="document.getElementById('fileConfidentiality').click()">
                                     <i class="fas fa-file-upload me-1"></i>
                                     上傳
                                 </button>
-                                <div class="tag-group mt-0 gap-1">
-                                    <span class="tag tag-green-light">
-                                        <a class="tag-link" href="#" target="_blank">1140001_海洋科技科專案計畫書.pdf</a>
-                                        <button type="button" class="tag-btn">
-                                            <i class="fa-solid fa-circle-xmark"></i>
-                                        </button>
-                                    </span>
-                                </div>
+                                <div id="filesConfidentiality" class="tag-group mt-0 gap-1"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <!-- 個資同意書 - 所有單位都顯示 -->
+                    <tr id="rowPrivacy" runat="server">
+                        <td class="text-center"><asp:Literal ID="litPrivacyNumber" runat="server" Text="2" /></td>
+                        <td>
+                            <div><span class="text-pink">*</span>個資同意書（請包含共同執行單位）</div>
+                            <button class="btn btn-sm btn-teal-dark rounded-pill mt-2" type="button"
+                                    onclick="downloadTemplate('CONTRACT_PRIVACY')">
+                                <i class="fas fa-file-download me-1"></i>
+                                範本下載
+                            </button>
+                        </td>
+                        <td class="text-center">
+                            <span id="statusPrivacy" class="text-pink">尚未上傳</span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <input type="file" id="filePrivacy" accept=".pdf" style="display: none;"
+                                       onchange="handleFileSelect('CONTRACT_PRIVACY', this)" />
+                                <button class="btn btn-sm btn-teal-dark" type="button"
+                                        onclick="document.getElementById('filePrivacy').click()">
+                                    <i class="fas fa-file-upload me-1"></i>
+                                    上傳
+                                </button>
+                                <div id="filesPrivacy" class="tag-group mt-0 gap-1"></div>
                             </div>
                         </td>
                     </tr>

@@ -490,7 +490,7 @@
             if (currentPhase === 2) {
                 if (isReimbursementInProgress) {
                     // 當狀態為「審核中」時，顯示審核相關UI元素
-                    $('#fileUploadSection').hide(); // 檔案上傳區塊隱藏
+                    $('#fileUploadSection').show(); // 檔案上傳區塊隱藏
                     $('.block-bottom').hide(); // 暫存/提送按鈕隱藏
                     $('.scroll-bottom-panel').show(); // 審核結果視窗顯示
                 } else if (currentStatus === '通過') {

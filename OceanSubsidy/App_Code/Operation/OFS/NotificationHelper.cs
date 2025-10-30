@@ -304,17 +304,28 @@ public class NotificationHelper
 
     private static string queryOrganizers(int? organizer)
     {
+        if (organizer == null || organizer == 0)
+        {
+            return string.Empty;
+        }
+
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
+            -- 1. 取得指定 UserID 的帳號
             SELECT [Account]
               FROM [Sys_User]
              WHERE UserID = @UserID
+               AND IsValid = 1
             UNION
-            SELECT [Account]
-              FROM [Sys_User]
-             WHERE [UnitID] IN (SELECT [UnitID] FROM [Sys_User] WHERE UserID = @UserID)
-               AND [OSI_RoleID] = 6
+            -- 2. 取得同單位下具有「主管單位窗口」(RoleID = 6) 角色的使用者帳號
+            SELECT DISTINCT u.Account
+              FROM [Sys_User] u
+             INNER JOIN Sys_UserOFSRole uor ON u.UserID = uor.UserID
+             WHERE u.UnitID IN (SELECT [UnitID] FROM [Sys_User] WHERE UserID = @UserID)
+               AND uor.RoleID = 6
+               AND u.IsValid = 1
+               AND u.IsApproved = 1
         ";
 
         db.Parameters.Add("@UserID", organizer);

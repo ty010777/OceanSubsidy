@@ -82,7 +82,40 @@ public class OFSGrantTypeHelper
             Year = row.Field<int?>("Year")
         };
     }
+    public static GrantTypeInfo getByTypeID(string ID)
+    {
+        DbHelper db = new DbHelper();
 
+        db.CommandText = @"
+            SELECT [ShortName]
+                  ,[FullName]
+                  ,[ApplyStartDate]
+                  ,[ApplyEndDate]
+                  ,[Year]
+              FROM [OFS_GrantType]
+             WHERE TypeID = @TypeID
+        ";
+
+        db.Parameters.Add("@TypeID", ID);
+
+        var table = db.GetTable();
+
+        if (table.Rows.Count != 1)
+        {
+            return null;
+        }
+
+        DataRow row = table.Rows[0];
+
+        return new GrantTypeInfo
+        {
+            ShortName = row.Field<string>("ShortName"),
+            FullName = row.Field<string>("FullName"),
+            StartDate = row.Field<DateTime>("ApplyStartDate"),
+            EndDate = row.Field<DateTime>("ApplyEndDate"),
+            Year = row.Field<int?>("Year")
+        };
+    }
     public static void insert(GrantType model)
     {
         DbHelper db = new DbHelper();

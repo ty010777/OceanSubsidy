@@ -136,7 +136,8 @@
         if (path.EndsWith("/Login.aspx", StringComparison.OrdinalIgnoreCase) ||
             path.EndsWith("/Error.aspx", StringComparison.OrdinalIgnoreCase)||
             path.EndsWith("/SciDomainReview.aspx", StringComparison.OrdinalIgnoreCase)||
-            path.EndsWith("/SciExamReview.aspx", StringComparison.OrdinalIgnoreCase))
+            path.EndsWith("/SciExamReview.aspx", StringComparison.OrdinalIgnoreCase)||
+            path.EndsWith("/ReviewCommitteeInfo.aspx", StringComparison.OrdinalIgnoreCase))
             return;
 
         // 讀取 Session

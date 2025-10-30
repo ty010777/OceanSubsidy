@@ -265,41 +265,43 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
     {
         try
         {
-            string selectedGrantTypeId = ddlModalYear.SelectedValue;
+            string selectedTypeCode = ddlModalYear.SelectedValue;
+            string selectedTypeId = Request.Form["hdnSelectedTypeId"]; // 從隱藏欄位取得 TypeID
 
-            if (string.IsNullOrEmpty(selectedGrantTypeId))
+            if (string.IsNullOrEmpty(selectedTypeCode))
             {
                 ShowMessage("請選擇申請補助計畫類別", false);
                 return;
             }
 
             // 根據選擇的計畫類別重定向到相應的申請表單頁面
-            // 這裡可以根據 GrantTypeID 判斷要導向哪個申請表單
-            if (selectedGrantTypeId == "SCI")
+            if (selectedTypeCode == "SCI")
             {
-                Response.Redirect($"~/OFS/SCI/SciApplication.aspx?GrantTypeID={selectedGrantTypeId}");
+                // 科專：傳遞 TypeID
+                Response.Redirect($"~/OFS/SCI/SciApplication.aspx?TypeID={selectedTypeId}");
             }
-            else if (selectedGrantTypeId == "CUL")
+            else if (selectedTypeCode == "CUL")
             {
                 Response.Redirect("~/OFS/CUL/Application.aspx");
             }
-            else if (selectedGrantTypeId =="EDC")
+            else if (selectedTypeCode =="EDC")
             {
                 Response.Redirect("~/OFS/EDC/Application.aspx");
             }
-            else if (selectedGrantTypeId =="CLB")
+            else if (selectedTypeCode =="CLB")
             {
-                Response.Redirect($"~/OFS/CLB/ClbApplication.aspx?GrantTypeID={selectedGrantTypeId}");
+                // 社團：傳遞 TypeID
+                Response.Redirect($"~/OFS/CLB/ClbApplication.aspx?TypeID={selectedTypeId}");
             }
-            else if (selectedGrantTypeId =="MUL")
+            else if (selectedTypeCode =="MUL")
             {
                 Response.Redirect("~/OFS/MUL/Application.aspx");
             }
-            else if (selectedGrantTypeId =="LIT")
+            else if (selectedTypeCode =="LIT")
             {
                 Response.Redirect("~/OFS/LIT/Application.aspx");
             }
-            else if (selectedGrantTypeId =="ACC")
+            else if (selectedTypeCode =="ACC")
             {
                 Response.Redirect("~/OFS/ACC/Application.aspx");
             }

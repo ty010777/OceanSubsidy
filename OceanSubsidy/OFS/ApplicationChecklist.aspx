@@ -59,6 +59,7 @@
                         <div class="fs-16 text-gray mb-2">年度</div>
                         <asp:DropDownList ID="ddlYear" runat="server" CssClass="form-select">
                             <asp:ListItem Text="全部" Value=""></asp:ListItem>
+                            <asp:ListItem Text="115年" Value="115"></asp:ListItem>
                             <asp:ListItem Text="114年" Value="114"></asp:ListItem>
                         </asp:DropDownList>
                     </div>
@@ -330,8 +331,9 @@
                 <div class="modal-body">
                     <div class="">
                         <div class="fs-16 text-gray mb-2">申請補助計畫類別</div>
-                        <asp:DropDownList ID="ddlModalYear" runat="server" CssClass="form-select">
+                        <asp:DropDownList ID="ddlModalYear" runat="server" CssClass="form-select" onchange="updateSelectedTypeId()">
                         </asp:DropDownList>
+                        <input type="hidden" id="hdnSelectedTypeId" name="hdnSelectedTypeId" value="" />
                     </div>
 
                     <div class="d-flex gap-4 flex-wrap justify-content-center mt-5">
@@ -480,6 +482,29 @@
     </div>
 
     <script type="text/javascript">
+        // 更新選中的 TypeID
+        function updateSelectedTypeId() {
+            const dropdown = document.getElementById('<%= ddlModalYear.ClientID %>');
+            const hiddenField = document.getElementById('hdnSelectedTypeId');
+
+            if (dropdown && hiddenField) {
+                const selectedOption = dropdown.options[dropdown.selectedIndex];
+                // 從 data-typeid 屬性取得 TypeID
+                const typeId = selectedOption.getAttribute('data-typeid');
+                hiddenField.value = typeId || '';
+            }
+        }
+
+        // 當 Modal 開啟時，初始化 TypeID
+        document.addEventListener('DOMContentLoaded', function() {
+            const planApplyModal = document.getElementById('planApplyModal');
+            if (planApplyModal) {
+                planApplyModal.addEventListener('shown.bs.modal', function() {
+                    updateSelectedTypeId();
+                });
+            }
+        });
+
         // 處理撤案操作
         function handleWithdraw(projectId) {
             // 設定要撤案的 ProjectID
