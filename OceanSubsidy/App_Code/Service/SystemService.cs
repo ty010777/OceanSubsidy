@@ -29,6 +29,11 @@ public class SystemService : BaseService
 
     public object deleteNews(JObject param, HttpContext context)
     {
+        if (!CurrentUser.IsSupervisor && !CurrentUser.IsSysAdmin)
+        {
+            throw new InvalidOperationException();
+        }
+
         var id = int.Parse(param["ID"].ToString());
 
         OFSNewsHelper.delete(id);
@@ -53,6 +58,11 @@ public class SystemService : BaseService
 
     public object downloadRecusedList(JObject param, HttpContext context)
     {
+        if (!CurrentUser.IsOrganizer && !CurrentUser.IsSupervisor && !CurrentUser.IsSysAdmin)
+        {
+            throw new InvalidOperationException();
+        }
+
         var headers = new List<string>() { "年度", "計畫名稱", "計畫申請單位", "委員姓名", "任職單位", "職稱", "應迴避之具體理由及事證" };
         var rows = new List<List<string>>();
 
@@ -71,6 +81,11 @@ public class SystemService : BaseService
 
     public object downloadReviewerDetails(JObject param, HttpContext context)
     {
+        if (!CurrentUser.IsSupervisor && !CurrentUser.IsSysAdmin)
+        {
+            throw new InvalidOperationException();
+        }
+
         var headers = new List<string>() { "委員姓名", "審查階段", "類別", "計畫編號", "計畫名稱" };
         var rows = new List<List<string>>();
 
@@ -95,6 +110,11 @@ public class SystemService : BaseService
 
     public object downloadReviewerList(JObject param, HttpContext context)
     {
+        if (!CurrentUser.IsSupervisor && !CurrentUser.IsSysAdmin)
+        {
+            throw new InvalidOperationException();
+        }
+
         var headers = new List<string>() { "委員姓名", "Email", "審查階段", "審查計畫件數", "銀行帳戶", "戶籍地址", "更新時間" };
         var rows = new List<List<string>>();
 
@@ -254,6 +274,11 @@ public class SystemService : BaseService
 
     public object getRecusedList(JObject param, HttpContext context)
     {
+        if (!CurrentUser.IsOrganizer && !CurrentUser.IsSupervisor && !CurrentUser.IsSysAdmin)
+        {
+            throw new InvalidOperationException();
+        }
+
         var year = int.Parse(param["Year"].ToString());
         var keyword = param["Keyword"].ToString();
         var name = param["Name"].ToString();
@@ -267,6 +292,11 @@ public class SystemService : BaseService
 
     public object getReviewerDetails(JObject param, HttpContext context)
     {
+        if (!CurrentUser.IsSupervisor && !CurrentUser.IsSysAdmin)
+        {
+            throw new InvalidOperationException();
+        }
+
         var id = int.Parse(param["ID"].ToString());
         var type = int.Parse(param["Type"].ToString());
 
@@ -278,6 +308,11 @@ public class SystemService : BaseService
 
     public object getReviewerList(JObject param, HttpContext context)
     {
+        if (!CurrentUser.IsSupervisor && !CurrentUser.IsSysAdmin)
+        {
+            throw new InvalidOperationException();
+        }
+
         var type = int.Parse(param["Type"].ToString());
         var keyword = param["Keyword"].ToString();
         DateTime? begin = null;
@@ -362,6 +397,11 @@ public class SystemService : BaseService
 
     public object saveGrantTargetSettings(JObject param, HttpContext context)
     {
+        if (!CurrentUser.IsSupervisor && !CurrentUser.IsSysAdmin)
+        {
+            throw new InvalidOperationException();
+        }
+
         var settings = param["List"].ToObject<List<GrantTargetSetting>>();
 
         foreach (var item in settings)
@@ -374,6 +414,11 @@ public class SystemService : BaseService
 
     public object saveGrantType(JObject param, HttpContext context)
     {
+        if (!CurrentUser.IsSupervisor && !CurrentUser.IsSysAdmin)
+        {
+            throw new InvalidOperationException();
+        }
+
         var data = param["GrantType"].ToObject<GrantType>();
 
         OFSGrantTypeHelper.update(data);
@@ -383,6 +428,11 @@ public class SystemService : BaseService
 
     public object saveGrantTypeContent(JObject param, HttpContext context)
     {
+        if (!CurrentUser.IsSupervisor && !CurrentUser.IsSysAdmin)
+        {
+            throw new InvalidOperationException();
+        }
+
         var data = param["GrantType"].ToObject<GrantType>();
 
         if (data.TypeID == 0)
@@ -450,6 +500,11 @@ public class SystemService : BaseService
 
     public object saveNews(JObject param, HttpContext context)
     {
+        if (!CurrentUser.IsSupervisor && !CurrentUser.IsSysAdmin)
+        {
+            throw new InvalidOperationException();
+        }
+
         var news = param["News"].ToObject<News>();
 
         if (news.ID == 0)
@@ -542,6 +597,11 @@ public class SystemService : BaseService
 
     public object saveReviewCommitteeList(JObject param, HttpContext context)
     {
+        if (!CurrentUser.IsSupervisor && !CurrentUser.IsSysAdmin)
+        {
+            throw new InvalidOperationException();
+        }
+
         var id = param["ID"].ToString();
         var list = param["List"].ToObject<List<ReviewCommittee>>();
 
