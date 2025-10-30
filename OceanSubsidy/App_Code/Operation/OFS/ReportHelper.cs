@@ -47,7 +47,7 @@ public class ReportHelper
     UNION ALL SELECT '計畫執行', '通過', 52
     UNION ALL SELECT '計畫執行', '不通過', 53
     UNION ALL SELECT '計畫執行', '已結案', 91
-    UNION ALL SELECT '計畫執行', '已終止', 92
+    UNION ALL SELECT '計畫執行', '已終止', 99
 ), FinalApplyList as (
 
             SELECT O.[Year]
@@ -223,10 +223,10 @@ public class ReportHelper
         switch (approved)
         {
             case 1:
-                db.CommandText += " AND [Status] IN (45,51,52,91)";
+                db.CommandText += " AND [Status] IN (45,51,52,91,99)";
                 break;
             case 2:
-                db.CommandText += " AND [Status] IN (51,52,91)";
+                db.CommandText += " AND [Status] IN (51,52)";
                 break;
         }
 
@@ -303,7 +303,7 @@ public class ReportHelper
                     WHEN O.Statuses = '計畫執行' AND O.StatusesName = '通過' THEN 52
                     WHEN O.Statuses = '計畫執行' AND O.StatusesName = '不通過' THEN 53
                     WHEN O.Statuses = '計畫執行' AND O.StatusesName = '已結案' THEN 91
-                    WHEN O.Statuses = '計畫執行' AND O.StatusesName = '已終止' THEN 92
+                    WHEN O.Statuses = '計畫執行' AND O.StatusesName = '已終止' THEN 99
 
                     -- 其他專案保留原本 Status
                     ELSE ISNULL(O.Status, 0)
@@ -383,7 +383,7 @@ public class ReportHelper
                           ,ISNULL([SpendAmount], 0) AS [SpendAmount]
                           ,ISNULL([PaymentAmount], 0) AS [PaymentAmount]
                       FROM OFS_CUL_Project
-                     WHERE IsExists = 1 AND IsWithdrawal <> 1 AND Status IN (51,52,91)
+                     WHERE IsExists = 1 AND IsWithdrawal <> 1 AND Status IN (45,51,52,91,99)
                     UNION ALL
                     SELECT [Year]
                           ,'EDC' AS [Category]
@@ -391,7 +391,7 @@ public class ReportHelper
                           ,ISNULL([SpendAmount], 0) AS [SpendAmount]
                           ,ISNULL([PaymentAmount], 0) AS [PaymentAmount]
                       FROM OFS_EDC_Project
-                     WHERE IsExists = 1 AND IsWithdrawal <> 1 AND Status IN (51,52,91)
+                     WHERE IsExists = 1 AND IsWithdrawal <> 1 AND Status IN (45,51,52,91,99)
                     UNION ALL
                     SELECT [Year]
                           ,'MUL' AS [Category]
@@ -399,7 +399,7 @@ public class ReportHelper
                           ,ISNULL([SpendAmount], 0) AS [SpendAmount]
                           ,ISNULL([PaymentAmount], 0) AS [PaymentAmount]
                       FROM OFS_MUL_Project
-                     WHERE IsExists = 1 AND IsWithdrawal <> 1 AND Status IN (51,52,91)
+                     WHERE IsExists = 1 AND IsWithdrawal <> 1 AND Status IN (45,51,52,91,99)
                     UNION ALL
                     SELECT [Year]
                           ,'LIT' AS [Category]
@@ -407,7 +407,7 @@ public class ReportHelper
                           ,ISNULL([SpendAmount], 0) AS [SpendAmount]
                           ,ISNULL([PaymentAmount], 0) AS [PaymentAmount]
                       FROM OFS_LIT_Project
-                     WHERE IsExists = 1 AND IsWithdrawal <> 1 AND Status IN (51,52,91)
+                     WHERE IsExists = 1 AND IsWithdrawal <> 1 AND Status IN (45,51,52,91,99)
                     UNION ALL
                     SELECT [Year]
                           ,'ACC' AS [Category]
@@ -415,7 +415,7 @@ public class ReportHelper
                           ,ISNULL([SpendAmount], 0) AS [SpendAmount]
                           ,ISNULL([PaymentAmount], 0) AS [PaymentAmount]
                       FROM OFS_ACC_Project
-                     WHERE IsExists = 1 AND IsWithdrawal <> 1 AND Status IN (51,52,91)
+                     WHERE IsExists = 1 AND IsWithdrawal <> 1 AND Status IN (45,51,52,91,99)
 					 UNION ALL
 					 SELECT
 							YEAR(PM.created_at) - 1911 AS [Year],
