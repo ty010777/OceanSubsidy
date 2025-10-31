@@ -1,6 +1,6 @@
 using GS.Data;
 using GS.Data.Sql;
-using GS.OCA_OceanSubsidy.Entity;
+using GS.OCA_OceanSubsidy.Model.OFS;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,9 +8,9 @@ using System.Data;
 
 public class OFSPaymentHelper
 {
-    public static List<OFS_SCI_Payment> query(string projectID)
+    public static List<OFSPayment> query(string projectID)
     {
-        var result = new List<OFS_SCI_Payment>();
+        var result = new List<OFSPayment>();
         var db = new DbHelper();
 
         db.CommandText = @"
@@ -25,7 +25,7 @@ public class OFSPaymentHelper
                   ,[ReviewerComment]
                   ,[ReviewUser]
                   ,[ReviewTime]
-              FROM [OFS_SCI_Payment]
+              FROM [OFS_Payment]
              WHERE [ProjectID] = @ProjectID
           ORDER BY [Stage]
         ";
@@ -36,7 +36,7 @@ public class OFSPaymentHelper
 
         foreach (var row in dt.Rows.Cast<DataRow>())
         {
-            result.Add(new OFS_SCI_Payment
+            result.Add(new OFSPayment
             {
                 ID = row.Field<int>("ID"),
                 ProjectID = row.Field<string>("ProjectID"),
@@ -55,12 +55,12 @@ public class OFSPaymentHelper
         return result;
     }
 
-    public static void review(OFS_SCI_Payment model)
+    public static void review(OFSPayment model)
     {
         var db = new DbHelper();
 
         db.CommandText = @"
-            UPDATE [OFS_SCI_Payment]
+            UPDATE [OFS_Payment]
                SET [CurrentActualPaidAmount] = @CurrentActualPaidAmount
                   ,[Status] = @Status
                   ,[ReviewerComment] = @ReviewerComment
@@ -79,21 +79,21 @@ public class OFSPaymentHelper
         db.ExecuteNonQuery();
     }
 
-    public static void submit(OFS_SCI_Payment model)
+    public static void submit(OFSPayment model)
     {
         var db = new DbHelper();
 
         if (model.ID == 0)
         {
             db.CommandText = @"
-                INSERT INTO [OFS_SCI_Payment] ([ProjectID],[Stage],[ActDisbursementRatioPct],[CurrentRequestAmount],[TotalSpentAmount],[Status],[CreateTime])
-                                       VALUES (@ProjectID, @Stage, @ActDisbursementRatioPct, @CurrentRequestAmount, @TotalSpentAmount, @Status, GETDATE())
+                INSERT INTO [OFS_Payment] ([ProjectID],[Stage],[ActDisbursementRatioPct],[CurrentRequestAmount],[TotalSpentAmount],[Status],[CreateTime])
+                                   VALUES (@ProjectID, @Stage, @ActDisbursementRatioPct, @CurrentRequestAmount, @TotalSpentAmount, @Status, GETDATE())
             ";
         }
         else
         {
             db.CommandText = @"
-                UPDATE [OFS_SCI_Payment]
+                UPDATE [OFS_Payment]
                    SET [ActDisbursementRatioPct] = @ActDisbursementRatioPct
                       ,[CurrentRequestAmount] = @CurrentRequestAmount
                       ,[TotalSpentAmount] = @TotalSpentAmount
