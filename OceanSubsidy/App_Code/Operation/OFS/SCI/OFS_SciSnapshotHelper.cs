@@ -220,7 +220,7 @@ public class OFS_SciSnapshotHelper
                 ProjectID = row["ProjectID"]?.ToString(),
                 PersonID = row["PersonID"]?.ToString(),
                 Year = row["Year"] != DBNull.Value ? Convert.ToInt32(row["Year"]) : (int?)null,
-                Serial = row["Serial"]?.ToString(),
+                Serial = row["Serial"] != DBNull.Value ? Convert.ToInt32(row["Serial"]) : (int?)null,
                 SubsidyPlanType = row["SubsidyPlanType"]?.ToString(),
                 ProjectNameTw = row["ProjectNameTw"]?.ToString(),
                 ProjectNameEn = row["ProjectNameEn"]?.ToString(),

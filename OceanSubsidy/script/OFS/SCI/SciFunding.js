@@ -1378,11 +1378,22 @@ function handleAdminFeeVisibility() {
     }
 }
 
+// 全域旗標:標記使用者是否已確認送出
+window.isConfirmedToSubmit = false;
+
 // 處理「完成本頁，下一步」按鈕點擊
 function handleSaveAndNextClick() {
     try {
+        // 如果已經確認過,直接允許提交
+        if (window.isConfirmedToSubmit) {
+            window.isConfirmedToSubmit = false; // 重置旗標
+            return true; // 允許 PostBack
+        }
+
         // 先收集表單資料
         collectAllFormData();
+
+        // 同步變更說明資料
         if (typeof syncAllChangeDescriptions === 'function') {
             syncAllChangeDescriptions();
         }
@@ -1452,15 +1463,23 @@ function handleSaveAndNextClick() {
             }
         }).then((result) => {
             if (result.isConfirmed) {
-                // 使用者確認後，觸發隱藏按鈕來執行實際的 PostBack
-                const hiddenBtn = document.querySelector('[id*="tab3_btnSaveAndNextHidden"]');
-                if (hiddenBtn) {
-                    hiddenBtn.click();
+                // 使用者確認後,設定旗標並重新觸發按鈕
+                window.isConfirmedToSubmit = true;
+
+                // 再次同步變更說明(確保最新)
+                if (typeof syncAllChangeDescriptions === 'function') {
+                    syncAllChangeDescriptions();
+                }
+
+                // 重新觸發按鈕點擊,這次會因為旗標為 true 而執行 PostBack
+                const btn = document.querySelector('[id*="tab3_btnSaveAndNextHidden"]');
+                if (btn) {
+                    btn.click();
                 }
             }
         });
 
-        return false; // 阻止預設的提交行為
+        return false; // 第一次點擊:阻止 PostBack,等待使用者確認
     } catch (error) {
         console.error('處理送出驗證時發生錯誤:', error);
         return true; // 發生錯誤時直接提交

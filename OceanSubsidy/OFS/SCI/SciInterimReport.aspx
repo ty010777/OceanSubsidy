@@ -155,7 +155,7 @@
            
                            <!-- 批次輸入 -->
                            <div class="w-100 fromOption2" id="batchInputSection">
-                               <span class="form-control textarea rounded-0" role="textbox" contenteditable="" data-placeholder="輸入格式範例「姓名 <xxx@email.com>」，多筆請斷行輸入" aria-label="文本輸入區域"></span>
+                            <textarea class="form-control textarea textarea-auto-resize rounded-0" placeholder="輸入格式範例「姓名 <xxx@email.com>」，多筆請斷行輸入" aria-label="文本輸入區域"></textarea>
                            </div>
                             <button class="btn btn-teal-dark rounded-0" type="button" onclick="submitReviewers()">提送審查委員</button>
  
@@ -802,7 +802,7 @@
                 return { reviewers: [], parseInfo: null };
             }
             
-            var content = textarea.textContent || textarea.innerText || '';
+            var content = textarea.value || '';
             content = content.trim();
             
             if (!content || content === '輸入格式範例「姓名 <xxx@email.com>」，多筆請斷行輸入') {

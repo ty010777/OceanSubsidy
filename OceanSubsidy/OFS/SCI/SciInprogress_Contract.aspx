@@ -146,7 +146,7 @@
                         <td>
                             <div class="d-flex align-items-center gap-2">
                                 <input type="file" id="fileConfidentiality" accept=".pdf" style="display: none;"
-                                       onchange="handleFileSelect('CONTRACT_AC_CONFIDENTIALITY', this)" />
+                                       onchange="handleFileSelect('CONTRACT_CONFIDENTIALITY', this)" />
                                 <button class="btn btn-sm btn-teal-dark" type="button"
                                         onclick="document.getElementById('fileConfidentiality').click()">
                                     <i class="fas fa-file-upload me-1"></i>

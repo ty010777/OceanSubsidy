@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Web;
 using System.Web.UI;
@@ -68,11 +69,13 @@ public partial class OFS_SCI_SciInprogress_Contract : System.Web.UI.Page
             // 根據單位類別控制附件顯示
             SetAttachmentVisibility(applicationMain.OrgCategory);
 
-            // 在頁面加入 data attribute，供 JavaScript 使用
+            // 註冊 AppRootPath 和 OrgCategory 到前端（合併在一個 script 中）
+            string appRootPath = ConfigurationManager.AppSettings["AppRootPath"] ?? "";
             Page.ClientScript.RegisterStartupScript(
                 this.GetType(),
-                "SetOrgCategory",
-                $"document.body.setAttribute('data-org-category', '{applicationMain.OrgCategory}');",
+                "InitPageScript",
+                $@"window.AppRootPath = '{appRootPath}';
+                   document.body.setAttribute('data-org-category', '{applicationMain.OrgCategory}');",
                 true
             );
 

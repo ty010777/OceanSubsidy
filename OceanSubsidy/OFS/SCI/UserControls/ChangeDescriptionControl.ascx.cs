@@ -98,7 +98,9 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
             bool shouldShow = CheckDisplayCondition(projectID);
             changeDescriptionSection.Visible = shouldShow;
 
-            if (!string.IsNullOrEmpty(projectID))
+            // PostBack 時不要重新載入資料,避免覆蓋使用者在前端輸入的值
+            // (因為 LoadExistingChangeDescription 會設定 hdnChangeBefore.Value,覆蓋掉 LoadPostData 階段從 Request.Form 更新的值)
+            if (!Page.IsPostBack && !string.IsNullOrEmpty(projectID))
             {
                 // 載入已儲存的變更說明資料
                 LoadExistingChangeDescription(projectID);
@@ -158,17 +160,24 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
         this.ProjectID = projectID;
         try
         {
-            // 1. 同步前端內容
-            SyncContentFromFrontend();
-            // 2. 如果區塊不可見，不需要儲存
+            // 除錯:檢查隱藏欄位的值
+            System.Diagnostics.Debug.WriteLine("=== SaveChangeDescription 開始 ===");
+            System.Diagnostics.Debug.WriteLine($"hdnChangeBefore.Value: [{hdnChangeBefore.Value}]");
+            System.Diagnostics.Debug.WriteLine($"hdnChangeAfter.Value: [{hdnChangeAfter.Value}]");
+
+            // 1. 從隱藏欄位讀取值 (現在 PostBack 時不會被 LoadData 覆蓋了)
             string changeBefore = hdnChangeBefore.Value?.Trim();
             string changeAfter = hdnChangeAfter.Value?.Trim();
+
+            System.Diagnostics.Debug.WriteLine($"最終 changeBefore: [{changeBefore}]");
+            System.Diagnostics.Debug.WriteLine($"最終 changeAfter: [{changeAfter}]");
+            System.Diagnostics.Debug.WriteLine("=== SaveChangeDescription 檢查完畢 ===");
 
             if (!changeDescriptionSection.Visible)
             { 
                 return true;
             }
-            // 3. 執行驗證並檢查結果
+            // 2. 執行驗證並檢查結果
             var validationResult = ValidateChangeDescription(changeBefore, changeAfter);
             if (!validationResult.IsValid)
             {
@@ -176,7 +185,7 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
                 string errorMessage = string.Join("; ", validationResult.Errors);
                 throw new Exception($"驗證失敗：{errorMessage}");
             }
-            // 4. 儲存到資料庫
+            // 3. 儲存到資料庫
             // 判斷 Method：計畫書修正 = 1, 計畫變更 = 2
             var project = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
             int method = 2; // 預設為計畫書修正

@@ -2256,7 +2256,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                 ProjectID = project.ProjectID,
                 ProjectNameTw = project.ProjectNameTw,
                 UserOrg = project.UserOrg,
-
+                OrgName = project.OrgName,
                 // 經費與狀態
                 Req_SubsidyAmount = project.Req_SubsidyAmount,
                 StatusesName = project.StatusesName,

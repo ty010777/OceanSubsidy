@@ -694,7 +694,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             if (SaveData())
             {
                 // 儲存變更說明
-                tab3_ucChangeDescription.SaveChangeDescription(ProjectID);
+                // tab3_ucChangeDescription.SaveChangeDescription(ProjectID);
                 // 更新版本狀態（暫存）
                 if (!string.IsNullOrEmpty(ProjectID))
                 {
@@ -839,36 +839,40 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             string orgCategory = applicationMain?.OrgCategory ?? "";
             bool isOceanTech = orgCategory.Equals("OceanTech", StringComparison.OrdinalIgnoreCase);
 
-            // 確保包含行政管理費資料（從表單控制項取得）
+            // 確保包含行政管理費資料（從 totalFeesList 中取得，而非直接從表單控制項）
             // 當 OrgCategory 為 OceanTech 時，行政管理費金額設為 0
             decimal adminSubsidyAmount = 0;
             decimal adminCoopAmount = 0;
 
+            // 先從 totalFeesList 中查找是否已有行政管理費資料
+            var existingAdminFee = totalFeesList.FirstOrDefault(t => t.accountingItem?.Contains("行政管理費") == true);
+
             if (!isOceanTech)
             {
-                // 非 OceanTech 時，從表單欄位讀取金額
-                adminSubsidyAmount = decimal.TryParse(AdminFeeSubsidy.Text, out decimal adminSub) ? adminSub : 0;
-                adminCoopAmount = decimal.TryParse(AdminFeeCoop.Text, out decimal adminCoop) ? adminCoop : 0;
+                // 非 OceanTech 時，從 totalFeesList 取得金額（來自前端隱藏欄位）
+                if (existingAdminFee != null)
+                {
+                    adminSubsidyAmount = existingAdminFee.subsidyAmount ?? 0;
+                    adminCoopAmount = existingAdminFee.coopAmount ?? 0;
+                }
+                
             }
             // 如果是 OceanTech，adminSubsidyAmount 和 adminCoopAmount 保持為 0
 
-            var adminFee = new TotalFeeRow
-            {
-                accountingItem = "行政管理費",
-                subsidyAmount = adminSubsidyAmount,
-                coopAmount = adminCoopAmount
-            };
-
-            // 如果已存在行政管理費記錄，則更新；否則新增
-            var existingAdminFee = totalFeesList.FirstOrDefault(t => t.accountingItem?.Contains("行政管理費") == true);
+            // 更新或新增行政管理費記錄
             if (existingAdminFee != null)
             {
-                existingAdminFee.subsidyAmount = adminFee.subsidyAmount;
-                existingAdminFee.coopAmount = adminFee.coopAmount;
+                existingAdminFee.subsidyAmount = adminSubsidyAmount;
+                existingAdminFee.coopAmount = adminCoopAmount;
             }
             else
             {
-                totalFeesList.Add(adminFee);
+                totalFeesList.Add(new TotalFeeRow
+                {
+                    accountingItem = "行政管理費",
+                    subsidyAmount = adminSubsidyAmount,
+                    coopAmount = adminCoopAmount
+                });
             }
         }
         catch (Exception ex)

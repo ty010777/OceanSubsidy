@@ -988,15 +988,12 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
             var latestApplication = OFS_SciApplicationHelper.getLatestApplicationMain(currentYear.ToString());
 
             int nextSerial = 1;
-            if (latestApplication != null && !string.IsNullOrEmpty(latestApplication.Serial))
+            if (latestApplication != null && latestApplication.Serial.HasValue)
             {
-                if (int.TryParse(latestApplication.Serial, out int currentSerial))
-                {
-                    nextSerial = currentSerial + 1;
-                }
+                nextSerial = latestApplication.Serial.Value + 1;
             }
 
-            applicationData.Serial = nextSerial.ToString();
+            applicationData.Serial = nextSerial;
             return $"SCI{currentYear}{nextSerial:D4}";
         }
         catch (Exception ex)

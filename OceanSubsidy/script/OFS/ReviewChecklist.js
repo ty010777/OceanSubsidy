@@ -733,7 +733,7 @@ window.ReviewChecklist = (function() {
                     <a href="${getReviewUrl(item.ProjectID)}" class="link-black" target="_blank">${item.ProjectNameTw || ''}</a>
                 </td>
                 <td data-th="申請單位:" style="text-align: left;">${item.OrgName || ''}</td>
-                <td data-th="申請經費:">${item.Req_SubsidyAmount}</td>
+                <td data-th="申請經費:">${formattedAmount}</td>
                 <td data-th="狀態:" nowrap>
                     <span class="${statusClass}">${item.StatusesName || ''}</span>
                 </td>
@@ -774,7 +774,7 @@ window.ReviewChecklist = (function() {
                 <td data-th="計畫名稱:" style="text-align: left;">
                     <a href="${getViewUrl(item.ProjectID)}" class="link-black" target="_blank">${item.ProjectNameTw || ''}</a>
                 </td>
-                <td data-th="申請單位:" style="text-align: left;">${item.UserOrg || ''}</td>
+                <td data-th="申請單位:" style="text-align: left;">${item.OrgName || ''}</td>
                 <td data-th="審查組別:">${reviewGroup}</td>
                 <td data-th="審查進度:" nowrap>
                     <span class="">${reviewProgressDisplay}</span>

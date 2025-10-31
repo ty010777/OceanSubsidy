@@ -11,11 +11,11 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
 {
     
     /// <summary>
-    /// 科專申請表-申請表主表 ()
+    /// 科專類-申請主表 ()
     /// </summary>
     [DataContract]
     [Serializable()]
-    [GisTableAttribute("OFS_SCI_Application_Main", "科專申請表-申請表主表", false)]
+    [GisTableAttribute("OFS_SCI_Application_Main", "科專類-申請主表", false)]
     public class IOFS_SCI_Application_Main : IMeta
     {
         
@@ -124,13 +124,13 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
         
-        protected string _Serial = "";
+        protected int? _Serial = null;
         ///<summary>
         /// 流水序號 (流水序號)
         ///</summary>
         [DataMember]
         [GisFieldAttribute("Serial", "Serial", DataSource.TABLE, "流水序號", false)]
-        public virtual string Serial
+        public virtual int? Serial
         {
             get
             {
@@ -976,7 +976,7 @@ namespace GS.OCA_OceanSubsidy.Entity
     using GS.OCA_OceanSubsidy.Entity.Base;
     
     /// <summary>
-    /// 科專申請表-申請表主表 ()
+    /// 科專類-申請主表 ()
     /// </summary>
     [DataContract]
     [Serializable()]

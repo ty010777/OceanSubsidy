@@ -40,66 +40,20 @@
 <asp:HiddenField ID="hdnChangeAfter" runat="server" ClientIDMode="Predictable" />
 
 <script type="text/javascript">
-    (function() {
-        // // 使用閉包保存此控制項的 ClientID
-        // var txtChangeBeforeID = '<%= txtChangeBefore.ClientID %>';
-        // var txtChangeAfterID = '<%= txtChangeAfter.ClientID %>';
-        // var hdnChangeBeforeID = '<%= hdnChangeBefore.ClientID %>';
-        // var hdnChangeAfterID = '<%= hdnChangeAfter.ClientID %>';
-        //
-        // // 同步此控制項的 contenteditable 內容到隱藏欄位
-        // function syncThisChangeDescription() {
-        //     var changeBeforeElement = document.getElementById(txtChangeBeforeID);
-        //     var changeAfterElement = document.getElementById(txtChangeAfterID);
-        //     var hdnChangeBeforeElement = document.getElementById(hdnChangeBeforeID);
-        //     var hdnChangeAfterElement = document.getElementById(hdnChangeAfterID);
-        //
-        //     if (changeBeforeElement && hdnChangeBeforeElement) {
-        //         hdnChangeBeforeElement.value = changeBeforeElement.textContent || changeBeforeElement.innerText || '';
-        //         console.log('同步變更前:', hdnChangeBeforeID, '=', hdnChangeBeforeElement.value);
-        //     }
-        //
-        //     if (changeAfterElement && hdnChangeAfterElement) {
-        //         hdnChangeAfterElement.value = changeAfterElement.textContent || changeAfterElement.innerText || '';
-        //         console.log('同步變更後:', hdnChangeAfterID, '=', hdnChangeAfterElement.value);
-        //     }
-        // }
-
-        // 在表單提交前同步資料
-        // document.addEventListener('DOMContentLoaded', function() {
-        //     var changeBeforeElement = document.getElementById(txtChangeBeforeID);
-        //     var changeAfterElement = document.getElementById(txtChangeAfterID);
-        //
-        //     if (changeBeforeElement) {
-        //         changeBeforeElement.addEventListener('blur', syncThisChangeDescription);
-        //         changeBeforeElement.addEventListener('input', syncThisChangeDescription);
-        //     }
-        //
-        //     if (changeAfterElement) {
-        //         changeAfterElement.addEventListener('blur', syncThisChangeDescription);
-        //         changeAfterElement.addEventListener('input', syncThisChangeDescription);
-        //     }
-        //
-        //     // 表單提交前同步
-        //     var forms = document.querySelectorAll('form');
-        //     forms.forEach(function(form) {
-        //         form.addEventListener('submit', syncThisChangeDescription);
-        //     });
-        // });
-
-        // 將同步函數註冊到全域，讓按鈕的 OnClientClick 可以呼叫
-        // 使用唯一的函數名稱避免衝突
-        // window['syncChangeDescription_' + hdnChangeBeforeID.replace(/[^a-zA-Z0-9]/g, '_')] = syncThisChangeDescription;
-
+    (function() {   
         // 同時註冊通用的同步函數（同步所有變更說明控制項）
         if (!window.syncAllChangeDescriptions) {
             window.syncAllChangeDescriptions = function() {
+                console.log('=== syncAllChangeDescriptions 開始執行 ===');
                 // 找到所有變更說明控制項的隱藏欄位
                 var allHiddenFields = document.querySelectorAll('input[id*="hdnChangeBefore"], input[id*="hdnChangeAfter"]');
+                console.log('找到隱藏欄位數量:', allHiddenFields.length);
                 var processedControls = new Set();
 
                 allHiddenFields.forEach(function(hiddenField) {
+                    console.log('處理隱藏欄位 ID:', hiddenField.id);
                     var controlPrefix = hiddenField.id.replace(/(hdnChangeBefore|hdnChangeAfter)$/, '');
+                    console.log('控制項前綴:', controlPrefix);
 
                     if (!processedControls.has(controlPrefix)) {
                         processedControls.add(controlPrefix);
@@ -109,22 +63,43 @@
                         var hdnBeforeId = controlPrefix + 'hdnChangeBefore';
                         var hdnAfterId = controlPrefix + 'hdnChangeAfter';
 
+                        console.log('尋找元素:', { txtBeforeId, txtAfterId, hdnBeforeId, hdnAfterId });
+
                         var txtBefore = document.getElementById(txtBeforeId);
                         var txtAfter = document.getElementById(txtAfterId);
                         var hdnBefore = document.getElementById(hdnBeforeId);
                         var hdnAfter = document.getElementById(hdnAfterId);
 
+                        console.log('找到元素:', { txtBefore: !!txtBefore, txtAfter: !!txtAfter, hdnBefore: !!hdnBefore, hdnAfter: !!hdnAfter });
+
                         if (txtBefore && hdnBefore) {
-                            hdnBefore.value = txtBefore.textContent || txtBefore.innerText || '';
-                            console.log('全域同步變更前:', hdnBeforeId, '=', hdnBefore.value);
+                            var beforeValue = txtBefore.textContent || txtBefore.innerText || '';
+                            hdnBefore.value = beforeValue;
+                            // 確保 name 屬性與 ASP.NET 的 UniqueID 一致
+                            if (hdnBefore.name && hdnBefore.name.indexOf('$') > -1) {
+                                console.log('✅ 同步變更前 -', hdnBeforeId, '=', beforeValue, '(長度:', beforeValue.length, '), name:', hdnBefore.name);
+                            } else {
+                                console.warn('⚠️ hdnBefore.name 可能不正確:', hdnBefore.name);
+                            }
+                        } else {
+                            console.warn('❌ 找不到變更前元素 -', { txtBeforeId, hdnBeforeId });
                         }
 
                         if (txtAfter && hdnAfter) {
-                            hdnAfter.value = txtAfter.textContent || txtAfter.innerText || '';
-                            console.log('全域同步變更後:', hdnAfterId, '=', hdnAfter.value);
+                            var afterValue = txtAfter.textContent || txtAfter.innerText || '';
+                            hdnAfter.value = afterValue;
+                            // 確保 name 屬性與 ASP.NET 的 UniqueID 一致
+                            if (hdnAfter.name && hdnAfter.name.indexOf('$') > -1) {
+                                console.log('✅ 同步變更後 -', hdnAfterId, '=', afterValue, '(長度:', afterValue.length, '), name:', hdnAfter.name);
+                            } else {
+                                console.warn('⚠️ hdnAfter.name 可能不正確:', hdnAfter.name);
+                            }
+                        } else {
+                            console.warn('❌ 找不到變更後元素 -', { txtAfterId, hdnAfterId });
                         }
                     }
                 });
+                console.log('=== syncAllChangeDescriptions 執行完畢 ===');
             };
         }
     })();

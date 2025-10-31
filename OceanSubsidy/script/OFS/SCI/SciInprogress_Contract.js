@@ -67,8 +67,9 @@ function downloadTemplate(templateType) {
         return;
     }
 
-    // 呼叫下載 API
-    const downloadUrl = `/Service/SCI_Download.ashx?action=downloadTemplate&fileCode=${fileCode}&ProjectID=${projectID}`;
+    // 呼叫下載 API（考慮虛擬路徑）
+    const appRootPath = window.AppRootPath || '';
+    const downloadUrl = `${appRootPath}/Service/SCI_Download.ashx?action=downloadTemplate&fileCode=${fileCode}&ProjectID=${projectID}`;
     window.open(downloadUrl, '_blank');
 }
 
@@ -139,7 +140,8 @@ function uploadFile(templateType, file, input) {
     uploadButton.disabled = true;
     uploadButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>上傳中...';
 
-    fetch('/Service/SCI_Upload.ashx', {
+    const appRootPath = window.AppRootPath || '';
+    fetch(`${appRootPath}/Service/SCI_Upload.ashx`, {
         method: 'POST',
         body: formData
     })
@@ -206,8 +208,9 @@ function loadUploadedFiles() {
  */
 function loadFilesByCode(fileCode, containerId, statusId) {
     const projectID = getProjectID();
+    const appRootPath = window.AppRootPath || '';
 
-    fetch(`/Service/SCI_Download.ashx?action=getContractFiles&projectID=${projectID}&fileCode=${fileCode}`)
+    fetch(`${appRootPath}/Service/SCI_Download.ashx?action=getContractFiles&projectID=${projectID}&fileCode=${fileCode}`)
     .then(response => response.json())
     .then(data => {
         const container = document.getElementById(containerId);
@@ -247,9 +250,10 @@ function createFileTag(fileInfo, fileCode) {
     const tag = document.createElement('span');
     tag.className = 'tag tag-green-light';
 
+    const appRootPath = window.AppRootPath || '';
     const link = document.createElement('a');
     link.className = 'tag-link';
-    link.href = `/Service/SCI_Download.ashx?action=downloadFile&projectID=${getProjectID()}&fileCode=${fileCode}&fileName=${encodeURIComponent(fileInfo.FileName)}`;
+    link.href = `${appRootPath}/Service/SCI_Download.ashx?action=downloadFile&projectID=${getProjectID()}&fileCode=${fileCode}&fileName=${encodeURIComponent(fileInfo.FileName)}`;
     link.target = '_blank';
     link.textContent = fileInfo.FileName;
 
@@ -294,7 +298,8 @@ function deleteFile(fileCode, fileName) {
         formData.append('fileCode', fileCode);
         formData.append('fileName', fileName);
 
-        fetch('/Service/SCI_Upload.ashx', {
+        const appRootPath = window.AppRootPath || '';
+        fetch(`${appRootPath}/Service/SCI_Upload.ashx`, {
             method: 'POST',
             body: formData
         })

@@ -443,12 +443,14 @@ public class ReviewCheckListHelper
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
-            SELECT DISTINCT [OrgName]
+            SELECT DISTINCT AM.[OrgName]
               FROM [OFS_SCI_Project_Main] PM
 	     LEFT JOIN [OFS_SCI_Application_Main] AM ON (AM.[ProjectID] = PM.[ProjectID])
-             WHERE [OrgName] != ''
-               AND [OrgName] IS NOT NULL
-               AND [Statuses] LIKE @status
+             WHERE AM.[OrgName] != ''
+               AND AM.[OrgName] IS NOT NULL
+               AND PM.[Statuses] LIKE @status
+               AND (PM.[isExist] = 1 OR PM.[isExist] IS NULL)
+               AND (PM.[isWithdrawal] != 1 OR PM.[isWithdrawal] IS NULL)
             UNION
             SELECT DISTINCT [OrgName]
               FROM [OFS_CUL_Project]
@@ -808,6 +810,8 @@ public class ReviewCheckListHelper
                AND SupervisoryPersonName != ''
                AND SupervisoryPersonName IS NOT NULL
                AND Statuses LIKE @status
+               AND (isExist = 1 OR isExist IS NULL)
+               AND (isWithdrawal != 1 OR isWithdrawal IS NULL)
             UNION
             SELECT DISTINCT R.Account AS SupervisoryPersonAccount, R.Name AS SupervisoryPersonName
               FROM [OFS_CUL_Project] AS O
@@ -1558,7 +1562,7 @@ SELECT TOP (1000) [ProjectID]
 
         if (!string.IsNullOrEmpty(orgName))
         {
-            db.CommandText += " AND p.UserOrg LIKE @orgName";
+            db.CommandText += " AND m.OrgName LIKE @orgName";
             db.Parameters.Add("@orgName", $"%{orgName}%");
         }
 

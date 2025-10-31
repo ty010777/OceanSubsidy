@@ -508,18 +508,21 @@
             CssClass="btn btn-outline-teal"
             OnClientClick="collectAllFormData(); if (typeof syncAllChangeDescriptions === 'function') { syncAllChangeDescriptions(); } return true;"
             OnClick="btnTempSave_Click" />
-        <asp:Button ID="tab3_btnSaveAndNext" runat="server"
+        <%-- <button type="button" --%>
+        <%--     id="tab3_btnSaveAndNext" --%>
+        <%--     class="btn btn-teal" --%>
+        <%--     onclick="return handleSaveAndNextClick();"> --%>
+        <%--     完成本頁，下一步 --%>
+        <%-- </button> --%>
+        <!-- 隱藏按鈕：用於驗證通過後實際執行 PostBack -->
+        <asp:Button ID="tab3_btnSaveAndNextHidden" runat="server"
             Text="完成本頁，下一步"
             CssClass="btn btn-teal"
             OnClientClick="return handleSaveAndNextClick();"
             OnClick="btnSaveAndNext_Click" />
-        <!-- 隱藏按鈕：用於驗證通過後實際執行 PostBack -->
-        <asp:Button ID="tab3_btnSaveAndNextHidden" runat="server"
-            Text="完成本頁，下一步"
-            CssClass="d-none"
-            OnClientClick="collectAllFormData(); if (typeof syncAllChangeDescriptions === 'function') { syncAllChangeDescriptions(); } return true;"
-            OnClick="btnSaveAndNext_Click" />
     </div>
+    
+
 
 </div>
 
