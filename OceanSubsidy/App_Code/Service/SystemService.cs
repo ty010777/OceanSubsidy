@@ -337,24 +337,10 @@ public class SystemService : BaseService
     public object getReviewCommittee(JObject param, HttpContext context)
     {
         var token = param["Token"].ToString();
-        var data = OFSReviewCommitteeHelper.getByToken(token);
 
-        if (data != null)
+        return new
         {
-            return new { Data = data };
-        }
-
-        var row = OFS_SciExamReviewHelper.GetExamDataByToken(token);
-
-        return new {
-            Data = new
-            {
-                CommitteeUser = row["Committee"].ToString(),
-                Email = row["committeeAccount"].ToString(),
-                BankCode = row["BankCode"].ToString(),
-                BankAccount = row["BankAccount"].ToString(),
-                RegistrationAddress = row["RegistrationAddress"].ToString()
-            }
+            Data = OFSReviewCommitteeHelper.getByToken(token)
         };
     }
 
@@ -581,16 +567,7 @@ public class SystemService : BaseService
         var bankAccount = param["BankAccount"].ToString();
         var registrationAddress = param["RegistrationAddress"].ToString();
 
-        var data = OFSReviewCommitteeHelper.getByToken(token);
-
-        if (data != null)
-        {
-            OFSReviewCommitteeHelper.updateBankInfo(token, bankCode, bankAccount, registrationAddress);
-        }
-        else
-        {
-            OFS_SciExamReviewHelper.UpdateReviewerBankInfo(token, bankCode, bankAccount, registrationAddress);
-        }
+        OFSReviewCommitteeHelper.updateBankInfo(token, bankCode, bankAccount, registrationAddress);
 
         return new {};
     }

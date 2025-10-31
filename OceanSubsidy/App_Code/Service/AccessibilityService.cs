@@ -195,7 +195,7 @@ public class AccessibilityService : BaseService
 
         return new {
             Project = data,
-            Report = OFS_SciInterimReportHelper.GetStageExamStatus(data.ProjectID, stage),
+            Report = OFSReportHelper.GetStageExamStatus(data.ProjectID, stage),
             Attachments = OFS_AccAttachmentHelper.query(id, 1)
         };
     }
@@ -417,7 +417,7 @@ public class AccessibilityService : BaseService
         checkReviewPermission(data);
 
         var stage = int.Parse(param["Stage"].ToString());
-        var report = OFS_SciInterimReportHelper.GetStageExamStatus(data.ProjectID, stage);
+        var report = OFSReportHelper.GetStageExamStatus(data.ProjectID, stage);
 
         if (report.Status != "審核中")
         {
@@ -436,7 +436,7 @@ public class AccessibilityService : BaseService
 
         var eventName = stage == 1 ? "期中報告" : "成果報告";
 
-        OFS_SciInterimReportHelper.ReviewStageExam(data.ProjectID, stage, eventName, status, comment, CurrentUser.UserName, CurrentUser.Account);
+        OFSReportHelper.ReviewStageExam(data.ProjectID, stage, eventName, status, comment, CurrentUser.UserName, CurrentUser.Account);
 
         if (result == 2)
         {
@@ -775,7 +775,7 @@ public class AccessibilityService : BaseService
 
     public object savePayment(JObject param, HttpContext context)
     {
-        var payment = param["Payment"].ToObject<OFS_SCI_Payment>();
+        var payment = param["Payment"].ToObject<OFSPayment>();
         var id = getID(payment.ProjectID);
         var data = getProject(id, new int[] {51}); //執行階段-審核中
 
@@ -795,7 +795,7 @@ public class AccessibilityService : BaseService
 
         if (model == null)
         {
-            model = new OFS_SCI_Payment();
+            model = new OFSPayment();
             model.ProjectID = payment.ProjectID;
             model.Stage = payment.Stage;
         }
@@ -848,7 +848,7 @@ public class AccessibilityService : BaseService
         var stage = int.Parse(param["Stage"].ToString());
         var submit = bool.Parse(param["Submit"].ToString());
 
-        OFS_SciInterimReportHelper.SubmitStageExam(data.ProjectID, stage, submit ? "審核中" : "暫存");
+        OFSReportHelper.SubmitStageExam(data.ProjectID, stage, submit ? "審核中" : "暫存");
 
         var attachments = param["Attachments"].ToObject<List<OFS_AccAttachment>>();
 
