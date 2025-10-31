@@ -114,7 +114,7 @@ SELECT B.[Year],
        B.[OrgName],
        B.[ProjectNameTw]
   FROM (SELECT [ProjectID], 1 AS [Type], [Stage] FROM [OFS_Payment] WHERE Status = '審核中'
-        UNION ALL
+        UNION
         SELECT [ProjectID], 2 AS [Type], [Stage] FROM [OFS_StageExam] WHERE Status = '審核中') AS A
   JOIN (SELECT O.Year,
                O.ProjectID,
