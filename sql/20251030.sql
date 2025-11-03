@@ -67,42 +67,96 @@ GO
 
 ALTER VIEW [V_OFS_ReviewChecklist_type6]
 AS
-WITH SCI_ReviewTodo_Raw AS (
-    SELECT ProjectID,
-           Stage,
-           CASE WHEN A.Stage = 1 THEN '期中檢核' WHEN A.Stage = 2 THEN '期末檢核' ELSE '' END AS ReviewTodo
-      FROM dbo.OFS_SCI_StageExam AS A
-     WHERE (Status = '審核中')
+WITH ReviewTodo_Raw AS (
+    ---------------------------------------
+    -- SCI StageExam
+    ---------------------------------------
+    SELECT
+        AM.Year,
+        A.ProjectID,
+        'SCI' AS Category,
+        A.Stage,
+        CASE
+            WHEN A.Stage = 1 THEN '期中檢核'
+            WHEN A.Stage = 2 THEN '期末檢核'
+            ELSE ''
+        END AS ReviewTodo,
+        P.SupervisoryPersonAccount,
+        P.SupervisoryUnit,
+        AM.OrgName,
+        AM.ProjectNameTw
+    FROM dbo.OFS_SCI_StageExam AS A
+    LEFT JOIN dbo.OFS_SCI_Project_Main AS P
+        ON P.ProjectID = A.ProjectID
+    LEFT JOIN dbo.OFS_SCI_Application_Main AS AM
+        ON AM.ProjectID = A.ProjectID
+    WHERE A.Status = '審核中'
+    ---------------------------------------
     UNION ALL
-    SELECT ProjectID,
-           Stage,
-           CASE WHEN B.Stage = 1 THEN '第一期請款審核' WHEN B.Stage = 2 THEN '第二期請款審核' ELSE '' END AS ReviewTodo
-      FROM dbo.OFS_SCI_Payment AS B
-     WHERE (Status = '審核中')
-), SCI_ReviewTodo AS (
-    SELECT AM.Year,
-           SR.ProjectID,
-           'SCI' AS Category,
-           SR.Stage,
-           SR.ReviewTodo,
-           PM.SupervisoryPersonAccount,
-           PM.SupervisoryUnit,
-           AM.OrgName,
-           AM.ProjectNameTw
-      FROM SCI_ReviewTodo_Raw AS SR
-LEFT OUTER JOIN dbo.OFS_SCI_Project_Main AS PM ON PM.ProjectID = SR.ProjectID
-LEFT OUTER JOIN dbo.OFS_SCI_Application_Main AS AM ON PM.ProjectID = AM.ProjectID
+    ---------------------------------------
+    -- SCI Payment
+    SELECT
+        AM.Year,
+        B.ProjectID,
+        'SCI' AS Category,
+        B.Stage,
+        CASE
+            WHEN B.Stage = 1 THEN '第一期請款審核'
+            WHEN B.Stage = 2 THEN '第二期請款審核'
+            ELSE ''
+        END AS ReviewTodo,
+        P.SupervisoryPersonAccount,
+        P.SupervisoryUnit,
+        AM.OrgName,
+        AM.ProjectNameTw
+    FROM dbo.OFS_SCI_Payment AS B
+    LEFT JOIN dbo.OFS_SCI_Project_Main AS P
+        ON P.ProjectID = B.ProjectID
+    LEFT JOIN dbo.OFS_SCI_Application_Main AS AM
+        ON AM.ProjectID = B.ProjectID
+    WHERE B.Status = '審核中'
+    ---------------------------------------
+    UNION ALL
+    ---------------------------------------
+    -- CLB StageExam
+    SELECT
+        A_CLB.Year,
+        S.ProjectID,
+        'CLB' AS Category,
+        1 AS Stage,
+        '成果報告' AS ReviewTodo,
+        P.SupervisoryPersonAccount,
+        P.SupervisoryUnit,
+        P.UserOrg AS OrgName,
+        P.UserOrg AS ProjectNameTw
+    FROM dbo.OFS_CLB_StageExam AS S
+    INNER JOIN dbo.OFS_CLB_Project_Main AS P
+        ON P.ProjectID = S.ProjectID
+    LEFT JOIN dbo.OFS_CLB_Application_Basic AS A_CLB
+        ON A_CLB.ProjectID = S.ProjectID
+    WHERE S.Status = '審核中'
+    ---------------------------------------
+    UNION ALL
+    ---------------------------------------
+    -- CLB Payment
+    SELECT
+        A_CLB.Year,
+        C.ProjectID,
+        'CLB' AS Category,
+        Stage,
+        '請款核銷' AS ReviewTodo,
+        P.SupervisoryPersonAccount,
+        P.SupervisoryUnit,
+        P.UserOrg AS OrgName,
+        P.UserOrg AS ProjectNameTw
+    FROM dbo.OFS_CLB_Payment AS C
+    INNER JOIN dbo.OFS_CLB_Project_Main AS P
+        ON P.ProjectID = C.ProjectID
+    LEFT JOIN dbo.OFS_CLB_Application_Basic AS A_CLB
+        ON A_CLB.ProjectID = C.ProjectID
+    WHERE C.Status = '審核中'
 )
-SELECT Year,
-       ProjectID,
-       Category,
-       Stage,
-       ReviewTodo,
-       SupervisoryPersonAccount,
-       SupervisoryUnit,
-       OrgName,
-       ProjectNameTw
-  FROM SCI_ReviewTodo AS SCI_ReviewTodo_1
+SELECT * FROM ReviewTodo_Raw
 UNION
 SELECT B.[Year],
        B.[ProjectID],
