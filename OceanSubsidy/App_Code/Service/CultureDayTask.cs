@@ -167,6 +167,31 @@ public class CultureDayTask : IHttpHandler
                     }
                 }
             }
+
+            if (grant.ApplyEndDate.HasValue)
+            {
+                // 逾期前1天提醒
+                if (isSameDate(today, grant.ApplyEndDate.Value))
+                {
+                    var list11 = OFS_CulProjectHelper.query(new OFS_CulProject { Status = 1 });
+
+                    foreach (var data in list11)
+                    {
+                        NotificationHelper.A0("文化", data.ProjectName, grant.ApplyEndDate.Value, data.UserAccount, "CUL");
+                    }
+                }
+
+                // 逾期
+                if (isSameDate(today, grant.ApplyEndDate.Value.AddDays(1)))
+                {
+                    var list12 = OFS_CulProjectHelper.query(new OFS_CulProject { Status = 1 });
+
+                    foreach (var data in list12)
+                    {
+                        OFS_CulProjectHelper.updateStatus(data.ProjectID, 2);
+                    }
+                }
+            }
         }
     }
 

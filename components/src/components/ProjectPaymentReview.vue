@@ -44,8 +44,12 @@
 
     const button = computed(() => {
         if (form.value.Result === 1) {
-            if ((["culture", "literacy", "accessibility"].includes(props.type) && store.stage === 2) || (props.type === "education") || (props.type === "multiple" && store.stage === 3)) {
-                return "確定撥款及結案核銷";
+            if ((props.type === "culture" && store.stage === 2) || (props.type === "education") || (props.type === "accessibility" && store.stage === 2)) {
+                return "確定撥款及結案";
+            }
+
+            if ((props.type === "multiple" && store.stage === 3) || (props.type === "literacy" && store.stage === 2)) {
+                return "確定核銷及結案";
             }
 
             return "確定撥款";

@@ -38,7 +38,7 @@
 
                 const current = ref(1);
                 const id = "<%= Request.QueryString["ID"] %>";
-                const stage = ref(1);
+                const stage = ref(parseInt("<%= Request.QueryString["Stage"] %>") || 1);
                 const store = useProgressStore();
 
                 const stages = [{

@@ -146,6 +146,7 @@ public class OFS_EdcProjectHelper
                   ,P.[IsExists]
                   ,P.[FinalReviewNotes]
                   ,P.[FinalReviewOrder]
+                  ,P.[ApplyTime]
               FROM [OFS_EDC_Project] AS P
          LEFT JOIN [Sys_User] AS U ON (U.UserID = P.Organizer)
         ";
@@ -301,6 +302,21 @@ public class OFS_EdcProjectHelper
         db.Parameters.Add("@OtherUnitAmount", model.OtherUnitAmount);
         db.Parameters.Add("@UpdateUser", CurrentUser.ID);
 
+        db.ExecuteNonQuery();
+    }
+
+    public static void updateApplyTime(string projectID)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            UPDATE [OFS_EDC_Project]
+               SET [ApplyTime] = GETDATE()
+             WHERE [ProjectID] = @ProjectID
+               AND [ApplyTime] IS NULL
+        ";
+
+        db.Parameters.Add("@ProjectID", projectID);
         db.ExecuteNonQuery();
     }
 
@@ -481,7 +497,8 @@ public class OFS_EdcProjectHelper
             IsWithdrawal = row.Field<bool>("IsWithdrawal"),
             IsExists = row.Field<bool>("IsExists"),
             FinalReviewNotes = row.Field<string>("FinalReviewNotes"),
-            FinalReviewOrder = row.Field<int?>("FinalReviewOrder")
+            FinalReviewOrder = row.Field<int?>("FinalReviewOrder"),
+            ApplyTime = row.Field<DateTime?>("ApplyTime")
         };
     }
 }

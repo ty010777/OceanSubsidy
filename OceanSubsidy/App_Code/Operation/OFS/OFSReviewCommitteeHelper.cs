@@ -34,6 +34,7 @@ public class OFSReviewCommitteeHelper
                   ,[Token]
                   ,[BankCode]
                   ,[BankAccount]
+                  ,[BankPhoto]
                   ,[RegistrationAddress]
               FROM [OFS_ReviewCommitteeList]
              WHERE [Token] = @Token
@@ -80,6 +81,7 @@ public class OFSReviewCommitteeHelper
                   ,[Token]
                   ,[BankCode]
                   ,[BankAccount]
+                  ,[BankPhoto]
                   ,[RegistrationAddress]
               FROM [OFS_ReviewCommitteeList]
              WHERE [SubjectTypeID] = @SubjectTypeID
@@ -252,7 +254,7 @@ public class OFSReviewCommitteeHelper
         db.ExecuteNonQuery();
     }
 
-    public static void updateBankInfo(string token, string bankCode, string bankAccount, string registrationAddress)
+    public static void updateBankInfo(string token, string bankCode, string bankAccount, string bankPhoto, string registrationAddress)
     {
         DbHelper db = new DbHelper();
 
@@ -260,6 +262,7 @@ public class OFSReviewCommitteeHelper
             UPDATE [OFS_ReviewCommitteeList]
                SET [BankCode] = @BankCode
                   ,[BankAccount] = @BankAccount
+                  ,[BankPhoto] = @BankPhoto
                   ,[RegistrationAddress] = @RegistrationAddress
                   ,[UpdateTime] = GETDATE()
              WHERE [Token] = @Token
@@ -268,6 +271,7 @@ public class OFSReviewCommitteeHelper
         db.Parameters.Add("@Token", token);
         db.Parameters.Add("@BankCode", bankCode);
         db.Parameters.Add("@BankAccount", bankAccount);
+        db.Parameters.Add("@BankPhoto", bankPhoto);
         db.Parameters.Add("@RegistrationAddress", registrationAddress);
 
         db.ExecuteNonQuery();
@@ -284,6 +288,7 @@ public class OFSReviewCommitteeHelper
             Token = row.Field<string>("Token"),
             BankCode = row.Field<string>("BankCode"),
             BankAccount = row.Field<string>("BankAccount"),
+            BankPhoto = row.Field<string>("BankPhoto"),
             RegistrationAddress = row.Field<string>("RegistrationAddress")
         };
     }

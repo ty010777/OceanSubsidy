@@ -83,6 +83,31 @@ public class MultipleDayTask : IHttpHandler
                     }
                 }
             }
+
+            if (grant.ApplyEndDate.HasValue)
+            {
+                // 逾期前1天提醒
+                if (isSameDate(today, grant.ApplyEndDate.Value))
+                {
+                    var list6 = OFS_MulProjectHelper.query(new OFS_MulProject { Status = 1 });
+
+                    foreach (var data in list6)
+                    {
+                        NotificationHelper.A0("多元", data.ProjectName, grant.ApplyEndDate.Value, data.UserAccount, "MUL");
+                    }
+                }
+
+                // 逾期
+                if (isSameDate(today, grant.ApplyEndDate.Value.AddDays(1)))
+                {
+                    var list7 = OFS_MulProjectHelper.query(new OFS_MulProject { Status = 1 });
+
+                    foreach (var data in list7)
+                    {
+                        OFS_MulProjectHelper.updateStatus(data.ProjectID, 2);
+                    }
+                }
+            }
         }
     }
 

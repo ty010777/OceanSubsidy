@@ -441,6 +441,7 @@ public class EducationService : BaseService
             {
                 OFS_EdcProjectHelper.updateFormStep(data.ProjectID, 3);
                 OFS_EdcProjectHelper.updateProgressStatus(data.ProjectID, 1); //資格審查
+                OFS_EdcProjectHelper.updateApplyTime(data.ProjectID);
 
                 saveApplyLog(data.ProjectID, "編輯中");
             }
@@ -478,6 +479,7 @@ public class EducationService : BaseService
                 mergePdfFiles(data, "核定版", context);
 
                 NotificationHelper.A1("學校民間", data.ProjectName, "EDC");
+                NotificationHelper.A3("學校民間", data.ProjectName, data.Status == 1 ? "申請送件" : "補正補件", DateTime.Now, data.UserAccount);
             }
             else if (data.IsProjChanged)
             {

@@ -142,6 +142,7 @@ public class OFS_MulProjectHelper
                   ,P.[IsExists]
                   ,P.[FinalReviewNotes]
                   ,P.[FinalReviewOrder]
+                  ,P.[ApplyTime]
               FROM [OFS_MUL_Project] AS P
          LEFT JOIN [Sys_User] AS U ON (U.UserID = P.Organizer)
         ";
@@ -287,6 +288,21 @@ public class OFS_MulProjectHelper
         db.Parameters.Add("@Qualitative", model.Qualitative);
         db.Parameters.Add("@UpdateUser", CurrentUser.ID);
 
+        db.ExecuteNonQuery();
+    }
+
+    public static void updateApplyTime(string projectID)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            UPDATE [OFS_MUL_Project]
+               SET [ApplyTime] = GETDATE()
+             WHERE [ProjectID] = @ProjectID
+               AND [ApplyTime] IS NULL
+        ";
+
+        db.Parameters.Add("@ProjectID", projectID);
         db.ExecuteNonQuery();
     }
 
@@ -531,7 +547,8 @@ public class OFS_MulProjectHelper
             IsWithdrawal = row.Field<bool>("IsWithdrawal"),
             IsExists = row.Field<bool>("IsExists"),
             FinalReviewNotes = row.Field<string>("FinalReviewNotes"),
-            FinalReviewOrder = row.Field<int?>("FinalReviewOrder")
+            FinalReviewOrder = row.Field<int?>("FinalReviewOrder"),
+            ApplyTime = row.Field<DateTime?>("ApplyTime")
         };
     }
 }

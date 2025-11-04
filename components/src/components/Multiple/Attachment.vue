@@ -88,7 +88,7 @@
     const docs = ref([
         { Type: 1, Title: "申請表", Template: `../../Service/OFS/DownloadTemplateMUL.ashx?type=1&id=${props.id}`, Files: [] },
         { Type: 2, Title: "計畫書", Template: `../../Service/OFS/DownloadTemplateMUL.ashx?type=2&id=${props.id}`, Files: [] },
-        { Type: 3, Title: "執行承諾書", Template: `../../Service/OFS/DownloadTemplateMUL.ashx?tpe=3&id=${props.id}`, Files: [] },
+        { Type: 3, Title: "執行承諾書", Template: `../../Service/OFS/DownloadTemplateMUL.ashx?type=3&id=${props.id}`, Files: [] },
         { Type: 4, Title: "未違反公職人員利益衝突迴避法切結書及事前揭露表", Template: `../../Service/OFS/DownloadTemplateMUL.ashx?type=4&id=${props.id}`, Files: [] },
         { Type: 5, Title: "其他佐證資料", Comment: "提案計畫倘有結合其他合作單位、團體或相關機關(構)，請提供合作意向書或相關參考文件尤佳，無則免附", Files: [], Multiple: true, Optional: true }
     ]);

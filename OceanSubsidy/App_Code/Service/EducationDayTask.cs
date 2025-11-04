@@ -39,5 +39,38 @@ public class EducationDayTask : IHttpHandler
                 NotificationHelper.F11("學校民間", data.ProjectName, "成果報告", today.AddDays(30), data.UserAccount);
             }
         }
+
+        foreach (var grant in OFSGrantTypeHelper.query("EDC"))
+        {
+            if (grant.ApplyEndDate.HasValue)
+            {
+                // 逾期前1天提醒
+                if (isSameDate(today, grant.ApplyEndDate.Value))
+                {
+                    var list4 = OFS_EdcProjectHelper.query(new OFS_EdcProject { Status = 1 });
+
+                    foreach (var data in list4)
+                    {
+                        NotificationHelper.A0("學校民間", data.ProjectName, grant.ApplyEndDate.Value, data.UserAccount, "EDC");
+                    }
+                }
+
+                // 逾期
+                if (isSameDate(today, grant.ApplyEndDate.Value.AddDays(1)))
+                {
+                    var list5 = OFS_EdcProjectHelper.query(new OFS_EdcProject { Status = 1 });
+
+                    foreach (var data in list5)
+                    {
+                        OFS_EdcProjectHelper.updateStatus(data.ProjectID, 2);
+                    }
+                }
+            }
+        }
+    }
+
+    private bool isSameDate(DateTime date1, DateTime date2)
+    {
+        return date1.Year == date2.Year && date1.Month == date2.Month && date1.Day == date2.Day;
     }
 }

@@ -14,7 +14,7 @@
                 </div>
                 <div class="col-12 col-lg-6">
                     <div class="fs-16 text-gray mb-2">全部類別</div>
-                    <input-select :options="types" placeholder="全部" text-name="title" value-name="code" v-model="type"></input-select>
+                    <input-select allow-empty :options="types" placeholder="全部" text-name="title" value-name="code" v-model="type"></input-select>
                 </div>
             </div>
             <button class="btn btn-teal-dark d-table mx-auto" type="button">
@@ -119,6 +119,7 @@
                         <th scope="col">年度</th>
                         <th scope="col" class="text-start">類別</th>
                         <th scope="col">補助計畫</th>
+                        <th scope="col">申請期限</th>
                         <th scope="col">補助對象</th>
                         <th scope="col">相關檔案</th>
                         <th scope="col"></th>
@@ -129,6 +130,7 @@
                         <td data-th="年度:">{{ item.Year }}</td>
                         <td data-th="類別:" class="text-start">{{ item.ShortName }}</td>
                         <td data-th="補助計畫:">{{ item.FullName }}</td>
+                        <td data-th="申請期限:"><tw-date :value="item.ApplyEndDate"></tw-date></td>
                         <td data-th="補助對象:">
                             <tooltip data-bs-html="true" :title="notes(item)"></tooltip>
                         </td>

@@ -579,6 +579,7 @@ public class AccessibilityService : BaseService
             {
                 OFS_AccProjectHelper.updateFormStep(data.ProjectID, 6);
                 OFS_AccProjectHelper.updateProgressStatus(data.ProjectID, 1); //資格審查
+                OFS_AccProjectHelper.updateApplyTime(data.ProjectID);
 
                 saveApplyLog(data.ProjectID, "編輯中");
             }
@@ -622,12 +623,14 @@ public class AccessibilityService : BaseService
                 mergePdfFiles(data, "核定版", context);
 
                 NotificationHelper.A1("無障礙", data.ProjectName, "ACC");
+                NotificationHelper.A3("無障礙", data.ProjectName, data.Status == 1 ? "申請送件" : "補正補件", DateTime.Now, data.UserAccount);
             }
             else if (data.Status == 42)
             {
                 mergePdfFiles(data, "核定版", context);
 
-                NotificationHelper.A2("文化", data.ProjectName, data.Organizer);
+                NotificationHelper.A2("無障礙", data.ProjectName, data.Organizer);
+                NotificationHelper.A3("無障礙", data.ProjectName, "修正計畫書提送", DateTime.Now, data.UserAccount);
             }
             else if (data.IsProjChanged)
             {

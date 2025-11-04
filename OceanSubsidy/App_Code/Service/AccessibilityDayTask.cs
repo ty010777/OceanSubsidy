@@ -87,6 +87,31 @@ public class AccessibilityDayTask : IHttpHandler
                     }
                 }
             }
+
+            if (grant.ApplyEndDate.HasValue)
+            {
+                // 逾期前1天提醒
+                if (isSameDate(today, grant.ApplyEndDate.Value))
+                {
+                    var list6 = OFS_AccProjectHelper.query(new OFS_AccProject { Status = 1 });
+
+                    foreach (var data in list6)
+                    {
+                        NotificationHelper.A0("無障礙", data.ProjectName, grant.ApplyEndDate.Value, data.UserAccount, "ACC");
+                    }
+                }
+
+                // 逾期
+                if (isSameDate(today, grant.ApplyEndDate.Value.AddDays(1)))
+                {
+                    var list7 = OFS_AccProjectHelper.query(new OFS_AccProject { Status = 1 });
+
+                    foreach (var data in list7)
+                    {
+                        OFS_AccProjectHelper.updateStatus(data.ProjectID, 2);
+                    }
+                }
+            }
         }
     }
 

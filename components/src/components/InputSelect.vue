@@ -1,6 +1,6 @@
 <template>
     <select class="form-select" :disabled="disabled || !editable" v-bind="$attrs" v-model="model">
-        <option :value="emptyValue" v-if="editable && !model">{{ placeholder }}</option>
+        <option :value="emptyValue" v-if="allowEmpty || (editable && !model)">{{ placeholder }}</option>
         <template :key="item" v-for="(item,idx) in options">
             <slot :index="idx" :option="item">
                 <option :value="item[valueName]">{{ item[textName] }}</option>
@@ -17,6 +17,7 @@
     defineOptions({ inheritAttrs: false });
 
     defineProps({
+        allowEmpty: { default: false, type: Boolean },
         disabled: { default: false, type: Boolean },
         emptyValue: { type: [Number, String] },
         error: { type: String },

@@ -79,6 +79,7 @@ public class OFS_CulProject
 
     // 狀態
     //  1: 編輯中
+    //  2: 逾期
     // 11: 審查中
     // 12: 通過
     // 13: 不通過
@@ -145,6 +146,9 @@ public class OFS_CulProject
 
     // 核定排序
     public int? FinalReviewOrder { get; set; }
+
+    // 送件時間
+    public DateTime? ApplyTime { get; set; }
 
     public ProjectChangeRecord changeApply { get; set; }
     public bool isOrganizer { get; set; }

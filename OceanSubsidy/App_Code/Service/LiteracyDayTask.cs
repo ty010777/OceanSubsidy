@@ -65,6 +65,31 @@ public class LiteracyDayTask : IHttpHandler
                     }
                 }
             }
+
+            if (grant.ApplyEndDate.HasValue)
+            {
+                // 逾期前1天提醒
+                if (isSameDate(today, grant.ApplyEndDate.Value))
+                {
+                    var list5 = OFS_LitProjectHelper.query(new OFS_LitProject { Status = 1 });
+
+                    foreach (var data in list5)
+                    {
+                        NotificationHelper.A0("素養", data.ProjectName, grant.ApplyEndDate.Value, data.UserAccount, "LIT");
+                    }
+                }
+
+                // 逾期
+                if (isSameDate(today, grant.ApplyEndDate.Value.AddDays(1)))
+                {
+                    var list6 = OFS_LitProjectHelper.query(new OFS_LitProject { Status = 1 });
+
+                    foreach (var data in list6)
+                    {
+                        OFS_LitProjectHelper.updateStatus(data.ProjectID, 2);
+                    }
+                }
+            }
         }
     }
 

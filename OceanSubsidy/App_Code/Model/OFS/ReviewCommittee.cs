@@ -11,6 +11,7 @@ namespace GS.OCA_OceanSubsidy.Model.OFS
         public string Token { get; set; }
         public string BankCode { get; set; }
         public string BankAccount { get; set; }
+        public string BankPhoto { get; set; }
         public string RegistrationAddress { get; set; }
 
         public bool Deleted { get; set; }

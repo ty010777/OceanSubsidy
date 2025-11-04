@@ -1,4 +1,4 @@
-using GS.Data.Sql;
+﻿using GS.Data.Sql;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -7,11 +7,25 @@ using System.Linq;
 
 public class NotificationHelper
 {
+    public static void A0(string category, string projectName, DateTime deadline, string account, string type)
+    {
+        toAll(
+            "［海洋委員會］補助申請案 尚未提送，請於期限前完成！",
+            $"您好：<br><br>" + $"您申請的{category}類計畫「{projectName}」，目前仍尚未完成提送！<br>" +
+                $"為避免影響後續審查及您的申請權益，請務必於申請期限前完成提送。<br><br>" +
+                $"申請截止日期：{deadline.Year - 1911}/{deadline.Month:D2}/{deadline.Day:D2}<br><br>" +
+                $"如您確定無須申請，請登入系統後刪除此案，<br>" +
+                $"感謝您的配合",
+            account,
+            type
+        );
+    }
+
     public static void A1(string category, string projectName, string type)
     {
         toSupervisor(
             "［海洋委員會］補助申請案 計畫提送通知",
-            $"您好：<br><br>{category}計畫「{projectName}」已提送申請，敬請進行資格審查。",
+            $"主管單位您好：<br><br>{category}計畫「{projectName}」已提送申請，敬請進行資格審查。",
             type
         );
     }
@@ -20,12 +34,21 @@ public class NotificationHelper
     {
         toOrganizer(
             "［海洋委員會］補助申請案 修正計畫書提送通知",
-            $"您好：<br><br>{category}計畫「{projectName}」已提送修正計畫書，敬請至［計畫審查＞決審核定］進行修正計畫書確認。",
+            $"主管單位您好：<br><br>{category}計畫「{projectName}」已提送修正計畫書，敬請至［計畫審查＞決審核定］進行修正計畫書確認。",
             organizer
         );
     }
 
-    public static void B1(string category, string projectName,string year, string reason,string deadline, string account)
+    public static void A3(string category, string projectName, string kind, DateTime time, string account)
+    {
+        toUser(
+            "［海洋委員會］補助申請案 計畫提送通知",
+            $"您好：<br><br>{category}類計畫「{projectName}」已提送申請。<br><br>提送類型：{kind}<br>提送時間：{time.Year - 1911}/{time.Month:D2}/{time.Day:D2} {time.Hour:D2}:{time.Minute:D2}",
+            account
+        );
+    }
+
+    public static void B1(string category, string projectName, string year, string reason, string deadline, string account)
     {
         toUser(
             "［海洋委員會］補助申請案 資料須補正補件",
@@ -36,7 +59,8 @@ public class NotificationHelper
             account
         );
     }
-    public static void B2(string category, string projectName,string year, string reason,string deadline, string account)
+
+    public static void B2(string category, string projectName, string year, string reason, string deadline, string account)
     {
         toUser(
             "［海洋委員會］補助申請案 資料請盡速補正補件",
@@ -47,6 +71,7 @@ public class NotificationHelper
             account
         );
     }
+
     public static void C1(string category, Dictionary<string, string> ProjectList, string eventName, string account)
     {
         string content =$"您好：<br><br>海洋委員會以下補助申請案，請協助{eventName}之評分及審查意見：<br>";
@@ -65,6 +90,7 @@ public class NotificationHelper
             account
         );
     }
+
     public static void C2(string category, string projectName, string account)
     {
         toUser(
@@ -72,8 +98,8 @@ public class NotificationHelper
             $"您好：<br><br>{category}類計畫「{projectName}」，<br>審查委員已提供審查意見，<br>請至［計畫申請］查看審查意見及回覆。",
             account
         );
-    } 
-   
+    }
+
     public static void E1(string category, string projectName, string account)
     {
         toUser(
@@ -82,7 +108,8 @@ public class NotificationHelper
             account
         );
     }
-    public static void E2(string category,int year, string projectName, string account)
+
+    public static void E2(string category, int year, string projectName, string account)
     {
         toUser(
             "［海洋委員會］補助申請案 審查不通過通知",
@@ -90,7 +117,8 @@ public class NotificationHelper
             account
         );
     }
-    public static void E31(string category,int year, string projectName, string eventName,string account)
+
+    public static void E31(string category, int year, string projectName, string eventName, string account)
     {
         toUser(
             "［海洋委員會］補助申請案 審查通過通知",
@@ -98,7 +126,8 @@ public class NotificationHelper
             account
         );
     }
-    public static void E32(string category, string projectName,string eventName,string eventName2, string account)
+
+    public static void E32(string category, string projectName, string eventName, string eventName2, string account)
     {
         toUser(
             "［海洋委員會］補助申請案 審查通過通知",
@@ -108,7 +137,8 @@ public class NotificationHelper
             account
         );
     }
-    public static void E5(int year, string projectName, string approveAmount,string account)
+
+    public static void E5(int year, string projectName, string approveAmount, string account)
     {
         toUser(
             "［海洋委員會］補助申請案 計畫核定通知",
@@ -116,7 +146,6 @@ public class NotificationHelper
             account
         );
     }
-
 
     public static void F2(string category, string projectName, string eventName, string account, int? organizer)
     {
@@ -199,6 +228,7 @@ public class NotificationHelper
             account
         );
     }
+
     public static void H2(string category, string projectName, int? organizer)
     {
         toOrganizer(
@@ -207,6 +237,7 @@ public class NotificationHelper
             organizer
         );
     }
+
     public static void H11(string category, string projectName, int? organizer)
     {
         toOrganizer(
@@ -215,6 +246,7 @@ public class NotificationHelper
             organizer
         );
     }
+
     public static void H12(string category, string projectName, string account)
     {
         toUser(
@@ -224,7 +256,7 @@ public class NotificationHelper
         );
     }
 
-    public static void J1( string projectName, string eventName,string url, string account)
+    public static void J1( string projectName, string eventName, string url, string account)
     {
         toSomeOne(
             "［海洋委員會］執行計畫案 請委員進行審查",
@@ -232,7 +264,8 @@ public class NotificationHelper
             account
         );
     }
-    public static void J2(string projectID,string projectName,string ReviewerName,string eventName, int? organizer)
+
+    public static void J2(string projectID, string projectName, string ReviewerName, string eventName, int? organizer)
     {
         toOrganizer(
             "［海洋委員會］執行計畫案 委員已提送審查意見",
@@ -244,16 +277,16 @@ public class NotificationHelper
             organizer
         );
     }
-    public static void Z1(string category, string type,string projectName,  string reson,string account,int? organizer)
-    {
 
+    public static void Z1(string category, string type, string projectName,  string reson, string account, int? organizer)
+    {
         if (organizer == null || organizer == 0)
         {
             toSupervisor(
                 "［海洋委員會］補助申請案 已撤案通知",
                 $"您好：<br><br> {category}類計畫「{projectName}」已進行撤案申請。<br>撤案原因：{reson}",
                 type
-                );
+            );
         }
         else
         {
@@ -263,15 +296,15 @@ public class NotificationHelper
                 organizer
             );
         }
+
         toSomeOne(
             "［海洋委員會］補助申請案 已撤案通知",
             $"您好：<br><br> {category}類計畫「{projectName}」已進行撤案申請。<br>撤案原因：{reson}",
             account
         );
-
-
     }
-    public static void Z2(string category, string type, string projectName, string reson,string account,int? organizer)
+
+    public static void Z2(string category, string type, string projectName, string reson, string account, int? organizer)
     {
         if (organizer == null || organizer == 0)
         {
@@ -289,12 +322,14 @@ public class NotificationHelper
                 organizer
             );
         }
+
         toSomeOne(
             "［海洋委員會］補助申請案 撤案已恢復通知",
             $"您好：<br><br>原已撤案之 {category}類計畫「{projectName}」，目前已恢復案件至原審查階段。<br>恢復案件原因：{reson}",
             account
         );
     }
+
     private static string getFooter()
     {
         var url = ConfigurationManager.AppSettings["Host"] + ConfigurationManager.AppSettings["AppRootPath"];
@@ -332,6 +367,7 @@ public class NotificationHelper
 
         return string.Join(",", db.GetTable().Rows.Cast<DataRow>().Select(row => row.Field<string>("Account")).ToList());
     }
+
     private static string querySupervisor(string Type)
     {
         DbHelper db = new DbHelper();
@@ -365,6 +401,7 @@ public class NotificationHelper
 
         return string.Join(",", db.GetTable().Rows.Cast<DataRow>().Select(row => row.Field<string>("Account")).ToList());
     }
+
     private static string querySysAdmin()
     {
         DbHelper db = new DbHelper();
@@ -383,6 +420,11 @@ public class NotificationHelper
         EmailApiHelper.Send(account + "," + queryOrganizers(organizer), subject, content + getFooter(), querySysAdmin());
     }
 
+    private static void toAll(string subject, string content, string account, string type)
+    {
+        EmailApiHelper.Send(account + "," + querySupervisor(type), subject, content + getFooter(), querySysAdmin());
+    }
+
     private static void toOrganizer(string subject, string content, int? organizer)
     {
         EmailApiHelper.Send(queryOrganizers(organizer), subject, content + getFooter(), querySysAdmin());
@@ -392,14 +434,17 @@ public class NotificationHelper
     {
         EmailApiHelper.Send(account, subject, content + getFooter(), querySysAdmin());
     }
+
     private static void toSomeOne(string subject, string content, string account)
     {
         EmailApiHelper.Send(account, subject, content + getFooter());
     }
+
     private static void toSupervisor(string subject, string content, string type)
     {
         EmailApiHelper.Send(querySupervisor(type), subject, content + getFooter());
     }
+
     public static void ReviewCommittee(string token, string account)
     {
         var url = ConfigurationManager.AppSettings["Host"] + ConfigurationManager.AppSettings["AppRootPath"] + $"/OFS/ReviewCommitteeInfo?Token={token}";
@@ -410,5 +455,4 @@ public class NotificationHelper
             account
         );
     }
-
 }

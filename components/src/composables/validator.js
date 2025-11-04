@@ -7,7 +7,7 @@ export const validateData = (data, rules, prefix = "") => {
         const rule = rules[name];
 
         if (validate.isString(rule)) {
-            constraints[name] = { presence: { allowEmpty: false, message: `^請輸入${rule}` } };
+            constraints[name] = { presence: { allowEmpty: false, message: rule.startsWith("^") ? rule : `^請輸入${rule}` } };
         } else {
             constraints[name] = rule;
         }

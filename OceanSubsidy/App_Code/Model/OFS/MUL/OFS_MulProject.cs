@@ -112,6 +112,9 @@ public class OFS_MulProject
     // 核定排序
     public int? FinalReviewOrder { get; set; }
 
+    // 送件時間
+    public DateTime? ApplyTime { get; set; }
+
     public ProjectChangeRecord changeApply { get; set; }
     public bool isOrganizer { get; set; }
 }

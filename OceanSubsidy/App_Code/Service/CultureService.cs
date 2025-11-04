@@ -701,6 +701,7 @@ public class CultureService : BaseService
             {
                 OFS_CulProjectHelper.updateFormStep(data.ProjectID, 6);
                 OFS_CulProjectHelper.updateProgressStatus(data.ProjectID, 1); //資格審查
+                OFS_CulProjectHelper.updateApplyTime(data.ProjectID);
 
                 saveApplyLog(data.ProjectID, "編輯中");
             }
@@ -744,12 +745,14 @@ public class CultureService : BaseService
                 mergePdfFiles(data, "核定版", context);
 
                 NotificationHelper.A1("文化", data.ProjectName, "CUL");
+                NotificationHelper.A3("文化", data.ProjectName, data.Status == 1 ? "申請送件" : "補正補件", DateTime.Now, data.UserAccount);
             }
             else if (data.Status == 42)
             {
                 mergePdfFiles(data, "核定版", context);
 
                 NotificationHelper.A2("文化", data.ProjectName, data.Organizer);
+                NotificationHelper.A3("文化", data.ProjectName, "修正計畫書提送", DateTime.Now, data.UserAccount);
             }
             else if (data.IsProjChanged)
             {

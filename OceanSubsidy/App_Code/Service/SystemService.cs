@@ -565,9 +565,10 @@ public class SystemService : BaseService
         var token = param["Token"].ToString();
         var bankCode = param["BankCode"].ToString();
         var bankAccount = param["BankAccount"].ToString();
+        var bankPhoto = param["BankPhoto"].ToString();
         var registrationAddress = param["RegistrationAddress"].ToString();
 
-        OFSReviewCommitteeHelper.updateBankInfo(token, bankCode, bankAccount, registrationAddress);
+        OFSReviewCommitteeHelper.updateBankInfo(token, bankCode, bankAccount, bankPhoto, registrationAddress);
 
         return new {};
     }

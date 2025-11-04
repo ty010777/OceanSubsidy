@@ -538,6 +538,7 @@ public class LiteracyService : BaseService
             {
                 OFS_LitProjectHelper.updateFormStep(data.ProjectID, 6);
                 OFS_LitProjectHelper.updateProgressStatus(data.ProjectID, 1); //資格審查
+                OFS_LitProjectHelper.updateApplyTime(data.ProjectID);
 
                 saveApplyLog(data.ProjectID, "編輯中");
             }
@@ -575,6 +576,7 @@ public class LiteracyService : BaseService
                 mergePdfFiles(data, "核定版", context);
 
                 NotificationHelper.A1("素養", data.ProjectName, "LIT");
+                NotificationHelper.A3("素養", data.ProjectName, data.Status == 1 ? "申請送件" : "補正補件", DateTime.Now, data.UserAccount);
             }
             else if (data.IsProjChanged)
             {
