@@ -540,8 +540,11 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
                 bool isAssignedReviewer = !string.IsNullOrEmpty(projectMain.SupervisoryPersonAccount) &&
                                           string.Equals(currentUserAccount, projectMain.SupervisoryPersonAccount, StringComparison.OrdinalIgnoreCase);
 
-                // 只有當前使用者與審核人員相同時才顯示 scrollBottomPanel
-                scrollBottomPanel.Visible = isAssignedReviewer;
+                // 檢查專案狀態是否為「資格審查」且「審核中」
+                bool isCorrectStatus = projectMain.Statuses == "資格審查" && projectMain.StatusesName == "審核中";
+
+                // 只有當前使用者與審核人員相同，且狀態正確時才顯示 scrollBottomPanel
+                scrollBottomPanel.Visible = isAssignedReviewer && isCorrectStatus;
             }
             else
             {
@@ -709,6 +712,12 @@ public partial class OFS_SCI_Review_SciApplicationReview : System.Web.UI.Page
                 !string.Equals(currentUser.Account, projectMain.SupervisoryPersonAccount, StringComparison.OrdinalIgnoreCase))
             {
                 return new { success = false, message = "您不是此案件的指派審核承辦人員，無法提交審查結果" };
+            }
+
+            // 檢查專案狀態是否為「資格審查」且「審核中」
+            if (projectMain.Statuses != "資格審查" || projectMain.StatusesName != "審核中")
+            {
+                return new { success = false, message = "此專案當前狀態不允許進行審核，請確認專案狀態是否為「資格審查-審核中」" };
             }
 
             // 建立更新物件

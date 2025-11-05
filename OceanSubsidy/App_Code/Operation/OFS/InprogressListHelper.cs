@@ -131,9 +131,11 @@ public class InprogressListHelper
     /// <param name="projectKeyword">計畫關鍵字</param>
     /// <param name="contentKeyword">內容關鍵字</param>
     /// <param name="userAccount">使用者帳號（非主管機關人員時使用）</param>
+    /// <param name="isPendingReply">是否只顯示待回覆</param>
     /// <returns>進度清單資料的 DataTable</returns>
     public static DataTable GetInprogressListData(string year, string category, string orgName,
-        string supervisoryUnit, string projectKeyword, string contentKeyword, string userAccount = "")
+        string supervisoryUnit, string projectKeyword, string contentKeyword, string userAccount = "",
+        bool isPendingReply = false)
     {
         // 建構查詢條件
         string whereClause = "WHERE 1=1";
@@ -180,6 +182,17 @@ public class InprogressListHelper
         {
             whereClause += " AND (ProjectContent LIKE @ContentKeyword OR KeyWords LIKE @ContentKeyword)";
             db.Parameters.Add("@ContentKeyword", $"%{contentKeyword}%");
+        }
+
+        // 待回覆條件：與 OFS_AuditRecords 做交集，只顯示 ExecutorComment 為空或 NULL 的記錄
+        if (isPendingReply)
+        {
+            whereClause += @" AND EXISTS (
+                SELECT 1
+                FROM OFS_AuditRecords AR
+                WHERE AR.ProjectID = V.ProjectID
+                  AND (AR.ExecutorComment IS NULL OR AR.ExecutorComment = '')
+            )";
         }
 
         // 執行查詢
@@ -230,9 +243,11 @@ public class InprogressListHelper
     /// <param name="projectKeyword">計畫關鍵字</param>
     /// <param name="contentKeyword">內容關鍵字</param>
     /// <param name="userAccount">使用者帳號（非主管機關人員時使用）</param>
+    /// <param name="isPendingReply">是否只顯示待回覆</param>
     /// <returns>包含統計數量的 DataRow (Total, InProgress, Overdue, Closed, Terminated)</returns>
     public static DataRow GetInprogressStatistics(string year, string category, string orgName,
-        string supervisoryUnit, string projectKeyword, string contentKeyword, string userAccount = "")
+        string supervisoryUnit, string projectKeyword, string contentKeyword, string userAccount = "",
+        bool isPendingReply = false)
     {
         // 建構查詢條件
         string whereClause = "WHERE 1=1";
@@ -279,6 +294,17 @@ public class InprogressListHelper
         {
             whereClause += " AND (ProjectContent LIKE @ContentKeyword OR KeyWords LIKE @ContentKeyword)";
             db.Parameters.Add("@ContentKeyword", $"%{contentKeyword}%");
+        }
+
+        // 待回覆條件：與 OFS_AuditRecords 做交集，只顯示 ExecutorComment 為空或 NULL 的記錄
+        if (isPendingReply)
+        {
+            whereClause += @" AND EXISTS (
+                SELECT 1
+                FROM OFS_AuditRecords AR
+                WHERE AR.ProjectID = V.ProjectID
+                  AND (AR.ExecutorComment IS NULL OR AR.ExecutorComment = '')
+            )";
         }
 
         // 查詢統計數量

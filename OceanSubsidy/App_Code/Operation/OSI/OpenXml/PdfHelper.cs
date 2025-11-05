@@ -1,5 +1,6 @@
 ﻿using PdfSharp.Pdf;
 using PdfSharp.Pdf.IO;
+using Spire.Doc;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -299,6 +300,74 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
             catch
             {
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// 將 Word 文件轉換為 PDF
+        /// 使用 Spire.Doc 進行轉換
+        /// 注意：免費版限制最多 3 頁
+        /// </summary>
+        /// <param name="wordFilePath">Word 文件路徑 (.docx)</param>
+        /// <param name="outputPdfPath">輸出 PDF 路徑（可選，如果為空則輸出到暫存資料夾）</param>
+        /// <returns>PDF 檔案路徑</returns>
+        public static string ConvertWordToPdf(string wordFilePath, string outputPdfPath = null)
+        {
+            try
+            {
+                if (!File.Exists(wordFilePath))
+                {
+                    throw new FileNotFoundException($"找不到 Word 檔案: {wordFilePath}");
+                }
+
+                // 如果沒有指定輸出路徑，建立暫存檔案
+                if (string.IsNullOrEmpty(outputPdfPath))
+                {
+                    string fileName = Path.GetFileNameWithoutExtension(wordFilePath);
+                    outputPdfPath = Path.Combine(Path.GetTempPath(), $"{fileName}.pdf");
+                }
+
+                // 載入 Word 文件
+                Document doc = new Document();
+                doc.LoadFromFile(wordFilePath);
+
+                // 轉換為 PDF
+                doc.SaveToFile(outputPdfPath, FileFormat.PDF);
+
+                // 關閉文件
+                doc.Close();
+
+                return outputPdfPath;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Word 轉 PDF 時發生錯誤: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// 將 Word 文件轉換為 PDF 並回傳位元組陣列
+        /// </summary>
+        /// <param name="wordFilePath">Word 文件路徑 (.docx)</param>
+        /// <returns>PDF 位元組陣列</returns>
+        public static byte[] ConvertWordToPdfBytes(string wordFilePath)
+        {
+            try
+            {
+                string tempPdfPath = ConvertWordToPdf(wordFilePath);
+                byte[] pdfBytes = File.ReadAllBytes(tempPdfPath);
+
+                // 清理暫存檔案
+                if (File.Exists(tempPdfPath))
+                {
+                    File.Delete(tempPdfPath);
+                }
+
+                return pdfBytes;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Word 轉 PDF 位元組陣列時發生錯誤: {ex.Message}", ex);
             }
         }
     }

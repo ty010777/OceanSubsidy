@@ -406,6 +406,7 @@ public class CLB_download : IHttpHandler
     /// </summary>
     private string ProcessApplicationForm(string originalFilePath, string subsidyType,OFS_CLB_Application_Plan  plan,List<OFS_CLB_Application_Personnel> Personnel ,OFS_CLB_Application_Funds Funds ,OFS_CLB_Application_Basic Basic)
     {
+        
         try
         {
             // 建立暫存檔案路徑
@@ -450,16 +451,18 @@ public class CLB_download : IHttpHandler
                     replacements.Add("PlanContent", plan?.PlanContent ?? "");
                     replacements.Add("Benefits", plan?.PreBenefits ?? "");
                     
-                    replacements.Add("SubsidyFunds", Funds?.SubsidyFunds?.ToString() ?? "");
-                    replacements.Add("SelfFunds", Funds?.SelfFunds?.ToString() ?? "");
-                    replacements.Add("OtherGovFunds", Funds?.OtherGovFunds?.ToString() ?? "");
-                    replacements.Add("OtherUnitFunds", Funds?.OtherUnitFunds?.ToString() ?? "");
-                    replacements.Add("TotalFunds", Funds?.TotalFunds?.ToString() ?? "");
+                    replacements.Add("SubsidyFunds", Funds?.SubsidyFunds != null ? ((int)Funds.SubsidyFunds).ToString() : "");
+                    replacements.Add("SelfFunds", Funds?.SelfFunds != null ? ((int)Funds.SelfFunds).ToString() : "");
+                    replacements.Add("OtherGovFunds", Funds?.OtherGovFunds != null ? ((int)Funds.OtherGovFunds).ToString() : "");
+                    replacements.Add("OtherUnitFunds", Funds?.OtherUnitFunds != null ? ((int)Funds.OtherUnitFunds).ToString() : "");
+                    replacements.Add("TotalFunds", Funds?.TotalFunds != null ? ((int)Funds.TotalFunds).ToString() : "");
 
                     // Funds.PreviouslySubsidized - 過去是否受補助
                     bool previouslySubsidized = Funds?.PreviouslySubsidized ?? false;
+                    string FundingDescription = Funds?.FundingDescription ?? "";
                     replacements.Add("yesSubsidy", previouslySubsidized ? "☒" : "☐");
                     replacements.Add("noSubsidy", previouslySubsidized ? "☐" : "☒");
+                    replacements.Add("FundingDescription", FundingDescription);
 
                     // 今日日期（民國年）
                     DateTime today = DateTime.Now;
@@ -505,16 +508,18 @@ public class CLB_download : IHttpHandler
                     replacements.Add("Benefits", plan?.PreBenefits ?? "");
                     
                     
-                    replacements.Add("SubsidyFunds", Funds?.SubsidyFunds?.ToString() ?? "");
-                    replacements.Add("SelfFunds", Funds?.SelfFunds?.ToString() ?? "");
-                    replacements.Add("OtherGovFunds", Funds?.OtherGovFunds?.ToString() ?? "");
-                    replacements.Add("OtherUnitFunds", Funds?.OtherUnitFunds?.ToString() ?? "");
-                    replacements.Add("TotalFunds", Funds?.TotalFunds?.ToString() ?? "");
+                    replacements.Add("SubsidyFunds", Funds?.SubsidyFunds != null ? ((int)Funds.SubsidyFunds).ToString() : "");
+                    replacements.Add("SelfFunds", Funds?.SelfFunds != null ? ((int)Funds.SelfFunds).ToString() : "");
+                    replacements.Add("OtherGovFunds", Funds?.OtherGovFunds != null ? ((int)Funds.OtherGovFunds).ToString() : "");
+                    replacements.Add("OtherUnitFunds", Funds?.OtherUnitFunds != null ? ((int)Funds.OtherUnitFunds).ToString() : "");
+                    replacements.Add("TotalFunds", Funds?.TotalFunds != null ? ((int)Funds.TotalFunds).ToString() : "");
 
                     // Funds.PreviouslySubsidized - 過去是否受補助
                     bool previouslySubsidized = Funds?.PreviouslySubsidized ?? false;
+                    string FundingDescription = Funds?.FundingDescription ?? "";
                     replacements.Add("yesSubsidy", previouslySubsidized ? "☒" : "☐");
                     replacements.Add("noSubsidy", previouslySubsidized ? "☐" : "☒");
+                    replacements.Add("FundingDescription", FundingDescription);
 
                     // 今日日期（民國年）
                     DateTime today = DateTime.Now;
@@ -589,11 +594,11 @@ public class CLB_download : IHttpHandler
                     string creationDate = GS.App.DateTimeHelper.ToMinguoDate(Basic.CreationDate);
                     replacements.Add("CreationDate", creationDate??"");
                     
-                    replacements.Add("SubsidyFunds", Funds?.SubsidyFunds?.ToString() ?? "");
-                    replacements.Add("SelfFunds", Funds?.SelfFunds?.ToString() ?? "");
-                    replacements.Add("OtherGovFunds", Funds?.OtherGovFunds?.ToString() ?? "");
-                    replacements.Add("OtherUnitFunds", Funds?.OtherUnitFunds?.ToString() ?? "");
-                    replacements.Add("TotalFunds", Funds?.TotalFunds?.ToString() ?? "");
+                    replacements.Add("SubsidyFunds", Funds?.SubsidyFunds != null ? ((int)Funds.SubsidyFunds).ToString() : "");
+                    replacements.Add("SelfFunds", Funds?.SelfFunds != null ? ((int)Funds.SelfFunds).ToString() : "");
+                    replacements.Add("OtherGovFunds", Funds?.OtherGovFunds != null ? ((int)Funds.OtherGovFunds).ToString() : "");
+                    replacements.Add("OtherUnitFunds", Funds?.OtherUnitFunds != null ? ((int)Funds.OtherUnitFunds).ToString() : "");
+                    replacements.Add("TotalFunds", Funds?.TotalFunds != null ? ((int)Funds.TotalFunds).ToString() : "");
                     replacements.Add("Benefits", plan?.PreBenefits ?? "");
                     //緊急計畫
                     replacements.Add("EmergencyPlan", plan.EmergencyPlan??"");
@@ -619,11 +624,11 @@ public class CLB_download : IHttpHandler
                     replacements.Add("CreationDate", creationDate??"");
                     replacements.Add("EstimatedPeople", plan.EstimatedPeople??"");
                     replacements.Add("Purpose", plan.Purpose??"");
-                    replacements.Add("SubsidyFunds", Funds?.SubsidyFunds?.ToString() ?? "");
-                    replacements.Add("SelfFunds", Funds?.SelfFunds?.ToString() ?? "");
-                    replacements.Add("OtherGovFunds", Funds?.OtherGovFunds?.ToString() ?? "");
-                    replacements.Add("OtherUnitFunds", Funds?.OtherUnitFunds?.ToString() ?? "");
-                    replacements.Add("TotalFunds", Funds?.TotalFunds?.ToString() ?? "");
+                    replacements.Add("SubsidyFunds", Funds?.SubsidyFunds != null ? ((int)Funds.SubsidyFunds).ToString() : "");
+                    replacements.Add("SelfFunds", Funds?.SelfFunds != null ? ((int)Funds.SelfFunds).ToString() : "");
+                    replacements.Add("OtherGovFunds", Funds?.OtherGovFunds != null ? ((int)Funds.OtherGovFunds).ToString() : "");
+                    replacements.Add("OtherUnitFunds", Funds?.OtherUnitFunds != null ? ((int)Funds.OtherUnitFunds).ToString() : "");
+                    replacements.Add("TotalFunds", Funds?.TotalFunds != null ? ((int)Funds.TotalFunds).ToString() : "");
                     replacements.Add("Benefits", plan?.PreBenefits ?? "");
                     // Basic.SubsidyType - 補助類型勾選
                     bool isStartup = subsidyType == "Startup";

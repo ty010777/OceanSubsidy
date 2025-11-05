@@ -257,6 +257,9 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
                             var para = run?.Parent as Paragraph;
                             if (para == null) continue;
 
+                            // 複製原本的 RunProperties（包含字體格式）
+                            var originalRunProperties = run.RunProperties?.CloneNode(true) as RunProperties;
+
                             // 先移除原本的 text
                             text.Text = text.Text.Replace(key, "");
 
@@ -266,8 +269,17 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
                             foreach (var line in lines)
                             {
                                 if (!first)
-                                    para.AppendChild(new Run(new Break()));
-                                para.AppendChild(new Run(new Text(line)));
+                                {
+                                    var breakRun = new Run(new Break());
+                                    if (originalRunProperties != null)
+                                        breakRun.RunProperties = originalRunProperties.CloneNode(true) as RunProperties;
+                                    para.AppendChild(breakRun);
+                                }
+
+                                var newRun = new Run(new Text(line));
+                                if (originalRunProperties != null)
+                                    newRun.RunProperties = originalRunProperties.CloneNode(true) as RunProperties;
+                                para.AppendChild(newRun);
                                 first = false;
                             }
                         }

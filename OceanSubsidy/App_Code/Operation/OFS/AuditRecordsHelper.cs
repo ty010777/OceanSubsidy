@@ -232,4 +232,75 @@ public class AuditRecordsHelper
             ExecutorComment = row.Field<string>("ExecutorComment")
         }).ToList();
     }
+
+    /// <summary>
+    /// 取得匯出查核紀錄所需的完整資料（包含計畫基本資料和查核紀錄）
+    /// </summary>
+    /// <param name="projectID">計畫編號</param>
+    /// <returns>包含計畫資料和查核紀錄的 DataSet</returns>
+    public static DataSet GetAuditRecordsForExport(string projectID)
+    {
+        DataSet ds = new DataSet();
+
+        // 1. 取得計畫基本資料
+        GisTable projectTable;
+        if (projectID.Contains("SCI"))
+        {
+            projectTable = SCI_GetProjectBasicData(projectID);
+        }
+        else if (projectID.Contains("CLB"))
+        {
+            projectTable = CLB_GetProjectBasicData(projectID);
+        }
+        else
+        {
+            projectTable = Other_GetProjectBasicData(projectID);
+        }
+
+        DataTable projectData = new DataTable("ProjectData");
+        projectData.Columns.Add("ProjectID", typeof(string));
+        projectData.Columns.Add("ProjectNameTw", typeof(string));
+        projectData.Columns.Add("OrgName", typeof(string));
+        projectData.Columns.Add("StartTime", typeof(DateTime));
+        projectData.Columns.Add("EndTime", typeof(DateTime));
+
+        if (projectTable.Rows.Count > 0)
+        {
+            var row = projectTable.Rows[0];
+            projectData.Rows.Add(
+                row["ProjectID"],
+                row["ProjectNameTw"],
+                row["OrgName"],
+                row["StartTime"],
+                row["EndTime"]
+            );
+        }
+
+        ds.Tables.Add(projectData);
+
+        // 2. 取得查核紀錄資料
+        GisTable auditRecordsTable = GetAuditRecordsByProjectID(projectID);
+
+        DataTable auditData = new DataTable("AuditRecords");
+        auditData.Columns.Add("CheckDate", typeof(DateTime));
+        auditData.Columns.Add("ReviewerName", typeof(string));
+        auditData.Columns.Add("Risk", typeof(string));
+        auditData.Columns.Add("ReviewerComment", typeof(string));
+        auditData.Columns.Add("ExecutorComment", typeof(string));
+
+        foreach (System.Data.DataRow row in auditRecordsTable.Rows)
+        {
+            auditData.Rows.Add(
+                row["CheckDate"],
+                row["ReviewerName"],
+                row["Risk"],
+                row["ReviewerComment"],
+                row["ExecutorComment"]
+            );
+        }
+
+        ds.Tables.Add(auditData);
+
+        return ds;
+    }
 }

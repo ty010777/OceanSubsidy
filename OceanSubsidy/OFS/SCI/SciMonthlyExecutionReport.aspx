@@ -62,9 +62,9 @@
                 <thead>
                     <tr>
                         <th class="text-end"></th>
-                        <th class="text-end">補助款 (A)</th>
-                        <th class="text-end">配合款 (B)</th>
-                        <th class="text-end">計畫總經費 (A+B)</th>
+                        <th class="text-end">補助款(元) (A)</th>
+                        <th class="text-end">配合款(元) (B)</th>
+                        <th class="text-end">計畫總經費(元) (A+B)</th>
                     </tr>
                 </thead>
                 <tbody>

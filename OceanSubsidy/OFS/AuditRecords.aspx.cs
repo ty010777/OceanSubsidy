@@ -6,10 +6,13 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Text;
 using System.Data;
+using System.IO;
 using GS.Extension;
 using GS.App;
 using GS.Data;
 using GS.OCA_OceanSubsidy.Entity;
+using NPOI.SS.UserModel;
+using NPOI.XSSF.UserModel;
 
 public partial class OFS_AuditRecords : System.Web.UI.Page
 {
@@ -828,5 +831,135 @@ public partial class OFS_AuditRecords : System.Web.UI.Page
             // 發生錯誤時回傳一般用戶權限，較為安全
             return AuditRecordsModel.UserPermissionType.GeneralUser;
         }
+    }
+
+    /// <summary>
+    /// 匯出查核紀錄按鈕點擊事件
+    /// </summary>
+    protected void btnExportRecords_Click(object sender, EventArgs e)
+    {
+        string ProjectID = Request.QueryString["ProjectID"];
+
+        try
+        {
+            // 權限檢查：只有主管單位窗口、系統管理員可以匯出
+            CurrentUserPermission = GetCurrentUserPermission();
+            if (CurrentUserPermission != AuditRecordsModel.UserPermissionType.Administrator)
+            {
+                ShowErrorMessage("您沒有匯出查核紀錄的權限");
+                return;
+            }
+
+            // 取得匯出資料
+            DataSet exportData = AuditRecordsHelper.GetAuditRecordsForExport(ProjectID);
+
+            if (exportData.Tables["ProjectData"].Rows.Count == 0)
+            {
+                ShowErrorMessage("找不到計畫資料");
+                return;
+            }
+
+            // 取得計畫基本資料
+            DataRow projectRow = exportData.Tables["ProjectData"].Rows[0];
+            string projectName = projectRow["ProjectNameTw"]?.ToString() ?? "";
+            string orgName = projectRow["OrgName"]?.ToString() ?? "";
+            DateTime? startTime = projectRow["StartTime"] as DateTime?;
+            DateTime? endTime = projectRow["EndTime"] as DateTime?;
+
+            // 計算計畫期程
+            string projectPeriod = "";
+            if (startTime.HasValue && endTime.HasValue)
+            {
+                projectPeriod = $"{startTime.Value.ToMinguoDate()} - {endTime.Value.ToMinguoDate()}";
+            }
+
+            // 讀取範本檔案
+            string templatePath = Server.MapPath("~/Template/Shared/查核意見及回覆紀錄_匯出範本.xlsx");
+
+            if (!File.Exists(templatePath))
+            {
+                ShowErrorMessage("找不到匯出範本檔案");
+                return;
+            }
+
+            IWorkbook workbook;
+            using (FileStream file = new FileStream(templatePath, FileMode.Open, FileAccess.Read))
+            {
+                workbook = new XSSFWorkbook(file);
+            }
+
+            ISheet sheet = workbook.GetSheetAt(0);
+
+            // 填入計畫基本資料 (B1~B4)
+            SetCellValue(sheet, 0, 1, ProjectID);          // B1: 計畫編號
+            SetCellValue(sheet, 1, 1, projectName);        // B2: 計畫名稱
+            SetCellValue(sheet, 2, 1, orgName);            // B3: 執行單位
+            SetCellValue(sheet, 3, 1, projectPeriod);      // B4: 計畫期程
+
+            // 填入查核紀錄資料 (從 A7 開始)
+            int rowIndex = 6; // Excel 的第7行 (0-based index)
+            foreach (DataRow auditRow in exportData.Tables["AuditRecords"].Rows)
+            {
+                DateTime? checkDate = auditRow["CheckDate"] as DateTime?;
+                string reviewerName = auditRow["ReviewerName"]?.ToString() ?? "";
+                string risk = auditRow["Risk"]?.ToString() ?? "";
+                string reviewerComment = auditRow["ReviewerComment"]?.ToString() ?? "";
+                string executorComment = auditRow["ExecutorComment"]?.ToString() ?? "";
+
+                // 轉換風險評估為中文顯示
+                string riskDisplayValue = GetRiskDisplayValue(risk);
+
+                IRow row = sheet.GetRow(rowIndex);
+                if (row == null)
+                {
+                    row = sheet.CreateRow(rowIndex);
+                }
+
+                SetCellValue(sheet, rowIndex, 0, checkDate.HasValue ? checkDate.Value.ToMinguoDate() : "");  // A: 查核日期
+                SetCellValue(sheet, rowIndex, 1, reviewerName);          // B: 查核人員
+                SetCellValue(sheet, rowIndex, 2, riskDisplayValue);      // C: 風險評估
+                SetCellValue(sheet, rowIndex, 3, reviewerComment);       // D: 查核意見
+                SetCellValue(sheet, rowIndex, 4, executorComment);       // E: 執行單位回覆
+
+                rowIndex++;
+            }
+
+            // 輸出檔案
+            string fileName = $"查核紀錄_{ProjectID}_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
+
+            using (MemoryStream ms = new MemoryStream())
+            {
+                workbook.Write(ms);
+                Response.Clear();
+                Response.ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                Response.AddHeader("Content-Disposition", $"attachment; filename={HttpUtility.UrlEncode(fileName)}");
+                Response.BinaryWrite(ms.ToArray());
+                Response.End();
+            }
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "匯出查核紀錄時發生錯誤");
+        }
+    }
+
+    /// <summary>
+    /// 設定 Excel 儲存格的值
+    /// </summary>
+    private void SetCellValue(ISheet sheet, int rowIndex, int colIndex, string value)
+    {
+        IRow row = sheet.GetRow(rowIndex);
+        if (row == null)
+        {
+            row = sheet.CreateRow(rowIndex);
+        }
+
+        ICell cell = row.GetCell(colIndex);
+        if (cell == null)
+        {
+            cell = row.CreateCell(colIndex);
+        }
+
+        cell.SetCellValue(value ?? "");
     }
 }

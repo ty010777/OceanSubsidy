@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
+using System.Linq;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 
@@ -78,10 +80,69 @@ public partial class OFS_SCI_SciDomainReview : System.Web.UI.Page
             lblApplicantUnit.Text = projectData["OrgName"].ToString();
             lblDocumentName.Text =  projectID + "_申請版_計畫書.pdf";
             lblReviewStatusName.Text =Status;
+
+            // 檢查 PPT 檔案是否存在
+            CheckPPTFileExists(projectID);
         }
 
         // 初始化風險評估等其他資料
         InitializeOtherData(projectID);
+    }
+
+    /// <summary>
+    /// 檢查 PPT 檔案是否存在並設定按鈕顯示狀態
+    /// </summary>
+    /// <param name="projectID">計畫編號</param>
+    private void CheckPPTFileExists(string projectID)
+    {
+        try
+        {
+            // 判斷補助案類型
+            string type = "";
+            if (projectID.Contains("SCI"))
+            {
+                type = "SCI";
+            }
+            else if (projectID.Contains("CUL"))
+            {
+                type = "CUL";
+            }
+            else
+            {
+                // 不是 SCI 或 CUL，不顯示 PPT 按鈕
+                btnDownloadPPT.Visible = false;
+                return;
+            }
+
+            // 建立 PPT 檔案路徑
+            string folderPath = Server.MapPath($"~/UploadFiles/OFS/{type}/{projectID}/TechReviewFiles");
+
+            // 檢查資料夾是否存在
+            if (!Directory.Exists(folderPath))
+            {
+                btnDownloadPPT.Visible = false;
+                return;
+            }
+
+            // 搜尋 PPT 檔案 (*.ppt 或 *.pptx)
+            var pptFiles = Directory.GetFiles(folderPath, "*.ppt*");
+
+            if (pptFiles.Length > 0)
+            {
+                // 找到 PPT 檔案，顯示下載按鈕
+                btnDownloadPPT.Visible = true;
+            }
+            else
+            {
+                // 沒有 PPT 檔案，不顯示按鈕
+                btnDownloadPPT.Visible = false;
+            }
+        }
+        catch (Exception)
+        {
+            // 發生錯誤時不顯示按鈕
+            btnDownloadPPT.Visible = false;
+        }
     }
 
     private void InitializeOtherData(string projectID)
@@ -89,11 +150,11 @@ public partial class OFS_SCI_SciDomainReview : System.Web.UI.Page
         // 取得風險評估資料（寫死資料）
         string riskLevel = OFS_SciDomainReviewHelper.GetRiskLevel(projectID);
         int recordCount = OFS_SciDomainReviewHelper.GetRiskRecordCount(projectID);
-        
+
         lblRiskLevel.Text = riskLevel;
         lblRiskRecordCount.Text = recordCount.ToString();
         lblModalRiskLevel.Text = riskLevel;
-        
+
         // Modal 資料初始化
         lblExecutingUnit.Text = "海洋委員會科技文教處科技科";
     }
@@ -243,6 +304,71 @@ public partial class OFS_SCI_SciDomainReview : System.Web.UI.Page
         catch (Exception ex)
         {
             ShowMessage($"下載檔案時發生錯誤：{ex.Message}", false);
+        }
+    }
+
+    protected void btnDownloadPPT_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(ProjectID))
+            {
+                ShowMessage("無法取得計畫編號", false);
+                return;
+            }
+
+            // 判斷補助案類型
+            string type = "";
+            if (ProjectID.Contains("SCI"))
+            {
+                type = "SCI";
+            }
+            else if (ProjectID.Contains("CUL"))
+            {
+                type = "CUL";
+            }
+            else
+            {
+                ShowMessage("無法識別補助案類型", false);
+                return;
+            }
+
+            // 建立 PPT 檔案路徑
+            string folderPath = Server.MapPath($"~/UploadFiles/OFS/{type}/{ProjectID}/TechReviewFiles");
+
+            // 檢查資料夾是否存在
+            if (!Directory.Exists(folderPath))
+            {
+                ShowMessage("找不到 PPT 檔案", false);
+                return;
+            }
+
+            // 搜尋 PPT 檔案 (*.ppt 或 *.pptx)，取最新的檔案
+            var pptFiles = Directory.GetFiles(folderPath, "*.ppt*")
+                                   .OrderByDescending(f => File.GetLastWriteTime(f))
+                                   .ToArray();
+
+            if (pptFiles.Length == 0)
+            {
+                ShowMessage("找不到 PPT 檔案", false);
+                return;
+            }
+
+            // 取得最新的 PPT 檔案
+            string pptFilePath = pptFiles[0];
+            string fileName = Path.GetFileName(pptFilePath);
+
+            // 設定回應標頭並下載檔案
+            Response.Clear();
+            Response.ContentType = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+            Response.AddHeader("Content-Disposition", $"attachment; filename=\"{fileName}\"");
+            Response.TransmitFile(pptFilePath);
+            Response.Flush();
+            Response.End();
+        }
+        catch (Exception ex)
+        {
+            ShowMessage($"下載 PPT 檔案時發生錯誤：{ex.Message}", false);
         }
     }
 

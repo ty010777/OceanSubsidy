@@ -53,11 +53,85 @@ public partial class inprogressList : System.Web.UI.Page
         try
         {
             LoadDropDownLists();
+            LoadQueryStringParameters();
             LoadData();
         }
         catch (Exception ex)
         {
             HandleException(ex, "初始化頁面時發生錯誤");
+        }
+    }
+
+    /// <summary>
+    /// 從 URL QueryString 載入查詢條件
+    /// </summary>
+    private void LoadQueryStringParameters()
+    {
+        try
+        {
+            // 年度
+            if (!string.IsNullOrEmpty(Request.QueryString["year"]))
+            {
+                string year = Request.QueryString["year"];
+                if (ddlYear.Items.FindByValue(year) != null)
+                {
+                    ddlYear.SelectedValue = year;
+                }
+            }
+
+            // 類別
+            if (!string.IsNullOrEmpty(Request.QueryString["category"]))
+            {
+                string category = Request.QueryString["category"];
+                if (ddlCategory.Items.FindByValue(category) != null)
+                {
+                    ddlCategory.SelectedValue = category;
+                }
+            }
+
+            // 申請單位
+            if (!string.IsNullOrEmpty(Request.QueryString["applyUnit"]))
+            {
+                string applyUnit = Request.QueryString["applyUnit"];
+                if (ddlApplyUnit.Items.FindByValue(applyUnit) != null)
+                {
+                    ddlApplyUnit.SelectedValue = applyUnit;
+                }
+            }
+
+            // 主管單位
+            if (!string.IsNullOrEmpty(Request.QueryString["supervisoryUnit"]))
+            {
+                string supervisoryUnit = Request.QueryString["supervisoryUnit"];
+                if (ddlSupervisoryUnit.Items.FindByValue(supervisoryUnit) != null)
+                {
+                    ddlSupervisoryUnit.SelectedValue = supervisoryUnit;
+                }
+            }
+
+            // 計畫編號或名稱關鍵字
+            if (!string.IsNullOrEmpty(Request.QueryString["projectKeyword"]))
+            {
+                txtProjectKeyword.Text = Request.QueryString["projectKeyword"];
+            }
+
+            // 計畫內容關鍵字
+            if (!string.IsNullOrEmpty(Request.QueryString["contentKeyword"]))
+            {
+                txtContentKeyword.Text = Request.QueryString["contentKeyword"];
+            }
+
+            // 待回覆
+            if (!string.IsNullOrEmpty(Request.QueryString["pendingReply"]))
+            {
+                string pendingReplyValue = Request.QueryString["pendingReply"].ToLower();
+                chkPendingReply.Checked = (pendingReplyValue == "true" || pendingReplyValue == "1");
+            }
+        }
+        catch (Exception ex)
+        {
+            // 載入 QueryString 失敗時不影響頁面正常運作
+            System.Diagnostics.Debug.WriteLine($"載入 QueryString 參數時發生錯誤: {ex.Message}");
         }
     }
 
@@ -213,7 +287,8 @@ public partial class inprogressList : System.Web.UI.Page
                 ddlSupervisoryUnit.SelectedValue,
                 txtProjectKeyword.Text.Trim(),
                 txtContentKeyword.Text.Trim(),
-                userAccount
+                userAccount,
+                chkPendingReply.Checked
             );
 
             totalRecords = result.Rows.Count; // 設定總記錄數
@@ -257,7 +332,8 @@ public partial class inprogressList : System.Web.UI.Page
             ddlSupervisoryUnit.SelectedValue,
             txtProjectKeyword.Text.Trim(),
             txtContentKeyword.Text.Trim(),
-            userAccount
+            userAccount,
+            chkPendingReply.Checked
         );
 
         // 建立統計資訊的 JSON 物件

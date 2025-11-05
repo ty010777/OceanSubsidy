@@ -85,6 +85,20 @@ public partial class OFS_CLB_Review_ClbApplicationReview : System.Web.UI.Page
                 return;
             }
 
+            // 檢查專案狀態是否為「內容審查」且「審核中」
+            var projectMain = OFS_ClbApplicationHelper.GetProjectMainData(ProjectID);
+            if (projectMain == null)
+            {
+                ShowSweetAlert("錯誤", "找不到計畫資料", "error");
+                return;
+            }
+
+            if (projectMain.Statuses != "內容審查" || projectMain.StatusesName != "審核中")
+            {
+                ShowSweetAlert("錯誤", "此專案當前狀態不允許進行審核，請確認專案狀態是否為「內容審查-審核中」", "error");
+                return;
+            }
+
             // 取得審查結果
             string reviewResult = Request.Form["reviewResult"];
             string returnDate = Request.Form["returnDate"];
@@ -159,7 +173,6 @@ public partial class OFS_CLB_Review_ClbApplicationReview : System.Web.UI.Page
             // 儲存歷史記錄
             ApplicationChecklistHelper.InsertCaseHistoryLog(historyLog);
             var projectBasic = OFS_ClbApplicationHelper.GetBasicData(ProjectID);
-            var projectMain = OFS_ClbApplicationHelper.GetProjectMainData(ProjectID);
             //通過,不通過之寄信  在列表執行
             if (reviewResult == "return")
             {
@@ -606,8 +619,11 @@ public partial class OFS_CLB_Review_ClbApplicationReview : System.Web.UI.Page
                 bool isAssignedReviewer = !string.IsNullOrEmpty(projectMain.SupervisoryPersonAccount) &&
                                           string.Equals(currentUserAccount, projectMain.SupervisoryPersonAccount, StringComparison.OrdinalIgnoreCase);
 
-                // 只有當前使用者與審核人員相同時才顯示 scrollBottomPanel
-                scrollBottomPanel.Visible = isAssignedReviewer;
+                // 檢查專案狀態是否為「內容審查」且「審核中」
+                bool isCorrectStatus = projectMain.Statuses == "內容審查" && projectMain.StatusesName == "審核中";
+
+                // 只有當前使用者與審核人員相同，且狀態正確時才顯示 scrollBottomPanel
+                scrollBottomPanel.Visible = isAssignedReviewer && isCorrectStatus;
             }
             else
             {

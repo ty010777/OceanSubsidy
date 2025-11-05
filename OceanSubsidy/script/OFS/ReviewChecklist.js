@@ -772,7 +772,7 @@ window.ReviewChecklist = (function() {
                 <td data-th="類別:" style="text-align: center;">${projectCategory}</td>
                 <td data-th="計畫編號:" style="text-align: left;" nowrap>${item.ProjectID || ''}</td>
                 <td data-th="計畫名稱:" style="text-align: left;">
-                    <a href="${getViewUrl(item.ProjectID)}" class="link-black" target="_blank">${item.ProjectNameTw || ''}</a>
+                    <a href="${getReviewUrl(item.ProjectID)}" class="link-black" target="_blank">${item.ProjectNameTw || ''}</a>
                 </td>
                 <td data-th="申請單位:" style="text-align: left;">${item.OrgName || ''}</td>
                 <td data-th="審查組別:">${reviewGroup}</td>
@@ -829,7 +829,7 @@ window.ReviewChecklist = (function() {
                 <td data-th="排序:">${index}</td>
                 <td data-th="年度:">${year}</td>
                 <td data-th="計畫名稱:" style="text-align: left;">
-                    <a href="${getViewUrl(item.ProjectID)}" class="link-black" target="_blank">${item.ProjectNameTw || ''}</a>
+                    <a href="${getReviewUrl(item.ProjectID)}" class="link-black" target="_blank">${item.ProjectNameTw || ''}</a>
                 </td>
                 <td data-th="申請單位:" width="180" style="text-align: left;">${item.OrgName || ''}</td>
                 <td data-th="總分:" nowrap>${totalScore}</td>
@@ -867,7 +867,8 @@ window.ReviewChecklist = (function() {
                 <td data-th="計畫編號:" style="text-align: left;" nowrap>${projectId}</td>
                 <td data-th="類別:" style="text-align: center;">${categoryDisplay}</td>
                 <td data-th="計畫名稱:" style="text-align: left;">
-                    <a href="#" class="link-black" target="_blank">${projectName}</a>
+                    <a href="${getReviewUrl(projectId)}" class="link-black" target="_blank">${projectName || ''}</a>
+                  
                 </td>
                 <td data-th="申請單位:" style="text-align: left;">${orgName}</td>
                 <td data-th="操作:" style="text-align: center;">
@@ -895,13 +896,10 @@ window.ReviewChecklist = (function() {
         const projectName = item.ProjectNameTw || '';
         const orgName = item.OrgName || '';
         const reviewItem = item.ReviewTodo || '';  // 待審項目
-        const reviewProgress = item.ReviewProgress || '';  // 審查委員進度
+        const reviewProgress = item.ReviewProgress || '-';  // 審查委員進度，空值顯示 "-"
 
-        // 決定是否顯示審查委員進度欄位 (僅科專專案)
-        const showReviewProgress = category === 'SCI';
-        const reviewProgressCell = showReviewProgress ?
-            `<td data-th="審查委員進度:" class="review-progress-cell text-center">${reviewProgress}</td>` :
-            `<td class="review-progress-cell" style="display: none;"></td>`;
+        // 所有類別都顯示審查委員進度欄位
+        const reviewProgressCell = `<td data-th="審查委員進度:" class="review-progress-cell text-center">${reviewProgress}</td>`;
 
         return `
             <tr>
@@ -909,7 +907,7 @@ window.ReviewChecklist = (function() {
                 <td data-th="類別:" style="text-align: center;">${categoryDisplay}</td>
                 <td data-th="計畫編號:" style="text-align: left;" nowrap>${projectId}</td>
                 <td data-th="計畫名稱:" style="text-align: left;">
-                    <a href="#" class="link-black" target="_blank">${projectName}</a>
+                    <a href="${getReviewUrl(projectId)}" class="link-black" target="_blank">${projectName || ''}</a>
                 </td>
                 <td data-th="申請單位:" style="text-align: left;">${orgName}</td>
                 <td data-th="待審項目:" style="text-align: left;">${reviewItem}</td>
@@ -930,31 +928,13 @@ window.ReviewChecklist = (function() {
      * @param {Array} results - 搜尋結果數組
      */
     function handleType6ReviewProgressDisplay(results) {
-        // 檢查是否有科專專案
-        const hasSciProjects = results.some(item => item.Category === 'SCI');
-
-        // 控制表格標題的顯示/隱藏
+        // 所有類別都顯示審查委員進度欄位
         const $headerCell = $('#content-type-6 .review-progress-header');
         const $dataCells = $('#content-type-6 .review-progress-cell');
 
-        if (hasSciProjects) {
-            $headerCell.show();
-            $dataCells.each(function() {
-                const $cell = $(this);
-                const $row = $cell.closest('tr');
-                const categoryCell = $row.find('td:nth-child(2)');
-
-                // 只顯示科專專案的進度資料
-                if (categoryCell.text().trim() === '科專') {
-                    $cell.show();
-                } else {
-                    $cell.hide();
-                }
-            });
-        } else {
-            $headerCell.hide();
-            $dataCells.hide();
-        }
+        // 永遠顯示表頭和資料欄位
+        $headerCell.show();
+        $dataCells.show();
     }
 
     /**
@@ -1812,7 +1792,7 @@ function handleExecutionPlanReview(projectId,reviewItem) {
 
         if (projectId.includes('SCI')) {
             // 科專執行計畫審核頁面
-            if(reviewItem.includes('檢核')) {
+            if(reviewItem.includes('報告')) {
                 reviewUrl = `SCI/SciInterimReport.aspx?ProjectID=${projectId}`;
             }
             else if (reviewItem.includes('請款')){
@@ -1820,7 +1800,7 @@ function handleExecutionPlanReview(projectId,reviewItem) {
             }
         } else if (projectId.includes('CUL')) {
             // 文化執行計畫審核頁面
-            if(reviewItem.includes('檢核')) {
+            if(reviewItem.includes('報告')) {
                 reviewUrl = `CUL/Report.aspx?ID=${projectId}`;
             }
             else if (reviewItem.includes('請款')){
@@ -1828,7 +1808,7 @@ function handleExecutionPlanReview(projectId,reviewItem) {
             }
         } else if (projectId.includes('EDC')) {
             // 學校民間執行計畫審核頁面
-            if(reviewItem.includes('檢核')) {
+            if(reviewItem.includes('成果')) {
                 reviewUrl = `EDC/Report.aspx?ID=${projectId}`;
             }
             else if (reviewItem.includes('請款')){
@@ -1836,9 +1816,15 @@ function handleExecutionPlanReview(projectId,reviewItem) {
             }
         } else if (projectId.includes('CLB')) {
             // 學校社團執行計畫審核頁面
+            if(reviewItem.includes('報告')) {
+                reviewUrl = `CLB/ClbPayment.aspx?ProjectID=${projectId}`;
+            }
+            else if (reviewItem.includes('請款')){
+                reviewUrl = `CLB/ClbStageReport.aspx?ProjectID=${projectId}`;
+            }
         } else if (projectId.includes('MUL')) {
             // 多元執行計畫審核頁面
-            if(reviewItem.includes('檢核')) {
+            if(reviewItem.includes('報告')) {
                 reviewUrl = `MUL/Report.aspx?ID=${projectId}`;
             }
             else if (reviewItem.includes('請款')){
@@ -1846,7 +1832,7 @@ function handleExecutionPlanReview(projectId,reviewItem) {
             }
         } else if (projectId.includes('LIT')) {
             // 素養執行計畫審核頁面
-            if(reviewItem.includes('檢核')) {
+            if(reviewItem.includes('報告')) {
                 reviewUrl = `LIT/Report.aspx?ID=${projectId}`;
             }
             else if (reviewItem.includes('請款')){
@@ -1854,7 +1840,7 @@ function handleExecutionPlanReview(projectId,reviewItem) {
             }
         } else if (projectId.includes('ACC')) {
             // 無障礙執行計畫審核頁面
-            if(reviewItem.includes('檢核')) {
+            if(reviewItem.includes('報告')) {
                 reviewUrl = `ACC/Report.aspx?ID=${projectId}`;
             }
             else if (reviewItem.includes('請款')){

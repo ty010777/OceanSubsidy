@@ -76,12 +76,19 @@
                                         <asp:Label ID="lblApplicantUnit" runat="server" />
                                     </li>
                                     <li>
-                                        <span class="text-gray">書面審查資料 :</span>
-                                        <asp:LinkButton ID="btnDownloadDocument" runat="server" 
-                                            CssClass="btn btn-sm btn-teal-dark rounded-pill d-inline-flex align-items-center gap-2 py-1 px-2" 
+                                        <span class="text-gray">審查資料 :</span>
+                                        <asp:LinkButton ID="btnDownloadDocument" runat="server"
+                                            CssClass="btn btn-sm btn-teal-dark rounded-pill d-inline-flex align-items-center gap-2 py-1 px-2"
                                             OnClick="btnDownloadDocument_Click">
                                             <i class="fas fa-file-download"></i>
                                             <asp:Label ID="lblDocumentName" runat="server" />
+                                        </asp:LinkButton>
+                                        <asp:LinkButton ID="btnDownloadPPT" runat="server"
+                                            CssClass="btn btn-sm btn-teal-dark rounded-pill d-inline-flex align-items-center gap-2 py-1 px-2 ms-2"
+                                            OnClick="btnDownloadPPT_Click"
+                                            Visible="false">
+                                            <i class="fas fa-file-powerpoint"></i>
+                                            <span>簡報檔案下載</span>
                                         </asp:LinkButton>
                                     </li>
                                 </ul>

@@ -64,13 +64,11 @@ public class SCI_Download : IHttpHandler
 
     /// <summary>
     /// 下載計畫書
-    /// 路徑格式：~\UploadFiles\OFS\SCI\{ProjectID}\SciApplication\{ProjectID}_科專_{ProjectName}_送審版.pdf
+    /// 邏輯：根據 OrgCategory 查詢 OFS_SCI_UploadFile 的 FileCode (FILE_OTech2 或 FILE_AC2) 取得 TemplatePath 後下載
     /// </summary>
     private void DownloadPlan(HttpContext context)
     {
         var projectID = context.Request.QueryString["projectID"];
-        var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
-        string ProjectName = applicationMain.ProjectNameTw ?? "";
 
         // 驗證參數
         if (string.IsNullOrEmpty(projectID))
@@ -80,16 +78,59 @@ public class SCI_Download : IHttpHandler
             return;
         }
 
-        // 構建檔案路徑
-        string fileName = $"{projectID}_科專_{ProjectName}_送審版.pdf";
-        string relativePath = $"~/UploadFiles/OFS/SCI/{projectID}/SciApplication/{fileName}";
-        string filePath = context.Server.MapPath(relativePath);
+        // 取得申請資料（包含 OrgCategory）
+        var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
+
+        if (applicationMain == null)
+        {
+            context.Response.StatusCode = 404;
+            context.Response.Write($"Application data not found for ProjectID: {projectID}");
+            return;
+        }
+
+        // 根據 OrgCategory 決定 FileCode
+        string fileCode = "";
+        string orgCategory = applicationMain.OrgCategory ?? "";
+
+        if (orgCategory == "OceanTech")
+        {
+            fileCode = "FILE_OTech2";
+        }
+        else if (orgCategory == "Academic" || orgCategory == "Legal")
+        {
+            fileCode = "FILE_AC2";
+        }
+        else
+        {
+            context.Response.StatusCode = 400;
+            context.Response.Write($"Invalid OrgCategory: {orgCategory}");
+            return;
+        }
+
+        // 從 OFS_SCI_UploadFile 查詢檔案路徑
+        var uploadFiles = OFS_SciUploadAttachmentsHelper.GetAttachmentsByFileCodeAndProject(projectID, fileCode);
+
+        if (uploadFiles == null || uploadFiles.Count == 0)
+        {
+            context.Response.StatusCode = 404;
+            context.Response.Write($"Plan file not found for ProjectID: {projectID}, FileCode: {fileCode}");
+            return;
+        }
+
+        // 取得第一筆記錄的 TemplatePath（最新的）
+        var uploadFile = uploadFiles[0];
+        string templatePath = uploadFile.TemplatePath;
+        string fileName = uploadFile.FileName;
+
+        // 轉換為實體路徑：根目錄 + TemplatePath
+        string rootPath = context.Server.MapPath("~/");
+        string filePath = Path.Combine(rootPath, templatePath.TrimStart('~', '/', '\\'));
 
         // 檢查檔案是否存在
         if (!File.Exists(filePath))
         {
             context.Response.StatusCode = 404;
-            context.Response.Write($"Plan file not found: {fileName}");
+            context.Response.Write($"Physical file not found: {filePath}");
             return;
         }
 
@@ -298,7 +339,7 @@ public class SCI_Download : IHttpHandler
         {
             // OceanTech 業者範本檔案對應
             case "FILE_OTech1":
-                return "~/Template/SCI/OTech/附件-01海洋委員會海洋科技專案補助作業要點.pdf";
+                return "~/Template/SCI/OTech/附件-01海洋委員會海洋科技專案補助作業要點01.docx";
             case "FILE_OTech2":
                 return "~/Template/SCI/OTech/附件-02海洋科技科專案計畫書";
             case "FILE_OTech3":
@@ -322,7 +363,7 @@ public class SCI_Download : IHttpHandler
 
             // Academic 學研範本檔案對應
             case "FILE_AC1":
-                return "~/Template/SCI/Academic/附件-01海洋委員會海洋科技專案補助作業要點.pdf";
+                return "~/Template/SCI/Academic/附件-01海洋委員會海洋科技專案補助作業要點01.docx";
             case "FILE_AC2":
                 return "~/Template/SCI/Academic/附件-02海洋科技科專案計畫書";
             case "FILE_AC3":
@@ -1827,6 +1868,7 @@ public class SCI_Download : IHttpHandler
 
     /// <summary>
     /// 處理海洋委員會海洋科技專案補助作業要點 (OTech)
+    /// 將第一頁 Word 轉 PDF，並與剩餘頁面的 PDF 合併
     /// </summary>
     private string ApplyProjectDataToWord_FILE_OTech1(string originalFilePath, string projectId)
     {
@@ -1839,13 +1881,13 @@ public class SCI_Download : IHttpHandler
 
             // 建立暫存檔案路徑，保持原檔名
             string originalFileName = Path.GetFileName(originalFilePath);
-            string tempFilePath = Path.Combine(Path.GetTempPath(), originalFileName);
+            string tempWordFilePath = Path.Combine(Path.GetTempPath(), originalFileName);
 
             // 複製範本檔案到暫存資料夾
-            File.Copy(originalFilePath, tempFilePath, true);
+            File.Copy(originalFilePath, tempWordFilePath, true);
 
             // 使用 OpenXmlHelper 處理 Word 文件
-            using (var fs = new FileStream(tempFilePath, FileMode.Open, FileAccess.ReadWrite))
+            using (var fs = new FileStream(tempWordFilePath, FileMode.Open, FileAccess.ReadWrite))
             {
                 var helper = new OpenXmlHelper(fs);
                 // 取得當前年月日 (參考 DownloadTemplateCUL 的實作)
@@ -1865,8 +1907,30 @@ public class SCI_Download : IHttpHandler
                 helper.CloseAsSave();
             }
 
-            // 回傳處理後的檔案路徑
-            return tempFilePath;
+            // 將第一頁 Word 文件轉換為 PDF
+            string firstPagePdfPath = Path.Combine(Path.GetTempPath(), "temp_page1.pdf");
+            PdfHelper.ConvertWordToPdf(tempWordFilePath, firstPagePdfPath);
+
+            // 取得第二部分 PDF 的路徑（剩餘頁面）
+            string secondPartPdfPath = HttpContext.Current.Server.MapPath("~/Template/SCI/OTech/附件-01海洋委員會海洋科技專案補助作業要點02.pdf");
+
+            // 合併兩個 PDF
+            string mergedPdfPath = Path.Combine(Path.GetTempPath(), "附件-01海洋委員會海洋科技專案補助作業要點.pdf");
+            List<string> pdfFilesToMerge = new List<string> { firstPagePdfPath, secondPartPdfPath };
+            PdfHelper.MergePdfs(pdfFilesToMerge, mergedPdfPath);
+
+            // 清理暫存的 Word 和第一頁 PDF 檔案
+            if (File.Exists(tempWordFilePath))
+            {
+                File.Delete(tempWordFilePath);
+            }
+            if (File.Exists(firstPagePdfPath))
+            {
+                File.Delete(firstPagePdfPath);
+            }
+
+            // 回傳合併後的 PDF 檔案路徑
+            return mergedPdfPath;
         }
         catch (Exception ex)
         {
@@ -1878,6 +1942,7 @@ public class SCI_Download : IHttpHandler
 
     /// <summary>
     /// 處理海洋委員會海洋科技專案補助作業要點 (Academic)
+    /// 將第一頁 Word 轉 PDF，並與剩餘頁面的 PDF 合併
     /// </summary>
     private string ApplyProjectDataToWord_FILE_AC1(string originalFilePath, string projectId)
     {
@@ -1890,13 +1955,13 @@ public class SCI_Download : IHttpHandler
 
             // 建立暫存檔案路徑，保持原檔名
             string originalFileName = Path.GetFileName(originalFilePath);
-            string tempFilePath = Path.Combine(Path.GetTempPath(), originalFileName);
+            string tempWordFilePath = Path.Combine(Path.GetTempPath(), originalFileName);
 
             // 複製範本檔案到暫存資料夾
-            File.Copy(originalFilePath, tempFilePath, true);
+            File.Copy(originalFilePath, tempWordFilePath, true);
 
             // 使用 OpenXmlHelper 處理 Word 文件
-            using (var fs = new FileStream(tempFilePath, FileMode.Open, FileAccess.ReadWrite))
+            using (var fs = new FileStream(tempWordFilePath, FileMode.Open, FileAccess.ReadWrite))
             {
                 var helper = new OpenXmlHelper(fs);
                 // 取得當前年月日 (參考 DownloadTemplateCUL 的實作)
@@ -1915,8 +1980,30 @@ public class SCI_Download : IHttpHandler
                 helper.CloseAsSave();
             }
 
-            // 回傳處理後的檔案路徑
-            return tempFilePath;
+            // 將第一頁 Word 文件轉換為 PDF
+            string firstPagePdfPath = Path.Combine(Path.GetTempPath(), "temp_page1.pdf");
+            PdfHelper.ConvertWordToPdf(tempWordFilePath, firstPagePdfPath);
+
+            // 取得第二部分 PDF 的路徑（剩餘頁面）
+            string secondPartPdfPath = HttpContext.Current.Server.MapPath("~/Template/SCI/Academic/附件-01海洋委員會海洋科技專案補助作業要點02.pdf");
+
+            // 合併兩個 PDF
+            string mergedPdfPath = Path.Combine(Path.GetTempPath(), "附件-01海洋委員會海洋科技專案補助作業要點.pdf");
+            List<string> pdfFilesToMerge = new List<string> { firstPagePdfPath, secondPartPdfPath };
+            PdfHelper.MergePdfs(pdfFilesToMerge, mergedPdfPath);
+
+            // 清理暫存的 Word 和第一頁 PDF 檔案
+            if (File.Exists(tempWordFilePath))
+            {
+                File.Delete(tempWordFilePath);
+            }
+            if (File.Exists(firstPagePdfPath))
+            {
+                File.Delete(firstPagePdfPath);
+            }
+
+            // 回傳合併後的 PDF 檔案路徑
+            return mergedPdfPath;
         }
         catch (Exception ex)
         {

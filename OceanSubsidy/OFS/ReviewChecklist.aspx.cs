@@ -1926,7 +1926,9 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             }
 
             int successCount = 0;
+            int skippedCount = 0;
             var errorMessages = new List<string>();
+            var skippedProjects = new List<string>();
             string Reason = "提送至申請者修正計畫書";
             string fromStatus = "核定中";
             string toStatus = "計畫書修正中";
@@ -1941,6 +1943,16 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                 else if (projectId.Contains("MUL")) projectType = "MUL";
                 else if (projectId.Contains("LIT")) projectType = "LIT";
                 else if (projectId.Contains("ACC")) projectType = "ACC";
+
+                // 檢查是否為不支援的專案類型
+                if (projectType == "EDC" || projectType == "CLB" || projectType == "LIT")
+                {
+                    skippedCount++;
+                    string typeName = projectType == "EDC" ? "學校民間" :
+                                     projectType == "CLB" ? "社團" : "素養";
+                    skippedProjects.Add($"{projectId} ({typeName})");
+                    continue;
+                }
 
                 // 準備計畫變更記錄 model
                 var changeRecord = new ProjectChangeRecord
@@ -1973,22 +1985,12 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                             OFSProjectChangeRecordHelper.insert(changeRecord);
                             break;
 
-                        case "EDC":
-                            // 學校民間
-                            continue;
-
-                        case "CLB":
-                            continue;
-
                         case "MUL":
                             // 多元
                             OFS_MulProjectHelper.updateStatus(projectId, 42); //計畫書修正中
                             ReviewCheckListHelper.InsertReviewHistory(projectId, "核定中", "計畫書修正中", "提送至申請者", currentUser.Account);
                             OFSProjectChangeRecordHelper.insert(changeRecord);
                             break;
-
-                        case "LIT":
-                            continue;
 
                         case "ACC":
                             OFS_AccProjectHelper.updateStatus(projectId, 42); //計畫書修正中
@@ -2076,16 +2078,31 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             if (successCount > 0)
             {
                 string message = $"成功處理 {successCount} 件計畫";
+                if (skippedCount > 0)
+                {
+                    message += $"\\n已跳過 {skippedCount} 件不支援的案件類型";
+                }
                 if (errorMessages.Count > 0)
                 {
-                    message += $"，{errorMessages.Count} 件失敗";
+                    message += $"\\n處理失敗 {errorMessages.Count} 件";
                 }
                 ShowMessage(message, "success");
-
+            }
+            else if (skippedCount > 0 && errorMessages.Count == 0)
+            {
+                // 全部都是跳過的案件，沒有錯誤
+                string message = "所選案件類型目前不支援修正計畫書（學校民間類、學校社團類、素養類）";
+                ShowMessage(message, "warning");
             }
             else
             {
-                ShowMessage("所有案件處理失敗", "error");
+                // 有錯誤但沒有成功的案件
+                string message = "所有案件處理失敗";
+                if (skippedCount > 0)
+                {
+                    message += $"\\n其中 {skippedCount} 件為不支援的案件類型";
+                }
+                ShowMessage(message, "error");
             }
         }
         catch (Exception ex)

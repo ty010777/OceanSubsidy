@@ -77,7 +77,7 @@
                 <div class="col-12">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="square-title">查核紀錄</h5>
-                        <asp:Button ID="btnExportRecords" runat="server" Text="匯出查核紀錄" CssClass="btn btn-teal-dark" />
+                        <asp:Button ID="btnExportRecords" runat="server" Text="匯出查核紀錄" CssClass="btn btn-teal-dark" OnClick="btnExportRecords_Click" />
                     </div>
 
                     <div class="table-responsive">

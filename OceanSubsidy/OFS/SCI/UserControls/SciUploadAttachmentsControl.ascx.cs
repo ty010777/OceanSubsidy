@@ -1008,32 +1008,58 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
             // 建立檔案路徑清單
             var pdfFilePaths = new List<string>();
 
-            // 根據 OrgCategory 決定要合併的檔案 Code
-            var fileCodesToMerge = GetFileCodesToMerge(orgCategory);
+            // 根據 OrgCategory 取得要合併的檔案清單（包含固定範本和使用者上傳檔案）
+            var filesToMerge = GetFilesToMergeList(orgCategory);
 
-            // 從資料庫取得檔案路徑並檢查檔案是否存在
-            foreach (string fileCode in fileCodesToMerge)
+            // 處理每個檔案
+            foreach (var fileInfo in filesToMerge)
             {
-                var uploadedFiles = OFS_SciUploadAttachmentsHelper.GetAttachmentsByFileCodeAndProject(projectId, fileCode);
+                string pdfPath = null;
 
-                if (uploadedFiles != null && uploadedFiles.Count > 0)
+                if (fileInfo.IsTemplate)
                 {
-                    var uploadedFile = uploadedFiles.First();
-                    string fullPath = Server.MapPath($"~/{uploadedFile.TemplatePath}");
-
-                    if (File.Exists(fullPath))
+                    // 固定範本檔案
+                    if (fileInfo.IsSpecial)
                     {
-                        pdfFilePaths.Add(fullPath);
-                        System.Diagnostics.Debug.WriteLine($"找到檔案 {fileCode}：{fullPath}");
+                        // 特殊處理：FILE_AC1/FILE_OTech1 需要動態生成（填入日期並合併PDF）
+                        pdfPath = GenerateAttachment01Pdf(orgCategory, projectId);
                     }
                     else
                     {
-                        System.Diagnostics.Debug.WriteLine($"檔案 {fileCode} 不存在：{fullPath}");
+                        // 其他固定範本檔案直接使用
+                        pdfPath = Server.MapPath(fileInfo.TemplatePath);
                     }
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine($"資料庫中找不到檔案記錄，FileCode：{fileCode}");
+                    // 使用者上傳的檔案
+                    var uploadedFiles = OFS_SciUploadAttachmentsHelper.GetAttachmentsByFileCodeAndProject(projectId, fileInfo.FileCode);
+
+                    if (uploadedFiles != null && uploadedFiles.Count > 0)
+                    {
+                        var uploadedFile = uploadedFiles.First();
+                        pdfPath = Server.MapPath($"~/{uploadedFile.TemplatePath}");
+                    }
+                }
+
+                // 檢查檔案是否存在並加入清單
+                if (!string.IsNullOrEmpty(pdfPath) && File.Exists(pdfPath))
+                {
+                    pdfFilePaths.Add(pdfPath);
+                    System.Diagnostics.Debug.WriteLine($"加入檔案 {fileInfo.FileCode}：{pdfPath}");
+                }
+                else
+                {
+                    if (fileInfo.IsTemplate && !fileInfo.IsSpecial)
+                    {
+                        // 固定範本檔案應該要存在，如果不存在記錄警告
+                        System.Diagnostics.Debug.WriteLine($"警告：固定範本檔案 {fileInfo.FileCode} 不存在：{pdfPath}");
+                    }
+                    else if (!fileInfo.IsTemplate)
+                    {
+                        // 使用者上傳的檔案可能未上傳，這是正常的
+                        System.Diagnostics.Debug.WriteLine($"使用者未上傳檔案：{fileInfo.FileCode}");
+                    }
                 }
             }
 
@@ -1068,38 +1094,150 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
     }
 
     /// <summary>
-    /// 根據機構類別取得要合併的檔案 Code 清單
+    /// 動態生成附件-01 PDF（填入年月並合併）
     /// </summary>
     /// <param name="orgCategory">機構類別</param>
-    /// <returns>檔案 Code 清單（依指定順序）</returns>
-    private List<string> GetFileCodesToMerge(string orgCategory)
+    /// <param name="projectId">專案ID</param>
+    /// <returns>生成的 PDF 檔案路徑</returns>
+    private string GenerateAttachment01Pdf(string orgCategory, string projectId)
     {
-        var fileCodes = new List<string>();
+        try
+        {
+            // 決定範本檔案路徑
+            string wordTemplatePath, pdfTemplatePath;
+            if (orgCategory == "OceanTech")
+            {
+                wordTemplatePath = Server.MapPath("~/Template/SCI/OTech/附件-01海洋委員會海洋科技專案補助作業要點01.docx");
+                pdfTemplatePath = Server.MapPath("~/Template/SCI/OTech/附件-01海洋委員會海洋科技專案補助作業要點02.pdf");
+            }
+            else
+            {
+                wordTemplatePath = Server.MapPath("~/Template/SCI/Academic/附件-01海洋委員會海洋科技專案補助作業要點01.docx");
+                pdfTemplatePath = Server.MapPath("~/Template/SCI/Academic/附件-01海洋委員會海洋科技專案補助作業要點02.pdf");
+            }
+
+            // 檢查範本檔案是否存在
+            if (!File.Exists(wordTemplatePath))
+            {
+                System.Diagnostics.Debug.WriteLine($"Word 範本檔案不存在：{wordTemplatePath}");
+                return null;
+            }
+
+            if (!File.Exists(pdfTemplatePath))
+            {
+                System.Diagnostics.Debug.WriteLine($"PDF 範本檔案不存在：{pdfTemplatePath}");
+                return null;
+            }
+
+            // 建立暫存檔案路徑
+            string tempWordFilePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".docx");
+
+            // 複製範本檔案到暫存資料夾
+            File.Copy(wordTemplatePath, tempWordFilePath, true);
+
+            // 使用 OpenXmlHelper 處理 Word 文件（填充年月）
+            using (var fs = new FileStream(tempWordFilePath, FileMode.Open, FileAccess.ReadWrite))
+            {
+                var helper = new OpenXmlHelper(fs);
+
+                // 取得當前年月
+                DateTime currentDate = DateTime.Now;
+                int year = currentDate.Year - 1911; // 民國年
+                int month = currentDate.Month;
+
+                // 建立替換字典
+                var placeholder = new Dictionary<string, string>();
+                placeholder.Add("{{Year}}", year.ToString());
+                placeholder.Add("{{Month}}", month.ToString());
+
+                var repeatData = new List<Dictionary<string, string>>();
+
+                // 使用 GenerateWord 方法替換佔位符
+                helper.GenerateWord(placeholder, repeatData);
+                helper.CloseAsSave();
+            }
+
+            // 將第一頁 Word 文件轉換為 PDF
+            string firstPagePdfPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + "_page1.pdf");
+            PdfHelper.ConvertWordToPdf(tempWordFilePath, firstPagePdfPath);
+
+            // 合併兩個 PDF
+            string mergedPdfPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + "_附件01.pdf");
+            List<string> pdfFilesToMerge = new List<string> { firstPagePdfPath, pdfTemplatePath };
+            PdfHelper.MergePdfs(pdfFilesToMerge, mergedPdfPath);
+
+            // 清理暫存的 Word 和第一頁 PDF 檔案
+            if (File.Exists(tempWordFilePath))
+            {
+                File.Delete(tempWordFilePath);
+            }
+            if (File.Exists(firstPagePdfPath))
+            {
+                File.Delete(firstPagePdfPath);
+            }
+
+            System.Diagnostics.Debug.WriteLine($"附件-01 PDF 生成成功：{mergedPdfPath}");
+            return mergedPdfPath;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"生成附件-01 PDF 時發生錯誤：{ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// 根據機構類別取得要合併的檔案資訊清單（包含固定範本和使用者上傳檔案）
+    /// </summary>
+    /// <param name="orgCategory">機構類別</param>
+    /// <returns>檔案資訊清單（依指定順序）</returns>
+    private List<FileToMerge> GetFilesToMergeList(string orgCategory)
+    {
+        var files = new List<FileToMerge>();
 
         if (orgCategory == "OceanTech")
         {
-            // 海洋科技業者（OceanTech）- 6 個檔案（依順序）
-            fileCodes.Add("FILE_OTech2");  // 海洋科技科專案計畫書
-            fileCodes.Add("FILE_OTech3");  // 建議迴避之審查委員清單
-            fileCodes.Add("FILE_OTech4");  // 未違反公職人員利益衝突迴避法切結書
-            fileCodes.Add("FILE_OTech5");  // 蒐集個人資料告知事項暨個人資料提供同意書
-            fileCodes.Add("FILE_OTech6");  // 申請人自我檢查表
-            fileCodes.Add("FILE_OTech8");  // 海洋科技業者科專計畫補助契約書
+            // 海洋科技業者（OceanTech）- 10 個檔案（依順序）
+            files.Add(new FileToMerge { FileCode = "FILE_OTech1", IsTemplate = true, IsSpecial = true });  // 1. 附件-01（特殊處理）
+            files.Add(new FileToMerge { FileCode = "FILE_OTech2", IsTemplate = false });  // 2. 海洋科技科專案計畫書（使用者上傳）
+            files.Add(new FileToMerge { FileCode = "FILE_OTech3", IsTemplate = false });  // 3. 建議迴避之審查委員清單（使用者上傳）
+            files.Add(new FileToMerge { FileCode = "FILE_OTech4", IsTemplate = false });  // 4. 未違反公職人員利益衝突迴避法切結書（使用者上傳）
+            files.Add(new FileToMerge { FileCode = "FILE_OTech5", IsTemplate = false });  // 5. 蒐集個人資料告知事項暨個人資料提供同意書（使用者上傳）
+            files.Add(new FileToMerge { FileCode = "FILE_OTech6", IsTemplate = false });  // 6. 申請人自我檢查表（使用者上傳）
+            files.Add(new FileToMerge { FileCode = "FILE_OTech7", IsTemplate = true, TemplatePath = "~/Template/SCI/OTech/附件-07簽約注意事項.pdf" });  // 7. 簽約注意事項（固定範本）
+            files.Add(new FileToMerge { FileCode = "FILE_OTech8", IsTemplate = false });  // 8. 海洋科技業者科專計畫補助契約書（使用者上傳）
+            files.Add(new FileToMerge { FileCode = "FILE_OTech9", IsTemplate = true, TemplatePath = "~/Template/SCI/OTech/附件-09研究紀錄簿使用原則.pdf" });  // 9. 研究紀錄簿使用原則（固定範本）
+            files.Add(new FileToMerge { FileCode = "FILE_OTech10", IsTemplate = true, TemplatePath = "~/Template/SCI/OTech/附件-10海洋科技專案計畫會計科目編列與執行原則.pdf" });  // 10. 會計科目編列與執行原則（固定範本）
         }
         else
         {
-            // 學術機構/法人機構 - 8 個檔案（依順序）
-            fileCodes.Add("FILE_AC2");     // 海洋科技科專案計畫書
-            fileCodes.Add("FILE_AC3");     // 建議迴避之審查委員清單
-            fileCodes.Add("FILE_AC4");     // 未違反公職人員利益衝突迴避法切結書
-            fileCodes.Add("FILE_AC5");     // 蒐集個人資料告知事項暨個人資料提供同意書
-            fileCodes.Add("FILE_AC6");     // 共同執行單位基本資料表
-            fileCodes.Add("FILE_AC7");     // 申請人自我檢查表
-            fileCodes.Add("FILE_AC9");     // 海洋委員會補助科技專案計畫契約書
-            fileCodes.Add("FILE_AC11");    // 海洋科技專案成效追蹤自評表
+            // 學術機構/法人機構（Academic）- 12 個檔案（依順序）
+            files.Add(new FileToMerge { FileCode = "FILE_AC1", IsTemplate = true, IsSpecial = true });  // 1. 附件-01（特殊處理）
+            files.Add(new FileToMerge { FileCode = "FILE_AC2", IsTemplate = false });  // 2. 海洋科技科專案計畫書（使用者上傳）
+            files.Add(new FileToMerge { FileCode = "FILE_AC3", IsTemplate = false });  // 3. 建議迴避之審查委員清單（使用者上傳）
+            files.Add(new FileToMerge { FileCode = "FILE_AC4", IsTemplate = false });  // 4. 未違反公職人員利益衝突迴避法切結書（使用者上傳）
+            files.Add(new FileToMerge { FileCode = "FILE_AC5", IsTemplate = false });  // 5. 蒐集個人資料告知事項暨個人資料提供同意書（使用者上傳）
+            files.Add(new FileToMerge { FileCode = "FILE_AC6", IsTemplate = false });  // 6. 共同執行單位基本資料表（使用者上傳）
+            files.Add(new FileToMerge { FileCode = "FILE_AC7", IsTemplate = false });  // 7. 申請人自我檢查表（使用者上傳）
+            files.Add(new FileToMerge { FileCode = "FILE_AC8", IsTemplate = true, TemplatePath = "~/Template/SCI/Academic/附件-08簽約注意事項.pdf" });  // 8. 簽約注意事項（固定範本）
+            files.Add(new FileToMerge { FileCode = "FILE_AC9", IsTemplate = false });  // 9. 海洋委員會補助科技專案計畫契約書（使用者上傳）
+            files.Add(new FileToMerge { FileCode = "FILE_AC10", IsTemplate = true, TemplatePath = "~/Template/SCI/Academic/附件-10海洋科技專案計畫會計科目編列與執行原則.pdf" });  // 10. 會計科目編列與執行原則（固定範本）
+            files.Add(new FileToMerge { FileCode = "FILE_AC11", IsTemplate = false });  // 11. 海洋科技專案成效追蹤自評表（使用者上傳）
+            files.Add(new FileToMerge { FileCode = "FILE_AC12", IsTemplate = true, TemplatePath = "~/Template/SCI/Academic/附件-12研究紀錄簿使用原則.pdf" });  // 12. 研究紀錄簿使用原則（固定範本）
         }
 
-        return fileCodes;
+        return files;
+    }
+
+    /// <summary>
+    /// 檔案合併資訊類別
+    /// </summary>
+    private class FileToMerge
+    {
+        public string FileCode { get; set; }
+        public bool IsTemplate { get; set; }  // true: 固定範本, false: 使用者上傳
+        public bool IsSpecial { get; set; }  // true: 需要特殊處理（FILE_AC1/FILE_OTech1）
+        public string TemplatePath { get; set; }  // 固定範本的路徑
     }
 
     #endregion
