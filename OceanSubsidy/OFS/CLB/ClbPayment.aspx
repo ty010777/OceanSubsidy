@@ -290,6 +290,6 @@
                 </li>
     
             </ul>
-            <button type="button" class="btn btn-teal d-table mx-auto" id = "confirmReviewBtn" onclick="submitReview()">確定撥款</button>
+            <button type="button" class="btn btn-teal d-table mx-auto" id = "confirmReviewBtn" onclick="submitReview()">確定撥款及結案</button>
         </div>
 </asp:Content>

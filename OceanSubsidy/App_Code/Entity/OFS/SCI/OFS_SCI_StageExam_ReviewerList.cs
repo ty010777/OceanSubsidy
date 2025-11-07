@@ -334,6 +334,41 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
         
+        protected string _BankBookPath = "";
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("BankBookPath", "BankBookPath", DataSource.TABLE, "", false)]
+        public virtual string BankBookPath
+        {
+            get
+            {
+                return _BankBookPath;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_BankBookPath == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_BankBookPath.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("BankBookPath") == -1)
+                    {
+                        UPDATE_COLUMN.Add("BankBookPath");
+                    }
+                    _BankBookPath = value;
+                }
+            }
+        }
+        
         protected string _RegistrationAddress = "";
         ///<summary>
         ///  ()
@@ -365,6 +400,41 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
                         UPDATE_COLUMN.Add("RegistrationAddress");
                     }
                     _RegistrationAddress = value;
+                }
+            }
+        }
+        
+        protected DateTime? _UpdateTime = null;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("UpdateTime", "UpdateTime", DataSource.TABLE, "", false)]
+        public virtual DateTime? UpdateTime
+        {
+            get
+            {
+                return _UpdateTime;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_UpdateTime == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_UpdateTime.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("UpdateTime") == -1)
+                    {
+                        UPDATE_COLUMN.Add("UpdateTime");
+                    }
+                    _UpdateTime = value;
                 }
             }
         }

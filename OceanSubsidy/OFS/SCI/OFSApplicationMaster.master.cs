@@ -450,9 +450,10 @@ public partial class OFSApplicationMaster : System.Web.UI.MasterPage
             // 只有這些狀態可以編輯
             string statuses = ApplicationData.Statuses ?? "";
             string statusesName = ApplicationData.StatusesName ?? "";
-            
-            return statuses == "尚未提送" || 
-                   statusesName == "補正補件" || 
+
+            // 「尚未提送」狀態下，如果 StatusesName 是「逾期」則不可編輯
+            return (statuses == "尚未提送" && statusesName != "逾期") ||
+                   statusesName == "補正補件" ||
                    statusesName == "計畫書修正中";
         }
         catch (Exception ex)

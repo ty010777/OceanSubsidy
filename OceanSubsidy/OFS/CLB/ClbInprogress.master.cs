@@ -43,9 +43,6 @@ public partial class OFS_CLB_ClbInprogress : System.Web.UI.MasterPage
         // 設定階段狀態的 active class
         SetActiveStep();
         SetProjectInfoToMaster();
-
-        // 檢查並顯示計畫狀態提示
-        CheckAndShowStatusAlert();
     }
     
     /// <summary>
@@ -139,84 +136,52 @@ public partial class OFS_CLB_ClbInprogress : System.Web.UI.MasterPage
         // 清空現有內容
         var placeholder = phTodoItems;
         if (placeholder == null) return;
-        
+
         placeholder.Controls.Clear();
 
-        List<string> todoItems = new List<string>();
-        
-        try
+        // 檢查計畫狀態
+        if (projectMain.StatusesName == "已終止")
         {
-            // 從 OFS_TaskQueue 取得待辦事項（只顯示第一筆）
-            var dt = OFS_TaskQueueHelper.GetProjectTodoTasks(ProjectID);
-            if (dt.Rows.Count > 0)
+            // 顯示「計畫已終止」標籤
+            var statusTag = new LiteralControl("<span class=\"tag tag-light-pink\">計畫已終止</span>");
+            placeholder.Controls.Add(statusTag);
+        }
+        else if (projectMain.StatusesName == "已結案")
+        {
+            // 顯示「計畫已結案」標籤
+            var statusTag = new LiteralControl("<span class=\"tag tag-light-gray\">計畫已結案</span>");
+            placeholder.Controls.Add(statusTag);
+        }
+        else
+        {
+            // 顯示待辦事項
+            try
             {
-                var row = dt.Rows[0]; // 只取第一筆
-                string taskNameEn = row["TaskNameEn"]?.ToString();
-                string taskName = row["TaskName"]?.ToString();
-                
-                // CLB 類型的待辦事項處理
-                todoItems.Add($"待辦事項:{taskName}");
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"取得待辦事項時發生錯誤: {ex.Message}");
-        }
+                // 從 OFS_TaskQueue 取得待辦事項（只顯示第一筆）
+                var dt = OFS_TaskQueueHelper.GetProjectTodoTasks(ProjectID);
+                if (dt.Rows.Count > 0)
+                {
+                    var row = dt.Rows[0]; // 只取第一筆
+                    string taskName = row["TaskName"]?.ToString();
 
-        // 為每個代辦事項建立獨立的 span 控制項
-        foreach (string item in todoItems)
-        {
-            var span = new LiteralControl("<span class=\"tag tag-pale-green\">");
-            var literal = new Literal();
-            literal.Text = item;
-            var closeSpan = new LiteralControl("</span>");
-            
-            placeholder.Controls.Add(span);
-            placeholder.Controls.Add(literal);
-            placeholder.Controls.Add(closeSpan);
+                    // 建立待辦事項標籤
+                    var span = new LiteralControl("<span class=\"tag tag-pale-green\">");
+                    var literal = new Literal();
+                    literal.Text = $"待辦事項:{taskName}";
+                    var closeSpan = new LiteralControl("</span>");
+
+                    placeholder.Controls.Add(span);
+                    placeholder.Controls.Add(literal);
+                    placeholder.Controls.Add(closeSpan);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"取得待辦事項時發生錯誤: {ex.Message}");
+            }
         }
     }
 
-    /// <summary>
-    /// 檢查並顯示計畫狀態提示
-    /// </summary>
-    private void CheckAndShowStatusAlert()
-    {
-        try
-        {
-            if (string.IsNullOrEmpty(ProjectID))
-            {
-                return;
-            }
-
-            // 從資料庫取得計畫主資料
-            var projectMain = OFS_ClbApplicationHelper.GetProjectMainData(ProjectID);
-
-            if (projectMain == null)
-            {
-                return;
-            }
-
-            // 檢查 StatusesName 並顯示對應提示
-            if (!string.IsNullOrEmpty(projectMain.StatusesName))
-            {
-                if (projectMain.StatusesName == "已終止")
-                {
-                    pnlStatusAlert.Visible = true;
-                    lblStatusMessage.Text = "計畫已終止";
-                }
-                else if (projectMain.StatusesName == "已結案")
-                {
-                    pnlStatusAlert.Visible = true;
-                    lblStatusMessage.Text = "計畫已結案";
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"檢查計畫狀態提示時發生錯誤: {ex.Message}");
-        }
-    }
     /// <summary>
     /// 驗證專案擁有權 - 確認使用者是否為專案的擁有者
     /// </summary>

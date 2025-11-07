@@ -32,7 +32,7 @@
     </div>
 
     <!-- 總計列表 -->
-    <ul class="total-list mt-4">
+    <ul class="total-list tab-light-green mt-4">
         <li class="total-item" id="total-item-1">
             <a href="javascript:void(0)" onclick="ReviewChecklist.switchReviewType(1)">
                 <div class="total-item-title">資格審查/內容審查</div>

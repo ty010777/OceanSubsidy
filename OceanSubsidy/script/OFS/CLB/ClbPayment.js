@@ -576,7 +576,7 @@ function initializeViewMode() {
 document.addEventListener('DOMContentLoaded', function() {
     // 計算第二期數值
     calculatePhase2Values();
-    
+
     // 綁定累積實支金額輸入框的變化事件
     const accumulatedAmountInput = document.getElementById('accumulatedAmountInput');
     if (accumulatedAmountInput) {
@@ -585,6 +585,18 @@ document.addEventListener('DOMContentLoaded', function() {
             updateRemainingAmount();
         });
     }
+
+    // 綁定審查結果 radio 按鈕變化事件
+    const radioPass = document.getElementById('radio-pass');
+    const radioReturn = document.getElementById('radio-return');
+
+    if (radioPass && radioReturn) {
+        radioPass.addEventListener('change', updateReviewButtonText);
+        radioReturn.addEventListener('change', updateReviewButtonText);
+    }
+
+    // 初始化按鈕文字
+    updateReviewButtonText();
 });
 
 // CLB 第一期動態計算
@@ -625,21 +637,42 @@ function updateUsageRatio() {
     // 取得頁面上的狀態資訊（這個需要從後端傳入）
     var paymentStatus = window.paymentStatus || '';
     var currentActualPaidAmount = window.currentActualPaidAmount || 0;
-    
+
     if (paymentStatus === '通過' && currentActualPaidAmount > 0) {
         var totalSpentAmount = parseFloat(document.getElementById('accumulatedAmountInput').value) || 0;
-        
+
         // 支用比 = 累積實支金額 ÷ 本期實際撥款金額 × 100%
         var usageRate = (totalSpentAmount / currentActualPaidAmount) * 100;
-        
+
         // 若結果 > 100%，顯示為 100%
         if (usageRate > 100) {
             usageRate = 100;
         }
-        
+
         document.getElementById('usageRatio').textContent = usageRate.toFixed(2) + '%';
     } else {
         // 未審核通過時顯示 "--"
         document.getElementById('usageRatio').textContent = '--';
+    }
+}
+
+// 更新審查按鈕文字
+function updateReviewButtonText() {
+    const radioPass = document.getElementById('radio-pass');
+    const radioReturn = document.getElementById('radio-return');
+    const confirmReviewBtn = document.getElementById('confirmReviewBtn');
+
+    if (!confirmReviewBtn) {
+        return;
+    }
+
+    // 檢查哪個選項被選中
+    if (radioPass && radioPass.checked) {
+        confirmReviewBtn.textContent = '確定撥款及結案';
+    } else if (radioReturn && radioReturn.checked) {
+        confirmReviewBtn.textContent = '確定退回';
+    } else {
+        // 預設顯示（沒有選中任何選項時）
+        confirmReviewBtn.textContent = '確定撥款及結案';
     }
 }

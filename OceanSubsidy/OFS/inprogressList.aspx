@@ -91,7 +91,7 @@
     </div>
 
     <!-- 總計列表 -->
-    <ul class="total-list" id="statusTabsList">
+    <ul class="total-list tab-white" id="statusTabsList">
         <li class="total-item active" data-status="all">
             <a href="javascript:void(0);">
                 <div class="total-item-title">總核定計畫</div>

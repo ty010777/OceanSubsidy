@@ -30,6 +30,7 @@
         }
     }
 
+
     .tag-btn{
         display: flex;
         align-items: center;
@@ -99,6 +100,21 @@
     background-color: $pale-green;
     border: 1px solid $teal-dark;
     color: $teal-dark;
+    line-height: 1;
+    border-radius: 6px;
+}
+
+.tag-light-gray {
+    border: 1px solid $neutral-700;
+    color: $neutral-700;
+    background-color: #D1D8D8;
+    line-height: 1;
+    border-radius: 6px;
+}
+.tag-light-pink {
+    border: 1px solid $pink;
+    color: $pink;
+    background-color: #F0D9E4;
     line-height: 1;
     border-radius: 6px;
 }

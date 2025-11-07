@@ -730,6 +730,9 @@ VALUES
                 if (dt.Columns.Contains("IsProjChanged") && row["IsProjChanged"] != DBNull.Value)
                     projectMain.IsProjChanged = Convert.ToInt32(row["IsProjChanged"]);
 
+                if (dt.Columns.Contains("ApplyTime") && row["ApplyTime"] != DBNull.Value)
+                    projectMain.ApplyTime = Convert.ToDateTime(row["ApplyTime"]);
+
                 return projectMain;
             }
 

@@ -55,6 +55,41 @@
         }
 
     }
+
+    &.tab-white {
+        background-color: $teal-dark;
+        .total-item {
+            margin-bottom: 0;
+            >a {
+                background-color: $teal-dark;
+            }
+            &.active,&:hover {
+                >a {
+                    background-color: white;
+                    color: $teal-dark;
+                    .unit {
+                        color: $teal-dark;
+                    }
+                }
+            }
+            
+        }
+
+    }
+    &.tab-light-green {
+        .total-item {
+            margin-bottom: 0;
+            &.active,&:hover {
+                >a {
+                    background-color: $light-teal-100;
+                    color: $teal;
+                    .unit {
+                        color: $teal;
+                    }
+                }
+            }
+        }
+    }
 }
 
 .multiple-option {

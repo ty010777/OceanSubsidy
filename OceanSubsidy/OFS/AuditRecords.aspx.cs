@@ -416,7 +416,7 @@ public partial class OFS_AuditRecords : System.Web.UI.Page
             }
             else if (projectID.Contains("CLB"))
             {
-                category = "社團";
+                category = "學校社團";
                 var applicationBasic = OFS_ClbApplicationHelper.GetBasicData(projectID);
                 var projectMain = OFS_ClbApplicationHelper.GetProjectMainData(projectID);
 
@@ -608,7 +608,7 @@ public partial class OFS_AuditRecords : System.Web.UI.Page
             }
             else if (projectID.Contains("CLB"))
             {
-                category = "社團";
+                category = "學校社團";
                 var applicationBasic = OFS_ClbApplicationHelper.GetBasicData(projectID);
                 var projectMain = OFS_ClbApplicationHelper.GetProjectMainData(projectID);
 

@@ -1949,7 +1949,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                 {
                     skippedCount++;
                     string typeName = projectType == "EDC" ? "學校民間" :
-                                     projectType == "CLB" ? "社團" : "素養";
+                                     projectType == "CLB" ? "學校社團" : "素養";
                     skippedProjects.Add($"{projectId} ({typeName})");
                     continue;
                 }

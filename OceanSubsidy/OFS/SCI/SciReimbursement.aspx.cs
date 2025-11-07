@@ -207,6 +207,20 @@ public partial class OFS_SCI_SciReimbursement : System.Web.UI.Page
     }
 
     [WebMethod]
+    public static object GetCurrentPhase(string projectID)
+    {
+        try
+        {
+            int currentPhase = OFS_SciReimbursementHelper.GetCurrentPhase(projectID);
+            return new { Success = true, Phase = currentPhase };
+        }
+        catch (Exception ex)
+        {
+            return new { Success = false, Message = "系統錯誤: " + ex.Message };
+        }
+    }
+
+    [WebMethod]
     public static object GetPhaseData(string projectID, int phaseOrder)
     {
         try

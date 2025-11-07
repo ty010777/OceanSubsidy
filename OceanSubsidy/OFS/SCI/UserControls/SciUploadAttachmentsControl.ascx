@@ -465,6 +465,9 @@
             </tbody>
         </table>
     </div>
+    <div id="divApplyTime" runat="server" class="text-center text-neutral-700 lh-base mt-4" visible="false">
+        申請送件時間 : <asp:Label ID="lblApplyTime" runat="server" />
+    </div>
 </div>
  <!-- 變更說明 UserControl -->
     <uc:ChangeDescriptionControl ID="tab5_ucChangeDescription" runat="server" SourcePage="SciUploadAttachments" />

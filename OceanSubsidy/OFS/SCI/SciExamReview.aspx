@@ -135,6 +135,29 @@
                                                     <input type="text" id="registrationAddressInput" class="form-control" placeholder="請輸入戶籍地址">
                                                 </td>
                                             </tr>
+                                            <tr>
+                                                <th class="bg-light">存摺封面</th>
+                                                <td>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <input type="file" id="bankBookFileInput" accept=".jpg,.jpeg,.png" style="display: none;" onchange="handleBankBookUpload(this)">
+                                                        <button type="button" class="btn btn-sm btn-teal-dark" id="btnUploadBankBook" onclick="document.getElementById('bankBookFileInput').click()">
+                                                            <i class="fas fa-file-upload me-1"></i>
+                                                            上傳圖片
+                                                        </button>
+                                                        <span class="text-muted" style="font-size: 0.875rem;">支援 JPG/JPEG/PNG 格式，檔案大小不超過 10MB</span>
+                                                    </div>
+                                                    <div id="bankBookFilePreview" style="display: none;" class="mt-2">
+                                                        <span class="tag tag-green-light">
+                                                            <a class="tag-link" href="#" id="bankBookDownloadLink" target="_blank">
+                                                                <span id="bankBookFileName"></span>
+                                                            </a>
+                                                            <button type="button" class="tag-btn" onclick="deleteBankBookFile()">
+                                                                <i class="fa-solid fa-circle-xmark"></i>
+                                                            </button>
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -240,7 +263,12 @@
         let currentToken = '';
         let currentProjectID = '';
         let currentStage = 1;
-        
+
+        // 使用 AppRootPath 處理虛擬路徑，如果沒有則用空字串
+        const appRoot = window.AppRootPath || '';
+        const sciUploadUrl = appRoot + '/Service/SCI_Upload.ashx';
+        const sciDownloadUrl = appRoot + '/Service/SCI_Download.ashx';
+
         $(document).ready(function() {
             // 從URL取得token
             const urlParams = new URLSearchParams(window.location.search);
@@ -292,6 +320,11 @@
                         }
                         if (data.RegistrationAddress) {
                             $('#registrationAddressInput').val(data.RegistrationAddress);
+                        }
+
+                        // 檢查是否已有上傳的存摺檔案
+                        if (data.BankBookPath) {
+                            showBankBookFile(data.BankBookPath);
                         }
 
                         // 載入檔案清單
@@ -507,6 +540,12 @@
                 return;
             }
 
+            // 驗證存摺封面是否已上傳
+            if ($('#bankBookFilePreview').is(':hidden')) {
+                Swal.fire('錯誤', '請上傳存摺封面', 'error');
+                return;
+            }
+
             Swal.fire({
                 title: '確定要提交審查結果嗎？',
                 text: '提交後將無法修改',
@@ -593,6 +632,129 @@
                 },
                 error: function(xhr, status, error) {
                     console.error('載入銀行代碼清單時發生錯誤:', error);
+                }
+            });
+        }
+
+        // 處理存摺檔案上傳
+        function handleBankBookUpload(fileInput) {
+            const file = fileInput.files[0];
+            if (!file) {
+                return;
+            }
+
+            // 驗證檔案類型
+            const fileExt = '.' + file.name.split('.').pop().toLowerCase();
+            const allowedExts = ['.jpg', '.jpeg', '.png'];
+            if (!allowedExts.includes(fileExt)) {
+                Swal.fire('錯誤', '請上傳 JPG/JPEG/PNG 格式的圖片檔案', 'error');
+                fileInput.value = '';
+                return;
+            }
+
+            // 檢查檔案大小 (10MB)
+            const maxSize = 10 * 1024 * 1024;
+            if (file.size > maxSize) {
+                Swal.fire('錯誤', '檔案大小不可超過 10MB', 'error');
+                fileInput.value = '';
+                return;
+            }
+
+            // 顯示上傳進度
+            Swal.fire({
+                title: '上傳中...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // 使用 FormData 上傳
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('token', currentToken);
+            formData.append('action', 'uploadbankbook');
+
+            $.ajax({
+                type: 'POST',
+                url: sciUploadUrl,
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    Swal.close();
+                    if (response.success) {
+                        Swal.fire('成功', '存摺封面上傳成功', 'success');
+                        showBankBookFile(response.relativePath);
+                    } else {
+                        Swal.fire('失敗', response.message || '上傳失敗', 'error');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    Swal.close();
+                    console.error('上傳錯誤:', error);
+                    Swal.fire('錯誤', '上傳過程發生錯誤', 'error');
+                }
+            });
+
+            fileInput.value = '';
+        }
+
+        // 顯示已上傳的存摺檔案
+        function showBankBookFile(filePath) {
+            if (filePath) {
+                const fileName = filePath.split('/').pop();
+                $('#bankBookFileName').text(fileName);
+                const downloadUrl = sciDownloadUrl + '?action=downloadbankbook&token=' + encodeURIComponent(currentToken);
+                $('#bankBookDownloadLink').attr('href', downloadUrl);
+                $('#bankBookFilePreview').show();
+                $('#btnUploadBankBook').hide();
+            }
+        }
+
+        // 刪除存摺檔案
+        function deleteBankBookFile() {
+            Swal.fire({
+                title: '確定要刪除存摺封面嗎？',
+                text: '',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: '確定刪除',
+                cancelButtonText: '取消'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // 顯示載入中
+                    Swal.fire({
+                        title: '處理中...',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    $.ajax({
+                        type: 'POST',
+                        url: sciUploadUrl,
+                        data: {
+                            action: 'deletebankbook',
+                            token: currentToken
+                        },
+                        success: function(response) {
+                            Swal.close();
+                            if (response.success) {
+                                Swal.fire('成功', '存摺封面已刪除', 'success');
+                                $('#bankBookFilePreview').hide();
+                                $('#btnUploadBankBook').show();
+                            } else {
+                                Swal.fire('失敗', response.message || '刪除失敗', 'error');
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            Swal.close();
+                            console.error('刪除錯誤:', error);
+                            Swal.fire('錯誤', '刪除過程發生錯誤', 'error');
+                        }
+                    });
                 }
             });
         }

@@ -49,7 +49,7 @@ public class OFS_ClbStageReportHelper
                     int? organizer = SysUserHelper.GetUserIDByAccount(supervisoryAccount);
 
                     // 寄送通知信
-                    NotificationHelper.G2("社團", projectName, "成果報告", organizer);
+                    NotificationHelper.G2("學校社團", projectName, "成果報告", organizer);
                 }      
             }
                 
@@ -447,13 +447,13 @@ public class OFS_ClbStageReportHelper
             var projectMain = GetProjectMainData(projectID);
             if (reviewResult == "pass")
             {
-                NotificationHelper.G5( "社團", projectBasic.ProjectNameTw, "成果報告", projectMain.UserAccount);
-                NotificationHelper.F12( "社團", projectBasic.ProjectNameTw, "請款", projectMain.UserAccount);
+                NotificationHelper.G5( "學校社團", projectBasic.ProjectNameTw, "成果報告", projectMain.UserAccount);
+                NotificationHelper.F12( "學校社團", projectBasic.ProjectNameTw, "請款", projectMain.UserAccount);
 
             }
             else
             {
-                NotificationHelper.G3( "社團", projectBasic.ProjectNameTw, "成果報告",ReviewCommit, projectMain.UserAccount);
+                NotificationHelper.G3( "學校社團", projectBasic.ProjectNameTw, "成果報告",ReviewCommit, projectMain.UserAccount);
 
             }
             

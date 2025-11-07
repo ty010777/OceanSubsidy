@@ -175,9 +175,9 @@
                 <span class="text-gray mt-2">審查結果 :</span>
                 <div class="d-flex flex-column gap-2 align-items-start flex-grow-1">
                     <div class="form-check-input-group d-flex text-nowrap mt-2 align-items-center">
-                        <input id="radio-pass" class="form-check-input check-teal" type="radio" name="reviewResult" >
+                        <input id="radio-pass" class="form-check-input check-teal" type="radio" name="reviewResult" checked="">
                         <label for="radio-pass">通過</label>
-                        <input id="radio-return" class="form-check-input check-teal" type="radio" name="reviewResult" checked="">
+                        <input id="radio-return" class="form-check-input check-teal" type="radio" name="reviewResult">
                         <label for="radio-return">退回修改</label>
                     </div>
                     <span class="form-control textarea w-100" role="textbox" contenteditable="" data-placeholder="請輸入原因" aria-label="文本輸入區域" id="reviewComment"></span>
@@ -194,14 +194,60 @@
         
         // 頁面載入時自動帶入期別資料
         $(document).ready(function() {
-            // 從URL參數讀取stage，預設為1
+            // 從URL參數讀取stage
             var urlParams = new URLSearchParams(window.location.search);
-            var stage = parseInt(urlParams.get('stage')) || 1;
-            
-            loadPhaseData(stage);
+            var stageParam = urlParams.get('stage');
+
+            if (stageParam) {
+                // 如果URL有指定stage，直接使用
+                loadPhaseData(parseInt(stageParam));
+            } else {
+                // 如果URL沒有指定，自動判斷當期
+                $.ajax({
+                    url: 'SciReimbursement.aspx/GetCurrentPhase',
+                    type: 'POST',
+                    contentType: 'application/json; charset=utf-8',
+                    data: JSON.stringify({ projectID: currentProjectID }),
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.d && response.d.Success) {
+                            loadPhaseData(response.d.Phase);
+                        } else {
+                            loadPhaseData(1); // 發生錯誤時預設第一期
+                        }
+                    },
+                    error: function() {
+                        loadPhaseData(1); // 發生錯誤時預設第一期
+                    }
+                });
+            }
+
             $('#confirmReviewBtn').on('click', submitReview);
 
+            // 監聽審查結果變化，動態改變按鈕文字
+            $('input[name="reviewResult"]').on('change', function() {
+                updateConfirmButtonText();
+            });
+
+            // 初始化按鈕文字
+            updateConfirmButtonText();
         });
+
+        // 更新確認按鈕文字
+        function updateConfirmButtonText() {
+            var isPass = $('#radio-pass').is(':checked');
+            var btnText;
+
+            if (currentPhase === 1) {
+                // 第一期
+                btnText = isPass ? '確定撥款' : '確定退回';
+            } else if (currentPhase === 2) {
+                // 第二期
+                btnText = isPass ? '確定撥款及結案' : '確定退回';
+            }
+
+            $('#confirmReviewBtn').text(btnText);
+        }
         
         // 載入期別資料
         function loadPhaseData(phase) {

@@ -13,8 +13,12 @@ public class ClubDayTask : IHttpHandler
 
         try
         {
-            // 檢查所有待辦事項
+            // 1.檢查逾期補正補件 轉 逾期未補
+            CheckDeadlines();
+            // 2.檢查所有待辦事項
             CheckAllTasks();
+            // 3.檢查申請截止日前一天並發送提醒郵件
+            CheckAndSendDeadlineReminder();
 
             var response = new
             {
@@ -37,6 +41,25 @@ public class ClubDayTask : IHttpHandler
         }
     }
 
+    /// <summary>
+    /// 檢查截止日期並更新逾期專案
+    /// </summary>
+    public static void CheckDeadlines()
+    {
+        try
+        {
+            // 更新「補正補件」逾期的專案 → 「逾期未補」
+            OFS_ClubTaskHelper.UpdateExpiredProjects();
+
+            // 更新「尚未提送」逾期的專案 → 「逾期」
+            OFS_ClubTaskHelper.UpdateUnsubmittedExpiredProjects();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"檢查截止日期時發生錯誤: {ex.Message}");
+        }
+    }
+    
     /// <summary>
     /// 檢查所有專案的待辦事項
     /// </summary>
@@ -104,11 +127,11 @@ public class ClubDayTask : IHttpHandler
                 // 如果今天日期已經大於逾期日期，使用 F2（進度落後提醒），否則使用 F11（資料填報提醒）
                 if (DateTime.Today > overdueDate.Value)
                 {
-                    NotificationHelper.F2("社團", projectName, "成果報告", account, organizer);
+                    NotificationHelper.F2("學校社團", projectName, "成果報告", account, organizer);
                 }
                 else
                 {
-                    NotificationHelper.F11("社團", projectName, "成果報告", overdueDate.Value, account);
+                    NotificationHelper.F11("學校社團", projectName, "成果報告", overdueDate.Value, account);
                 }
             }
         }
@@ -127,6 +150,48 @@ public class ClubDayTask : IHttpHandler
     private static void UpdateOrInsertTask(string projectId, string taskNameEn, string taskName, bool isTodo, DateTime? overdueDate = null)
     {
         OFS_ClubTaskHelper.UpdateTaskStatus(projectId, taskNameEn, isTodo, overdueDate);
+    }
+
+    /// <summary>
+    /// 檢查申請截止日前一天並發送提醒郵件
+    /// </summary>
+    private static void CheckAndSendDeadlineReminder()
+    {
+        try
+        {
+            // 取得最新的社團補助案申請截止日期
+            DateTime? applyEndDate = OFS_ClubTaskHelper.GetLatestApplyEndDate();
+
+            if (applyEndDate.HasValue)
+            {
+                DateTime today = DateTime.Today;
+
+                // 檢查今天是否為申請截止日的前一天
+                if (applyEndDate.Value.Date == today.AddDays(1)||applyEndDate.Value.Date == today.AddDays(2)||applyEndDate.Value.Date == today.AddDays(3))
+                {
+                    // 取得所有尚未提送的專案
+                    var projectDt = OFS_ClubTaskHelper.GetUnsubmittedProjects();
+
+                    // 為每個未提送的專案發送提醒郵件
+                    foreach (System.Data.DataRow row in projectDt.Rows)
+                    {
+                        string projectId = row["ProjectID"]?.ToString();
+                        string account = row["UserAccount"]?.ToString();
+                        string projectName = row["ProjectNameTw"]?.ToString() ?? "";
+
+                        if (!string.IsNullOrEmpty(account))
+                        {
+                            // 使用 NotificationHelper.A0 發送提醒郵件
+                            NotificationHelper.A0("學校社團", projectName, applyEndDate.Value, account, "CLB");
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"檢查申請截止日提醒時發生錯誤: {ex.Message}");
+        }
     }
 
     public bool IsReusable

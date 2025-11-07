@@ -46,9 +46,6 @@ public partial class OFS_SCI_SciInprogress : System.Web.UI.MasterPage
         // 設定階段狀態的 active class
         SetActiveStep();
         SetProjectInfoToMaster();
-
-        // 檢查並顯示計畫狀態提示
-        CheckAndShowStatusAlert();
     }
     
     /// <summary>
@@ -135,55 +132,71 @@ public partial class OFS_SCI_SciInprogress : System.Web.UI.MasterPage
         // 清空現有內容
         var placeholder = phTodoItems;
         if (placeholder == null) return;
-        
+
         placeholder.Controls.Clear();
 
-        List<string> todoItems = new List<string>();
-        
-        try
+        // 檢查計畫狀態
+        if (projectMain.StatusesName == "已終止")
         {
-            // 從 OFS_TaskQueue 取得待辦事項（只顯示第一筆）
-            var dt = OFS_TaskQueueHelper.GetProjectTodoTasks(ProjectID);
-            if (dt.Rows.Count > 0)
+            // 顯示「計畫已終止」標籤
+            var statusTag = new LiteralControl("<span class=\"tag tag-light-pink\">計畫已終止</span>");
+            placeholder.Controls.Add(statusTag);
+        }
+        else if (projectMain.StatusesName == "已結案")
+        {
+            // 顯示「計畫已結案」標籤
+            var statusTag = new LiteralControl("<span class=\"tag tag-light-gray\">計畫已結案</span>");
+            placeholder.Controls.Add(statusTag);
+        }
+        else
+        {
+            // 顯示待辦事項
+            try
             {
-                var row = dt.Rows[0]; // 只取第一筆
-                string taskNameEn = row["TaskNameEn"]?.ToString();
-                string taskName = row["TaskName"]?.ToString();
-                
-                if (taskNameEn == "MonthlyReport")
+                // 從 OFS_TaskQueue 取得待辦事項（只顯示第一筆）
+                var dt = OFS_TaskQueueHelper.GetProjectTodoTasks(ProjectID);
+                if (dt.Rows.Count > 0)
                 {
-                    // 每月進度報告需要額外判斷具體月份（取最早的月份）
-                    var monthlyTodoItems = new List<string>();
-                    CheckMonthlyProgressTodo(ProjectID, monthlyTodoItems);
-                    
-                    // 只顯示第一筆月份（最早的）
-                    if (monthlyTodoItems.Count > 0)
+                    var row = dt.Rows[0]; // 只取第一筆
+                    string taskNameEn = row["TaskNameEn"]?.ToString();
+                    string taskName = row["TaskName"]?.ToString();
+
+                    string todoText = "";
+                    if (taskNameEn == "MonthlyReport")
                     {
-                        todoItems.Add(monthlyTodoItems[0]);
+                        // 每月進度報告需要額外判斷具體月份（取最早的月份）
+                        var monthlyTodoItems = new List<string>();
+                        CheckMonthlyProgressTodo(ProjectID, monthlyTodoItems);
+
+                        // 只顯示第一筆月份（最早的）
+                        if (monthlyTodoItems.Count > 0)
+                        {
+                            todoText = monthlyTodoItems[0];
+                        }
+                    }
+                    else
+                    {
+                        todoText = $"待辦事項:{taskName}";
+                    }
+
+                    // 建立待辦事項標籤
+                    if (!string.IsNullOrEmpty(todoText))
+                    {
+                        var span = new LiteralControl("<span class=\"tag tag-pale-green\">");
+                        var literal = new Literal();
+                        literal.Text = todoText;
+                        var closeSpan = new LiteralControl("</span>");
+
+                        placeholder.Controls.Add(span);
+                        placeholder.Controls.Add(literal);
+                        placeholder.Controls.Add(closeSpan);
                     }
                 }
-                else
-                {
-                    todoItems.Add($"待辦事項:{taskName}");
-                }
             }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"取得待辦事項時發生錯誤: {ex.Message}");
-        }
-
-        // 為每個代辦事項建立獨立的 span 控制項
-        foreach (string item in todoItems)
-        {
-            var span = new LiteralControl("<span class=\"tag tag-pale-green\">");
-            var literal = new Literal();
-            literal.Text = item;
-            var closeSpan = new LiteralControl("</span>");
-            
-            placeholder.Controls.Add(span);
-            placeholder.Controls.Add(literal);
-            placeholder.Controls.Add(closeSpan);
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"取得待辦事項時發生錯誤: {ex.Message}");
+            }
         }
     }
 
@@ -256,47 +269,6 @@ public partial class OFS_SCI_SciInprogress : System.Web.UI.MasterPage
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"檢查每月進度代辦事項時發生錯誤: {ex.Message}");
-        }
-    }
-
-    /// <summary>
-    /// 檢查並顯示計畫狀態提示
-    /// </summary>
-    private void CheckAndShowStatusAlert()
-    {
-        try
-        {
-            if (string.IsNullOrEmpty(ProjectID))
-            {
-                return;
-            }
-
-            // 從資料庫取得計畫主資料
-            var projectMain = OFS_SciApplicationHelper.getVersionByProjectID(ProjectID);
-
-            if (projectMain == null)
-            {
-                return;
-            }
-
-            // 檢查 StatusesName 並顯示對應提示
-            if (!string.IsNullOrEmpty(projectMain.StatusesName))
-            {
-                if (projectMain.StatusesName == "已終止")
-                {
-                    pnlStatusAlert.Visible = true;
-                    lblStatusMessage.Text = "計畫已終止";
-                }
-                else if (projectMain.StatusesName == "已結案")
-                {
-                    pnlStatusAlert.Visible = true;
-                    lblStatusMessage.Text = "計畫已結案";
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"檢查計畫狀態提示時發生錯誤: {ex.Message}");
         }
     }
 

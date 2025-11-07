@@ -625,11 +625,29 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                     db.Parameters.Add("@Stage", stage);
 
                     DataTable dt = db.GetTable();
+
+                    // 用於生成委員代號的計數器
+                    int reviewerIndex = 0;
+
                     foreach (DataRow row in dt.Rows)
                     {
                         int examVersion = Convert.ToInt32(row["ExamVersion"]);
                         string filePath = row["ReviewFilePath"]?.ToString() ?? "";
-                        string reviewer = includeReviewer ? (row["Reviewer"]?.ToString() ?? "") : "";
+                        string reviewer = "";
+
+                        if (includeReviewer)
+                        {
+                            // 主管單位：顯示真實姓名
+                            reviewer = row["Reviewer"]?.ToString() ?? "";
+                        }
+                        else
+                        {
+                            // 非主管單位：顯示代號（委員A、委員B、委員C...）
+                            char reviewerLetter = (char)('A' + reviewerIndex);
+                            reviewer = $"委員{reviewerLetter}";
+                            reviewerIndex++;
+                        }
+
                         bool isSubmit = Convert.ToInt32(row["IsSubmit"]) == 1;
 
                         result.Add(new ReviewFileInfo
@@ -669,6 +687,53 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
             public string Email { get; set; }
             public string Name { get; set; }
             public string Url { get; set; }
+        }
+
+        /// <summary>
+        /// 取得當前應顯示的期別（1=期中報告 或 2=期末報告）
+        /// 邏輯：如果第一期（期中報告）審查狀態為「通過」，返回第二期；否則返回第一期
+        /// </summary>
+        /// <param name="projectID">專案ID</param>
+        /// <returns>當前期別（1 或 2）</returns>
+        public static int GetCurrentPhase(string projectID)
+        {
+            if (string.IsNullOrEmpty(projectID))
+                return 1;
+
+            using (DbHelper db = new DbHelper())
+            {
+                try
+                {
+                    db.CommandText = @"
+                        SELECT TOP(1) Status
+                        FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_StageExam]
+                        WHERE ProjectID = @ProjectID
+                          AND Stage = 1
+                        ORDER BY ExamVersion DESC";
+
+                    db.Parameters.Clear();
+                    db.Parameters.Add("@ProjectID", projectID);
+
+                    DataTable dt = db.GetTable();
+
+                    // 如果第一期（期中報告）狀態為「通過」，返回第二期（期末報告）；否則返回第一期
+                    if (dt.Rows.Count > 0 && dt.Rows[0]["Status"] != DBNull.Value)
+                    {
+                        string status = dt.Rows[0]["Status"].ToString();
+                        if (status == "通過")
+                        {
+                            return 2;
+                        }
+                    }
+
+                    return 1;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"取得當前期別時發生錯誤: {ex.Message}");
+                    return 1;
+                }
+            }
         }
     }
 }

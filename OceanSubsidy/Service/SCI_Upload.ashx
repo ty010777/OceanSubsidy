@@ -34,8 +34,14 @@ public class SCI_Upload : IHttpHandler
                 case "uploadtechdiagram":
                     HandleTechDiagramUpload(context);
                     break;
+                case "uploadbankbook":
+                    HandleBankBookUpload(context);
+                    break;
+                case "deletebankbook":
+                    HandleBankBookDelete(context);
+                    break;
                 default:
-                    context.Response.Write("{\"success\":false,\"message\":\"Invalid action. Use 'upload', 'delete', or 'uploadTechDiagram'.\"}");
+                    context.Response.Write("{\"success\":false,\"message\":\"Invalid action. Use 'upload', 'delete', 'uploadTechDiagram', 'uploadBankBook', or 'deleteBankBook'.\"}");
                     break;
             }
         }
@@ -413,6 +419,89 @@ public class SCI_Upload : IHttpHandler
         catch (Exception ex)
         {
             throw new Exception($"儲存檔案資訊失敗：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 處理存摺檔案上傳
+    /// </summary>
+    private void HandleBankBookUpload(HttpContext context)
+    {
+        try
+        {
+            string token = context.Request.Form["token"];
+
+            if (string.IsNullOrEmpty(token))
+            {
+                context.Response.Write("{\"success\":false,\"message\":\"Token不能為空\"}");
+                return;
+            }
+
+            if (context.Request.Files.Count == 0 || context.Request.Files[0] == null)
+            {
+                context.Response.Write("{\"success\":false,\"message\":\"請選擇要上傳的檔案\"}");
+                return;
+            }
+
+            HttpPostedFile uploadedFile = context.Request.Files[0];
+
+            // 驗證檔案類型
+            string fileExtension = Path.GetExtension(uploadedFile.FileName).ToLower();
+            string[] allowedExtensions = { ".jpg", ".jpeg", ".png" };
+            if (!allowedExtensions.Contains(fileExtension))
+            {
+                context.Response.Write("{\"success\":false,\"message\":\"僅支援 JPG/JPEG/PNG 格式的圖片檔案\"}");
+                return;
+            }
+
+            // 驗證檔案大小 (10MB)
+            if (uploadedFile.ContentLength > 10 * 1024 * 1024)
+            {
+                context.Response.Write("{\"success\":false,\"message\":\"檔案大小不能超過 10MB\"}");
+                return;
+            }
+
+            // 使用 Helper 方法儲存檔案
+            string relativePath = OFS_SciExamReviewHelper.SaveBankBookFile(token, uploadedFile);
+            string fileName = Path.GetFileName(relativePath);
+
+            // 跳脫 JSON 字串中的特殊字元
+            string escapedFileName = EscapeJsonString(fileName);
+            string escapedRelativePath = EscapeJsonString(relativePath);
+
+            context.Response.Write($"{{\"success\":true,\"message\":\"檔案上傳成功\",\"fileName\":\"{escapedFileName}\",\"relativePath\":\"{escapedRelativePath}\"}}");
+        }
+        catch (Exception ex)
+        {
+            string escapedMessage = EscapeJsonString(ex.Message);
+            context.Response.Write($"{{\"success\":false,\"message\":\"檔案上傳失敗：{escapedMessage}\"}}");
+        }
+    }
+
+    /// <summary>
+    /// 處理存摺檔案刪除（僅清除資料庫記錄）
+    /// </summary>
+    private void HandleBankBookDelete(HttpContext context)
+    {
+        try
+        {
+            string token = context.Request.Form["token"];
+
+            if (string.IsNullOrEmpty(token))
+            {
+                context.Response.Write("{\"success\":false,\"message\":\"Token不能為空\"}");
+                return;
+            }
+
+            // 使用 Helper 方法刪除檔案記錄
+            OFS_SciExamReviewHelper.DeleteBankBookFile(token);
+
+            context.Response.Write("{\"success\":true,\"message\":\"檔案刪除成功\"}");
+        }
+        catch (Exception ex)
+        {
+            string escapedMessage = EscapeJsonString(ex.Message);
+            context.Response.Write($"{{\"success\":false,\"message\":\"檔案刪除失敗：{escapedMessage}\"}}");
         }
     }
 

@@ -952,7 +952,8 @@ public class OFS_ClbApplicationHelper
                     updated_at = row["updated_at"] != DBNull.Value ? Convert.ToDateTime(row["updated_at"]) : (DateTime?)null,
                     isWithdrawal = row["isWithdrawal"] != DBNull.Value ? Convert.ToBoolean(row["isWithdrawal"]) : (bool?)null,
                     isExist = row["isExist"] != DBNull.Value ? Convert.ToBoolean(row["isExist"]) : (bool?)null,
-                    IsProjChanged = row["IsProjChanged"] != DBNull.Value ? Convert.ToInt32(row["IsProjChanged"]) : 0
+                    IsProjChanged = row["IsProjChanged"] != DBNull.Value ? Convert.ToInt32(row["IsProjChanged"]) : 0,
+                    ApplyTime = row["ApplyTime"] != DBNull.Value ? Convert.ToDateTime(row["ApplyTime"]) : (DateTime?)null
                 };
             }
 
@@ -1214,10 +1215,11 @@ public class OFS_ClbApplicationHelper
         {
             DbHelper db = new DbHelper();
             db.CommandText = @"
-                UPDATE [OCA_OceanSubsidy].[dbo].[OFS_CLB_Project_Main] 
+                UPDATE [OCA_OceanSubsidy].[dbo].[OFS_CLB_Project_Main]
                 SET [Statuses] = @Statuses,
                     [StatusesName] = @StatusesName,
                     [CurrentStep] = @CurrentStep,
+                    [ApplyTime] = GETDATE(),
                     [updated_at] = GETDATE()
                 WHERE [ProjectID] = @ProjectID";
 

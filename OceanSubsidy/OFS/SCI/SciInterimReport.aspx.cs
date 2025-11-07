@@ -220,11 +220,25 @@ public partial class OFS_SCI_SciInterimReport : System.Web.UI.Page
         }
     }
     [System.Web.Services.WebMethod]
+    public static object GetCurrentPhase(string projectID)
+    {
+        try
+        {
+            int currentPhase = OFS_SciInterimReportHelper.GetCurrentPhase(projectID);
+            return new { Success = true, Phase = currentPhase };
+        }
+        catch (Exception ex)
+        {
+            return new { Success = false, Message = "系統錯誤: " + ex.Message };
+        }
+    }
+
+    [System.Web.Services.WebMethod]
     public static object GetUploadedFiles(string projectID, int reportType = 1)
     {
         try
         {
-            
+
             var files = OFS_SciInterimReportHelper.GetUploadedFilesList(projectID, reportType);
             return new { Success = true, Files = files };
         }

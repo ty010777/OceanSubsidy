@@ -3,6 +3,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     initApplicationStepSwitch();
     initDownloadPlan();
+    checkPlanChangeStatus();
     initProjectChangeModal();
     initChangeReviewPanel();
     initPlanStopModal();
@@ -76,6 +77,47 @@ function initApplicationStepSwitch() {
 
     // 初始化到儲存的頁簽或第一個步驟
     switchToApplicationStep(initialStep);
+}
+
+/**
+ * 檢查計畫變更狀態並更新按鈕
+ */
+function checkPlanChangeStatus() {
+    const projectID = getProjectIDFromUrl();
+    const btnPlanChange = document.getElementById('btnPlanChange');
+
+    if (!projectID || !btnPlanChange) {
+        return;
+    }
+
+    // 呼叫 WebMethod 取得計畫變更狀態
+    $.ajax({
+        type: 'POST',
+        url: 'SciInprogress_Approved.aspx/GetPlanChangeStatus',
+        data: JSON.stringify({ projectID: projectID }),
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        success: function(response) {
+            const data = response.d;
+
+            if (data.success && data.isProjChanged != 0) {
+                // IsProjChanged != 0 表示計畫變更申請中
+                // 修改按鈕文字和樣式
+                btnPlanChange.innerHTML = '計畫變更申請中';
+                btnPlanChange.classList.remove('btn-teal-dark');
+                btnPlanChange.classList.add('btn', 'text-teal-dark');
+
+                // 移除 modal 觸發屬性，禁用按鈕
+                btnPlanChange.removeAttribute('data-bs-toggle');
+                btnPlanChange.removeAttribute('data-bs-target');
+                btnPlanChange.style.cursor = 'not-allowed';
+                btnPlanChange.disabled = true;
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error checking plan change status:', error);
+        }
+    });
 }
 
 /**

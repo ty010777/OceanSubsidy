@@ -189,7 +189,7 @@ $(document).ready(function() {
                 const row = `
                     <tr class="${rowClass}">
                         <td data-th="年度:">${item.Year || ''}</td>
-                        <td data-th="類別:">${item.Category || ''}</td>
+                        <td data-th="類別:">${this.getCategoryName(item.Category)}</td>
                         <td data-th="計畫編號:" style="text-align: left;" nowrap>${item.ProjectID || ''}</td>
                         <td data-th="計畫名稱:" style="text-align: left;">
                             ${this.generateProjectNameLink(item)}
@@ -206,6 +206,20 @@ $(document).ready(function() {
                 `;
                 $tableBody.append(row);
             });
+        },
+
+        // 將類別代碼轉換為中文名稱
+        getCategoryName: function(category) {
+            const categoryMap = {
+                'SCI': '科專',
+                'CUL': '文化',
+                'EDC': '學校民間',
+                'CLB': '學校社團',
+                'MUL': '多元',
+                'LIT': '素養',
+                'ACC': '無障礙'
+            };
+            return categoryMap[category] || category || '';
         },
 
         // 生成計畫名稱連結

@@ -600,4 +600,49 @@ public class OFS_SciReimbursementHelper
         db.ExecuteNonQuery();
     }
 
+    /// <summary>
+    /// 取得當前應顯示的期別（1 或 2）
+    /// 邏輯：如果第一期請款狀態為「通過」，返回第二期；否則返回第一期
+    /// </summary>
+    /// <param name="projectID">專案ID</param>
+    /// <returns>當前期別（1 或 2）</returns>
+    public static int GetCurrentPhase(string projectID)
+    {
+        if (string.IsNullOrEmpty(projectID))
+            return 1;
+
+        DbHelper db = new DbHelper();
+        try
+        {
+            db.CommandText = @"
+                SELECT TOP(1) Status
+                FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Payment]
+                WHERE ProjectID = @ProjectID
+                  AND Stage = 1
+                ORDER BY ID DESC";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@ProjectID", projectID);
+
+            DataTable dt = db.GetTable();
+
+            // 如果第一期狀態為「通過」，返回第二期；否則返回第一期
+            if (dt.Rows.Count > 0 && dt.Rows[0]["Status"] != DBNull.Value)
+            {
+                string status = dt.Rows[0]["Status"].ToString();
+                if (status == "通過")
+                {
+                    return 2;
+                }
+            }
+
+            return 1;
+        }
+        finally
+        {
+            if (db != null)
+                db.Dispose();
+        }
+    }
+
 }

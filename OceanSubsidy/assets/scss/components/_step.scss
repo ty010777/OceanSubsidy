@@ -226,10 +226,10 @@ $app-step-status-size: 14px;
 .step-line-wrapper {
     display: flex;
     gap: 80px;
-    position: sticky;
-    top: 84px;
-    z-index: 15;
     background-color: $neutral-200;
+    position: sticky;
+    top: 90px;
+    z-index: 15;
 }
 .step-line {
     flex: 1;

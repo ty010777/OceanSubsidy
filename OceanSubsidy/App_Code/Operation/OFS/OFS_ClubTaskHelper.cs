@@ -227,4 +227,114 @@ public class OFS_ClubTaskHelper
             db.Dispose();
         }
     }
+
+    /// <summary>
+    /// 更新逾期專案狀態（補正補件 → 逾期未補）
+    /// </summary>
+    public static void UpdateExpiredProjects()
+    {
+        DbHelper db = new DbHelper();
+        try
+        {
+            db.CommandText = @"
+                UPDATE [OCA_OceanSubsidy].[dbo].[OFS_CLB_Project_Main]
+                SET [StatusesName] = '逾期未補',
+                    [updated_at] = GETDATE()
+                WHERE [StatusesName] = '補正補件'
+                  AND [ExpirationDate] IS NOT NULL
+                  AND [ExpirationDate] < GETDATE()
+                  AND [isExist] = 1";
+
+            db.ExecuteNonQuery();
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 取得最新的社團補助案申請截止日期
+    /// </summary>
+    /// <returns>申請截止日期，如果沒有則回傳 null</returns>
+    public static DateTime? GetLatestApplyEndDate()
+    {
+        DbHelper db = new DbHelper();
+        try
+        {
+            db.CommandText = @"
+                SELECT TOP(1) ApplyEndDate
+                FROM [OCA_OceanSubsidy].[dbo].[OFS_GrantType]
+                WHERE TypeCode = 'CLB'
+                ORDER BY TypeID DESC";
+
+            var dt = db.GetTable();
+
+            if (dt.Rows.Count > 0 && dt.Rows[0]["ApplyEndDate"] != DBNull.Value)
+            {
+                return Convert.ToDateTime(dt.Rows[0]["ApplyEndDate"]);
+            }
+
+            return null;
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 更新尚未提送的逾期專案狀態（尚未提送 → 逾期）
+    /// </summary>
+    public static void UpdateUnsubmittedExpiredProjects()
+    {
+        // 使用共用方法取得申請截止日期
+        DateTime? applyEndDate = GetLatestApplyEndDate();
+
+        if (applyEndDate.HasValue && DateTime.Now > applyEndDate.Value)
+        {
+            DbHelper db = new DbHelper();
+            try
+            {
+                db.CommandText = @"
+                    UPDATE [OCA_OceanSubsidy].[dbo].[OFS_CLB_Project_Main]
+                    SET [StatusesName] = '逾期',
+                        [updated_at] = GETDATE()
+                    WHERE [Statuses] = '尚未提送'
+                      AND [isExist] = 1";
+
+                db.ExecuteNonQuery();
+            }
+            finally
+            {
+                db.Dispose();
+            }
+        }
+    }
+
+    /// <summary>
+    /// 取得所有尚未提送的專案（Statuses = '尚未提送' 且 StatusesName = '編輯中'）
+    /// </summary>
+    /// <returns>未提送專案的資料表（包含 ProjectID, UserAccount, ProjectNameTw）</returns>
+    public static System.Data.DataTable GetUnsubmittedProjects()
+    {
+        DbHelper db = new DbHelper();
+        try
+        {
+            db.CommandText = @"
+                SELECT PM.ProjectID, PM.UserAccount, AB.ProjectNameTw
+                FROM [OCA_OceanSubsidy].[dbo].[OFS_CLB_Project_Main] PM
+                LEFT JOIN [OCA_OceanSubsidy].[dbo].[OFS_CLB_Application_Basic] AB
+                  ON PM.ProjectID = AB.ProjectID
+                WHERE PM.Statuses = '尚未提送'
+                  AND PM.StatusesName = '編輯中'
+                  AND PM.isExist = 1";
+
+            return db.GetTable();
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
 }

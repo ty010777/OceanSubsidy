@@ -11,6 +11,7 @@
 .anchor-menu {
     position: relative;
     right: -18px;
+    z-index: 10;
     background-color: $green-light;
     padding: 12px 10px;
     border-radius: 50px 0 0 50px;
@@ -44,4 +45,9 @@
         border-width: 0 18px 10px 0;
         border-color: transparent transparent darken($green-light, 20%) transparent;
     }
+}
+
+//針對PG的計畫執行頁tab內容區塊，錨點選單位置
+.data-view-section .tab-content:has(.anchor-wrapper) .anchor-wrapper {
+    top: 270px;
 }

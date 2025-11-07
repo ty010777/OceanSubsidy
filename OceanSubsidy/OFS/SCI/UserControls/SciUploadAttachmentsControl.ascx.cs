@@ -5,6 +5,7 @@ using System.Linq;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using GS.App;
 using GS.OCA_OceanSubsidy.Entity;
 using GS.OCA_OceanSubsidy.Model.OFS;
 using GS.OCA_OceanSubsidy.Operation.OFS;
@@ -49,6 +50,8 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
                 DetermineFormType(projectID);
                 LoadExistingData(projectID);
 
+                // 載入申請送件時間
+                LoadApplyTime(projectID);
 
                 // 載入變更說明控制項
                 tab5_ucChangeDescription.LoadData(projectID,IsViewMode );
@@ -179,7 +182,7 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
         {
             // 載入附件上傳狀態
             var attachmentList = OFS_SciUploadAttachmentsHelper.GetAttachmentsByProjectID(projectID);
-            
+
             // 更新頁面上的附件狀態顯示
             UpdateAttachmentStatus(attachmentList);
         }
@@ -189,7 +192,32 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
         }
     }
 
+    /// <summary>
+    /// 載入申請送件時間
+    /// </summary>
+    private void LoadApplyTime(string projectID)
+    {
+        try
+        {
+            // 從 OFS_SCI_Project_Main 取得 ApplyTime
+            var projectMain = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
 
+            if (projectMain != null && projectMain.ApplyTime.HasValue)
+            {
+                lblApplyTime.Text = DateTimeHelper.ToMinguoDateTime(projectMain.ApplyTime.Value);
+                divApplyTime.Visible = true;
+            }
+            else
+            {
+                divApplyTime.Visible = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "載入申請送件時間時發生錯誤");
+            divApplyTime.Visible = false;
+        }
+    }
 
     /// <summary>
     /// 套用檢視模式
@@ -640,6 +668,9 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
 
                     NotificationHelper.A2("科專", ProjectName,  organizer);
 
+                    // 寄送通知信給申請者
+                    NotificationHelper.A3("科專", ProjectName, "修正計畫書提送", DateTime.Now, projectData.UserAccount);
+
                 }else if (projectData?.IsProjChanged == 1)//計畫變更
                 {
                     tab5_ucChangeDescription.SaveChangeDescription(ProjectID);
@@ -710,8 +741,8 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
                         // 寄送通知信
                         NotificationHelper.G2("科專", projectName, "計畫變更申請", organizer);
                     }
-                    
-                    
+
+
                 }
                 else //申請階段
                 {
@@ -724,6 +755,15 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
                     MergePdfFiles(ProjectID, orgCategory,ProjectName, "核定版");
                     NotificationHelper.A1("科專", ProjectName,  "SCI");
 
+                    // 寄送通知信給申請者
+                    // 判斷提送類型：如果之前狀態是「補正補件」則為資格審查補件,否則為申請送件
+                    string submitKind = (currentStatusesName == "補正補件") ? "補正補件" : "申請送件";
+                    string userAccount = projectData?.UserAccount ?? "";
+                    if (!string.IsNullOrEmpty(userAccount))
+                    {
+                        NotificationHelper.A3("科專", ProjectName, submitKind, DateTime.Now, userAccount);
+                    }
+
                 }
                 OFS_SciSnapshotHelper.CreateSnapshot(ProjectID);
                 
@@ -735,7 +775,9 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
 
             // 判斷當前頁面是否為 SciInprogress_Approved.aspx
             string currentPage = System.IO.Path.GetFileName(Request.Url.AbsolutePath);
-            string redirectUrl ="/OFS/ApplicationChecklist.aspx";
+
+            // 使用 ASP.NET 內建方法處理虛擬路徑
+            string redirectUrl = ResolveUrl("~/OFS/ApplicationChecklist.aspx");
 
             // 顯示成功訊息（如果有 URL 則 1 秒後跳轉）
             ShowSuccessMessage("提送成功", redirectUrl);

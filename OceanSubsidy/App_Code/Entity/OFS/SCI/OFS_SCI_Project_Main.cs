@@ -1104,6 +1104,41 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
         
+        protected DateTime? _ApplyTime = null;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("ApplyTime", "ApplyTime", DataSource.TABLE, "", false)]
+        public virtual DateTime? ApplyTime
+        {
+            get
+            {
+                return _ApplyTime;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_ApplyTime == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_ApplyTime.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("ApplyTime") == -1)
+                    {
+                        UPDATE_COLUMN.Add("ApplyTime");
+                    }
+                    _ApplyTime = value;
+                }
+            }
+        }
+        
         protected DateTime? _updated_at = DateTime.Now;
         ///<summary>
         ///  ()

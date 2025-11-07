@@ -15,6 +15,7 @@ using NPOI.SS.Formula.Functions;
 using Org.BouncyCastle.Asn1.X509.SigI;
 using GS.App;
 using GS.Data;
+using If = System.Activities.Statements.If;
 
 public partial class OFS_ApplicationChecklist : System.Web.UI.Page
 {
@@ -596,7 +597,7 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
                 LogCaseOperation(projectId, "撤案", reason, beforeStatus, "已撤案");
 
                 // 發送撤案通知
-                NotificationHelper.Z1("社團", "CLB", projectBasic.ProjectNameTw, reason,
+                NotificationHelper.Z1("學校社團", "CLB", projectBasic.ProjectNameTw, reason,
                     projectMain.UserAccount, organizerUserId);
 
             }
@@ -773,7 +774,10 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
         {
             string projectId = hdnDeleteProjectId.Value;
             string reason = txtDeleteReason.Text.Trim();
-
+            string projectName = "";
+            string userAccount = "";
+            string category = "";
+            string typeCode = "";
             if (string.IsNullOrEmpty(reason))
             {
                 ShowMessage("請輸入刪除原因", false);
@@ -786,14 +790,29 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
                 return;
             }else if (projectId.Contains("SCI"))
             {
+         
+                category = "科專";
+                typeCode = "SCI";
+                var projectMain = OFS_SciApplicationHelper.getVersionByProjectID(projectId);
+                var projectBasic = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectId);
+                projectName = projectBasic.ProjectNameTw;
+                userAccount = projectMain.UserAccount;
                 // 取得操作前的狀態
                 string beforeStatus = GetProjectCurrentStatus(projectId);
                 ApplicationChecklistHelper.UpdateExistsStatus(projectId, false);
+                
                 // 記錄操作到案件歷程
                 LogCaseOperation(projectId, "刪除", reason, beforeStatus, "已刪除");
             }
             else if (projectId.Contains("CUL"))
             {
+                category = "文化";
+                typeCode = "CUL";
+                int projectIntId = OFS_CulProjectHelper.getID(projectId);
+                var project = OFS_CulProjectHelper.get(projectIntId);
+                projectName = project.ProjectName;
+                userAccount = project.UserAccount;
+                // 取得操作前的狀態
                 string beforeStatus = GetProjectCurrentStatus(projectId);
                 OFS_CulProjectHelper.updateExistsStatus(projectId, false);
 
@@ -801,6 +820,13 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             }
             else if (projectId.Contains("EDC"))
             {
+                category = "學校民間";
+                typeCode = "EDC";
+                int projectIntId = OFS_EdcProjectHelper.getID(projectId);
+                var project = OFS_EdcProjectHelper.get(projectIntId);
+                projectName = project.ProjectName;
+                userAccount = project.UserAccount;
+                // 取得操作前的狀態
                 string beforeStatus = GetProjectCurrentStatus(projectId);
                 OFS_EdcProjectHelper.updateExistsStatus(projectId, false);
 
@@ -808,6 +834,12 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             }
             else if (projectId.Contains("CLB"))
             {
+                category = "學校社團";
+                typeCode = "CLB";
+                var projectMain = OFS_ClbApplicationHelper.GetProjectMainData(projectId);
+                var projectBasic = OFS_ClbApplicationHelper.GetBasicData(projectId);
+                projectName = projectBasic.ProjectNameTw;
+                userAccount = projectMain.UserAccount;
                 // 取得操作前的狀態
                 string beforeStatus = GetProjectCurrentStatus(projectId);
                 ApplicationChecklistHelper.CLB_UpdateExistsStatus(projectId, false, reason);
@@ -816,6 +848,13 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             }
             else if (projectId.Contains("MUL"))
             {
+                category = "多元";
+                typeCode = "MUL";
+                int projectIntId = OFS_MulProjectHelper.getID(projectId);
+                var project = OFS_MulProjectHelper.get(projectIntId);
+                projectName = project.ProjectName;
+                userAccount = project.UserAccount;
+                // 取得操作前的狀態
                 string beforeStatus = GetProjectCurrentStatus(projectId);
                 OFS_MulProjectHelper.updateExistsStatus(projectId, false);
 
@@ -823,6 +862,13 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             }
             else if (projectId.Contains("LIT"))
             {
+                category = "素養";
+                typeCode = "LIT";
+                int projectIntId = OFS_LitProjectHelper.getID(projectId);
+                var project = OFS_LitProjectHelper.get(projectIntId);
+                projectName = project.ProjectName;
+                userAccount = project.UserAccount;
+                // 取得操作前的狀態
                 string beforeStatus = GetProjectCurrentStatus(projectId);
                 OFS_LitProjectHelper.updateExistsStatus(projectId, false);
 
@@ -830,6 +876,13 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             }
             else if (projectId.Contains("ACC"))
             {
+                category = "無障礙";
+                typeCode = "ACC";
+                int projectIntId = OFS_AccProjectHelper.getID(projectId);
+                var project = OFS_AccProjectHelper.get(projectIntId);
+                projectName = project.ProjectName;
+                userAccount = project.UserAccount;
+                // 取得操作前的狀態
                 string beforeStatus = GetProjectCurrentStatus(projectId);
                 OFS_AccProjectHelper.updateExistsStatus(projectId, false);
 
@@ -839,8 +892,9 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             {
                 // 其他不符合的情況
             }
-
-
+            
+            // 發送刪除通知
+            NotificationHelper.Z3(category, typeCode, projectName, reason, userAccount);
 
             // 清空輸入欄位
             txtDeleteReason.Text = "";
@@ -955,7 +1009,7 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
                 LogCaseOperation(projectId, "恢復案件", reason, beforeStatus, afterStatus);
 
                 // 發送恢復案件通知
-                NotificationHelper.Z2("社團", "CLB", projectBasic.ProjectNameTw, reason,
+                NotificationHelper.Z2("學校社團", "CLB", projectBasic.ProjectNameTw, reason,
                     projectMain.UserAccount, organizerUserId);
             }
             else if (projectId.Contains("CUL"))
@@ -1693,11 +1747,25 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
 
             // 判斷專案類型
             string projectType = GetProjectTypeFromId(projectId);
+            string projectName = "";
             if (string.IsNullOrEmpty(projectType))
             {
                 return new { success = false, message = "無法識別專案類型" };
             }
-
+            if(projectType.Contains("SCI") )
+            {
+                var projectBasic = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectId);
+                 projectName = projectBasic != null ? projectBasic.ProjectNameTw : "";
+            }else if(projectType.Contains("CUL"))
+            {
+                var projectIdInt = OFS_CulProjectHelper.getID(projectId);
+                var projectBasic = OFS_CulProjectHelper.get(projectIdInt);
+                 projectName = projectBasic != null ? projectBasic.ProjectName : "";
+            }
+            else
+            {
+                return new { success = false, message = "目前僅支援科專及文化專案" };
+            }
             string uploadFolder = HttpContext.Current.Server.MapPath($"~/UploadFiles/OFS/{projectType}/{projectId}/TechReviewFiles/");
 
             if (Directory.Exists(uploadFolder))
@@ -1710,18 +1778,20 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
                     string fileName = Path.GetFileName(filePath);
 
                     // 從檔案名稱中提取原始檔案資訊
-                    string displayName = ExtractOriginalFileName(fileName);
+                    string displayName = ExtractOriginalFileName(projectId,fileName);
 
                     return new {
                         success = true,
                         hasFile = true,
+                        ProjectID = projectId,
+                        ProjectName = projectName,
                         fileName = displayName,
                         savedFileName = fileName
                     };
                 }
             }
 
-            return new { success = true, hasFile = false };
+            return new { success = true, hasFile = false,ProjectID = projectId, ProjectName = projectName};
         }
         catch (Exception ex)
         {
@@ -1732,12 +1802,12 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
     /// <summary>
     /// 從儲存的檔案名稱中提取顯示用的檔案名稱
     /// </summary>
-    private static string ExtractOriginalFileName(string savedFileName)
+    private static string ExtractOriginalFileName(string projectId, string savedFileName)
     {
         // 儲存格式: {projectId}_TechReview_{timeStamp}{extension}
         // 這裡簡化處理，只返回副檔名資訊
         string extension = Path.GetExtension(savedFileName);
-        return $"技術審查檔案{extension}";
+        return $"{projectId}_技術審查簡報{extension}";
     }
 
 

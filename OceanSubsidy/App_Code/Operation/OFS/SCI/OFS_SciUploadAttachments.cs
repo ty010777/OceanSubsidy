@@ -62,6 +62,7 @@ public class OFS_SciUploadAttachmentsHelper
                 SET Form5Status = @Form5Status,
                     CurrentStep = @CurrentStep,
                     Statuses = @Statuses,
+                    ApplyTime = GETDATE(),
                     StatusesName = @StatusesName,
                     updated_at = GETDATE()
                 WHERE ProjectID = @ProjectID";

@@ -176,7 +176,7 @@ public partial class OFS_CLB_Review_ClbApplicationReview : System.Web.UI.Page
             //通過,不通過之寄信  在列表執行
             if (reviewResult == "return")
             {
-                NotificationHelper.B2("社團", projectBasic.ProjectNameTw, projectBasic.Year.ToString(), reviewNotes, returnDate,
+                NotificationHelper.B2("學校社團", projectBasic.ProjectNameTw, projectBasic.Year.ToString(), reviewNotes, returnDate,
                     projectMain.UserAccount);
             }
            

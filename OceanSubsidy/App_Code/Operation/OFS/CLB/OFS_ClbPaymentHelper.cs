@@ -463,7 +463,7 @@ public class OFS_ClbPaymentHelper
                     int? organizer = SysUserHelper.GetUserIDByAccount(supervisoryAccount);
 
                     // 寄送通知信
-                    NotificationHelper.G2("社團", projectName, "請款", organizer);
+                    NotificationHelper.G2("學校社團", projectName, "請款", organizer);
                 }            
             }
 
@@ -669,13 +669,13 @@ public class OFS_ClbPaymentHelper
             {
 
                 // 寄送通知信
-                NotificationHelper.G3("社團", projectName, "請款", reviewComment,UserAccount);
+                NotificationHelper.G3("學校社團", projectName, "請款", reviewComment,UserAccount);
 
             }
             else
             {
                 // 寄送通知信
-                NotificationHelper.G6("社團", projectName, "請款",actualPaidAmount, reviewComment,UserAccount);
+                NotificationHelper.G6("學校社團", projectName, "請款",actualPaidAmount, reviewComment,UserAccount);
             }
 
 

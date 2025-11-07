@@ -329,7 +329,21 @@ public class NotificationHelper
             account
         );
     }
-
+    public static void Z3(string category, string type, string projectName,  string reson, string account)
+    {
+        
+        toSupervisor(
+            "［海洋委員會］補助申請案 已刪除案件通知",
+            $"您好：<br><br> {category}類計畫「{projectName}」申請案件已刪除。<br>刪除原因：{reson}",
+            type
+        );
+        toSomeOne(
+            "［海洋委員會］補助申請案 已刪除案件通知",
+            $"您好：<br><br> {category}類計畫「{projectName}」申請案件已刪除。<br>刪除原因：{reson}",
+            account
+        );
+      
+    }
     private static string getFooter()
     {
         var url = ConfigurationManager.AppSettings["Host"] + ConfigurationManager.AppSettings["AppRootPath"];

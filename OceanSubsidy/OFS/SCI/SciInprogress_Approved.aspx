@@ -29,7 +29,7 @@
         <!--  計畫變更紀錄 下載核定計畫書 -->
         <div class="block rounded-top-4 py-4 d-flex justify-content-between" style="position: sticky; top: 180px; z-index: 15;">
             <div>
-                <button class="btn btn-teal-dark" type="button" data-bs-toggle="modal" data-bs-target="#changePlanModal">
+                <button id="btnPlanChange" class="btn btn-teal-dark" type="button" data-bs-toggle="modal" data-bs-target="#changePlanModal">
                     <i class="fas fa-exchange"></i>
                     計畫變更申請
                 </button>

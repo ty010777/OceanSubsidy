@@ -15,16 +15,18 @@ public class ScienceDayTask : IHttpHandler
         {
             //1.檢查逾期補正補件 轉 逾期未補
             CheckDeadlines();
-            //2.檢查所有待辦事項 
-            CheckAllTasks(); 
-            
+            //2.檢查所有待辦事項
+            CheckAllTasks();
+            //3.檢查申請截止日前一天並發送提醒郵件
+            CheckAndSendDeadlineReminder();
+
             var response = new
             {
                 success = true,
                 executedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
                 // result = result
             };
-            
+
             context.Response.Write(JsonConvert.SerializeObject(response));
         }
         catch (Exception ex)
@@ -48,7 +50,11 @@ public class ScienceDayTask : IHttpHandler
     {
         try
         {
+            // 更新「補正補件」逾期的專案 → 「逾期未補」
             OFS_ScienceTaskHelper.UpdateExpiredProjects();
+
+            // 更新「尚未提送」逾期的專案 → 「逾期」
+            OFS_ScienceTaskHelper.UpdateUnsubmittedExpiredProjects();
         }
         catch (Exception ex)
         {
@@ -274,6 +280,49 @@ public class ScienceDayTask : IHttpHandler
     {
         OFS_ScienceTaskHelper.UpdateTaskStatus(projectId, taskNameEn, isTodo, overdueDate);
     }
+
+    /// <summary>
+    /// 檢查申請截止日前一天並發送提醒郵件
+    /// </summary>
+    private static void CheckAndSendDeadlineReminder()
+    {
+        try
+        {
+            // 取得最新的科專補助案申請截止日期
+            DateTime? applyEndDate = OFS_ScienceTaskHelper.GetLatestApplyEndDate();
+
+            if (applyEndDate.HasValue)
+            {
+                DateTime today = DateTime.Today;
+
+                // 檢查今天是否為申請截止日的前一天
+                if (applyEndDate.Value.Date == today.AddDays(1) ||applyEndDate.Value.Date == today.AddDays(2) ||applyEndDate.Value.Date == today.AddDays(3))
+                {
+                    // 取得所有尚未提送的專案
+                    var projectDt = OFS_ScienceTaskHelper.GetUnsubmittedProjects();
+
+                    // 為每個未提送的專案發送提醒郵件
+                    foreach (System.Data.DataRow row in projectDt.Rows)
+                    {
+                        string projectId = row["ProjectID"]?.ToString();
+                        string account = row["UserAccount"]?.ToString();
+                        string projectName = row["ProjectNameTw"]?.ToString() ?? "";
+
+                        if (!string.IsNullOrEmpty(account))
+                        {
+                            // 使用 NotificationHelper.A0 發送提醒郵件
+                            NotificationHelper.A0("科專", projectName, applyEndDate.Value, account, "SCI");
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"檢查申請截止日提醒時發生錯誤: {ex.Message}");
+        }
+    }
+
     public bool IsReusable
     {
         get { return false; }

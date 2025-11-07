@@ -914,6 +914,36 @@ public partial class OFS_SCI_SciInprogress_Approved : System.Web.UI.Page
     #region WebMethod
 
     /// <summary>
+    /// 取得計畫變更狀態
+    /// </summary>
+    /// <param name="projectID">計畫ID</param>
+    [WebMethod]
+    public static object GetPlanChangeStatus(string projectID)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(projectID))
+            {
+                return new { success = false, message = "計畫ID不能為空" };
+            }
+
+            var projectMain = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
+            if (projectMain == null)
+            {
+                return new { success = false, message = "找不到計畫資料" };
+            }
+
+            // IsProjChanged: 0=正常, 1=變更中(申請人已提送), 2=待審查(承辦人審查中)
+            return new { success = true, isProjChanged = projectMain.IsProjChanged };
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得計畫變更狀態時發生錯誤: {ex.Message}");
+            return new { success = false, message = $"系統發生錯誤: {ex.Message}" };
+        }
+    }
+
+    /// <summary>
     /// 提交計畫變更申請
     /// </summary>
     /// <param name="projectID">計畫ID</param>
@@ -932,6 +962,13 @@ public partial class OFS_SCI_SciInprogress_Approved : System.Web.UI.Page
             if (string.IsNullOrEmpty(changeReason))
             {
                 return new { success = false, message = "請填寫變更原因" };
+            }
+
+            // 檢查是否已有計畫變更申請中
+            var projectMain = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
+            if (projectMain != null && projectMain.IsProjChanged != 0)
+            {
+                return new { success = false, message = "目前已有計畫變更申請進行中，無法重複提交" };
             }
 
             // 1. 更新 OFS_SCI_Project_Main.IsProjChanged = 1

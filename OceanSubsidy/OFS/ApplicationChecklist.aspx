@@ -115,7 +115,7 @@
     </div>
 
     <!-- 總計列表 -->
-    <ul class="total-list">
+    <ul class="total-list tab-white">
         <li class="total-item active">
             <a href="#">
                 <div class="total-item-title">總申請</div>
@@ -453,14 +453,27 @@
                 <div class="modal-body">
                     <asp:HiddenField ID="hdnUploadProjectId" runat="server" />
 
+                    <div class="bg-light-gray p-3 mb-3">
+                        <ul class="lh-lg" style="list-style: none; padding-left: 0;">
+                            <li>
+                                <span class="text-gray">計畫編號：</span>
+                                <span id="uploadModalProjectId"></span>
+                            </li>
+                            <li>
+                                <span class="text-gray">計畫名稱：</span>
+                                <span id="uploadModalProjectName"></span>
+                            </li>
+                        </ul>
+                    </div>
+
                     <div class="mb-3">
-                        <div class="fs-16 text-gray mb-2">選擇檔案 (支援 PPT, PPTX 格式)</div>
+                        <div class="fs-16 text-gray mb-3">選擇檔案 (支援 PPT, PPTX 格式)</div>
+                        <div class="text-muted mb-3">檔案大小限制：50MB</div>
                         <asp:FileUpload ID="fileUploadTechReview" runat="server" CssClass="form-control" accept=".ppt,.pptx" />
-                        <small class="text-muted">檔案大小限制：50MB</small>
+                        
                     </div>
 
                     <div id="currentFileDisplay" class="mb-3" style="display: none;">
-                        <div class="fs-16 text-gray mb-2">目前檔案</div>
                         <div class="d-flex align-items-center gap-2 p-3 bg-light rounded">
                             <i class="fas fa-file-powerpoint text-orange"></i>
                             <span id="currentFileName" class="flex-grow-1"></span>
@@ -607,6 +620,9 @@
                 dataType: "json",
                 success: function(response) {
                     if (response.d && response.d.success) {
+                        document.getElementById('uploadModalProjectId').textContent = response.d.ProjectID ?? "";
+                        document.getElementById('uploadModalProjectName').textContent = response.d.ProjectName ?? "";
+
                         if (response.d.hasFile) {
                             // 顯示現有檔案區塊
                             document.getElementById('currentFileDisplay').style.display = 'block';

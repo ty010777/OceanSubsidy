@@ -317,6 +317,7 @@ public partial class OFS_SCI_SciExamReview : System.Web.UI.Page
                     BankCode = examData["BankCode"]?.ToString() ?? "",
                     BankAccount = examData["BankAccount"]?.ToString() ?? "",
                     RegistrationAddress = examData["RegistrationAddress"]?.ToString() ?? "",
+                    BankBookPath = examData["BankBookPath"]?.ToString() ?? "",
                     Files = files
                 }
             };
@@ -586,5 +587,39 @@ public partial class OFS_SCI_SciExamReview : System.Web.UI.Page
         // 可以使用 JavaScript Alert 或其他方式顯示訊息
         string script = $"alert('{message}');";
         ClientScript.RegisterStartupScript(this.GetType(), "ShowMessage", script, true);
+    }
+
+    /// <summary>
+    /// 檢查是否已有上傳的存摺檔案
+    /// </summary>
+    [WebMethod]
+    public static object CheckExistingBankBookFile(string token)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(token))
+            {
+                return new { Success = false, Message = "Token不可為空" };
+            }
+
+            string filePath = OFS_SciExamReviewHelper.GetBankBookPath(token);
+
+            if (!string.IsNullOrEmpty(filePath))
+            {
+                string fileName = System.IO.Path.GetFileName(filePath);
+                return new {
+                    Success = true,
+                    HasFile = true,
+                    FileName = fileName,
+                    FilePath = filePath
+                };
+            }
+
+            return new { Success = true, HasFile = false };
+        }
+        catch (Exception ex)
+        {
+            return new { Success = false, Message = "系統錯誤: " + ex.Message };
+        }
     }
 }

@@ -49,9 +49,12 @@ public class SCI_Download : IHttpHandler
                 case "getcontractfiles":
                     GetContractFiles(context);
                     break;
+                case "downloadbankbook":
+                    DownloadBankBook(context);
+                    break;
                 default:
                     context.Response.StatusCode = 400;
-                    context.Response.Write("Invalid action. Use 'downloadPlan', 'downloadApprovedPlan', 'downloadTemplate', 'downloadFile', 'downloadReviewFile', or 'getContractFiles'.");
+                    context.Response.Write("Invalid action. Use 'downloadPlan', 'downloadApprovedPlan', 'downloadTemplate', 'downloadFile', 'downloadReviewFile', 'getContractFiles', or 'downloadBankBook'.");
                     break;
             }
         }
@@ -401,6 +404,70 @@ public class SCI_Download : IHttpHandler
 
             default:
                 return "";
+        }
+    }
+
+    /// <summary>
+    /// 下載存摺檔案
+    /// </summary>
+    private void DownloadBankBook(HttpContext context)
+    {
+        var token = context.Request.QueryString["token"];
+
+        // 驗證參數
+        if (string.IsNullOrEmpty(token))
+        {
+            context.Response.StatusCode = 400;
+            context.Response.Write("Missing token parameter.");
+            return;
+        }
+
+        try
+        {
+            // 從資料庫取得存摺檔案路徑
+            string relativePath = OFS_SciExamReviewHelper.GetBankBookPath(token);
+
+            if (string.IsNullOrEmpty(relativePath))
+            {
+                context.Response.StatusCode = 404;
+                context.Response.Write("Bank book file not found.");
+                return;
+            }
+
+            // 轉換為實體路徑
+            string physicalPath = context.Server.MapPath("~/" + relativePath);
+
+            // 檢查檔案是否存在
+            if (!File.Exists(physicalPath))
+            {
+                context.Response.StatusCode = 404;
+                context.Response.Write($"Physical file not found: {physicalPath}");
+                return;
+            }
+
+            string fileName = Path.GetFileName(physicalPath);
+            string extension = Path.GetExtension(fileName).ToLower();
+            string contentType = "application/octet-stream";
+
+            // 根據副檔名設定 Content-Type
+            switch (extension)
+            {
+                case ".jpg":
+                case ".jpeg":
+                    contentType = "image/jpeg";
+                    break;
+                case ".png":
+                    contentType = "image/png";
+                    break;
+            }
+
+            // 下載檔案
+            DownloadFile(context, physicalPath, fileName, contentType);
+        }
+        catch (Exception ex)
+        {
+            context.Response.StatusCode = 500;
+            context.Response.Write($"Error downloading bank book file: {ex.Message}");
         }
     }
 

@@ -167,6 +167,11 @@ public partial class OFS_CLB_ClbApplication : System.Web.UI.Page
                         // 可編輯狀態
                         ucClbApplication.IsReadOnly = false;
                     }
+                    else if (statuses == "尚未提送" && statusesName == "逾期")
+                    {
+                        // 逾期狀態：檢視模式（不可編輯）
+                        ucClbApplication.IsReadOnly = true;
+                    }
                     else
                     {
                         // 其他狀態都是檢視模式

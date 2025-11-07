@@ -369,6 +369,47 @@ function confirmTransfer() {
 }
 
 /**
+ * 檢查計畫變更狀態並更新按鈕
+ */
+function checkPlanChangeStatus() {
+    const projectID = getProjectIDFromUrl();
+    const btnPlanChange = document.getElementById('btnPlanChange');
+
+    if (!projectID || !btnPlanChange) {
+        return;
+    }
+
+    // 呼叫 WebMethod 取得計畫變更狀態
+    $.ajax({
+        type: 'POST',
+        url: 'ClbApproved.aspx/GetPlanChangeStatus',
+        data: JSON.stringify({ ProjectID: projectID }),
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        success: function(response) {
+            const data = response.d;
+
+            if (data.success && data.isProjChanged != 0) {
+                // IsProjChanged != 0 表示計畫變更申請中
+                // 修改按鈕文字和樣式
+                btnPlanChange.innerHTML = '計畫變更申請中';
+                btnPlanChange.classList.remove('btn-teal-dark');
+                btnPlanChange.classList.add('btn', 'text-teal-dark');
+
+                // 移除 modal 觸發屬性，禁用按鈕
+                btnPlanChange.removeAttribute('data-bs-toggle');
+                btnPlanChange.removeAttribute('data-bs-target');
+                btnPlanChange.style.cursor = 'not-allowed';
+                btnPlanChange.disabled = true;
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error checking plan change status:', error);
+        }
+    });
+}
+
+/**
  * 從 URL 取得專案ID
  */
 function getProjectIDFromUrl() {
@@ -380,6 +421,7 @@ function getProjectIDFromUrl() {
  * DOMContentLoaded 事件監聽
  */
 document.addEventListener('DOMContentLoaded', function() {
+    checkPlanChangeStatus();
     initPlanStopModal();
 });
 

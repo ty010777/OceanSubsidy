@@ -823,12 +823,23 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
         try
         {
             var projectMainData = OFS_ClbApplicationHelper.GetProjectMainData(projectID);
-            
+
             if (projectMainData != null)
             {
                 // Project_Main 的資訊主要用於內部流程控制
                 // 在申請表單頁面中不需要特別顯示這些資訊
                 // 使用者資訊、狀態等都是由系統自動管理
+
+                // 顯示申請送件時間（如果有的話）
+                if (projectMainData.ApplyTime.HasValue)
+                {
+                    lblApplyTime.Text = projectMainData.ApplyTime.Value.ToMinguoDateTime();
+                    divApplyTime.Visible = true;
+                }
+                else
+                {
+                    divApplyTime.Visible = false;
+                }
             }
         }
         catch (Exception ex)
@@ -1166,7 +1177,7 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
                             int? organizer = SysUserHelper.GetUserIDByAccount(supervisoryAccount);
 
                             // 寄送通知信
-                            NotificationHelper.G2("社團", projectName, "計畫變更申請", organizer);
+                            NotificationHelper.G2("學校社團", projectName, "計畫變更申請", organizer);
                         }
                     }
                     catch (Exception emailEx)
@@ -1183,7 +1194,7 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
                     // 產生送審版與核定版 PDF
                     MergePdfFiles(projectID, ProjectName,"送審版");
                     MergePdfFiles(projectID, ProjectName,"核定版");
-                    NotificationHelper.A1("社團", ProjectName,  "CLB");
+                    NotificationHelper.A1("學校社團", ProjectName,  "CLB");
                     //提送歷史紀錄
                     InsertClbHistory(projectID);
                 }

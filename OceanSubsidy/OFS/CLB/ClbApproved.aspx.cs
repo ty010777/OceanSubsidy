@@ -235,6 +235,36 @@ public partial class OFS_CLB_ClbApproved : System.Web.UI.Page
     }
 
     /// <summary>
+    /// 取得計畫變更狀態
+    /// </summary>
+    /// <param name="ProjectID">計畫ID</param>
+    [System.Web.Services.WebMethod]
+    public static object GetPlanChangeStatus(string ProjectID)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(ProjectID))
+            {
+                return new { success = false, message = "計畫ID不能為空" };
+            }
+
+            var projectMain = OFS_ClbApplicationHelper.GetProjectMainData(ProjectID);
+            if (projectMain == null)
+            {
+                return new { success = false, message = "找不到計畫資料" };
+            }
+
+            // IsProjChanged: 0=正常, 1=變更中(申請人已提送), 2=待審查(承辦人審查中)
+            return new { success = true, isProjChanged = projectMain.IsProjChanged };
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得計畫變更狀態時發生錯誤: {ex.Message}");
+            return new { success = false, message = $"系統發生錯誤: {ex.Message}" };
+        }
+    }
+
+    /// <summary>
     /// 處理計畫變更申請 WebMethod (AJAX 呼叫)
     /// </summary>
     [System.Web.Services.WebMethod]
@@ -258,6 +288,12 @@ public partial class OFS_CLB_ClbApproved : System.Web.UI.Page
             if (projectMain == null)
             {
                 return new { success = false, message = "找不到案件資料" };
+            }
+
+            // 檢查是否已有計畫變更申請中
+            if (projectMain.IsProjChanged != 0)
+            {
+                return new { success = false, message = "目前已有計畫變更申請進行中，無法重複提交" };
             }
 
             // 更新 IsProjChanged 為 1 (計畫變更中)
@@ -410,7 +446,7 @@ public partial class OFS_CLB_ClbApproved : System.Web.UI.Page
                     string UserAccount = projectMainData.UserAccount;
                     
                     // 寄送通知信
-                    NotificationHelper.G4("社團", projectName, "計畫變更申請", UserAccount);
+                    NotificationHelper.G4("學校社團", projectName, "計畫變更申請", UserAccount);
                 }
             }
             else if (reviewResult == "reject")
@@ -420,7 +456,7 @@ public partial class OFS_CLB_ClbApproved : System.Web.UI.Page
                     string projectName = basicData.ProjectNameTw;
                     string UserAccount = projectMainData.UserAccount;
                     // 寄送通知信
-                    NotificationHelper.G3("社團", projectName, "計畫變更申請", reviewNotes,UserAccount);
+                    NotificationHelper.G3("學校社團", projectName, "計畫變更申請", reviewNotes,UserAccount);
                 }
             }
             // 顯示成功訊息並重新載入頁面

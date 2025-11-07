@@ -215,13 +215,39 @@
         
         // 頁面載入時載入報告資料
         $(document).ready(function() {
-            // 從URL參數讀取stage，預設為1
+            // 從URL參數讀取stage
             var urlParams = new URLSearchParams(window.location.search);
-            var stage = parseInt(urlParams.get('stage')) || 1;
+            var stageParam = urlParams.get('stage');
 
-            loadReportData(stage);
-            checkReviewPermissionAndStatus();
-            initializeReviewSections();
+            if (stageParam) {
+                // 如果URL有指定stage，直接使用
+                loadReportData(parseInt(stageParam));
+                checkReviewPermissionAndStatus();
+                initializeReviewSections();
+            } else {
+                // 如果URL沒有指定，自動判斷當期
+                $.ajax({
+                    url: 'SciInterimReport.aspx/GetCurrentPhase',
+                    type: 'POST',
+                    contentType: 'application/json; charset=utf-8',
+                    data: JSON.stringify({ projectID: currentProjectID }),
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.d && response.d.Success) {
+                            loadReportData(response.d.Phase);
+                        } else {
+                            loadReportData(1); // 發生錯誤時預設期中報告
+                        }
+                        checkReviewPermissionAndStatus();
+                        initializeReviewSections();
+                    },
+                    error: function() {
+                        loadReportData(1); // 發生錯誤時預設期中報告
+                        checkReviewPermissionAndStatus();
+                        initializeReviewSections();
+                    }
+                });
+            }
         });
         
         // 載入報告資料

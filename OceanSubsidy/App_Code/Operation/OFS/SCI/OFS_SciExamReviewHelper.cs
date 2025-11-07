@@ -38,7 +38,8 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                     srl.Account as committeeAccount,
                     srl.BankCode,
                     srl.BankAccount,
-                    srl.RegistrationAddress ,
+                    srl.RegistrationAddress,
+                    srl.BankBookPath,
                     srl.token,
                     am.ProjectNameTw AS ProjectName,
                     am.Field,
@@ -542,6 +543,144 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
             {
                 db.Dispose();
             }
+        }
+
+        /// <summary>
+        /// 取得存摺檔案路徑
+        /// </summary>
+        /// <param name="token">Token</param>
+        /// <returns>存摺檔案路徑</returns>
+        public static string GetBankBookPath(string token)
+        {
+            if (string.IsNullOrEmpty(token))
+                return null;
+
+            DbHelper db = new DbHelper();
+            db.CommandText = "SELECT BankBookPath FROM OFS_SCI_StageExam_ReviewerList WHERE token = @token";
+            db.Parameters.Clear();
+            db.Parameters.Add("@token", token);
+
+            try
+            {
+                DataTable dt = db.GetTable();
+                if (dt.Rows.Count > 0)
+                {
+                    return dt.Rows[0]["BankBookPath"]?.ToString();
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"取得存摺檔案路徑時發生錯誤: {ex.Message}");
+                return null;
+            }
+            finally
+            {
+                db.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// 儲存存摺檔案
+        /// </summary>
+        /// <param name="token">Token</param>
+        /// <param name="uploadedFile">上傳的檔案</param>
+        /// <returns>儲存的檔案相對路徑</returns>
+        public static string SaveBankBookFile(string token, System.Web.HttpPostedFile uploadedFile)
+        {
+            if (string.IsNullOrEmpty(token) || uploadedFile == null)
+                throw new Exception("參數不完整");
+
+            // 取得審查資料
+            DataRow examData = GetExamDataByToken(token);
+            if (examData == null)
+                throw new Exception("找不到對應的審查資料");
+
+            string projectID = examData["ProjectID"]?.ToString();
+            string reviewerEmail = examData["committeeAccount"]?.ToString();
+
+            if (string.IsNullOrEmpty(projectID) || string.IsNullOrEmpty(reviewerEmail))
+                throw new Exception("專案ID或審查委員Email不完整");
+
+            // 驗證檔案類型
+            string fileExtension = System.IO.Path.GetExtension(uploadedFile.FileName).ToLower();
+            string[] allowedExtensions = { ".jpg", ".jpeg", ".png" };
+            if (!allowedExtensions.Contains(fileExtension))
+            {
+                throw new Exception("僅支援 JPG/JPEG/PNG 格式的圖片檔案");
+            }
+
+            // 產生時間序（民國年月日時分秒）
+            DateTime now = DateTime.Now;
+            int rocYear = GS.App.DateTimeHelper.GregorianYearToMinguo(now.Year);
+            string timestamp = $"{rocYear:000}{now.Month:00}{now.Day:00}{now.Hour:00}{now.Minute:00}{now.Second:00}";
+
+            // 產生檔案名稱：{ReviewerEmail}_存摺_{時間序}{副檔名}
+            string fileName = $"{reviewerEmail}_存摺_{timestamp}{fileExtension}";
+
+            // 產生儲存路徑：UploadFiles/OFS/SCI/{ProjectID}/ReviewFiles/
+            string relativePath = $"UploadFiles/OFS/SCI/{projectID}/ReviewFiles/{fileName}";
+            string physicalPath = System.Web.HttpContext.Current.Server.MapPath("~/" + relativePath);
+
+            // 確保目錄存在
+            string directory = System.IO.Path.GetDirectoryName(physicalPath);
+            if (!System.IO.Directory.Exists(directory))
+            {
+                System.IO.Directory.CreateDirectory(directory);
+            }
+
+            // 儲存檔案
+            uploadedFile.SaveAs(physicalPath);
+
+            // 更新資料庫記錄
+            UpdateBankBookPath(token, relativePath);
+
+            return relativePath;
+        }
+
+        /// <summary>
+        /// 更新存摺檔案路徑
+        /// </summary>
+        /// <param name="token">Token</param>
+        /// <param name="filePath">檔案路徑</param>
+        private static void UpdateBankBookPath(string token, string filePath)
+        {
+            DbHelper db = new DbHelper();
+            db.CommandText = @"
+                UPDATE OFS_SCI_StageExam_ReviewerList
+                SET BankBookPath = @filePath
+                WHERE token = @token";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@filePath", filePath);
+            db.Parameters.Add("@token", token);
+
+            try
+            {
+                db.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"更新存摺檔案路徑時發生錯誤: {ex.Message}");
+                throw new Exception($"更新存摺檔案路徑時發生錯誤: {ex.Message}", ex);
+            }
+            finally
+            {
+                db.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// 刪除存摺檔案（僅清除資料庫記錄，不刪除實體檔案）
+        /// </summary>
+        /// <param name="token">Token</param>
+        public static void DeleteBankBookFile(string token)
+        {
+            if (string.IsNullOrEmpty(token))
+                throw new Exception("Token不可為空");
+
+            // 清除資料庫中的檔案路徑記錄
+            UpdateBankBookPath(token, "");
         }
 
         #region 內部類別定義
