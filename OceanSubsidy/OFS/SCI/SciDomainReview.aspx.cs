@@ -15,6 +15,11 @@ public partial class OFS_SCI_SciDomainReview : System.Web.UI.Page
     private string Token => Request["Token"];
     private string ReviewID => hdnReviewID.Value;
 
+    /// <summary>
+    /// 執行單位名稱（用於風險評估連結）
+    /// </summary>
+    protected string OrgName { get; set; } = "";
+
     protected void Page_Load(object sender, EventArgs e)
     {
         if (!IsPostBack)
@@ -147,16 +152,66 @@ public partial class OFS_SCI_SciDomainReview : System.Web.UI.Page
 
     private void InitializeOtherData(string projectID)
     {
-        // 取得風險評估資料（寫死資料）
-        string riskLevel = OFS_SciDomainReviewHelper.GetRiskLevel(projectID);
-        int recordCount = OFS_SciDomainReviewHelper.GetRiskRecordCount(projectID);
+        // 取得計畫基本資料以獲得執行單位名稱
+        DataRow projectData = OFS_SciDomainReviewHelper.GetProjectData(projectID);
+        if (projectData == null)
+        {
+            return;
+        }
+
+        string orgName = projectData["OrgName"]?.ToString() ?? "";
+
+        // 儲存到屬性供前端使用
+        OrgName = orgName;
+
+        // 使用 GetAuditRecordsByOrgName 取得風險評估記錄
+        var auditRecords = AuditRecordsHelper.GetAuditRecordsByOrgName(orgName);
+
+        // 統計筆數
+        int recordCount = auditRecords != null ? auditRecords.Count : 0;
+        lblRiskRecordCount.Text = recordCount.ToString();
+
+        // 計算最高風險等級
+        string riskLevel = "無";
+        int maxRiskLevel = 0;
+
+        if (auditRecords != null && auditRecords.Count > 0)
+        {
+            foreach (var record in auditRecords)
+            {
+                switch (record.Risk)
+                {
+                    case "Low":
+                        if (maxRiskLevel < 1) maxRiskLevel = 1;
+                        break;
+                    case "Medium":
+                        if (maxRiskLevel < 2) maxRiskLevel = 2;
+                        break;
+                    case "High":
+                        if (maxRiskLevel < 3) maxRiskLevel = 3;
+                        break;
+                }
+            }
+
+            // 轉換風險等級顯示文字
+            switch (maxRiskLevel)
+            {
+                case 1:
+                    riskLevel = "低風險";
+                    break;
+                case 2:
+                    riskLevel = "中風險";
+                    break;
+                case 3:
+                    riskLevel = "高風險";
+                    break;
+                default:
+                    riskLevel = "無";
+                    break;
+            }
+        }
 
         lblRiskLevel.Text = riskLevel;
-        lblRiskRecordCount.Text = recordCount.ToString();
-        lblModalRiskLevel.Text = riskLevel;
-
-        // Modal 資料初始化
-        lblExecutingUnit.Text = "海洋委員會科技文教處科技科";
     }
 
 

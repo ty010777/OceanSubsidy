@@ -28,6 +28,7 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
         {
             LoadData();
             LoadAvailablePrograms(); // 載入可申請的計畫類別
+            LoadDropdownLists(); // 載入下拉式選單
 
             // 設定年度預設值為今年
             int currentYear = DateTimeHelper.GregorianYearToMinguo(DateTime.Now.Year); // 民國年
@@ -343,6 +344,59 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"載入申請計畫類別時發生錯誤：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 載入下拉式選單（年度、階段、狀態、主管單位）
+    /// </summary>
+    private void LoadDropdownLists()
+    {
+        try
+        {
+            // 載入年度下拉選單
+            ddlYear.Items.Clear();
+            ddlYear.Items.Add(new ListItem("全部", ""));
+            var years = ApplicationChecklistHelper.GetAvailableYears();
+            foreach (var item in years)
+            {
+                ddlYear.Items.Add(item);
+            }
+
+            // 載入階段下拉選單
+            ddlStage.Items.Clear();
+            ddlStage.Items.Add(new ListItem("全部", ""));
+            ddlStage.Items.Add(new ListItem("尚未提送", "尚未提送"));
+            ddlStage.Items.Add(new ListItem("資格審查", "資格審查"));
+            ddlStage.Items.Add(new ListItem("內容審查", "內容審查"));
+            ddlStage.Items.Add(new ListItem("領域審查", "領域審查"));
+            ddlStage.Items.Add(new ListItem("技術審查", "技術審查"));
+            ddlStage.Items.Add(new ListItem("初審", "初審"));
+            ddlStage.Items.Add(new ListItem("複審", "複審"));
+            ddlStage.Items.Add(new ListItem("決審核定", "決審核定"));
+            ddlStage.Items.Add(new ListItem("計畫執行", "計畫執行"));
+
+            // 載入狀態下拉選單
+            ddlStatus.Items.Clear();
+            ddlStatus.Items.Add(new ListItem("全部", ""));
+            ddlStatus.Items.Add(new ListItem("審核中", "審核中"));
+            ddlStatus.Items.Add(new ListItem("補正補件", "補正補件"));
+            ddlStatus.Items.Add(new ListItem("逾期未補", "逾期未補"));
+            ddlStatus.Items.Add(new ListItem("未通過", "未通過"));
+            ddlStatus.Items.Add(new ListItem("通過", "通過"));
+
+            // 載入主管單位下拉選單
+            ddlReviewer.Items.Clear();
+            ddlReviewer.Items.Add(new ListItem("全部", ""));
+            var adminUnits = ApplicationChecklistHelper.GetAvailableAdminUnits();
+            foreach (var item in adminUnits)
+            {
+                ddlReviewer.Items.Add(item);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"載入下拉式選單時發生錯誤：{ex.Message}");
         }
     }
 

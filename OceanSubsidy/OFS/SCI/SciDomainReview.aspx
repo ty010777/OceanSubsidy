@@ -28,6 +28,18 @@
     <!-- 自訂 CSS -->
     <link rel="stylesheet" href="<%= ResolveUrl("~/assets/css/login.css") %>">
     <link rel="stylesheet" href="<%= ResolveUrl("~/assets/css/main.css") %>">
+
+    <script>
+        // 設定風險評估連結
+        document.addEventListener('DOMContentLoaded', function() {
+            var linkRiskAssessment = document.getElementById('linkRiskAssessment');
+            if (linkRiskAssessment) {
+                var orgName = '<%= Server.UrlEncode(OrgName) %>';
+                var appRootPath = window.AppRootPath || '';
+                linkRiskAssessment.href = appRootPath + '/OFS/AuditHistory.aspx?Name=' + orgName;
+            }
+        });
+    </script>
 </head>
 
 <body>
@@ -102,9 +114,9 @@
                                     <asp:Label ID="lblReviewerName" runat="server" />
                                 </li>
                                 <li>
-                                    <span class="text-gray">風險評估 :</span>      
+                                    <span class="text-gray">風險評估 :</span>
                                     <asp:Label ID="lblRiskLevel" runat="server" CssClass="text-pink" />
-                                    <span>( <a class="link-teal fw-bold" href="#" data-bs-toggle="modal" data-bs-target="#riskAssessmentModal">
+                                    <span>( <a class="link-teal fw-bold" href="#" id="linkRiskAssessment" target="_blank">
                                         <asp:Label ID="lblRiskRecordCount" runat="server" />
                                     </a> 筆記錄)</span>
                                 </li>
@@ -192,62 +204,6 @@
                 <!-- 主要內容 END-->
             </div>
         </main>
-
-        <!-- Modal 風險評估 -->
-        <div class="modal fade" id="riskAssessmentModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="riskAssessmentModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h4 class="fs-24 fw-bold text-green-light">風險評估</h4>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
-                            <i class="fa-solid fa-circle-xmark"></i>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="bg-light-gray p-3 mb-4">
-                            <ul class="lh-lg">
-                                <li>
-                                    <span class="text-gray">執行單位:</span>
-                                    <asp:Label ID="lblExecutingUnit" runat="server" />
-                                </li>
-                                <li>
-                                    <span class="text-gray">風險評估:</span>
-                                    <asp:Label ID="lblModalRiskLevel" runat="server" CssClass="text-pink" />
-                                </li>
-                            </ul>
-                        </div>
-
-                        <div class="table-responsive">
-                            <table class="table align-middle gray-table lh-base">
-                                <thead>
-                                    <tr>
-                                        <th>計畫編號 / 計畫名稱</th>
-                                        <th>查核日期 / 人員</th>
-                                        <th>風險評估</th>
-                                        <th>查核意見</th>
-                                        <th>執行單位回覆</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>
-                                            <a href="#" class="link-teal">SCI1140001 / 海洋環境監測預警系統建置計畫</a>
-                                        </td>
-                                        <td class="text-center">
-                                            <div>114/08/30</div>
-                                            <div>劉某人</div>
-                                        </td>
-                                        <td>中風險</td>
-                                        <td>申請單位回覆申請單位回覆申請單位回覆申請單位回覆申請單位回覆申請單位回覆申請單位回覆申請單位回覆申請單位回覆</td>
-                                        <td>申請單位回覆申請單位回覆申請單位回覆申請單位回覆申請單位回覆申請單位回覆申請單位回覆申請單位回覆申請單位回覆</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <!-- JavaScript 文件 -->
         <script src="<%= ResolveUrl("~/assets/vendor/bootstrap-5.3.3/dist/js/bootstrap.bundle.min.js") %>"></script>

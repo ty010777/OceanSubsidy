@@ -58,32 +58,16 @@
                     <div class="col-12 col-lg-4">
                         <div class="fs-16 text-gray mb-2">年度</div>
                         <asp:DropDownList ID="ddlYear" runat="server" CssClass="form-select">
-                            <asp:ListItem Text="全部" Value=""></asp:ListItem>
-                            <asp:ListItem Text="115年" Value="115"></asp:ListItem>
-                            <asp:ListItem Text="114年" Value="114"></asp:ListItem>
                         </asp:DropDownList>
                     </div>
                     <div class="col-12 col-lg-4">
                         <div class="fs-16 text-gray mb-2">階段</div>
                         <asp:DropDownList ID="ddlStage" runat="server" CssClass="form-select">
-                            <asp:ListItem Text="全部" Value=""></asp:ListItem>
-                            <asp:ListItem Text="尚未提送" Value="尚未提送"></asp:ListItem>
-                            <asp:ListItem Text="資格審查" Value="資格審查"></asp:ListItem>
-                            <asp:ListItem Text="領域審查" Value="領域審查"></asp:ListItem>
-                            <asp:ListItem Text="技術審查" Value="技術審查"></asp:ListItem>
-                            <asp:ListItem Text="決審核定" Value="決審核定"></asp:ListItem>
-                            <asp:ListItem Text="計畫執行" Value="計畫執行"></asp:ListItem>
                         </asp:DropDownList>
                     </div>
                     <div class="col-12 col-lg-4">
                         <div class="fs-16 text-gray mb-2">狀態</div>
                         <asp:DropDownList ID="ddlStatus" runat="server" CssClass="form-select">
-                            <asp:ListItem Text="全部" Value=""></asp:ListItem>
-                            <asp:ListItem Text="審核中" Value="審核中"></asp:ListItem>
-                            <asp:ListItem Text="補正補件" Value="補正補件"></asp:ListItem>
-                            <asp:ListItem Text="逾期未補" Value="逾期未補"></asp:ListItem>
-                            <asp:ListItem Text="未通過" Value="未通過"></asp:ListItem>
-                            <asp:ListItem Text="通過" Value="通過"></asp:ListItem>
                         </asp:DropDownList>
                     </div>
                 </div>
@@ -95,10 +79,6 @@
                     <div class="col-12 col-lg-6">
                         <div class="fs-16 text-gray mb-2">主管單位</div>
                         <asp:DropDownList ID="ddlReviewer" runat="server" CssClass="form-select">
-                            <asp:ListItem Text="全部" Value=""></asp:ListItem>
-                            <asp:ListItem Text="海洋科技科" Value="海洋科技科"></asp:ListItem>
-                            <asp:ListItem Text="海洋文化科" Value="海洋文化科"></asp:ListItem>
-                            <asp:ListItem Text="海洋教育科" Value="海洋教育科"></asp:ListItem>
                         </asp:DropDownList>
                     </div>
                 </div>

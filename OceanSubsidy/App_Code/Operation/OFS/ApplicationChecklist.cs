@@ -813,4 +813,84 @@ public class ApplicationChecklistHelper
 
         return projectIds;
     }
+
+    /// <summary>
+    /// 取得年度清單
+    /// </summary>
+    /// <returns>年度清單</returns>
+    public static List<ListItem> GetAvailableYears()
+    {
+        List<ListItem> result = new List<ListItem>();
+        DbHelper db = new DbHelper();
+
+        try
+        {
+            db.CommandText = @"
+                SELECT DISTINCT year
+                FROM [OCA_OceanSubsidy].[dbo].[OFS_GrantType]
+                WHERE year IS NOT NULL
+                ORDER BY year DESC";
+
+            DataTable dt = db.GetTable();
+
+            foreach (DataRow row in dt.Rows)
+            {
+                string year = row["year"]?.ToString();
+                if (!string.IsNullOrEmpty(year))
+                {
+                    result.Add(new ListItem($"{year}年", year));
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得年度清單時發生錯誤：{ex.Message}");
+        }
+        finally
+        {
+            db.Dispose();
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// 取得主管單位清單
+    /// </summary>
+    /// <returns>主管單位清單</returns>
+    public static List<ListItem> GetAvailableAdminUnits()
+    {
+        List<ListItem> result = new List<ListItem>();
+        DbHelper db = new DbHelper();
+
+        try
+        {
+            db.CommandText = @"
+                SELECT DISTINCT AdminUnit
+                FROM [OCA_OceanSubsidy].[dbo].[OFS_GrantType]
+                WHERE AdminUnit IS NOT NULL
+                ORDER BY AdminUnit";
+
+            DataTable dt = db.GetTable();
+
+            foreach (DataRow row in dt.Rows)
+            {
+                string adminUnit = row["AdminUnit"]?.ToString();
+                if (!string.IsNullOrEmpty(adminUnit))
+                {
+                    result.Add(new ListItem(adminUnit, adminUnit));
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"取得主管單位清單時發生錯誤：{ex.Message}");
+        }
+        finally
+        {
+            db.Dispose();
+        }
+
+        return result;
+    }
 }
