@@ -645,4 +645,80 @@ public class OFS_SciReimbursementHelper
         }
     }
 
+    /// <summary>
+    /// 從上傳的經費支用表 Excel 讀取累積實支金額
+    /// </summary>
+    /// <param name="filePath">Excel 檔案實體路徑</param>
+    /// <param name="projectID">專案ID（用於判斷組織類型）</param>
+    /// <returns>累積實支金額，如果讀取失敗則返回 null（不會拋出錯誤）</returns>
+    public static decimal? ReadAccumulatedAmountFromExcel(string filePath, string projectID)
+    {
+        try
+        {
+            // 1. 判斷檔案是否為 Excel
+            string extension = System.IO.Path.GetExtension(filePath).ToLower();
+            if (extension != ".xlsx" && extension != ".xls")
+            {
+                System.Diagnostics.Debug.WriteLine("檔案格式不正確，必須為 Excel 檔案");
+                return null;
+            }
+
+            // 2. 取得組織類型
+            string orgCategory = GetOrgCategoryByProjectID(projectID);
+            if (string.IsNullOrEmpty(orgCategory))
+            {
+                System.Diagnostics.Debug.WriteLine("無法取得專案的組織類型");
+                return null;
+            }
+
+            // 3. 根據組織類型讀取不同的工作表和儲存格
+            string sheetName;
+            string columnLetter;
+            int rowNumber;
+
+            if (orgCategory == "OceanTech")
+            {
+                // 業者：讀取「計畫經費支用彙總表」工作表的 K14 儲存格
+                sheetName = "計畫經費支用彙總表";
+                columnLetter = "K";
+                rowNumber = 14;
+            }
+            else if (orgCategory == "Academic" || orgCategory == "Legal")
+            {
+                // 學研/法人：讀取「經費支用明細表」工作表的 C23 儲存格
+                sheetName = "經費支用明細表";
+                columnLetter = "C";
+                rowNumber = 23;
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"不支援的組織類型: {orgCategory}");
+                return null;
+            }
+
+            // 4. 使用 NPOIHelper 讀取儲存格值
+            decimal? amount = NPOIHelper.ReadCellValue(filePath, sheetName, columnLetter, rowNumber);
+
+            // 5. 驗證是否為有效數字
+            if (!amount.HasValue)
+            {
+                System.Diagnostics.Debug.WriteLine($"無法讀取儲存格 {columnLetter}{rowNumber} 的值（可能工作表名稱或位置有變更）");
+                return null;
+            }
+
+            if (amount.Value < 0)
+            {
+                System.Diagnostics.Debug.WriteLine($"儲存格 {columnLetter}{rowNumber} 的值為負數，不合理");
+                return null;
+            }
+
+            return amount;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"讀取 Excel 累積實支金額時發生錯誤: {ex.Message}");
+            return null; // 不拋出例外，返回 null
+        }
+    }
+
 }

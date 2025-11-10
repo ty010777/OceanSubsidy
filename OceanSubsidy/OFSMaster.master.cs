@@ -10,6 +10,10 @@ public partial class OFSMaster : System.Web.UI.MasterPage
     // 公開屬性供 ASPX 頁面使用
     public string UserName { get; set; }
     public string UnitName { get; set; }
+    public int ApplicationPendingCount { get; set; }
+    public int InprogressPendingCount { get; set; }
+    public int ApplicationReviewPendingCount { get; set; }
+    public int InprogressReviewPendingCount { get; set; }
 
     protected void Page_Load(object sender, EventArgs e)
     {
@@ -32,6 +36,30 @@ public partial class OFSMaster : System.Web.UI.MasterPage
         {
             UserName = CurrentUser.UserName ?? "訪客";
             UnitName = CurrentUser.UnitName ?? "未設定單位";
+
+            // 取得小鈴鐺提醒的數量
+            string userAccount = CurrentUser.Account ?? "";
+            ApplicationPendingCount = AlarmBellHelper.GetApplicationPendingCount(userAccount);
+            InprogressPendingCount = AlarmBellHelper.GetInprogressPendingCount(userAccount);
+
+            // 僅主管單位人員、主管單位窗口、系統管理者可看到審核數量
+            if (CurrentUser.IsOrganizer || CurrentUser.IsSupervisor || CurrentUser.IsSysAdmin)
+            {
+                ApplicationReviewPendingCount = AlarmBellHelper.GetApplicationReviewPendingCount(
+                    CurrentUser.IsOrganizer,
+                    CurrentUser.IsSupervisor,
+                    CurrentUser.IsSysAdmin,
+                    userAccount,
+                    CurrentUser.UnitName ?? ""
+                );
+                InprogressReviewPendingCount = AlarmBellHelper.GetInprogressReviewPendingCount(
+                    CurrentUser.IsOrganizer,
+                    CurrentUser.IsSupervisor,
+                    CurrentUser.IsSysAdmin,
+                    userAccount,
+                    CurrentUser.UnitName ?? ""
+                );
+            }
         }
         catch
         {

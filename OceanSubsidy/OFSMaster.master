@@ -321,22 +321,44 @@
                   <div class="action-group" id="FuncBtn">
                       <!-- 公告提醒 -->
                       <div class="dropdown">
-                          <button class="btn-tip new" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                          <button class="btn-tip<%= (ApplicationPendingCount > 0 || InprogressPendingCount > 0 || ApplicationReviewPendingCount > 0 || InprogressReviewPendingCount > 0) ? " new" : "" %>" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                               <img src="<%= ResolveUrl("~/assets/img/icon-bell.svg") %>" alt="公告提醒">
                           </button>
                           <ul class="dropdown-menu">
                               <li>
-                                  <a class="dropdown-menu-item" href="#" tabindex="0" aria-label="查看計畫申請待處理項目">
+                                  <a class="dropdown-menu-item" href="<%= ResolveUrl("~/OFS/ApplicationChecklist.aspx") %>" tabindex="0" aria-label="查看計畫申請待處理項目">
                                       <span>計畫申請待處理</span>
-                                      <span class="badge">4</span>
+<% if (ApplicationPendingCount > 0) { %>
+                                      <span class="badge"><%= ApplicationPendingCount %></span>
+<% } %>
                                   </a>
                               </li>
                               <li>
-                                  <a class="dropdown-menu-item" href="#" tabindex="0" aria-label="查看計畫申請待處理項目">
-                                      <span>計畫申請待處理</span>
-                                      <span class="badge">4</span>
+                                  <a class="dropdown-menu-item" href="<%= ResolveUrl("~/OFS/inprogressList.aspx") %>" tabindex="0" aria-label="查看計畫執行待處理項目">
+                                      <span>計畫執行待處理</span>
+<% if (InprogressPendingCount > 0) { %>
+                                      <span class="badge"><%= InprogressPendingCount %></span>
+<% } %>
                                   </a>
                               </li>
+<% if (CurrentUser.IsOrganizer || CurrentUser.IsSupervisor || CurrentUser.IsSysAdmin) { %>
+                              <li>
+                                  <a class="dropdown-menu-item" href="<%= ResolveUrl("~/OFS/ReviewChecklist.aspx?type=1") %>" tabindex="0" aria-label="查看申請計畫待審核項目">
+                                      <span>申請計畫待審核</span>
+<% if (ApplicationReviewPendingCount > 0) { %>
+                                      <span class="badge"><%= ApplicationReviewPendingCount %></span>
+<% } %>
+                                  </a>
+                              </li>
+                              <li>
+                                  <a class="dropdown-menu-item" href="<%= ResolveUrl("~/OFS/ReviewChecklist.aspx?type=5") %>" tabindex="0" aria-label="查看執行計畫待審核項目">
+                                      <span>執行計畫待審核</span>
+<% if (InprogressReviewPendingCount > 0) { %>
+                                      <span class="badge"><%= InprogressReviewPendingCount %></span>
+<% } %>
+                                  </a>
+                              </li>
+<% } %>
                           </ul>
                       </div>
 

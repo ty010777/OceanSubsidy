@@ -525,6 +525,7 @@ GO
 ALTER TABLE dbo.OFS_SCI_Application_Main
 ALTER COLUMN Serial INT;
 ------------------------------------------------------
+
 ALTER VIEW [dbo].[V_OFS_ReviewChecklist_type6]
 AS
 WITH ReviewTodo_Raw AS (
@@ -536,9 +537,9 @@ WITH ReviewTodo_Raw AS (
         A.ProjectID,
         'SCI' AS Category,
         A.Stage,
-        CASE 
-            WHEN A.Stage = 1 THEN '期中檢核'
-            WHEN A.Stage = 2 THEN '期末檢核'
+        CASE
+            WHEN A.Stage = 1 THEN '期中報告'
+            WHEN A.Stage = 2 THEN '期末報告'
             ELSE ''
         END AS ReviewTodo,
         P.SupervisoryPersonAccount,
@@ -550,8 +551,7 @@ WITH ReviewTodo_Raw AS (
         ON P.ProjectID = A.ProjectID
     LEFT JOIN dbo.OFS_SCI_Application_Main AS AM
         ON AM.ProjectID = A.ProjectID
-    WHERE A.Status = '審核中'
-
+    WHERE A.Status = '審核中' and P.StatusesName != '已終止'
     ---------------------------------------
     UNION ALL
     ---------------------------------------
@@ -561,7 +561,7 @@ WITH ReviewTodo_Raw AS (
         B.ProjectID,
         'SCI' AS Category,
         B.Stage,
-        CASE 
+        CASE
             WHEN B.Stage = 1 THEN '第一期請款審核'
             WHEN B.Stage = 2 THEN '第二期請款審核'
             ELSE ''
@@ -575,8 +575,7 @@ WITH ReviewTodo_Raw AS (
         ON P.ProjectID = B.ProjectID
     LEFT JOIN dbo.OFS_SCI_Application_Main AS AM
         ON AM.ProjectID = B.ProjectID
-    WHERE B.Status = '審核中'
-
+    WHERE B.Status = '審核中' and P.StatusesName != '已終止'
     ---------------------------------------
     UNION ALL
     ---------------------------------------
@@ -596,8 +595,7 @@ WITH ReviewTodo_Raw AS (
         ON P.ProjectID = S.ProjectID
     LEFT JOIN dbo.OFS_CLB_Application_Basic AS A_CLB
         ON A_CLB.ProjectID = S.ProjectID
-    WHERE S.Status = '審核中'
-
+    WHERE S.Status = '審核中'  and P.StatusesName != '已終止'
     ---------------------------------------
     UNION ALL
     ---------------------------------------
@@ -617,8 +615,243 @@ WITH ReviewTodo_Raw AS (
         ON P.ProjectID = C.ProjectID
     LEFT JOIN dbo.OFS_CLB_Application_Basic AS A_CLB
         ON A_CLB.ProjectID = C.ProjectID
-    WHERE C.Status = '審核中'
+    WHERE C.Status = '審核中' and P.StatusesName != '已終止'
 )
-SELECT *
-FROM ReviewTodo_Raw
+SELECT * FROM ReviewTodo_Raw
+UNION
+SELECT B.[Year],
+       B.[ProjectID],
+       B.[Category],
+       A.[Stage],
+       C.[ReviewTodo],
+       B.[SupervisoryPersonAccount],
+       B.[SupervisoryUnit],
+       B.[OrgName],
+       B.[ProjectNameTw]
+FROM (SELECT [ProjectID], 1 AS [Type], [Stage] FROM [OFS_Payment] WHERE Status = '審核中'
+    UNION
+    SELECT [ProjectID], 2 AS [Type], [Stage] FROM [OFS_StageExam] WHERE Status = '審核中') AS A
+    JOIN (SELECT O.Year,
+    O.ProjectID,
+    O.Category,
+    R.Account AS SupervisoryPersonAccount,
+    U.UnitName AS SupervisoryUnit,
+    O.OrgName,
+    O.ProjectName AS ProjectNameTw
+    FROM (SELECT Year, ProjectID, 'CUL' AS Category, OrgName, ProjectName, Organizer,Status FROM OFS_CUL_Project
+    UNION
+    SELECT Year, ProjectID, 'EDC' AS Category, OrgName, ProjectName, Organizer,Status FROM OFS_EDC_Project
+    UNION
+    SELECT Year, ProjectID, 'MUL' AS Category, OrgName, ProjectName, Organizer,Status FROM OFS_MUL_Project
+    UNION
+    SELECT Year, ProjectID, 'LIT' AS Category, OrgName, ProjectName, Organizer,Status FROM OFS_LIT_Project
+    UNION
+    SELECT Year, ProjectID, 'ACC' AS Category, OrgName, ProjectName, Organizer,Status  FROM OFS_ACC_Project) AS O
+    LEFT JOIN Sys_User AS R ON (R.UserID = O.Organizer)
+    LEFT JOIN Sys_Unit AS U ON (U.UnitID = R.UnitID)
+    where O.Status not in (99)
+    ) AS B ON (B.ProjectID = A.ProjectID)
+    JOIN (SELECT [TypeCode],
+    1 AS [Type],
+    [PhaseOrder],
+    [PhaseName] AS [ReviewTodo]
+    FROM [OFS_PaymentPhaseSetting]
+    UNION SELECT 'CUL', 2, 1, '期中報告'
+    UNION SELECT 'CUL', 2, 2, '期末報告'
+    UNION SELECT 'EDC', 2, 1, '成果報告'
+    UNION SELECT 'MUL', 2, 1, '成果報告'
+    UNION SELECT 'LIT', 2, 1, '成果報告'
+    UNION SELECT 'ACC', 2, 1, '期中報告'
+    UNION SELECT 'ACC', 2, 2, '成果報告') AS C ON (C.[TypeCode] = B.[Category] AND C.[Type] = A.[Type] AND C.[PhaseOrder] = A.[Stage])
     GO
+------------------------------------------
+    20251107
+ALTER TABLE OFS_SCI_StageExam_ReviewerList
+    ADD BankBookPath NVARCHAR(1000) NULL;
+
+ALTER TABLE OFS_CLB_Project_Main
+    ADD ApplyTime DATETIME NULL;
+
+ALTER TABLE OFS_SCI_Project_Main
+    ADD ApplyTime DATETIME NULL;
+
+-------------------------------------------
+ALTER VIEW [dbo].[V_OFS_ApplicationChecklistSearch]
+AS
+WITH SubsidySummary AS (
+    SELECT ProjectID, SUM(SubsidyAmount) AS TotalSubsidyAmount
+    FROM dbo.OFS_SCI_PersonnelCost_TotalFee
+    GROUP BY ProjectID
+),
+SCI_CTE AS (
+    SELECT
+        v.ProjectID,
+        v.Statuses,
+        v.StatusesName,
+        v.ExpirationDate,
+        v.SupervisoryUnit,
+        v.SupervisoryPersonName,
+        v.SupervisoryPersonAccount,
+        v.UserAccount,
+        v.UserOrg,
+        v.UserName,
+        v.isWithdrawal,
+        v.isExist,
+		CONCAT_WS(' , ', m.Target, m.Summary, m.Innovation) AS ProjectContent,
+        m.SubsidyPlanType,
+        m.ProjectNameTw,
+        m.OrgName,
+        m.Year,
+        ISNULL(s.TotalSubsidyAmount, 0) AS TotalSubsidyAmount,
+        'SCI' AS SourceSystem   -- 來源標記
+    FROM dbo.OFS_SCI_Project_Main v
+    LEFT JOIN dbo.OFS_SCI_Application_Main m
+        ON v.ProjectID = m.ProjectID
+    LEFT JOIN SubsidySummary s
+        ON v.ProjectID = s.ProjectID
+),
+CLB_CTE AS (
+    SELECT
+        CLB_PM.ProjectID,
+        CLB_PM.Statuses,
+        CLB_PM.StatusesName,
+        CLB_PM.ExpirationDate,
+        CLB_PM.SupervisoryUnit,
+        CLB_PM.SupervisoryPersonName,
+        CLB_PM.SupervisoryPersonAccount,
+        CLB_PM.UserAccount,
+        CLB_PM.UserOrg,
+        CLB_PM.UserName,
+        CLB_PM.isWithdrawal,
+        CLB_PM.isExist,
+		CONCAT_WS(' , ', CLB_AP.Purpose, CLB_AP.PlanContent, CLB_AP.PreBenefits) AS ProjectContent,
+        CLB_AB.SubsidyPlanType,
+        CLB_AB.ProjectNameTw,
+        (CLB_AB.SchoolName + CLB_AB.ClubName) AS OrgName,
+        CLB_AB.Year,
+        ISNULL(CLB_AF.TotalFunds, 0) AS TotalSubsidyAmount,
+        'CLB' AS SourceSystem   -- 來源標記
+    FROM dbo.OFS_CLB_Project_Main CLB_PM
+    LEFT JOIN dbo.OFS_CLB_Application_Basic CLB_AB
+        ON CLB_PM.ProjectID = CLB_AB.ProjectID
+    LEFT JOIN dbo.OFS_CLB_Application_Funds CLB_AF
+        ON CLB_PM.ProjectID = CLB_AF.ProjectID
+	 LEFT JOIN OFS_CLB_Application_Plan CLB_AP 
+           ON CLB_PM.ProjectID = CLB_AP.ProjectID
+)
+SELECT * FROM SCI_CTE
+UNION ALL
+SELECT * FROM CLB_CTE
+UNION
+SELECT O.ProjectID,
+       P.Descname AS Statuses,
+       S.Descname AS StatusesName,
+       O.EndTime AS ExpirationDate,
+       U.UnitName AS SupervisoryUnit,
+       R.Name AS SupervisoryPersonName,
+       R.Account AS SupervisoryPersonAccount,
+       O.UserAccount,
+       O.UserOrg,
+       O.UserName,
+       O.isWithdrawal,
+       O.IsExists AS isExist,
+       O.ProjectContent,
+       O.SubsidyPlanType,
+       O.ProjectName AS ProjectNameTw,
+       O.OrgName,
+       O.Year,
+       O.ApplyAmount AS TotalSubsidyAmount,
+       O.SourceSystem
+FROM (SELECT ProjectID, ProgressStatus, Status, CONCAT_WS(' , ', Target, Summary, Quantified, Qualitative) AS ProjectContent,EndTime, UserAccount, UserOrg, UserName, isWithdrawal, IsExists, SubsidyPlanType, ProjectName, OrgName, Year, ApplyAmount, Organizer, 'CUL' AS SourceSystem
+      FROM OFS_CUL_Project
+      UNION
+      SELECT ProjectID, ProgressStatus, Status,CONCAT_WS(' , ', Target, Summary, Quantified) AS ProjectContent, EndTime, UserAccount, UserOrg, UserName, isWithdrawal, IsExists, SubsidyPlanType, ProjectName, OrgName, Year, ApplyAmount, Organizer, 'EDC' AS SourceSystem
+      FROM OFS_EDC_Project
+      UNION
+      SELECT ProjectID, ProgressStatus, Status,CONCAT_WS(' , ', Target, Summary, Quantified, Qualitative) AS ProjectContent, EndTime, UserAccount, UserOrg, UserName, isWithdrawal, IsExists, SubsidyPlanType, ProjectName, OrgName, Year, ApplyAmount, Organizer, 'MUL' AS SourceSystem
+      FROM OFS_MUL_Project
+      UNION
+      SELECT ProjectID, ProgressStatus, Status,CONCAT_WS(' , ', Target, Summary, Quantified, Qualitative) AS ProjectContent, EndTime, UserAccount, UserOrg, UserName, isWithdrawal, IsExists, SubsidyPlanType, ProjectName, OrgName, Year, ApplyAmount, Organizer, 'LIT' AS SourceSystem
+      FROM OFS_LIT_Project
+      UNION
+      SELECT ProjectID, ProgressStatus, Status,CONCAT_WS(' , ', Target, Summary, Quantified, Qualitative) AS ProjectContent, EndTime, UserAccount, UserOrg, UserName, isWithdrawal, IsExists, SubsidyPlanType, ProjectName, OrgName, Year, ApplyAmount, Organizer, 'ACC' AS SourceSystem
+      FROM OFS_ACC_Project) AS O
+         LEFT JOIN Sys_User AS R ON (R.UserID = O.Organizer)
+         LEFT JOIN Sys_Unit AS U ON (U.UnitID = R.UnitID)
+         JOIN Sys_ZgsCode AS S ON (S.CodeGroup = 'ProjectStatus' AND S.Code = O.Status)
+         JOIN Sys_ZgsCode AS P ON (P.CodeGroup = 'ProjectProgressStatus' AND P.Code = O.ProgressStatus)
+    GO
+
+----------------------------
+
+ALTER VIEW [dbo].[V_OFS_ReviewChecklist_type5]
+AS
+WITH SCI_CTE AS (
+    SELECT
+        AM.Year,
+        AM.ProjectID,
+        'SCI' AS Category,
+        AM.ProjectNameTw,
+        AM.OrgName,
+        PM.SupervisoryUnit
+    FROM dbo.OFS_SCI_Project_Main AS PM
+    LEFT JOIN dbo.OFS_SCI_Application_Main AS AM
+        ON AM.ProjectID = PM.ProjectID
+    WHERE
+        PM.IsProjChanged = 2
+        AND PM.isExist = 1
+        AND PM.isWithdrawal <> 1
+		AND PM.StatusesName <> '已終止'
+),
+CLB_CTE AS (
+    SELECT
+        CLB_AB.Year,
+        CLB_PM.ProjectID,
+        'CLB' AS Category,
+        CLB_AB.ProjectNameTw,
+        (CLB_AB.SchoolName + CLB_AB.ClubName) AS OrgName,
+        CLB_PM.SupervisoryUnit
+    FROM dbo.OFS_CLB_Project_Main AS CLB_PM
+    LEFT JOIN dbo.OFS_CLB_Application_Basic AS CLB_AB
+        ON CLB_PM.ProjectID = CLB_AB.ProjectID
+    WHERE
+        CLB_PM.IsProjChanged =  2 
+        AND CLB_PM.isExist = 1
+        AND CLB_PM.isWithdrawal <> 1
+		AND CLB_PM.StatusesName <> '已終止'
+)
+SELECT * FROM SCI_CTE
+UNION ALL
+SELECT * FROM CLB_CTE
+UNION
+SELECT O.Year,
+       O.ProjectID,
+       O.Category,
+       O.ProjectName AS ProjectNameTw,
+       O.OrgName,
+       U.UnitName AS SupervisoryUnit
+FROM (SELECT Year, ProjectID, 'CUL' AS Category, ProjectName, OrgName, Organizer, LastOperation,Status, CONCAT_WS(' , ', Target, Summary, Quantified, Qualitative) AS ProjectContent
+      FROM OFS_CUL_Project
+      WHERE IsProjChanged =  2
+      UNION
+      SELECT Year, ProjectID, 'EDC' AS Category, ProjectName, OrgName, Organizer, LastOperation,Status, CONCAT_WS(' , ', Target, Summary, Quantified) AS ProjectContent
+      FROM OFS_EDC_Project
+      WHERE IsProjChanged =  2
+      UNION
+      SELECT Year, ProjectID, 'MUL' AS Category, ProjectName, OrgName, Organizer, LastOperation,Status, CONCAT_WS(' , ', Target, Summary, Quantified, Qualitative) AS ProjectContent
+      FROM OFS_MUL_Project
+      WHERE IsProjChanged =  2
+      UNION
+      SELECT Year, ProjectID, 'LIT' AS Category, ProjectName, OrgName, Organizer, LastOperation,Status, CONCAT_WS(' , ', Target, Summary, Quantified, Qualitative) AS ProjectContent
+      FROM OFS_LIT_Project
+      WHERE IsProjChanged =  2
+      UNION
+      SELECT Year, ProjectID, 'ACC' AS Category, ProjectName, OrgName, Organizer, LastOperation,Status, CONCAT_WS(' , ', Target, Summary, Quantified, Qualitative) AS ProjectContent
+      FROM OFS_ACC_Project
+      WHERE IsProjChanged =  2 ) AS O
+         LEFT JOIN Sys_User AS R ON (R.UserID = O.Organizer)
+         LEFT JOIN Sys_Unit AS U ON (U.UnitID = R.UnitID)
+where Status not in (91,99)
+    GO
+
+

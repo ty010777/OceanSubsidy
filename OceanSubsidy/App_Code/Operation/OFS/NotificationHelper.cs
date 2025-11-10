@@ -142,7 +142,10 @@ public class NotificationHelper
     {
         toUser(
             "［海洋委員會］補助申請案 計畫核定通知",
-            $"您好：<br><br> 核定貴單位「{projectName}」計畫，{year}年度補助經費為新臺幣{approveAmount}元，<br>相關配合事項本會另函通知，請查照。",
+            $"您好：<br><br> 核定貴單位「{projectName}」計畫，{year}年度補助經費為新臺幣{approveAmount}元，<br>相關配合事項本會另函通知，請查照。" +
+            $"貴單位申請經費補助已獲本會同意，請以紙本公文，後附相關附件正本<br>" +
+            $"(其中申請書表及未違反公職人員利益衝突迴避法切結書及事前揭露表，需加蓋關防及負責人簽章，並需為正本)，<br>" +
+            $"以郵寄方式寄送本會憑辦。",
             account
         );
     }
@@ -224,7 +227,9 @@ public class NotificationHelper
     {
         toUser(
             "［海洋委員會］執行計畫案 請款核銷已通過",
-            $"您好：<br><br>貴單位{category}類執行計畫「{projectName}」，<br>{eventName}已通過。<br><br>撥付金額：{amount}<br>審核備註：{remark}",
+            $"您好：<br><br>貴單位{category}類執行計畫「{projectName}」，<br>{eventName}已通過。<br><br>撥付金額：{amount}<br>審核備註：{remark}<br><br><br>" +
+            $"貴單位申請經費補助核銷文件經本會審視，原則無意見。<br>" +
+            $"請以紙本公文，後附相關核銷文件、成果報告等相關證明文件正本，以郵寄方式寄送本會憑辦。",
             account
         );
     }
@@ -388,7 +393,7 @@ public class NotificationHelper
 
         db.CommandText = @"
         -- 取得目前有效 XX 補助類型對應單位下的特定角色使用者
-        SELECT Account
+       SELECT distinct Account
         FROM Sys_User AS u
         LEFT JOIN Sys_UserOFSRole AS ur
                ON u.UserID = ur.UserID
@@ -401,13 +406,14 @@ public class NotificationHelper
                 SELECT s.UnitID
                 FROM [OCA_OceanSubsidy].[dbo].[Sys_Unit] AS s
                 WHERE s.UnitName = (
-                    SELECT g.AdminUnit
+                    SELECT TOP(1) g.AdminUnit
                     FROM [OCA_OceanSubsidy].[dbo].[OFS_GrantType] AS g
                     WHERE g.TypeCode = @Type
                       AND GETDATE() >= g.ApplyStartDate
                       AND GETDATE() <= g.ApplyEndDate
                 )
             );
+;
 
         ";
 

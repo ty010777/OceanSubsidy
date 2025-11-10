@@ -1542,6 +1542,13 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
                 (x.ProjectNameTw?.Contains(searchText) == true));
         }
 
+        // 計畫內容關鍵字篩選
+        if (!string.IsNullOrEmpty(contentKeyword))
+        {
+            filteredList = filteredList.Where(x =>
+                x.ProjectContent?.Contains(contentKeyword) == true);
+        }
+
         // 年度篩選
         if (!string.IsNullOrEmpty(year))
         {

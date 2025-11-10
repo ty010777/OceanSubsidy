@@ -23,7 +23,7 @@ public class ApplicationChecklistHelper
     {
         DbHelper db = new DbHelper();
         db.CommandText = @"
-    SELECT TOP (1000) [ProjectID]
+   SELECT TOP (1000) [ProjectID]
       ,[Statuses]
       ,[StatusesName]
       ,[ExpirationDate]
@@ -35,12 +35,15 @@ public class ApplicationChecklistHelper
       ,[UserName]
       ,[isWithdrawal]
       ,[isExist]
+      ,[ProjectContent]
       ,[SubsidyPlanType]
       ,[ProjectNameTw]
       ,[OrgName]
       ,[Year]
       ,[TotalSubsidyAmount]
+      ,[SourceSystem]
   FROM [OCA_OceanSubsidy].[dbo].[V_OFS_ApplicationChecklistSearch]
+
 
 ";
 
@@ -70,7 +73,7 @@ public class ApplicationChecklistHelper
                     OrgName = row["OrgName"]?.ToString(),
                     Req_SubsidyAmount = row["TotalSubsidyAmount"] != DBNull.Value ?
                         Convert.ToDecimal(row["TotalSubsidyAmount"]).ToString("N0") : "0",
-
+                    ProjectContent = row["ProjectContent"].ToString(),
                     // 狀態相關
                     Statuses = row["Statuses"]?.ToString(),
                     StatusesName = row["StatusesName"]?.ToString(),

@@ -56,6 +56,7 @@ namespace GS.OCA_OceanSubsidy.Model.OFS
         public string Year { get; set; }
         public string SubsidyPlanType { get; set; }
         public string Req_SubsidyAmount { get; set; }
+        public string ProjectContent { get; set; }
         public bool? isWithdrawal { get; set; }
         public bool? isExists { get; set; }
         

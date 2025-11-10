@@ -636,9 +636,30 @@
                 try {
                     const response = iframe.contentDocument.body.textContent;
                     if (response.startsWith('SUCCESS:')) {
-                        const fileName = response.substring(8);
-                        Swal.fire('成功', '檔案上傳成功', 'success');
-                        loadUploadedFiles(); // 重新載入檔案列表
+                        const data = response.substring(8);
+                        const parts = data.split('|');
+                        const fileName = parts[0];
+                        const accumulatedAmount = parts.length > 1 ? parts[1] : null;
+
+                        // 重新載入檔案列表
+                        loadUploadedFiles();
+
+                        // 如果有讀取到累積實支金額，自動填入欄位
+                        if (accumulatedAmount && accumulatedAmount !== 'MANUAL' && fileType === 1 && currentPhase === 2) {
+                            $('#accumulatedAmountInput').val(accumulatedAmount);
+                            // 觸發計算
+                            calculatePhase2Values();
+                            // 更新賸餘款
+                            updateRemainingAmount();
+                            // 顯示成功訊息
+                            Swal.fire('成功', '檔案上傳成功，已自動帶入累積實支金額', 'success');
+                        } else if (accumulatedAmount === 'MANUAL' && fileType === 1 && currentPhase === 2) {
+                            // 無法自動讀取，提示使用者手動輸入
+                            Swal.fire('提醒', '檔案上傳成功！<br>沒有讀取到金額欄位，請自行輸入累積實支金額', 'warning');
+                        } else {
+                            // 其他情況（非經費支用表或非第二期）
+                            Swal.fire('成功', '檔案上傳成功', 'success');
+                        }
                     } else if (response.startsWith('ERROR:')) {
                         const errorMsg = response.substring(6);
                         Swal.fire('錯誤', errorMsg, 'error');
@@ -648,7 +669,7 @@
                 } catch (e) {
                     Swal.fire('錯誤', '上傳過程發生錯誤', 'error');
                 }
-                
+
                 // 清理
                 document.body.removeChild(form);
                 document.body.removeChild(iframe);

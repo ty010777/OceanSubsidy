@@ -368,10 +368,10 @@ public partial class OFS_SCI_SciReimbursement : System.Web.UI.Page
         {
             string projectID = Request.QueryString["ProjectID"];
             string fileType = Request.Form["fileType"]; // 1=經費支用表, 2=憑證
-            
+
             if (string.IsNullOrEmpty(projectID))
             {
-                Response.Write("專案ID不可為空");
+                Response.Write("ERROR:專案ID不可為空");
                 Response.End();
                 return;
             }
@@ -379,39 +379,62 @@ public partial class OFS_SCI_SciReimbursement : System.Web.UI.Page
             HttpFileCollection files = Request.Files;
             if (files.Count == 0 || files[0].ContentLength == 0)
             {
-                Response.Write("請選擇要上傳的檔案");
+                Response.Write("ERROR:請選擇要上傳的檔案");
                 Response.End();
                 return;
             }
 
             HttpPostedFile uploadedFile = files[0];
             string fileCode = fileType == "1" ? "REIMBURSE_EXPENSE" : "REIMBURSE_RECEIPT";
-            
+
             // 產生檔案路徑
             string relativePath = OFS_SciReimbursementHelper.GenerateFilePath(projectID, uploadedFile.FileName, fileCode);
             string physicalPath = Server.MapPath("~/" + relativePath);
-            
+
             // 確保目錄存在
             string directory = Path.GetDirectoryName(physicalPath);
             if (!Directory.Exists(directory))
             {
                 Directory.CreateDirectory(directory);
             }
-            
+
             // 儲存檔案
             uploadedFile.SaveAs(physicalPath);
-            
+
             // 儲存檔案記錄到資料庫
             string fileName = Path.GetFileName(relativePath);
             bool success = OFS_SciReimbursementHelper.SaveUploadedFile(projectID, fileCode, fileName, relativePath);
-            
-            if (success)
+
+            if (!success)
             {
-                Response.Write("SUCCESS:" + fileName);
+                Response.Write("ERROR:儲存檔案記錄失敗");
+                Response.End();
+                return;
+            }
+
+            // 如果是經費支用表(Excel)，讀取累積實支金額
+            decimal? accumulatedAmount = null;
+            if (fileType == "1")
+            {
+                accumulatedAmount = OFS_SciReimbursementHelper.ReadAccumulatedAmountFromExcel(physicalPath, projectID);
+            }
+
+            // 回傳成功訊息，包含檔名和累積實支金額(如果有讀取到)
+            if (accumulatedAmount.HasValue)
+            {
+                Response.Write($"SUCCESS:{fileName}|{accumulatedAmount.Value}");
             }
             else
             {
-                Response.Write("ERROR:儲存檔案記錄失敗");
+                // 如果是經費支用表但沒有讀取到金額，回傳提示訊息
+                if (fileType == "1")
+                {
+                    Response.Write($"SUCCESS:{fileName}|MANUAL");
+                }
+                else
+                {
+                    Response.Write($"SUCCESS:{fileName}");
+                }
             }
         }
         catch (Exception ex)
