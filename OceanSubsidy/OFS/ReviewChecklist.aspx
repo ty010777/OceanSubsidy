@@ -279,7 +279,7 @@
             <div class="bg-light-teal-100 mb-5 checkPlanBtnPanel checkPlanBtnPanel-type1" style="display: none;">
                 <div class="p-3 d-flex justify-content-between align-items-center">
                     <div class="d-flex gap-3">
-                        <button class="btn btn-teal" type="button" onclick="handleBatchApproval('轉入下一階段')"><i class="fa-solid fa-check"></i>批次通過，轉入下一階段</button>
+                        <button class="btn btn-teal" type="button" onclick="openReviewerSetupModal()"><i class="fa-solid fa-check"></i>批次通過，轉入下一階段</button>
                         <button class="btn btn-pink" type="button" onclick="handleBatchReject('批次不通過')"><i class="fa-solid fa-xmark"></i>批次不通過，提送申請者</button>
                     </div>
                 </div>
@@ -463,7 +463,7 @@
         	  <div class="p-3 d-flex justify-content-between align-items-start gap-3 flex-wrap">
         		  <div class="d-flex gap-3 flex-wrap">
         			  <button class="btn btn-royal-blue" type="button" onclick="handleSendReviewComments()"><i class="fa-solid fa-check"></i>審查意見 提送至申請者</button>
-        			  <button class="btn btn-teal" type="button" onclick="handleBatchApproval('轉入下一階段')"><i class="fa-solid fa-check"></i>批次通過，轉入下一階段</button>
+        			  <button class="btn btn-teal" type="button" onclick="openReviewerSetupModal('轉入下一階段')"><i class="fa-solid fa-check"></i>批次通過，轉入下一階段</button>
         			  <button class="btn btn-teal" type="button" onclick="handleBatchApproval('進入決審')"><i class="fa-solid fa-check"></i>批次通過，進入決審</button>
         			  <button class="btn btn-pink" type="button" onclick="handleBatchReject('批次不通過')"><i class="fa-solid fa-xmark"></i>批次不通過</button>
         		  </div>
@@ -1269,8 +1269,7 @@
                                 <div class="col-12 col-md-4">
                                     <div class="fs-16 text-gray mb-2">年度</div>
                                     <select id="sortingYear" class="form-select">
-                                        <option value="113">113年</option>
-                                        <option value="114">114年</option>
+                                        <option value="">載入中...</option>
                                     </select>
                                 </div>
                                 <div class="col-12 col-md-4">
@@ -1482,7 +1481,340 @@
           </div>
       </div>
   </div>
+
+  <!-- Modal 設置審查人員 -->
+  <div class="modal fade" id="reviewerSetupModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="reviewerSetupModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <div>
+                      <h4 class="fs-24 fw-bold text-green-light">設置審查人員</h4>
+                      <p class="text-muted mb-0" style="font-size: 14px;">若專案無須設置審查人員，則請直接進行送出。</p>
+                  </div>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                      <i class="fa-solid fa-circle-xmark"></i>
+                  </button>
+              </div>
+              <div class="modal-body">
+                  <!-- 領域選擇 -->
+                  <div class="mb-4">
+                      <div class="fs-16 text-gray mb-2">選擇領域</div>
+                      <select id="ddlSubjectType" class="form-select" onchange="loadReviewersBySubject()">
+                          <option value="">請選擇領域</option>
+                      </select>
+                  </div>
+
+                  <!-- 雙清單選擇器 -->
+                  <div class="row g-3">
+                      <!-- A清單：可選擇的審查委員 -->
+                      <div class="col-12 col-md-5">
+                          <div class="d-flex justify-content-between align-items-center mb-2">
+                              <span class="fs-16 text-gray">可選擇的審查委員</span>
+                              <span class="badge bg-teal" id="availableCount">0</span>
+                          </div>
+                          <div class="border rounded p-2" style="height: 400px; overflow-y: auto;">
+                              <div id="availableReviewersList">
+                                  <div class="text-center text-muted py-5">
+                                      請先選擇領域
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+
+                      <!-- 中間操作按鈕 -->
+                      <div class="col-12 col-md-2 d-flex flex-column justify-content-center align-items-center gap-2">
+                          <button type="button" class="btn btn-teal" onclick="addSelectedReviewers()" title="加入">
+                              <i class="fa-solid fa-chevron-right"></i>
+                          </button>
+                          <button type="button" class="btn btn-pink" onclick="removeSelectedReviewers()" title="移除">
+                              <i class="fa-solid fa-chevron-left"></i>
+                          </button>
+                      </div>
+
+                      <!-- B清單：已選擇的審查委員 -->
+                      <div class="col-12 col-md-5">
+                          <div class="d-flex justify-content-between align-items-center mb-2">
+                              <span class="fs-16 text-gray">已選擇的審查委員</span>
+                              <span class="badge bg-pink" id="selectedCount">0</span>
+                          </div>
+                          <div class="border rounded p-2" style="height: 400px; overflow-y: auto;">
+                              <div id="selectedReviewersList">
+                                  <div class="text-center text-muted py-5">
+                                      尚未選擇審查委員
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+              <div class="modal-footer">
+                  <button type="button" class="btn btn-gray" data-bs-dismiss="modal">取消</button>
+                  <button type="button" class="btn btn-teal" onclick="confirmReviewerSetup()">設置完成，轉入下一階段</button>
+              </div>
+          </div>
+      </div>
+  </div>
+
     <script>
         startVueApp("#news-marquee");
+
+        // 審查人員設置相關變數
+        var availableReviewers = []; // A清單：可選擇的審查委員
+        var selectedReviewers = [];  // B清單：已選擇的審查委員
+        var currentActionText = '';  // 當前操作文字
+
+        // 開啟設置審查人員 Modal
+        function openReviewerSetupModal(actionText) {
+            // 儲存操作文字（預設為「轉入下一階段」）
+            currentActionText = actionText || '轉入下一階段';
+
+            // 重置清單
+            availableReviewers = [];
+            selectedReviewers = [];
+
+            // 清空下拉選單
+            $('#ddlSubjectType').empty().append('<option value="">請選擇領域</option>');
+
+            // 清空 A清單
+            $('#availableReviewersList').html('<div class="text-center text-muted py-5">請先選擇領域</div>');
+            $('#availableCount').text('0');
+
+            // 清空 B清單
+            $('#selectedReviewersList').html('<div class="text-center text-muted py-5">尚未選擇審查委員</div>');
+            $('#selectedCount').text('0');
+
+            // 載入領域下拉選單
+            loadSubjectTypes();
+
+            // 顯示 modal
+            var modal = new bootstrap.Modal(document.getElementById('reviewerSetupModal'));
+            modal.show();
+        }
+
+        // 載入領域下拉選單
+        function loadSubjectTypes() {
+            $.ajax({
+                type: "POST",
+                url: "ReviewChecklist.aspx/GetSubjectTypes",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function(response) {
+                    var result = JSON.parse(response.d);
+                    if (result.success) {
+                        var ddl = $('#ddlSubjectType');
+                        ddl.empty();
+                        ddl.append('<option value="">請選擇領域</option>');
+
+                        result.data.forEach(function(item) {
+                            ddl.append('<option value="' + item.code + '">' + item.name + '</option>');
+                        });
+                    } else {
+                        Swal.fire('錯誤', result.message, 'error');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire('錯誤', '載入領域清單失敗', 'error');
+                }
+            });
+        }
+
+        // 根據領域載入審查委員
+        function loadReviewersBySubject() {
+            var subjectCode = $('#ddlSubjectType').val();
+
+            if (!subjectCode) {
+                $('#availableReviewersList').html('<div class="text-center text-muted py-5">請先選擇領域</div>');
+                $('#availableCount').text('0');
+                availableReviewers = [];
+                return;
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "ReviewChecklist.aspx/GetReviewersBySubject",
+                data: JSON.stringify({ subjectCode: subjectCode }),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function(response) {
+                    var result = JSON.parse(response.d);
+                    if (result.success) {
+                        availableReviewers = result.data;
+                        renderAvailableReviewers();
+                    } else {
+                        Swal.fire('錯誤', result.message, 'error');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    Swal.fire('錯誤', '載入審查委員清單失敗', 'error');
+                }
+            });
+        }
+
+        // 渲染 A清單（可選擇的審查委員）
+        function renderAvailableReviewers() {
+            var html = '';
+
+            if (availableReviewers.length === 0) {
+                html = '<div class="text-center text-muted py-5">此領域無可選擇的審查委員</div>';
+            } else {
+                availableReviewers.forEach(function(reviewer) {
+                    // 檢查是否已在 B清單中
+                    var isSelected = selectedReviewers.some(r => r.account === reviewer.account);
+                    if (!isSelected) {
+                        html += '<div class="form-check mb-2">';
+                        html += '<input class="form-check-input check-teal" type="checkbox" value="' + reviewer.account + '" id="avail_' + reviewer.account + '">';
+                        html += '<label class="form-check-label" for="avail_' + reviewer.account + '">';
+                        html += reviewer.displayName;
+                        html += '</label>';
+                        html += '</div>';
+                    }
+                });
+
+                if (html === '') {
+                    html = '<div class="text-center text-muted py-5">所有審查委員已被選擇</div>';
+                }
+            }
+
+            $('#availableReviewersList').html(html);
+            updateAvailableCount();
+        }
+
+        // 渲染 B清單（已選擇的審查委員）
+        function renderSelectedReviewers() {
+            var html = '';
+
+            if (selectedReviewers.length === 0) {
+                html = '<div class="text-center text-muted py-5">尚未選擇審查委員</div>';
+            } else {
+                selectedReviewers.forEach(function(reviewer) {
+                    html += '<div class="form-check mb-2">';
+                    html += '<input class="form-check-input check-pink" type="checkbox" value="' + reviewer.account + '" id="sel_' + reviewer.account + '">';
+                    html += '<label class="form-check-label" for="sel_' + reviewer.account + '">';
+                    html += reviewer.displayName;
+                    html += '</label>';
+                    html += '</div>';
+                });
+            }
+
+            $('#selectedReviewersList').html(html);
+            $('#selectedCount').text(selectedReviewers.length);
+        }
+
+        // 更新 A清單計數
+        function updateAvailableCount() {
+            var count = availableReviewers.filter(function(reviewer) {
+                return !selectedReviewers.some(r => r.account === reviewer.account);
+            }).length;
+            $('#availableCount').text(count);
+        }
+
+        // 加入選中的審查委員到 B清單
+        function addSelectedReviewers() {
+            var checkedBoxes = $('#availableReviewersList input[type="checkbox"]:checked');
+
+            if (checkedBoxes.length === 0) {
+                Swal.fire('提示', '請先勾選要加入的審查委員', 'info');
+                return;
+            }
+
+            checkedBoxes.each(function() {
+                var account = $(this).val();
+                var reviewer = availableReviewers.find(r => r.account === account);
+
+                if (reviewer && !selectedReviewers.some(r => r.account === account)) {
+                    selectedReviewers.push(reviewer);
+                }
+            });
+
+            renderAvailableReviewers();
+            renderSelectedReviewers();
+        }
+
+        // 從 B清單移除選中的審查委員
+        function removeSelectedReviewers() {
+            var checkedBoxes = $('#selectedReviewersList input[type="checkbox"]:checked');
+
+            if (checkedBoxes.length === 0) {
+                Swal.fire('提示', '請先勾選要移除的審查委員', 'info');
+                return;
+            }
+
+            var accountsToRemove = [];
+            checkedBoxes.each(function() {
+                accountsToRemove.push($(this).val());
+            });
+
+            selectedReviewers = selectedReviewers.filter(function(reviewer) {
+                return !accountsToRemove.includes(reviewer.account);
+            });
+
+            renderAvailableReviewers();
+            renderSelectedReviewers();
+        }
+
+        // 確認設置完成，執行原本的批次通過功能
+        function confirmReviewerSetup() {
+            // 取得當前審查類型
+            var currentType = window.ReviewChecklist.getCurrentType();
+
+            // 檢查是否有選中的專案
+            var currentContent = $('#content-type-' + currentType);
+            var selectedCheckboxes = currentContent.find('.checkPlan:checked');
+
+            // 檢查選中的專案中是否包含文化或科專
+            var hasCulOrSci = false;
+            selectedCheckboxes.each(function() {
+                var projectId = $(this).val();
+                if (projectId.includes('CUL') || projectId.includes('SCI')) {
+                    hasCulOrSci = true;
+                    return false; // 跳出 each 迴圈
+                }
+            });
+
+            // 準備審查人員清單資料
+            var reviewerList = selectedReviewers.map(function(reviewer) {
+                return {
+                    account: reviewer.account,
+                    name: reviewer.name
+                };
+            });
+
+            console.log('已選擇的審查委員:', reviewerList);
+            console.log('操作類型:', currentActionText);
+            console.log('是否包含文化或科專:', hasCulOrSci);
+
+            // 如果有文化或科專專案，但沒有選擇審查委員，顯示提示
+            if (hasCulOrSci && reviewerList.length === 0) {
+                Swal.fire({
+                    title: '提示',
+                    text: '您選擇的專案中包含文化或科專項目，建議設置審查人員。確定要繼續嗎？',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: '確定繼續',
+                    cancelButtonText: '取消',
+                    confirmButtonColor: '#26A69A',
+                    cancelButtonColor: '#d33'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // 使用者確認繼續
+                        proceedWithBatchApproval(reviewerList);
+                    }
+                    // 如果取消，不關閉 modal，讓使用者可以繼續選擇審查人員
+                });
+            } else {
+                // 沒有文化或科專，或已選擇審查委員，直接執行
+                proceedWithBatchApproval(reviewerList);
+            }
+        }
+
+        // 執行批次通過處理
+        function proceedWithBatchApproval(reviewerList) {
+            // 關閉 modal
+            var modal = bootstrap.Modal.getInstance(document.getElementById('reviewerSetupModal'));
+            modal.hide();
+
+            // 執行原本的批次通過功能，並傳遞審查人員清單
+            handleBatchApproval(currentActionText, reviewerList);
+        }
     </script>
 </asp:Content>

@@ -78,8 +78,9 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             using (var db = new GS.Data.Sql.DbHelper())
             {
                 db.CommandText = @"
-                    SELECT [TypeID], [TypeCode], [ShortName]
+                    SELECT TypeCode,ShortName
                     FROM [OCA_OceanSubsidy].[dbo].[OFS_GrantType]
+                    where TypeID in(1,2,3,4,5,6,7)
                     ORDER BY [TypeID]
                 ";
 
@@ -750,9 +751,10 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
     /// <param name="projectIds">專案編號列表</param>
     /// <param name="actionType">操作類型</param>
     /// <param name="reviewType">審查類型</param>
+    /// <param name="reviewerList">審查人員清單（僅 Type1、Type2 使用）</param>
     /// <returns>批次處理結果</returns>
     [WebMethod]
-    public static BatchApprovalResult BatchApproveType(List<string> projectIds, string actionType, string reviewType)
+    public static BatchApprovalResult BatchApproveType(List<string> projectIds, string actionType, string reviewType, List<ReviewerInfo> reviewerList = null)
     {
         var result = new BatchApprovalResult
         {
@@ -831,11 +833,11 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                         switch (subsidyType)
                         {
                             case "SCI":
-                                ReviewCheckListHelper.ProcessSciPostApproval(groupResult.SuccessProjectIds, toStatus, actionType, currentUser.Account);
+                                ReviewCheckListHelper.ProcessSciPostApproval(groupResult.SuccessProjectIds, toStatus, reviewerList);
 
                                 break;
                             case "CUL":
-                                ReviewCheckListHelper.ProcessCulPostApproval(groupResult.SuccessProjectIds, toStatus, actionType, currentUser.Account);
+                                ReviewCheckListHelper.ProcessCulPostApproval(groupResult.SuccessProjectIds, toStatus, reviewerList);
 
                                 break;
                             default:
@@ -2784,7 +2786,6 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
 
             // 依補助類型分組專案
             //科專、文化 --> 領域審核、初審 寄信
-            //其他 --> 決審 寄信
             var sciProjects = projectIds.Where(p => p.Contains("SCI")).ToList();
             var culProjects = projectIds.Where(p => p.Contains("CUL")).ToList();
           
@@ -3833,6 +3834,161 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             }
         }
         return successCount;
+    }
+
+    #endregion
+
+    #region 審查人員設置相關 WebMethod
+
+    /// <summary>
+    /// 取得年度清單
+    /// </summary>
+    [WebMethod]
+    public static string GetYearList()
+    {
+        try
+        {
+            using (var db = new GS.Data.Sql.DbHelper())
+            {
+                db.CommandText = @"
+                    SELECT Year
+                    FROM [OCA_OceanSubsidy].[dbo].[OFS_GrantType]
+                    GROUP BY Year
+                    ORDER BY Year DESC
+                ";
+
+                var table = db.GetTable();
+                var results = new List<object>();
+
+                foreach (DataRow row in table.Rows)
+                {
+                    results.Add(new
+                    {
+                        year = row["Year"]?.ToString() ?? ""
+                    });
+                }
+
+                return JsonConvert.SerializeObject(new
+                {
+                    success = true,
+                    data = results,
+                    message = "成功取得年度清單"
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            return JsonConvert.SerializeObject(new
+            {
+                success = false,
+                message = "取得年度清單時發生錯誤: " + ex.Message,
+                data = new List<object>()
+            });
+        }
+    }
+
+    /// <summary>
+    /// 取得領域清單（主題、領域）
+    /// </summary>
+    [WebMethod]
+    public static string GetSubjectTypes()
+    {
+        try
+        {
+            using (var db = new GS.Data.Sql.DbHelper())
+            {
+                db.CommandText = @"
+                    SELECT Code, Descname
+                    FROM [OCA_OceanSubsidy].[dbo].[Sys_ZgsCode]
+                    WHERE (CodeGroup = 'CULField' AND ParentCode IN (10, 20, 30))
+                       OR CodeGroup = 'SCIField'
+                    ORDER BY CodeGroup
+                ";
+
+                var table = db.GetTable();
+                var results = new List<object>();
+
+                foreach (DataRow row in table.Rows)
+                {
+                    results.Add(new
+                    {
+                        code = row["Code"]?.ToString() ?? "",
+                        name = row["Descname"]?.ToString() ?? ""
+                    });
+                }
+
+                return JsonConvert.SerializeObject(new
+                {
+                    success = true,
+                    data = results,
+                    message = "成功取得領域清單"
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            return JsonConvert.SerializeObject(new
+            {
+                success = false,
+                message = "取得領域清單時發生錯誤: " + ex.Message,
+                data = new List<object>()
+            });
+        }
+    }
+
+    /// <summary>
+    /// 根據領域代碼取得審查委員清單
+    /// </summary>
+    [WebMethod]
+    public static string GetReviewersBySubject(string subjectCode)
+    {
+        try
+        {
+            using (var db = new GS.Data.Sql.DbHelper())
+            {
+                db.CommandText = @"
+                    SELECT CommitteeUser, Email
+                    FROM OFS_ReviewCommitteeList
+                    WHERE SubjectTypeID = @SubjectCode
+                ";
+
+                db.Parameters.Add("@SubjectCode", subjectCode);
+
+                var table = db.GetTable();
+                var results = new List<object>();
+
+                foreach (DataRow row in table.Rows)
+                {
+                    string name = row["CommitteeUser"]?.ToString() ?? "";  // 中文名稱
+                    string account = row["Email"]?.ToString() ?? "";       // 帳號
+
+                    results.Add(new
+                    {
+                        account = account,
+                        name = name,
+                        displayName = $"{account} {name}"
+                    });
+                }
+
+                db.Parameters.Clear();
+
+                return JsonConvert.SerializeObject(new
+                {
+                    success = true,
+                    data = results,
+                    message = $"成功取得 {results.Count} 位審查委員"
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            return JsonConvert.SerializeObject(new
+            {
+                success = false,
+                message = "取得審查委員清單時發生錯誤: " + ex.Message,
+                data = new List<object>()
+            });
+        }
     }
 
     #endregion

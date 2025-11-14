@@ -8,4 +8,13 @@ namespace GS.OCA_OceanSubsidy.Model.OFS
         public string ProjectID { get; set; }
         public string ProjectName { get; set; }
     }
+
+    /// <summary>
+    /// 審查人員資訊（用於批次設置審查人員）
+    /// </summary>
+    public class ReviewerInfo
+    {
+        public string Account { get; set; }  // 帳號 (Email)
+        public string Name { get; set; }     // 中文名稱 (CommitteeUser)
+    }
 }

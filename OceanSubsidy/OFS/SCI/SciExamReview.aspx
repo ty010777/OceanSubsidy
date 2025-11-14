@@ -147,14 +147,20 @@
                                                         <span class="text-muted" style="font-size: 0.875rem;">支援 JPG/JPEG/PNG 格式，檔案大小不超過 10MB</span>
                                                     </div>
                                                     <div id="bankBookFilePreview" style="display: none;" class="mt-2">
-                                                        <span class="tag tag-green-light">
-                                                            <a class="tag-link" href="#" id="bankBookDownloadLink" target="_blank">
-                                                                <span id="bankBookFileName"></span>
-                                                            </a>
-                                                            <button type="button" class="tag-btn" onclick="deleteBankBookFile()">
-                                                                <i class="fa-solid fa-circle-xmark"></i>
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <span class="tag tag-green-light">
+                                                                <a class="tag-link" href="#" id="bankBookDownloadLink" target="_blank">
+                                                                    <span id="bankBookFileName"></span>
+                                                                </a>
+                                                                <button type="button" class="tag-btn" onclick="deleteBankBookFile()">
+                                                                    <i class="fa-solid fa-circle-xmark"></i>
+                                                                </button>
+                                                            </span>
+                                                            <button type="button" class="btn btn-sm btn-outline-teal" onclick="previewBankBookImage()">
+                                                                <i class="fas fa-eye me-1"></i>
+                                                                預覽圖片
                                                             </button>
-                                                        </span>
+                                                        </div>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -248,7 +254,31 @@
                                 </li>
                             </ul>
                         </div>
-                        
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal 存摺封面預覽 -->
+        <div class="modal fade" id="bankBookPreviewModal" tabindex="-1" aria-labelledby="bankBookPreviewModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="bankBookPreviewModalLabel">存摺封面預覽</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <img id="bankBookPreviewImage" src="" alt="存摺封面" class="img-fluid" style="max-width: 100%; max-height: 70vh;">
+                    </div>
+                    <div class="modal-footer">
+                        <a id="bankBookPreviewDownloadLink" href="#" target="_blank" class="btn btn-teal-dark">
+                            <i class="fas fa-download me-1"></i>
+                            下載圖片
+                        </a>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
                     </div>
                 </div>
             </div>
@@ -757,6 +787,21 @@
                     });
                 }
             });
+        }
+
+        // 預覽存摺封面圖片
+        function previewBankBookImage() {
+            const downloadUrl = sciDownloadUrl + '?action=downloadbankbook&token=' + encodeURIComponent(currentToken);
+
+            // 設定預覽圖片的 src
+            $('#bankBookPreviewImage').attr('src', downloadUrl);
+
+            // 設定下載連結
+            $('#bankBookPreviewDownloadLink').attr('href', downloadUrl);
+
+            // 顯示 Modal
+            const modal = new bootstrap.Modal(document.getElementById('bankBookPreviewModal'));
+            modal.show();
         }
 
         </script>

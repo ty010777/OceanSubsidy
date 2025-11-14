@@ -338,7 +338,7 @@ public class ReviewCheckListHelper
             new DropdownItem { Value = "", Text = "全部" },
             new DropdownItem { Value = "審核中", Text = "審核中" },
             new DropdownItem { Value = "通過", Text = "通過" },
-            new DropdownItem { Value = "未通過", Text = "未通過" },
+            new DropdownItem { Value = "不通過", Text = "不通過" },
             new DropdownItem { Value = "補正補件", Text = "補正補件" },
             new DropdownItem { Value = "逾期未補", Text = "逾期未補" }
         };
@@ -1407,7 +1407,7 @@ SELECT TOP (1000) [ProjectID]
             if (!string.IsNullOrEmpty(status))
             {
                 db.CommandText += " AND StatusesName LIKE @status";
-                db.Parameters.Add("@status", $"%{status}%");
+                db.Parameters.Add("@status", $"{status}");
             }
 
             if (!string.IsNullOrEmpty(orgName))
@@ -2371,9 +2371,8 @@ SELECT TOP (1000) [ProjectID]
     /// </summary>
     /// <param name="projectIds">專案編號列表</param>
     /// <param name="reviewStage">審查階段</param>
-    /// <param name="actionType">操作類型</param>
-    /// <param name="userAccount">操作者帳號</param>
-    public static void ProcessSciPostApproval(List<string> projectIds, string toStatus, string actionType, string userAccount)
+
+    public static void ProcessSciPostApproval(List<string> projectIds, string toStatus, List<ReviewerInfo> reviewerList = null)
     {
         string reviewStage = toStatus == "領域審查" ? "2" : "3";
         DbHelper db = new DbHelper();
@@ -2381,7 +2380,7 @@ SELECT TOP (1000) [ProjectID]
         foreach (string projectId in projectIds)
         {
             // 1. 從 OFS_SCI_Application_Main 取得 Field
-            
+
             db.CommandText = "SELECT Field FROM OFS_SCI_Application_Main WHERE ProjectID = @ProjectID";
             db.Parameters.Add("@ProjectID", projectId);
             string field = db.GetTable().Rows[0]["Field"]?.ToString();
@@ -2389,15 +2388,31 @@ SELECT TOP (1000) [ProjectID]
 
             if (!string.IsNullOrEmpty(field))
             {
-                // 2. 從 OFS_ReviewCommitteeList 取得對應審查組別的所有人員
-                db.CommandText = @"
-                        SELECT CommitteeUser, Email
-                        FROM OFS_ReviewCommitteeList
-                        WHERE SubjectTypeID = @SubjectTypeID";
+                // 2. 取得審查人員清單
+                DataTable reviewers = new DataTable();
+                reviewers.Columns.Add("CommitteeUser", typeof(string));
+                reviewers.Columns.Add("Email", typeof(string));
 
-                db.Parameters.Add("@SubjectTypeID", field);
-                DataTable reviewers = db.GetTable();
-                db.Parameters.Clear();
+                if (reviewerList != null && reviewerList.Count > 0)
+                {
+                    // 使用傳入的審查人員清單
+                    foreach (var reviewer in reviewerList)
+                    {
+                        reviewers.Rows.Add(reviewer.Name, reviewer.Account);
+                    }
+                }
+                else
+                {
+                    // 從 OFS_ReviewCommitteeList 取得對應審查組別的所有人員（舊邏輯）
+                    db.CommandText = @"
+                            SELECT CommitteeUser, Email
+                            FROM OFS_ReviewCommitteeList
+                            WHERE SubjectTypeID = @SubjectTypeID";
+
+                    db.Parameters.Add("@SubjectTypeID", field);
+                    reviewers = db.GetTable();
+                    db.Parameters.Clear();
+                }
 
                 // 3. 取得科專的審查範本
                 db.CommandText = @"
@@ -2489,7 +2504,7 @@ SELECT TOP (1000) [ProjectID]
     /// <summary>
     /// 處理文化批次審核後的特殊流程
     /// </summary>
-    public static void ProcessCulPostApproval(List<string> projectIds, string reviewStage, string actionType, string userAccount)
+    public static void ProcessCulPostApproval(List<string> projectIds, string reviewStage, List<ReviewerInfo> reviewerList = null)
     {
         DbHelper db = new DbHelper();
 
@@ -2513,16 +2528,32 @@ SELECT TOP (1000) [ProjectID]
             }
             if (!string.IsNullOrEmpty(field))
             {
-                // 2. 從 OFS_ReviewCommitteeList 取得對應審查組別的所有人員
-                db.CommandText = @"
-                    SELECT CommitteeUser, Email
-                      FROM OFS_ReviewCommitteeList
-                     WHERE SubjectTypeID = @SubjectTypeID
-                ";
+                // 2. 取得審查人員清單
+                DataTable reviewers = new DataTable();
+                reviewers.Columns.Add("CommitteeUser", typeof(string));
+                reviewers.Columns.Add("Email", typeof(string));
 
-                db.Parameters.Add("@SubjectTypeID", field);
-                DataTable reviewers = db.GetTable();
-                db.Parameters.Clear();
+                if (reviewerList != null && reviewerList.Count > 0)
+                {
+                    // 使用傳入的審查人員清單
+                    foreach (var reviewer in reviewerList)
+                    {
+                        reviewers.Rows.Add(reviewer.Name, reviewer.Account);
+                    }
+                }
+                else
+                {
+                    // 從 OFS_ReviewCommitteeList 取得對應審查組別的所有人員（舊邏輯）
+                    db.CommandText = @"
+                        SELECT CommitteeUser, Email
+                          FROM OFS_ReviewCommitteeList
+                         WHERE SubjectTypeID = @SubjectTypeID
+                    ";
+
+                    db.Parameters.Add("@SubjectTypeID", field);
+                    reviewers = db.GetTable();
+                    db.Parameters.Clear();
+                }
 
                 // 3. 取得文化的審查範本
                 db.CommandText = $@"

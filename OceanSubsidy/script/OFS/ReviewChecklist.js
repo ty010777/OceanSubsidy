@@ -59,6 +59,9 @@ window.ReviewChecklist = (function() {
             // 載入統計資料
             loadStatistics();
 
+            // 載入年度清單
+            loadYearList();
+
             isInitialized = true;
         } catch (error) {
             console.error('初始化ReviewChecklist模組時發生錯誤:', error);
@@ -285,6 +288,51 @@ window.ReviewChecklist = (function() {
             });
         } catch (error) {
             console.error('載入統計資料時發生錯誤:', error);
+        }
+    }
+
+    /**
+     * 載入年度清單
+     */
+    function loadYearList() {
+        try {
+            $.ajax({
+                type: 'POST',
+                url: 'ReviewChecklist.aspx/GetYearList',
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                success: function(response) {
+                    try {
+                        var result = JSON.parse(response.d);
+                        if (result.success && result.data) {
+                            var yearSelect = $('#sortingYear');
+                            yearSelect.empty();
+
+                            // 如果有資料，載入選項
+                            if (result.data.length > 0) {
+                                result.data.forEach(function(item) {
+                                    yearSelect.append('<option value="' + item.year + '">' + item.year + '年</option>');
+                                });
+                            } else {
+                                yearSelect.append('<option value="">無可用年度</option>');
+                            }
+                        } else {
+                            console.error('取得年度清單失敗:', result.message);
+                            $('#sortingYear').html('<option value="">載入失敗</option>');
+                        }
+                    } catch (error) {
+                        console.error('解析年度清單時發生錯誤:', error);
+                        $('#sortingYear').html('<option value="">載入失敗</option>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('取得年度清單時發生錯誤:', error);
+                    $('#sortingYear').html('<option value="">載入失敗</option>');
+                }
+            });
+        } catch (error) {
+            console.error('載入年度清單時發生錯誤:', error);
+            $('#sortingYear').html('<option value="">載入失敗</option>');
         }
     }
 
@@ -2185,7 +2233,7 @@ $(function() {
  * 簡化版批次審核處理函數 - 全域函數供按鈕直接調用
  * @param {string} actionText - 動作文字 (如: "轉入下一階段", "進入決審")
  */
-function handleBatchApproval(actionText) {
+function handleBatchApproval(actionText, reviewerList = null) {
     try {
         const currentType = window.ReviewChecklist.getCurrentType();
 
@@ -2263,8 +2311,8 @@ function handleBatchApproval(actionText) {
             cancelButtonColor: '#d33'
         }).then((result) => {
             if (result.isConfirmed) {
-                // 3. 執行批次處理
-                batchProcess(selectedIds, actionText, currentType);
+                // 3. 執行批次處理，並傳遞審查人員清單（如果有的話）
+                batchProcess(selectedIds, actionText, currentType, reviewerList);
             }
         });
 
@@ -2541,7 +2589,7 @@ function handleBatchReject(actionText) {
 /**
  * 執行批次處理 - 簡化版本
  */
-function batchProcess(selectedIds, actionText, currentType) {
+function batchProcess(selectedIds, actionText, currentType, reviewerList = null) {
     // 如果是 Type4 且有勾選項目，先執行儲存核定金額
     const hasCheckedItems = $('#content-type-4 .approval-mode-table table tbody .checkPlan:checked').length > 0;
 
@@ -2550,18 +2598,18 @@ function batchProcess(selectedIds, actionText, currentType) {
         window.ReviewChecklist.callSaveApprovalAPI(function(result) {
             console.log(`成功儲存 ${result.count || 0} 筆核定金額資料，繼續執行批次處理`);
             // 儲存成功後執行批次處理
-            executeBatchProcess(selectedIds, actionText, currentType);
+            executeBatchProcess(selectedIds, actionText, currentType, reviewerList);
         });
     } else {
         // 直接執行批次處理
-        executeBatchProcess(selectedIds, actionText, currentType);
+        executeBatchProcess(selectedIds, actionText, currentType, reviewerList);
     }
 }
 
 /**
  * 執行批次處理
 //  */
-function executeBatchProcess(selectedIds, actionText, currentType) {
+function executeBatchProcess(selectedIds, actionText, currentType, reviewerList = null) {
     // 顯示批次處理中
     Swal.fire({
         title: '批次處理中...',
@@ -2578,7 +2626,8 @@ function executeBatchProcess(selectedIds, actionText, currentType) {
         data: JSON.stringify({
             projectIds: selectedIds,
             actionType: actionText,
-            reviewType: currentType
+            reviewType: currentType,
+            reviewerList: reviewerList  // 傳遞審查人員清單（Type1、Type2 才有值，Type3、Type4 為 null）
         }),
         contentType: "application/json; charset=utf-8",
         dataType: "json",
