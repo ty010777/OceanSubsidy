@@ -166,15 +166,16 @@
     const countList = [
         { title: "申請中尚未提送", url: "ApplicationChecklist.aspx", count: computed(() => applies.value.filter((i) => [1,14].includes(i.Status)).length) },
         { title: "申請審查中", url: "ApplicationChecklist.aspx", count: computed(() => applies.value.filter((i) => [11,12,21,22,31,32,41,42,43,44].includes(i.Status)).length) },
-        { title: "審查意見待回覆", url: "ApplicationChecklist.aspx", count: computed(() => 0) },
+        { title: "審查意見待回覆", url: "ApplicationChecklist.aspx?waitingReply=1", count: computed(() => pending.value.find((i) => i.Status === 1)?.Count || 0) },
         { title: "執行中計畫", url: "inprogressList.aspx", count: computed(() => applies.value.filter((i) => [51,52].includes(i.Status)).length) },
-        { title: "執行階段待回覆", url: "inprogressList.aspx", count: computed(() => 0) }
+        { title: "執行階段待回覆", url: "inprogressList.aspx?pendingReply=1", count: computed(() => pending.value.find((i) => i.Status === 2)?.Count || 0) }
     ];
 
     const applies = ref([]);
     const grants = ref([]);
     const isOrganizer = ref();
     const isUser = ref();
+    const pending = ref([]);
     const rank = ref("");
     const ranks = ref([]);
     const settings = ref([]);
@@ -240,6 +241,7 @@
             settings.value = res.Settings;
             applies.value = res.ApplyList;
             statList.value = res.StatList;
+            pending.value = res.PendingList;
             isOrganizer.value = res.IsOrganizer;
             isUser.value = res.IsUser;
 

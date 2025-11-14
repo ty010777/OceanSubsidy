@@ -51,6 +51,7 @@
                 </tbody>
             </table>
         </div>
+        <div class="text-center mt-4" v-if="project.ApplyTime">申請送件時間：<tw-date-time :value="project.ApplyTime"></tw-date-time></div>
         <template v-if="changeForm">
             <h5 class="square-title mt-5">變更說明</h5>
             <div class="mt-4">

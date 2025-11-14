@@ -12,18 +12,17 @@ public class DownloadPdfService : IHttpHandler, IRequiresSessionState
     {
         try
         {
-            var type = context.Request["Type"].ToString();
             var projectId = context.Request["ProjectID"].ToString();
-            var version = context.Request["Version"].ToString();
+            var version = context.Request["Version"]?.ToString();
 
-            var path = Path.Combine(Path.GetFullPath(Path.Combine(context.Server.MapPath("~"), "..")), "UploadFiles", "OFS", type, projectId);
+            var path = Path.Combine(Path.GetFullPath(Path.Combine(context.Server.MapPath("~"), "..")), "UploadFiles", "OFS", projectId.Substring(0, 3), projectId);
             var file = "";
 
             if (version == "1")
             {
                 file = Path.Combine(path, $"{projectId}_送審版.pdf");
             }
-            else
+            else if (version == "2")
             {
                 file = Path.Combine(path, $"{projectId}_計畫變更最新版.pdf");
 
@@ -31,6 +30,10 @@ public class DownloadPdfService : IHttpHandler, IRequiresSessionState
                 {
                     file = Path.Combine(path, $"{projectId}_核定版.pdf");
                 }
+            }
+            else
+            {
+                file = Path.Combine(path, $"{projectId}_評審版.pdf");
             }
 
             if (File.Exists(file))

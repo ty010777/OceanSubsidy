@@ -89,7 +89,10 @@
                         <td data-th="審查計畫件數:">
                             <a class="link-black" :href="`ReviewerList${item.Type}.aspx?ID=${item.ID}`" target="_blank">{{ item.Count }}</a>
                         </td>
-                        <td data-th="銀行帳戶:" class="text-start">{{ item.BankCode }} {{ item.BankName }} {{ item.BankAccount }}</td>
+                        <td data-th="銀行帳戶:" class="text-start">
+                            <a @click.prevent="showPhoto(item)" href="#" v-if="item.BankPhoto">{{ item.BankCode }} {{ item.BankName }} {{ item.BankAccount }}</a>
+                            <span v-else>{{ item.BankCode }} {{ item.BankName }} {{ item.BankAccount }}</span>
+                        </td>
                         <td data-th="戶籍地址:" class="text-start">{{ item.RegistrationAddress }}</td>
                         <td data-th="更新時間:" class="text-start"><tw-date-time :value="item.UpdateTime"></tw-date-time></td>
                     </tr>
@@ -98,13 +101,38 @@
         </div>
         <list-pager :count="list.length" @change="change" :page="page" :page-size="size"></list-pager>
     </div>
+    <teleport to="body">
+        <div aria-hidden="true" class="modal fade" ref="modal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-5">
+                            <img class="img-fluid" :src="photo" />
+                        </div>
+                        <div class="d-flex justify-content-center">
+                            <button class="btn btn-primary" data-bs-dismiss="modal" type="button">
+                                確認
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </teleport>
 </template>
 
 <script setup>
     const form = ref({ Type: 0, Keyword: "", Begin: "", End: "" });
     const list = ref([]);
+    const modal = ref();
     const page = ref(1);
     const size = ref(10);
+    const photo = ref({});
     const types = [{ text: "申請計畫審查", value: 1 }, { text: "執行計畫審查", value: 2 }];
 
     const rows = computed(() => list.value.slice((page.value - 1) * size.value, page.value * size.value));
@@ -122,6 +150,12 @@
             link.href = api.download(res.filename);
             link.click();
         });
+    };
+
+    const showPhoto = (item) => {
+        photo.value = item.Type === 1 ? api.download(item.BankPhoto) : api.sciDownload("downloadbankbook", { token: item.BankPhoto?.trim() });
+
+        bootstrap.Modal.getOrCreateInstance(modal.value).show();
     };
 
     const submit = () => {

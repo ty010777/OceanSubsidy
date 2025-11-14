@@ -167,6 +167,7 @@ public class OFSReviewCommitteeHelper
                   ,A.[BankCode]
                   ,Z.[Descname] AS [BankName]
                   ,A.[BankAccount]
+                  ,A.[BankPhoto]
                   ,A.[RegistrationAddress]
                   ,A.[UpdateTime]
               FROM (SELECT C.[ID]
@@ -176,6 +177,7 @@ public class OFSReviewCommitteeHelper
                           ,R.[Count]
                           ,C.[BankCode]
                           ,C.[BankAccount]
+                          ,C.[BankPhoto]
                           ,C.[RegistrationAddress]
                           ,C.[UpdateTime]
                       FROM [OFS_ReviewCommitteeList] AS C
@@ -188,6 +190,7 @@ public class OFSReviewCommitteeHelper
                           ,1 AS [Count]
                           ,[BankCode]
                           ,[BankAccount]
+                          ,[token] AS [BankPhoto]
                           ,[RegistrationAddress]
                           ,[UpdateTime]
                       FROM [OFS_SCI_StageExam_ReviewerList]) AS A
@@ -231,6 +234,7 @@ public class OFSReviewCommitteeHelper
             BankCode = row.Field<string>("BankCode"),
             BankName = row.Field<string>("BankName"),
             BankAccount = row.Field<string>("BankAccount"),
+            BankPhoto = row.Field<string>("BankPhoto"),
             RegistrationAddress = row.Field<string>("RegistrationAddress"),
             UpdateTime = row.Field<DateTime?>("UpdateTime")
         }).ToList();

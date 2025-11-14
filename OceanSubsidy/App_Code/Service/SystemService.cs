@@ -22,6 +22,7 @@ public class SystemService : BaseService
             Settings = OFSGrantTargetSettingHelper.query(),
             ApplyList = ReportHelper.queryApplyListByUser(CurrentUser.Account),
             StatList = ReportHelper.queryApplyStat(),
+            PendingList = ReportHelper.queryPendingList(CurrentUser.Account),
             IsOrganizer = CurrentUser.IsSysAdmin || CurrentUser.IsOrganizer || CurrentUser.IsSupervisor,
             IsUser = CurrentUser.IsSysAdmin || CurrentUser.IsUser
         };

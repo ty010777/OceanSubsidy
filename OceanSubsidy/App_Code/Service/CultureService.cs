@@ -742,6 +742,7 @@ public class CultureService : BaseService
             if (data.Status == 1 || data.Status == 14)
             {
                 mergePdfFiles(data, "送審版", context);
+                mergePdfFiles(data, "評審版", context, new List<int> {1,2});
                 mergePdfFiles(data, "核定版", context);
 
                 NotificationHelper.A1("文化", data.ProjectName, "CUL");
@@ -1238,10 +1239,17 @@ public class CultureService : BaseService
         return project;
     }
 
-    private void mergePdfFiles(OFS_CulProject data, string version, HttpContext context)
+    private void mergePdfFiles(OFS_CulProject data, string version, HttpContext context, List<int> types = null)
     {
         var prefix = Path.GetFullPath(Path.Combine(context.Server.MapPath("~"), ".."));
-        var paths = OFS_CulAttachmentHelper.query(data.ID).Select(d => Path.Combine(prefix, "UploadFiles", "files", d.Path)).ToList();
+        var attachments = OFS_CulAttachmentHelper.query(data.ID);
+
+        if (types != null)
+        {
+            attachments = attachments.Where(d => types.Contains(d.Type)).ToList();
+        }
+
+        var paths = attachments.Select(d => Path.Combine(prefix, "UploadFiles", "files", d.Path)).ToList();
 
         string filename = $"{data.ProjectID}_{version}.pdf";
         string folder = Path.Combine(prefix, "UploadFiles", "OFS", "CUL", data.ProjectID);

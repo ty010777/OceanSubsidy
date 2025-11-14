@@ -12,7 +12,7 @@ const culture = (method, param = {}) => {
 };
 
 const download = (path) => {
-    return `${base}/Service/OFS/Download.ashx?path=${path}`;
+    return `${base}/Service/OFS/Download.ashx?path=${encodeURIComponent(path)}`;
 };
 
 const education = (method, param = {}) => {
@@ -65,6 +65,14 @@ const post = (url, payload = {}) => {
     return ajax(options).pipe(map(parse), catchError(error));
 };
 
+const sciDownload = (action, param) => {
+    let url = `${base}/Service/SCI_Download.ashx?action=${action}`;
+
+    Object.keys(param).forEach((name) => url = `${url}&${name}=${encodeURIComponent(param[name])}`);
+
+    return url;
+};
+
 const setBaseUrl = (url) => base = url;
 
 const system = (method, param = {}) => {
@@ -81,4 +89,4 @@ const upload = (file) => {
     return post("Service/OFS/Upload.ashx", payload);
 };
 
-export const api = Object.assign(post, { accessibility, culture, download, education, literacy, multiple, setBaseUrl, system, toUrl, upload });
+export const api = Object.assign(post, { accessibility, culture, download, education, literacy, multiple, sciDownload, setBaseUrl, system, toUrl, upload });

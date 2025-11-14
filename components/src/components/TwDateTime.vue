@@ -9,7 +9,7 @@
     });
 
     const toTwDateTime = (value) => {
-        const matches = value?.match(/^(\d+)[\/-](\d+)[\/-](\d+) (\d+:\d+(:\d+)?)$/);
+        const matches = value?.match(/^(\d+)[\/-](\d+)[\/-](\d+)[ T](\d+:\d+(:\d+)?)/);
 
         return matches ? `${parseInt(matches[1], 10) - 1911}/${matches[2]}/${matches[3]} ${matches[4]}` : "";
     };

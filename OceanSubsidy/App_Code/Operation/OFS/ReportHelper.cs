@@ -466,4 +466,37 @@ public class ReportHelper
             BudgetFees = Convert.ToInt32(row["BudgetFees"])
         }).ToList();
     }
+
+    public static List<ApplyPlan> queryPendingList(string account)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            SELECT 1 AS [Status]
+                  ,COUNT(*) AS [Count]
+              FROM [OFS_ReviewRecords] AS A
+              JOIN (SELECT [ProjectID], [UserAccount] FROM [OFS_SCI_Project_Main] WHERE [IsExist] = 1 AND [IsWithdrawal] <> 1
+                    UNION ALL
+                    SELECT [ProjectID], [UserAccount] FROM [OFS_CUL_Project] WHERE [IsExists] = 1 AND [IsWithdrawal] <> 1) AS B ON (B.[ProjectID] = A.[ProjectID])
+             WHERE [ReplyComment] = '' OR [ReplyComment] IS NULL
+               AND B.[UserAccount] = @UserAccount
+            UNION ALL
+            SELECT 2 AS [Status]
+                  ,COUNT(*) AS [Count]
+              FROM [OFS_AuditRecords] AS A
+              JOIN (SELECT [ProjectID], [UserAccount] FROM [OFS_SCI_Project_Main] WHERE [IsExist] = 1 AND [IsWithdrawal] <> 1
+                    UNION ALL
+                    SELECT [ProjectID], [UserAccount] FROM [OFS_CUL_Project] WHERE [IsExists] = 1 AND [IsWithdrawal] <> 1) AS B ON (B.[ProjectID] = A.[ProjectID])
+             WHERE (A.[ExecutorComment] = '' OR A.[ExecutorComment] IS NULL)
+               AND B.[UserAccount] = @UserAccount
+        ";
+
+        db.Parameters.Add("@UserAccount", account);
+
+        return db.GetTable().Rows.Cast<DataRow>().Select(row => new ApplyPlan
+        {
+            Status = Convert.ToInt32(row["Status"]),
+            Count = Convert.ToInt32(row["Count"])
+        }).ToList();
+    }
 }
