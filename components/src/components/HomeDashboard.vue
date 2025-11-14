@@ -1,8 +1,8 @@
 <template>
     <div class="search bg-gray rounded-4 mt-4" v-if="isOrganizer">
-        <h3 class="text-teal">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            查詢
+        <h3 class="text-teal d-flex align-items-center gap-2">
+            <img :src="`../assets/img/title-icon12-teal.svg`">
+            經費執行狀況
         </h3>
         <div class="search-form">
             <div class="row g-3">
@@ -26,7 +26,7 @@
             <div class="row">
                 <div class="col-12">
                     <div class="row">
-                        <div class="col-12 col-lg-6 d-flex justify-content-between pe-4">
+                        <div class="col-12 d-flex justify-content-between align-items-center pe-4">
                             <div class="fw-bold fs-4">總預算經費</div>
                             <div class="fw-bold text-primary fs-2">{{ Math.floor(stat.BudgetFees / 1000).toLocaleString() }} <span class="fs-6 text-black">千元</span></div>
                         </div>
@@ -51,59 +51,60 @@
         </div>
         <div class="row" v-if="stat">
             <div class="col-12 col-lg-6 pt-4">
-                <div class="d-flex justify-content-between rounded-4 bg-white p-4">
+                <div class="d-flex justify-content-between align-items-center rounded-4 bg-white p-4">
                     <div class="fw-bold fs-4">核定補助經費</div>
                     <div class="fw-bold text-primary fs-2">{{ Math.floor(stat.ApprovedAmount / 1000).toLocaleString() }} <span class="fs-6 text-black">千元</span></div>
                 </div>
             </div>
             <div class="col-12 col-lg-6 pt-4">
-                <div class="d-flex justify-content-between rounded-4 bg-white p-4">
+                <div class="d-flex justify-content-between align-items-center rounded-4 bg-white p-4">
                     <div class="fw-bold fs-4">賸餘款</div>
                     <div class="fw-bold text-primary fs-2">{{ Math.floor(stat.RemainingAmount / 1000).toLocaleString() }} <span class="fs-6 text-black">千元</span></div>
                 </div>
             </div>
             <div class="col-12 col-lg-6 pt-4">
-                <div class="d-flex justify-content-between rounded-4 bg-white p-4">
+                <div class="d-flex justify-content-between align-items-center rounded-4 bg-white p-4">
                     <div class="fw-bold fs-4">實支金額</div>
                     <div class="fw-bold text-primary fs-2">{{ Math.floor(stat.SpendAmount / 1000).toLocaleString() }} <span class="fs-6 text-black">千元</span></div>
                 </div>
             </div>
             <div class="col-12 col-lg-6 pt-4">
-                <div class="d-flex justify-content-between rounded-4 bg-white p-4">
+                <div class="d-flex justify-content-between align-items-center rounded-4 bg-white p-4">
                     <div class="fw-bold fs-4">已撥付</div>
                     <div class="fw-bold text-primary fs-2">{{ Math.floor(stat.PaymentAmount / 1000).toLocaleString() }} <span class="fs-6 text-black">千元</span></div>
                 </div>
             </div>
         </div>
-        <div class="rounded-4 bg-white p-4 mt-4 d-flex flex-column gap-5">
-            <div>
-                <div class="mt-4">
-                    <div class="table-responsive">
-                        <table class="table align-middle gray-table">
-                            <thead>
-                                <tr>
-                                    <th class="text-center">類別</th>
-                                    <th class="text-center">核定件數</th>
-                                    <th class="text-end">核定補助經費</th>
-                                    <th class="text-end">經費執行率</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr :key="item" v-for="(item) in statList">
-                                    <td class="text-center">{{ types.find((ty) => ty.code === item.Category).title }}</td>
-                                    <td class="text-center"><a :href="`Report/ApprovedList.aspx?category=${item.Category}`">{{ item.Count }}</a></td>
-                                    <td class="text-end">{{ item.ApprovedAmount.toLocaleString() }}</td>
-                                    <td class="text-end">{{ toPercent(item.SpendAmount, item.ApprovedAmount) }}%</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+        <div class="rounded-4 bg-white p-4 mt-4 d-flex flex-column gap-3">
+            <h5 class="square-title">各類經費列表</h5>
+            <div class="table-responsive">
+                <table class="table align-middle gray-table">
+                    <thead>
+                        <tr>
+                            <th class="text-center">類別</th>
+                            <th class="text-center">核定件數</th>
+                            <th class="text-end">核定補助經費</th>
+                            <th class="text-end">經費執行率</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr :key="item" v-for="(item) in statList">
+                            <td class="text-center">{{ types.find((ty) => ty.code === item.Category).title }}</td>
+                            <td class="text-center"><a :href="`Report/ApprovedList.aspx?category=${item.Category}`">{{ item.Count }}</a></td>
+                            <td class="text-end">{{ item.ApprovedAmount.toLocaleString() }}</td>
+                            <td class="text-end">{{ toPercent(item.SpendAmount, item.ApprovedAmount) }}%</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
-    <div class="block rounded-4 mt-4">
-        <div class="table-responsive">
+    <div class="search bg-white rounded-4 mt-4">
+        <h3 class="text-teal d-flex align-items-center gap-2">
+            <img :src="`../assets/img/title-icon13-teal.svg`">
+            海洋委員會補助公告
+        </h3>
+        <div class="table-responsive mt-4">
             <div class="row">
                 <div class="col">
                     <div class="fs-16 text-gray mb-2">依身分篩選適用規定</div>
@@ -147,17 +148,25 @@
             </table>
         </div>
     </div>
-    <ul class="total-list mt-4" v-if="isUser">
-        <li class="total-item" :key="item" v-for="(item) in countList">
-            <a :href="item.url">
-                <div class="total-item-title">{{ item.title }}</div>
-                <div class="total-item-content">
-                    <span class="count">{{ item.count }}</span>
-                    <span class="unit">件</span>
-                </div>
-            </a>
-        </li>
-    </ul>
+    <div class="search bg-white rounded-4 mt-4">
+        <h3 class="text-teal d-flex align-items-center gap-2">
+            <img :src="`../assets/img/title-icon14-teal.svg`">
+            我的計畫進度
+        </h3>
+        <div class="mt-4">
+            <ul class="total-list mt-4" v-if="isUser">
+                <li class="total-item" :key="item" v-for="(item) in countList">
+                    <a :href="item.url">
+                        <div class="total-item-title">{{ item.title }}</div>
+                        <div class="total-item-content">
+                            <span class="count">{{ item.count }}</span>
+                            <span class="unit">件</span>
+                        </div>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
 </template>
 
 <script setup>
