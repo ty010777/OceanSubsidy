@@ -102,6 +102,7 @@ public partial class OFS_CLB_ClbStageReport : System.Web.UI.Page
                         document.getElementById('uploadStatus{fileTypes[i]}').className = 'text-success';
                         document.getElementById('fileName{fileTypes[i]}').textContent = '{uploadedFile.FileName.Replace("'", "\\'")}';
                         document.getElementById('uploadedFile{fileTypes[i]}').style.display = 'flex';
+                        document.getElementById('uploadedFile{fileTypes[i]}').dataset.fileId = '{uploadedFile.ID}';
                     ";
                 }
             }

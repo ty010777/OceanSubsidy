@@ -57,7 +57,7 @@
     <div class="application-step">
         <div class="step-item active" role="button" onclick="switchTab('application')" id="applicationTab">
             <div class="step-content">
-                <div class="step-label">申請表</div>
+                <div class="step-label">申請表/計畫書</div>
                 <!-- 狀態將由後端動態設定 -->
             </div>
         </div>

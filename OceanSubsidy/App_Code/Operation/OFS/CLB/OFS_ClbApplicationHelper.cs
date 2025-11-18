@@ -156,6 +156,10 @@ public class OFS_ClbApplicationHelper
                 [CreationDate],
                 [School_IDNumber],
                 [Address],
+                [ApplyAmount],
+                [SelfAmount],
+                [OtherAmount],
+                [IsPreviouslySubsidized],
                 [created_at],
                 [updated_at]
             )
@@ -172,6 +176,10 @@ public class OFS_ClbApplicationHelper
                 @CreationDate,
                 @School_IDNumber,
                 @Address,
+                @ApplyAmount,
+                @SelfAmount,
+                @OtherAmount,
+                @IsPreviouslySubsidized,
                 GETDATE(),
                 GETDATE()
             )";
@@ -188,6 +196,10 @@ public class OFS_ClbApplicationHelper
         db.Parameters.Add("@CreationDate", basicData.CreationDate);
         db.Parameters.Add("@School_IDNumber", basicData.School_IDNumber ?? "");
         db.Parameters.Add("@Address", basicData.Address ?? "");
+        db.Parameters.Add("@ApplyAmount", basicData.ApplyAmount.HasValue ? (object)basicData.ApplyAmount.Value : DBNull.Value);
+        db.Parameters.Add("@SelfAmount", basicData.SelfAmount.HasValue ? (object)basicData.SelfAmount.Value : DBNull.Value);
+        db.Parameters.Add("@OtherAmount", basicData.OtherAmount.HasValue ? (object)basicData.OtherAmount.Value : DBNull.Value);
+        db.Parameters.Add("@IsPreviouslySubsidized", basicData.IsPreviouslySubsidized.HasValue ? (object)basicData.IsPreviouslySubsidized.Value : DBNull.Value);
 
         db.ExecuteNonQuery();
     }
@@ -201,7 +213,7 @@ public class OFS_ClbApplicationHelper
         DbHelper db = new DbHelper();
         db.CommandText = @"
             UPDATE [OCA_OceanSubsidy].[dbo].[OFS_CLB_Application_Basic]
-            SET 
+            SET
                 [SubsidyPlanType] = @SubsidyPlanType,
                 [ProjectNameTw] = @ProjectNameTw,
                 [SubsidyType] = @SubsidyType,
@@ -210,6 +222,10 @@ public class OFS_ClbApplicationHelper
                 [CreationDate] = @CreationDate,
                 [School_IDNumber] = @School_IDNumber,
                 [Address] = @Address,
+                [ApplyAmount] = @ApplyAmount,
+                [SelfAmount] = @SelfAmount,
+                [OtherAmount] = @OtherAmount,
+                [IsPreviouslySubsidized] = @IsPreviouslySubsidized,
                 [updated_at] = GETDATE()
             WHERE [ProjectID] = @ProjectID";
 
@@ -223,6 +239,10 @@ public class OFS_ClbApplicationHelper
         db.Parameters.Add("@CreationDate", basicData.CreationDate);
         db.Parameters.Add("@School_IDNumber", basicData.School_IDNumber ?? "");
         db.Parameters.Add("@Address", basicData.Address ?? "");
+        db.Parameters.Add("@ApplyAmount", basicData.ApplyAmount.HasValue ? (object)basicData.ApplyAmount.Value : DBNull.Value);
+        db.Parameters.Add("@SelfAmount", basicData.SelfAmount.HasValue ? (object)basicData.SelfAmount.Value : DBNull.Value);
+        db.Parameters.Add("@OtherAmount", basicData.OtherAmount.HasValue ? (object)basicData.OtherAmount.Value : DBNull.Value);
+        db.Parameters.Add("@IsPreviouslySubsidized", basicData.IsPreviouslySubsidized.HasValue ? (object)basicData.IsPreviouslySubsidized.Value : DBNull.Value);
 
         db.ExecuteNonQuery();
     }
@@ -262,7 +282,11 @@ public class OFS_ClbApplicationHelper
                     ClubName = row["ClubName"]?.ToString(),
                     CreationDate = row["CreationDate"] != DBNull.Value ? Convert.ToDateTime(row["CreationDate"]) : (DateTime?)null,
                     School_IDNumber = row["School_IDNumber"]?.ToString(),
-                    Address = row["Address"]?.ToString()
+                    Address = row["Address"]?.ToString(),
+                    ApplyAmount = row["ApplyAmount"] != DBNull.Value ? Convert.ToInt32(row["ApplyAmount"]) : (int?)null,
+                    SelfAmount = row["SelfAmount"] != DBNull.Value ? Convert.ToInt32(row["SelfAmount"]) : (int?)null,
+                    OtherAmount = row["OtherAmount"] != DBNull.Value ? Convert.ToInt32(row["OtherAmount"]) : (int?)null,
+                    IsPreviouslySubsidized = row["IsPreviouslySubsidized"] != DBNull.Value ? Convert.ToBoolean(row["IsPreviouslySubsidized"]) : (bool?)null
                 };
             }
 
@@ -971,7 +995,7 @@ public class OFS_ClbApplicationHelper
     /// 插入上傳文件記錄
     /// </summary>
     /// <param name="uploadFile">上傳文件物件</param>
-    public static void InsertUploadFile(OFS_CLB_UploadFile uploadFile)
+    public static int InsertUploadFile(OFS_CLB_UploadFile uploadFile)
     {
         try
         {
@@ -990,7 +1014,8 @@ public class OFS_ClbApplicationHelper
                     @FileCode,
                     @FileName,
                     @TemplatePath
-                )";
+                );
+                SELECT SCOPE_IDENTITY();";
 
             db.Parameters.Clear();
             db.Parameters.Add("@ProjectID", uploadFile.ProjectID ?? "");
@@ -998,7 +1023,12 @@ public class OFS_ClbApplicationHelper
             db.Parameters.Add("@FileName", uploadFile.FileName ?? "");
             db.Parameters.Add("@TemplatePath", uploadFile.TemplatePath ?? "");
 
-            db.ExecuteNonQuery();
+            var result = db.GetTable();
+            if (result != null && result.Rows.Count > 0)
+            {
+                return Convert.ToInt32(result.Rows[0][0]);
+            }
+            return 0;
         }
         catch (Exception ex)
         {
@@ -1029,6 +1059,70 @@ public class OFS_ClbApplicationHelper
         catch (Exception ex)
         {
             throw new Exception($"刪除上傳文件記錄失敗：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 根據 ID 刪除上傳文件記錄
+    /// </summary>
+    /// <param name="id">文件 ID</param>
+    public static void DeleteUploadFileById(int id)
+    {
+        try
+        {
+            DbHelper db = new DbHelper();
+            db.CommandText = @"
+                DELETE FROM [OCA_OceanSubsidy].[dbo].[OFS_CLB_UploadFile]
+                WHERE [ID] = @ID";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@ID", id);
+
+            db.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"根據ID刪除上傳文件記錄失敗：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 根據 ID 取得上傳文件
+    /// </summary>
+    /// <param name="id">文件 ID</param>
+    /// <returns>上傳文件</returns>
+    public static OFS_CLB_UploadFile GetUploadedFileById(int id)
+    {
+        try
+        {
+            DbHelper db = new DbHelper();
+            db.CommandText = @"
+                SELECT [ID], [ProjectID], [FileCode], [FileName], [TemplatePath]
+                FROM [OCA_OceanSubsidy].[dbo].[OFS_CLB_UploadFile]
+                WHERE [ID] = @ID";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@ID", id);
+
+            var dt = db.GetTable();
+            if (dt != null && dt.Rows.Count > 0)
+            {
+                var row = dt.Rows[0];
+                return new OFS_CLB_UploadFile
+                {
+                    ID = row.Field<int>("ID"),
+                    ProjectID = row.Field<string>("ProjectID"),
+                    FileCode = row.Field<string>("FileCode"),
+                    FileName = row.Field<string>("FileName"),
+                    TemplatePath = row.Field<string>("TemplatePath")
+                };
+            }
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"根據ID取得上傳文件失敗：{ex.Message}");
         }
     }
 

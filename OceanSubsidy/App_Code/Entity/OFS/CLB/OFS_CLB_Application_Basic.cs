@@ -11,11 +11,11 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
 {
     
     /// <summary>
-    ///  ()
+    /// 社團類-基本資料 ()
     /// </summary>
     [DataContract]
     [Serializable()]
-    [GisTableAttribute("OFS_CLB_Application_Basic", "", false)]
+    [GisTableAttribute("OFS_CLB_Application_Basic", "社團類-基本資料", false)]
     public class IOFS_CLB_Application_Basic : IMeta
     {
         
@@ -474,6 +474,146 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
         
+        protected int? _ApplyAmount = null;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("ApplyAmount", "ApplyAmount", DataSource.TABLE, "", false)]
+        public virtual int? ApplyAmount
+        {
+            get
+            {
+                return _ApplyAmount;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_ApplyAmount == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_ApplyAmount.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("ApplyAmount") == -1)
+                    {
+                        UPDATE_COLUMN.Add("ApplyAmount");
+                    }
+                    _ApplyAmount = value;
+                }
+            }
+        }
+        
+        protected int? _SelfAmount = null;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("SelfAmount", "SelfAmount", DataSource.TABLE, "", false)]
+        public virtual int? SelfAmount
+        {
+            get
+            {
+                return _SelfAmount;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_SelfAmount == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_SelfAmount.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("SelfAmount") == -1)
+                    {
+                        UPDATE_COLUMN.Add("SelfAmount");
+                    }
+                    _SelfAmount = value;
+                }
+            }
+        }
+        
+        protected int? _OtherAmount = null;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("OtherAmount", "OtherAmount", DataSource.TABLE, "", false)]
+        public virtual int? OtherAmount
+        {
+            get
+            {
+                return _OtherAmount;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_OtherAmount == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_OtherAmount.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("OtherAmount") == -1)
+                    {
+                        UPDATE_COLUMN.Add("OtherAmount");
+                    }
+                    _OtherAmount = value;
+                }
+            }
+        }
+        
+        protected bool? _IsPreviouslySubsidized = false;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("IsPreviouslySubsidized", "IsPreviouslySubsidized", DataSource.TABLE, "", false)]
+        public virtual bool? IsPreviouslySubsidized
+        {
+            get
+            {
+                return _IsPreviouslySubsidized;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_IsPreviouslySubsidized == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_IsPreviouslySubsidized.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("IsPreviouslySubsidized") == -1)
+                    {
+                        UPDATE_COLUMN.Add("IsPreviouslySubsidized");
+                    }
+                    _IsPreviouslySubsidized = value;
+                }
+            }
+        }
+        
     }
 
     
@@ -486,7 +626,7 @@ namespace GS.OCA_OceanSubsidy.Entity
     using GS.OCA_OceanSubsidy.Entity.Base;
     
     /// <summary>
-    ///  ()
+    /// 社團類-基本資料 ()
     /// </summary>
     [DataContract]
     [Serializable()]

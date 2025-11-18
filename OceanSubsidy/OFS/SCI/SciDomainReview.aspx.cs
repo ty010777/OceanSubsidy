@@ -338,8 +338,8 @@ public partial class OFS_SCI_SciDomainReview : System.Web.UI.Page
             // 判斷補助案類型並使用對應的下載服務
             if (ProjectID.Contains("CUL"))
             {
-                // CUL 使用 DownloadPdf.ashx
-                downloadUrl = $"/Service/OFS/DownloadPdf.ashx?Type=CUL&ProjectID={ProjectID}&Version=1";
+                // CUL 使用 DownloadPdf.ashx 下載評審版
+                downloadUrl = $"/Service/OFS/DownloadPdf.ashx?ProjectID={ProjectID}";
             }
             else if (ProjectID.Contains("SCI"))
             {

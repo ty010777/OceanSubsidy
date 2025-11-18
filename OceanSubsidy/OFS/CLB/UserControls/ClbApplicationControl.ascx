@@ -200,73 +200,100 @@
     <div class="block">
         <h5 class="square-title">經費資訊</h5>
         <div class="mt-4">
-            <table class="table align-middle gray-table side-table">
-                <tbody>
+            <div class="table-responsive mt-3 mb-0">
+                <table class="table align-middle gray-table">
+                    <thead>
                     <tr>
-                        <th>經費明細 <span class="text-danger view-mode">*</span></th>
+                        <th class="text-end">申請海委會補助／合作金額(元) (A)</th>
+                        <th class="text-end">申請單位自籌款(元) (B)</th>
+                        <th class="text-end">其他機關補助／合作總金額(元) (C)</th>
+                        <th class="text-end">計畫總經費(元) (A+B+C)</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
                         <td>
-                            <div style="font-size: 18px;">
-                                <!-- 第一行：申請海委會補助 + 自籌款 -->
-                                <div class="d-flex align-items-center gap-5 mb-3">
-                                    <div class="d-flex align-items-center">
-                                        <label class="mb-0 fw-medium" style="white-space: nowrap; width: 140px;">申請海委會補助:</label>
-                                        <asp:TextBox ID="txtSubsidyFunds" runat="server" CssClass="form-control text-end"
-                                                   placeholder="0" style="width: 150px;" TextMode="Number" step="any"  min="0" onkeypress="return event.charCode != 45 && event.charCode != 46"/>
-                                        <span class="ms-2">元</span>
-                                    </div>
-                                    <div class="d-flex align-items-center">
-                                        <label class="mb-0" style="white-space: nowrap; width: 140px;">自籌款:</label>
-                                        <asp:TextBox ID="txtSelfFunds" runat="server" CssClass="form-control text-end"
-                                                   placeholder="0" style="width: 150px;" TextMode="Number" step="any"  min="0" onkeypress="return event.charCode != 45 && event.charCode != 46"/>
-                                        <span class="ms-2">元</span>
-                                    </div>
-                                </div>
+                            <input id="txtApplyAmount" class="form-control" placeholder="請輸入" type="text" style="text-align: right;">
+                        </td>
+                        <td>
+                            <input id="txtSelfAmount" class="form-control" placeholder="請輸入" type="text" style="text-align: right;">
+                        </td>
+                        <td id="lblOtherAmount" class="text-end">0</td>
+                        <td id="lblTotalAmount" class="text-end">0</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle gray-table">
+                    <thead>
+                    <tr>
+                        <th colspan="6" style="border-bottom-width: 1px;">其他機關補助／合作金額 (C)</th>
+                    </tr>
+                    <tr>
+                        <th width="1"></th>
+                        <th>單位名稱</th>
+                        <th class="text-end">申請／分攤補助金額(元)（含尚未核定者）</th>
+                        <th>比例</th>
+                        <th>申請合作項目</th>
+                        <th width="1">功能</th>
+                    </tr>
+                    </thead>
+                    <tbody id="tbodyOtherSubsidy">
+                    </tbody>
+                </table><button id="btnAddOtherSubsidy" class="btn btn-sm btn-teal-dark m-0" type="button"><i class="fas fa-plus"></i> 新增</button>
+            </div>
+        </div>
+        <h5 class="square-title">經費預算規劃</h5>
 
-                                <!-- 第二行：其他政府補助 + 其他單位補助 -->
-                                <div class="d-flex align-items-center gap-5 mb-3">
-                                    <div class="d-flex align-items-center">
-                                        <label class="mb-0" style="white-space: nowrap; width: 140px;">其他政府補助:</label>
-                                        <asp:TextBox ID="txtOtherGovFunds" runat="server" CssClass="form-control text-end"
-                                                   placeholder="0" style="width: 150px;" TextMode="Number" step="any"  min="0" onkeypress="return event.charCode != 45  && event.charCode != 46"/>
-                                        <span class="ms-2">元</span>
-                                    </div>
-                                    <div class="d-flex align-items-center">
-                                        <label class="mb-0" style="white-space: nowrap; width: 140px;">其他單位補助:</label>
-                                        <asp:TextBox ID="txtOtherUnitFunds" runat="server" CssClass="form-control text-end"
-                                                   placeholder="0" style="width: 150px;" TextMode="Number" step="any"  min="0" onkeypress="return event.charCode != 45  && event.charCode != 46"/>
-                                        <span class="ms-2">元</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="d-flex align-items-center gap-2 pt-2 border-top">
-                                <label class="form-label fw-bold mb-0">計畫總經費:</label>
-                                <asp:Label ID="lblTotalFunds" runat="server" CssClass="fw-bold text-primary fs-5" Text="0" />
-                                <span class="fw-medium">元</span>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>最近兩年曾獲本會補助</th>
-                        <td>
-                            <div class="form-check-input-group d-flex">
-                                <asp:RadioButton ID="rbPreviouslySubsidizedYes"  runat="server" GroupName="PreviouslySubsidized"
-                                               Text="是" Value="true" ClientIDMode="Static" />
-                                <asp:RadioButton ID="rbPreviouslySubsidizedNo" runat="server" GroupName="PreviouslySubsidized"
-                                               Text="否" Value="false" Checked="true"  ClientIDMode="Static" />
-                            </div>
-                        </td>
-                    </tr>
-                    <tr class="funding-description-row d-none">
-                        <th>經費說明</th>
-                        <td>
-                            <asp:TextBox ID="txtFundingDescription" runat="server" CssClass="form-control textarea-auto-resize"
-                                       TextMode="MultiLine" Rows="4" placeholder="請說明經費用途規劃"
-                                       MaxLength="1000" style="width: 100%;" />
-                        </td>
-                    </tr>
+        <div class="table-responsive mt-3 mb-0">
+            <table class="table align-middle gray-table">
+                <thead>
+                <tr>
+                    <th>預算項目</th>
+                    <th class="text-end">預算金額(元)<br>海洋委員會經費</th>
+                    <th class="text-end">預算金額(元)<br>其他配合經費</th>
+                    <th class="text-end">預算金額(元)<br>小計</th>
+                    <th>計算方式及說明</th>
+                    <th width="1">功能</th>
+                </tr>
+                </thead>
+                <tbody id="tbodyBudgetPlan">
                 </tbody>
             </table>
+            <button id="btnAddBudgetPlan" class="btn btn-sm btn-teal-dark m-0" type="button"><i class="fas fa-plus"></i> 新增</button>
         </div>
+        <table class="table align-middle gray-table side-table">
+                        <tbody>
+                            
+                            <tr>
+                                <th>最近兩年曾獲本會補助</th>
+                                <td>
+                                    <div class="form-check-input-group d-flex">
+                                        <input id="rbPreviouslySubsidizedYes" type="radio" name="rbPreviouslySubsidized" value="true" class="form-check-input check-teal"><label for="rbPreviouslySubsidizedYes">是</label>
+                                        <input id="rbPreviouslySubsidizedNo" type="radio" name="rbPreviouslySubsidized" value="false" checked="checked" class="form-check-input check-teal"><label for="rbPreviouslySubsidizedNo">否</label>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="funding-description-row d-none">
+                                <th>經費說明</th>
+                                <td>
+                                    <table class="table align-middle gray-table">
+                                        <thead>
+                                        <tr>
+                                            <th>計畫名稱</th>
+                                            <th class="text-end">海委會補助經費(元)</th>
+                                            <th width="1">功能</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody id="tbodyFundingDescription">
+                                        </tbody>
+                                    </table>
+                                    <button id="btnAddFundingDescription" class="btn btn-sm btn-teal-dark m-0" type="button"><i class="fas fa-plus"></i> 新增</button>
+                                </td>
+                            </tr>
+                        </tbody>        
+                    </table>
     </div>
    
 </div>
@@ -278,10 +305,12 @@
 <!-- 上傳附件區塊 -->
 <div id="uploadAttachmentSection" style="display: none;">
     <div class="block">
-        <h5 class="square-title">上傳附件</h5>
+        <h5 class="square-title">請下載範本填寫用印並上傳</h5>
         <p class="text-pink lh-base mt-3">
             請下載附件範本，填寫資料及公文用印後上傳（僅支援PDF格式上傳，每個檔案10MB以內）<br>
-            申請計畫書請自行留存送審版電子檔，待審核結果公告後請提交修正計畫書以供核定。
+            請以紙本公文發文郵寄本會憑辦，附件需含資料表或申請書(正本；須加蓋學校關防及負責人核章)、<br>
+            計畫書、未違反公職人員利益衝突迴避法切結書及事前揭露表(正本；須加蓋學校、單位關防及負責人核章)，<br>
+            及相關佐證資料(如社團成立證明、社團運作證明等)
         </p>
         <div class="table-responsive mt-3 mb-0">
             <table id="FileTable" class="table align-middle gray-table">
@@ -372,7 +401,9 @@
                             <div>
                                 相關佐證資料
                             </div>
-                           
+                            <div class="text-muted" style="font-size: 16px;">
+                                (如:社團成立證明、社團運作證明等)
+                            </div>
                         </td>
                         <td class="text-center">
                             <asp:Label ID="lblStatusCLB4" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>

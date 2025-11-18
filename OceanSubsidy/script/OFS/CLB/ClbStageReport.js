@@ -104,10 +104,10 @@ function handleFileUpload(fileCode, fileInput) {
             document.getElementById('fileName' + fileCode).textContent = data.fileName;
             document.getElementById('uploadedFile' + fileCode).style.display = 'flex';
             document.getElementById('uploadedFile' + fileCode).classList.remove('d-none');
-            
-            // 儲存檔案路徑供下載使用
-            document.getElementById('uploadedFile' + fileCode).dataset.filePath = data.relativePath;
-            
+
+            // 儲存檔案 ID 供下載和刪除使用
+            document.getElementById('uploadedFile' + fileCode).dataset.fileId = data.fileId;
+
             Swal.fire({
                 title: '上傳成功！',
                 text: data.message,
@@ -150,12 +150,14 @@ function handleFileUpload(fileCode, fileInput) {
     });
 }
 
-// 下載已上傳檔案
+// 下載已上傳檔案（使用 ID）
 function downloadUploadedFile(fileType) {
     try {
-        // 檢查是否有檔案可以下載
-        const fileName = document.getElementById('fileName' + fileType).textContent;
-        if (!fileName || fileName.trim() === '') {
+        // 取得檔案 ID
+        const uploadedFileElement = document.getElementById('uploadedFile' + fileType);
+        const fileId = uploadedFileElement?.dataset.fileId;
+
+        if (!fileId) {
             Swal.fire({
                 title: '無檔案可下載！',
                 text: '請先上傳檔案',
@@ -164,49 +166,17 @@ function downloadUploadedFile(fileType) {
             });
             return;
         }
-        
-        // 取得 ProjectID
-        const urlParams = new URLSearchParams(window.location.search);
-        const projectID = urlParams.get('ProjectID');
-        
-        if (!projectID) {
-            Swal.fire({
-                title: '錯誤！',
-                text: '計畫編號不存在，請確認 URL 參數',
-                icon: 'error',
-                confirmButtonText: '確定'
-            });
-            return;
-        }
-
-        // 取得對應的檔案代碼
-        let fileCode = '';
-        switch(fileType) {
-            case 1:
-            case '1':
-                fileCode = 'StageReport1';
-                break;
-            default:
-                Swal.fire({
-                    title: '錯誤！',
-                    text: '無效的檔案類型',
-                    icon: 'error',
-                    confirmButtonText: '確定'
-                });
-                return;
-        }
 
         // 使用 window.AppRootPath 處理虛擬路徑
         const appRootPath = window.AppRootPath || '';
 
-        // 建立下載連結
+        // 建立下載連結（使用 fileById action）
         const downloadUrl = appRootPath + '/Service/CLB_download.ashx' +
-                           '?action=file&projectID=' + encodeURIComponent(projectID) +
-                           '&fileCode=' + encodeURIComponent(fileCode);
+                           '?action=fileById&fileId=' + encodeURIComponent(fileId);
 
         // 使用 window.open 開啟下載
         window.open(downloadUrl, '_blank');
-        
+
     } catch (error) {
         console.error('下載檔案時發生錯誤:', error);
         Swal.fire({
@@ -218,7 +188,7 @@ function downloadUploadedFile(fileType) {
     }
 }
 
-// 刪除已上傳檔案
+// 刪除已上傳檔案（使用 ID）
 function deleteUploadedFile(fileType) {
     Swal.fire({
         title: '確定要刪除此檔案嗎？',
@@ -234,43 +204,24 @@ function deleteUploadedFile(fileType) {
         }
 
         try {
-            // 取得 ProjectID
-            const urlParams = new URLSearchParams(window.location.search);
-            const projectID = urlParams.get('ProjectID');
+            // 取得檔案 ID
+            const uploadedFileElement = document.getElementById('uploadedFile' + fileType);
+            const fileId = uploadedFileElement?.dataset.fileId;
 
-            if (!projectID) {
+            if (!fileId) {
                 Swal.fire({
                     title: '錯誤！',
-                    text: '計畫編號不存在，請確認 URL 參數',
+                    text: '找不到檔案 ID',
                     icon: 'error',
                     confirmButtonText: '確定'
                 });
                 return;
             }
 
-            // 將 fileType (1) 轉換為正確的 fileCode (StageReport1)
-            let fileCode = '';
-            switch(fileType) {
-                case 1:
-                case '1':
-                    fileCode = 'StageReport1';
-                    break;
-                default:
-                    Swal.fire({
-                        title: '錯誤！',
-                        text: '無效的檔案類型',
-                        icon: 'error',
-                        confirmButtonText: '確定'
-                    });
-                    return;
-            }
-
             // 建立 FormData
             const formData = new FormData();
-            formData.append('action', 'delete');
-            formData.append('fileType', 'StageReport');
-            formData.append('fileCode', fileCode);
-            formData.append('projectID', projectID);
+            formData.append('action', 'deleteById');
+            formData.append('fileId', fileId);
 
             // 使用 window.AppRootPath 處理虛擬路徑
             const appRootPath = window.AppRootPath || '';
@@ -289,7 +240,8 @@ function deleteUploadedFile(fileType) {
                     document.getElementById('fileName' + fileType).textContent = '';
                     document.getElementById('uploadedFile' + fileType).style.display = 'none';
                     document.getElementById('uploadedFile' + fileType).classList.add('d-none');
-                    
+                    delete uploadedFileElement.dataset.fileId;
+
                     Swal.fire({
                         title: '刪除成功！',
                         text: data.message,
@@ -314,7 +266,7 @@ function deleteUploadedFile(fileType) {
                     confirmButtonText: '確定'
                 });
             });
-            
+
         } catch (error) {
             console.error('刪除檔案時發生錯誤:', error);
             Swal.fire({

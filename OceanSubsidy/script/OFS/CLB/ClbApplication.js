@@ -9,15 +9,27 @@
 function initializePage() {
     // 初始化日期選擇器
     initializeDatePickers();
-    
+
     // 同步已載入的日期資料到隱藏欄位
     syncLoadedDatesToHiddenFields();
-    
+
     // 初始化數字輸入格式
     initializeNumberInputs();
-    
+
     // 初始化驗證
     initializeValidation();
+
+    // 初始化經費資訊管理
+    initializeFundsManagement();
+
+    // 初始化經費預算規劃管理
+    initializeBudgetPlanManagement();
+
+    // 初始化經費說明管理
+    initializeFundingDescriptionManagement();
+
+    // 初始化 textarea 自動調整高度
+    initializeTextareaAutoResize();
 }
 
 function bindEvents() {
@@ -288,14 +300,6 @@ function syncLoadedDatesToHiddenFields() {
 }
 
 function initializeNumberInputs() {
-    // 綁定經費欄位變化事件進行自動計算
-    $('input[id*="Funds"]').on('input', function() {
-        calculateTotalFunds();
-    });
-
-    // 綁定經費計算
-    $('input[id*="Funds"]').addClass('funds-input');
-
     ['rbPreviouslySubsidizedYes', 'rbPreviouslySubsidizedNo','rbSubsidyTypeActivity','rbSubsidyTypeOperation','rbSubsidyTypeCreate'].forEach(function (id) {
         var el = document.getElementById(id);
         if (el) {
@@ -309,8 +313,11 @@ function initializeNumberInputs() {
     // 初始化時執行一次，確保初始狀態正確
     handleSubsidyTypeChange();
 
-    // 綁定補助金額變更事件（檢查是否超過限制）
-    $('input[id*="txtSubsidyFunds"]').on('input', function() {
+    // 初始化申請海委會補助和自籌款的數字檔控
+    initializeAmountInputValidation();
+
+    // 綁定申請金額變更事件（檢查是否超過補助限制）
+    $('#txtApplyAmount').on('input', function() {
         checkGrantLimit();
     });
 
@@ -328,23 +335,80 @@ function initializeValidation() {
     });
 }
 
-function calculateTotalFunds() {
-    // 使用通用的 ID 選擇器來查找經費輸入欄位
-    let subsidyFunds = parseFloatFromFormatted($('input[id*="txtSubsidyFunds"]').val()) || 0;
-    let selfFunds = parseFloatFromFormatted($('input[id*="txtSelfFunds"]').val()) || 0;
-    let otherGovFunds = parseFloatFromFormatted($('input[id*="txtOtherGovFunds"]').val()) || 0;
-    let otherUnitFunds = parseFloatFromFormatted($('input[id*="txtOtherUnitFunds"]').val()) || 0;
-    
-    let total = subsidyFunds + selfFunds + otherGovFunds + otherUnitFunds;
-    
-    // 更新總經費顯示，使用千分位格式
-    $('span[id*="lblTotalFunds"]').text(total.toLocaleString());
+/**
+ * 初始化 textarea 自動調整高度功能
+ */
+function initializeTextareaAutoResize() {
+    // 綁定所有具有 textarea-auto-resize class 的 textarea
+    $(document).on('input', 'textarea.textarea-auto-resize', function() {
+        autoResizeTextarea(this);
+    });
+
+    // 初始化時調整所有現有 textarea 的高度
+    $('textarea.textarea-auto-resize').each(function() {
+        autoResizeTextarea(this);
+    });
+}
+
+/**
+ * 自動調整單個 textarea 的高度
+ * @param {HTMLElement} textarea - textarea 元素
+ */
+function autoResizeTextarea(textarea) {
+    // 重置高度以取得正確的 scrollHeight
+    textarea.style.height = 'auto';
+    // 設定新高度
+    textarea.style.height = textarea.scrollHeight + 'px';
 }
 
 function parseFloatFromFormatted(value) {
     if (!value) return 0;
     // number type 輸入框不會有千分位逗號，直接轉換即可
     return parseFloat(value) || 0;
+}
+
+/**
+ * 初始化申請海委會補助和自籌款的數字檔控
+ */
+function initializeAmountInputValidation() {
+    // 綁定申請海委會補助金額輸入事件
+    $('#txtApplyAmount').on('input', function() {
+        validateAndFormatAmountInput($(this));
+    });
+
+    // 綁定自籌款金額輸入事件
+    $('#txtSelfAmount').on('input', function() {
+        validateAndFormatAmountInput($(this));
+    });
+}
+
+/**
+ * 驗證並格式化金額輸入
+ * @param {jQuery} $input - 輸入欄位的 jQuery 物件
+ */
+function validateAndFormatAmountInput($input) {
+    let value = $input.val();
+
+    // 移除所有非數字字元
+    value = value.replace(/[^\d]/g, '');
+
+    // 如果是空值，直接返回
+    if (value === '') {
+        $input.val('');
+        return;
+    }
+
+    // 轉換為數字
+    let numValue = parseInt(value, 10);
+
+    // 檢查是否為負數或非數字
+    if (isNaN(numValue) || numValue < 0) {
+        $input.val('');
+        return;
+    }
+
+    // 格式化為千分位並設定回輸入欄位
+    $input.val(numValue.toLocaleString('en-US'));
 }
 
 /**
@@ -396,6 +460,8 @@ function handleSubsidyTypeChange() {
 
 /**
  * 檢查補助金額是否超過限制
+ * 讀取 OFS_GrantTargetSetting 表格，檢查當前申請補助類型的金額上限
+ * 超過時會顯示紅色警告，但不擋控（僅提示）
  */
 function checkGrantLimit() {
     // 檢查是否已載入補助額度限制資料
@@ -415,7 +481,7 @@ function checkGrantLimit() {
 
     // 如果沒有選擇補助類型，清除紅色提示
     if (!targetTypeID) {
-        $('input[id*="txtSubsidyFunds"]').removeClass('text-danger');
+        $('#txtApplyAmount').removeClass('text-danger');
         return;
     }
 
@@ -425,16 +491,17 @@ function checkGrantLimit() {
         return;
     }
 
-    // 取得申請補助金額
-    const subsidyFunds = parseFloatFromFormatted($('input[id*="txtSubsidyFunds"]').val()) || 0;
+    // 取得申請補助金額（使用 txtApplyAmount）
+    const applyAmountText = $('#txtApplyAmount').val() || '';
+    const applyAmount = parseFloat(applyAmountText.replace(/,/g, '')) || 0;
 
     // 比較金額
-    if (subsidyFunds > limitData.GrantLimit) {
-        // 超過限制，顯示紅色文字
-        $('input[id*="txtSubsidyFunds"]').addClass('text-danger');
+    if (applyAmount > limitData.GrantLimit) {
+        // 超過限制，顯示紅色文字（僅提示，不擋控）
+        $('#txtApplyAmount').addClass('text-danger');
     } else {
         // 未超過限制，移除紅色文字
-        $('input[id*="txtSubsidyFunds"]').removeClass('text-danger');
+        $('#txtApplyAmount').removeClass('text-danger');
     }
 }
 
@@ -776,8 +843,8 @@ function handleFileUpload(fileCode, fileInput) {
     .then(data => {
         if (data && data.success) {
             // 直接更新 UI，不重新載入頁面
-            updateFileStatusUIFromJS(fileCode, data.fileName, data.relativePath);
-            
+            updateFileStatusUIFromJS(fileCode, data.fileName, data.relativePath, data.fileId);
+
             Swal.fire({
                 icon: 'success',
                 title: '上傳成功',
@@ -785,7 +852,7 @@ function handleFileUpload(fileCode, fileInput) {
                 timer: 1500,
                 showConfirmButton: false
             });
-            
+
             // 清空檔案輸入
             fileInput.value = '';
         } else {
@@ -801,10 +868,11 @@ function handleFileUpload(fileCode, fileInput) {
 }
 
 /**
- * 刪除檔案
+ * 根據 ID 刪除檔案
+ * @param {number} fileId - 檔案 ID
  * @param {string} fileCode - 檔案代碼
  */
-function deleteFile(fileCode) {
+function deleteFileById(fileId, fileCode) {
     Swal.fire({
         title: '確認刪除',
         text: '確定要刪除這個檔案嗎？',
@@ -816,22 +884,17 @@ function deleteFile(fileCode) {
         cancelButtonText: '取消'
     }).then((result) => {
         if (result.isConfirmed) {
-            performFileDelete(fileCode);
+            performFileDeleteById(fileId, fileCode);
         }
     });
 }
 
 /**
- * 執行檔案刪除
+ * 執行根據 ID 刪除檔案
+ * @param {number} fileId - 檔案 ID
  * @param {string} fileCode - 檔案代碼
  */
-function performFileDelete(fileCode) {
-    const projectID = getProjectID();
-    if (!projectID) {
-        showErrorMessage('計畫編號不存在');
-        return;
-    }
-
+function performFileDeleteById(fileId, fileCode) {
     // 顯示刪除中的訊息
     Swal.fire({
         title: '正在刪除檔案',
@@ -845,13 +908,11 @@ function performFileDelete(fileCode) {
 
     // 建立 FormData
     const formData = new FormData();
-    formData.append('action', 'delete');
-    formData.append('fileType', 'Application');
-    formData.append('fileCode', fileCode);
-    formData.append('projectID', projectID);
+    formData.append('action', 'deleteById');
+    formData.append('fileId', fileId);
 
     // 發送 AJAX 請求到 CLB_Upload.ashx
-    var  deletePath= window.location.origin+window.AppRootPath+'/Service/CLB_Upload.ashx';
+    var deletePath = window.location.origin + window.AppRootPath + '/Service/CLB_Upload.ashx';
     fetch(deletePath, {
         method: 'POST',
         body: formData
@@ -859,9 +920,21 @@ function performFileDelete(fileCode) {
     .then(response => response.json())
     .then(data => {
         if (data && data.success) {
-            // 直接更新 UI，不重新載入頁面
-            resetFileStatusUIFromJS(fileCode);
-            
+            // 移除該檔案標籤
+            $(`.tag[data-file-id="${fileId}"]`).remove();
+
+            // 檢查是否還有檔案
+            const statusLabelId = `lblStatus${fileCode.replace('FILE_', '')}`;
+            const filesPanelId = `pnlFiles${fileCode.replace('FILE_', '')}`;
+            const filesPanel = $(`[id*="${filesPanelId}"]`);
+
+            if (filesPanel.find('.tag').length === 0) {
+                // 沒有檔案了，重置狀態
+                $(`[id*="${statusLabelId}"]`).text('未上傳')
+                    .removeClass('text-success').addClass('text-muted');
+                filesPanel.hide();
+            }
+
             Swal.fire({
                 icon: 'success',
                 title: '刪除成功',
@@ -969,22 +1042,15 @@ function downloadTemplate(templateType) {
 }
 
 /**
- * 下載已上傳的檔案
- * @param {string} fileCode - 檔案代碼
+ * 根據 ID 下載已上傳的檔案
+ * @param {number} fileId - 檔案 ID
  */
-function downloadUploadedFile(fileCode) {
-    const projectID = getProjectID();
-    if (!projectID) {
-        showErrorMessage('計畫編號不存在');
-        return;
-    }
-
-    // 取得網站根路徑，確保與上傳、刪除使用相同的路徑格式
+function downloadUploadedFileById(fileId) {
+    // 取得網站根路徑
     const downloadPath = window.location.origin + (window.AppRootPath || '') + '/Service/CLB_download.ashx';
 
     // 構建下載 URL
-    const downloadUrl = downloadPath + '?action=file&projectID=' +
-                       encodeURIComponent(projectID) + '&fileCode=' + encodeURIComponent(fileCode);
+    const downloadUrl = downloadPath + '?action=fileById&fileId=' + encodeURIComponent(fileId);
 
     // 開啟下載
     window.open(downloadUrl, '_blank');
@@ -995,20 +1061,21 @@ function downloadUploadedFile(fileCode) {
  * @param {string} fileCode - 檔案代碼
  * @param {string} fileName - 檔案名稱
  * @param {string} relativePath - 相對路徑
+ * @param {number} fileId - 檔案 ID
  */
-function updateFileStatusUIFromJS(fileCode, fileName, relativePath) {
+function updateFileStatusUIFromJS(fileCode, fileName, relativePath, fileId) {
     // 取得對應的狀態標籤和檔案面板
     // FILE_CLB1 -> CLB1, FILE_CLB2 -> CLB2, etc.
     const statusLabelId = `lblStatus${fileCode.replace('FILE_', '')}`;
     const filesPanelId = `pnlFiles${fileCode.replace('FILE_', '')}`;
-    
+
     const statusLabel = $(`[id*="${statusLabelId}"]`);
     let filesPanel = $(`[id*="${filesPanelId}"]`);
-    
+
     if (statusLabel.length > 0) {
         // 更新狀態標籤
         statusLabel.text('已上傳').removeClass('text-muted').addClass('text-success');
-        
+
         // 如果檔案面板不存在，可能是因為 Visible="false"，嘗試找到它的容器並創建
         if (filesPanel.length === 0) {
             // 在狀態標籤的父容器中尋找可能的檔案面板位置
@@ -1024,65 +1091,36 @@ function updateFileStatusUIFromJS(fileCode, fileName, relativePath) {
                 filesPanel = existingPanel;
             }
         }
-        
+
         if (filesPanel.length > 0) {
-            // 清空並重建檔案面板內容，確保面板可見
-            filesPanel.empty().show().css('display', 'block');
-            
-            // 建立檔案標籤 HTML
+            // 確保面板可見
+            filesPanel.show().css('display', 'block');
+
+            // FILE_CLB4 允許多檔，追加新檔案；其他檔案只允許單檔，清空後再添加
+            if (fileCode !== 'FILE_CLB4') {
+                filesPanel.empty();
+            }
+
+            // 建立新的檔案標籤
             const fileTagHtml = `
-                <span class="tag tag-green-light">
-                    <a class="tag-link" href="#" onclick="downloadUploadedFile('${fileCode}'); return false;" target="_blank">
+                <span class="tag tag-green-light" data-file-id="${fileId}">
+                    <a class="tag-link" href="#" onclick="downloadUploadedFileById(${fileId}); return false;">
                         ${fileName}
                     </a>
-                    <button type="button" class="tag-btn" onclick="deleteFile('${fileCode}')">
+                    <button type="button" class="tag-btn" onclick="deleteFileById(${fileId}, '${fileCode}')">
                         <i class="fa-solid fa-circle-xmark"></i>
                     </button>
                 </span>
             `;
-            
-            filesPanel.html(fileTagHtml);
-            
-            console.log(`File status updated for ${fileCode}: ${fileName}`);
+
+            filesPanel.append(fileTagHtml);
+
+            console.log(`File added for ${fileCode}: ${fileName} (ID: ${fileId})`);
         } else {
             console.warn(`Files panel not found for ${fileCode}`);
         }
     } else {
         console.warn(`Status label not found for ${fileCode}`);
-    }
-}
-
-/**
- * 從 JavaScript 端重置檔案狀態 UI
- * @param {string} fileCode - 檔案代碼
- */
-function resetFileStatusUIFromJS(fileCode) {
-    // 取得對應的狀態標籤和檔案面板
-    // FILE_CLB1 -> CLB1, FILE_CLB2 -> CLB2, etc.
-    const statusLabelId = `lblStatus${fileCode.replace('FILE_', '')}`;
-    const filesPanelId = `pnlFiles${fileCode.replace('FILE_', '')}`;
-    
-    const statusLabel = $(`[id*="${statusLabelId}"]`);
-    let filesPanel = $(`[id*="${filesPanelId}"]`);
-    
-    if (statusLabel.length > 0) {
-        // 重置狀態標籤
-        statusLabel.text('未上傳').removeClass('text-success').addClass('text-muted');
-        
-        // 查找檔案面板，包括可能由 JavaScript 創建的面板
-        if (filesPanel.length === 0) {
-            filesPanel = $(`#${filesPanelId}_js`);
-        }
-        
-        if (filesPanel.length > 0) {
-            // 隱藏並清空檔案面板
-            filesPanel.hide().empty();
-        }
-        
-        // 同時查找並移除可能存在的其他檔案面板
-        statusLabel.closest('td').next('td').find('.tag-group').hide().empty();
-        
-        console.log(`File status reset for ${fileCode}`);
     }
 }
 
@@ -1340,8 +1378,9 @@ function checkIfExceedsGrantLimit() {
         return null;
     }
 
-    // 取得申請補助金額
-    const subsidyFunds = parseFloatFromFormatted($('input[id*="txtSubsidyFunds"]').val()) || 0;
+    // 取得申請補助金額（使用 txtApplyAmount，即申請海委會補助金額）
+    const applyAmountText = $('#txtApplyAmount').val() || '';
+    const subsidyFunds = parseFloat(applyAmountText.replace(/,/g, '')) || 0;
 
     // 比較金額
     if (subsidyFunds > limitData.GrantLimit) {
@@ -1359,6 +1398,30 @@ function checkIfExceedsGrantLimit() {
  * 執行儲存並下一步的實際操作
  */
 function performSaveAndNext() {
+    // 先驗證其他補助明細資料
+    const validationResult = validateOtherSubsidyData();
+    if (!validationResult.isValid) {
+        Swal.fire({
+            icon: 'error',
+            title: '請完整填寫其他補助明細',
+            html: validationResult.errorMessages.join('<br>'),
+            confirmButtonText: '確定'
+        });
+        return;
+    }
+
+    // 驗證經費預算規劃資料
+    const budgetValidationResult = validateBudgetPlanData();
+    if (!budgetValidationResult.isValid) {
+        Swal.fire({
+            icon: 'error',
+            title: '請完整填寫經費預算規劃',
+            html: budgetValidationResult.errorMessages.join('<br>'),
+            confirmButtonText: '確定'
+        });
+        return;
+    }
+
     // 顯示載入中訊息
     Swal.fire({
         title: '儲存中...',
@@ -1509,29 +1572,43 @@ function collectFormData() {
         formData.append('emergencyPlan', $('[id*="txtEmergencyPlan"]').val() || '');
     }
 
-    // 經費資料
-    const subsidyFunds = $('[id*="txtSubsidyFunds"]').val();
-    const selfFunds = $('[id*="txtSelfFunds"]').val();
-    const otherGovFunds = $('[id*="txtOtherGovFunds"]').val();
-    const otherUnitFunds = $('[id*="txtOtherUnitFunds"]').val();
-
-    if (subsidyFunds !== null && subsidyFunds !== undefined && subsidyFunds !== '') {
-        formData.append('subsidyFunds', subsidyFunds);
-    }
-    if (selfFunds !== null && selfFunds !== undefined && selfFunds !== '') {
-        formData.append('selfFunds', selfFunds);
-    }
-    if (otherGovFunds !== null && otherGovFunds !== undefined && otherGovFunds !== '') {
-        formData.append('otherGovFunds', otherGovFunds);
-    }
-    if (otherUnitFunds !== null && otherUnitFunds !== undefined && otherUnitFunds !== '') {
-        formData.append('otherUnitFunds', otherUnitFunds);
+    // 經費資料 - 使用 ID 取得
+    // A: 申請海委會補助／合作金額(元)
+    const applyAmountText = $('#txtApplyAmount').val() || '';
+    const applyAmount = parseInt(applyAmountText.replace(/,/g, '')) || null;
+    if (applyAmount !== null) {
+        formData.append('applyAmount', applyAmount);
     }
 
-    const previouslySubsidized = $('[id*="rbPreviouslySubsidizedYes"]').prop('checked');
-    formData.append('previouslySubsidized', previouslySubsidized);
+    // B: 申請單位自籌款(元)
+    const selfAmountText = $('#txtSelfAmount').val() || '';
+    const selfAmount = parseInt(selfAmountText.replace(/,/g, '')) || null;
+    if (selfAmount !== null) {
+        formData.append('selfAmount', selfAmount);
+    }
 
-    formData.append('fundingDescription', $('[id*="txtFundingDescription"]').val() || '');
+    // C: 其他機關補助／合作總金額(元) - 從顯示的文字取得（已經由 calculateOtherSubsidyTotal 計算好）
+    const otherAmountText = $('#lblOtherAmount').text().replace(/,/g, '');
+    const otherAmount = parseInt(otherAmountText) || null;
+    if (otherAmount !== null) {
+        formData.append('otherAmount', otherAmount);
+    }
+
+    // 收集「最近兩年曾獲本會補助」的值
+    const isPreviouslySubsidized = $('[id*="rbPreviouslySubsidizedYes"]').prop('checked');
+    formData.append('isPreviouslySubsidized', isPreviouslySubsidized);
+
+    // 收集其他補助明細資料（OFS_CLB_Other_Subsidy 表）
+    const otherSubsidyData = collectOtherSubsidyData();
+    formData.append('otherSubsidyData', JSON.stringify(otherSubsidyData));
+
+    // 收集經費預算規劃資料（OFS_CLB_Budget_Plan 表）
+    const budgetPlanData = collectBudgetPlanData();
+    formData.append('budgetPlanData', JSON.stringify(budgetPlanData));
+
+    // 收集經費說明資料（OFS_CLB_Received_Subsidy 表）
+    const receivedSubsidyData = collectFundingDescriptionData();
+    formData.append('receivedSubsidyData', JSON.stringify(receivedSubsidyData));
 
     // 人員資料
     formData.append('teacherName', $('[id*="txtTeacherName"]').val() || '');
@@ -1546,13 +1623,906 @@ function collectFormData() {
     return formData;
 }
 
+// ========================================
+// 經費資訊管理功能
+// ========================================
+
+/**
+ * 初始化經費資訊管理功能
+ */
+function initializeFundsManagement() {
+    // 綁定新增按鈕事件
+    bindAddSubsidyRowEvent();
+
+    // 綁定刪除按鈕事件（使用事件委派）
+    bindDeleteSubsidyRowEvents();
+
+    // 綁定金額輸入事件（用於自動計算）
+    bindSubsidyAmountInputEvents();
+
+    // 初始計算總金額和比例
+    calculateOtherSubsidyTotal();
+}
+
+/**
+ * 綁定新增其他補助資料按鈕事件
+ */
+function bindAddSubsidyRowEvent() {
+    // 使用 ID 綁定新增按鈕
+    $('#btnAddOtherSubsidy').off('click').on('click', function(e) {
+        e.preventDefault();
+        addOtherSubsidyRow();
+    });
+}
+
+/**
+ * 綁定刪除按鈕事件（使用事件委派）
+ */
+function bindDeleteSubsidyRowEvents() {
+    // 使用事件委派，綁定到 document
+    $(document).off('click', '.btn-teal-dark:has(.fa-trash-alt)').on('click', '.btn-teal-dark:has(.fa-trash-alt)', function(e) {
+        e.preventDefault();
+        const $row = $(this).closest('tr');
+        deleteOtherSubsidyRow($row);
+    });
+}
+
+/**
+ * 綁定其他補助金額輸入事件
+ */
+function bindSubsidyAmountInputEvents() {
+    // 使用事件委派綁定其他補助表格的金額輸入欄位
+    $(document).off('input', '#tbodyOtherSubsidy input[type="text"][style*="right"]').on('input', '#tbodyOtherSubsidy input[type="text"][style*="right"]', function() {
+        calculateOtherSubsidyTotal();
+    });
+
+    // 綁定申請海委會補助和自籌款輸入事件（使用 ID）
+    $('#txtApplyAmount, #txtSelfAmount').off('input').on('input', function() {
+        calculateMainFundsTotal();
+    });
+}
+
+/**
+ * 新增一行其他補助資料
+ */
+function addOtherSubsidyRow() {
+    // 使用 ID 選擇 tbody
+    const $tbody = $('#tbodyOtherSubsidy');
+
+    // 計算新的序號
+    const currentRowCount = $tbody.find('tr').length;
+    const newRowNumber = currentRowCount + 1;
+
+    // 建立新的一行 HTML
+    const newRowHtml = `
+        <tr data-subsidy-id="0">
+            <td>${newRowNumber}</td>
+            <td>
+                <div class="input-group">
+                    <input class="form-control" placeholder="請輸入" type="text">
+                </div>
+            </td>
+            <td>
+                <input class="form-control" placeholder="請輸入" type="text" style="text-align: right;">
+            </td>
+            <td class="text-end">0%</td>
+            <td>
+                <textarea class="form-control textarea-auto-resize" placeholder="請輸入" rows="1"></textarea>
+            </td>
+            <td>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-teal-dark m-0" type="button">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `;
+
+    // 將新行加入到 tbody
+    $tbody.append(newRowHtml);
+
+    // 重新計算總金額和比例
+    calculateOtherSubsidyTotal();
+}
+
+/**
+ * 刪除一行其他補助資料
+ * @param {jQuery} $row - 要刪除的行元素
+ */
+function deleteOtherSubsidyRow($row) {
+    // 確認刪除
+    Swal.fire({
+        icon: 'warning',
+        title: '確認刪除',
+        text: '確定要刪除這筆其他補助資料嗎？',
+        showCancelButton: true,
+        confirmButtonText: '確定刪除',
+        cancelButtonText: '取消',
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // 執行刪除
+            performDeleteOtherSubsidyRow($row);
+        }
+    });
+}
+
+/**
+ * 執行刪除其他補助資料行
+ * @param {jQuery} $row - 要刪除的行元素
+ */
+function performDeleteOtherSubsidyRow($row) {
+    // 移除該行
+    $row.remove();
+
+    // 重新編號所有行
+    renumberOtherSubsidyRows();
+
+    // 重新計算總金額和比例
+    calculateOtherSubsidyTotal();
+
+    // 顯示刪除成功訊息
+    Swal.fire({
+        icon: 'success',
+        title: '刪除成功',
+        text: '已成功刪除該筆其他補助資料',
+        timer: 1500,
+        showConfirmButton: false
+    });
+}
+
+/**
+ * 重新編號其他補助資料行
+ */
+function renumberOtherSubsidyRows() {
+    // 使用 ID 選擇 tbody
+    const $tbody = $('#tbodyOtherSubsidy');
+
+    $tbody.find('tr').each(function(index) {
+        $(this).find('td:first').text(index + 1);
+    });
+}
+
+/**
+ * 計算其他機關補助總金額和比例
+ */
+function calculateOtherSubsidyTotal() {
+    // 使用 ID 選擇 tbody
+    const $tbody = $('#tbodyOtherSubsidy');
+
+    let totalOtherSubsidy = 0;
+    const rowData = [];
+
+    // 收集所有金額並計算總和
+    $tbody.find('tr').each(function() {
+        const $row = $(this);
+        const $amountInput = $row.find('td').eq(2).find('input'); // 第3個 td 的 input
+        const amountText = $amountInput.val() || '';
+        const amount = parseFloat(amountText.replace(/,/g, '')) || 0;
+
+        rowData.push({
+            $row: $row,
+            amount: amount
+        });
+
+        totalOtherSubsidy += amount;
+    });
+
+    // 更新每一行的比例
+    rowData.forEach(item => {
+        let ratio = 0;
+        if (totalOtherSubsidy > 0) {
+            ratio = (item.amount / totalOtherSubsidy) * 100;
+        }
+        const $ratioCell = item.$row.find('td').eq(3); // 第4個 td
+        $ratioCell.text(ratio.toFixed(1) + '%');
+    });
+
+    // 更新第一個表格中「其他機關補助／合作總金額(元) (C)」的顯示
+    updateOtherSubsidyTotalDisplay(totalOtherSubsidy);
+
+    // 重新計算計畫總經費
+    calculateMainFundsTotal();
+}
+
+/**
+ * 更新其他機關補助總金額顯示
+ * @param {number} total - 總金額
+ */
+function updateOtherSubsidyTotalDisplay(total) {
+    // 使用 ID 更新顯示
+    $('#lblOtherAmount').text(total.toLocaleString());
+}
+
+/**
+ * 計算計畫總經費 (A + B + C)
+ */
+function calculateMainFundsTotal() {
+    // 使用 ID 取得各項金額
+    // A: 申請海委會補助／合作金額
+    const applyAmountText = $('#txtApplyAmount').val() || '';
+    const applyAmount = parseFloat(applyAmountText.replace(/,/g, '')) || 0;
+
+    // B: 申請單位自籌款
+    const selfAmountText = $('#txtSelfAmount').val() || '';
+    const selfAmount = parseFloat(selfAmountText.replace(/,/g, '')) || 0;
+
+    // C: 其他機關補助／合作總金額（從顯示的文字取得）
+    const otherAmountText = $('#lblOtherAmount').text().replace(/,/g, '');
+    const otherAmount = parseFloat(otherAmountText) || 0;
+
+    // 計算總經費
+    const totalFunds = applyAmount + selfAmount + otherAmount;
+
+    // 使用 ID 更新計畫總經費顯示
+    $('#lblTotalAmount').text(totalFunds.toLocaleString());
+}
+
+/**
+ * 收集所有其他補助資料（供表單提交時使用）
+ * @returns {Array} 其他補助資料陣列
+ */
+function collectOtherSubsidyData() {
+    const subsidyData = [];
+    // 使用 ID 選擇 tbody
+    const $tbody = $('#tbodyOtherSubsidy');
+
+    $tbody.find('tr').each(function() {
+        const $row = $(this);
+        const id = $row.data('subsidy-id') || 0;
+
+        // 取得各欄位值
+        const unit = $row.find('td').eq(1).find('input').val() || ''; // 單位名稱
+        const amountText = $row.find('td').eq(2).find('input').val() || ''; // 金額
+        const amount = parseInt(amountText.replace(/,/g, '')) || 0;
+        const content = $row.find('td').eq(4).find('textarea').val() || ''; // 申請合作項目
+
+        // 只收集有填寫單位名稱或金額的資料
+        if (unit.trim() !== '' || amount > 0) {
+            subsidyData.push({
+                ID: id,
+                Unit: unit,
+                Amount: amount,
+                Content: content
+            });
+        }
+    });
+
+    return subsidyData;
+}
+
+/**
+ * 驗證其他補助資料
+ * @returns {Object} 驗證結果 { isValid: boolean, errorMessages: Array }
+ */
+function validateOtherSubsidyData() {
+    const $tbody = $('#tbodyOtherSubsidy');
+    const $rows = $tbody.find('tr');
+    const errorMessages = [];
+
+    // 如果沒有任何列，則不需要驗證
+    if ($rows.length === 0) {
+        return {
+            isValid: true,
+            errorMessages: []
+        };
+    }
+
+    // 驗證每一列
+    $rows.each(function(index) {
+        const $row = $(this);
+        const rowNumber = index + 1;
+
+        // 取得各欄位值
+        const unit = $row.find('td').eq(1).find('input').val() || '';
+        const amountText = $row.find('td').eq(2).find('input').val() || '';
+        const amount = parseInt(amountText.replace(/,/g, '')) || 0;
+        const content = $row.find('td').eq(4).find('textarea').val() || '';
+
+        // 檢查欄位是否都有填寫
+        const hasUnit = unit.trim() !== '';
+        const hasAmount = amount > 0;
+        const hasContent = content.trim() !== '';
+
+        // 如果任何一個欄位有填寫，則其他欄位也必須填寫
+        if (hasUnit || hasAmount || hasContent) {
+            if (!hasUnit) {
+                errorMessages.push(`其他機關補助明細第 ${rowNumber} 列：請輸入單位名稱`);
+            }
+            if (!hasAmount) {
+                errorMessages.push(`其他機關補助明細第 ${rowNumber} 列：請輸入申請／分攤補助金額`);
+            }
+            if (!hasContent) {
+                errorMessages.push(`其他機關補助明細第 ${rowNumber} 列：請輸入申請合作項目`);
+            }
+        }
+    });
+
+    return {
+        isValid: errorMessages.length === 0,
+        errorMessages: errorMessages
+    };
+}
+
+/**
+ * 驗證經費預算規劃資料
+ * @returns {Object} 驗證結果 { isValid: boolean, errorMessages: Array }
+ */
+function validateBudgetPlanData() {
+    const $tbody = $('#tbodyBudgetPlan');
+    const $rows = $tbody.find('tr');
+    const errorMessages = [];
+
+    // 如果沒有任何列，則不需要驗證
+    if ($rows.length === 0) {
+        return {
+            isValid: true,
+            errorMessages: []
+        };
+    }
+
+    // 驗證每一列
+    $rows.each(function(index) {
+        const $row = $(this);
+        const rowNumber = index + 1;
+
+        // 取得各欄位值
+        const title = $row.find('td').eq(0).find('input').val() || '';
+        const amountText = $row.find('td').eq(1).find('input').val() || '';
+        const amount = parseInt(amountText.replace(/,/g, '')) || 0;
+        const otherAmountText = $row.find('td').eq(2).find('input').val() || '';
+        const otherAmount = parseInt(otherAmountText.replace(/,/g, '')) || 0;
+        const description = $row.find('td').eq(4).find('textarea').val() || '';
+
+        // 檢查欄位是否都有填寫
+        const hasTitle = title.trim() !== '';
+        const hasAmount = amount > 0;
+        const hasOtherAmount = otherAmount > 0;
+        const hasDescription = description.trim() !== '';
+
+        // 如果任何一個欄位有填寫，則所有欄位都必須填寫
+        if (hasTitle || hasAmount || hasOtherAmount || hasDescription) {
+            if (!hasTitle) {
+                errorMessages.push(`經費預算規劃第 ${rowNumber} 列：請輸入預算項目`);
+            }
+            if (!hasAmount) {
+                errorMessages.push(`經費預算規劃第 ${rowNumber} 列：請輸入預算金額(海洋委員會經費)`);
+            }
+            if (!hasOtherAmount) {
+                errorMessages.push(`經費預算規劃第 ${rowNumber} 列：請輸入預算金額(其他配合經費)`);
+            }
+            if (!hasDescription) {
+                errorMessages.push(`經費預算規劃第 ${rowNumber} 列：請輸入計算方式及說明`);
+            }
+        }
+    });
+
+    return {
+        isValid: errorMessages.length === 0,
+        errorMessages: errorMessages
+    };
+}
+
+// ========================================
+// 經費預算規劃管理功能
+// ========================================
+
+/**
+ * 初始化經費預算規劃管理功能
+ */
+function initializeBudgetPlanManagement() {
+    // 綁定新增按鈕事件
+    bindAddBudgetPlanRowEvent();
+
+    // 綁定刪除按鈕事件（使用事件委派）
+    bindDeleteBudgetPlanRowEvents();
+
+    // 綁定金額輸入事件（用於自動計算小計）
+    bindBudgetPlanAmountInputEvents();
+}
+
+/**
+ * 綁定新增經費預算規劃按鈕事件
+ */
+function bindAddBudgetPlanRowEvent() {
+    $('#btnAddBudgetPlan').off('click').on('click', function(e) {
+        e.preventDefault();
+        addBudgetPlanRow();
+    });
+}
+
+/**
+ * 綁定刪除按鈕事件（使用事件委派）
+ */
+function bindDeleteBudgetPlanRowEvents() {
+    // 使用 ID 選擇器配合事件委派
+    $('#tbodyBudgetPlan').off('click', '.btn-teal-dark:has(.fa-trash-alt)').on('click', '.btn-teal-dark:has(.fa-trash-alt)', function(e) {
+        e.preventDefault();
+        const $row = $(this).closest('tr');
+        deleteBudgetPlanRow($row);
+    });
+}
+
+/**
+ * 綁定經費預算規劃金額輸入事件
+ */
+function bindBudgetPlanAmountInputEvents() {
+    // 使用 ID 選擇器配合事件委派綁定金額輸入欄位
+    $('#tbodyBudgetPlan').off('input', 'input[type="text"][style*="right"]').on('input', 'input[type="text"][style*="right"]', function() {
+        const $row = $(this).closest('tr');
+        calculateBudgetPlanSubtotal($row);
+    });
+}
+
+/**
+ * 新增一列經費預算規劃
+ */
+function addBudgetPlanRow() {
+    const $tbody = $('#tbodyBudgetPlan');
+
+    const rowHtml = `
+        <tr data-budget-id="0">
+            <td>
+                <div class="input-group">
+                    <input class="form-control" placeholder="請輸入" type="text">
+                </div>
+            </td>
+            <td>
+                <input class="form-control" placeholder="請輸入" type="text" style="text-align: right;">
+            </td>
+            <td>
+                <input class="form-control" placeholder="請輸入" type="text" style="text-align: right;">
+            </td>
+            <td class="text-end budget-subtotal">0</td>
+            <td>
+                <textarea class="form-control textarea-auto-resize" placeholder="請輸入" rows="1"></textarea>
+            </td>
+            <td>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-teal-dark m-0" type="button"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            </td>
+        </tr>
+    `;
+
+    $tbody.append(rowHtml);
+}
+
+/**
+ * 刪除一列經費預算規劃
+ * @param {jQuery} $row - 要刪除的列
+ */
+function deleteBudgetPlanRow($row) {
+    Swal.fire({
+        title: '確認刪除',
+        text: '確定要刪除這筆預算規劃資料嗎？',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '確定',
+        cancelButtonText: '取消',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $row.remove();
+        }
+    });
+}
+
+/**
+ * 計算單列預算小計
+ * @param {jQuery} $row - 要計算的列
+ */
+function calculateBudgetPlanSubtotal($row) {
+    // 取得海洋委員會經費
+    const amountText = $row.find('td').eq(1).find('input').val() || '';
+    const amount = parseInt(amountText.replace(/,/g, '')) || 0;
+
+    // 取得其他配合經費
+    const otherAmountText = $row.find('td').eq(2).find('input').val() || '';
+    const otherAmount = parseInt(otherAmountText.replace(/,/g, '')) || 0;
+
+    // 計算小計
+    const subtotal = amount + otherAmount;
+
+    // 更新顯示
+    $row.find('.budget-subtotal').text(subtotal.toLocaleString());
+}
+
+/**
+ * 收集所有經費預算規劃資料
+ * @returns {Array} 經費預算規劃資料陣列
+ */
+function collectBudgetPlanData() {
+    const budgetPlanData = [];
+    const $tbody = $('#tbodyBudgetPlan');
+
+    $tbody.find('tr').each(function() {
+        const $row = $(this);
+        const id = $row.data('budget-id') || 0;
+
+        // 取得各欄位值
+        const title = $row.find('td').eq(0).find('input').val() || '';
+        const amountText = $row.find('td').eq(1).find('input').val() || '';
+        const amount = parseInt(amountText.replace(/,/g, '')) || 0;
+        const otherAmountText = $row.find('td').eq(2).find('input').val() || '';
+        const otherAmount = parseInt(otherAmountText.replace(/,/g, '')) || 0;
+        const description = $row.find('td').eq(4).find('textarea').val() || '';
+
+        // 只收集有填寫預算項目的資料
+        if (title.trim() !== '' || amount > 0 || otherAmount > 0) {
+            budgetPlanData.push({
+                ID: id,
+                Title: title,
+                Amount: amount,
+                OtherAmount: otherAmount,
+                Description: description
+            });
+        }
+    });
+
+    return budgetPlanData;
+}
+
+/**
+ * 載入經費預算規劃資料到表格
+ * @param {Array} budgetPlanData - 經費預算規劃資料陣列
+ */
+function loadBudgetPlanData(budgetPlanData) {
+    if (!budgetPlanData || budgetPlanData.length === 0) {
+        return;
+    }
+
+    const $tbody = $('#tbodyBudgetPlan');
+
+    // 清空現有資料
+    $tbody.empty();
+
+    // 載入每一筆資料
+    budgetPlanData.forEach((item) => {
+        const subtotal = (item.Amount || 0) + (item.OtherAmount || 0);
+        const rowHtml = `
+            <tr data-budget-id="${item.ID || 0}">
+                <td>
+                    <div class="input-group">
+                        <input class="form-control" placeholder="請輸入" type="text" value="${escapeHtml(item.Title || '')}">
+                    </div>
+                </td>
+                <td>
+                    <input class="form-control" placeholder="請輸入" type="text" style="text-align: right;" value="${item.Amount ? item.Amount.toLocaleString() : ''}">
+                </td>
+                <td>
+                    <input class="form-control" placeholder="請輸入" type="text" style="text-align: right;" value="${item.OtherAmount ? item.OtherAmount.toLocaleString() : ''}">
+                </td>
+                <td class="text-end budget-subtotal">${subtotal.toLocaleString()}</td>
+                <td>
+                    <textarea class="form-control textarea-auto-resize" placeholder="請輸入" rows="1">${escapeHtml(item.Description || '')}</textarea>
+                </td>
+                <td>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-teal-dark m-0" type="button"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        $tbody.append(rowHtml);
+    });
+}
+
+/**
+ * 載入基本經費資料到表單
+ * @param {Object} fundsData - 經費資料物件
+ * @param {string} fundsData.applyAmount - 申請海委會補助／合作金額(元)
+ * @param {string} fundsData.selfAmount - 申請單位自籌款(元)
+ * @param {boolean} fundsData.isPreviouslySubsidized - 最近兩年曾獲本會補助
+ */
+function loadFundsData(fundsData) {
+    if (!fundsData) {
+        return;
+    }
+
+    // 載入申請海委會補助／合作金額(元) (A)
+    if (fundsData.applyAmount) {
+        $('#txtApplyAmount').val(fundsData.applyAmount);
+    }
+
+    // 載入申請單位自籌款(元) (B)
+    if (fundsData.selfAmount) {
+        $('#txtSelfAmount').val(fundsData.selfAmount);
+    }
+
+    // 載入「最近兩年曾獲本會補助」的值
+    if (typeof fundsData.isPreviouslySubsidized !== 'undefined') {
+        if (fundsData.isPreviouslySubsidized) {
+            $('[id*="rbPreviouslySubsidizedYes"]').prop('checked', true);
+        } else {
+            $('[id*="rbPreviouslySubsidizedNo"]').prop('checked', true);
+        }
+        // 觸發變更事件，顯示或隱藏經費說明欄位
+        handlePreviouslySubsidizedChange();
+    }
+
+    // 重新計算總金額（會自動計算其他補助總金額和全部經費總計）
+    calculateMainFundsTotal();
+}
+
+/**
+ * 載入其他補助資料到表格
+ * @param {Array} subsidyData - 其他補助資料陣列
+ */
+function loadOtherSubsidyData(subsidyData) {
+    if (!subsidyData || subsidyData.length === 0) {
+        return;
+    }
+
+    // 使用 ID 選擇 tbody
+    const $tbody = $('#tbodyOtherSubsidy');
+
+    // 清空現有資料
+    $tbody.empty();
+
+    // 載入每一筆資料
+    subsidyData.forEach((item, index) => {
+        const rowNumber = index + 1;
+        const rowHtml = `
+            <tr data-subsidy-id="${item.ID || 0}">
+                <td>${rowNumber}</td>
+                <td>
+                    <div class="input-group">
+                        <input class="form-control" placeholder="請輸入" type="text" value="${escapeHtml(item.Unit || '')}">
+                    </div>
+                </td>
+                <td>
+                    <input class="form-control" placeholder="請輸入" type="text" style="text-align: right;" value="${item.Amount || ''}">
+                </td>
+                <td class="text-end">0%</td>
+                <td>
+                    <textarea class="form-control textarea-auto-resize" placeholder="請輸入" rows="1">${escapeHtml(item.Content || '')}</textarea>
+                </td>
+                <td>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-teal-dark m-0" type="button">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        $tbody.append(rowHtml);
+    });
+
+    // 重新計算總金額和比例
+    calculateOtherSubsidyTotal();
+}
+
+/**
+ * HTML 轉義函數（防止 XSS）
+ * @param {string} text - 要轉義的文字
+ * @returns {string} 轉義後的文字
+ */
+function escapeHtml(text) {
+    if (!text) return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
+// ========================================
+// 經費說明管理功能
+// ========================================
+
+/**
+ * 初始化經費說明管理功能
+ */
+function initializeFundingDescriptionManagement() {
+    // 綁定新增按鈕事件
+    bindAddFundingDescriptionRowEvent();
+
+    // 綁定刪除按鈕事件（使用事件委派）
+    bindDeleteFundingDescriptionRowEvents();
+}
+
+/**
+ * 綁定新增經費說明按鈕事件
+ */
+function bindAddFundingDescriptionRowEvent() {
+    $('#btnAddFundingDescription').off('click').on('click', function(e) {
+        e.preventDefault();
+        addFundingDescriptionRow();
+    });
+}
+
+/**
+ * 綁定刪除按鈕事件（使用事件委派）
+ */
+function bindDeleteFundingDescriptionRowEvents() {
+    // 使用 ID 選擇器配合事件委派
+    $('#tbodyFundingDescription').off('click', '.btn-teal-dark:has(.fa-trash-alt)').on('click', '.btn-teal-dark:has(.fa-trash-alt)', function(e) {
+        e.preventDefault();
+        const $row = $(this).closest('tr');
+        deleteFundingDescriptionRow($row);
+    });
+}
+
+/**
+ * 新增一列經費說明
+ */
+function addFundingDescriptionRow() {
+    const $tbody = $('#tbodyFundingDescription');
+
+    const rowHtml = `
+        <tr data-description-id="0">
+            <td>
+                <input class="form-control" placeholder="請輸入計畫名稱" type="text">
+            </td>
+            <td>
+                <input class="form-control" placeholder="請輸入金額" type="text" style="text-align: right;">
+            </td>
+            <td>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-teal-dark m-0" type="button"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            </td>
+        </tr>
+    `;
+
+    $tbody.append(rowHtml);
+}
+
+/**
+ * 刪除一列經費說明
+ * @param {jQuery} $row - 要刪除的列
+ */
+function deleteFundingDescriptionRow($row) {
+    Swal.fire({
+        title: '確認刪除',
+        text: '確定要刪除這筆經費說明資料嗎？',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '確定',
+        cancelButtonText: '取消',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $row.remove();
+
+            Swal.fire({
+                icon: 'success',
+                title: '刪除成功',
+                text: '已成功刪除該筆經費說明資料',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        }
+    });
+}
+
+/**
+ * 收集所有經費說明資料
+ * @returns {Array} 經費說明資料陣列
+ */
+function collectFundingDescriptionData() {
+    const descriptionData = [];
+    const $tbody = $('#tbodyFundingDescription');
+
+    $tbody.find('tr').each(function() {
+        const $row = $(this);
+        const id = $row.data('description-id') || 0;
+
+        // 取得各欄位值
+        const projectName = $row.find('td').eq(0).find('input').val() || '';
+        const amountText = $row.find('td').eq(1).find('input').val() || '';
+        const amount = parseInt(amountText.replace(/,/g, '')) || 0;
+
+        // 只收集有填寫計畫名稱或金額的資料
+        if (projectName.trim() !== '' || amount > 0) {
+            descriptionData.push({
+                ID: id,
+                ProjectName: projectName,
+                Amount: amount
+            });
+        }
+    });
+
+    return descriptionData;
+}
+
+/**
+ * 驗證經費說明資料
+ * @returns {Object} 驗證結果 { isValid: boolean, errorMessages: Array }
+ */
+function validateFundingDescriptionData() {
+    const $tbody = $('#tbodyFundingDescription');
+    const $rows = $tbody.find('tr');
+    const errorMessages = [];
+
+    // 如果沒有任何列，則不需要驗證
+    if ($rows.length === 0) {
+        return {
+            isValid: true,
+            errorMessages: []
+        };
+    }
+
+    // 驗證每一列
+    $rows.each(function(index) {
+        const $row = $(this);
+        const rowNumber = index + 1;
+
+        // 取得各欄位值
+        const projectName = $row.find('td').eq(0).find('input').val() || '';
+        const amountText = $row.find('td').eq(1).find('input').val() || '';
+        const amount = parseInt(amountText.replace(/,/g, '')) || 0;
+
+        // 檢查欄位是否都有填寫
+        const hasProjectName = projectName.trim() !== '';
+        const hasAmount = amount > 0;
+
+        // 如果任何一個欄位有填寫，則所有欄位都必須填寫
+        if (hasProjectName || hasAmount) {
+            if (!hasProjectName) {
+                errorMessages.push(`經費說明第 ${rowNumber} 列：請輸入計畫名稱`);
+            }
+            if (!hasAmount) {
+                errorMessages.push(`經費說明第 ${rowNumber} 列：請輸入海委會補助經費`);
+            }
+        }
+    });
+
+    return {
+        isValid: errorMessages.length === 0,
+        errorMessages: errorMessages
+    };
+}
+
+/**
+ * 載入經費說明資料到表格
+ * @param {Array} descriptionData - 經費說明資料陣列
+ */
+function loadFundingDescriptionData(descriptionData) {
+    if (!descriptionData || descriptionData.length === 0) {
+        return;
+    }
+
+    const $tbody = $('#tbodyFundingDescription');
+
+    // 清空現有資料
+    $tbody.empty();
+
+    // 載入每一筆資料
+    descriptionData.forEach((item) => {
+        const rowHtml = `
+            <tr data-description-id="${item.ID || 0}">
+                <td>
+                    <input class="form-control" placeholder="請輸入計畫名稱" type="text" value="${escapeHtml(item.ProjectName || '')}">
+                </td>
+                <td>
+                    <input class="form-control" placeholder="請輸入金額" type="text" style="text-align: right;" value="${item.Amount ? item.Amount.toLocaleString() : ''}">
+                </td>
+                <td>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-teal-dark m-0" type="button"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        $tbody.append(rowHtml);
+    });
+}
+
 // 將函數公開給全域範圍以供 HTML 中的 onclick 事件使用
 window.handleFileUpload = handleFileUpload;
-window.deleteFile = deleteFile;
+window.deleteFileById = deleteFileById;
 window.downloadTemplate = downloadTemplate;
-window.downloadUploadedFile = downloadUploadedFile;
+window.downloadUploadedFileById = downloadUploadedFileById;
 window.updateFileStatusUIFromJS = updateFileStatusUIFromJS;
-window.resetFileStatusUIFromJS = resetFileStatusUIFromJS;
 window.submitApplicationFinal = submitApplicationFinal;
 window.navigateToStep = navigateToStep;
 window.switchTab = switchTab;
@@ -1560,3 +2530,33 @@ window.initializeTabSystem = initializeTabSystem;
 window.handleTempSave = handleTempSave;
 window.handleSaveAndNext = handleSaveAndNext;
 window.handleSubmitApplication = handleSubmitApplication;
+
+// 公開經費資訊管理函數
+window.initializeFundsManagement = initializeFundsManagement;
+window.addOtherSubsidyRow = addOtherSubsidyRow;
+window.deleteOtherSubsidyRow = deleteOtherSubsidyRow;
+window.collectOtherSubsidyData = collectOtherSubsidyData;
+window.validateOtherSubsidyData = validateOtherSubsidyData;
+window.loadFundsData = loadFundsData;
+window.loadOtherSubsidyData = loadOtherSubsidyData;
+window.calculateOtherSubsidyTotal = calculateOtherSubsidyTotal;
+window.calculateMainFundsTotal = calculateMainFundsTotal;
+window.initializeAmountInputValidation = initializeAmountInputValidation;
+window.validateAndFormatAmountInput = validateAndFormatAmountInput;
+
+// 公開經費預算規劃管理函數
+window.initializeBudgetPlanManagement = initializeBudgetPlanManagement;
+window.addBudgetPlanRow = addBudgetPlanRow;
+window.deleteBudgetPlanRow = deleteBudgetPlanRow;
+window.calculateBudgetPlanSubtotal = calculateBudgetPlanSubtotal;
+window.collectBudgetPlanData = collectBudgetPlanData;
+window.loadBudgetPlanData = loadBudgetPlanData;
+window.validateBudgetPlanData = validateBudgetPlanData;
+
+// 公開經費說明管理函數
+window.initializeFundingDescriptionManagement = initializeFundingDescriptionManagement;
+window.addFundingDescriptionRow = addFundingDescriptionRow;
+window.deleteFundingDescriptionRow = deleteFundingDescriptionRow;
+window.collectFundingDescriptionData = collectFundingDescriptionData;
+window.validateFundingDescriptionData = validateFundingDescriptionData;
+window.loadFundingDescriptionData = loadFundingDescriptionData;

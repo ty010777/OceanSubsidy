@@ -15,7 +15,7 @@ public class CLB_Upload : IHttpHandler
 
         if (string.IsNullOrEmpty(action))
         {
-            context.Response.Write("{\"success\":false,\"message\":\"Missing action parameter. Use 'upload' or 'delete'.\"}");
+            context.Response.Write("{\"success\":false,\"message\":\"Missing action parameter. Use 'upload' or 'deleteById'.\"}");
             return;
         }
 
@@ -26,11 +26,11 @@ public class CLB_Upload : IHttpHandler
                 case "upload":
                     HandleFileUpload(context);
                     break;
-                case "delete":
-                    HandleFileDelete(context);
+                case "deletebyid":
+                    HandleFileDeleteById(context);
                     break;
                 default:
-                    context.Response.Write("{\"success\":false,\"message\":\"Invalid action. Use 'upload' or 'delete'.\"}");
+                    context.Response.Write("{\"success\":false,\"message\":\"Invalid action. Use 'upload' or 'deleteById'.\"}");
                     break;
             }
         }
@@ -77,21 +77,29 @@ public class CLB_Upload : IHttpHandler
                 return;
             }
 
-            // 決定 FileCode 和附件名稱
+            // 決定 FileCode
              if (!string.IsNullOrEmpty(fileCode))
             {
                 fileCode = GetFileCodeByType(fileType, fileCode);
-                attachmentName = GetAttachmentNameByFileType(fileType, fileCode);
             }
-            // else if (string.IsNullOrEmpty(attachmentName))
-            // {
-            //     // 如果沒有提供 attachmentName，根據 fileCode 生成
-            //     // attachmentName = GetAttachmentNameByFileCode(fileCode);
-            // }
 
             // 生成檔案名稱
             string fileExtension = Path.GetExtension(uploadedFile.FileName);
-            string fileName = $"{projectID}_{attachmentName}{fileExtension}";
+            string timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+            string fileName = "";
+
+            // FILE_CLB4（相關佐證資料）使用原始檔名 + 時間序
+            if (fileCode == "FILE_CLB4")
+            {
+                string originalFileName = Path.GetFileNameWithoutExtension(uploadedFile.FileName);
+                fileName = $"{projectID}_{originalFileName}_{timestamp}{fileExtension}";
+            }
+            else
+            {
+                // 其他檔案使用系統定義的附件名稱 + 時間序
+                attachmentName = GetAttachmentNameByFileType(fileType, fileCode);
+                fileName = $"{projectID}_{attachmentName}_{timestamp}{fileExtension}";
+            }
 
             // 上傳檔案
             string relativePath = SaveUploadedFile(context, uploadedFile, fileName, projectID);
@@ -102,13 +110,13 @@ public class CLB_Upload : IHttpHandler
             }
 
             // 儲存到資料庫
-            SaveFileToDatabase(projectID, fileCode, fileName, relativePath);
+            int fileId = SaveFileToDatabase(projectID, fileCode, fileName, relativePath);
 
             // 使用 System.Web.HttpUtility.JavaScriptStringEncode 或手動跳脫特殊字元
             string escapedFileName = EscapeJsonString(fileName);
             string escapedRelativePath = EscapeJsonString(relativePath);
 
-            context.Response.Write($"{{\"success\":true,\"message\":\"檔案上傳成功\",\"fileName\":\"{escapedFileName}\",\"relativePath\":\"{escapedRelativePath}\"}}");
+            context.Response.Write($"{{\"success\":true,\"message\":\"檔案上傳成功\",\"fileName\":\"{escapedFileName}\",\"relativePath\":\"{escapedRelativePath}\",\"fileId\":{fileId}}}");
         }
         catch (Exception ex)
         {
@@ -118,51 +126,22 @@ public class CLB_Upload : IHttpHandler
     }
 
     /// <summary>
-    /// 處理檔案刪除
+    /// 處理根據 ID 刪除檔案（僅刪除資料庫記錄，不刪除實體檔案）
     /// </summary>
-    private void HandleFileDelete(HttpContext context)
+    private void HandleFileDeleteById(HttpContext context)
     {
         try
         {
-            string projectID = context.Request.Form["projectID"];
-            string fileCode = context.Request.Form["fileCode"];
-            string fileType = context.Request.Form["fileType"]; // 用於 StageReport
+            string fileIdStr = context.Request.Form["fileId"];
 
-            if (string.IsNullOrEmpty(projectID))
+            if (string.IsNullOrEmpty(fileIdStr) || !int.TryParse(fileIdStr, out int fileId))
             {
-                context.Response.Write("{\"success\":false,\"message\":\"計畫編號不能為空\"}");
+                context.Response.Write("{\"success\":false,\"message\":\"檔案ID不正確\"}");
                 return;
             }
 
-            // 決定 FileCode
-          
-            fileCode = GetFileCodeByType(fileType,fileCode);
-            
-
-            // 從資料庫取得檔案資訊
-            var uploadedFile = OFS_ClbApplicationHelper.GetUploadedFile(projectID, fileCode);
-            if (uploadedFile != null)
-            {
-                // 刪除實體檔案
-                string templatePath = uploadedFile.TemplatePath;
-
-                // 如果路徑不是以 ~/ 開頭，則加上
-                if (!templatePath.StartsWith("~/"))
-                {
-                    // 移除開頭的 / 或 \ 避免重複
-                    templatePath = templatePath.TrimStart('/', '\\');
-                    templatePath = "~/" + templatePath;
-                }
-
-                string physicalPath = context.Server.MapPath(templatePath);
-                if (File.Exists(physicalPath))
-                {
-                    File.Delete(physicalPath);
-                }
-
-                // 從資料庫刪除記錄
-                OFS_ClbApplicationHelper.DeleteUploadFile(projectID, fileCode);
-            }
+            // 從資料庫刪除記錄（不刪除實體檔案）
+            OFS_ClbApplicationHelper.DeleteUploadFileById(fileId);
 
             context.Response.Write("{\"success\":true,\"message\":\"檔案刪除成功\"}");
         }
@@ -367,7 +346,7 @@ public class CLB_Upload : IHttpHandler
     /// <summary>
     /// 儲存檔案資訊到資料庫
     /// </summary>
-    private void SaveFileToDatabase(string projectID, string fileCode, string fileName, string relativePath)
+    private int SaveFileToDatabase(string projectID, string fileCode, string fileName, string relativePath)
     {
         try
         {
@@ -379,11 +358,18 @@ public class CLB_Upload : IHttpHandler
                 TemplatePath = relativePath
             };
 
-            // 檢查是否已存在同樣的記錄，如果有就刪除
-            OFS_ClbApplicationHelper.DeleteUploadFile(projectID, fileCode);
-
-            // 插入新記錄
-            OFS_ClbApplicationHelper.InsertUploadFile(uploadFile);
+            // FILE_CLB4（相關佐證資料）允許多檔，不刪除舊記錄
+            if (fileCode == "FILE_CLB4")
+            {
+                // 直接插入新記錄
+                return OFS_ClbApplicationHelper.InsertUploadFile(uploadFile);
+            }
+            else
+            {
+                // 其他檔案維持原邏輯：先刪除再插入（單檔）
+                OFS_ClbApplicationHelper.DeleteUploadFile(projectID, fileCode);
+                return OFS_ClbApplicationHelper.InsertUploadFile(uploadFile);
+            }
         }
         catch (Exception ex)
         {

@@ -191,13 +191,13 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
         txtPlanLocation.Enabled = false;
         txtEstimatedPeople.Enabled = false;
         txtEmergencyPlan.Enabled = false;
-        txtSubsidyFunds.Enabled = false;
-        txtSelfFunds.Enabled = false;
-        txtOtherGovFunds.Enabled = false;
-        txtOtherUnitFunds.Enabled = false;
-        rbPreviouslySubsidizedYes.Enabled = false;
-        rbPreviouslySubsidizedNo.Enabled = false;
-        txtFundingDescription.Enabled = false;
+        // txtSubsidyFunds.Enabled = false;
+        // txtSelfFunds.Enabled = false;
+        // txtOtherGovFunds.Enabled = false;
+        // txtOtherUnitFunds.Enabled = false;
+        // rbPreviouslySubsidizedYes.Enabled = false;
+        // rbPreviouslySubsidizedNo.Enabled = false;
+        // txtFundingDescription.Enabled = false;
         
         // 人員欄位
         txtTeacherName.Enabled = false;
@@ -268,8 +268,8 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
         if (string.IsNullOrEmpty(txtPreBenefits.Text.Trim()))
             errors.Add("請輸入預期效益");
 
-        if (string.IsNullOrEmpty(txtSubsidyFunds.Text.Trim()))
-            errors.Add("請輸入申請補助金額");
+        // if (string.IsNullOrEmpty(txtSubsidyFunds.Text.Trim()))
+        //     errors.Add("請輸入申請補助金額");
 
         // 人員必填驗證
         if (string.IsNullOrEmpty(txtTeacherName.Text.Trim()))
@@ -333,17 +333,17 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
         data["EmergencyPlan"] = txtEmergencyPlan.Text.Trim();
 
         // 經費資料
-        if (!string.IsNullOrEmpty(txtSubsidyFunds.Text.Trim()))
-            data["SubsidyFunds"] = decimal.Parse(txtSubsidyFunds.Text);
-        if (!string.IsNullOrEmpty(txtSelfFunds.Text.Trim()))
-            data["SelfFunds"] = decimal.Parse(txtSelfFunds.Text);
-        if (!string.IsNullOrEmpty(txtOtherGovFunds.Text.Trim()))
-            data["OtherGovFunds"] = decimal.Parse(txtOtherGovFunds.Text);
-        if (!string.IsNullOrEmpty(txtOtherUnitFunds.Text.Trim()))
-            data["OtherUnitFunds"] = decimal.Parse(txtOtherUnitFunds.Text);
-            
-        data["PreviouslySubsidized"] = rbPreviouslySubsidizedYes.Checked;
-        data["FundingDescription"] = txtFundingDescription.Text.Trim();
+        // if (!string.IsNullOrEmpty(txtSubsidyFunds.Text.Trim()))
+        //     data["SubsidyFunds"] = decimal.Parse(txtSubsidyFunds.Text);
+        // if (!string.IsNullOrEmpty(txtSelfFunds.Text.Trim()))
+        //     data["SelfFunds"] = decimal.Parse(txtSelfFunds.Text);
+        // if (!string.IsNullOrEmpty(txtOtherGovFunds.Text.Trim()))
+        //     data["OtherGovFunds"] = decimal.Parse(txtOtherGovFunds.Text);
+        // if (!string.IsNullOrEmpty(txtOtherUnitFunds.Text.Trim()))
+        //     data["OtherUnitFunds"] = decimal.Parse(txtOtherUnitFunds.Text);
+        //     
+        // data["PreviouslySubsidized"] = rbPreviouslySubsidizedYes.Checked;
+        // data["FundingDescription"] = txtFundingDescription.Text.Trim();
 
         // 人員資料
         data["TeacherName"] = txtTeacherName.Text.Trim();
@@ -510,10 +510,10 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
 
             // 總經費由前端 JavaScript calculateTotalFunds() 自動計算並顯示
             // 這裡直接從表單取得已計算好的總經費值
-            if (!string.IsNullOrEmpty(lblTotalFunds.Text) && decimal.TryParse(lblTotalFunds.Text, out decimal calculatedTotal))
-            {
-                fundsData.TotalFunds = calculatedTotal;
-            }
+            // if (!string.IsNullOrEmpty(lblTotalFunds.Text) && decimal.TryParse(lblTotalFunds.Text, out decimal calculatedTotal))
+            // {
+            //     fundsData.TotalFunds = calculatedTotal;
+            // }
 
             // 呼叫 Helper 儲存經費資訊
             OFS_ClbApplicationHelper.SaveFundsData(fundsData);
@@ -673,6 +673,7 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
                 txtClubName.Text = basicData.ClubName;
                 txtSchoolIDNumber.Text = basicData.School_IDNumber;
                 txtAddress.Text = basicData.Address;
+                // basicData.IsPreviouslySubsidized;
                 
                 // 設定成立日期 - 轉換為民國年顯示
                 if (basicData.CreationDate.HasValue)
@@ -785,27 +786,90 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
     {
         try
         {
-            var fundsData = OFS_ClbApplicationHelper.GetFundsData(projectID);
-            
-            if (fundsData != null)
+            // 1. 載入基本經費金額 (從 BasicData 取得)
+            var basicData = OFS_ClbApplicationHelper.GetBasicData(projectID);
+            if (basicData != null)
             {
-                // 設定經費欄位
-                txtSubsidyFunds.Text = fundsData.SubsidyFunds?.ToString("0");
-                txtSelfFunds.Text = fundsData.SelfFunds?.ToString("0");
-                txtOtherGovFunds.Text = fundsData.OtherGovFunds?.ToString("0");
-                txtOtherUnitFunds.Text = fundsData.OtherUnitFunds?.ToString("0");
-                
-                // 設定計畫總經費
-                lblTotalFunds.Text = fundsData.TotalFunds?.ToString("0") ?? "0";
-                
-                // 設定曾申請政府補助
-                if (fundsData.PreviouslySubsidized.HasValue)
+                // 準備經費資料並通過 JavaScript 載入到前端
+                string applyAmount = basicData.ApplyAmount?.ToString("N0") ?? "";
+                string selfAmount = basicData.SelfAmount?.ToString("N0") ?? "";
+
+                // 載入「最近兩年曾獲本會補助」的值
+                bool isPreviouslySubsidized = basicData.IsPreviouslySubsidized ?? false;
+
+                string script = $@"
+                    if (typeof loadFundsData === 'function') {{
+                        loadFundsData({{
+                            applyAmount: '{applyAmount}',
+                            selfAmount: '{selfAmount}',
+                            isPreviouslySubsidized: {isPreviouslySubsidized.ToString().ToLower()}
+                        }});
+                    }}
+                ";
+                Page.ClientScript.RegisterStartupScript(this.GetType(), "LoadFundsData", script, true);
+            }
+
+            // 2. 載入其他補助資料
+            var otherSubsidyList = OFS_ClbOtherSubsidyHelper.GetByProjectID(projectID);
+            if (otherSubsidyList != null && otherSubsidyList.Count > 0)
+            {
+                // 將其他補助資料轉換為 JSON 並傳遞給前端
+                string otherSubsidyJson = JsonConvert.SerializeObject(otherSubsidyList.Select(s => new
                 {
-                    rbPreviouslySubsidizedYes.Checked = fundsData.PreviouslySubsidized.Value;
-                    rbPreviouslySubsidizedNo.Checked = !fundsData.PreviouslySubsidized.Value;
-                }
-                
-                txtFundingDescription.Text = fundsData.FundingDescription;
+                    ID = s.ID,
+                    Unit = s.Unit,
+                    Amount = s.Amount,
+                    Content = s.Content
+                }).ToList());
+
+                string script = $@"
+                    if (typeof loadOtherSubsidyData === 'function') {{
+                        loadOtherSubsidyData({otherSubsidyJson});
+                    }}
+                ";
+                Page.ClientScript.RegisterStartupScript(this.GetType(), "LoadOtherSubsidyData", script, true);
+            }
+
+            // 3. 載入經費預算規劃資料
+            var budgetPlanList = OFS_ClbBudgetPlanHelper.GetByProjectID(projectID);
+            if (budgetPlanList != null && budgetPlanList.Count > 0)
+            {
+                // 將經費預算規劃資料轉換為 JSON 並傳遞給前端
+                string budgetPlanJson = JsonConvert.SerializeObject(budgetPlanList.Select(b => new
+                {
+                    ID = b.ID,
+                    Title = b.Title,
+                    Amount = b.Amount,
+                    OtherAmount = b.OtherAmount,
+                    Description = b.Description
+                }).ToList());
+
+                string script = $@"
+                    if (typeof loadBudgetPlanData === 'function') {{
+                        loadBudgetPlanData({budgetPlanJson});
+                    }}
+                ";
+                Page.ClientScript.RegisterStartupScript(this.GetType(), "LoadBudgetPlanData", script, true);
+            }
+
+            // 4. 載入經費說明資料 (已獲補助資料)
+            var receivedSubsidyList = OFS_ClbReceivedSubsidyHelper.GetByProjectID(projectID);
+            if (receivedSubsidyList != null && receivedSubsidyList.Count > 0)
+            {
+                // 將已獲補助資料轉換為 JSON 並傳遞給前端
+                string receivedSubsidyJson = JsonConvert.SerializeObject(receivedSubsidyList.Select(r => new
+                {
+                    ID = r.ID,
+                    ProjectName = r.Name,
+                    Amount = r.Amount
+                }).ToList());
+
+                string script = $@"
+                    if (typeof loadFundingDescriptionData === 'function') {{
+                        loadFundingDescriptionData({receivedSubsidyJson});
+                    }}
+                ";
+                Page.ClientScript.RegisterStartupScript(this.GetType(), "LoadReceivedSubsidyData", script, true);
             }
         }
         catch (Exception ex)
@@ -913,9 +977,9 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
     // }
 
     /// <summary>
-    /// 更新檔案狀態UI
+    /// 更新檔案狀態UI（支援多檔）
     /// </summary>
-    private void UpdateFileStatusUI(string fileCode, string fileName, string relativePath)
+    private void UpdateFileStatusUI(string fileCode, string fileName, string relativePath, int fileId, bool clearExisting = false)
     {
         Label statusLabel = null;
         Panel filesPanel = null;
@@ -949,25 +1013,30 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
 
             // 顯示檔案標籤
             filesPanel.Visible = true;
-            filesPanel.Controls.Clear();
+
+            // 只有在 clearExisting 為 true 或非 FILE_CLB4 時才清空（單檔模式）
+            if (clearExisting || fileCode != "FILE_CLB4")
+            {
+                filesPanel.Controls.Clear();
+            }
 
             // 建立主要的檔案標籤容器
             var fileTag = new System.Web.UI.HtmlControls.HtmlGenericControl("span");
             fileTag.Attributes["class"] = "tag tag-green-light";
+            fileTag.Attributes["data-file-id"] = fileId.ToString();
 
             // 建立下載連結
             var downloadLink = new System.Web.UI.HtmlControls.HtmlGenericControl("a");
             downloadLink.Attributes["class"] = "tag-link";
             downloadLink.Attributes["href"] = "#";
-            downloadLink.Attributes["onclick"] = $"downloadUploadedFile('{fileCode}'); return false;";
-            downloadLink.Attributes["target"] = "_blank";
+            downloadLink.Attributes["onclick"] = $"downloadUploadedFileById({fileId}); return false;";
             downloadLink.InnerText = fileName;
 
             // 建立刪除按鈕
             var deleteButton = new System.Web.UI.HtmlControls.HtmlGenericControl("button");
             deleteButton.Attributes["type"] = "button";
             deleteButton.Attributes["class"] = "tag-btn";
-            deleteButton.Attributes["onclick"] = $"deleteFile('{fileCode}')";
+            deleteButton.Attributes["onclick"] = $"deleteFileById({fileId}, '{fileCode}')";
             deleteButton.InnerHtml = "<i class=\"fa-solid fa-circle-xmark\"></i>";
 
             // 將元素加入到檔案標籤中
@@ -988,10 +1057,19 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
             if (string.IsNullOrEmpty(projectID)) return;
 
             var uploadedFiles = OFS_ClbApplicationHelper.GetUploadedFiles(projectID);
-            
-            foreach (var file in uploadedFiles)
+
+            // 按 FileCode 分組，以便判斷是否為第一筆（需要清空）
+            var groupedFiles = uploadedFiles.GroupBy(f => f.FileCode);
+
+            foreach (var group in groupedFiles)
             {
-                UpdateFileStatusUI(file.FileCode, file.FileName, file.TemplatePath);
+                bool isFirst = true;
+                foreach (var file in group)
+                {
+                    // 第一筆清空面板，後續追加（支援 FILE_CLB4 多檔）
+                    UpdateFileStatusUI(file.FileCode, file.FileName, file.TemplatePath, file.ID, isFirst);
+                    isFirst = false;
+                }
             }
         }
         catch (Exception ex)
@@ -1477,17 +1555,25 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
         data["EmergencyPlan"] = Request.Form["emergencyPlan"] ?? "";
 
         // 經費資料
-        if (decimal.TryParse(Request.Form["subsidyFunds"], out decimal subsidyFunds))
-            data["SubsidyFunds"] = subsidyFunds;
-        if (decimal.TryParse(Request.Form["selfFunds"], out decimal selfFunds))
-            data["SelfFunds"] = selfFunds;
-        if (decimal.TryParse(Request.Form["otherGovFunds"], out decimal otherGovFunds))
-            data["OtherGovFunds"] = otherGovFunds;
-        if (decimal.TryParse(Request.Form["otherUnitFunds"], out decimal otherUnitFunds))
-            data["OtherUnitFunds"] = otherUnitFunds;
+        if (int.TryParse(Request.Form["applyAmount"], out int applyAmount))
+            data["ApplyAmount"] = applyAmount;
+        if (int.TryParse(Request.Form["selfAmount"], out int selfAmount))
+            data["SelfAmount"] = selfAmount;
+        if (int.TryParse(Request.Form["otherAmount"], out int otherAmount))
+            data["OtherAmount"] = otherAmount;
 
-        data["PreviouslySubsidized"] = Request.Form["previouslySubsidized"] == "true";
-        data["FundingDescription"] = Request.Form["fundingDescription"] ?? "";
+        // 最近兩年曾獲本會補助
+        if (bool.TryParse(Request.Form["isPreviouslySubsidized"], out bool isPreviouslySubsidized))
+            data["IsPreviouslySubsidized"] = isPreviouslySubsidized;
+
+        // 其他補助明細資料 (JSON 字串)
+        data["OtherSubsidyData"] = Request.Form["otherSubsidyData"] ?? "";
+
+        // 經費預算規劃資料 (JSON 字串)
+        data["BudgetPlanData"] = Request.Form["budgetPlanData"] ?? "";
+
+        // 經費說明資料 (JSON 字串)
+        data["ReceivedSubsidyData"] = Request.Form["receivedSubsidyData"] ?? "";
 
         // 人員資料
         data["TeacherName"] = Request.Form["teacherName"] ?? "";
@@ -1525,7 +1611,11 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
                 ClubName = formData["ClubName"]?.ToString(),
                 CreationDate = formData.ContainsKey("CreationDate") ? (DateTime?)formData["CreationDate"] : null,
                 School_IDNumber = formData["School_IDNumber"]?.ToString(),
-                Address = formData["Address"]?.ToString()
+                Address = formData["Address"]?.ToString(),
+                ApplyAmount = formData.ContainsKey("ApplyAmount") ? (int?)formData["ApplyAmount"] : null,
+                SelfAmount = formData.ContainsKey("SelfAmount") ? (int?)formData["SelfAmount"] : null,
+                OtherAmount = formData.ContainsKey("OtherAmount") ? (int?)formData["OtherAmount"] : null,
+                IsPreviouslySubsidized = formData.ContainsKey("IsPreviouslySubsidized") ? (bool?)formData["IsPreviouslySubsidized"] : null
             };
 
             // 儲存資料並取得 ProjectID
@@ -1634,28 +1724,149 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
     {
         try
         {
-            var fundsData = new OFS_CLB_Application_Funds
-            {
-                ProjectID = projectID,
-                SubsidyFunds = formData.ContainsKey("SubsidyFunds") ? (decimal?)formData["SubsidyFunds"] : null,
-                SelfFunds = formData.ContainsKey("SelfFunds") ? (decimal?)formData["SelfFunds"] : null,
-                OtherGovFunds = formData.ContainsKey("OtherGovFunds") ? (decimal?)formData["OtherGovFunds"] : null,
-                OtherUnitFunds = formData.ContainsKey("OtherUnitFunds") ? (decimal?)formData["OtherUnitFunds"] : null,
-                PreviouslySubsidized = formData.ContainsKey("PreviouslySubsidized") ? (bool?)formData["PreviouslySubsidized"] : null,
-                FundingDescription = formData["FundingDescription"]?.ToString()
-            };
+            // 儲存其他補助明細資料到 OFS_CLB_Other_Subsidy
+            SaveOtherSubsidyData(projectID, formData);
 
-            // 計算總經費
-            decimal totalFunds = (fundsData.SubsidyFunds ?? 0) + (fundsData.SelfFunds ?? 0) +
-                               (fundsData.OtherGovFunds ?? 0) + (fundsData.OtherUnitFunds ?? 0);
-            fundsData.TotalFunds = totalFunds;
+            // 儲存經費預算規劃資料到 OFS_CLB_Budget_Plan
+            SaveBudgetPlanData(projectID, formData);
 
-            // 呼叫 Helper 儲存經費資訊
-            OFS_ClbApplicationHelper.SaveFundsData(fundsData);
+            // 儲存經費說明資料到 OFS_CLB_Received_Subsidy
+            SaveReceivedSubsidyData(projectID, formData);
         }
         catch (Exception ex)
         {
             throw new Exception($"儲存經費資訊失敗：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 儲存其他補助明細資料到 OFS_CLB_Other_Subsidy
+    /// </summary>
+    private void SaveOtherSubsidyData(string projectID, Dictionary<string, object> formData)
+    {
+        try
+        {
+            // 從 formData 取得其他補助明細 JSON 字串
+            string otherSubsidyDataJson = formData.ContainsKey("OtherSubsidyData")
+                ? formData["OtherSubsidyData"]?.ToString()
+                : null;
+
+            // 反序列化 JSON 為物件列表
+            var subsidyDataList = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(otherSubsidyDataJson);
+            
+            // 轉換為 Entity 列表
+            List<OFS_CLB_Other_Subsidy> subsidyList = new List<OFS_CLB_Other_Subsidy>();
+
+            foreach (var item in subsidyDataList)
+            {
+                subsidyList.Add(new OFS_CLB_Other_Subsidy
+                {
+                    ID = item.ContainsKey("ID") ? Convert.ToInt32(item["ID"]) : 0,
+                    ProjectID = projectID,
+                    Unit = item.ContainsKey("Unit") ? item["Unit"]?.ToString() : "",
+                    Amount = item.ContainsKey("Amount") ? Convert.ToInt32(item["Amount"]) : (int?)null,
+                    Content = item.ContainsKey("Content") ? item["Content"]?.ToString() : ""
+                });
+            }
+
+            // 呼叫 Helper 儲存資料（先刪除後新增）
+            OFS_ClbOtherSubsidyHelper.SaveOtherSubsidyData(projectID, subsidyList);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"儲存其他補助明細資料失敗：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 儲存經費預算規劃資料到 OFS_CLB_Budget_Plan
+    /// </summary>
+    private void SaveBudgetPlanData(string projectID, Dictionary<string, object> formData)
+    {
+        try
+        {
+            // 從 formData 取得經費預算規劃 JSON 字串
+            string budgetPlanDataJson = formData.ContainsKey("BudgetPlanData")
+                ? formData["BudgetPlanData"]?.ToString()
+                : null;
+
+            // 如果沒有資料，則刪除所有舊資料
+            if (string.IsNullOrEmpty(budgetPlanDataJson))
+            {
+                OFS_ClbBudgetPlanHelper.DeleteByProjectID(projectID);
+                return;
+            }
+
+            // 反序列化 JSON 為物件列表
+            var budgetPlanDataList = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(budgetPlanDataJson);
+
+            // 轉換為 Entity 列表
+            List<OFS_CLB_Budget_Plan> budgetPlanList = new List<OFS_CLB_Budget_Plan>();
+
+            foreach (var item in budgetPlanDataList)
+            {
+                budgetPlanList.Add(new OFS_CLB_Budget_Plan
+                {
+                    ID = item.ContainsKey("ID") ? Convert.ToInt32(item["ID"]) : 0,
+                    ProjectID = projectID,
+                    Title = item.ContainsKey("Title") ? item["Title"]?.ToString() : "",
+                    Amount = item.ContainsKey("Amount") ? Convert.ToInt32(item["Amount"]) : (int?)null,
+                    OtherAmount = item.ContainsKey("OtherAmount") ? Convert.ToInt32(item["OtherAmount"]) : (int?)null,
+                    Description = item.ContainsKey("Description") ? item["Description"]?.ToString() : ""
+                });
+            }
+
+            // 呼叫 Helper 儲存資料（先刪除後新增）
+            OFS_ClbBudgetPlanHelper.SaveBudgetPlanData(projectID, budgetPlanList);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"儲存經費預算規劃資料失敗：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 儲存經費說明資料到 OFS_CLB_Received_Subsidy
+    /// </summary>
+    private void SaveReceivedSubsidyData(string projectID, Dictionary<string, object> formData)
+    {
+        try
+        {
+            // 從 formData 取得經費說明 JSON 字串
+            string receivedSubsidyDataJson = formData.ContainsKey("ReceivedSubsidyData")
+                ? formData["ReceivedSubsidyData"]?.ToString()
+                : null;
+
+            // 如果沒有資料，則刪除所有舊資料
+            if (string.IsNullOrEmpty(receivedSubsidyDataJson))
+            {
+                OFS_ClbReceivedSubsidyHelper.DeleteByProjectID(projectID);
+                return;
+            }
+
+            // 反序列化 JSON 為物件列表
+            var receivedSubsidyDataList = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(receivedSubsidyDataJson);
+
+            // 轉換為 Entity 列表
+            List<OFS_CLB_Received_Subsidy> receivedSubsidyList = new List<OFS_CLB_Received_Subsidy>();
+
+            foreach (var item in receivedSubsidyDataList)
+            {
+                receivedSubsidyList.Add(new OFS_CLB_Received_Subsidy
+                {
+                    ID = item.ContainsKey("ID") ? Convert.ToInt32(item["ID"]) : 0,
+                    ProjectID = projectID,
+                    Name = item.ContainsKey("ProjectName") ? item["ProjectName"]?.ToString() : "",
+                    Amount = item.ContainsKey("Amount") ? Convert.ToInt32(item["Amount"]) : 0
+                });
+            }
+
+            // 呼叫 Helper 儲存資料（先刪除後新增）
+            OFS_ClbReceivedSubsidyHelper.SaveReceivedSubsidyData(projectID, receivedSubsidyList);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"儲存經費說明資料失敗：{ex.Message}");
         }
     }
 
@@ -1720,19 +1931,6 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
         if (string.IsNullOrWhiteSpace(formData["PreBenefits"]?.ToString()))
             errors.Add("請輸入預期效益");
 
-        // 經費必填欄位（所有類型都需要）
-        if (!formData.ContainsKey("SubsidyFunds") || formData["SubsidyFunds"] == null)
-            errors.Add("請輸入申請海委會補助金額");
-
-        if (!formData.ContainsKey("SelfFunds") || formData["SelfFunds"] == null)
-            errors.Add("請輸入自籌款金額");
-
-        if (!formData.ContainsKey("OtherGovFunds") || formData["OtherGovFunds"] == null)
-            errors.Add("請輸入其他政府補助金額");
-
-        if (!formData.ContainsKey("OtherUnitFunds") || formData["OtherUnitFunds"] == null)
-            errors.Add("請輸入其他單位補助金額");
-
         // 人員必填欄位（所有類型都需要）
         if (string.IsNullOrWhiteSpace(formData["TeacherName"]?.ToString()))
             errors.Add("請輸入社團指導老師姓名");
@@ -1751,6 +1949,13 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
 
         if (string.IsNullOrWhiteSpace(formData["ContactPhone"]?.ToString()))
             errors.Add("請輸入社團業務聯絡人手機號碼");
+
+        // 經費必填欄位（所有類型都需要）
+        if (!formData.ContainsKey("ApplyAmount") || formData["ApplyAmount"] == null)
+            errors.Add("請輸入申請海委會補助／合作金額(元)");
+
+        if (!formData.ContainsKey("SelfAmount") || formData["SelfAmount"] == null)
+            errors.Add("請輸入申請單位自籌款(元)");
 
         return errors;
     }
@@ -2253,7 +2458,7 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
                 );
                 if (fundsData != null)
                 {
-                    PopulateFundsData(fundsData);
+                    // PopulateFundsData(fundsData);
                 }
             }
 
@@ -2376,22 +2581,22 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
     /// </summary>
     private void PopulateFundsData(OFS_CLB_Application_Funds fundsData)
     {
-        txtSubsidyFunds.Text = fundsData.SubsidyFunds?.ToString("0");
-        txtSelfFunds.Text = fundsData.SelfFunds?.ToString("0");
-        txtOtherGovFunds.Text = fundsData.OtherGovFunds?.ToString("0");
-        txtOtherUnitFunds.Text = fundsData.OtherUnitFunds?.ToString("0");
-
-        // 設定計畫總經費
-        lblTotalFunds.Text = fundsData.TotalFunds?.ToString("0") ?? "0";
-
-        // 設定曾申請政府補助
-        if (fundsData.PreviouslySubsidized.HasValue)
-        {
-            rbPreviouslySubsidizedYes.Checked = fundsData.PreviouslySubsidized.Value;
-            rbPreviouslySubsidizedNo.Checked = !fundsData.PreviouslySubsidized.Value;
-        }
-
-        txtFundingDescription.Text = fundsData.FundingDescription;
+        // txtSubsidyFunds.Text = fundsData.SubsidyFunds?.ToString("0");
+        // txtSelfFunds.Text = fundsData.SelfFunds?.ToString("0");
+        // txtOtherGovFunds.Text = fundsData.OtherGovFunds?.ToString("0");
+        // txtOtherUnitFunds.Text = fundsData.OtherUnitFunds?.ToString("0");
+        //
+        // // 設定計畫總經費
+        // lblTotalFunds.Text = fundsData.TotalFunds?.ToString("0") ?? "0";
+        //
+        // // 設定曾申請政府補助
+        // if (fundsData.PreviouslySubsidized.HasValue)
+        // {
+        //     rbPreviouslySubsidizedYes.Checked = fundsData.PreviouslySubsidized.Value;
+        //     rbPreviouslySubsidizedNo.Checked = !fundsData.PreviouslySubsidized.Value;
+        // }
+        //
+        // txtFundingDescription.Text = fundsData.FundingDescription;
     }
 
     /// <summary>
@@ -2399,9 +2604,18 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
     /// </summary>
     private void PopulateUploadFileData(List<OFS_CLB_UploadFile> uploadFiles)
     {
-        foreach (var file in uploadFiles)
+        // 按 FileCode 分組，以便判斷是否為第一筆（需要清空）
+        var groupedFiles = uploadFiles.GroupBy(f => f.FileCode);
+
+        foreach (var group in groupedFiles)
         {
-            UpdateFileStatusUI(file.FileCode, file.FileName, file.TemplatePath);
+            bool isFirst = true;
+            foreach (var file in group)
+            {
+                // 第一筆清空面板，後續追加（支援 FILE_CLB4 多檔）
+                UpdateFileStatusUI(file.FileCode, file.FileName, file.TemplatePath, file.ID, isFirst);
+                isFirst = false;
+            }
         }
     }
 

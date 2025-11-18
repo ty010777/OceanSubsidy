@@ -27,8 +27,8 @@ public class CLB_download : IHttpHandler
                 case "template":
                     DownloadTemplate(context);
                     break;
-                case "file":
-                    DownloadUploadedFile(context);
+                case "filebyid":
+                    DownloadUploadedFileById(context);
                     break;
                 case "downloadplan":
                     DownloadApplicationPlan(context);
@@ -38,7 +38,7 @@ public class CLB_download : IHttpHandler
                     break;
                 default:
                     context.Response.StatusCode = 400;
-                    context.Response.Write("Invalid action. Use 'template', 'file', 'downloadPlan' or 'downloadApprovedPlan'.");
+                    context.Response.Write("Invalid action. Use 'template', 'file', 'fileById', 'downloadPlan' or 'downloadApprovedPlan'.");
                     break;
             }
         }
@@ -86,31 +86,25 @@ public class CLB_download : IHttpHandler
         CleanupTempFile(processedFilePath);
     }
 
+
+
     /// <summary>
-    /// 下載已上傳的檔案
+    /// 根據 ID 下載已上傳的檔案
     /// </summary>
-    private void DownloadUploadedFile(HttpContext context)
+    private void DownloadUploadedFileById(HttpContext context)
     {
-        var projectID = context.Request.QueryString["projectID"];
-        var fileCode = context.Request.QueryString["fileCode"];
+        var fileIdStr = context.Request.QueryString["fileId"];
 
-        if (string.IsNullOrEmpty(projectID))
+        if (string.IsNullOrEmpty(fileIdStr) || !int.TryParse(fileIdStr, out int fileId))
         {
             context.Response.StatusCode = 400;
-            context.Response.Write("Missing projectID parameter.");
-            return;
-        }
-
-        if (string.IsNullOrEmpty(fileCode))
-        {
-            context.Response.StatusCode = 400;
-            context.Response.Write("Missing fileCode parameter.");
+            context.Response.Write("Missing or invalid fileId parameter.");
             return;
         }
 
         // 從資料庫取得檔案資訊
-        var uploadedFile = OFS_ClbApplicationHelper.GetUploadedFile(projectID, fileCode);
-        
+        var uploadedFile = OFS_ClbApplicationHelper.GetUploadedFileById(fileId);
+
         if (uploadedFile == null)
         {
             context.Response.StatusCode = 404;
@@ -130,7 +124,7 @@ public class CLB_download : IHttpHandler
         }
 
         string filePath = context.Server.MapPath(templatePath);
-        
+
         if (!File.Exists(filePath))
         {
             context.Response.StatusCode = 404;

@@ -96,8 +96,8 @@ function handleFileUpload(fileCode, fileInput) {
         .then(data => {
             // ✅ 修正：ASHX 直接返回 JSON，不需要 .d 包裝
             if (data && data.success) {
-                // 更新 UI
-                updateUploadStatus(fileCode, true, data.fileName);
+                // 更新 UI（傳入 fileId）
+                updateUploadStatus(fileCode, true, data.fileName, data.fileId);
 
                 Swal.fire({
                     icon: 'success',
@@ -152,12 +152,14 @@ function handleFileUpload(fileCode, fileInput) {
             fileInput.value = '';
         });
 }
-// 下載已上傳檔案
+// 下載已上傳檔案（使用 ID）
 function downloadUploadedFile(fileType) {
     try {
-        // 檢查是否有檔案可以下載
-        const fileName = document.getElementById('fileName' + fileType).textContent;
-        if (!fileName || fileName.trim() === '') {
+        // 取得檔案 ID
+        const uploadedFileElement = document.getElementById('uploadedFile' + fileType);
+        const fileId = uploadedFileElement?.dataset.fileId;
+
+        if (!fileId) {
             Swal.fire({
                 title: '無檔案可下載！',
                 text: '請先上傳檔案',
@@ -167,55 +169,12 @@ function downloadUploadedFile(fileType) {
             return;
         }
 
-        // 取得 ProjectID
-        const urlParams = new URLSearchParams(window.location.search);
-        const projectID = urlParams.get('ProjectID');
-
-        if (!projectID) {
-            Swal.fire({
-                title: '錯誤！',
-                text: '計畫編號不存在，請確認 URL 參數',
-                icon: 'error',
-                confirmButtonText: '確定'
-            });
-            return;
-        }
-
-        // 取得對應的檔案代碼
-        let fileCode = '';
-        switch(fileType) {
-            case 1:
-                fileCode = 'PaymentIncomeStatement';
-                break;
-            case 2:
-                fileCode = 'PaymentSubsidyList';
-                break;
-            case 3:
-                fileCode = 'PaymentCostAllocation';
-                break;
-            case 4:
-                fileCode = 'PaymentVouchers';
-                break;
-            case 5:
-                fileCode = 'PaymentReceipts';
-                break;
-            default:
-                Swal.fire({
-                    title: '錯誤！',
-                    text: '無效的檔案類型',
-                    icon: 'error',
-                    confirmButtonText: '確定'
-                });
-                return;
-        }
-
         // 使用 window.AppRootPath 處理虛擬路徑
         const appRootPath = window.AppRootPath || '';
 
-        // 建立下載連結
+        // 建立下載連結（使用 fileById action）
         const downloadUrl = appRootPath + '/Service/CLB_download.ashx' +
-            '?action=file&projectID=' + encodeURIComponent(projectID) +
-            '&fileCode=' + encodeURIComponent(fileCode);
+                           '?action=fileById&fileId=' + encodeURIComponent(fileId);
 
         // 使用 window.open 開啟下載
         window.open(downloadUrl, '_blank');
@@ -231,16 +190,16 @@ function downloadUploadedFile(fileType) {
     }
 }
 
-// 刪除已上傳的檔案
+// 刪除已上傳的檔案（使用 ID）
 function deleteUploadedFile(fileType) {
-    // 取得 ProjectID
-    const urlParams = new URLSearchParams(window.location.search);
-    const projectID = urlParams.get('ProjectID');
-    
-    if (!projectID) {
+    // 取得檔案 ID
+    const uploadedFileElement = document.getElementById('uploadedFile' + fileType);
+    const fileId = uploadedFileElement?.dataset.fileId;
+
+    if (!fileId) {
         Swal.fire({
             title: '錯誤！',
-            text: '計畫編號不存在，請確認 URL 參數',
+            text: '找不到檔案 ID',
             icon: 'error',
             confirmButtonText: '確定'
         });
@@ -260,10 +219,8 @@ function deleteUploadedFile(fileType) {
         if (result.isConfirmed) {
             // 建立 FormData
             const formData = new FormData();
-            formData.append('action', 'delete');
-            formData.append('fileType', 'Payment');
-            formData.append('fileCode', fileType);
-            formData.append('projectID', projectID);
+            formData.append('action', 'deleteById');
+            formData.append('fileId', fileId);
 
             // 發送 AJAX 請求到 CLB_Upload.ashx
             fetch(window.location.origin + window.AppRootPath +'/Service/CLB_Upload.ashx', {
@@ -275,7 +232,7 @@ function deleteUploadedFile(fileType) {
                 if (data.success) {
                     // 更新 UI
                     updateUploadStatus(fileType, false, '');
-                    
+
                     Swal.fire({
                         icon: 'success',
                         title: '刪除成功',
@@ -303,22 +260,30 @@ function deleteUploadedFile(fileType) {
 }
 
 // 更新上傳狀態 UI
-function updateUploadStatus(fileType, isUploaded, fileName) {
+function updateUploadStatus(fileType, isUploaded, fileName, fileId = null) {
     const statusElement = document.getElementById(`uploadStatus${fileType}`);
     const fileNameElement = document.getElementById(`fileName${fileType}`);
     const uploadedFileDiv = document.getElementById(`uploadedFile${fileType}`);
-    
+
     if (statusElement && fileNameElement && uploadedFileDiv) {
         if (isUploaded) {
             statusElement.textContent = '已上傳';
             statusElement.className = 'text-success';
             fileNameElement.textContent = fileName;
             uploadedFileDiv.style.display = 'flex';
+
+            // 儲存檔案 ID 到 dataset
+            if (fileId) {
+                uploadedFileDiv.dataset.fileId = fileId;
+            }
         } else {
             statusElement.textContent = '尚未上傳';
             statusElement.className = 'text-pink';
             fileNameElement.textContent = '';
             uploadedFileDiv.style.display = 'none';
+
+            // 清除檔案 ID
+            delete uploadedFileDiv.dataset.fileId;
         }
     }
 }
