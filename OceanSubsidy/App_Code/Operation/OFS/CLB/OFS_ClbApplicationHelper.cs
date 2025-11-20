@@ -604,136 +604,9 @@ public class OFS_ClbApplicationHelper
         }
     }
 
-    /// <summary>
-    /// 儲存經費資訊
-    /// </summary>
-    /// <param name="fundsData">經費資訊物件</param>
-    public static void SaveFundsData(OFS_CLB_Application_Funds fundsData)
-    {
-        try
-        {
-            // 檢查是否已存在
-            bool isUpdate = CheckFundsDataExists(fundsData.ProjectID);
-            
-            if (isUpdate)
-            {
-                UpdateFundsData(fundsData);
-            }
-            else
-            {
-                InsertFundsData(fundsData);
-            }
-        }
-        catch (Exception ex)
-        {
-            throw new Exception($"儲存經費資訊失敗：{ex.Message}");
-        }
-    }
+    
 
-    /// <summary>
-    /// 檢查經費資訊是否已存在
-    /// </summary>
-    /// <param name="projectID">計畫編號</param>
-    /// <returns>是否存在</returns>
-    private static bool CheckFundsDataExists(string projectID)
-    {
-        DbHelper db = new DbHelper();
-        db.CommandText = @"
-            SELECT COUNT(*) 
-            FROM [OCA_OceanSubsidy].[dbo].[OFS_CLB_Application_Funds] 
-            WHERE [ProjectID] = @ProjectID";
-        
-        db.Parameters.Clear();
-        db.Parameters.Add("@ProjectID", projectID);
-        
-        DataSet ds = db.GetDataSet();
-        
-        if (ds.Tables.Count > 0 && ds.Tables[0].Rows.Count > 0)
-        {
-            object result = ds.Tables[0].Rows[0][0];
-            if (result != null && result != DBNull.Value)
-            {
-                int count = Convert.ToInt32(result);
-                return count > 0;
-            }
-        }
-        
-        return false;
-    }
-
-    /// <summary>
-    /// 新增經費資訊
-    /// </summary>
-    /// <param name="fundsData">經費資訊物件</param>
-    private static void InsertFundsData(OFS_CLB_Application_Funds fundsData)
-    {
-        DbHelper db = new DbHelper();
-        db.CommandText = @"
-            INSERT INTO [OCA_OceanSubsidy].[dbo].[OFS_CLB_Application_Funds]
-            (
-                [ProjectID],
-                [SubsidyFunds],
-                [SelfFunds],
-                [OtherGovFunds],
-                [OtherUnitFunds],
-                [PreviouslySubsidized],
-                [FundingDescription]
-            )
-            VALUES
-            (
-                @ProjectID,
-                @SubsidyFunds,
-                @SelfFunds,
-                @OtherGovFunds,
-                @OtherUnitFunds,
-                @PreviouslySubsidized,
-                @FundingDescription
-            )";
-
-        db.Parameters.Clear();
-        db.Parameters.Add("@ProjectID", fundsData.ProjectID ?? "");
-        db.Parameters.Add("@SubsidyFunds", fundsData.SubsidyFunds ?? 0);
-        db.Parameters.Add("@SelfFunds", fundsData.SelfFunds ?? 0);
-        db.Parameters.Add("@OtherGovFunds", fundsData.OtherGovFunds ?? 0);
-        db.Parameters.Add("@OtherUnitFunds", fundsData.OtherUnitFunds ?? 0);
-        db.Parameters.Add("@TotalFunds", fundsData.TotalFunds ?? 0);
-        db.Parameters.Add("@PreviouslySubsidized", fundsData.PreviouslySubsidized ?? false);
-        db.Parameters.Add("@FundingDescription", fundsData.FundingDescription ?? "");
-
-        db.ExecuteNonQuery();
-    }
-
-    /// <summary>
-    /// 更新經費資訊
-    /// </summary>
-    /// <param name="fundsData">經費資訊物件</param>
-    private static void UpdateFundsData(OFS_CLB_Application_Funds fundsData)
-    {
-        DbHelper db = new DbHelper();
-        db.CommandText = @"
-            UPDATE [OCA_OceanSubsidy].[dbo].[OFS_CLB_Application_Funds]
-            SET 
-                [SubsidyFunds] = @SubsidyFunds,
-                [SelfFunds] = @SelfFunds,
-                [OtherGovFunds] = @OtherGovFunds,
-                [OtherUnitFunds] = @OtherUnitFunds,
-                [PreviouslySubsidized] = @PreviouslySubsidized,
-                [FundingDescription] = @FundingDescription
-            WHERE [ProjectID] = @ProjectID";
-
-        db.Parameters.Clear();
-        db.Parameters.Add("@ProjectID", fundsData.ProjectID ?? "");
-        db.Parameters.Add("@SubsidyFunds", fundsData.SubsidyFunds ?? 0);
-        db.Parameters.Add("@SelfFunds", fundsData.SelfFunds ?? 0);
-        db.Parameters.Add("@OtherGovFunds", fundsData.OtherGovFunds ?? 0);
-        db.Parameters.Add("@OtherUnitFunds", fundsData.OtherUnitFunds ?? 0);
-        db.Parameters.Add("@TotalFunds", fundsData.TotalFunds ?? 0);
-        db.Parameters.Add("@PreviouslySubsidized", fundsData.PreviouslySubsidized ?? false);
-        db.Parameters.Add("@FundingDescription", fundsData.FundingDescription ?? "");
-
-        db.ExecuteNonQuery();
-    }
-
+ 
     /// <summary>
     /// 取得經費資訊
     /// </summary>
@@ -1484,6 +1357,165 @@ public class OFS_ClbApplicationHelper
         catch (Exception ex)
         {
             throw new Exception($"更新追回金額時發生錯誤: {ex.Message}", ex);
+        }
+        finally
+        {
+            db.Parameters.Clear();
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 取得經費預算規劃資料
+    /// </summary>
+    /// <param name="projectID">計畫編號</param>
+    /// <returns>經費預算規劃列表</returns>
+    public static List<OFS_CLB_Budget_Plan> GetBudgetPlanData(string projectID)
+    {
+        DbHelper db = new DbHelper();
+        List<OFS_CLB_Budget_Plan> result = new List<OFS_CLB_Budget_Plan>();
+
+        try
+        {
+            db.CommandText = @"
+                SELECT [ID]
+                      ,[ProjectID]
+                      ,[Title]
+                      ,[Amount]
+                      ,[OtherAmount]
+                      ,[Description]
+                      ,[CreateTime]
+                      ,[UpdateTime]
+                FROM [OFS_CLB_Budget_Plan]
+                WHERE [ProjectID] = @ProjectID
+                ORDER BY [CreateTime]
+            ";
+
+            db.Parameters.Add("@ProjectID", projectID);
+
+            DataTable dt = db.GetTable();
+
+            foreach (DataRow row in dt.Rows)
+            {
+                result.Add(new OFS_CLB_Budget_Plan
+                {
+                    ID = row.Field<int>("ID"),
+                    ProjectID = row.Field<string>("ProjectID"),
+                    Title = row.Field<string>("Title") ?? "",
+                    Amount = row.Field<int?>("Amount"),
+                    OtherAmount = row.Field<int?>("OtherAmount"),
+                    Description = row.Field<string>("Description") ?? "",
+                    CreateTime = row.Field<DateTime>("CreateTime"),
+                    UpdateTime = row.Field<DateTime?>("UpdateTime")
+                });
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"取得經費預算規劃資料時發生錯誤: {ex.Message}", ex);
+        }
+        finally
+        {
+            db.Parameters.Clear();
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 取得其他機關補助/合作資料
+    /// </summary>
+    /// <param name="projectID">計畫編號</param>
+    /// <returns>其他機關補助列表</returns>
+    public static List<OFS_CLB_Other_Subsidy> GetOtherSubsidyData(string projectID)
+    {
+        DbHelper db = new DbHelper();
+        List<OFS_CLB_Other_Subsidy> result = new List<OFS_CLB_Other_Subsidy>();
+
+        try
+        {
+            db.CommandText = @"
+                SELECT [ID]
+                      ,[ProjectID]
+                      ,[Unit]
+                      ,[Amount]
+                      ,[Content]
+                      ,[CreateTime]
+                      ,[UpdateTime]
+                FROM [OFS_CLB_Other_Subsidy]
+                WHERE [ProjectID] = @ProjectID
+                ORDER BY [CreateTime]
+            ";
+
+            db.Parameters.Add("@ProjectID", projectID);
+
+            DataTable dt = db.GetTable();
+
+            foreach (DataRow row in dt.Rows)
+            {
+                result.Add(new OFS_CLB_Other_Subsidy
+                {
+                    ID = row.Field<int>("ID"),
+                    ProjectID = row.Field<string>("ProjectID"),
+                    Unit = row.Field<string>("Unit") ?? "",
+                    Amount = row.Field<int?>("Amount"),
+                    Content = row.Field<string>("Content") ?? "",
+                    CreateTime = row.Field<DateTime>("CreateTime"),
+                    UpdateTime = row.Field<DateTime?>("UpdateTime")
+                });
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"取得其他機關補助資料時發生錯誤: {ex.Message}", ex);
+        }
+        finally
+        {
+            db.Parameters.Clear();
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// 取得社團最近兩年曾獲本會補助計畫及經費資料
+    /// </summary>
+    public static List<OFS_CLB_Received_Subsidy> GetReceivedSubsidyData(string projectID)
+    {
+        DbHelper db = new DbHelper();
+        List<OFS_CLB_Received_Subsidy> result = new List<OFS_CLB_Received_Subsidy>();
+
+        try
+        {
+            db.CommandText = @"
+                SELECT [ID], [ProjectID], [Name], [Amount], [CreateTime], [UpdateTime]
+                FROM [OFS_CLB_Received_Subsidy]
+                WHERE [ProjectID] = @ProjectID
+                ORDER BY [CreateTime]
+            ";
+
+            db.Parameters.Add("@ProjectID", projectID);
+
+            DataTable dt = db.GetTable();
+
+            foreach (DataRow row in dt.Rows)
+            {
+                result.Add(new OFS_CLB_Received_Subsidy
+                {
+                    ID = row.Field<int>("ID"),
+                    ProjectID = row.Field<string>("ProjectID"),
+                    Name = row.Field<string>("Name") ?? "",
+                    Amount = row.Field<int>("Amount")
+                });
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"取得曾獲補助資料時發生錯誤: {ex.Message}", ex);
         }
         finally
         {

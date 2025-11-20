@@ -442,26 +442,54 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
             // 創建 Open XML 表格
             Table wordTable = new Table();
 
-            // 處理表格屬性 (這裡簡化為只設定基本屬性)
-            TableProperties tableProps = new TableProperties(
-                // width 100%
-                new TableWidth() { Type = TableWidthUnitValues.Pct, Width = "5000" },
-                new TableBorders(
-                    new TopBorder() { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = 10 },
-                    new BottomBorder() { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = 10 },
-                    new LeftBorder() { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = 10 },
-                    new RightBorder() { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = 10 },
-                    new InsideHorizontalBorder() { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = 10 },
-                    new InsideVerticalBorder() { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = 10 }
-                ),
-                // 新增儲存格 padding
-                new TableCellMarginDefault(
-                    new TopMargin() { Width = "100", Type = TableWidthUnitValues.Dxa },
-                    new BottomMargin() { Width = "100", Type = TableWidthUnitValues.Dxa },
-                    new LeftMargin() { Width = "100", Type = TableWidthUnitValues.Dxa },
-                    new RightMargin() { Width = "100", Type = TableWidthUnitValues.Dxa }
-                )
-            );
+            // 檢查 table 標籤的 style 屬性，判斷是否要移除邊框
+            var tableStyle = htmlTable.GetAttributeValue("style", "").ToLower();
+            bool hasBorder = !tableStyle.Contains("border") || !tableStyle.Contains("none");
+
+            // 處理表格屬性
+            TableProperties tableProps;
+            if (hasBorder)
+            {
+                // 有邊框的表格
+                tableProps = new TableProperties(
+                    // width 100%
+                    new TableWidth() { Type = TableWidthUnitValues.Pct, Width = "5000" },
+                    new TableBorders(
+                        new TopBorder() { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = 4 },
+                        new BottomBorder() { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = 4 },
+                        new LeftBorder() { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = 4 },
+                        new RightBorder() { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = 4 },
+                        new InsideHorizontalBorder() { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = 4 },
+                        new InsideVerticalBorder() { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = 4 }
+                    ),
+                    // 新增儲存格 padding
+                    new TableCellMarginDefault(
+                        new TopMargin() { Width = "100", Type = TableWidthUnitValues.Dxa },
+                        new BottomMargin() { Width = "100", Type = TableWidthUnitValues.Dxa },
+                        new LeftMargin() { Width = "100", Type = TableWidthUnitValues.Dxa },
+                        new RightMargin() { Width = "100", Type = TableWidthUnitValues.Dxa }
+                        
+                    )
+                );
+            }
+            else
+            {
+                // 無邊框的表格
+                tableProps = new TableProperties(
+                    // width 100%
+                    new TableWidth() { Type = TableWidthUnitValues.Pct, Width = "5000" },
+                    new TableBorders(
+                        new TopBorder() { Val = new EnumValue<BorderValues>(BorderValues.None), Size = 0 },
+                        new BottomBorder() { Val = new EnumValue<BorderValues>(BorderValues.None), Size = 0 },
+                        new LeftBorder() { Val = new EnumValue<BorderValues>(BorderValues.None), Size = 0 },
+                        new RightBorder() { Val = new EnumValue<BorderValues>(BorderValues.None), Size = 0 },
+                        new InsideHorizontalBorder() { Val = new EnumValue<BorderValues>(BorderValues.None), Size = 0 },
+                        new InsideVerticalBorder() { Val = new EnumValue<BorderValues>(BorderValues.None), Size = 0 },
+                                           // 設定表格對齊方式為置中
+                        new TableJustification() { Val =  TableRowAlignmentValues.Center }
+                    )
+                );
+            }
             wordTable.AppendChild(tableProps);
 
             // 先建立一個記錄每個 cell 是否被 rowspan 佔用的結構
@@ -587,6 +615,17 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
                         });
                     }
 
+                    // 處理儲存格邊框 border: none;
+                    if (style.Contains("border") && style.Contains("none"))
+                    {
+                        cellProps.Append(new TableCellBorders(
+                            new TopBorder() { Val = new EnumValue<BorderValues>(BorderValues.None), Size = 0 },
+                            new BottomBorder() { Val = new EnumValue<BorderValues>(BorderValues.None), Size = 0 },
+                            new LeftBorder() { Val = new EnumValue<BorderValues>(BorderValues.None), Size = 0 },
+                            new RightBorder() { Val = new EnumValue<BorderValues>(BorderValues.None), Size = 0 }
+                        ));
+                    }
+
                     // 解析 cell 內容，處理 <br> 與 \n
                     foreach (var node in htmlCell.ChildNodes)
                     {
@@ -603,8 +642,11 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
                                 if (j > 0) p.Append(new Run(new Break()));
                                 var innerRun = new Run(new Text(lines[j]));
 
-                                // 設定字型大小 12pt (24 half-points)
-                                innerRun.PrependChild(new RunProperties(new FontSize() { Val = "24" }));
+                                // 設定字型大小 12pt (24 half-points) 和字型為標楷體
+                                innerRun.PrependChild(new RunProperties(
+                                    new RunFonts() { EastAsia = "標楷體" },
+                                    new FontSize() { Val = "24" }
+                                ));
                                 p.Append(innerRun);
                             }
                         }
@@ -613,8 +655,11 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
                             // 其他節點（如 span），遞迴處理
                             var innerRun = new Run(new Text(node.InnerText));
 
-                            // 設定字型大小 12pt (24 half-points)
-                            innerRun.PrependChild(new RunProperties(new FontSize() { Val = "24" }));
+                            // 設定字型大小 12pt (24 half-points) 和字型為標楷體
+                            innerRun.PrependChild(new RunProperties(
+                                new RunFonts() { EastAsia = "標楷體" },
+                                new FontSize() { Val = "24" }
+                            ));
                             p.Append(innerRun);
                         }
                     }
@@ -646,6 +691,18 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
 
             // 將轉換後的元素插入到 placeholder 位置
             para.InsertAfterSelf(wordTable);
+
+            // 在表格後面插入一個極小高度的段落作為分隔
+            var spacingPara = new Paragraph(new ParagraphProperties(
+                new SpacingBetweenLines()
+                {
+                    Before = "0",
+                    After = "0",
+                    Line = "1",  // 極小行距（1 twip = 1/1440 inch）
+                    LineRule = LineSpacingRuleValues.Exact
+                }
+            ));
+            wordTable.InsertAfterSelf(spacingPara);
 
             // 移除原本的段落，避免多出一個 enter
             para.Remove();
@@ -714,8 +771,11 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
                                     p.AppendChild(new Run(new Break()));
                                 var innerRun = new Run(new Text(lines[lineIdx]));
 
-                                // 設定字型大小 12pt (24 half-points)
-                                innerRun.PrependChild(new RunProperties(new FontSize() { Val = "24" }));
+                                // 設定字型大小 12pt (24 half-points) 和字型為標楷體
+                                innerRun.PrependChild(new RunProperties(
+                                    new RunFonts() { EastAsia = "標楷體" },
+                                    new FontSize() { Val = "24" }
+                                ));
                                 p.Append(innerRun);
                             }
 

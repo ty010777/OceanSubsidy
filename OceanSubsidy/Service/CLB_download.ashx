@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Web;
 using System.IO;
+using System.Linq;
 using GS.OCA_OceanSubsidy.Entity;
 
 public class CLB_download : IHttpHandler
@@ -386,9 +387,9 @@ public class CLB_download : IHttpHandler
         switch (templateType)
         {
             case "1": // 申請表
-                return ProcessApplicationForm(originalFilePath, subsidyType, plan, Personnel, Funds, Basic);
+                return ProcessApplicationForm(originalFilePath, subsidyType, plan, Personnel, Basic,projectID);
             case "2": // 計畫書
-                return ProcessPlanForm(originalFilePath, subsidyType, plan, Personnel, Funds, Basic);
+                return ProcessPlanForm(originalFilePath, subsidyType, plan, Personnel, Basic, projectID);
             default:
                 // 不需要動態處理的範本直接返回原路徑
                 return originalFilePath;
@@ -398,7 +399,7 @@ public class CLB_download : IHttpHandler
     /// <summary>
     /// 加工申請表（填入專案資料）
     /// </summary>
-    private string ProcessApplicationForm(string originalFilePath, string subsidyType,OFS_CLB_Application_Plan  plan,List<OFS_CLB_Application_Personnel> Personnel ,OFS_CLB_Application_Funds Funds ,OFS_CLB_Application_Basic Basic)
+    private string ProcessApplicationForm(string originalFilePath, string subsidyType,OFS_CLB_Application_Plan  plan,List<OFS_CLB_Application_Personnel> Personnel, OFS_CLB_Application_Basic Basic,string projectID)
     {
         
         try
@@ -441,30 +442,36 @@ public class CLB_download : IHttpHandler
                     replacements.Add("EYear", plan?.EndDate != null ? GS.App.DateTimeHelper.GregorianYearToMinguo(plan.EndDate.Value.Year).ToString() : "");
                     replacements.Add("EMonth", plan?.EndDate?.Month.ToString() ?? "");
                     replacements.Add("EDay", plan?.EndDate?.Day.ToString() ?? "");
-                    
+
                     replacements.Add("PlanContent", plan?.PlanContent ?? "");
                     replacements.Add("Benefits", plan?.PreBenefits ?? "");
-                    
-                    replacements.Add("SubsidyFunds", Funds?.SubsidyFunds != null ? ((int)Funds.SubsidyFunds).ToString() : "");
-                    replacements.Add("SelfFunds", Funds?.SelfFunds != null ? ((int)Funds.SelfFunds).ToString() : "");
-                    replacements.Add("OtherGovFunds", Funds?.OtherGovFunds != null ? ((int)Funds.OtherGovFunds).ToString() : "");
-                    replacements.Add("OtherUnitFunds", Funds?.OtherUnitFunds != null ? ((int)Funds.OtherUnitFunds).ToString() : "");
-                    replacements.Add("TotalFunds", Funds?.TotalFunds != null ? ((int)Funds.TotalFunds).ToString() : "");
-
-                    // Funds.PreviouslySubsidized - 過去是否受補助
-                    bool previouslySubsidized = Funds?.PreviouslySubsidized ?? false;
-                    string FundingDescription = Funds?.FundingDescription ?? "";
-                    replacements.Add("yesSubsidy", previouslySubsidized ? "☒" : "☐");
-                    replacements.Add("noSubsidy", previouslySubsidized ? "☐" : "☒");
-                    replacements.Add("FundingDescription", FundingDescription);
 
                     // 今日日期（民國年）
                     DateTime today = DateTime.Now;
                     replacements.Add("TYear", GS.App.DateTimeHelper.GregorianYearToMinguo(today.Year).ToString());
                     replacements.Add("TMonth", today.Month.ToString());
                     replacements.Add("TDay", today.Day.ToString());
-             
+
                     docHelper.GenerateWord(replacements, new List<Dictionary<string, string>>());
+
+                    // 計算經費金額（用於整合表格）
+                    int subsidyAmount = Basic?.ApplyAmount != null ? (int)Basic.ApplyAmount : 0;
+                    int selfAmount = Basic?.SelfAmount != null ? (int)Basic.SelfAmount : 0;
+                    int otherAmount = Basic?.OtherAmount != null ? (int)Basic.OtherAmount : 0;
+
+                    // Insert integrated funds table
+                    string integratedFundsTableHtml = GenerateIntegratedFundsTableHtml(subsidyAmount, selfAmount, otherAmount, projectID);
+                    if (!string.IsNullOrEmpty(integratedFundsTableHtml))
+                    {
+                        docHelper.InsertHtmlAsTable("{{IntegratedFundsTable}}", integratedFundsTableHtml);
+                    }
+
+                    // Insert received subsidy table
+                    string receivedSubsidyTableHtml = GenerateReceivedSubsidyTableHtml(projectID);
+                    if (!string.IsNullOrEmpty(receivedSubsidyTableHtml))
+                    {
+                        docHelper.InsertHtmlAsTable("{{ReceivedSubsidyTable}}", receivedSubsidyTableHtml);
+                    }
                 }
             }
             else
@@ -497,23 +504,9 @@ public class CLB_download : IHttpHandler
                     replacements.Add("EYear", plan?.EndDate != null ? GS.App.DateTimeHelper.GregorianYearToMinguo(plan.EndDate.Value.Year).ToString() : "");
                     replacements.Add("EMonth", plan?.EndDate?.Month.ToString() ?? "");
                     replacements.Add("EDay", plan?.EndDate?.Day.ToString() ?? "");
-                    
+
                     replacements.Add("PlanContent", plan?.PlanContent ?? "");
                     replacements.Add("Benefits", plan?.PreBenefits ?? "");
-                    
-                    
-                    replacements.Add("SubsidyFunds", Funds?.SubsidyFunds != null ? ((int)Funds.SubsidyFunds).ToString() : "");
-                    replacements.Add("SelfFunds", Funds?.SelfFunds != null ? ((int)Funds.SelfFunds).ToString() : "");
-                    replacements.Add("OtherGovFunds", Funds?.OtherGovFunds != null ? ((int)Funds.OtherGovFunds).ToString() : "");
-                    replacements.Add("OtherUnitFunds", Funds?.OtherUnitFunds != null ? ((int)Funds.OtherUnitFunds).ToString() : "");
-                    replacements.Add("TotalFunds", Funds?.TotalFunds != null ? ((int)Funds.TotalFunds).ToString() : "");
-
-                    // Funds.PreviouslySubsidized - 過去是否受補助
-                    bool previouslySubsidized = Funds?.PreviouslySubsidized ?? false;
-                    string FundingDescription = Funds?.FundingDescription ?? "";
-                    replacements.Add("yesSubsidy", previouslySubsidized ? "☒" : "☐");
-                    replacements.Add("noSubsidy", previouslySubsidized ? "☐" : "☒");
-                    replacements.Add("FundingDescription", FundingDescription);
 
                     // 今日日期（民國年）
                     DateTime today = DateTime.Now;
@@ -528,11 +521,30 @@ public class CLB_download : IHttpHandler
 
                     // 年度 - 今年和去年（民國年）
                     int currentRocYear = GS.App.DateTimeHelper.GregorianYearToMinguo(DateTime.Now.Year);
-                    replacements.Add("Check1Year", currentRocYear.ToString());
-                    replacements.Add("Check2Year", (currentRocYear - 1).ToString());
+                    replacements.Add("CheckYear1", currentRocYear.ToString());
+                    replacements.Add("CheckYear2", (currentRocYear - 1).ToString());
 
                     // 執行替換
                     docHelper.GenerateWord(replacements, new List<Dictionary<string, string>>());
+
+                    // 計算經費金額（用於整合表格）
+                    int subsidyAmount = Basic?.ApplyAmount != null ? (int)Basic.ApplyAmount : 0;
+                    int selfAmount = Basic?.SelfAmount != null ? (int)Basic.SelfAmount : 0;
+                    int otherAmount = Basic?.OtherAmount != null ? (int)Basic.OtherAmount : 0;
+
+                    // Insert integrated funds table
+                    string integratedFundsTableHtml = GenerateIntegratedFundsTableHtml(subsidyAmount, selfAmount, otherAmount, projectID);
+                    if (!string.IsNullOrEmpty(integratedFundsTableHtml))
+                    {
+                        docHelper.InsertHtmlAsTable("{{IntegratedFundsTable}}", integratedFundsTableHtml);
+                    }
+
+                    // Insert received subsidy table
+                    string receivedSubsidyTableHtml = GenerateReceivedSubsidyTableHtml(projectID);
+                    if (!string.IsNullOrEmpty(receivedSubsidyTableHtml))
+                    {
+                        docHelper.InsertHtmlAsTable("{{ReceivedSubsidyTable}}", receivedSubsidyTableHtml);
+                    }
                 }
             }
 
@@ -548,7 +560,7 @@ public class CLB_download : IHttpHandler
     /// <summary>
     /// 加工計畫書（填入專案資料）
     /// </summary>
-    private string ProcessPlanForm(string originalFilePath, string subsidyType, OFS_CLB_Application_Plan plan, List<OFS_CLB_Application_Personnel> Personnel, OFS_CLB_Application_Funds Funds, OFS_CLB_Application_Basic Basic)
+    private string ProcessPlanForm(string originalFilePath, string subsidyType, OFS_CLB_Application_Plan plan, List<OFS_CLB_Application_Personnel> Personnel, OFS_CLB_Application_Basic Basic, string projectID)
     {
         try
         {
@@ -588,16 +600,29 @@ public class CLB_download : IHttpHandler
                     string creationDate = GS.App.DateTimeHelper.ToMinguoDate(Basic.CreationDate);
                     replacements.Add("CreationDate", creationDate??"");
                     
-                    replacements.Add("SubsidyFunds", Funds?.SubsidyFunds != null ? ((int)Funds.SubsidyFunds).ToString() : "");
-                    replacements.Add("SelfFunds", Funds?.SelfFunds != null ? ((int)Funds.SelfFunds).ToString() : "");
-                    replacements.Add("OtherGovFunds", Funds?.OtherGovFunds != null ? ((int)Funds.OtherGovFunds).ToString() : "");
-                    replacements.Add("OtherUnitFunds", Funds?.OtherUnitFunds != null ? ((int)Funds.OtherUnitFunds).ToString() : "");
-                    replacements.Add("TotalFunds", Funds?.TotalFunds != null ? ((int)Funds.TotalFunds).ToString() : "");
+                    replacements.Add("SubsidyFunds", Basic?.ApplyAmount != null ? ((int)Basic.ApplyAmount).ToString() : "0");
+                    replacements.Add("SelfFunds", Basic?.SelfAmount != null ? ((int)Basic.SelfAmount).ToString() : "0");
+                    replacements.Add("OtherUnitFunds", Basic?.OtherAmount != null ? ((int)Basic.OtherAmount).ToString() : "0");
+                    replacements.Add("TotalFunds", ((Basic?.ApplyAmount ?? 0) + (Basic?.SelfAmount ?? 0) + (Basic?.OtherAmount ?? 0)).ToString());
                     replacements.Add("Benefits", plan?.PreBenefits ?? "");
                     //緊急計畫
                     replacements.Add("EmergencyPlan", plan.EmergencyPlan??"");
 
                     docHelper.GenerateWord(replacements, new List<Dictionary<string, string>>());
+
+                    // 插入經費預算表格
+                    string budgetTableHtml = GenerateBudgetPlanTableHtml(projectID);
+                    if (!string.IsNullOrEmpty(budgetTableHtml))
+                    {
+                        docHelper.InsertHtmlAsTable("{{BudgetTable}}", budgetTableHtml);
+                    }
+
+                    // 插入其他機關補助表格
+                    string otherSubsidyTableHtml = GenerateOtherSubsidyTableHtml(projectID);
+                    if (!string.IsNullOrEmpty(otherSubsidyTableHtml))
+                    {
+                        docHelper.InsertHtmlAsTable("{{OtherSubsidyTable}}", otherSubsidyTableHtml);
+                    }
                 }
             }
             else
@@ -618,18 +643,31 @@ public class CLB_download : IHttpHandler
                     replacements.Add("CreationDate", creationDate??"");
                     replacements.Add("EstimatedPeople", plan.EstimatedPeople??"");
                     replacements.Add("Purpose", plan.Purpose??"");
-                    replacements.Add("SubsidyFunds", Funds?.SubsidyFunds != null ? ((int)Funds.SubsidyFunds).ToString() : "");
-                    replacements.Add("SelfFunds", Funds?.SelfFunds != null ? ((int)Funds.SelfFunds).ToString() : "");
-                    replacements.Add("OtherGovFunds", Funds?.OtherGovFunds != null ? ((int)Funds.OtherGovFunds).ToString() : "");
-                    replacements.Add("OtherUnitFunds", Funds?.OtherUnitFunds != null ? ((int)Funds.OtherUnitFunds).ToString() : "");
-                    replacements.Add("TotalFunds", Funds?.TotalFunds != null ? ((int)Funds.TotalFunds).ToString() : "");
+                    replacements.Add("SubsidyFunds", Basic?.ApplyAmount != null ? ((int)Basic.ApplyAmount).ToString() : "0");
+                    replacements.Add("SelfFunds", Basic?.SelfAmount != null ? ((int)Basic.SelfAmount).ToString() : "0");
+                    replacements.Add("OtherUnitFunds", Basic?.OtherAmount != null ? ((int)Basic.OtherAmount).ToString() : "0");
+                    replacements.Add("TotalFunds", ((Basic?.ApplyAmount ?? 0) + (Basic?.SelfAmount ?? 0) + (Basic?.OtherAmount ?? 0)).ToString());
                     replacements.Add("Benefits", plan?.PreBenefits ?? "");
                     // Basic.SubsidyType - 補助類型勾選
                     bool isStartup = subsidyType == "Startup";
                     replacements.Add("Check1", isStartup ? "☒" : "☐");
                     replacements.Add("Check2", isStartup ? "☐" : "☒");
-                        
+
                     docHelper.GenerateWord(replacements, new List<Dictionary<string, string>>());
+
+                    // 插入經費預算表格
+                    string budgetTableHtml = GenerateBudgetPlanTableHtml(projectID);
+                    if (!string.IsNullOrEmpty(budgetTableHtml))
+                    {
+                        docHelper.InsertHtmlAsTable("{{BudgetTable}}", budgetTableHtml);
+                    }
+
+                    // 插入其他機關補助表格
+                    string otherSubsidyTableHtml = GenerateOtherSubsidyTableHtml(projectID);
+                    if (!string.IsNullOrEmpty(otherSubsidyTableHtml))
+                    {
+                        docHelper.InsertHtmlAsTable("{{OtherSubsidyTable}}", otherSubsidyTableHtml);
+                    }
                 }
             }
 
@@ -666,6 +704,367 @@ public class CLB_download : IHttpHandler
         {
             // 清理失敗不影響主要功能，只記錄錯誤
             System.Diagnostics.Debug.WriteLine($"清理暫存檔案失敗：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 生成經費預算規劃表格的 HTML
+    /// </summary>
+    private string GenerateBudgetPlanTableHtml(string projectID)
+    {
+        if (string.IsNullOrEmpty(projectID))
+        {
+            return "";
+        }
+
+        try
+        {
+            // 從資料庫取得經費預算資料
+            var budgetPlans = OFS_ClbApplicationHelper.GetBudgetPlanData(projectID);
+
+            if (budgetPlans == null || budgetPlans.Count == 0)
+            {
+                // 無資料時返回簡單的 HTML 表格（無格線）
+                return @"
+<table style='border: none;'>
+    <tr>
+        <td style='text-align: center; vertical-align: middle; border: none;'>無經費預算資料</td>
+    </tr>
+</table>";
+            }
+
+            // 建立 HTML 表格（雙層表頭結構）
+            var html = @"
+<table>
+    <tr>
+        <th rowspan='2' style='text-align: center; vertical-align: middle;  width: 20%;'>預算項目</th>
+        <th colspan='3' style='text-align: center; vertical-align: middle;  width: 45%;'>預算金額</th>
+        <th rowspan='2' style='text-align: center; vertical-align: middle;  width: 35%;'>計算方式及說明</th>
+    </tr>
+    <tr>
+        <th style='text-align: center; vertical-align: middle;  width: 15%;'>海洋委員會經費</th>
+        <th style='text-align: center; vertical-align: middle;  width: 15%;'>其他配合經費</th>
+        <th style='text-align: center; vertical-align: middle;  width: 15%;'>小計</th>
+    </tr>";
+
+            // 加入資料列
+            foreach (var item in budgetPlans)
+            {
+                int amount = item.Amount ?? 0;
+                int otherAmount = item.OtherAmount ?? 0;
+                int subtotal = amount + otherAmount;
+
+                html += $@"
+    <tr>
+        <td style='vertical-align: middle;'>{item.Title}</td>
+        <td style='text-align: right; vertical-align: middle;'>{amount:N0}</td>
+        <td style='text-align: right; vertical-align: middle;'>{otherAmount:N0}</td>
+        <td style='text-align: right; vertical-align: middle;'>{subtotal:N0}</td>
+        <td style='vertical-align: middle;'>{item.Description}</td>
+    </tr>";
+            }
+
+            html += @"
+</table>";
+
+            return html;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"GenerateBudgetPlanTableHtml Error: {ex.Message}");
+            return "";
+        }
+    }
+
+    /// <summary>
+    /// 生成其他機關補助/合作金額表格的 HTML
+    /// </summary>
+    private string GenerateOtherSubsidyTableHtml(string projectID)
+    {
+        if (string.IsNullOrEmpty(projectID))
+        {
+            return "";
+        }
+
+        try
+        {
+            // 從資料庫取得其他機關補助資料
+            var otherSubsidies = OFS_ClbApplicationHelper.GetOtherSubsidyData(projectID);
+
+            if (otherSubsidies == null || otherSubsidies.Count == 0)
+            {
+                // 無資料時返回簡單的 HTML 表格（無格線）
+                return @"
+<table style='border: none;'>
+    <tr>
+        <td style='text-align: center; vertical-align: middle; border: none;'>無其他機關補助資料</td>
+    </tr>
+</table>";
+            }
+
+            // 計算總金額
+            int totalAmount = otherSubsidies.Sum(x => x.Amount ?? 0);
+
+            // 建立 HTML 表格
+            var html = @"
+<table>
+    <tr>
+        <th style='text-align: center; vertical-align: middle;  width: 10%;'>序號</th>
+        <th style='text-align: center; vertical-align: middle;  width: 25%;'>機關(單位)名稱</th>
+        <th style='text-align: center; vertical-align: middle;  width: 20%;'>金額(千元)</th>
+        <th style='text-align: center; vertical-align: middle;  width: 15%;'>比例(%)</th>
+        <th style='text-align: center; vertical-align: middle;  width: 30%;'>申請合作項目</th>
+    </tr>";
+
+            // 加入資料列
+            int rowIndex = 1;
+            foreach (var item in otherSubsidies)
+            {
+                int amount = item.Amount ?? 0;
+                decimal amountInThousand = amount / 1000m;  // 轉換為千元單位
+
+                // 計算比例
+                decimal percentage = totalAmount > 0 ? (decimal)amount / totalAmount * 100 : 0;
+
+                html += $@"
+    <tr>
+        <td style='text-align: center; vertical-align: middle;'>{rowIndex}</td>
+        <td style='vertical-align: middle;'>{item.Unit}</td>
+        <td style='text-align: right; vertical-align: middle;'>{amountInThousand:F2}</td>
+        <td style='text-align: right; vertical-align: middle;'>{percentage:F2}</td>
+        <td style='vertical-align: middle;'>{item.Content}</td>
+    </tr>";
+
+                rowIndex++;
+            }
+
+            // 加入合計列
+            decimal totalAmountInThousand = totalAmount / 1000m;  // 轉換為千元單位
+            html += $@"
+    <tr>
+        <td colspan='2' style='text-align: center; vertical-align: middle; '><strong>合計</strong></td>
+        <td style='text-align: right; vertical-align: middle; '><strong>{totalAmountInThousand:F2}</strong></td>
+        <td style='text-align: right; vertical-align: middle; '><strong>100.00</strong></td>
+        <td style='vertical-align: middle; '></td>
+    </tr>";
+
+            html += @"
+</table>";
+
+            return html;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"GenerateOtherSubsidyTableHtml Error: {ex.Message}");
+            return "";
+        }
+    }
+
+    /// <summary>
+    /// 生成其他補助單位簡表（僅兩欄）的 HTML
+    /// </summary>
+    private string GenerateOtherSubsidySimpleTableHtml(string projectID)
+    {
+        if (string.IsNullOrEmpty(projectID))
+        {
+            return "";
+        }
+
+        try
+        {
+            // 從資料庫取得其他機關補助資料
+            var otherSubsidies = OFS_ClbApplicationHelper.GetOtherSubsidyData(projectID);
+
+            if (otherSubsidies == null || otherSubsidies.Count == 0)
+            {
+                // 無資料時返回簡單的 HTML 表格（無格線）
+                return @"
+<table style='border: none;'>
+    <tr>
+        <td style='text-align: center; vertical-align: middle; border: none;'>無其他補助單位資料</td>
+    </tr>
+</table>";
+            }
+
+            // 建立 HTML 表格
+            var html = @"
+<table>
+    <tr>
+        <th style='text-align: center; vertical-align: middle;  width: 50%;'>單位名稱</th>
+        <th style='text-align: center; vertical-align: middle;  width: 50%;'>申請／分攤補助金額（含尚未核定者）</th>
+    </tr>";
+
+            // 加入資料列
+            foreach (var item in otherSubsidies)
+            {
+                int amount = item.Amount ?? 0;
+
+                html += $@"
+    <tr>
+        <td style='vertical-align: middle;'>{item.Unit}</td>
+        <td style='text-align: right; vertical-align: middle;'>{amount:N0}</td>
+    </tr>";
+            }
+
+            html += @"
+</table>";
+
+            return html;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"GenerateOtherSubsidySimpleTableHtml Error: {ex.Message}");
+            return "";
+        }
+    }
+
+    /// <summary>
+    /// 生成整合經費表格的 HTML（包含 A/B/C 所有經費資訊和其他補助單位明細）
+    /// </summary>
+    private string GenerateIntegratedFundsTableHtml(int subsidyAmount, int selfAmount, int otherAmount, string projectID)
+    {
+        try
+        {
+            int totalAmount = subsidyAmount + selfAmount + otherAmount;
+
+            // 取得其他補助單位資料
+            var otherSubsidies = OFS_ClbApplicationHelper.GetOtherSubsidyData(projectID);
+            int otherSubsidyCount = (otherSubsidies != null && otherSubsidies.Count > 0) ? otherSubsidies.Count : 1;
+
+            // 計算 rowspan
+            int totalRowspan = 3 + otherSubsidyCount; // A列 + B列 + C的header列 + 資料列數
+            int cRowspan = 1 + otherSubsidyCount; // header列 + 資料列數
+
+            // 建立 HTML 表格
+            var html = @"
+<table>
+    <tr>";
+
+            // 第一列：計畫總經費（rowspan動態）+ A + 申請本會分攤金額 + 金額
+            html += $@"
+        <td rowspan='{totalRowspan}' style='vertical-align: middle; width: 20%;'>
+            計畫總經費（A+B+C）
+            {totalAmount / 10000}萬{totalAmount % 10000}元整
+        </td>
+        <td style='vertical-align: middle; width: 8%;'>A</td>
+        <td style='vertical-align: middle; width: 32%;'>申請本會分攤金額</td>
+        <td colspan='2' style='vertical-align: middle; width: 40%;'>{subsidyAmount / 10000} 萬 {subsidyAmount % 10000} 元整</td>
+    </tr>";
+
+            // 第二列：B + 申請單位自籌款 + 金額
+            html += $@"
+    <tr>
+        <td style='vertical-align: middle; width: 8%;'>B</td>
+        <td style='vertical-align: middle; width: 32%;'>申請單位自籌款</td>
+        <td colspan='2' style='vertical-align: middle; width: 40%;'>{selfAmount / 10000} 萬 {selfAmount % 10000} 元整</td>
+    </tr>";
+
+            // 第三列：C（rowspan動態）+ 其他機關總金額（rowspan動態）+ 單位名稱 header + 金額 header
+            html += $@"
+    <tr>
+        <td rowspan='{cRowspan}' style='vertical-align: middle; width: 8%;'>C</td>
+        <td rowspan='{cRowspan}' style='vertical-align: middle; width: 32%;'>
+            其他機關補助/分攤總金額：
+            {otherAmount / 10000}萬{otherAmount % 10000}元整
+        </td>
+        <td style='vertical-align: middle; width: 20%;'>單位名稱</td>
+        <td style='vertical-align: middle; width: 20%;'>申請／分攤補助金額<br/>（含尚未核定者）</td>
+    </tr>";
+
+            // 第四列及之後：其他補助單位資料
+            if (otherSubsidies != null && otherSubsidies.Count > 0)
+            {
+                foreach (var item in otherSubsidies)
+                {
+                    int amount = item.Amount ?? 0;
+                    html += $@"
+    <tr>
+        <td style='vertical-align: middle;'>{item.Unit}</td>
+        <td style='vertical-align: middle;'>{amount:N0}</td>
+    </tr>";
+                }
+            }
+            else
+            {
+                // 無資料時顯示空白列
+                html += @"
+    <tr>
+        <td style='vertical-align: middle; height: 60px;'></td>
+        <td style='vertical-align: middle;'></td>
+    </tr>";
+            }
+
+            html += @"
+</table>";
+
+            return html;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"GenerateIntegratedFundsTableHtml Error: {ex.Message}");
+            return "";
+        }
+    }
+
+    /// <summary>
+    /// 生成社團最近兩年曾獲本會補助計畫及經費表格的 HTML
+    /// </summary>
+    private string GenerateReceivedSubsidyTableHtml(string projectID)
+    {
+        if (string.IsNullOrEmpty(projectID))
+        {
+            return "";
+        }
+
+        try
+        {
+            // 從資料庫取得曾獲補助資料
+            var receivedSubsidies = OFS_ClbApplicationHelper.GetReceivedSubsidyData(projectID);
+
+            // 計算 rowspan（資料筆數 + header 列）
+            int dataCount = (receivedSubsidies != null && receivedSubsidies.Count > 0) ? receivedSubsidies.Count : 1;
+            int rowspan = dataCount + 1;
+
+            // 建立 HTML 表格
+            var html = $@"
+<table>
+    <tr>
+        <td rowspan='{rowspan}' style='vertical-align: middle; width: 40%;'>社團最近兩年曾獲本會補助計畫及經費</td>
+        <td style='vertical-align: middle; width: 40%;'>計畫名稱</td>
+        <td style='vertical-align: middle; width: 20%;'>補助金額</td>
+    </tr>";
+
+            // 加入資料列
+            if (receivedSubsidies != null && receivedSubsidies.Count > 0)
+            {
+                foreach (var item in receivedSubsidies)
+                {
+                    html += $@"
+    <tr>
+        <td style='vertical-align: middle;'>{item.Name}</td>
+        <td style='vertical-align: middle;'>{item.Amount:N0}</td>
+    </tr>";
+                }
+            }
+            else
+            {
+                // 無資料時顯示空白列
+                html += @"
+    <tr>
+        <td style='vertical-align: middle; height: 60px;'></td>
+        <td style='vertical-align: middle;'></td>
+    </tr>";
+            }
+
+            html += @"
+</table>";
+
+            return html;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"GenerateReceivedSubsidyTableHtml Error: {ex.Message}");
+            return "";
         }
     }
 

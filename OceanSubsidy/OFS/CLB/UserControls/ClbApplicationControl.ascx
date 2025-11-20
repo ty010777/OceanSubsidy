@@ -201,7 +201,7 @@
         <h5 class="square-title">經費資訊</h5>
         <div class="mt-4">
             <div class="table-responsive mt-3 mb-0">
-                <table class="table align-middle gray-table">
+                <table id="FundingTable" class="table align-middle gray-table">
                     <thead>
                     <tr>
                         <th class="text-end">申請海委會補助／合作金額(元) (A)</th>
@@ -225,7 +225,7 @@
                 </table>
             </div>
             <div class="table-responsive">
-                <table class="table align-middle gray-table">
+                <table id="OtherSubsidyTable" class="table align-middle gray-table">
                     <thead>
                     <tr>
                         <th colspan="6" style="border-bottom-width: 1px;">其他機關補助／合作金額 (C)</th>
@@ -241,13 +241,13 @@
                     </thead>
                     <tbody id="tbodyOtherSubsidy">
                     </tbody>
-                </table><button id="btnAddOtherSubsidy" class="btn btn-sm btn-teal-dark m-0" type="button"><i class="fas fa-plus"></i> 新增</button>
+                </table><button id="btnAddOtherSubsidy" class="btn btn-sm btn-teal-dark m-0 view-mode" type="button"><i class="fas fa-plus"></i> 新增</button>
             </div>
         </div>
         <h5 class="square-title">經費預算規劃</h5>
 
         <div class="table-responsive mt-3 mb-0">
-            <table class="table align-middle gray-table">
+            <table id="BudgetPlanTable" class="table align-middle gray-table">
                 <thead>
                 <tr>
                     <th>預算項目</th>
@@ -261,9 +261,9 @@
                 <tbody id="tbodyBudgetPlan">
                 </tbody>
             </table>
-            <button id="btnAddBudgetPlan" class="btn btn-sm btn-teal-dark m-0" type="button"><i class="fas fa-plus"></i> 新增</button>
+            <button id="btnAddBudgetPlan" class="btn btn-sm btn-teal-dark m-0 view-mode" type="button"><i class="fas fa-plus"></i> 新增</button>
         </div>
-        <table class="table align-middle gray-table side-table">
+        <table id="PreviouslySubsidizedTable" class="table align-middle gray-table side-table">
                         <tbody>
                             
                             <tr>
@@ -278,7 +278,7 @@
                             <tr class="funding-description-row d-none">
                                 <th>經費說明</th>
                                 <td>
-                                    <table class="table align-middle gray-table">
+                                    <table  id="FundingDescriptionTable" class="table align-middle gray-table">
                                         <thead>
                                         <tr>
                                             <th>計畫名稱</th>
@@ -289,7 +289,7 @@
                                         <tbody id="tbodyFundingDescription">
                                         </tbody>
                                     </table>
-                                    <button id="btnAddFundingDescription" class="btn btn-sm btn-teal-dark m-0" type="button"><i class="fas fa-plus"></i> 新增</button>
+                                    <button id="btnAddFundingDescription" class="btn btn-sm btn-teal-dark m-0 view-mode" type="button"><i class="fas fa-plus"></i> 新增</button>
                                 </td>
                             </tr>
                         </tbody>        
