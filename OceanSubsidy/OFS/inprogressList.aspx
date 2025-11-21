@@ -297,7 +297,7 @@
                     </div>
 
                     <div class="d-flex justify-content-between">
-                        <h5 class="square-title">領域審查意見回覆</h5>
+                        <h5 class="square-title">實質審查意見回覆</h5>
                         <button class="btn btn-teal-dark" type="button"><i class="fas fa-download"></i>匯出審查意見回覆表</button>
                     </div>
                     <div class="table-responsive mt-3">

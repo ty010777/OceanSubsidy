@@ -607,49 +607,7 @@ public class OFS_ClbApplicationHelper
     
 
  
-    /// <summary>
-    /// 取得經費資訊
-    /// </summary>
-    /// <param name="projectID">計畫編號</param>
-    /// <returns>經費資訊物件</returns>
-    public static OFS_CLB_Application_Funds GetFundsData(string projectID)
-    {
-        try
-        {
-            DbHelper db = new DbHelper();
-            db.CommandText = @"
-                SELECT * 
-                FROM [OCA_OceanSubsidy].[dbo].[OFS_CLB_Application_Funds] 
-                WHERE [ProjectID] = @ProjectID";
-
-            db.Parameters.Clear();
-            db.Parameters.Add("@ProjectID", projectID);
-
-            DataTable dt = db.GetTable();
-
-            if (dt.Rows.Count > 0)
-            {
-                DataRow row = dt.Rows[0];
-                return new OFS_CLB_Application_Funds
-                {
-                    ProjectID = row["ProjectID"]?.ToString(),
-                    SubsidyFunds = row["SubsidyFunds"] != DBNull.Value ? Convert.ToDecimal(row["SubsidyFunds"]) : (decimal?)null,
-                    SelfFunds = row["SelfFunds"] != DBNull.Value ? Convert.ToDecimal(row["SelfFunds"]) : (decimal?)null,
-                    OtherGovFunds = row["OtherGovFunds"] != DBNull.Value ? Convert.ToDecimal(row["OtherGovFunds"]) : (decimal?)null,
-                    OtherUnitFunds = row["OtherUnitFunds"] != DBNull.Value ? Convert.ToDecimal(row["OtherUnitFunds"]) : (decimal?)null,
-                    TotalFunds = row["TotalFunds"] != DBNull.Value ? Convert.ToDecimal(row["TotalFunds"]) : (decimal?)null,
-                    PreviouslySubsidized = row["PreviouslySubsidized"] != DBNull.Value ? Convert.ToBoolean(row["PreviouslySubsidized"]) : (bool?)null,
-                    FundingDescription = row["FundingDescription"]?.ToString()
-                };
-            }
-
-            return null;
-        }
-        catch (Exception ex)
-        {
-            throw new Exception($"取得經費資訊失敗：{ex.Message}");
-        }
-    }
+   
 
  
 

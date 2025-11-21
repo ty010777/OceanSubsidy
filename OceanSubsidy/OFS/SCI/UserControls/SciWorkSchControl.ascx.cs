@@ -68,6 +68,16 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
     /// </summary>
     public OFS_SCI_UploadFile DiagramFile { get; private set; }
 
+    /// <summary>
+    /// 計畫結束日期提示文字
+    /// </summary>
+    public string PlanEndDateHint { get; private set; }
+
+    /// <summary>
+    /// 是否顯示計畫結束日期提示
+    /// </summary>
+    public bool ShouldShowPlanEndDateHint { get; private set; }
+
     #endregion
 
     #region 頁面事件
@@ -688,6 +698,9 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
         hiddenWorkItemsData.Value = "[]";
         hiddenCheckStandardsData.Value = "[]";
         CheckFormStatusAndHideTempSaveButton();
+
+        // 處理計畫結束日期提示
+        ProcessPlanEndDateHint();
     }
     /// <summary>
     /// 檢查表單狀態並控制暫存按鈕顯示
@@ -698,12 +711,12 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
         {
             var ProjectID = Request.QueryString["ProjectID"];
             var formStatus = OFS_SciWorkSchHelper.GetFormStatusByProjectID(ProjectID, "Form2Status");
-            
+
             if (formStatus == "完成")
             {
                 // 隱藏暫存按鈕
                 tab2_btnTempSave.Style["display"] = "none";
-                
+
                 // 也可以用 Visible 屬性
             }
         }
@@ -711,6 +724,59 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
         {
             // 發生錯誤時不隱藏按鈕，讓用戶正常使用
             System.Diagnostics.Debug.WriteLine($"檢查表單狀態失敗: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 處理計畫結束日期提示
+    /// </summary>
+    private void ProcessPlanEndDateHint()
+    {
+        try
+        {
+            // 預設不顯示提示
+            ShouldShowPlanEndDateHint = false;
+            PlanEndDateHint = "";
+
+            // 判斷是否應該顯示提示
+            // 條件1: 沒有 ProjectID，或
+            // 條件2: 專案狀態為 "尚未提送"
+            bool shouldShow = false;
+
+            if (string.IsNullOrEmpty(ProjectID))
+            {
+                // 沒有 ProjectID，顯示提示
+                shouldShow = true;
+            }
+            else
+            {
+                // 有 ProjectID，檢查狀態
+                string projectStatus = OFS_SciWorkSchHelper.GetProjectStatus(ProjectID);
+                if (projectStatus == "尚未提送")
+                {
+                    shouldShow = true;
+                }
+            }
+
+            // 如果需要顯示提示，從資料庫取得計畫結束日期
+            if (shouldShow)
+            {
+                DateTime? planEndDate = OFS_SciWorkSchHelper.GetCurrentSCIGrantTypePlanEndDate();
+                if (planEndDate.HasValue)
+                {
+                    // 使用 ToMinguoDate 將西元年轉換為民國年字串
+                    string planEndDateStr = planEndDate.Value.ToMinguoDate();
+                    PlanEndDateHint = $"(期程不可超過 {planEndDateStr})";
+                    ShouldShowPlanEndDateHint = true;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"處理計畫結束日期提示失敗: {ex.Message}");
+            // 發生錯誤時不顯示提示
+            ShouldShowPlanEndDateHint = false;
+            PlanEndDateHint = "";
         }
     }
     /// <summary>

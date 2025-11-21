@@ -225,7 +225,7 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
     // 檢查是否可撤案
     private bool CanWithdraw(string status)
     {
-        var withdrawableStatuses = new[] { "資格審查", "內容審查", "領域審查", "初審", "技術審查", "複審", "決審核定" };
+        var withdrawableStatuses = new[] { "資格審查", "內容審查", "實質審查", "初審", "技術審查", "複審", "決審核定" };
         return withdrawableStatuses.Contains(status);
     }
 
@@ -369,7 +369,7 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             ddlStage.Items.Add(new ListItem("尚未提送", "尚未提送"));
             ddlStage.Items.Add(new ListItem("資格審查", "資格審查"));
             ddlStage.Items.Add(new ListItem("內容審查", "內容審查"));
-            ddlStage.Items.Add(new ListItem("領域審查", "領域審查"));
+            ddlStage.Items.Add(new ListItem("實質審查", "實質審查"));
             ddlStage.Items.Add(new ListItem("技術審查", "技術審查"));
             ddlStage.Items.Add(new ListItem("初審", "初審"));
             ddlStage.Items.Add(new ListItem("複審", "複審"));
@@ -1317,7 +1317,7 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
 
             // 根據 ProjectID 判斷計畫類型並取得審查意見
 
-            // 科專計畫處理 - 同時查詢領域審查和技術審查
+            // 科專計畫處理 - 同時查詢實質審查和技術審查
             string Stage1 = "";
             string Stage2 = "";
 

@@ -369,6 +369,41 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
         
+        protected bool? _IsCoreOceanData = false;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("IsCoreOceanData", "IsCoreOceanData", DataSource.TABLE, "", false)]
+        public virtual bool? IsCoreOceanData
+        {
+            get
+            {
+                return _IsCoreOceanData;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_IsCoreOceanData == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_IsCoreOceanData.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("IsCoreOceanData") == -1)
+                    {
+                        UPDATE_COLUMN.Add("IsCoreOceanData");
+                    }
+                    _IsCoreOceanData = value;
+                }
+            }
+        }
+        
         protected bool? _CountryTech_Underwater = false;
         ///<summary>
         /// 水下研究 (水下研究)

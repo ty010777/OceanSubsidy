@@ -27,13 +27,15 @@ public class OFS_ClbSnapshotHelper
 
             // 查詢所有相關資料
             var basicData = GetBasicData(projectID);
-            var fundsData = GetFundsData(projectID);
             var personnelData = GetPersonnelData(projectID);
             var planData = GetPlanData(projectID);
             var paymentData = GetPaymentData(projectID);
             var projectMainData = GetProjectMainData(projectID);
             var stageExamData = GetStageExamData(projectID);
             var uploadFileData = GetUploadFileData(projectID);
+            var otherSubsidyData = GetOtherSubsidyData(projectID);
+            var budgetPlanData = GetBudgetPlanData(projectID);
+            var receivedSubsidyData = GetReceivedSubsidyData(projectID);
 
             // 根據 Statuses 和 StatusesName 轉換 Status
             int status = ConvertToStatusCode(projectMainData?.Statuses, projectMainData?.StatusesName);
@@ -42,13 +44,15 @@ public class OFS_ClbSnapshotHelper
             var snapshotData = new
             {
                 ApplicationBasic = basicData,
-                ApplicationFunds = fundsData,
                 ApplicationPersonnel = personnelData,
                 ApplicationPlan = planData,
                 Payment = paymentData,
                 ProjectMain = projectMainData,
                 StageExam = stageExamData,
-                UploadFile = uploadFileData
+                UploadFile = uploadFileData,
+                OtherSubsidy = otherSubsidyData,
+                BudgetPlan = budgetPlanData,
+                ReceivedSubsidy = receivedSubsidyData
             };
 
             string jsonData = JsonConvert.SerializeObject(snapshotData);
@@ -97,8 +101,8 @@ public class OFS_ClbSnapshotHelper
             if (statusesName == "結案(未通過)") return 19;
         }
 
-        // 領域審查
-        if (statuses == "領域審查")
+        // 實質審查
+        if (statuses == "實質審查")
         {
             if (statusesName == "審核中") return 21;
             if (statusesName == "通過") return 22;
@@ -176,47 +180,17 @@ public class OFS_ClbSnapshotHelper
                 ClubName = row["ClubName"]?.ToString(),
                 CreationDate = row["CreationDate"] != DBNull.Value ? Convert.ToDateTime(row["CreationDate"]) : (DateTime?)null,
                 School_IDNumber = row["School_IDNumber"]?.ToString(),
-                Address = row["Address"]?.ToString()
+                Address = row["Address"]?.ToString(),
+                ApplyAmount = row["ApplyAmount"] != DBNull.Value ? Convert.ToInt32(row["ApplyAmount"]) : (int?)null,
+                SelfAmount = row["SelfAmount"] != DBNull.Value ? Convert.ToInt32(row["SelfAmount"]) : (int?)null,
+                OtherAmount = row["OtherAmount"] != DBNull.Value ? Convert.ToInt32(row["OtherAmount"]) : (int?)null,
+                IsPreviouslySubsidized = row["IsPreviouslySubsidized"] != DBNull.Value ? Convert.ToBoolean(row["IsPreviouslySubsidized"]) : (bool?)null
             };
         }
 
         return null;
     }
-
-    /// <summary>
-    /// 取得經費資訊
-    /// </summary>
-    private static OFS_CLB_Application_Funds GetFundsData(string projectID)
-    {
-        DbHelper db = new DbHelper();
-        db.CommandText = @"
-            SELECT *
-            FROM [OCA_OceanSubsidy].[dbo].[OFS_CLB_Application_Funds]
-            WHERE [ProjectID] = @ProjectID";
-
-        db.Parameters.Add("@ProjectID", projectID);
-
-        DataTable dt = db.GetTable();
-        db.Parameters.Clear();
-
-        if (dt.Rows.Count > 0)
-        {
-            DataRow row = dt.Rows[0];
-            return new OFS_CLB_Application_Funds
-            {
-                ProjectID = row["ProjectID"]?.ToString(),
-                SubsidyFunds = row["SubsidyFunds"] != DBNull.Value ? Convert.ToDecimal(row["SubsidyFunds"]) : (decimal?)null,
-                SelfFunds = row["SelfFunds"] != DBNull.Value ? Convert.ToDecimal(row["SelfFunds"]) : (decimal?)null,
-                OtherGovFunds = row["OtherGovFunds"] != DBNull.Value ? Convert.ToDecimal(row["OtherGovFunds"]) : (decimal?)null,
-                OtherUnitFunds = row["OtherUnitFunds"] != DBNull.Value ? Convert.ToDecimal(row["OtherUnitFunds"]) : (decimal?)null,
-                TotalFunds = row["TotalFunds"] != DBNull.Value ? Convert.ToDecimal(row["TotalFunds"]) : (decimal?)null,
-                PreviouslySubsidized = row["PreviouslySubsidized"] != DBNull.Value ? Convert.ToBoolean(row["PreviouslySubsidized"]) : (bool?)null,
-                FundingDescription = row["FundingDescription"]?.ToString()
-            };
-        }
-
-        return null;
-    }
+    
 
     /// <summary>
     /// 取得人員資料
@@ -462,6 +436,108 @@ public class OFS_ClbSnapshotHelper
 
         // 如果找不到記錄，返回 0
         return 0;
+    }
+
+    /// <summary>
+    /// 取得其他補助資料
+    /// </summary>
+    private static List<OFS_CLB_Other_Subsidy> GetOtherSubsidyData(string projectID)
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText = @"
+            SELECT *
+            FROM [OCA_OceanSubsidy].[dbo].[OFS_CLB_Other_Subsidy]
+            WHERE [ProjectID] = @ProjectID
+            ORDER BY [ID]";
+
+        db.Parameters.Add("@ProjectID", projectID);
+
+        DataTable dt = db.GetTable();
+        db.Parameters.Clear();
+
+        List<OFS_CLB_Other_Subsidy> otherSubsidyList = new List<OFS_CLB_Other_Subsidy>();
+
+        foreach (DataRow row in dt.Rows)
+        {
+            otherSubsidyList.Add(new OFS_CLB_Other_Subsidy
+            {
+                ID = row["ID"] != DBNull.Value ? Convert.ToInt32(row["ID"]) : 0,
+                ProjectID = row["ProjectID"]?.ToString(),
+                Unit = row["Unit"]?.ToString(),
+                Amount = row["Amount"] != DBNull.Value ? Convert.ToInt32(row["Amount"]) : (int?)null,
+                Content = row["Content"]?.ToString()
+            });
+        }
+
+        return otherSubsidyList;
+    }
+
+    /// <summary>
+    /// 取得經費預算規劃資料
+    /// </summary>
+    private static List<OFS_CLB_Budget_Plan> GetBudgetPlanData(string projectID)
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText = @"
+            SELECT *
+            FROM [OCA_OceanSubsidy].[dbo].[OFS_CLB_Budget_Plan]
+            WHERE [ProjectID] = @ProjectID
+            ORDER BY [ID]";
+
+        db.Parameters.Add("@ProjectID", projectID);
+
+        DataTable dt = db.GetTable();
+        db.Parameters.Clear();
+
+        List<OFS_CLB_Budget_Plan> budgetPlanList = new List<OFS_CLB_Budget_Plan>();
+
+        foreach (DataRow row in dt.Rows)
+        {
+            budgetPlanList.Add(new OFS_CLB_Budget_Plan
+            {
+                ID = row["ID"] != DBNull.Value ? Convert.ToInt32(row["ID"]) : 0,
+                ProjectID = row["ProjectID"]?.ToString(),
+                Title = row["Title"]?.ToString(),
+                Amount = row["Amount"] != DBNull.Value ? Convert.ToInt32(row["Amount"]) : (int?)null,
+                OtherAmount = row["OtherAmount"] != DBNull.Value ? Convert.ToInt32(row["OtherAmount"]) : (int?)null,
+                Description = row["Description"]?.ToString()
+            });
+        }
+
+        return budgetPlanList;
+    }
+
+    /// <summary>
+    /// 取得已獲補助資料
+    /// </summary>
+    private static List<OFS_CLB_Received_Subsidy> GetReceivedSubsidyData(string projectID)
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText = @"
+            SELECT *
+            FROM [OCA_OceanSubsidy].[dbo].[OFS_CLB_Received_Subsidy]
+            WHERE [ProjectID] = @ProjectID
+            ORDER BY [ID]";
+
+        db.Parameters.Add("@ProjectID", projectID);
+
+        DataTable dt = db.GetTable();
+        db.Parameters.Clear();
+
+        List<OFS_CLB_Received_Subsidy> receivedSubsidyList = new List<OFS_CLB_Received_Subsidy>();
+
+        foreach (DataRow row in dt.Rows)
+        {
+            receivedSubsidyList.Add(new OFS_CLB_Received_Subsidy
+            {
+                ID = row["ID"] != DBNull.Value ? Convert.ToInt32(row["ID"]) : 0,
+                ProjectID = row["ProjectID"]?.ToString(),
+                Name = row["Name"]?.ToString(),
+                Amount = row["Amount"] != DBNull.Value ? Convert.ToInt32(row["Amount"]) : 0
+            });
+        }
+
+        return receivedSubsidyList;
     }
 
     #endregion

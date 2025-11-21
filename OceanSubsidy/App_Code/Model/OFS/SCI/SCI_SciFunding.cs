@@ -84,6 +84,30 @@ public class TravelRow
     public decimal price { get; set; }
 }
 
+public class ForeignTravelRow
+{
+    [JsonProperty("country")]
+    public string country { get; set; }
+
+    [JsonProperty("topic")]
+    public string topic { get; set; }
+
+    [JsonProperty("days")]
+    public decimal days { get; set; }
+
+    [JsonProperty("people")]
+    public decimal people { get; set; }
+
+    [JsonProperty("transportFee")]
+    public decimal transportFee { get; set; }
+
+    [JsonProperty("livingFee")]
+    public decimal livingFee { get; set; }
+
+    [JsonProperty("conference")]
+    public string conference { get; set; }
+}
+
 public class OtherFeeRow
 {
     [JsonProperty("JobTitle")]

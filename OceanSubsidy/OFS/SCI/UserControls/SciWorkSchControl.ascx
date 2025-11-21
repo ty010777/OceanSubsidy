@@ -20,7 +20,9 @@
                                 <span class="input-group-text">至</span>
                                 <input id="endDate" name="endDate" type="text" class="form-control taiwan-date-picker" aria-label="計畫結束日期" placeholder="請選擇日期" readonly runat="server"/>
                             </div>
-                            <span class="text-dark-green2">(期程不可超過 115/04/30)</span>
+                            <% if (ShouldShowPlanEndDateHint) { %>
+                                <span class="text-dark-green2"><%= PlanEndDateHint %></span>
+                            <% } %>
                         </div>
                     </td>
                 </tr>

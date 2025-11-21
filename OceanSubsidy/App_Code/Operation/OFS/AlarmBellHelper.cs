@@ -202,11 +202,11 @@ public class AlarmBellHelper
 
             db.Parameters.Clear();
 
-            // 3. OFS_SCI_Project_Main (領域審查、技術審查)
+            // 3. OFS_SCI_Project_Main (實質審查、技術審查)
             db.CommandText = $@"
                 SELECT COUNT(ProjectID) AS Count
                 FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main]
-                WHERE (Statuses = '領域審查' OR Statuses = '技術審查')
+                WHERE (Statuses = '實質審查' OR Statuses = '技術審查')
                   AND StatusesName NOT LIKE '%結案%'{additionalCondition}";
 
             if (isSupervisor && !isSysAdmin)

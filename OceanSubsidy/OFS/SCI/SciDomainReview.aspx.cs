@@ -7,7 +7,7 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 
 /// <summary>
-/// 領域審查頁面
+/// 實質審查頁面
 /// </summary>
 public partial class OFS_SCI_SciDomainReview : System.Web.UI.Page
 {
@@ -64,8 +64,8 @@ public partial class OFS_SCI_SciDomainReview : System.Web.UI.Page
             string Status = "";
             switch (projectData["Status"].ToString())
             {
-                case "領域審查":
-                    Status = "領域審查";
+                case "實質審查":
+                    Status = "實質審查";
                     break;
                 case "技術審查":
                     Status = "技術審查";

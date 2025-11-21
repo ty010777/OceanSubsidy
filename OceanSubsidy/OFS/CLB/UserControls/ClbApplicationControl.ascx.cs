@@ -2022,17 +2022,6 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
                 }
             }
 
-            // 載入經費資訊
-            if (snapshotData.ApplicationFunds != null)
-            {
-                var fundsData = JsonConvert.DeserializeObject<OFS_CLB_Application_Funds>(
-                    snapshotData.ApplicationFunds.ToString()
-                );
-                if (fundsData != null)
-                {
-                    // PopulateFundsData(fundsData);
-                }
-            }
 
             // 載入檔案上傳狀態
             if (snapshotData.UploadFile != null)
@@ -2043,6 +2032,42 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
                 if (uploadFiles != null && uploadFiles.Count > 0)
                 {
                     PopulateUploadFileData(uploadFiles);
+                }
+            }
+
+            // 載入其他補助資料
+            if (snapshotData.OtherSubsidy != null)
+            {
+                var otherSubsidyList = JsonConvert.DeserializeObject<List<OFS_CLB_Other_Subsidy>>(
+                    snapshotData.OtherSubsidy.ToString()
+                );
+                if (otherSubsidyList != null && otherSubsidyList.Count > 0)
+                {
+                    PopulateOtherSubsidyData(otherSubsidyList);
+                }
+            }
+
+            // 載入經費預算規劃資料
+            if (snapshotData.BudgetPlan != null)
+            {
+                var budgetPlanList = JsonConvert.DeserializeObject<List<OFS_CLB_Budget_Plan>>(
+                    snapshotData.BudgetPlan.ToString()
+                );
+                if (budgetPlanList != null && budgetPlanList.Count > 0)
+                {
+                    PopulateBudgetPlanData(budgetPlanList);
+                }
+            }
+
+            // 載入已獲補助資料
+            if (snapshotData.ReceivedSubsidy != null)
+            {
+                var receivedSubsidyList = JsonConvert.DeserializeObject<List<OFS_CLB_Received_Subsidy>>(
+                    snapshotData.ReceivedSubsidy.ToString()
+                );
+                if (receivedSubsidyList != null && receivedSubsidyList.Count > 0)
+                {
+                    PopulateReceivedSubsidyData(receivedSubsidyList);
                 }
             }
 
@@ -2098,6 +2123,22 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
             txtCreationDate.Text = basicData.CreationDate.Value.ToMinguoDate();
             txtCreationDate.Attributes["data-gregorian-date"] = basicData.CreationDate.Value.ToString("yyyy/MM/dd");
         }
+
+        // 載入經費資料到前端 (使用 JavaScript)
+        string applyAmount = basicData.ApplyAmount?.ToString("N0") ?? "";
+        string selfAmount = basicData.SelfAmount?.ToString("N0") ?? "";
+        bool isPreviouslySubsidized = basicData.IsPreviouslySubsidized ?? false;
+
+        string script = $@"
+            if (typeof loadFundsData === 'function') {{
+                loadFundsData({{
+                    applyAmount: '{applyAmount}',
+                    selfAmount: '{selfAmount}',
+                    isPreviouslySubsidized: {isPreviouslySubsidized.ToString().ToLower()}
+                }});
+            }}
+        ";
+        Page.ClientScript.RegisterStartupScript(this.GetType(), "PopulateBasicDataFunds", script, true);
     }
 
     /// <summary>
@@ -2166,6 +2207,81 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
                 UpdateFileStatusUI(file.FileCode, file.FileName, file.TemplatePath, file.ID, isFirst);
                 isFirst = false;
             }
+        }
+    }
+
+    /// <summary>
+    /// 填入其他補助資料到表單
+    /// </summary>
+    private void PopulateOtherSubsidyData(List<OFS_CLB_Other_Subsidy> otherSubsidyList)
+    {
+        if (otherSubsidyList != null && otherSubsidyList.Count > 0)
+        {
+            // 將其他補助資料轉換為 JSON 並傳遞給前端
+            string otherSubsidyJson = JsonConvert.SerializeObject(otherSubsidyList.Select(s => new
+            {
+                ID = s.ID,
+                Unit = s.Unit,
+                Amount = s.Amount,
+                Content = s.Content
+            }).ToList());
+
+            string script = $@"
+                if (typeof loadOtherSubsidyData === 'function') {{
+                    loadOtherSubsidyData({otherSubsidyJson});
+                }}
+            ";
+            Page.ClientScript.RegisterStartupScript(this.GetType(), "PopulateOtherSubsidyData", script, true);
+        }
+    }
+
+    /// <summary>
+    /// 填入經費預算規劃資料到表單
+    /// </summary>
+    private void PopulateBudgetPlanData(List<OFS_CLB_Budget_Plan> budgetPlanList)
+    {
+        if (budgetPlanList != null && budgetPlanList.Count > 0)
+        {
+            // 將經費預算規劃資料轉換為 JSON 並傳遞給前端
+            string budgetPlanJson = JsonConvert.SerializeObject(budgetPlanList.Select(b => new
+            {
+                ID = b.ID,
+                Title = b.Title,
+                Amount = b.Amount,
+                OtherAmount = b.OtherAmount,
+                Description = b.Description
+            }).ToList());
+
+            string script = $@"
+                if (typeof loadBudgetPlanData === 'function') {{
+                    loadBudgetPlanData({budgetPlanJson});
+                }}
+            ";
+            Page.ClientScript.RegisterStartupScript(this.GetType(), "PopulateBudgetPlanData", script, true);
+        }
+    }
+
+    /// <summary>
+    /// 填入已獲補助資料到表單
+    /// </summary>
+    private void PopulateReceivedSubsidyData(List<OFS_CLB_Received_Subsidy> receivedSubsidyList)
+    {
+        if (receivedSubsidyList != null && receivedSubsidyList.Count > 0)
+        {
+            // 將已獲補助資料轉換為 JSON 並傳遞給前端
+            string receivedSubsidyJson = JsonConvert.SerializeObject(receivedSubsidyList.Select(r => new
+            {
+                ID = r.ID,
+                ProjectName = r.Name,
+                Amount = r.Amount
+            }).ToList());
+
+            string script = $@"
+                if (typeof loadFundingDescriptionData === 'function') {{
+                    loadFundingDescriptionData({receivedSubsidyJson});
+                }}
+            ";
+            Page.ClientScript.RegisterStartupScript(this.GetType(), "PopulateReceivedSubsidyData", script, true);
         }
     }
 

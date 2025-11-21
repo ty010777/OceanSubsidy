@@ -120,8 +120,8 @@ public class OFS_SciSnapshotHelper
             if (statusesName == "結案(未通過)") return 19;
         }
 
-        // 領域審查
-        if (statuses == "領域審查")
+        // 實質審查
+        if (statuses == "實質審查")
         {
             if (statusesName == "審核中") return 21;
             if (statusesName == "通過") return 22;

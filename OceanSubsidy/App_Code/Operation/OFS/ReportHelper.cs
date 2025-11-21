@@ -13,7 +13,7 @@ public class ReportHelper
         DbHelper db = new DbHelper();
 
         db.CommandText = @"
-          WITH StatusMapping AS (
+            WITH StatusMapping AS (
     SELECT '尚未提送' AS Statuses, '編輯中' AS StatusesName, 1 AS Status
     UNION ALL SELECT '資格審查', '審核中', 11
     UNION ALL SELECT '資格審查', '通過', 12
@@ -27,10 +27,10 @@ public class ReportHelper
     UNION ALL SELECT '內容審查', '補正補件', 14
     UNION ALL SELECT '內容審查', '逾期未補', 15
     UNION ALL SELECT '內容審查', '結案(未通過)', 19
-    UNION ALL SELECT '領域審查', '審核中', 21
-    UNION ALL SELECT '領域審查', '通過', 22
-    UNION ALL SELECT '領域審查', '不通過', 23
-    UNION ALL SELECT '領域審查', '結案(未通過)', 29
+    UNION ALL SELECT '實質審查', '審核中', 21
+    UNION ALL SELECT '實質審查', '通過', 22
+    UNION ALL SELECT '實質審查', '不通過', 23
+    UNION ALL SELECT '實質審查', '結案(未通過)', 29
     UNION ALL SELECT '技術審查', '審核中', 31
     UNION ALL SELECT '技術審查', '通過', 32
     UNION ALL SELECT '技術審查', '不通過', 33
@@ -200,8 +200,8 @@ public class ReportHelper
 						ProjectNameTw AS [ProjectName],
 						AB.[SchoolName] + AB.[ClubName] AS [OrgName],
 						ISNULL(PM.ApprovedSubsidy,0) AS ApprovedAmount,
-						ISNULL(AF.SubsidyFunds,0) AS ApplyAmount,
-						ISNULL(SelfFunds,0) + ISNULL(OtherGovFunds,0) + ISNULL(OtherUnitFunds,0) AS [OtherAmount],
+						ISNULL(AB.ApplyAmount,0) AS ApplyAmount,
+						ISNULL(AB.SelfAmount,0)  + ISNULL(AB.OtherAmount,0) AS [OtherAmount],
 						ISNULL(CP.TotalSpentAmount,0) AS SpendAmount,
 						ISNULL(CP.CurrentActualPaidAmount,0) AS PaymentAmount,
 						PM.SupervisoryUnit AS SupervisoryUnit,
@@ -211,7 +211,6 @@ public class ReportHelper
                         PM.[UserAccount]
 						 FROM OFS_CLB_Project_Main PM
 						 LEFT JOIN OFS_CLB_Application_Basic AB ON PM.ProjectID = AB.ProjectID
-						 LEFT JOIN OFS_CLB_Application_Funds AF ON PM.ProjectID = AF.ProjectID
 						 LEFT JOIN OFS_CLB_Payment CP ON CP.ProjectID = PM.ProjectID
 						 LEFT JOIN StatusMapping SM ON PM.Statuses = SM.Statuses and PM.StatusesName = SM.StatusesName
 						 WHERE PM.IsExist = 1 AND IsWithdrawal <> 1
@@ -277,11 +276,11 @@ public class ReportHelper
                     WHEN (O.Statuses = '資格審查' OR O.Statuses = '內容審查') AND O.StatusesName = '逾期未補' THEN 15
                     WHEN (O.Statuses = '資格審查' OR O.Statuses = '內容審查') AND O.StatusesName = '結案(未通過)' THEN 19
 
-                    -- 領域審查
-                    WHEN O.Statuses = '領域審查' AND O.StatusesName = '審核中' THEN 21
-                    WHEN O.Statuses = '領域審查' AND O.StatusesName = '通過' THEN 22
-                    WHEN O.Statuses = '領域審查' AND O.StatusesName = '不通過' THEN 23
-                    WHEN O.Statuses = '領域審查' AND O.StatusesName = '結案(未通過)' THEN 29
+                    -- 實質審查
+                    WHEN O.Statuses = '實質審查' AND O.StatusesName = '審核中' THEN 21
+                    WHEN O.Statuses = '實質審查' AND O.StatusesName = '通過' THEN 22
+                    WHEN O.Statuses = '實質審查' AND O.StatusesName = '不通過' THEN 23
+                    WHEN O.Statuses = '實質審查' AND O.StatusesName = '結案(未通過)' THEN 29
 
                     -- 技術審查
                     WHEN O.Statuses = '技術審查' AND O.StatusesName = '審核中' THEN 31

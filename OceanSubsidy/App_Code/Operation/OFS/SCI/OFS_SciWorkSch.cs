@@ -665,7 +665,87 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
         }
         
         #endregion
-        
+
+        #region 補助案類型查詢操作
+
+        /// <summary>
+        /// 查詢目前有效的 SCI 補助案計畫結束日期
+        /// </summary>
+        /// <returns>計畫結束日期 (DateTime)，若無符合條件則回傳 null</returns>
+        public static DateTime? GetCurrentSCIGrantTypePlanEndDate()
+        {
+            using (DbHelper db = new DbHelper())
+            {
+                try
+                {
+                    string sql = @"
+                        SELECT TOP(1) PlanEndDate
+                        FROM OFS_GrantType
+                        WHERE TypeCode = @TypeCode
+                        AND ApplyStartDate < @Today
+                        AND ApplyEndDate > @Today
+                        AND PlanEndDate  is not NULL
+                        ORDER BY ApplyStartDate DESC";
+
+                    db.CommandText = sql;
+                    db.Parameters.Clear();
+                    db.Parameters.Add("@TypeCode", "SCI");
+                    db.Parameters.Add("@Today", DateTime.Today);
+
+                    DataTable dt = db.GetTable();
+                    if (dt.Rows.Count > 0 && dt.Rows[0]["PlanEndDate"] != DBNull.Value)
+                    {
+                        return Convert.ToDateTime(dt.Rows[0]["PlanEndDate"]);
+                    }
+
+                    return null;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"GetCurrentSCIGrantTypePlanEndDate 發生錯誤: {ex.Message}");
+                    return null;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 查詢專案狀態
+        /// </summary>
+        /// <param name="projectId">計畫ID</param>
+        /// <returns>專案狀態 (例如: "尚未提送", "審查中"等)，若無資料則回傳空字串</returns>
+        public static string GetProjectStatus(string projectId)
+        {
+            using (DbHelper db = new DbHelper())
+            {
+                try
+                {
+                    string sql = @"
+                        SELECT Statuses
+                        FROM OFS_SCI_Project_Main
+                        WHERE ProjectID = @ProjectId";
+
+                    db.CommandText = sql;
+                    db.Parameters.Clear();
+                    db.Parameters.Add("@ProjectId", projectId);
+
+                    DataTable dt = db.GetTable();
+                    if (dt.Rows.Count > 0 && dt.Rows[0]["Statuses"] != DBNull.Value)
+                    {
+                        return dt.Rows[0]["Statuses"].ToString();
+                    }
+
+                    return "";
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"GetProjectStatus 發生錯誤: {ex.Message}");
+                    return "";
+                }
+            }
+        }
+
+        #endregion
+
         #region 查核點查詢操作
         
         /// <summary>

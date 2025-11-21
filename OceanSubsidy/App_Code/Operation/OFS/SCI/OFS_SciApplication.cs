@@ -64,6 +64,7 @@ public class OFS_SciApplicationHelper
     [CountryTech_Underwater],
     [CountryTech_Geology],
     [CountryTech_Physics],
+    [IsCoreOceanData],
     [OrgName],
     [OrgPartner],
     [RegisteredAddress],
@@ -94,6 +95,7 @@ VALUES
     @CountryTech_Underwater, -- 國家核心科技 水下研究
     @CountryTech_Geology,    -- 國家核心科技 海洋地質
     @CountryTech_Physics,    -- 國家核心科技 海洋物理
+    @IsCoreOceanData,        -- 是否涉及國家核心海洋資料項目
     @OrgName,                -- 申請單位
     @OrgPartner,             -- 共同執行單位
     @RegisteredAddress,      -- 登記地址
@@ -124,6 +126,7 @@ VALUES
         db.Parameters.Add("@CountryTech_Underwater", applicationData.CountryTech_Underwater);
         db.Parameters.Add("@CountryTech_Geology", applicationData.CountryTech_Geology);
         db.Parameters.Add("@CountryTech_Physics", applicationData.CountryTech_Physics);
+        db.Parameters.Add("@IsCoreOceanData", applicationData.IsCoreOceanData);
         db.Parameters.Add("@OrgName", applicationData.OrgName);
         db.Parameters.Add("@OrgPartner", applicationData.OrgPartner);
         db.Parameters.Add("@RegisteredAddress", applicationData.RegisteredAddress);
@@ -185,6 +188,7 @@ VALUES
             AddIfNotNull("CountryTech_Underwater", applicationData.CountryTech_Underwater);
             AddIfNotNull("CountryTech_Geology", applicationData.CountryTech_Geology);
             AddIfNotNull("CountryTech_Physics", applicationData.CountryTech_Physics);
+            AddIfNotNull("IsCoreOceanData", applicationData.IsCoreOceanData);
             AddIfNotNull("OrgName", applicationData.OrgName);
             AddIfNotNull("OrgPartner", applicationData.OrgPartner);
             AddIfNotNull("RegisteredAddress", applicationData.RegisteredAddress);
@@ -231,7 +235,7 @@ VALUES
     {
         DbHelper db = new DbHelper();
         db.CommandText = @"SELECT *
-    FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Application_Main] 
+    FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Application_Main]
     WHERE [ProjectID] = @ProjectID";
 
         db.Parameters.Clear();
@@ -264,6 +268,9 @@ VALUES
                         : null,
                     CountryTech_Physics = row["CountryTech_Physics"] != DBNull.Value
                         ? (bool?)row["CountryTech_Physics"]
+                        : null,
+                    IsCoreOceanData = row["IsCoreOceanData"] != DBNull.Value
+                        ? (bool?)row["IsCoreOceanData"]
                         : null,
                     OrgName = row["OrgName"]?.ToString(),
                     OrgPartner = row["OrgPartner"]?.ToString(),
@@ -341,7 +348,7 @@ VALUES
     {
         DbHelper db = new DbHelper();
         db.CommandText = @"
-        SELECT TOP(1) * 
+        SELECT TOP(1) *
         FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Application_Main]
         where Year = @Year
         order by Serial Desc ";
@@ -376,6 +383,9 @@ VALUES
                         : null,
                     CountryTech_Physics = row["CountryTech_Physics"] != DBNull.Value
                         ? (bool?)row["CountryTech_Physics"]
+                        : null,
+                    IsCoreOceanData = row["IsCoreOceanData"] != DBNull.Value
+                        ? (bool?)row["IsCoreOceanData"]
                         : null,
                     OrgName = row["OrgName"]?.ToString(),
                     OrgPartner = row["OrgPartner"]?.ToString(),

@@ -297,7 +297,7 @@ public class DownloadApplicationChecklistFile : IHttpHandler
                 string reviewStageTypeName = "";
                 if (projectId.Contains("SCI"))
                 {
-                    reviewStageTypeName = reviewType == "domain" ? "領域審查" : "技術審查";
+                    reviewStageTypeName = reviewType == "domain" ? "實質審查" : "技術審查";
                 }
                 else if (projectId.Contains("CUL"))
                 {
@@ -326,7 +326,7 @@ public class DownloadApplicationChecklistFile : IHttpHandler
             string downloadFileTypeName = "";
             if (projectId.Contains("SCI"))
             {
-                downloadFileTypeName = reviewType == "domain" ? "領域審查意見回覆表" : "技術審查意見回覆表";
+                downloadFileTypeName = reviewType == "domain" ? "實質審查意見回覆表" : "技術審查意見回覆表";
             }
             else if (projectId.Contains("CUL"))
             {
@@ -334,7 +334,7 @@ public class DownloadApplicationChecklistFile : IHttpHandler
             }
             else
             {
-                downloadFileTypeName = reviewType == "domain" ? "領域審查意見回覆表" : "技術審查意見回覆表"; // 預設值
+                downloadFileTypeName = reviewType == "domain" ? "實質審查意見回覆表" : "技術審查意見回覆表"; // 預設值
             }
 
             string downloadFileName = $"{projectId}_{downloadFileTypeName}_{DateTime.Now:yyyyMMdd}.docx";
@@ -358,7 +358,7 @@ public class DownloadApplicationChecklistFile : IHttpHandler
         catch (Exception ex)
         {
             context.Response.StatusCode = 500;
-            context.Response.Write($"匯出領域審查意見回覆表時發生錯誤: {ex.Message}");
+            context.Response.Write($"匯出實質審查意見回覆表時發生錯誤: {ex.Message}");
         }
     }
 
@@ -382,7 +382,7 @@ public class DownloadApplicationChecklistFile : IHttpHandler
                 // 根據 reviewType 決定查詢哪種審查意見
                 if (reviewType == "domain")
                 {
-                    // 只查詢領域審查意見
+                    // 只查詢實質審查意見
                     var domainCommentsTable = ReviewCheckListHelper.GetSciReviewComments(projectId, stage1);
                     if (domainCommentsTable != null && domainCommentsTable.Rows.Count > 0)
                     {
@@ -393,7 +393,7 @@ public class DownloadApplicationChecklistFile : IHttpHandler
                                 ReviewerName = row["ReviewerName"]?.ToString() ?? "",
                                 ReviewComment = row["ReviewComment"]?.ToString() ?? "",
                                 ReplyComment = row["ReplyComment"]?.ToString() ?? "",
-                                Stage = "領域審查"
+                                Stage = "實質審查"
                             });
                         }
                     }
@@ -499,7 +499,7 @@ public class DownloadApplicationChecklistFile : IHttpHandler
                 string reviewTypeName = "";
                 if (projectData.ProjectID != null && projectData.ProjectID.Contains("SCI"))
                 {
-                    reviewTypeName = reviewType == "domain" ? "領域審查" : "技術審查";
+                    reviewTypeName = reviewType == "domain" ? "實質審查" : "技術審查";
                 }
                 else if (projectData.ProjectID != null && projectData.ProjectID.Contains("CUL"))
                 {
@@ -507,7 +507,7 @@ public class DownloadApplicationChecklistFile : IHttpHandler
                 }
                 else
                 {
-                    reviewTypeName = reviewType == "domain" ? "領域審查" : "技術審查"; // 預設值
+                    reviewTypeName = reviewType == "domain" ? "實質審查" : "技術審查"; // 預設值
                 }
 
                 placeholder.Add("{UserName}", projectData.UserName ?? "");

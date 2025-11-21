@@ -9,7 +9,7 @@ using System.Web;
 using GS.OCA_OceanSubsidy.Operation.OFS;
 
 /// <summary>
-/// 領域審查頁面
+/// 實質審查頁面
 /// </summary>
 public partial class OFS_SCI_SciExamReview : System.Web.UI.Page
 {

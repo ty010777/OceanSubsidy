@@ -24,7 +24,7 @@ public class OFS_SciFundingHelper
         db.CommandText = @"
         SELECT *
         FROM Sys_ZgsCode
-        WHERE CodeGroup = @CodeGroup
+        WHERE CodeGroup = @CodeGroup and IsValid='1'
         ORDER BY OrderNo";
 
         db.Parameters.Clear();
@@ -221,7 +221,7 @@ public class OFS_SciFundingHelper
                     (ProjectID, TripReason, Area, Days, Times, Price)
                     VALUES
                     (@ProjectID, @TripReason, @Area, @Days, @Times, @Price)";
-                
+
                     db.Parameters.Clear();
                     db.Parameters.Add("@ProjectID", ProjectID);
                     db.Parameters.Add("@TripReason", row.reason ?? "");
@@ -239,6 +239,46 @@ public class OFS_SciFundingHelper
             }
         }
     }
+
+    public static void ReplaceAbroadTripForm(List<ForeignTravelRow> abroadTripList, string ProjectID)
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            try
+            {
+                db.CommandText = @"DELETE FROM OFS_SCI_PersonnelCost_AbroadTrip WHERE ProjectID = @ProjectID";
+                db.Parameters.Clear();
+                db.Parameters.Add("@ProjectID", ProjectID);
+                db.ExecuteNonQuery();
+
+                foreach (var row in abroadTripList)
+                {
+                    db.CommandText = @"
+                    INSERT INTO OFS_SCI_PersonnelCost_AbroadTrip
+                    (ProjectID, Area, Topic, Day, People, TravelPrice, LivingPrice, Content)
+                    VALUES
+                    (@ProjectID, @Area, @Topic, @Day, @People, @TravelPrice, @LivingPrice, @Content)";
+
+                    db.Parameters.Clear();
+                    db.Parameters.Add("@ProjectID", ProjectID);
+                    db.Parameters.Add("@Area", row.country ?? "");
+                    db.Parameters.Add("@Topic", row.topic ?? "");
+                    db.Parameters.Add("@Day", row.days);
+                    db.Parameters.Add("@People", row.people);
+                    db.Parameters.Add("@TravelPrice", row.transportFee);
+                    db.Parameters.Add("@LivingPrice", row.livingFee);
+                    db.Parameters.Add("@Content", row.conference ?? "");
+
+                    db.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"儲存國外差旅費時發生錯誤: {ex.Message}", ex);
+            }
+        }
+    }
+
     public static void ReplaceOtherPersonFee(List<OtherFeeRow> feeList, string ProjectID)
     {
         using (DbHelper db = new DbHelper())
@@ -513,13 +553,13 @@ public class OFS_SciFundingHelper
                 FROM OFS_SCI_PersonnelCost_TripForm
                 WHERE ProjectID = @ProjectID
                 ORDER BY TripReason";
-                
+
                 db.Parameters.Clear();
                 db.Parameters.Add("@ProjectID", ProjectID);
-                
+
                 DataTable dt = db.GetTable();
                 List<TravelRow> travelList = new List<TravelRow>();
-                
+
                 foreach (DataRow row in dt.Rows)
                 {
                     var travel = new TravelRow
@@ -532,12 +572,54 @@ public class OFS_SciFundingHelper
                     };
                     travelList.Add(travel);
                 }
-                
+
                 return travelList;
             }
             catch (Exception ex)
             {
                 throw new Exception($"讀取差旅費資料時發生錯誤: {ex.Message}", ex);
+            }
+        }
+    }
+
+    public static List<ForeignTravelRow> GetAbroadTripFormList(string ProjectID)
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            try
+            {
+                db.CommandText = @"
+                SELECT ProjectID, Area, Topic, Day, People, TravelPrice, LivingPrice, Content
+                FROM OFS_SCI_PersonnelCost_AbroadTrip
+                WHERE ProjectID = @ProjectID
+                ORDER BY Area";
+
+                db.Parameters.Clear();
+                db.Parameters.Add("@ProjectID", ProjectID);
+
+                DataTable dt = db.GetTable();
+                List<ForeignTravelRow> foreignTravelList = new List<ForeignTravelRow>();
+
+                foreach (DataRow row in dt.Rows)
+                {
+                    var foreignTravel = new ForeignTravelRow
+                    {
+                        country = row["Area"]?.ToString() ?? "",
+                        topic = row["Topic"]?.ToString() ?? "",
+                        days = row["Day"] != DBNull.Value ? Convert.ToDecimal(row["Day"]) : 0,
+                        people = row["People"] != DBNull.Value ? Convert.ToDecimal(row["People"]) : 0,
+                        transportFee = row["TravelPrice"] != DBNull.Value ? Convert.ToDecimal(row["TravelPrice"]) : 0,
+                        livingFee = row["LivingPrice"] != DBNull.Value ? Convert.ToDecimal(row["LivingPrice"]) : 0,
+                        conference = row["Content"]?.ToString() ?? ""
+                    };
+                    foreignTravelList.Add(foreignTravel);
+                }
+
+                return foreignTravelList;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"讀取國外差旅費資料時發生錯誤: {ex.Message}", ex);
             }
         }
     }

@@ -55,7 +55,7 @@ public class DownloadReviewChecklistFile : IHttpHandler
 
                     break;
 
-                case "2": // 領域審查/初審
+                case "2": // 實質審查/初審
                     switch (exportType)
                     {
                         case "applicationPdf":
@@ -179,7 +179,7 @@ public class DownloadReviewChecklistFile : IHttpHandler
         switch (type)
         {
             case "1": return "資格審查";
-            case "2": return "領域審查.初審";
+            case "2": return "實質審查.初審";
             case "3": return "技術審查.複審";
             case "4": return "決審核定";
             default: return "審查";

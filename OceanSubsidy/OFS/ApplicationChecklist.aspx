@@ -712,8 +712,8 @@
 
 
                     <div class="d-flex justify-content-between">
-                        <h5 class="square-title">領域審查意見回覆</h5>
-                        <button class="btn btn-teal-dark" type="button" onclick="exportReviewCommentReply('domain')"><i class="fas fa-download"></i>匯出領域審查意見回覆表</button>
+                        <h5 class="square-title">實質審查意見回覆</h5>
+                        <button class="btn btn-teal-dark" type="button" onclick="exportReviewCommentReply('domain')"><i class="fas fa-download"></i>匯出實質審查意見回覆表</button>
                     </div>
                     <div class="table-responsive mt-3">
                         <table class="table align-middle gray-table lh-base">
@@ -725,7 +725,7 @@
                                 </tr>
                             </thead>
                             <tbody id="domainReviewCommentsTableBody">
-                                <!-- 領域審查動態內容將在這裡插入 -->
+                                <!-- 實質審查動態內容將在這裡插入 -->
                             </tbody>
                         </table>
                     </div>

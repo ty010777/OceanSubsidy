@@ -381,7 +381,6 @@ public class CLB_download : IHttpHandler
 
         OFS_CLB_Application_Plan plan = OFS_ClbApplicationHelper.GetPlanData(projectID);
         List<OFS_CLB_Application_Personnel> Personnel = OFS_ClbApplicationHelper.GetPersonnelData(projectID);
-        OFS_CLB_Application_Funds Funds = OFS_ClbApplicationHelper.GetFundsData(projectID);
         OFS_CLB_Application_Basic Basic = OFS_ClbApplicationHelper.GetBasicData(projectID);
         // 根據 templateType 決定是否需要加工
         switch (templateType)

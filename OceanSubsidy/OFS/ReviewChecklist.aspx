@@ -44,7 +44,7 @@
         </li>
         <li class="total-item" id="total-item-2">
             <a href="javascript:void(0)" onclick="ReviewChecklist.switchReviewType(2)">
-                <div class="total-item-title">領域審查/初審</div>
+                <div class="total-item-title">實質審查/初審</div>
                 <div class="total-item-content">
                     <span class="count">0</span>
                     <span class="unit">件</span>
@@ -324,7 +324,7 @@
         </div>
     </div>
     <!-- 搜尋表單 -->
-    <!-- 類型2：領域審查/初審 -->
+    <!-- 類型2：實質審查/初審 -->
     <div id="content-type-2" class="review-content" style="display: none;">
         <div class="search bg-light-teal-100 rounded-0">
             <!-- 查詢表單 -->
@@ -1175,7 +1175,7 @@
            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
                <div class="modal-content">
                    <div class="modal-header">
-                       <h4 class="fs-24 fw-bold text-green-light">審查結果與意見回覆 - 領域審查/初審</h4>
+                       <h4 class="fs-24 fw-bold text-green-light">審查結果與意見回覆 - 實質審查/初審</h4>
                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                            <i class="fa-solid fa-circle-xmark"></i>
                        </button>
@@ -1496,51 +1496,64 @@
                   </button>
               </div>
               <div class="modal-body">
-                  <!-- 領域選擇 -->
+                  <!-- 設置審查人員開關 -->
                   <div class="mb-4">
-                      <div class="fs-16 text-gray mb-2">選擇領域</div>
-                      <select id="ddlSubjectType" class="form-select" onchange="loadReviewersBySubject()">
-                          <option value="">請選擇領域</option>
-                      </select>
+                      <div class="form-check">
+                          <input class="form-check-input check-teal" type="checkbox" id="chkEnableReviewerSetup" onchange="toggleReviewerSetup()">
+                          <label class="form-check-label fs-16" for="chkEnableReviewerSetup">
+                              需邀請審查委員進行審查（目前僅科專類、文化類）
+                          </label>
+                      </div>
                   </div>
 
-                  <!-- 雙清單選擇器 -->
-                  <div class="row g-3">
-                      <!-- A清單：可選擇的審查委員 -->
-                      <div class="col-12 col-md-5">
-                          <div class="d-flex justify-content-between align-items-center mb-2">
-                              <span class="fs-16 text-gray">可選擇的審查委員</span>
-                              <span class="badge bg-teal" id="availableCount">0</span>
-                          </div>
-                          <div class="border rounded p-2" style="height: 400px; overflow-y: auto;">
-                              <div id="availableReviewersList">
-                                  <div class="text-center text-muted py-5">
-                                      請先選擇領域
+                  <!-- 審查人員設置區域 (預設隱藏) -->
+                  <div id="reviewerSetupArea" style="display: none;">
+                      <!-- 領域選擇 -->
+                      <div class="mb-4">
+                          <div class="fs-16 text-gray mb-2">選擇領域</div>
+                          <select id="ddlSubjectType" class="form-select" onchange="loadReviewersBySubject()">
+                              <option value="">請選擇領域</option>
+                          </select>
+                      </div>
+
+                      <!-- 雙清單選擇器 -->
+                      <div class="row g-3">
+                          <!-- A清單：可選擇的審查委員 -->
+                          <div class="col-12 col-md-5">
+                              <div class="d-flex justify-content-between align-items-center mb-2">
+                                  <span class="fs-16 text-gray">可選擇的審查委員</span>
+                                  <span class="badge bg-teal" id="availableCount">0</span>
+                              </div>
+                              <div class="border rounded p-2" style="height: 400px; overflow-y: auto;">
+                                  <div id="availableReviewersList">
+                                      <div class="text-center text-muted py-5">
+                                          請先選擇領域
+                                      </div>
                                   </div>
                               </div>
                           </div>
-                      </div>
 
-                      <!-- 中間操作按鈕 -->
-                      <div class="col-12 col-md-2 d-flex flex-column justify-content-center align-items-center gap-2">
-                          <button type="button" class="btn btn-teal" onclick="addSelectedReviewers()" title="加入">
-                              <i class="fa-solid fa-chevron-right"></i>
-                          </button>
-                          <button type="button" class="btn btn-pink" onclick="removeSelectedReviewers()" title="移除">
-                              <i class="fa-solid fa-chevron-left"></i>
-                          </button>
-                      </div>
-
-                      <!-- B清單：已選擇的審查委員 -->
-                      <div class="col-12 col-md-5">
-                          <div class="d-flex justify-content-between align-items-center mb-2">
-                              <span class="fs-16 text-gray">已選擇的審查委員</span>
-                              <span class="badge bg-pink" id="selectedCount">0</span>
+                          <!-- 中間操作按鈕 -->
+                          <div class="col-12 col-md-2 d-flex flex-column justify-content-center align-items-center gap-2">
+                              <button type="button" class="btn btn-teal" onclick="addSelectedReviewers()" title="加入">
+                                  <i class="fa-solid fa-chevron-right"></i>
+                              </button>
+                              <button type="button" class="btn btn-pink" onclick="removeSelectedReviewers()" title="移除">
+                                  <i class="fa-solid fa-chevron-left"></i>
+                              </button>
                           </div>
-                          <div class="border rounded p-2" style="height: 400px; overflow-y: auto;">
-                              <div id="selectedReviewersList">
-                                  <div class="text-center text-muted py-5">
-                                      尚未選擇審查委員
+
+                          <!-- B清單：已選擇的審查委員 -->
+                          <div class="col-12 col-md-5">
+                              <div class="d-flex justify-content-between align-items-center mb-2">
+                                  <span class="fs-16 text-gray">已選擇的審查委員</span>
+                                  <span class="badge bg-pink" id="selectedCount">0</span>
+                              </div>
+                              <div class="border rounded p-2" style="height: 400px; overflow-y: auto;">
+                                  <div id="selectedReviewersList">
+                                      <div class="text-center text-muted py-5">
+                                          尚未選擇審查委員
+                                      </div>
                                   </div>
                               </div>
                           </div>
@@ -1549,7 +1562,7 @@
               </div>
               <div class="modal-footer">
                   <button type="button" class="btn btn-gray" data-bs-dismiss="modal">取消</button>
-                  <button type="button" class="btn btn-teal" onclick="confirmReviewerSetup()">設置完成，轉入下一階段</button>
+                  <button type="button" class="btn btn-teal" onclick="confirmReviewerSetup()">確定轉入下一階段</button>
               </div>
           </div>
       </div>
@@ -1572,6 +1585,10 @@
             availableReviewers = [];
             selectedReviewers = [];
 
+            // 重置 checkbox 狀態
+            $('#chkEnableReviewerSetup').prop('checked', false);
+            $('#reviewerSetupArea').hide();
+
             // 清空下拉選單
             $('#ddlSubjectType').empty().append('<option value="">請選擇領域</option>');
 
@@ -1589,6 +1606,28 @@
             // 顯示 modal
             var modal = new bootstrap.Modal(document.getElementById('reviewerSetupModal'));
             modal.show();
+        }
+
+        // 切換審查人員設置區域的顯示/隱藏
+        function toggleReviewerSetup() {
+            var isChecked = $('#chkEnableReviewerSetup').is(':checked');
+
+            if (isChecked) {
+                $('#reviewerSetupArea').slideDown(300);
+            } else {
+                $('#reviewerSetupArea').slideUp(300);
+
+                // 隱藏時清空已選擇的審查委員
+                selectedReviewers = [];
+                renderSelectedReviewers();
+
+                // 重置領域下拉選單
+                $('#ddlSubjectType').val('');
+
+                // 清空 A清單
+                $('#availableReviewersList').html('<div class="text-center text-muted py-5">請先選擇領域</div>');
+                $('#availableCount').text('0');
+            }
         }
 
         // 載入領域下拉選單

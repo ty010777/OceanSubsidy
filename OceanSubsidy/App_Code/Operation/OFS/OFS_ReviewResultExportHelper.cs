@@ -133,7 +133,7 @@ public class OFS_ReviewResultExportHelper
     /// </summary>
     private static DataTable SCI_BuildReviewResultQuery(string field, string reviewStage)
     {
-        string Statuses = reviewStage == "2" ? "領域審查" : "技術審查";
+        string Statuses = reviewStage == "2" ? "實質審查" : "技術審查";
         DbHelper db = new DbHelper();
         string sql = @"
            -- 建立臨時表存 Pivoted 資料

@@ -636,64 +636,7 @@ public class ApplicationChecklistHelper
             db.Dispose();
         }
     }
-
-    /// <summary>
-    /// 取得當前的審查階段
-    /// </summary>
-    /// <param name="projectId">計畫ID</param>
-    /// <returns>審查階段</returns>
-    public static string GetCurrentReviewStage(string projectId)
-    {
-        DbHelper db = new DbHelper();
-
-        try
-        {
-            // 根據 ProjectID 判斷計畫類型並查詢對應的表格
-            if (projectId.Contains("SCI"))
-            {
-                db.CommandText = @"SELECT [Statuses]
-                                  FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main]
-                                  WHERE ProjectID = @ProjectID";
-            }
-            else if (projectId.Contains("CUL"))
-            {
-                // TODO: 文化計畫審查階段查詢的 SQL
-                // TODO: 查詢文化計畫的 Project_Main 表
-                return "領域審查"; // 預設
-            }
-            else
-            {
-                return "領域審查"; // 預設
-            }
-
-            db.Parameters.Clear();
-            db.Parameters.Add("@ProjectID", projectId);
-
-            DataTable dt = db.GetTable();
-            if (dt != null && dt.Rows.Count > 0)
-            {
-                string statuses = dt.Rows[0]["Statuses"]?.ToString();
-
-                // 根據 Statuses 決定 ReviewStage
-                if (!string.IsNullOrEmpty(statuses))
-                {
-                    if (statuses.Contains("領域審查")) return "領域審查";
-                    if (statuses.Contains("技術審查")) return "技術審查";
-                }
-            }
-
-            return "領域審查"; // 預設
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"取得審查階段時發生錯誤：{ex.Message}");
-            return "領域審查"; // 預設
-        }
-        finally
-        {
-            db.Dispose();
-        }
-    }
+    
 
     public static void UpdateReplyContent(string ReviewID, string ReplyComment)
     {

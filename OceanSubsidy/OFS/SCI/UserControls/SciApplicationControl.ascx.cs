@@ -302,15 +302,23 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
                 result.AddError("請選擇主題");
             }
 
-            if (ddlField.SelectedIndex <= 0)
-            {
-                result.AddError("請選擇領域");
-            }
+            // 2025-01-20: 領域欄位已隱藏,不再驗證
+            //if (ddlField.SelectedIndex <= 0)
+            //{
+            //    result.AddError("請選擇領域");
+            //}
 
-            // 檢查國家核心科技
-            if (!IsNationalCoreTechSelected())
+            // 2025-01-20: 國家核心科技欄位已隱藏,不再驗證
+            //// 檢查國家核心科技
+            //if (!IsNationalCoreTechSelected())
+            //{
+            //    result.AddError("請選擇是否屬於國家核心科技");
+            //}
+
+            // 檢查是否涉及國家核心海洋資料項目
+            if (!IsCoreOceanDataSelected())
             {
-                result.AddError("請選擇是否屬於國家核心科技");
+                result.AddError("請選擇是否涉及國家核心海洋資料項目");
             }
 
             if (string.IsNullOrWhiteSpace(txtOrgName.Text))
@@ -615,23 +623,29 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
             SetDropDownValue(ddlField, data.Field);
         }
 
-        // 設定國家核心科技選項
-        if (data.CountryTech_Underwater.HasValue)
+        // 2025-11-20 : 國家核心科技欄位已隱藏,不再設定
+        // if (data.CountryTech_Underwater.HasValue)
+        // {
+        //     rbUnderwaterYes.Checked = data.CountryTech_Underwater.Value;
+        //     rbUnderwaterNo.Checked = !data.CountryTech_Underwater.Value;
+        // }
+        // if (data.CountryTech_Geology.HasValue)
+        // {
+        //     rbMarineYes.Checked = data.CountryTech_Geology.Value;
+        //     rbMarineNo.Checked = !data.CountryTech_Geology.Value;
+        // }
+        //
+        // if (data.CountryTech_Physics.HasValue)
+        // {
+        //     rbPhysicsYes.Checked = data.CountryTech_Physics.Value;
+        //     rbPhysicsNo.Checked = !data.CountryTech_Physics.Value;
+        // }
+        //
+        // 設定是否涉及國家核心海洋資料項目
+        if (data.IsCoreOceanData.HasValue)
         {
-            rbUnderwaterYes.Checked = data.CountryTech_Underwater.Value;
-            rbUnderwaterNo.Checked = !data.CountryTech_Underwater.Value;
-        }
-
-        if (data.CountryTech_Geology.HasValue)
-        {
-            rbMarineYes.Checked = data.CountryTech_Geology.Value;
-            rbMarineNo.Checked = !data.CountryTech_Geology.Value;
-        }
-
-        if (data.CountryTech_Physics.HasValue)
-        {
-            rbPhysicsYes.Checked = data.CountryTech_Physics.Value;
-            rbPhysicsNo.Checked = !data.CountryTech_Physics.Value;
+            rbCoreOceanDataYes.Checked = data.IsCoreOceanData.Value;
+            rbCoreOceanDataNo.Checked = !data.IsCoreOceanData.Value;
         }
 
         txtOrgName.Text = data.OrgName;
@@ -776,10 +790,13 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
         applicationData.ProjectNameEn = txtProjectNameEn.Text.Trim();
         applicationData.OrgCategory = ddlApplicationType.SelectedValue;
         applicationData.Topic = ddlTopic.SelectedValue;
-        applicationData.Field = ddlField.SelectedValue;
-        applicationData.CountryTech_Underwater = GetRadioButtonValue("Underwater");
-        applicationData.CountryTech_Geology = GetRadioButtonValue("Marine");
-        applicationData.CountryTech_Physics = GetRadioButtonValue("Physics");
+        // 2025-01-20: 領域欄位已隱藏,固定給空字串
+        applicationData.Field = ""; // ddlField.SelectedValue;
+        // 2025-01-20: 國家核心科技欄位已隱藏,固定給 NULL
+        applicationData.CountryTech_Underwater = null; // GetRadioButtonValue("Underwater");
+        applicationData.CountryTech_Geology = null; // GetRadioButtonValue("Marine");
+        applicationData.CountryTech_Physics = null; // GetRadioButtonValue("Physics");
+        applicationData.IsCoreOceanData = GetRadioButtonValue("CoreOceanData");
         applicationData.OrgName = txtOrgName.Text.Trim();
         applicationData.RegisteredAddress = txtRegisteredAddress.Text.Trim();
         applicationData.CorrespondenceAddress = txtCorrespondenceAddress.Text.Trim();
@@ -898,6 +915,10 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
                 if (rbPhysicsYes.Checked) return true;
                 if (rbPhysicsNo.Checked) return false;
                 break;
+            case "CoreOceanData":
+                if (rbCoreOceanDataYes.Checked) return true;
+                if (rbCoreOceanDataNo.Checked) return false;
+                break;
         }
         return null;
     }
@@ -910,6 +931,14 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
         return (rbUnderwaterYes.Checked || rbUnderwaterNo.Checked) &&
                (rbMarineYes.Checked || rbMarineNo.Checked) &&
                (rbPhysicsYes.Checked || rbPhysicsNo.Checked);
+    }
+
+    /// <summary>
+    /// 檢查是否已選擇是否涉及國家核心海洋資料項目
+    /// </summary>
+    private bool IsCoreOceanDataSelected()
+    {
+        return rbCoreOceanDataYes.Checked || rbCoreOceanDataNo.Checked;
     }
 
     /// <summary>

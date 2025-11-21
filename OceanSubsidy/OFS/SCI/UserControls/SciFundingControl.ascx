@@ -5,6 +5,7 @@
 <asp:HiddenField ID="hdnPersonnelData" runat="server" ClientIDMode="Static" />
 <asp:HiddenField ID="hdnMaterialData" runat="server" ClientIDMode="Static" />
 <asp:HiddenField ID="hdnTravelData" runat="server" ClientIDMode="Static" />
+<asp:HiddenField ID="hdnForeignTravelData" runat="server" ClientIDMode="Static" />
 <asp:HiddenField ID="hdnOtherData" runat="server" ClientIDMode="Static" />
 <asp:HiddenField ID="hdnOtherRentData" runat="server" ClientIDMode="Static" />
 <asp:HiddenField ID="hdnTotalFeesData" runat="server" ClientIDMode="Static" />
@@ -15,7 +16,8 @@
         <a href="#point1" class="anchor-menu-item">1.海洋科技研發人員人事費明細表</a>
         <a href="#point2" class="anchor-menu-item">2.消耗性器材及原材料費</a>
         <a href="#point3" class="anchor-menu-item">3.技術移轉、委託研究或驗證費</a>
-        <a href="#point4" class="anchor-menu-item">4.國內差旅費</a>
+        <a href="#point4" class="anchor-menu-item">4-1.國內差旅費</a>
+        <a href="#point4-2" class="anchor-menu-item">4-2.國外差旅費</a>
         <a href="#point5" class="anchor-menu-item">5.其他業務費</a>
         <a href="#point6" class="anchor-menu-item">【經費總表】</a>
     </div>
@@ -236,7 +238,7 @@
     </div>
 
     <div id="point4">
-        <h5 class="square-title mt-5">4.國內差旅費</h5>
+        <h5 class="square-title mt-5">4-1.國內差旅費</h5>
         <div class="table-responsive mt-3 mb-0">
             <table class="table align-middle gray-table travel" id="travelTable">
                 <thead>
@@ -283,10 +285,73 @@
 
         <ul class="list-unstyled lh-base">
             <li>1.限為海洋科技執行計畫需要，於計畫執行期間內，派遣本計畫研發人員之出差地點應為國內技術轉移對象、委外測試或驗證機構、委託研究對象之所在地。出差事由應與國內技術移轉、委外測試或驗證、委託研究及參與計畫補助單位認可之特定公務相關。</li>
-            <li>2.應依<a href="#" class="link-teal">附件十海洋科技專案計畫會計科目編列與執行原則</a>之規定辦理。</li>
+            <li>2.應依<a href="" class="link-teal">附件十海洋科技專案計畫會計科目編列與執行原則</a>之規定辦理。</li>
             <li>3.差旅費不得超過計畫總經費之1.5%。</li>
             <li>4.若有共同執行單位(企業)經費投入請編列至配合款，並於本表備註為共同執行單位之費用。</li>
             <li>5.本會計科目之編列不含營業稅。</li>
+        </ul>
+    </div>
+    <div id="point4-2">
+        <h5 class="square-title mt-5">4-2.國外差旅費</h5>
+        <div class="table-responsive mt-3 mb-0">
+            <table class="table align-middle gray-table foreignTravel" id="foreignTravelTable">
+                <thead>
+                <tr>
+                    <th width="150">擬前往國家或地區</th>
+                    <th width="250">主要會議議題</th>
+                    <th width="100" class="text-center">預計天數</th>
+                    <th width="100" class="text-center">擬派人數</th>
+                    <th width="150" class="text-end">交通費(元)</th>
+                    <th width="150" class="text-end">生活費(元)</th>
+                    <th width="150" class="text-end">合計(元)</th>
+                    <th width="250">計畫主持人近三年參加國外舉辦之<br>國際學術會議論文之發表情形</th>
+                    <th width="130">操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>
+                        <asp:TextBox ID="foreignCountry1" runat="server" CssClass="form-control" placeholder="請輸入" />
+                    </td>
+                    <td>
+                        <asp:TextBox ID="foreignTopic1" runat="server" CssClass="form-control" placeholder="請輸入" />
+                    </td>
+                    <td>
+                        <asp:TextBox ID="foreignDays1" runat="server" ClientIDMode="Static" CssClass="form-control text-center" Text="0" onkeypress="return event.charCode != 45" />
+                    </td>
+                    <td>
+                        <asp:TextBox ID="foreignPeople1" runat="server" ClientIDMode="Static" CssClass="form-control text-center" Text="0" onkeypress="return event.charCode != 45" />
+                    </td>
+                    <td>
+                        <asp:TextBox ID="foreignTransportFee1" runat="server" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onkeypress="return event.charCode != 45" onblur="calculateForeignTravel()" />
+                    </td>
+                    <td>
+                        <asp:TextBox ID="foreignLivingFee1" runat="server" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onkeypress="return event.charCode != 45" onblur="calculateForeignTravel()" />
+                    </td>
+                    <td class="text-end">0</td>
+                    <td>
+                        <asp:TextBox ID="foreignConference1" runat="server" CssClass="form-control" TextMode="MultiLine" Rows="2" placeholder="請輸入" />
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-teal" onclick="FT_addRow()">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </td>
+                </tr>
+                <tr class="total-row">
+                    <td colspan="6">合計</td>
+                    <td class="text-end" id="foreignTravelTotal">0</td>
+                    <td colspan="2"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <ul class="list-unstyled lh-base">
+            <li>1.計畫主持人及參與研究計畫之相關人員參加國際學術會議得申請本項經費。</li>
+            <li>2.請詳述預定參加國際學術會議之性質、預估經費、天數及地點。</li>
+            <li>3.國外旅費編列項目以交通費及生活費（住宿費及膳食費）為原則，相關報支標準，請參照<a href="https://law.dgbas.gov.tw/LawContent.aspx?id=FL017584" class="link-teal" target="_blank">行政院頒布之「國外出差旅費報支要點」規定</a>填列。</li>
+            <li>4.請詳述計畫主持人近三年參加國外舉辦之國際學術會議論文之發表情形。（包括會議名稱、時間、地點、發表之論文題目、補助機構，及後續收錄於期刊或專書之名稱、卷號、頁數、出版日期）</li>
         </ul>
     </div>
 
@@ -438,7 +503,17 @@
                     <td class="number-cell">0%</td>
                 </tr>
                 <tr>
-                    <th class="text-nowrap">4.國內差旅費</th>
+                    <th class="text-nowrap">4-1.國內差旅費</th>
+                    <td class="number-cell amount-a">0</td>
+                    <td class="number-cell amount-b">
+                        <asp:TextBox runat="server" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onkeypress="return event.charCode != 45" onblur="updateBudgetSummary()" />
+                    </td>
+                    <td class="number-cell amount-total">0</td>
+                    <td class="number-cell">0%</td>
+                    <td class="number-cell">0%</td>
+                </tr>
+                <tr>
+                    <th class="text-nowrap">4-2.國外差旅費</th>
                     <td class="number-cell amount-a">0</td>
                     <td class="number-cell amount-b">
                         <asp:TextBox runat="server" ClientIDMode="Static" CssClass="form-control text-end" Text="0" onkeypress="return event.charCode != 45" onblur="updateBudgetSummary()" />
@@ -562,18 +637,18 @@
                             <li>(7) 國內、外高中(職)以下畢業，且從事協助研究工作達5年以上者。</li>
                         </ul>
                     </li>
+                    <%-- <li> --%>
+                    <%--     <p>3.助理研究員級：指具有國內(外)大專講師、專業研究機構助理研究員政府機關委任技士或政府認定之助理工程師等以上身份，或具備下列資格之一者：</p> --%>
+                    <%--     <ul class="text-gray mt-1"> --%>
+                    <%--         <li>(1) 國內、外大學或研究院(所)有碩士學位者。</li> --%>
+                    <%--         <li>(2) 國內、外大學或獨立學院畢業者，曾從事學術研究工作或專業工作3年以上者。</li> --%>
+                    <%--         <li>(3) 國內、外專科畢業，曾從事學術研究工作或專業工作6年以上者。</li> --%>
+                    <%--         <li>(4) 國內、外高中(職)畢業，且從事協助研究工作或專業工作達9年以上者。</li> --%>
+                    <%--         <li>(5) 國內、外高中(職)以下畢業，且從事協助研究工作達12年以上者。</li> --%>
+                    <%--     </ul> --%>
+                    <%-- </li> --%>
                     <li>
-                        <p>3.助理研究員級：指具有國內(外)大專講師、專業研究機構助理研究員政府機關委任技士或政府認定之助理工程師等以上身份，或具備下列資格之一者：</p>
-                        <ul class="text-gray mt-1">
-                            <li>(1) 國內、外大學或研究院(所)有碩士學位者。</li>
-                            <li>(2) 國內、外大學或獨立學院畢業者，曾從事學術研究工作或專業工作3年以上者。</li>
-                            <li>(3) 國內、外專科畢業，曾從事學術研究工作或專業工作6年以上者。</li>
-                            <li>(4) 國內、外高中(職)畢業，且從事協助研究工作或專業工作達9年以上者。</li>
-                            <li>(5) 國內、外高中(職)以下畢業，且從事協助研究工作達12年以上者。</li>
-                        </ul>
-                    </li>
-                    <li>
-                        <p>4.研究助理員級：指具有國內(外)大專助教、專業研究機構研究助理等身份，或具備下列資格之一者：</p>
+                        <p>3.研究助理員級：指具有國內(外)大專助教、專業研究機構研究助理等身份，或具備下列資格之一者：</p>
                         <ul class="text-gray mt-1">
                             <li>(1) 國內、外大學或獨立學院畢業，得有學士學位。</li>
                             <li>(2) 國內、外專科畢業，且從事協助研究工作或專業工作達3年以上者。</li>

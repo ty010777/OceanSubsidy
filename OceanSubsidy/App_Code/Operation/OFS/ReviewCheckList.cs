@@ -1472,55 +1472,7 @@ SELECT TOP (1000) [ProjectID]
     #endregion
 
     #region type-2 Search 科專
-    // TODO 想刪除
-    // /// <summary>
-    // /// 查詢科專領域審查清單（支援分頁）
-    // /// </summary>
-    // /// <param name="year">年度</param>
-    // /// <param name="orgName">申請單位</param>
-    // /// <param name="supervisor">承辦人員</param>
-    // /// <param name="keyword">關鍵字</param>
-    // /// <param name="reviewProgress">審查進度</param>
-    // /// <param name="replyProgress">回覆進度</param>
-    // /// <param name="pageNumber">頁碼</param>
-    // /// <param name="pageSize">每頁筆數</param>
-    // /// <param name="totalRecords">總記錄數（輸出參數）</param>
-    // /// <returns>分頁資料</returns>
-    // public static PaginatedResult<ReviewChecklistItem> Search_SCI_Type2_Paged(out int totalRecords,
-    //     string year = "",
-    //     string orgName = "",
-    //     string supervisor = "",
-    //     string keyword = "",
-    //     string reviewProgress = "",
-    //     string replyProgress = "",
-    //     int pageNumber = 1,
-    //     int pageSize = 10
-    //     )
-    // {
-    //     var allData = Search_SCI_Type2(year, orgName, supervisor, keyword, reviewProgress, replyProgress);
-    //     totalRecords = allData.Count;
-    //
-    //     var pagedData = allData
-    //         .Skip((pageNumber - 1) * pageSize)
-    //         .Take(pageSize)
-    //         .ToList();
-    //
-    //     return new PaginatedResult<ReviewChecklistItem>
-    //     {
-    //         Data = pagedData,
-    //         TotalRecords = totalRecords,
-    //         PageNumber = pageNumber,
-    //         PageSize = pageSize,
-    //         TotalPages = (int)Math.Ceiling((double)totalRecords / pageSize)
-    //     };
-    // }
-
-
-    /// <summary>
-    /// 取得科專專案資料
-    /// </summary>
-
-
+    
     /// <summary>
     /// 取得科專基本資料
     /// </summary>
@@ -1626,7 +1578,7 @@ SELECT TOP (1000) [ProjectID]
     public static List<ProgressData> GetSciProgressData(List<string> projectIds , string status)
     {
         if (projectIds.Count == 0) return new List<ProgressData>();
-        status = status == "領域審查" ? "2" : "3";
+        status = status == "審查" ? "2" : "3";
         // 建立 IN 子句的參數
         var projectIdParams = projectIds.Select((id, index) => $"@projectId{index}").ToList();
         string inClause = "(" + string.Join(",", projectIdParams) + ")";
@@ -2050,7 +2002,6 @@ SELECT TOP (1000) [ProjectID]
     public static void CLB_UpdateProjectStatusInDatabase(string projectId, string newStatus,
         string userAccount, string StatusesName)
     {
-        string finalStatusesName = string.IsNullOrEmpty(StatusesName) ? "審核中" : StatusesName;
         string LastOperation = newStatus == "計畫執行" ? "計畫已核定" : "";
 
         using (DbHelper db = new DbHelper())
@@ -2058,14 +2009,14 @@ SELECT TOP (1000) [ProjectID]
             db.CommandText = @"
                 UPDATE OFS_CLB_Project_Main
                 SET Statuses = @newStatus,
-                    StatusesName = @finalStatusesName,
+                    StatusesName = @StatusesName,
                     LastOperation = @LastOperation,
                     updated_at = GETDATE()
                 WHERE ProjectID = @projectId";
 
             db.Parameters.Add("@projectId", projectId);
             db.Parameters.Add("@newStatus", newStatus);
-            db.Parameters.Add("@finalStatusesName", finalStatusesName);
+            db.Parameters.Add("@StatusesName", StatusesName);
             db.Parameters.Add("@LastOperation", LastOperation);
 
             db.ExecuteNonQuery();
@@ -2374,7 +2325,7 @@ SELECT TOP (1000) [ProjectID]
 
     public static void ProcessSciPostApproval(List<string> projectIds, string toStatus, List<ReviewerInfo> reviewerList = null)
     {
-        string reviewStage = toStatus == "領域審查" ? "2" : "3";
+        string reviewStage = toStatus == "實質審查" ? "2" : "3";
         DbHelper db = new DbHelper();
 
         foreach (string projectId in projectIds)
@@ -2407,7 +2358,8 @@ SELECT TOP (1000) [ProjectID]
                     db.CommandText = @"
                             SELECT CommitteeUser, Email
                             FROM OFS_ReviewCommitteeList
-                            WHERE SubjectTypeID = @SubjectTypeID";
+                            WHERE SubjectTypeID = @SubjectTypeID
+                            ";
 
                     db.Parameters.Add("@SubjectTypeID", field);
                     reviewers = db.GetTable();
@@ -2418,7 +2370,9 @@ SELECT TOP (1000) [ProjectID]
                 db.CommandText = @"
                     SELECT TemplateName, TemplateWeight
                     FROM OFS_ReviewTemplate
-                    WHERE SubsidyProjects = 'SCI'";
+                    WHERE SubsidyProjects = 'SCI'
+                    Order by OrderNo asc
+                    ";
 
                 DataTable templates = db.GetTable();
                 db.Parameters.Clear();
@@ -2560,6 +2514,7 @@ SELECT TOP (1000) [ProjectID]
                     SELECT TemplateName, TemplateWeight
                       FROM OFS_ReviewTemplate
                      WHERE SubsidyProjects = 'CUL'
+                     ORDER BY OrderNo ASC
                 ";
 
                 DataTable templates = db.GetTable();
@@ -3478,7 +3433,7 @@ SELECT TOP (1000) [ProjectID]
     /// <summary>
     /// 取得審查結果排名資料
     /// </summary>
-    /// <param name="reviewType">審查類型 (2: 領域審查, 3: 技術審查)</param>
+    /// <param name="reviewType">審查類型 (2: 實質審查, 3: 技術審查)</param>
     /// <param name="reviewGroup">審查組別 (如: Information, Environment 等)</param>
     /// <returns>排名資料清單</returns>
     public static List<ReviewRankingItem> GetReviewRanking(string reviewType, string reviewGroup = null)
@@ -3494,7 +3449,7 @@ SELECT TOP (1000) [ProjectID]
             }
             List<string> SciList = new List<string> { "Information", "Environment", "Material", "Mechanical" };
             string reviewStage = "";
-            string Status = reviewType == "2"? "領域審查" : "技術審查";
+            string Status = reviewType == "2"? "實質審查" : "技術審查";
             if (SciList.Contains(reviewGroup))
             {
                 reviewStage = reviewType == "2" ? "2" : "3";
@@ -3663,7 +3618,7 @@ SELECT TOP (1000) [ProjectID]
             // 根據審查類型提供不同的組別選項
             if (reviewType == "2" || reviewType == "3")
             {
-                // 領域審查和技術審查的組別
+                // 實質審查和技術審查的組別
                 options.Add(new DropdownItem { Value = "Information", Text = "資通訊" });
                 options.Add(new DropdownItem { Value = "Environment", Text = "環境工程" });
                 options.Add(new DropdownItem { Value = "Material", Text = "材料科技" });
@@ -3875,7 +3830,7 @@ SELECT TOP (1000) [ProjectID]
             if (category == "SCI" || string.IsNullOrEmpty(category))
             {
                 // 取得 SCI 科專資料
-                var sciResults = GetSciBasicData(year, orgName, supervisor, keyword, "領域審查");
+                var sciResults = GetSciBasicData(year, orgName, supervisor, keyword, "實質審查");
 
                 // 篩選符合進度和回覆狀態的 ProjectID
                 var filteredSciResults = FilterByProgressAndReplyStatus(sciResults, progress, replyStatus, "SCI");
@@ -3956,7 +3911,7 @@ SELECT TOP (1000) [ProjectID]
         List<ProgressData> progressDataList;
         if (category == "SCI")
         {
-            progressDataList = GetSciProgressData(projectIds,"領域審查");
+            progressDataList = GetSciProgressData(projectIds,"實質審查");
         }
         else if (category == "CUL")
         {
@@ -4325,7 +4280,7 @@ SELECT [FinalReviewOrder] AS '排序'
             // Type1: 資格審查/內容審查
             statistics["Type1"] = GetType1Count();
 
-            // Type2: 領域審查/初審
+            // Type2: 實質審查/初審
             statistics["Type2"] = GetType2Count();
 
             // Type3: 技術審查/複審
@@ -4378,7 +4333,7 @@ SELECT [FinalReviewOrder] AS '排序'
     }
 
     /// <summary>
-    /// 取得 Type2 (領域審查/初審) 的數量
+    /// 取得 Type2 (實質審查/初審) 的數量
     /// </summary>
     private static int GetType2Count()
     {
@@ -4389,13 +4344,13 @@ SELECT [FinalReviewOrder] AS '排序'
                 FROM (
                     SELECT ProjectID
                     FROM [OFS_SCI_Project_Main] PM
-                    WHERE [Statuses] LIKE '%領域審查%' AND isExist = 1
+                    WHERE [Statuses] LIKE '%實質審查%' AND isExist = 1 AND isWithdrawal = 0
 
                     UNION ALL
 
                     SELECT ProjectID
                     FROM [OFS_CUL_Project]
-                    WHERE [ProgressStatus] = 2 AND isExists = 1
+                    WHERE [ProgressStatus] = 2 AND isExists = 1 AND IsWithdrawal = 0 
                 ) AS Type2Data
             ";
 
@@ -4428,13 +4383,13 @@ SELECT [FinalReviewOrder] AS '排序'
                 FROM (
                     SELECT ProjectID
                     FROM [OFS_SCI_Project_Main] PM
-                    WHERE [Statuses] LIKE '%技術審查%'  AND isExist = 1
+                    WHERE [Statuses] LIKE '%技術審查%'  AND isExist = 1 AND isWithdrawal = 0
 
                     UNION ALL
 
                     SELECT ProjectID
                     FROM [OFS_CUL_Project]
-                    WHERE [ProgressStatus] = 3　AND isExists = 1
+                    WHERE [ProgressStatus] = 3　AND isExists = 1 and IsWithdrawal = 0
                 ) AS Type3Data
             ";
 
@@ -4556,7 +4511,7 @@ SELECT [FinalReviewOrder] AS '排序'
         DbHelper db = new DbHelper();
         db.CommandText = @"
             SELECT
-                AM.ProjectNameTw AS ProjectName
+                AM.Year,AM.ProjectNameTw AS ProjectName
             FROM OFS_SCI_Application_Main AM
             INNER JOIN OFS_SCI_Project_Main PM ON AM.ProjectID = PM.ProjectID
             WHERE AM.ProjectID = @ProjectID
@@ -4630,7 +4585,7 @@ SELECT [FinalReviewOrder] AS '排序'
     }
 
     /// <summary>
-    /// 取得 Type2 的年度選項（領域審查/初審）
+    /// 取得 Type2 的年度選項（實質審查/初審）
     /// </summary>
     /// <returns>年度選項列表</returns>
     public static List<string> GetType2YearOptions()
@@ -4641,7 +4596,7 @@ SELECT [FinalReviewOrder] AS '排序'
             FROM [OFS_SCI_Project_Main] PM
             LEFT JOIN [OFS_SCI_Application_Main] AM ON (AM.[ProjectID] = PM.[ProjectID])
             WHERE AM.[Year] IS NOT NULL
-              AND PM.[Statuses] LIKE '領域審查'
+              AND PM.[Statuses] LIKE '實質審查'
             UNION
             SELECT DISTINCT [Year]
             FROM [OFS_CUL_Project]

@@ -799,7 +799,7 @@ window.ReviewChecklist = (function() {
     }
 
     /**
-     * 建立 Type2 表格行 (領域審查/初審)
+     * 建立 Type2 表格行 (實質審查/初審)
      * @param {Object} item - 資料項目
      * @param {number} index - 序號
      * @returns {string} HTML 字串
@@ -1080,7 +1080,7 @@ window.ReviewChecklist = (function() {
 
         let buttons = '';
 
-        // Type2 領域審查 和 Type3 技術審查 顯示詳情按鈕
+        // Type2 實質審查 和 Type3 技術審查 顯示詳情按鈕
         if (currentType === '2' || currentType === '3') {
             buttons += `<button class="btn btn-sm btn-teal-dark" type="button" data-bs-toggle="modal" data-bs-target="#planDetailModal" onclick="openPlanDetail('${item.ProjectID}')">
                             <i class="fas fa-file-alt" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="詳情"></i>
@@ -1991,7 +1991,7 @@ function handleSendReviewComments() {
         if (currentType !== '2' && currentType !== '3' && currentType !== '4') {
             Swal.fire({
                 title: '權限錯誤',
-                text: '提送審查意見功能只適用於領域審查(Type2)、技術審查(Type3)和決審(Type4)',
+                text: '提送審查意見功能只適用於實質審查(Type2)、技術審查(Type3)和決審(Type4)',
                 icon: 'error',
                 confirmButtonText: '確定'
             });
@@ -2271,10 +2271,10 @@ function handleBatchApproval(actionText, reviewerList = null) {
 
                 // 當操作為「進入決審」時，僅允許文化項目(CUL)
                 if (actionText === '進入決審') {
-                    if (projectId.includes('CUL')) {
+                    if (projectId.includes('CUL')||projectId.includes('SCI')) {
                         selectedIds.push(projectId);
                     } else {
-                        invalidProjects.push({ id: projectId, status: '非文化項目' });
+                        invalidProjects.push({ id: projectId, status: '非科專、文化項目' });
                     }
                 } else {
                     selectedIds.push(projectId);
@@ -2287,7 +2287,7 @@ function handleBatchApproval(actionText, reviewerList = null) {
             if (currentType === '1') {
                 warningText = `資格審查階段只有狀態為「通過」的計畫可以${actionText}`;
             } else if (actionText === '進入決審') {
-                warningText = '「進入決審」操作僅適用於文化項目(CUL)';
+                warningText = '「進入決審」操作僅適用於科專、文化項目(SCI、CUL)';
             }
 
             Swal.fire({
@@ -2381,7 +2381,7 @@ function updateModalTitle(reviewType) {
 
     switch (reviewType) {
         case '2':
-            titleText = '審查結果與意見回覆 - 領域審查/初審';
+            titleText = '審查結果與意見回覆 - 實質審查/初審';
             break;
         case '3':
             titleText = '審查結果與意見回覆 - 技術審查/複審';

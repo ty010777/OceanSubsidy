@@ -667,7 +667,7 @@ function canEdit(status, statusName) {
 
 // 檢查是否可撤案
 function canWithdraw(status) {
-    const withdrawableStatuses = ['資格審查', '內容審查', '領域審查', '初審', '技術審查', '複審', '決審核定'];
+    const withdrawableStatuses = ['資格審查', '內容審查', '實質審查', '初審', '技術審查', '複審', '決審核定'];
     return withdrawableStatuses.includes(status);
 }
 
@@ -1079,7 +1079,7 @@ function displayReviewCommentsData(data) {
         updateReviewSectionTitles(projectId);
     }
 
-    // 建立領域審查意見表格
+    // 建立實質審查意見表格
     const domainTableBody = document.getElementById('domainReviewCommentsTableBody');
     let domainTableRows = '';
 
@@ -1102,7 +1102,7 @@ function displayReviewCommentsData(data) {
         domainTableRows = `
             <tr>
                 <td colspan="3" class="text-center p-4 text-muted">
-                    <i class="fas fa-info-circle"></i> 尚未有領域審查意見
+                    <i class="fas fa-info-circle"></i> 尚未有實質審查意見
                 </td>
             </tr>
         `;
@@ -1219,7 +1219,7 @@ function saveReply(reviewId) {
 
 // 提送回覆功能
 function submitReply() {
-    // 收集領域審查回覆內容
+    // 收集實質審查回覆內容
     const domainReplySpans = document.querySelectorAll('#domainReviewCommentsTableBody span[data-review-id]');
     const domainReplies = [];
 
@@ -1324,7 +1324,7 @@ function exportReviewCommentReply(reviewType) {
     if (reviewType === 'domain') {
         const domainComments = document.querySelectorAll('#domainReviewCommentsTableBody tr').length;
         hasComments = domainComments > 0;
-        exportTypeName = '領域審查意見回覆表';
+        exportTypeName = '實質審查意見回覆表';
     } else if (reviewType === 'technical') {
         const technicalComments = document.querySelectorAll('#technicalReviewCommentsTableBody tr').length;
         hasComments = technicalComments > 0;
@@ -1362,9 +1362,9 @@ function updateReviewSectionTitles(projectId) {
 
     if (projectId.includes('SCI')) {
         // 科專專案
-        domainTitle = '領域審查意見回覆';
+        domainTitle = '實質審查意見回覆';
         technicalTitle = '技術審查意見回覆';
-        domainButtonText = '匯出領域審查意見回覆表';
+        domainButtonText = '匯出實質審查意見回覆表';
         technicalButtonText = '匯出技術審查意見回覆表';
     } else if (projectId.includes('CUL')) {
         // 文化專案
@@ -1374,19 +1374,19 @@ function updateReviewSectionTitles(projectId) {
         technicalButtonText = '匯出複審意見回覆表';
     } else {
         // 預設值（其他專案類型）
-        domainTitle = '領域審查意見回覆';
+        domainTitle = '實質審查意見回覆';
         technicalTitle = '技術審查意見回覆';
-        domainButtonText = '匯出領域審查意見回覆表';
+        domainButtonText = '匯出實質審查意見回覆表';
         technicalButtonText = '匯出技術審查意見回覆表';
     }
 
     // 更新標題 - 使用更精確的選擇器
     const titleElements = document.querySelectorAll('#planCommentModal h5.square-title');
 
-    // 找到領域審查/初審標題（通常是第一個）
+    // 找到實質審查/初審標題（通常是第一個）
     titleElements.forEach((element, index) => {
         const text = element.textContent;
-        if (text.includes('領域審查') || text.includes('初審')) {
+        if (text.includes('實質審查') || text.includes('初審')) {
             element.textContent = domainTitle;
         } else if (text.includes('技術審查') || text.includes('複審')) {
             element.textContent = technicalTitle;

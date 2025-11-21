@@ -314,7 +314,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
     #endregion
     # region type-2 的下拉式選單
     /// <summary>
-    /// 載入科專領域審查的下拉選單資料
+    /// 載入科專實質審查的下拉選單資料
     /// </summary>
     private void LoadDomainReviewDropdowns()
     {
@@ -336,14 +336,14 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             ddlCategory_Type2.DataBind();
 
             // 載入申請單位選項
-            var orgOptions = ReviewCheckListHelper.GetReviewOrgOptions("領域審查", 21);
+            var orgOptions = ReviewCheckListHelper.GetReviewOrgOptions("實質審查", 21);
             ddlOrg_Type2.DataSource = orgOptions;
             ddlOrg_Type2.DataTextField = "Text";
             ddlOrg_Type2.DataValueField = "Value";
             ddlOrg_Type2.DataBind();
 
             // 載入承辦人員選項
-            var supervisorOptions = ReviewCheckListHelper.GetReviewSupervisorOptions("領域審查", 21);
+            var supervisorOptions = ReviewCheckListHelper.GetReviewSupervisorOptions("實質審查", 21);
             ddlSupervisor_Type2.DataSource = supervisorOptions;
             ddlSupervisor_Type2.DataTextField = "Text";
             ddlSupervisor_Type2.DataValueField = "Value";
@@ -365,7 +365,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
         }
         catch (Exception ex)
         {
-            HandleException(ex, "載入領域審查下拉選單時發生錯誤");
+            HandleException(ex, "載入實質審查下拉選單時發生錯誤");
         }
     }
     #endregion
@@ -827,7 +827,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                 // 只對成功更新的專案執行後續處理
                 if (groupResult != null && groupResult.SuccessProjectIds != null && groupResult.SuccessProjectIds.Count > 0)
                 {
-                    // 科專批次審核後的特殊處理（只在資格審查和領域審查階段執行）
+                    // 科專批次審核後的特殊處理（只在資格審查和實質審查階段執行）
                     if ((reviewType == "1" || reviewType == "2") && actionType != "進入決審")
                     {
                         switch (subsidyType)
@@ -882,7 +882,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                 }
             }
 
-            // 如果是「進入決審」，寄送 E31 通知給申請者（只有文化會有，從複審進入決審）
+            // 如果是「進入決審」，寄送 E31 通知給申請者
             if (totalSuccess > 0 && allSuccessIds.Count > 0 && reviewType == "2" && actionType == "進入決審")
             {
                 SendEnterFinalReviewNotifications(allSuccessIds);
@@ -1054,17 +1054,17 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
         {
             switch (subsidyType)
             {
-                case "SCI": // 科專: 資格審查 --> 領域審查 --> 技術審查 --> 決審
+                case "SCI": // 科專: 資格審查 --> 實質審查 --> 技術審查 --> 決審
                     switch (currentReviewType)
                     {
-                        case "1": // 資格審查 → 領域審查
+                        case "1": // 資格審查 → 實質審查
                             fromStatus = "資格審查";
-                            toStatus = "領域審查";
+                            toStatus = "實質審查";
                             StatusesName = "審核中";
                             return true;
-                        case "2": // 領域審查 → 技術審查
-                            fromStatus = "領域審查";
-                            toStatus = "技術審查";
+                        case "2": // 實質審查 → 技術審查
+                            fromStatus = "實質審查";
+                            toStatus = (currentActionType == "進入決審") ? "決審核定" : "技術審查";;
                             StatusesName = "審核中";
                             return true;
                         case "3": // 技術審查 → 決審
@@ -1103,7 +1103,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                 case "CLB": // 學校社團
                     switch (currentReviewType)
                     {
-                        case "1": // 資格審查 → 領域審查
+                        case "1": // 資格審查 → 實質審查
                             fromStatus = "資格審查";
                             toStatus = "決審核定";
                             StatusesName = "核定中";
@@ -1162,7 +1162,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
     /// 提送至申請者功能（Type2 和 Type3）
     /// </summary>
     /// <param name="projectIds">專案編號列表</param>
-    /// <param name="reviewType">審查類型 (2:領域審查, 3:技術審查)</param>
+    /// <param name="reviewType">審查類型 (2:實質審查, 3:技術審查)</param>
     /// <returns>處理結果</returns>
     [WebMethod]
     public static BatchApprovalResult SendToApplicant(List<string> projectIds, string reviewType)
@@ -1175,11 +1175,11 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
 
         try
         {
-            // 權限檢查：只有 Type2(領域審查)、Type3(技術審查) 和 Type4(決審) 可以使用
+            // 權限檢查：只有 Type2(實質審查)、Type3(技術審查) 和 Type4(決審) 可以使用
             if (reviewType != "2" && reviewType != "3" && reviewType != "4")
             {
                 result.Success = false;
-                result.Message = "提送至申請者功能只適用於領域審查(Type2)、技術審查(Type3)和決審(Type4)";
+                result.Message = "提送至申請者功能只適用於實質審查(Type2)、技術審查(Type3)和決審(Type4)";
                 return result;
             }
 
@@ -1521,7 +1521,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
     /// 取得計畫詳細資料
     /// </summary>
     /// <param name="projectId">專案編號</param>
-    /// <param name="reviewType">審查類型 (2:領域審查, 3:技術審查)</param>
+    /// <param name="reviewType">審查類型 (2:實質審查, 3:技術審查)</param>
     /// <returns>計畫詳細資料</returns>
     /// <summary>
     /// 匯出審查結果與意見回覆對照表
@@ -1848,7 +1848,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
         {
             // 檢查是否為需要記錄兩筆歷程的特定轉換
             //目的:為了 先變成 已核定/通過 在進入
-            if ((fromStatus == "領域審查" && toStatus == "技術審查") ||
+            if ((fromStatus == "實質審查" && toStatus == "技術審查") ||
                 (fromStatus == "技術審查" && toStatus == "決審核定") ||
                 (fromStatus == "決審核定" && toStatus == "計畫執行"))
             {
@@ -2193,7 +2193,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
         {
             List<ReviewChecklistItem> results = new List<ReviewChecklistItem>();
 
-            // 執行領域審查查詢
+            // 執行實質審查查詢
             if (category == "SCI" || string.IsNullOrEmpty(category))
             {
                 results.AddRange(GetSciProjectData(
@@ -2203,7 +2203,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                     keyword,
                     progress,
                     replyStatus,
-                    "領域審查"
+                    "實質審查"
                 ));
             }
             if (category == "CUL" || string.IsNullOrEmpty(category))
@@ -2573,7 +2573,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
     /// <summary>
     /// 取得審查結果排名
     /// </summary>
-    /// <param name="reviewType">審查類型 (2: 領域審查, 3: 技術審查)</param>
+    /// <param name="reviewType">審查類型 (2: 實質審查, 3: 技術審查)</param>
     /// <param name="reviewGroup">審查組別 (如: Information, Environment 等)</param>
     /// <returns>JSON格式的排名資料</returns>
     [WebMethod]
@@ -2776,7 +2776,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
     /// 發送審查通知給審查人員
     /// </summary>
     /// <param name="projectIds">專案ID清單</param>
-    /// <param name="reviewType">審查類型 (1:資格審查, 2:領域審查)</param>
+    /// <param name="reviewType">審查類型 (1:資格審查, 2:實質審查)</param>
     private static void SendReviewNotifications(List<string> projectIds, string reviewType)
     {
         try
@@ -2846,7 +2846,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
 
             System.Diagnostics.Debug.WriteLine($"已發送 C1 審查通知給 {reviewerGroups.Count()} 位審查委員");
 
-            // ===== 2. 發送 E32 通知給申請者（領域審查→技術審查）=====
+            // ===== 2. 發送 E32 通知給申請者（實質審查→技術審查）=====
             if (reviewType == "2")
             {
                 int SuccessCount = 0;
@@ -2861,7 +2861,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
 
                         if (!string.IsNullOrEmpty(applicantEmail) && !string.IsNullOrEmpty(projectName))
                         {
-                            NotificationHelper.E32("科專", projectName, "領域審查", "技術審查", applicantEmail);
+                            NotificationHelper.E32("科專", projectName, "實質審查", "技術審查", applicantEmail);
                             SuccessCount++;
                         }
                     }
@@ -2873,7 +2873,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
 
                 System.Diagnostics.Debug.WriteLine($"已發送 E32 通知給 {SuccessCount} 位申請者");
             }
-            else //資格審查-->領域審查
+            else //資格審查-->實質審查
             {
                 int SuccessCount = 0;
 
@@ -3365,7 +3365,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             case "1":
                 return "2"; // 資格審查 --> 找 領域審
             case "2":
-                return "3"; // 領域審查/初審 -->找技術審
+                return "3"; // 實質審查/初審 -->找技術審
             default:
                 return "";
         }
@@ -3379,7 +3379,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
         switch (reviewStage)
         {
             case "1":
-                return "領域審查";
+                return "實質審查";
             case "2":
                 return "技術審查";
             default:
@@ -3448,8 +3448,9 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
     }
 
     /// <summary>
-    /// 發送「進入決審」E31 通知給申請者（只有文化會有）
-    /// 複審通過後進入決審，寄信通知申請者
+    /// 發送「進入決審」E31 通知給申請者
+    /// 科專：實質審查通過後進入決審，寄信通知申請者
+    /// 文化：複審通過後進入決審，寄信通知申請者
     /// </summary>
     private static void SendEnterFinalReviewNotifications(List<string> projectIds)
     {
@@ -3458,29 +3459,22 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             if (projectIds == null || projectIds.Count == 0)
                 return;
 
-            // 只處理文化專案
-            var culProjects = projectIds.Where(p => p.Contains("CUL")).ToList();
-
-            if (culProjects.Count == 0)
-            {
-                System.Diagnostics.Debug.WriteLine("進入決審通知: 沒有文化專案需要處理");
-                return;
-            }
-
-            int successCount = 0;
-            foreach (string projectId in culProjects)
+            // 處理科專專案
+            var sciProjects = projectIds.Where(p => p.Contains("SCI")).ToList();
+            int sciSuccessCount = 0;
+            foreach (string projectId in sciProjects)
             {
                 try
                 {
-                    string applicantEmail = OFS_CulProjectHelper.getUserAccount(projectId);
-                    var culProjectInfo = ReviewCheckListHelper.GetCulProjectInfo(projectId);
-                    string projectName = culProjectInfo != null ? culProjectInfo["ProjectName"]?.ToString() ?? "" : "";
-                    int year = culProjectInfo != null ? Convert.ToInt32(culProjectInfo["Year"]) : 0;
+                    string applicantEmail = OFS_SciApplicationHelper.GetApplicantAccountByProjectId(projectId);
+                    var sciProjectInfo = ReviewCheckListHelper.GetSciProjectInfo(projectId);
+                    string projectName = sciProjectInfo != null ? sciProjectInfo["ProjectName"]?.ToString() ?? "" : "";
+                    int year = sciProjectInfo != null ? Convert.ToInt32(sciProjectInfo["Year"]) : 0;
 
                     if (!string.IsNullOrEmpty(applicantEmail) && !string.IsNullOrEmpty(projectName) && year > 0)
                     {
-                        NotificationHelper.E31("文化", year, projectName, "複審", applicantEmail);
-                        successCount++;
+                        NotificationHelper.E31("科專", year, projectName, "實質審查", applicantEmail);
+                        sciSuccessCount++;
                         System.Diagnostics.Debug.WriteLine($"已發送進入決審 E31 通知 - ProjectID: {projectId}, Year: {year}, ProjectName: {projectName}, Email: {applicantEmail}");
                     }
                     else
@@ -3494,7 +3488,36 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                 }
             }
 
-            System.Diagnostics.Debug.WriteLine($"已完成發送進入決審 E31 通知，成功 {successCount}/{culProjects.Count} 件");
+            // 處理文化專案
+            var culProjects = projectIds.Where(p => p.Contains("CUL")).ToList();
+            int culSuccessCount = 0;
+            foreach (string projectId in culProjects)
+            {
+                try
+                {
+                    string applicantEmail = OFS_CulProjectHelper.getUserAccount(projectId);
+                    var culProjectInfo = ReviewCheckListHelper.GetCulProjectInfo(projectId);
+                    string projectName = culProjectInfo != null ? culProjectInfo["ProjectName"]?.ToString() ?? "" : "";
+                    int year = culProjectInfo != null ? Convert.ToInt32(culProjectInfo["Year"]) : 0;
+
+                    if (!string.IsNullOrEmpty(applicantEmail) && !string.IsNullOrEmpty(projectName) && year > 0)
+                    {
+                        NotificationHelper.E31("文化", year, projectName, "複審", applicantEmail);
+                        culSuccessCount++;
+                        System.Diagnostics.Debug.WriteLine($"已發送進入決審 E31 通知 - ProjectID: {projectId}, Year: {year}, ProjectName: {projectName}, Email: {applicantEmail}");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"進入決審通知資料不完整 - ProjectID: {projectId}, Email: {applicantEmail}, Name: {projectName}, Year: {year}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"發送進入決審 E31 通知給專案 {projectId} 時發生錯誤：{ex.Message}");
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine($"已完成發送進入決審 E31 通知，科專成功 {sciSuccessCount}/{sciProjects.Count} 件，文化成功 {culSuccessCount}/{culProjects.Count} 件");
         }
         catch (Exception ex)
         {

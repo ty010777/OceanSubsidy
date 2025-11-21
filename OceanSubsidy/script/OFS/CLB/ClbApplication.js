@@ -1582,9 +1582,11 @@ function collectFormData() {
 
     // B: 申請單位自籌款(元)
     const selfAmountText = $('#txtSelfAmount').val() || '';
-    const selfAmount = parseInt(selfAmountText.replace(/,/g, '')) || null;
-    if (selfAmount !== null) {
-        formData.append('selfAmount', selfAmount);
+    if (selfAmountText !== '') {
+        const selfAmount = parseInt(selfAmountText.replace(/,/g, ''));
+        if (!isNaN(selfAmount)) {
+            formData.append('selfAmount', selfAmount);
+        }
     }
 
     // C: 其他機關補助／合作總金額(元) - 從顯示的文字取得（已經由 calculateOtherSubsidyTotal 計算好）

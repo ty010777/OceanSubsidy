@@ -171,7 +171,7 @@ function collectAllFormData() {
         const daysInput = row.querySelector('input[id*="travelDays"]');
         const peopleInput = row.querySelector('input[id*="travelPeople"]');
         const priceInput = row.querySelector('input[id*="travelPrice"]');
-        
+
         if (reasonInput && reasonInput.value.trim()) {
             travelData.push({
                 reason: reasonInput.value,
@@ -179,6 +179,30 @@ function collectAllFormData() {
                 days: parseFloat(daysInput?.value || '0'),
                 people: parseFloat(peopleInput?.value || '0'),
                 price: parseFloat(priceInput?.value?.replace(/,/g, '') || '0')
+            });
+        }
+    });
+
+    // 收集國外差旅費資料
+    const foreignTravelData = [];
+    document.querySelectorAll('.foreignTravel tbody tr:not(.total-row)').forEach(row => {
+        const countryInput = row.querySelector('input[id*="foreignCountry"]');
+        const topicInput = row.querySelector('input[id*="foreignTopic"]');
+        const daysInput = row.querySelector('input[id*="foreignDays"]');
+        const peopleInput = row.querySelector('input[id*="foreignPeople"]');
+        const transportFeeInput = row.querySelector('input[id*="foreignTransportFee"]');
+        const livingFeeInput = row.querySelector('input[id*="foreignLivingFee"]');
+        const conferenceInput = row.querySelector('textarea[id*="foreignConference"]');
+
+        if (countryInput && countryInput.value.trim()) {
+            foreignTravelData.push({
+                country: countryInput.value,
+                topic: topicInput ? topicInput.value : "",
+                days: parseFloat(daysInput?.value || '0'),
+                people: parseFloat(peopleInput?.value || '0'),
+                transportFee: parseFloat(transportFeeInput?.value?.replace(/,/g, '') || '0'),
+                livingFee: parseFloat(livingFeeInput?.value?.replace(/,/g, '') || '0'),
+                conference: conferenceInput ? conferenceInput.value : ""
             });
         }
     });
@@ -230,8 +254,9 @@ function collectAllFormData() {
         const $allCells = $(row).find('th, td');
         if ($allCells.length >= 4) {
             const accountingItem = $allCells.eq(0).text().trim() || "";
-            
-            if (/^\d+\./.test(accountingItem)) {
+
+            // 修改正則表達式以匹配 "1.", "2.", "4-1.", "4-2." 等格式
+            if (/^\d+(-\d+)?\./.test(accountingItem)) {
                 let subsidyAmount = 0;
                 const $subsidyCell = $allCells.eq(1);
                 if ($subsidyCell.length) {
@@ -245,14 +270,14 @@ function collectAllFormData() {
                         subsidyAmount = parseFloat(text) || 0;
                     }
                 }
-                
+
                 let coopAmount = 0;
                 const $coopCell = $allCells.eq(2);
                 const $coopInput = $coopCell.find('input');
                 if ($coopInput.length) {
                     coopAmount = parseFloat($coopInput.val().replace(/,/g, '') || '0');
                 }
-                
+
                 totalFeesData.push({
                     accountingItem: accountingItem,
                     subsidyAmount: subsidyAmount,
@@ -266,6 +291,7 @@ function collectAllFormData() {
     $('#hdnPersonnelData').val(JSON.stringify(personnelData));
     $('#hdnMaterialData').val(JSON.stringify(materialData));
     $('#hdnTravelData').val(JSON.stringify(travelData));
+    $('#hdnForeignTravelData').val(JSON.stringify(foreignTravelData));
     $('#hdnOtherData').val(JSON.stringify(otherData));
     $('#hdnOtherRentData').val(JSON.stringify(otherRentData));
     $('#hdnTotalFeesData').val(JSON.stringify(totalFeesData));
@@ -610,7 +636,7 @@ function T_addRow() {
     const table = document.querySelector('.travel tbody');
     const totalRow = table.querySelector('.total-row');
     const rowCount = table.children.length;
-    
+
     const newRow = document.createElement('tr');
     newRow.innerHTML = `
         <td><input type="text" ID="travelReason${rowCount}" class="form-control" /></td>
@@ -621,6 +647,82 @@ function T_addRow() {
         <td>
             <button type="button" class="btn btn-sm btn-teal" onclick="T_DeleteRow(this)"><i class="fas fa-trash-alt"></i></button>
             <button type="button" class="btn btn-sm btn-teal" onclick="T_addRow()"><i class="fas fa-plus"></i></button>
+        </td>
+    `;
+    table.insertBefore(newRow, totalRow);
+}
+
+// 4-2.國外差旅費
+function calculateForeignTravel() {
+    let total = 0;
+    const dataRows = document.querySelectorAll('.foreignTravel tbody tr:not(.total-row)');
+
+    dataRows.forEach((row) => {
+        const transportFeeInput = row.querySelector('input[id*="foreignTransportFee"]');
+        const livingFeeInput = row.querySelector('input[id*="foreignLivingFee"]');
+        const totalCell = row.cells[6]; // 合計欄位
+
+        if (transportFeeInput && livingFeeInput) {
+            const transportFee = parseFloat(transportFeeInput.value.replace(/,/g, '')) || 0;
+            const livingFee = parseFloat(livingFeeInput.value.replace(/,/g, '')) || 0;
+            const rowTotal = transportFee + livingFee;
+
+            totalCell.textContent = rowTotal.toLocaleString();
+            total += rowTotal;
+        }
+    });
+
+    document.getElementById('foreignTravelTotal').textContent = total.toLocaleString();
+    updateBudgetSummary();
+}
+
+function FT_DeleteRow(button) {
+    const table = document.querySelector('.foreignTravel tbody');
+    const dataRows = table.querySelectorAll('tr:not(.total-row)');
+
+    if (dataRows.length <= 1) {
+        Swal.fire({
+            icon: 'warning',
+            title: '無法刪除',
+            text: '至少需保留一行資料',
+            confirmButtonText: '確定'
+        });
+        return;
+    }
+
+    Swal.fire({
+        icon: 'question',
+        title: '確定要刪除嗎？',
+        text: '確定要刪除此行資料嗎？',
+        showCancelButton: true,
+        confirmButtonText: '確定',
+        cancelButtonText: '取消'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            button.closest('tr').remove();
+            calculateForeignTravel();
+        }
+    });
+}
+
+function FT_addRow() {
+    const table = document.querySelector('.foreignTravel tbody');
+    const totalRow = table.querySelector('.total-row');
+    const rowCount = table.children.length;
+
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = `
+        <td><input type="text" id="foreignCountry${rowCount}" class="form-control" placeholder="請輸入" /></td>
+        <td><input type="text" id="foreignTopic${rowCount}" class="form-control" placeholder="請輸入" /></td>
+        <td><input id="foreignDays${rowCount}" class="form-control text-center" value="0" onkeypress="return event.charCode != 45" /></td>
+        <td><input id="foreignPeople${rowCount}" class="form-control text-center" value="0" onkeypress="return event.charCode != 45" /></td>
+        <td><input id="foreignTransportFee${rowCount}" class="form-control text-end" value="0" onkeypress="return event.charCode != 45" onblur="calculateForeignTravel()" /></td>
+        <td><input id="foreignLivingFee${rowCount}" class="form-control text-end" value="0" onkeypress="return event.charCode != 45" onblur="calculateForeignTravel()" /></td>
+        <td class="text-end">0</td>
+        <td><textarea id="foreignConference${rowCount}" class="form-control" rows="2" placeholder="請輸入"></textarea></td>
+        <td>
+            <button type="button" class="btn btn-sm btn-teal" onclick="FT_DeleteRow(this)"><i class="fas fa-trash-alt"></i></button>
+            <button type="button" class="btn btn-sm btn-teal" onclick="FT_addRow()"><i class="fas fa-plus"></i></button>
         </td>
     `;
     table.insertBefore(newRow, totalRow);
@@ -776,14 +878,16 @@ function updateBudgetSummary() {
     const materialTotal = parseFloat($('#MaterialTotal').text().replace(/,/g, '') || '0');
     const researchTotal = parseFloat($('#ResearchFeesTotal').text().replace(/,/g, '') || '0');
     const travelTotal = parseFloat($('#travelTotal').text().replace(/,/g, '') || '0');
+    const foreignTravelTotal = parseFloat($('#foreignTravelTotal').text().replace(/,/g, '') || '0');
     const otherRentTotal = parseFloat($('#otherRentTotal').text().replace(/,/g, '') || '0');
-    
+
     updateAmountA('1', personTotal);
     updateAmountA('2', materialTotal);
     updateAmountA('3', researchTotal);
-    updateAmountA('4', travelTotal);
+    updateAmountA('4-1', travelTotal);
+    updateAmountA('4-2', foreignTravelTotal);
     updateAmountA('5', otherRentTotal);
-    
+
     updateItemTotals();
     updateGrandTotals();
     updatePercentages();
@@ -971,6 +1075,8 @@ function loadExistingDataToForm() {
             .then(() => new Promise(resolve => setTimeout(resolve, 50))) // 等待 DOM 更新
             .then(() => loadTravelData(window.loadedData.travel))
             .then(() => new Promise(resolve => setTimeout(resolve, 50))) // 等待 DOM 更新
+            .then(() => loadForeignTravelData(window.loadedData.foreignTravel))
+            .then(() => new Promise(resolve => setTimeout(resolve, 50))) // 等待 DOM 更新
             .then(() => loadOtherData(window.loadedData.other))
             .then(() => new Promise(resolve => setTimeout(resolve, 50))) // 等待 DOM 更新
             .then(() => loadOtherRentData(window.loadedData.otherRent))
@@ -983,6 +1089,7 @@ function loadExistingDataToForm() {
                 calculateMaterial();
                 calculateResearch();
                 calculateTravel();
+                calculateForeignTravel();
                 calculateOther();
                 calculateOtherRentTotal();
                 updateBudgetSummary();
@@ -1202,38 +1309,82 @@ function  convertToMinguoFormat(gregorianDate) {
 // 載入差旅費資料
 function loadTravelData(travelData) {
     if (!travelData || travelData.length === 0) return Promise.resolve();
-    
+
     return new Promise((resolve) => {
         const table = document.querySelector('.travel tbody');
         const totalRow = table.querySelector('.total-row');
-        
+
         // 清除所有現有的資料行（只保留總計行）
         const existingRows = table.querySelectorAll('tr:not(.total-row)');
         existingRows.forEach(row => row.remove());
-        
+
         // 新增所有需要的行（包含第一行）
         for (let i = 0; i < travelData.length; i++) {
             T_addRow();
         }
-        
+
         // 延遲填入資料，確保所有行都已建立
         setTimeout(() => {
             travelData.forEach((travel, index) => {
                 const rowIndex = index + 1;
-                
+
                 const reasonInput = document.getElementById(`travelReason${rowIndex}`);
                 const areaInput = document.getElementById(`travelArea${rowIndex}`);
                 const daysInput = document.getElementById(`travelDays${rowIndex}`);
                 const peopleInput = document.getElementById(`travelPeople${rowIndex}`);
                 const priceInput = document.getElementById(`travelPrice${rowIndex}`);
-                
+
                 if (reasonInput) reasonInput.value = travel.reason || '';
                 if (areaInput) areaInput.value = travel.area || '';
                 if (daysInput) daysInput.value = travel.days || '0';
                 if (peopleInput) peopleInput.value = travel.people || '0';
                 if (priceInput) priceInput.value = travel.price || '0';
             });
-            
+
+            resolve();
+        }, 50);
+    });
+}
+
+// 載入國外差旅費資料
+function loadForeignTravelData(foreignTravelData) {
+    if (!foreignTravelData || foreignTravelData.length === 0) return Promise.resolve();
+
+    return new Promise((resolve) => {
+        const table = document.querySelector('.foreignTravel tbody');
+        const totalRow = table.querySelector('.total-row');
+
+        // 清除所有現有的資料行（只保留總計行）
+        const existingRows = table.querySelectorAll('tr:not(.total-row)');
+        existingRows.forEach(row => row.remove());
+
+        // 新增所有需要的行（包含第一行）
+        for (let i = 0; i < foreignTravelData.length; i++) {
+            FT_addRow();
+        }
+
+        // 延遲填入資料，確保所有行都已建立
+        setTimeout(() => {
+            foreignTravelData.forEach((travel, index) => {
+                const rowIndex = index + 1;
+
+                const countryInput = document.getElementById(`foreignCountry${rowIndex}`);
+                const topicInput = document.getElementById(`foreignTopic${rowIndex}`);
+                const daysInput = document.getElementById(`foreignDays${rowIndex}`);
+                const peopleInput = document.getElementById(`foreignPeople${rowIndex}`);
+                const transportFeeInput = document.getElementById(`foreignTransportFee${rowIndex}`);
+                const livingFeeInput = document.getElementById(`foreignLivingFee${rowIndex}`);
+                const conferenceInput = document.getElementById(`foreignConference${rowIndex}`);
+
+                if (countryInput) countryInput.value = travel.country || '';
+                if (topicInput) topicInput.value = travel.topic || '';
+                if (daysInput) daysInput.value = travel.days || '0';
+                if (peopleInput) peopleInput.value = travel.people || '0';
+                if (transportFeeInput) transportFeeInput.value = travel.transportFee || '0';
+                if (livingFeeInput) livingFeeInput.value = travel.livingFee || '0';
+                if (conferenceInput) conferenceInput.value = travel.conference || '';
+            });
+
             resolve();
         }, 50);
     });

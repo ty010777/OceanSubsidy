@@ -131,6 +131,10 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                 ? snapshotData.PersonnelCostTripForm.ToObject<List<TravelRow>>()
                 : new List<TravelRow>();
 
+            List<ForeignTravelRow> foreignTravelData = snapshotData.PersonnelCostAbroadTrip != null
+                ? snapshotData.PersonnelCostAbroadTrip.ToObject<List<ForeignTravelRow>>()
+                : new List<ForeignTravelRow>();
+
             List<OtherFeeRow> otherData = snapshotData.PersonnelCostOtherPersonFee != null
                 ? snapshotData.PersonnelCostOtherPersonFee.ToObject<List<OtherFeeRow>>()
                 : new List<OtherFeeRow>();
@@ -168,6 +172,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             jsBuilder.AppendLine($"    material: {serializer.Serialize(materialData)},");
             jsBuilder.AppendLine($"    research: {serializer.Serialize(researchData)},");
             jsBuilder.AppendLine($"    travel: {serializer.Serialize(travelData)},");
+            jsBuilder.AppendLine($"    foreignTravel: {serializer.Serialize(foreignTravelData)},");
             jsBuilder.AppendLine($"    other: {serializer.Serialize(otherData)},");
             jsBuilder.AppendLine($"    otherRent: {serializer.Serialize(otherRentData)},");
             jsBuilder.AppendLine($"    totalFees: {serializer.Serialize(totalFeesData)},");
@@ -350,6 +355,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             var materialData = GetMaterialDataFromHidden();
             var researchData = GetResearchDataFromHidden();
             var travelData = GetTravelDataFromHidden();
+            var foreignTravelData = GetForeignTravelDataFromHidden();
             var otherData = GetOtherDataFromHidden();
             var otherRentData = GetOtherRentDataFromHidden();
             var totalFeesData = GetTotalFeesDataFromHidden();
@@ -373,6 +379,11 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             if (travelData != null && travelData.Count > 0)
             {
                 OFS_SciFundingHelper.ReplaceTripForm(travelData, ProjectID);
+            }
+
+            if (foreignTravelData != null && foreignTravelData.Count > 0)
+            {
+                OFS_SciFundingHelper.ReplaceAbroadTripForm(foreignTravelData, ProjectID);
             }
 
             if (otherData != null && otherData.Count > 0)
@@ -412,6 +423,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
         hdnPersonnelData.Value = "[]";
         hdnMaterialData.Value = "[]";
         hdnTravelData.Value = "[]";
+        hdnForeignTravelData.Value = "[]";
         hdnOtherData.Value = "[]";
         hdnOtherRentData.Value = "[]";
         hdnTotalFeesData.Value = "[]";
@@ -538,6 +550,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             var materialData = OFS_SciFundingHelper.GetMaterialList(projectID);
             var researchData = OFS_SciFundingHelper.GetResearchFeesList(projectID);
             var travelData = OFS_SciFundingHelper.GetTripFormList(projectID);
+            var foreignTravelData = OFS_SciFundingHelper.GetAbroadTripFormList(projectID);
             var otherData = OFS_SciFundingHelper.GetOtherPersonFeeList(projectID);
             var otherRentData = OFS_SciFundingHelper.GetOtherObjectFeeList(projectID);
             var totalFeesData = OFS_SciFundingHelper.GetTotalFeeList(projectID);
@@ -567,6 +580,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             jsBuilder.AppendLine($"    material: {serializer.Serialize(materialData)},");
             jsBuilder.AppendLine($"    research: {serializer.Serialize(researchData)},");
             jsBuilder.AppendLine($"    travel: {serializer.Serialize(travelData)},");
+            jsBuilder.AppendLine($"    foreignTravel: {serializer.Serialize(foreignTravelData)},");
             jsBuilder.AppendLine($"    other: {serializer.Serialize(otherData)},");
             jsBuilder.AppendLine($"    otherRent: {serializer.Serialize(otherRentData)},");
             jsBuilder.AppendLine($"    totalFees: {serializer.Serialize(totalFeesData)},");
@@ -1032,6 +1046,28 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
     }
 
     /// <summary>
+    /// 從隱藏欄位取得國外差旅費資料
+    /// </summary>
+    private List<ForeignTravelRow> GetForeignTravelDataFromHidden()
+    {
+        var foreignTravelList = new List<ForeignTravelRow>();
+        try
+        {
+            if (!string.IsNullOrEmpty(hdnForeignTravelData.Value))
+            {
+                var serializer = new JavaScriptSerializer();
+                foreignTravelList = serializer.Deserialize<List<ForeignTravelRow>>(hdnForeignTravelData.Value) ?? new List<ForeignTravelRow>();
+            }
+        }
+        catch (Exception ex)
+        {
+            HandleException(ex, "解析國外差旅費資料時發生錯誤");
+        }
+
+        return foreignTravelList;
+    }
+
+    /// <summary>
     /// 從隱藏欄位取得其他人事費資料
     /// </summary>
     private List<OtherFeeRow> GetOtherDataFromHidden()
@@ -1304,6 +1340,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             var materialData = GetMaterialDataFromHidden();
             var researchData = GetResearchDataFromHidden();
             var travelData = GetTravelDataFromHidden();
+            var foreignTravelData = GetForeignTravelDataFromHidden();
             var otherData = GetOtherDataFromHidden();
             var otherRentData = GetOtherRentDataFromHidden();
             var totalFeesData = GetTotalFeesDataFromHidden();
@@ -1316,6 +1353,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                 MaterialData = materialData,
                 ResearchData = researchData,
                 TravelData = travelData,
+                ForeignTravelData = foreignTravelData,
                 OtherData = otherData,
                 OtherRentData = otherRentData,
                 TotalFeesData = totalFeesData,
@@ -1382,6 +1420,9 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                     var travelData = (tempDataDynamic.TravelData != null)
                         ? JsonConvert.DeserializeObject<List<TravelRow>>(tempDataDynamic.TravelData.ToString())
                         : new List<TravelRow>();
+                    var foreignTravelData = (tempDataDynamic.ForeignTravelData != null)
+                        ? JsonConvert.DeserializeObject<List<ForeignTravelRow>>(tempDataDynamic.ForeignTravelData.ToString())
+                        : new List<ForeignTravelRow>();
                     var otherData = (tempDataDynamic.OtherData != null)
                         ? JsonConvert.DeserializeObject<List<OtherFeeRow>>(tempDataDynamic.OtherData.ToString())
                         : new List<OtherFeeRow>();
@@ -1401,6 +1442,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                     jsBuilder.AppendLine($"    material: {serializer.Serialize(materialData)},");
                     jsBuilder.AppendLine($"    research: {serializer.Serialize(researchData)},");
                     jsBuilder.AppendLine($"    travel: {serializer.Serialize(travelData)},");
+                    jsBuilder.AppendLine($"    foreignTravel: {serializer.Serialize(foreignTravelData)},");
                     jsBuilder.AppendLine($"    other: {serializer.Serialize(otherData)},");
                     jsBuilder.AppendLine($"    otherRent: {serializer.Serialize(otherRentData)},");
                     jsBuilder.AppendLine($"    totalFees: {serializer.Serialize(totalFeesData)}");

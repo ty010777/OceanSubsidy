@@ -11,11 +11,11 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
 {
     
     /// <summary>
-    ///  ()
+    /// 審查標準範本 ()
     /// </summary>
     [DataContract]
     [Serializable()]
-    [GisTableAttribute("OFS_ReviewTemplate", "", false)]
+    [GisTableAttribute("OFS_ReviewTemplate", "審查標準範本", false)]
     public class IOFS_ReviewTemplate : IMeta
     {
         
@@ -159,6 +159,76 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
         
+        protected string _TemplateNote = "";
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("TemplateNote", "TemplateNote", DataSource.TABLE, "", false)]
+        public virtual string TemplateNote
+        {
+            get
+            {
+                return _TemplateNote;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_TemplateNote == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_TemplateNote.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("TemplateNote") == -1)
+                    {
+                        UPDATE_COLUMN.Add("TemplateNote");
+                    }
+                    _TemplateNote = value;
+                }
+            }
+        }
+        
+        protected int? _OrderNo = null;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("OrderNo", "OrderNo", DataSource.TABLE, "", false)]
+        public virtual int? OrderNo
+        {
+            get
+            {
+                return _OrderNo;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_OrderNo == null) {
+                    if(value != null) {
+                        isModify = true;
+                    }
+                }
+                else if (!_OrderNo.Equals(value))
+                {
+                    isModify = true;
+                }
+                if(isModify) {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("OrderNo") == -1)
+                    {
+                        UPDATE_COLUMN.Add("OrderNo");
+                    }
+                    _OrderNo = value;
+                }
+            }
+        }
+        
     }
 
     
@@ -171,7 +241,7 @@ namespace GS.OCA_OceanSubsidy.Entity
     using GS.OCA_OceanSubsidy.Entity.Base;
     
     /// <summary>
-    ///  ()
+    /// 審查標準範本 ()
     /// </summary>
     [DataContract]
     [Serializable()]

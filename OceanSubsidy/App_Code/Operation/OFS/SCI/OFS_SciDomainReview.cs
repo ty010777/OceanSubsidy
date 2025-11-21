@@ -8,7 +8,7 @@ using GS.Data.Sql;
 using GS.OCA_OceanSubsidy.Entity;
 
 /// <summary>
-/// 領域審查相關資料操作 Helper
+/// 實質審查相關資料操作 Helper
 /// </summary>
 public class OFS_SciDomainReviewHelper
 {
