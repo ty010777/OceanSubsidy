@@ -36,7 +36,19 @@
                 const id = "<%= Request.QueryString["ID"] %>";
                 const stage = ref(1);
 
-                const next = () => location.href = "GrantList.aspx";
+                const next = (submit, grantId) => {
+                    Swal.fire({ title: submit ? "發布成功" : "儲存成功", icon: "success" }).then(() => {
+                        if (stage.value === 1) {
+                            if (id) {
+                                if (submit) {
+                                    location.reload();
+                                }
+                            } else {
+                                location.href = `GrantEdit.aspx?ID=${grantId}`;
+                            }
+                        }
+                    });
+                };
 
                 return { grant, id, next, stage };
             }

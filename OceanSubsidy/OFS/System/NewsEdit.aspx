@@ -18,7 +18,13 @@
             setup() {
                 const id = "<%= Request.QueryString["ID"] %>";
 
-                const next = () => location.href = "NewsList.aspx";
+                const next = (newsId) => {
+                    Swal.fire({ title: "儲存成功", icon: "success" }).then(() => {
+                        if (!id) {
+                            location.href = `NewsEdit.aspx?ID=${newsId}`;
+                        }
+                    });
+                };
 
                 return { id, next };
             }

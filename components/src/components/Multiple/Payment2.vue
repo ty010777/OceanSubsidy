@@ -75,7 +75,7 @@
             </table>
         </div>
     </div>
-    <div class="block-bottom bg-light-teal">
+    <div class="block-bottom bg-light-teal" v-if="editable">
         <button class="btn btn-outline-teal me-3" @click="save()" type="button">暫存</button>
         <button class="btn btn-teal" @click="save(true)" :disabled="disabled" type="button"><i class="fas fa-check"></i>提送</button>
     </div>
@@ -169,11 +169,13 @@
             Submit: submit ? "true" : "false"
         };
 
-        api.multiple("savePayment", data).subscribe(() => {
-            if (submit) {
-                emit("next");
-            } else {
-                load();
+        api.multiple("savePayment", data).subscribe((res) => {
+            if (res) {
+                if (submit) {
+                    emit("next", load);
+                } else {
+                    load();
+                }
             }
         });
     };

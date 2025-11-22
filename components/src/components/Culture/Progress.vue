@@ -108,6 +108,8 @@
         load();
     };
 
+    const emit = defineEmits(["next"]);
+
     const load = () => {
         api.culture("getMonthlyProgress", { ID: props.id, Year: current.value.year - 1911, Month: current.value.month }).subscribe((result) => {
             const logs = result.Logs;
@@ -176,8 +178,8 @@
         };
 
         api.culture("saveMonthlyProgress", data).subscribe((res) => {
-            if (res) {
-                window.location.href = "../inprogressList.aspx";
+            if (res && submit) {
+                emit("next");
             }
         });
     };

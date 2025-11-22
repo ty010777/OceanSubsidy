@@ -158,7 +158,7 @@
 
         api.system("saveNews", data).subscribe((res) => {
             if (res) {
-                emit("next");
+                emit("next", res.ID);
             }
         });
     };

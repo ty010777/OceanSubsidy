@@ -34,7 +34,7 @@
                         <td data-th="發布者:" class="text-start">{{ item.UserOrg }} {{ item.UserName }}</td>
                         <td data-th="功能:" class="text-center">
                             <div class="d-inline-flex gap-2">
-                                <a class="btn btn-sm btn-teal-dark" :href="`NewsEdit.aspx?id=${item.ID}`"><i class="fa-solid fa-pen"></i></a>
+                                <a class="btn btn-sm btn-teal-dark" :href="`NewsEdit.aspx?ID=${item.ID}`"><i class="fa-solid fa-pen"></i></a>
                                 <button class="btn btn-sm btn-teal-dark" @click="remove(item)" type="button"><i class="fa-solid fa-xmark"></i></button>
                             </div>
                         </td>
@@ -83,6 +83,7 @@
         if (!confirm) {
             target = item;
             bootstrap.Modal.getOrCreateInstance(modal.value).show();
+            return;
         }
 
         api.system("deleteNews", { ID: item.ID }).subscribe((res) => {

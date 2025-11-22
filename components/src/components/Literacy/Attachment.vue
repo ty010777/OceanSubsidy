@@ -152,11 +152,13 @@
             Submit: submit ? "true" : "false"
         };
 
-        api.literacy("saveAttachment", data).subscribe(() => {
-            if (submit) {
-                emit("next");
-            } else {
-                load();
+        api.literacy("saveAttachment", data).subscribe((res) => {
+            if (res) {
+                if (submit) {
+                    emit("next", load);
+                } else {
+                    load();
+                }
             }
         });
     }
