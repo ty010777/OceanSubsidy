@@ -196,7 +196,7 @@
 
         api.system("saveGrantTypeContent", data).subscribe((res) => {
             if (res) {
-                emit("next");
+                emit("next", submit, res.ID);
             }
         });
     };

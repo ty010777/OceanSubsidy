@@ -106,11 +106,13 @@
             Submit: submit ? "true" : "false"
         };
 
-        api[props.type]("saveReport", data).subscribe(() => {
-            if (submit) {
-                emit("next");
-            } else {
-                load();
+        api[props.type]("saveReport", data).subscribe((res) => {
+            if (res) {
+                if (submit) {
+                    emit("next", load);
+                } else {
+                    load();
+                }
             }
         });
     };

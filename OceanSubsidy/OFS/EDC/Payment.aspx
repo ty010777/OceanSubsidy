@@ -31,7 +31,7 @@
                 const settings = ref();
                 const store = useProgressStore();
 
-                const next = () => {};
+                const next = (callback) => Swal.fire({ title: "提送成功", icon: "success" }).then(callback);
 
                 onMounted(() => {
                     api.education("getPaymentPhaseSettings", { TypeCode: "EDC" }).subscribe((res) => settings.value = res);

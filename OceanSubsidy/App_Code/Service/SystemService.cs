@@ -558,7 +558,7 @@ public class SystemService : BaseService
             }
         }
 
-        return new {};
+        return new { ID = news.ID };
     }
 
     public object saveReviewCommittee(JObject param, HttpContext context)

@@ -155,11 +155,13 @@
             Submit: submit ? "true" : "false"
         };
 
-        api.multiple("saveAttachment", data).subscribe(() => {
-            if (submit) {
-                emit("next");
-            } else {
-                load();
+        api.multiple("saveAttachment", data).subscribe((res) => {
+            if (res) {
+                if (submit) {
+                    emit("next", load);
+                } else {
+                    load();
+                }
             }
         });
     }
