@@ -4,7 +4,7 @@
         <p class="text-pink lh-base mt-4" v-if="editable">
             請下載附件範本，填寫資料及公文用印後上傳（僅支援PDF格式上傳，每個檔案10MB以內）<br />
             <br />
-            請以紙本公文發文郵寄本會憑辦，附件需含資料表或申請書(正本；須加蓋學校、單位關防及負責人核章)、計畫書、未違反公職人員利益衝突迴避法切結書及事前揭露表(正本；須加蓋學校、單位關防及負責人核章)，及相關佐證資料(如社團成立證明、社團運作證明、有效期間內之當選證書、登記證書等)
+            請以紙本公文發文郵寄本會憑辦，附件需含資料表或申請書(正本；須加蓋學校、單位關防及負責人核章)、計畫書、未違反公職人員利益衝突迴避法切結書及事前揭露表(正本；須加蓋學校、單位關防及負責人核章)，及相關佐證資料(如有效期間內之當選證書、核准登記設立證明等)
         </p>
         <div class="mt-4">
             <table class="table align-middle gray-table">
@@ -90,7 +90,8 @@
     const docs = ref([
         { Type: 1, Title: "申請表", Template: `../../Service/OFS/DownloadTemplateEDC.ashx?type=1&id=${props.id}`, Files: [] },
         { Type: 2, Title: "計畫書", Template: `../../Service/OFS/DownloadTemplateEDC.ashx?type=2&id=${props.id}`, Files: [] },
-        { Type: 3, Title: "未違反公職人員利益衝突迴避法切結書及事前揭露表", Template: `../../Service/OFS/DownloadTemplateEDC.ashx?type=3&id=${props.id}`, Files: [] }
+        { Type: 3, Title: "未違反公職人員利益衝突迴避法切結書及事前揭露表", Template: `../../Service/OFS/DownloadTemplateEDC.ashx?type=3&id=${props.id}`, Files: [] },
+        { Type: 4, Title: "相關佐證資料", Comment: "(如：有效期間內之當選證書、核准登記設立證明等)", Files: [], Multiple: true, Optional: true }
     ]);
 
     const changeForm = ref();
