@@ -166,11 +166,99 @@
                             <td>
                                 <input-integer :error="errors.OtherGovAmount" v-model="form.OtherGovAmount"></input-integer>
                             </td>
-                            <td>
-                                <input-integer :error="errors.OtherUnitAmount" v-model="form.OtherUnitAmount"></input-integer>
+                            <td class="text-end">
+                                {{ form.OtherUnitAmount?.toLocaleString() }}
                             </td>
                             <td class="text-end">
                                 {{ total.toLocaleString() }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <ul class="list-unstyled lh-base mb-3">
+                <li>補助申請單位為民間團體或學校者，配合款比例應為計畫總經費之 5％以上；</li>
+                <li>合作申請單位之分攤比例應為計畫總經費之 20％以上。</li>
+            </ul>
+            <div class="table-responsive">
+                <table class="table align-middle gray-table">
+                    <thead>
+                        <tr>
+                            <th :colspan="editable ? 6 : 5" style="border-bottom-width:1px">其他機關補助／合作金額 (C)</th>
+                        </tr>
+                        <tr>
+                            <th width="1"></th>
+                            <th>單位名稱</th>
+                            <th class="text-end">申請／分攤補助金額(元)（含尚未核定者）</th>
+                            <th>比例</th>
+                            <th>申請合作項目</th>
+                            <th width="1" v-if="editable">功能</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr :key="item" v-for="(item, idx) in filteredOthers">
+                            <td>
+                                {{ idx + 1 }}
+                            </td>
+                            <td>
+                                <input-text :error="errors[`other-${idx}-Unit`]" v-model.trim="item.Unit"></input-text>
+                            </td>
+                            <td>
+                                <input-integer :error="errors[`other-${idx}-Amount`]" v-model="item.Amount"></input-integer>
+                            </td>
+                            <td class="text-end">
+                                {{ item.percent || 0 }}%
+                            </td>
+                            <td>
+                                <input-textarea :error="errors[`other-${idx}-Content`]" rows="1" v-model.trim="item.Content"></input-textarea>
+                            </td>
+                            <td v-if="editable">
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-teal-dark m-0" @click="remove(item)" type="button"><i class="fas fa-trash-alt"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button class="btn btn-sm btn-teal-dark m-0" @click="addOther" type="button" v-if="editable"><i class="fas fa-plus"></i> 新增</button>
+            </div>
+        </div>
+        <h5 class="square-title mt-5">經費預算規劃</h5>
+        <div class="mt-4">
+            <div class="table-responsive mt-3 mb-0">
+                <table class="table align-middle gray-table">
+                    <thead>
+                        <tr>
+                            <th>預算項目</th>
+                            <th class="text-end">預算金額(元)<br />海洋委員會經費</th>
+                            <th class="text-end">預算金額(元)<br />其他配合經費</th>
+                            <th class="text-end">預算金額(元)<br />小計</th>
+                            <th>計算方式及說明</th>
+                            <th width="1" v-if="editable">功能</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr :key="item" v-for="(item, idx) in filteredPlans">
+                            <td>
+                                <input-text :error="errors[`plan-${idx}-Title`]" v-model.trim="item.Title"></input-text>
+                            </td>
+                            <td>
+                                <input-integer :error="errors[`plan-${idx}-Amount`]" v-model="item.Amount"></input-integer>
+                            </td>
+                            <td>
+                                <input-integer :error="errors[`plan-${idx}-OtherAmount`]" v-model="item.OtherAmount"></input-integer>
+                            </td>
+                            <td class="text-end">
+                                {{ item.sum.toLocaleString() }}
+                            </td>
+                            <td>
+                                <input-textarea :error="errors[`plan-${idx}-Description`]" rows="1" v-model.trim="item.Description"></input-textarea>
+                            </td>
+                            <td v-if="editable">
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-teal-dark m-0" @click="remove(item)" type="button" v-if="filteredPlans.length > 1"><i class="fas fa-trash-alt"></i></button>
+                                    <button class="btn btn-sm btn-teal-dark m-0" @click="addPlan" type="button" v-if="idx + 1 === filteredPlans.length"><i class="fas fa-plus"></i></button>
+                                </div>
                             </td>
                         </tr>
                     </tbody>
@@ -261,9 +349,13 @@
     const contacts = ref();
     const editable = computed(() => isProjectEditable("education", form.value.Status, 1));
     const errors = ref({});
+    const filteredOthers = computed(() => others.value.filter((item) => !item.Deleted));
+    const filteredPlans = computed(() => plans.value.filter((item) => !item.Deleted));
     const filteredReceiveds = computed(() => receiveds.value.filter((item) => !item.Deleted));
     const form = ref({});
     const modal = ref();
+    const others = ref([]);
+    const plans = ref([]);
     const receiveds = ref([]);
     const setting = ref();
     const total = ref(0);
@@ -281,15 +373,25 @@
 
     const add = () => receiveds.value.push({});
 
+    const addOther = () => others.value.push({});
+
+    const addPlan = () => plans.value.push({});
+
     const emit = defineEmits(["next"]);
 
     const load = () => {
         api.education("getApplication", { Apply: props.apply ? "true" : "false", ID: props.id }).subscribe((res) => {
             form.value = res.Project;
             contacts.value = res.Contacts;
+            others.value = res.OtherSubsidies || [];
+            plans.value = res.BudgetPlans || [];
             receiveds.value = res.ReceivedSubsidies;
 
             form.value.OrgCategory = form.value.OrgCategory || null;
+
+            if (!plans.value.length) {
+                addPlan();
+            }
 
             useProgressStore().init("education", form.value);
 
@@ -316,6 +418,8 @@
         const data = {
             Project: form.value,
             Contacts: contacts.value,
+            OtherSubsidies: others.value,
+            BudgetPlans: plans.value,
             ReceivedSubsidies: receiveds.value.filter((item) => item.ID || !item.Deleted),
             Before: changeForm.value?.Form1Before,
             After: changeForm.value?.Form1After,
@@ -369,6 +473,23 @@
         Object.assign(errors.value, validateData(contacts.value[1], rules, `contact-${1}-`))
 
         rules = {
+            Unit: "單位名稱",
+            Amount: { presence: { allowEmpty: false, message: `^請輸入申請金額` }, numericality: { greaterThan: 0, message: "^申請金額不可為 0" } },
+            Content: "申請合作項目"
+        };
+
+        filteredOthers.value.forEach((other, index) => Object.assign(errors.value, validateData(other, rules, `other-${index}-`)));
+
+        rules = {
+            Title: "預算項目",
+            Amount: "海委會經費",
+            OtherAmount: "其他經費",
+            Description: "計算方式及說明"
+        };
+
+        filteredPlans.value.forEach((plan, index) => Object.assign(errors.value, validateData(plan, rules, `plan-${index}-`)));
+
+        rules = {
             Name: "計畫名稱",
             Amount: { presence: { allowEmpty: false, message: `^請輸入海委會補助經費` }, numericality: { greaterThan: 0, message: "^海委會補助經費不可為 0" } }
         };
@@ -415,6 +536,12 @@
     });
 
     watchEffect(() => {
+        form.value.OtherUnitAmount = filteredOthers.value.reduce((sum, other) => sum + toInt(other.Amount), 0);
+
         total.value = toInt(form.value.ApplyAmount) + toInt(form.value.SelfAmount) + toInt(form.value.OtherGovAmount) + toInt(form.value.OtherUnitAmount);
+
+        filteredOthers.value.forEach((other) => other.percent = Math.round(toInt(other.Amount) / form.value.OtherUnitAmount * 10000) / 100);
+
+        plans.value.forEach((plan) => plan.sum = toInt(plan.Amount) + toInt(plan.OtherAmount));
     });
 </script>

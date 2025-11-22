@@ -56,6 +56,8 @@ public class EducationService : BaseService
             {
                 Project = snapshot["Project"],
                 Contacts = snapshot["Contacts"],
+                OtherSubsidies = snapshot["OtherSubsidies"],
+                BudgetPlans = snapshot["BudgetPlans"],
                 ReceivedSubsidies = snapshot["ReceivedSubsidies"]
             };
         }
@@ -64,6 +66,8 @@ public class EducationService : BaseService
         {
             Project = data,
             Contacts = OFS_EdcContactHelper.query(data.ID),
+            OtherSubsidies = OFS_EdcOtherSubsidyHelper.query(data.ID),
+            BudgetPlans = OFS_EdcBudgetPlanHelper.query(data.ID),
             ReceivedSubsidies = OFS_EdcReceivedSubsidyHelper.query(data.ID)
         };
     }
@@ -377,6 +381,46 @@ public class EducationService : BaseService
             else
             {
                 OFS_EdcContactHelper.update(item);
+            }
+        }
+
+        var others = param["OtherSubsidies"].ToObject<List<OFS_EdcOtherSubsidy>>();
+
+        foreach (var item in others)
+        {
+            if (item.Deleted)
+            {
+                OFS_EdcOtherSubsidyHelper.delete(item.ID);
+            }
+            else if (item.ID == 0)
+            {
+                item.PID = project.ID;
+
+                OFS_EdcOtherSubsidyHelper.insert(item);
+            }
+            else
+            {
+                OFS_EdcOtherSubsidyHelper.update(item);
+            }
+        }
+
+        var plans = param["BudgetPlans"].ToObject<List<OFS_EdcBudgetPlan>>();
+
+        foreach (var item in plans)
+        {
+            if (item.Deleted)
+            {
+                OFS_EdcBudgetPlanHelper.delete(item.ID);
+            }
+            else if (item.ID == 0)
+            {
+                item.PID = project.ID;
+
+                OFS_EdcBudgetPlanHelper.insert(item);
+            }
+            else
+            {
+                OFS_EdcBudgetPlanHelper.update(item);
             }
         }
 
@@ -711,6 +755,8 @@ public class EducationService : BaseService
             {
                 Project = project,
                 Contacts = OFS_EdcContactHelper.query(id),
+                OtherSubsidies = OFS_EdcOtherSubsidyHelper.query(id),
+                BudgetPlans = OFS_EdcBudgetPlanHelper.query(id),
                 ReceivedSubsidies = OFS_EdcReceivedSubsidyHelper.query(id),
                 Attachments = OFS_EdcAttachmentHelper.query(id)
             })
