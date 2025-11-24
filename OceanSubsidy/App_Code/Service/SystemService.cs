@@ -408,6 +408,11 @@ public class SystemService : BaseService
 
         var data = param["GrantType"].ToObject<GrantType>();
 
+        if (data.ApplyStartDate.HasValue && data.ApplyEndDate.HasValue && OFSGrantTypeHelper.count(data.TypeID, data.TypeCode, data.ApplyStartDate.Value, data.ApplyEndDate.Value) > 0)
+        {
+            return new { error = "同一補助類別的申請期間不可重疊" };
+        }
+
         OFSGrantTypeHelper.update(data);
 
         return new {};

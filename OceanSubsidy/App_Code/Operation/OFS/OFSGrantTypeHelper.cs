@@ -7,6 +7,27 @@ using System.Linq;
 
 public class OFSGrantTypeHelper
 {
+    public static int count(int exclude, string typeCode, DateTime begin, DateTime end)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            SELECT COUNT(*) AS [Count]
+              FROM [OFS_GrantType]
+             WHERE [TypeID] != @exclude
+               AND [TypeCode] = @typeCode
+               AND [ApplyStartDate] <= @end
+               AND [ApplyEndDate] >= @begin
+        ";
+
+        db.Parameters.Add("@exclude", exclude);
+        db.Parameters.Add("@typeCode", typeCode);
+        db.Parameters.Add("@begin", begin);
+        db.Parameters.Add("@end", end);
+
+        return int.Parse(db.GetTable().Rows[0]["Count"].ToString());
+    }
+
     public static GrantType get(int id)
     {
         DbHelper db = new DbHelper();
