@@ -135,7 +135,11 @@
 
         api.system("saveGrantType", { GrantType: Object.assign(form.value, data) }).subscribe((res) => {
             if (res) {
-                emit("next");
+                if (res.error) {
+                    Swal.fire({ title: res.error, icon: "error" });
+                } else {
+                    emit("next");
+                }
             }
         });
     };
