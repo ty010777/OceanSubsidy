@@ -3924,7 +3924,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                     SELECT Code, Descname
                     FROM [OCA_OceanSubsidy].[dbo].[Sys_ZgsCode]
                     WHERE (CodeGroup = 'CULField' AND ParentCode IN (10, 20, 30))
-                       OR CodeGroup = 'SCIField'
+                       OR CodeGroup = 'SCITopic'
                     ORDER BY CodeGroup
                 ";
 
@@ -3969,28 +3969,47 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
         {
             using (var db = new GS.Data.Sql.DbHelper())
             {
-                db.CommandText = @"
-                    SELECT CommitteeUser, Email
-                    FROM OFS_ReviewCommitteeList
-                    WHERE SubjectTypeID = @SubjectCode
-                ";
-
-                db.Parameters.Add("@SubjectCode", subjectCode);
+                // 如果選擇「全部」,則不篩選 SubjectTypeID
+                if (subjectCode == "ALL")
+                {
+                    db.CommandText = @"
+                        SELECT DISTINCT CommitteeUser, Email
+                        FROM OFS_ReviewCommitteeList
+                        ORDER BY Email
+                    ";
+                }
+                else
+                {
+                    db.CommandText = @"
+                        SELECT CommitteeUser, Email
+                        FROM OFS_ReviewCommitteeList
+                        WHERE SubjectTypeID = @SubjectCode
+                    ";
+                    db.Parameters.Add("@SubjectCode", subjectCode);
+                }
 
                 var table = db.GetTable();
                 var results = new List<object>();
+
+                // 使用 HashSet 確保不重複(針對「全部」選項)
+                var uniqueAccounts = new HashSet<string>();
 
                 foreach (DataRow row in table.Rows)
                 {
                     string name = row["CommitteeUser"]?.ToString() ?? "";  // 中文名稱
                     string account = row["Email"]?.ToString() ?? "";       // 帳號
 
-                    results.Add(new
+                    // 確保不重複
+                    if (!string.IsNullOrEmpty(account) && !uniqueAccounts.Contains(account))
                     {
-                        account = account,
-                        name = name,
-                        displayName = $"{account} {name}"
-                    });
+                        uniqueAccounts.Add(account);
+                        results.Add(new
+                        {
+                            account = account,
+                            name = name,
+                            displayName = $"{account} {name}"
+                        });
+                    }
                 }
 
                 db.Parameters.Clear();

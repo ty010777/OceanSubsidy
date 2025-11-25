@@ -541,8 +541,8 @@ public class SCI_Download : IHttpHandler
                 var templateFiles = new HashSet<string>
                 {
                     "附件-02-1海洋科技科專案計畫書.docx",
-                    "附件-02-2預定進度及查核標準-查核標準.xlsx",
-                    "附件-02-2預定進度及查核標準-預定進度.xlsx",
+                    "附件-02-2-2預定進度及查核標準-查核標準.xlsx",
+                    "附件-02-2-1預定進度及查核標準-預定進度.xlsx",
                     "附件-02-4-0經費概算彙總表.xlsx"
                 };
 
@@ -600,10 +600,10 @@ public class SCI_Download : IHttpHandler
                 case "附件-02-1海洋科技科專案計畫書.docx":
                     ProcessTemplate_AC2_File1(filePath, projectID);
                     break;
-                case "附件-02-2預定進度及查核標準-查核標準.xlsx":
+                case "附件-02-2-2預定進度及查核標準-查核標準.xlsx":
                     ProcessTemplate_AC2_File2_CheckStandard(filePath, projectID);
                     break;
-                case "附件-02-2預定進度及查核標準-預定進度.xlsx":
+                case "附件-02-2-1預定進度及查核標準-預定進度.xlsx":
                     ProcessTemplate_AC2_File2_Schedule(filePath, projectID);
                     break;
                 case "附件-02-4-0經費概算彙總表.xlsx":
@@ -652,24 +652,34 @@ public class SCI_Download : IHttpHandler
 
                 // 處理 OrgCategory 欄位勾選（機構類別）
                 string orgCategory = applicationMain.OrgCategory ?? "";
-                placeholder.Add("Academic", orgCategory == "Academic" ? "☒" : "☐");
-                placeholder.Add("Legal", orgCategory == "Legal" ? "☒" : "☐");
+                placeholder.Add("Academic", orgCategory == "Academic" ? "■" : "□");
+                placeholder.Add("Legal", orgCategory == "Legal" ? "■" : "□");
 
                 // 處理 Field 欄位勾選（領域）
-                string field = applicationMain.Field ?? "";
-                placeholder.Add("Field1", field == "Information" ? "☒" : "☐");
-                placeholder.Add("Field2", field == "Environment" ? "☒" : "☐");
-                placeholder.Add("Field3", field == "Material" ? "☒" : "☐");
-                placeholder.Add("Field4", field == "Mechanical" ? "☒" : "☐");
+                // string field = applicationMain.Field ?? "";
+                // placeholder.Add("Field1", field == "Information" ? "☒" : "☐");
+                // placeholder.Add("Field2", field == "Environment" ? "☒" : "☐");
+                // placeholder.Add("Field3", field == "Material" ? "☒" : "☐");
+                // placeholder.Add("Field4", field == "Mechanical" ? "☒" : "☐");
 
                 // 處理 Topic 欄位勾選（主題）
                 string topic = applicationMain.Topic ?? "";
-                placeholder.Add("Topic1", topic == "Protection" ? "☒" : "☐");
-                placeholder.Add("Topic2", topic == "Security" ? "☒" : "☐");
-                placeholder.Add("Topic3", topic == "Sustainability" ? "☒" : "☐");
-                placeholder.Add("Topic4", topic == "Other" ? "☒" : "☐");
-
-                // 處理開始日期（民國年月日）
+                placeholder.Add("SCIT001", topic == "SCIT001" ? "■" : "□");
+                placeholder.Add("SCIT002", topic == "SCIT002" ? "■" : "□");
+                placeholder.Add("SCIT003", topic == "SCIT003" ? "■" : "□");
+                placeholder.Add("SCIT004", topic == "SCIT004" ? "■" : "□");
+                placeholder.Add("SCIT005", topic == "SCIT005" ? "■" : "□");
+                placeholder.Add("SCIT006", topic == "SCIT006" ? "■" : "□");
+                placeholder.Add("SCIT007", topic == "SCIT007" ? "■" : "□");
+                placeholder.Add("SCIT008", topic == "SCIT008" ? "■" : "□");
+                placeholder.Add("SCIT009", topic == "SCIT009" ? "■" : "□");
+                placeholder.Add("SCIT010", topic == "SCIT010" ? "■" : "□");
+                placeholder.Add("SCIT011", topic == "SCIT011" ? "■" : "□");
+                placeholder.Add("YesCoreOceanData", applicationMain?.IsCoreOceanData == true ? "■" : "□");
+                placeholder.Add("NoCoreOceanData", applicationMain?.IsCoreOceanData != true? "■" : "□");
+                placeholder.Add("Topic", topic??"");
+                
+                // 處理開始日期（民國年月日） 
                 int sYear = 0, sMonth = 0, sDay = 0;
                 if (applicationMain.StartTime != null)
                 {
@@ -716,7 +726,7 @@ public class SCI_Download : IHttpHandler
                 var numberFormat = (NumberFormatInfo)CultureInfo.InvariantCulture.NumberFormat.Clone();
                 numberFormat.NumberGroupSeparator = ".";
 
-                // 加入經費資料（千分位格式：1.100）
+                // 加入經費資料（千分位格式：1,100）
                 placeholder.Add("SubsidyAmount", totalFeeSum.SubsidyAmount.ToString("N0", numberFormat));
                 placeholder.Add("CoopAmount", totalFeeSum.CoopAmount.ToString("N0", numberFormat));
                 placeholder.Add("TotalAmount", totalFeeSum.TotalAmount.ToString("N0", numberFormat));
@@ -1328,6 +1338,13 @@ public class SCI_Download : IHttpHandler
                 FillMaterialCostSheet(excel, sheetNames, projectID); // 消耗性器材及原材料費
                 FillResearchFeeSheet(excel, sheetNames, projectID); // 技術移轉及委託研究費用
                 FillTravelExpenseSheet(excel, sheetNames, projectID); // 國內差旅費
+
+                // 國外差旅費 (僅限非 OceanTech)
+                if (applicationMain.OrgCategory != "OceanTech")
+                {
+                    FillAbroadTravelExpenseSheet(excel, sheetNames, projectID); // 國外差旅費
+                }
+
                 FillOtherExpenseSheet(excel, sheetNames, projectID); // 其他業務費
 
                 excel.Save();
@@ -1786,6 +1803,112 @@ public class SCI_Download : IHttpHandler
     }
 
     /// <summary>
+    /// 填寫國外差旅費 sheet
+    /// </summary>
+    private void FillAbroadTravelExpenseSheet(ExcelHelper excel, List<string> sheetNames, string projectID)
+    {
+        try
+        {
+            // 找到 '國外差旅費' sheet
+            string targetSheet = "國外差旅費";
+            if (!sheetNames.Contains(targetSheet))
+            {
+                // 如果沒有找到目標 sheet，嘗試使用索引
+                if (sheetNames.Count > 5)
+                {
+                    targetSheet = sheetNames[5];
+                }
+                else
+                {
+                    return; // 找不到對應的 sheet，直接返回
+                }
+            }
+
+            // 從資料庫讀取國外差旅費資料
+            var abroadTripList = OFS_SciFundingHelper.GetAbroadTripFormList(projectID);
+
+            if (abroadTripList != null && abroadTripList.Count > 0)
+            {
+                // 資料插入在第4行和第5行之間，所以從第5行開始插入
+                int insertPosition = 5;
+
+                // 先插入需要的行數 (資料筆數)
+                if (abroadTripList.Count > 0)
+                {
+                    excel.InsertRows(targetSheet, insertPosition, abroadTripList.Count);
+                }
+
+                // 填入資料 (從第5行開始)
+                for (int i = 0; i < abroadTripList.Count; i++)
+                {
+                    var item = abroadTripList[i];
+                    int currentRow = insertPosition + i;
+
+                    // A欄: 國家或地區
+                    var dataA = new List<List<object>>
+                    {
+                        new List<object> { item.country ?? "" }
+                    };
+                    excel.WriteRange(targetSheet, dataA, currentRow, 1);
+
+                    // B欄: 主要會議議題
+                    var dataB = new List<List<object>>
+                    {
+                        new List<object> { item.topic ?? "" }
+                    };
+                    excel.WriteRange(targetSheet, dataB, currentRow, 2);
+
+                    // C欄: 預計天數
+                    var dataC = new List<List<object>>
+                    {
+                        new List<object> { item.days }
+                    };
+                    excel.WriteRange(targetSheet, dataC, currentRow, 3);
+
+                    // D欄: 擬派人數
+                    var dataD = new List<List<object>>
+                    {
+                        new List<object> { item.people }
+                    };
+                    excel.WriteRange(targetSheet, dataD, currentRow, 4);
+
+                    // E欄: 交通費 (單位: 千元)
+                    var dataE = new List<List<object>>
+                    {
+                        new List<object> { item.transportFee / 1000 }
+                    };
+                    excel.WriteRange(targetSheet, dataE, currentRow, 5);
+
+                    // F欄: 生活費 (單位: 千元)
+                    var dataF = new List<List<object>>
+                    {
+                        new List<object> { item.livingFee / 1000 }
+                    };
+                    excel.WriteRange(targetSheet, dataF, currentRow, 6);
+
+                    // G欄: 合計 (單位: 千元)
+                    var dataG = new List<List<object>>
+                    {
+                        new List<object> { (item.transportFee + item.livingFee) / 1000 }
+                    };
+                    excel.WriteRange(targetSheet, dataG, currentRow, 7);
+
+                    // H欄: 內容
+                    var dataH = new List<List<object>>
+                    {
+                        new List<object> { item.conference ?? "" }
+                    };
+                    excel.WriteRange(targetSheet, dataH, currentRow, 8);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"FillAbroadTravelExpenseSheet Error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
     /// 填寫其他業務費 sheet
     /// </summary>
     private void FillOtherExpenseSheet(ExcelHelper excel, List<string> sheetNames, string projectID)
@@ -1910,18 +2033,18 @@ public class SCI_Download : IHttpHandler
             case "FILE_OTech4":
                 return ApplyProjectDataToWord_FILE_OTech4(originalFilePath, projectID);
             case "FILE_OTech8":
-                return ApplyProjectDataToWord_FILE_OTech8(originalFilePath, projectID);
+                return ApplyProjectDataToWord_FILE_AC9(originalFilePath, projectID);//替換文字與檔案與AC9類似 借用
             case "FILE_OTech11":
-                return ApplyProjectDataToWord_FILE_OTech11(originalFilePath, projectID);
+                return ApplyProjectDataToWord_FILE_OTech11(originalFilePath, projectID); 
             //---------------以下為學界、法人----------------
-            case "FILE_AC1":
+            case "FILE_AC1": 
                 return ApplyProjectDataToWord_FILE_AC1(originalFilePath, projectID);
             case "FILE_AC3":
                 return ApplyProjectDataToWord_FILE_OTech3(originalFilePath, projectID); // 檔案相同 借用
             case "FILE_AC4":
                 return ApplyProjectDataToWord_FILE_OTech4(originalFilePath, projectID); // 檔案相同 借用
             case "FILE_AC9":
-                return ApplyProjectDataToWord_FILE_OTech11(originalFilePath, projectID); //替換文字與OTech11相同 借用
+                return ApplyProjectDataToWord_FILE_AC9(originalFilePath, projectID); 
             case "FILE_AC11":
                 return ApplyProjectDataToWord_FILE_AC11(originalFilePath, projectID); //替換文字與OTech11相同 借用
             case "FILE_AC13":
@@ -2081,6 +2204,86 @@ public class SCI_Download : IHttpHandler
     }
 
     /// <summary>
+    /// 處理 FILE_AC9 - 替換申請單位、專案ID、結束日期(民國年)
+    /// </summary>
+    private string ApplyProjectDataToWord_FILE_AC9(string originalFilePath, string projectID)
+    {
+        try
+        {
+            if (!File.Exists(originalFilePath))
+            {
+                return originalFilePath; // 如果原檔案不存在，返回原路徑
+            }
+
+            // 取得專案資料
+            OFS_SCI_Application_Main applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
+            var totalFeeSum = OFS_SciFundingHelper.GetTotalFeeSum(projectID);
+
+            // 處理結束日期（轉換為民國年月日）
+            int etYear = 0, etMonth = 0, etDay = 0;
+
+            if (applicationMain?.EndTime != null)
+            {
+                DateTime endTime = applicationMain.EndTime.Value;
+                etYear = DateTimeHelper.GregorianYearToMinguo(endTime.Year);
+                etMonth = endTime.Month;
+                etDay = endTime.Day;
+            }
+
+            // 建立暫存檔案路徑，保持原檔名
+            string originalFileName = Path.GetFileName(originalFilePath);
+            string tempFilePath = Path.Combine(Path.GetTempPath(), originalFileName);
+
+            // 複製範本檔案到暫存資料夾
+            File.Copy(originalFilePath, tempFilePath, true);
+
+            // 使用 OpenXmlHelper 處理 Word 文件
+            using (var fs = new FileStream(tempFilePath, FileMode.Open, FileAccess.ReadWrite))
+            {
+                var helper = new OpenXmlHelper(fs);
+
+                // 建立替換字典
+                var placeholder = new Dictionary<string, string>();
+
+                // 加入計畫資料
+                placeholder.Add("ProjectID", projectID ?? "");
+                placeholder.Add("OrgName", applicationMain?.OrgName ?? "");
+                placeholder.Add("ProjectNameTw", applicationMain?.ProjectNameTw ?? "");
+
+                // 加入結束日期（民國年月日）
+                placeholder.Add("ETYear", etYear.ToString());
+                placeholder.Add("ETMonth", etMonth.ToString());
+                placeholder.Add("ETDay", etDay.ToString());
+                var numberFormat = (NumberFormatInfo)CultureInfo.InvariantCulture.NumberFormat.Clone();
+                numberFormat.NumberGroupSeparator = ",";
+                // 加入經費資料（千分位格式：1,100）
+                placeholder.Add("SubsidyAmount", totalFeeSum.SubsidyAmount.ToString("N0", numberFormat));
+                placeholder.Add("CoopAmount", totalFeeSum.CoopAmount.ToString("N0", numberFormat));
+                placeholder.Add("TotalAmount", totalFeeSum.TotalAmount.ToString("N0", numberFormat));
+                placeholder.Add("YesCoreOceanData", applicationMain?.IsCoreOceanData == true ? "■" : "□");
+                placeholder.Add("NoCoreOceanData", applicationMain?.IsCoreOceanData != true ? "■" : "□");
+
+
+    
+                var repeatData = new List<Dictionary<string, string>>();
+
+                // 使用 GenerateWord 方法替換佔位符
+                helper.GenerateWord(placeholder, repeatData);
+                helper.CloseAsSave();
+            }
+
+            // 回傳處理後的檔案路徑
+            return tempFilePath;
+        }
+        catch (Exception ex)
+        {
+            // 如果處理失敗，記錄錯誤並返回原檔案路徑
+            System.Diagnostics.Debug.WriteLine($"ApplyProjectDataToWord_FILE_AC9 Error: {ex.Message}");
+            return originalFilePath;
+        }
+    }
+
+    /// <summary>
     /// 處理建議迴避之審查委員清單 (OTech)
     /// </summary>
     private string ApplyProjectDataToWord_FILE_OTech3(string originalFilePath, string projectID)
@@ -2235,72 +2438,72 @@ public class SCI_Download : IHttpHandler
     /// <summary>
     /// 處理海洋科技業界科專計畫補助契約書 (OTech)
     /// </summary>
-    private string ApplyProjectDataToWord_FILE_OTech8(string originalFilePath, string projectID)
-    {
-        try
-        {
-            if (!File.Exists(originalFilePath))
-            {
-                return originalFilePath; // 如果原檔案不存在，返回原路徑
-            }
-
-            // 取得專案資料
-            OFS_SCI_Application_Main applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
-            var projectData = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
-
-            // 取得計畫主持人資料
-            string personID = "P" + projectID;
-            var personnelList = OFS_SciApplicationHelper.GetPersonnelByPersonID(personID);
-            var host = personnelList?.FirstOrDefault(p => p.Role == "計畫主持人");
-            string hostName = host?.Name ?? "";
-
-            // 建立暫存檔案路徑，保持原檔名
-            string originalFileName = Path.GetFileName(originalFilePath);
-            string tempFilePath = Path.Combine(Path.GetTempPath(), originalFileName);
-
-            // 複製範本檔案到暫存資料夾
-            File.Copy(originalFilePath, tempFilePath, true);
-
-            // 使用 OpenXmlHelper 處理 Word 文件
-            using (var fs = new FileStream(tempFilePath, FileMode.Open, FileAccess.ReadWrite))
-            {
-                var helper = new OpenXmlHelper(fs);
-
-                // 取得當前日期（民國年月日）
-                DateTime currentDate = DateTime.Now;
-                int year = DateTimeHelper.GregorianYearToMinguo(currentDate.Year);
-                int month = currentDate.Month;
-                int day = currentDate.Day;
-
-                // 建立替換字典
-                var placeholder = new Dictionary<string, string>();
-
-                // 加入日期
-                placeholder.Add("TYear", year.ToString());
-                placeholder.Add("TMonth", month.ToString());
-                placeholder.Add("TDay", day.ToString());
-
-                // 加入計畫資料 
-                placeholder.Add("ProjectNameTw", applicationMain?.ProjectNameTw ?? "");
-                placeholder.Add("HostSign", hostName);
-
-                var repeatData = new List<Dictionary<string, string>>();
-
-                // 使用 GenerateWord 方法替換佔位符
-                helper.GenerateWord(placeholder, repeatData);
-                helper.CloseAsSave();
-            }
-
-            // 回傳處理後的檔案路徑
-            return tempFilePath;
-        }
-        catch (Exception ex)
-        {
-            // 如果處理失敗，記錄錯誤並返回原檔案路徑
-            System.Diagnostics.Debug.WriteLine($"ApplyProjectDataToWord_FILE_OTech8 Error: {ex.Message}");
-            return originalFilePath;
-        }
-    }
+    // private string ApplyProjectDataToWord_FILE_OTech8(string originalFilePath, string projectID)
+    // {
+    //     try
+    //     {
+    //         if (!File.Exists(originalFilePath))
+    //         {
+    //             return originalFilePath; // 如果原檔案不存在，返回原路徑
+    //         }
+    //
+    //         // 取得專案資料
+    //         OFS_SCI_Application_Main applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
+    //         var projectData = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
+    //
+    //         // 取得計畫主持人資料
+    //         string personID = "P" + projectID;
+    //         var personnelList = OFS_SciApplicationHelper.GetPersonnelByPersonID(personID);
+    //         var host = personnelList?.FirstOrDefault(p => p.Role == "計畫主持人");
+    //         string hostName = host?.Name ?? "";
+    //
+    //         // 建立暫存檔案路徑，保持原檔名
+    //         string originalFileName = Path.GetFileName(originalFilePath);
+    //         string tempFilePath = Path.Combine(Path.GetTempPath(), originalFileName);
+    //
+    //         // 複製範本檔案到暫存資料夾
+    //         File.Copy(originalFilePath, tempFilePath, true);
+    //
+    //         // 使用 OpenXmlHelper 處理 Word 文件
+    //         using (var fs = new FileStream(tempFilePath, FileMode.Open, FileAccess.ReadWrite))
+    //         {
+    //             var helper = new OpenXmlHelper(fs);
+    //
+    //             // 取得當前日期（民國年月日）
+    //             DateTime currentDate = DateTime.Now;
+    //             int year = DateTimeHelper.GregorianYearToMinguo(currentDate.Year);
+    //             int month = currentDate.Month;
+    //             int day = currentDate.Day;
+    //
+    //             // 建立替換字典
+    //             var placeholder = new Dictionary<string, string>();
+    //
+    //             // 加入日期
+    //             placeholder.Add("TYear", year.ToString());
+    //             placeholder.Add("TMonth", month.ToString());
+    //             placeholder.Add("TDay", day.ToString());
+    //
+    //             // 加入計畫資料 
+    //             placeholder.Add("ProjectNameTw", applicationMain?.ProjectNameTw ?? "");
+    //             placeholder.Add("HostSign", hostName);
+    //
+    //             var repeatData = new List<Dictionary<string, string>>();
+    //
+    //             // 使用 GenerateWord 方法替換佔位符
+    //             helper.GenerateWord(placeholder, repeatData);
+    //             helper.CloseAsSave();
+    //         }
+    //
+    //         // 回傳處理後的檔案路徑
+    //         return tempFilePath;
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         // 如果處理失敗，記錄錯誤並返回原檔案路徑
+    //         System.Diagnostics.Debug.WriteLine($"ApplyProjectDataToWord_FILE_OTech8 Error: {ex.Message}");
+    //         return originalFilePath;
+    //     }
+    // }
 
     /// <summary>
     /// 處理研究紀錄簿使用原則 (OTech)

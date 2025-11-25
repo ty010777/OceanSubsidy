@@ -63,7 +63,7 @@ public class SysZgsCodeHelper
             SELECT [Code],
                    [Descname]
               FROM [Sys_ZgsCode]
-             WHERE [CodeGroup] = 'SCIField'
+             WHERE [CodeGroup] = 'SCITopic'
                AND [IsValid] = 1
           ORDER BY [OrderNo]
         ";

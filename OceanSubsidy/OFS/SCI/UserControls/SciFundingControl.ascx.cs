@@ -40,6 +40,21 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
     /// </summary>
     public List<TotalFeeRow> TotalFeesData { get; private set; }
 
+    /// <summary>
+    /// 是否顯示國外差旅費（OceanTech 不顯示）
+    /// </summary>
+    protected bool ShowForeignTravel
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(ProjectID)) return true;
+
+            var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(ProjectID);
+            string orgCategory = applicationMain?.OrgCategory ?? "";
+            return !orgCategory.Equals("OceanTech", StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
     #endregion
 
     #region 頁面事件
@@ -155,7 +170,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                 orgCategory = applicationMain?.OrgCategory ?? "";
             }
 
-            // 如果是 OceanTech，將 totalFeesData 中的行政管理費歸零
+            // 如果是 OceanTech，將 totalFeesData 中的行政管理費和國外差旅費歸零
             if (orgCategory.Equals("OceanTech", StringComparison.OrdinalIgnoreCase) && totalFeesData != null)
             {
                 var adminFee = totalFeesData.FirstOrDefault(t => t.accountingItem?.Contains("行政管理費") == true);
@@ -163,6 +178,15 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                 {
                     adminFee.subsidyAmount = 0;
                     adminFee.coopAmount = 0;
+                }
+
+                var foreignTravelFee = totalFeesData.FirstOrDefault(t =>
+                    t.accountingItem?.Contains("4-2") == true ||
+                    t.accountingItem?.Contains("國外差旅費") == true);
+                if (foreignTravelFee != null)
+                {
+                    foreignTravelFee.subsidyAmount = 0;
+                    foreignTravelFee.coopAmount = 0;
                 }
             }
 
@@ -271,14 +295,25 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
         {
             // 從隱藏欄位取得資料進行驗證
             var personnelData = GetPersonnelDataFromHidden();
-            var totalFeesData = GetTotalFeesDataFromHidden();
+            var materialData = GetMaterialDataFromHidden();
+            var researchData = GetResearchDataFromHidden();
+            var travelData = GetTravelDataFromHidden();
+            var foreignTravelData = GetForeignTravelDataFromHidden();
             var otherData = GetOtherDataFromHidden();
             var otherRentData = GetOtherRentDataFromHidden();
+            var totalFeesData = GetTotalFeesDataFromHidden();
 
-            // 驗證人事費資料
+            // 取得 OrgCategory 判斷是否為 OceanTech
+            var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(ProjectID);
+            string orgCategory = applicationMain?.OrgCategory ?? "";
+            bool isOceanTech = orgCategory.Equals("OceanTech", StringComparison.OrdinalIgnoreCase);
+
+            // ===== 必填項目驗證 =====
+
+            // 1. 驗證海洋科技研發人員人事費明細表（必填）
             if (personnelData == null || personnelData.Count == 0)
             {
-                result.AddError("請至少新增一筆人事費資料");
+                result.AddError("海洋科技研發人員人事費明細表：請至少新增一筆人事費資料");
             }
             else
             {
@@ -286,53 +321,169 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                 {
                     if (string.IsNullOrWhiteSpace(person.name))
                     {
-                        result.AddError("請輸入人員姓名");
+                        result.AddError("海洋科技研發人員人事費明細表：請輸入人員姓名");
                         break;
                     }
 
                     if (string.IsNullOrWhiteSpace(person.title))
                     {
-                        result.AddError("請選擇職稱");
+                        result.AddError("海洋科技研發人員人事費明細表：請選擇職稱");
                         break;
                     }
 
                     if (person.salary <= 0)
                     {
-                        result.AddError("請輸入有效的平均月薪");
+                        result.AddError("海洋科技研發人員人事費明細表：請輸入有效的平均月薪");
                         break;
                     }
 
                     if (person.months <= 0)
                     {
-                        result.AddError("請輸入有效的參與人月");
+                        result.AddError("海洋科技研發人員人事費明細表：請輸入有效的參與人月");
                         break;
                     }
                 }
             }
 
-            // 驗證其他業務費資料
-            if (otherData != null && otherData.Count > 0)
+            // 2. 驗證其他業務費（必填）
+            // if (otherData == null || otherData.Count == 0)
+            // {
+            //     result.AddError("其他業務費：請至少新增一筆資料");
+            // }
+            // else
+            // {
+            //     foreach (var other in otherData)
+            //     {
+            //         if (string.IsNullOrWhiteSpace(other.title))
+            //         {
+            //             result.AddError("其他業務費：請選擇職稱");
+            //             break;
+            //         }
+            //     }
+            // }
+
+            // ===== 選填項目驗證（如有填寫則檢查完整性，可接受金額/天數為0） =====
+
+            // 3. 驗證消耗性器材及原材料費（選填，但有填就檢查）
+            if (materialData != null && materialData.Count > 0)
             {
-                foreach (var other in otherData)
+                foreach (var material in materialData)
                 {
-                    if (string.IsNullOrWhiteSpace(other.title))
+                    if (string.IsNullOrWhiteSpace(material.name))
                     {
-                        result.AddError("其他業務費：請選擇職稱");
+                        result.AddError("消耗性器材及原材料費：請輸入品名");
                         break;
                     }
 
-                    
+                    if (string.IsNullOrWhiteSpace(material.unit))
+                    {
+                        result.AddError("消耗性器材及原材料費：請選擇單位");
+                        break;
+                    }
+
+                    // quantity 和 unitPrice 可以為 0，不檢查
                 }
             }
 
-            // 驗證總費用資料
+            // // 4. 驗證技術移轉、委託研究或驗證費（不須檢查 2025/11/25)
+            // if (researchData != null && researchData.Count > 0)
+            // {
+            //     foreach (var research in researchData)
+            //     {
+            //         if (string.IsNullOrWhiteSpace(research.projectName))
+            //         {
+            //             result.AddError("技術移轉、委託研究或驗證費：請輸入計畫名稱");
+            //             break;
+            //         }
+            //
+            //         if (string.IsNullOrWhiteSpace(research.targetPerson))
+            //         {
+            //             result.AddError("技術移轉、委託研究或驗證費：請輸入對象");
+            //             break;
+            //         }
+            //
+            //         // price 可以為 0，不檢查
+            //     }
+            // }
+
+            // 5. 驗證國內差旅費（選填，但有填就檢查）
+            if (travelData != null && travelData.Count > 0)
+            {
+                foreach (var travel in travelData)
+                {
+                    if (string.IsNullOrWhiteSpace(travel.reason))
+                    {
+                        result.AddError("國內差旅費：請輸入出差事由");
+                        break;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(travel.area))
+                    {
+                        result.AddError("國內差旅費：請輸入地點");
+                        break;
+                    }
+
+                    // days, people, price 可以為 0，不檢查
+                }
+            }
+
+            // 6. 驗證國外差旅費（選填，但有填就檢查）
+            if (foreignTravelData != null && foreignTravelData.Count > 0)
+            {
+                foreach (var foreignTravel in foreignTravelData)
+                {
+                    if (string.IsNullOrWhiteSpace(foreignTravel.country))
+                    {
+                        result.AddError("國外差旅費：請輸入國家");
+                        break;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(foreignTravel.topic))
+                    {
+                        result.AddError("國外差旅費：請輸入主題");
+                        break;
+                    }
+
+                    // days, people, transportFee, livingFee 可以為 0，不檢查
+                }
+            }
+
+            // ===== 經費總表驗證 =====
+
+            // 驗證總費用資料是否存在
             if (totalFeesData == null || totalFeesData.Count == 0)
             {
-                result.AddError("請輸入有效的補助金額或合作金額");
+                result.AddError("經費總表：請輸入有效的補助金額或合作金額");
             }
+            else
+            {
+                // 檢查經費總表中的各項目
+                foreach (var totalFee in totalFeesData)
+                {
+                    string itemName = totalFee.accountingItem ?? "";
 
+                    // 如果是 OceanTech，跳過行政管理費和國外差旅費的檢查
+                    if (isOceanTech)
+                    {
+                        if (itemName.Contains("行政管理費") ||
+                            itemName.Contains("4-2") ||
+                            itemName.Contains("國外差旅費"))
+                        {
+                            continue;
+                        }
+                    }
 
-            // 驗證行政管理費（可選）
+                    // 檢查補助金額和合作金額是否至少有一項有值
+                    decimal subsidyAmt = totalFee.subsidyAmount ?? 0;
+                    decimal coopAmt = totalFee.coopAmount ?? 0;
+
+                    if (subsidyAmt < 0 && coopAmt < 0)
+                    {
+                        result.AddError($"經費總表：項目「{itemName}」的補助金額或合作金額至少需填寫一項");
+                        break;
+                    }
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -360,6 +511,24 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             var otherRentData = GetOtherRentDataFromHidden();
             var totalFeesData = GetTotalFeesDataFromHidden();
 
+            // 取得 OrgCategory 資訊
+            var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(ProjectID);
+            string orgCategory = applicationMain?.OrgCategory ?? "";
+            bool isOceanTech = orgCategory.Equals("OceanTech", StringComparison.OrdinalIgnoreCase);
+
+            // 如果是 OceanTech，將 totalFeesData 中的國外差旅費歸零
+            if (isOceanTech && totalFeesData != null)
+            {
+                var foreignTravelFee = totalFeesData.FirstOrDefault(t =>
+                    t.accountingItem?.Contains("4-2") == true ||
+                    t.accountingItem?.Contains("國外差旅費") == true);
+                if (foreignTravelFee != null)
+                {
+                    foreignTravelFee.subsidyAmount = 0;
+                    foreignTravelFee.coopAmount = 0;
+                }
+            }
+
             // 儲存各類型資料
             if (personnelData != null && personnelData.Count > 0)
             {
@@ -371,25 +540,20 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                 OFS_SciFundingHelper.ReplaceMaterialList(materialData, ProjectID);
             }
 
-            if (researchData != null && researchData.Count > 0)
-            {
-                OFS_SciFundingHelper.ReplaceResearchFees(researchData, ProjectID);
-            }
+          
+            OFS_SciFundingHelper.ReplaceResearchFees(researchData, ProjectID);
+            
 
             if (travelData != null && travelData.Count > 0)
             {
                 OFS_SciFundingHelper.ReplaceTripForm(travelData, ProjectID);
             }
 
-            if (foreignTravelData != null && foreignTravelData.Count > 0)
-            {
-                OFS_SciFundingHelper.ReplaceAbroadTripForm(foreignTravelData, ProjectID);
-            }
-
-            if (otherData != null && otherData.Count > 0)
-            {
-                OFS_SciFundingHelper.ReplaceOtherPersonFee(otherData, ProjectID);
-            }
+            // 國外差旅費：前端會根據 OrgCategory 決定是否收集資料
+            // OceanTech 會傳空陣列，執行「先刪除」後不會插入，達到清除效果
+            OFS_SciFundingHelper.ReplaceAbroadTripForm(foreignTravelData ?? new List<ForeignTravelRow>(), ProjectID);
+            OFS_SciFundingHelper.ReplaceOtherPersonFee(otherData, ProjectID);
+            
 
             if (otherRentData != null && otherRentData.Count > 0)
             {
@@ -493,7 +657,12 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
     {
         try
         {
-            var personList = OFS_SciFundingHelper.GetSysZgsCodeByCodeGroup("SCIPersonAcademic");
+            // 取得 OrgCategory 來判斷使用哪個 CodeGroup
+            var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(ProjectID);
+            string orgCategory = applicationMain?.OrgCategory ?? "";
+            bool isOceanTech = orgCategory.Equals("OceanTech", StringComparison.OrdinalIgnoreCase);
+            string PersonCodeGroup = isOceanTech ? "SCIPersonIndustry" : "SCIPersonAcademic";
+            var personList = OFS_SciFundingHelper.GetSysZgsCodeByCodeGroup(PersonCodeGroup);
 
             StringBuilder jsBuilder = new StringBuilder();
             jsBuilder.AppendLine("const ddlPersonOptions = [");
@@ -518,8 +687,9 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
 
             jsBuilder.AppendLine("];");
 
-            // 其他業務費職稱下拉選單 - 修正參數名稱
-            var otherJobList = OFS_SciFundingHelper.GetSysZgsCodeByCodeGroup("SCIOtherAcademic");
+            // 其他業務費職稱下拉選單 - 根據 OrgCategory 決定使用 Academic 或 Industry
+            string otherCodeGroup = isOceanTech ? "SCIOtherIndustry" : "SCIOtherAcademic";
+            var otherJobList = OFS_SciFundingHelper.GetSysZgsCodeByCodeGroup(otherCodeGroup);
             jsBuilder.AppendLine("const ddlOtherOptions = [");
             foreach (var item in otherJobList)
             {
@@ -528,6 +698,8 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             }
 
             jsBuilder.AppendLine("];");
+
+          
 
             // 註冊到頁面
             Page.ClientScript.RegisterStartupScript(this.GetType(), "ddlOthersScript", jsBuilder.ToString(), true);
@@ -560,7 +732,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             string orgCategory = applicationMain?.OrgCategory ?? "";
             bool isOceanTech = orgCategory.Equals("OceanTech", StringComparison.OrdinalIgnoreCase);
 
-            // 如果是 OceanTech，將 totalFeesData 中的行政管理費歸零
+            // 如果是 OceanTech，將 totalFeesData 中的行政管理費和國外差旅費歸零
             if (isOceanTech && totalFeesData != null)
             {
                 var adminFee = totalFeesData.FirstOrDefault(t => t.accountingItem?.Contains("行政管理費") == true);
@@ -568,6 +740,15 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                 {
                     adminFee.subsidyAmount = 0;
                     adminFee.coopAmount = 0;
+                }
+
+                var foreignTravelFee = totalFeesData.FirstOrDefault(t =>
+                    t.accountingItem?.Contains("4-2") == true ||
+                    t.accountingItem?.Contains("國外差旅費") == true);
+                if (foreignTravelFee != null)
+                {
+                    foreignTravelFee.subsidyAmount = 0;
+                    foreignTravelFee.coopAmount = 0;
                 }
             }
 
@@ -980,10 +1161,9 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             if (!string.IsNullOrEmpty(ResearchFeesPrice1.Text))
             {
                 // 從隱藏欄位讀取西元年日期，如果沒有則使用顯示欄位的值
-                string date1Start = !string.IsNullOrEmpty(hdnDate1Start.Value)
-                    ? hdnDate1Start.Value
-                    : txtDate1Start.Text;
-                string date1End = !string.IsNullOrEmpty(hdnDate1End.Value) ? hdnDate1End.Value : txtDate1End.Text;
+                string date1Start = hdnDate1Start.Value;
+
+                string date1End = hdnDate1End.Value;
 
                 researchList.Add(new ResearchFeeRow
                 {
@@ -999,10 +1179,9 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             if (!string.IsNullOrEmpty(ResearchFeesPrice2.Text))
             {
                 // 從隱藏欄位讀取西元年日期，如果沒有則使用顯示欄位的值
-                string date2Start = !string.IsNullOrEmpty(hdnDate2Start.Value)
-                    ? hdnDate2Start.Value
-                    : txtDate2Start.Text;
-                string date2End = !string.IsNullOrEmpty(hdnDate2End.Value) ? hdnDate2End.Value : txtDate2End.Text;
+                string date2Start = hdnDate2Start.Value;
+
+                string date2End = hdnDate2End.Value;
 
                 researchList.Add(new ResearchFeeRow
                 {

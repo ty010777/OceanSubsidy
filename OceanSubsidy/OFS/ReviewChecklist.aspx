@@ -1513,6 +1513,7 @@
                           <div class="fs-16 text-gray mb-2">選擇領域</div>
                           <select id="ddlSubjectType" class="form-select" onchange="loadReviewersBySubject()">
                               <option value="">請選擇領域</option>
+                              <option value="ALL">全部</option>
                           </select>
                       </div>
 
@@ -1524,7 +1525,11 @@
                                   <span class="fs-16 text-gray">可選擇的審查委員</span>
                                   <span class="badge bg-teal" id="availableCount">0</span>
                               </div>
-                              <div class="border rounded p-2" style="height: 400px; overflow-y: auto;">
+                              <!-- 搜尋框 -->
+                              <div class="mb-2">
+                                  <input type="text" id="availableReviewersSearch" class="form-control form-control-sm" placeholder="搜尋 ID 或名稱...">
+                              </div>
+                              <div class="border rounded p-2" style="height: 360px; overflow-y: auto;">
                                   <div id="availableReviewersList">
                                       <div class="text-center text-muted py-5">
                                           請先選擇領域
@@ -1592,6 +1597,9 @@
             // 清空下拉選單
             $('#ddlSubjectType').empty().append('<option value="">請選擇領域</option>');
 
+            // 清空搜尋框
+            $('#availableReviewersSearch').val('');
+
             // 清空 A清單
             $('#availableReviewersList').html('<div class="text-center text-muted py-5">請先選擇領域</div>');
             $('#availableCount').text('0');
@@ -1599,6 +1607,11 @@
             // 清空 B清單
             $('#selectedReviewersList').html('<div class="text-center text-muted py-5">尚未選擇審查委員</div>');
             $('#selectedCount').text('0');
+
+            // 綁定搜尋框事件
+            $('#availableReviewersSearch').off('input').on('input', function() {
+                renderAvailableReviewers();
+            });
 
             // 載入領域下拉選單
             loadSubjectTypes();
@@ -1624,6 +1637,9 @@
                 // 重置領域下拉選單
                 $('#ddlSubjectType').val('');
 
+                // 清空搜尋框
+                $('#availableReviewersSearch').val('');
+
                 // 清空 A清單
                 $('#availableReviewersList').html('<div class="text-center text-muted py-5">請先選擇領域</div>');
                 $('#availableCount').text('0');
@@ -1643,6 +1659,7 @@
                         var ddl = $('#ddlSubjectType');
                         ddl.empty();
                         ddl.append('<option value="">請選擇領域</option>');
+                        ddl.append('<option value="ALL">全部</option>');
 
                         result.data.forEach(function(item) {
                             ddl.append('<option value="' + item.code + '">' + item.name + '</option>');
@@ -1690,27 +1707,48 @@
         }
 
         // 渲染 A清單（可選擇的審查委員）
-        function renderAvailableReviewers() {
+        function renderAvailableReviewers(searchKeyword) {
             var html = '';
+            var keyword = searchKeyword || $('#availableReviewersSearch').val() || '';
+            keyword = keyword.toLowerCase().trim();
 
             if (availableReviewers.length === 0) {
                 html = '<div class="text-center text-muted py-5">此領域無可選擇的審查委員</div>';
             } else {
-                availableReviewers.forEach(function(reviewer) {
+                var filteredReviewers = availableReviewers.filter(function(reviewer) {
                     // 檢查是否已在 B清單中
                     var isSelected = selectedReviewers.some(r => r.account === reviewer.account);
-                    if (!isSelected) {
-                        html += '<div class="form-check mb-2">';
-                        html += '<input class="form-check-input check-teal" type="checkbox" value="' + reviewer.account + '" id="avail_' + reviewer.account + '">';
-                        html += '<label class="form-check-label" for="avail_' + reviewer.account + '">';
-                        html += reviewer.displayName;
-                        html += '</label>';
-                        html += '</div>';
+                    if (isSelected) return false;
+
+                    // 如果有搜尋關鍵字，進行篩選
+                    if (keyword) {
+                        var account = (reviewer.account || '').toLowerCase();
+                        var name = (reviewer.name || '').toLowerCase();
+                        var displayName = (reviewer.displayName || '').toLowerCase();
+
+                        return account.includes(keyword) ||
+                               name.includes(keyword) ||
+                               displayName.includes(keyword);
                     }
+
+                    return true;
+                });
+
+                filteredReviewers.forEach(function(reviewer) {
+                    html += '<div class="form-check mb-2">';
+                    html += '<input class="form-check-input check-teal" type="checkbox" value="' + reviewer.account + '" id="avail_' + reviewer.account + '">';
+                    html += '<label class="form-check-label" for="avail_' + reviewer.account + '">';
+                    html += reviewer.displayName;
+                    html += '</label>';
+                    html += '</div>';
                 });
 
                 if (html === '') {
-                    html = '<div class="text-center text-muted py-5">所有審查委員已被選擇</div>';
+                    if (keyword) {
+                        html = '<div class="text-center text-muted py-5">查無符合搜尋條件的審查委員</div>';
+                    } else {
+                        html = '<div class="text-center text-muted py-5">所有審查委員已被選擇</div>';
+                    }
                 }
             }
 

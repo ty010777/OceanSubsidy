@@ -515,8 +515,8 @@ public class CLB_download : IHttpHandler
 
                     // Basic.SubsidyType - 補助類型勾選
                     bool isStartup = subsidyType == "Startup";
-                    replacements.Add("Check1", isStartup ? "☒" : "☐");
-                    replacements.Add("Check2", isStartup ? "☐" : "☒");
+                    replacements.Add("Check1", isStartup ? "■" : "□");
+                    replacements.Add("Check2", isStartup ? "□" : "■");
 
                     // 年度 - 今年和去年（民國年）
                     int currentRocYear = GS.App.DateTimeHelper.GregorianYearToMinguo(DateTime.Now.Year);
@@ -649,8 +649,8 @@ public class CLB_download : IHttpHandler
                     replacements.Add("Benefits", plan?.PreBenefits ?? "");
                     // Basic.SubsidyType - 補助類型勾選
                     bool isStartup = subsidyType == "Startup";
-                    replacements.Add("Check1", isStartup ? "☒" : "☐");
-                    replacements.Add("Check2", isStartup ? "☐" : "☒");
+                    replacements.Add("Check1", isStartup ? "■" : "□");
+                    replacements.Add("Check2", isStartup ? "□" : "■");
 
                     docHelper.GenerateWord(replacements, new List<Dictionary<string, string>>());
 

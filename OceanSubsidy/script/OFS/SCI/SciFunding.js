@@ -13,10 +13,93 @@ document.addEventListener('DOMContentLoaded', function () {
     // 延遲載入資料，確保所有初始化完成
     setTimeout(function() {
         loadExistingDataToForm();
-        // 根據 OrgCategory 決定是否隱藏行政管理費
-        handleAdminFeeVisibility();
+        // 根據 OrgCategory 決定顯示/隱藏特定項目
+        handleOrgCategoryVisibility();
     }, 800);
+
+    // 初始化其他業務費月薪上限 modal
+    initializeOtherJobSalaryModal();
 });
+
+// 初始化其他業務費月薪上限 modal
+function initializeOtherJobSalaryModal() {
+    const modal = document.getElementById('otherJobSalaryModal');
+    if (modal) {
+        modal.addEventListener('show.bs.modal', function () {
+            loadOtherJobSalaryData();
+        });
+    }   
+    const PersonModal = document.getElementById('PersonJobSalaryModal');
+    if (PersonModal) {
+        PersonModal.addEventListener('show.bs.modal', function () {
+            loadPersonLimit();
+        });
+    }
+}
+
+// 載入其他業務費月薪上限資料到 modal 表格
+function loadOtherJobSalaryData() {
+    const tbody = document.getElementById('otherJobSalaryTableBody');
+    if (!tbody) return;
+
+    // 清空現有資料
+    tbody.innerHTML = '';
+
+    // 檢查是否有資料
+    if (typeof ddlOtherOptions === 'undefined' || ddlOtherOptions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="2" class="text-center text-gray">無資料</td></tr>';
+        return;
+    }
+
+    // 填入資料
+    ddlOtherOptions.forEach(function(item) {
+        const row = document.createElement('tr');
+
+        // 職稱欄位
+        const titleCell = document.createElement('td');
+        titleCell.textContent = item.text || '';
+        row.appendChild(titleCell);
+
+        // 月薪上限欄位
+        const salaryCell = document.createElement('td');
+        salaryCell.className = 'text-end';
+        salaryCell.textContent = item.maxLimit ? item.maxLimit.toLocaleString() : '0';
+        row.appendChild(salaryCell);
+
+        tbody.appendChild(row);
+    });
+}
+function loadPersonLimit() {
+    const tbody = document.getElementById('PersonJobSalaryTableBody');
+    if (!tbody) return;
+
+    // 清空現有資料
+    tbody.innerHTML = '';
+
+    // 檢查是否有資料
+    if (typeof ddlPersonOptions === 'undefined' || ddlPersonOptions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="2" class="text-center text-gray">無資料</td></tr>';
+        return;
+    }
+
+    // 填入資料
+    ddlPersonOptions.forEach(function(item) {
+        const row = document.createElement('tr');
+
+        // 職稱欄位
+        const titleCell = document.createElement('td');
+        titleCell.textContent = item.text || '';
+        row.appendChild(titleCell);
+
+        // 月薪上限欄位
+        const salaryCell = document.createElement('td');
+        salaryCell.className = 'text-end';
+        salaryCell.textContent = item.maxLimit ? item.maxLimit.toLocaleString() : '0';
+        row.appendChild(salaryCell);
+
+        tbody.appendChild(row);
+    });
+}
 
 // 確保頁面完全載入後再次檢查日期選擇器
 window.addEventListener('load', function() {
@@ -80,9 +163,11 @@ function initializeAllDatePickers() {
         singleDatePicker: true,
         showDropdowns: true,
         autoUpdateInput: false,
-        autoApply: true,
+        autoApply: false, // 改為 false 以顯示按鈕
         locale: {
-            format: 'tYY/MM/DD' // 使用 moment-taiwan 提供的 tYY 格式
+            format: 'tYY/MM/DD', // 使用 moment-taiwan 提供的 tYY 格式
+            cancelLabel: '清除',
+            applyLabel: '確定'
         }
     };
 
@@ -111,13 +196,51 @@ function initializeAllDatePickers() {
         }
     };
 
+    // 清除日期處理函數
+    const handleDateClear = function(ev, picker) {
+        // 清除顯示欄位
+        $(this).val('');
+        $(this).data('gregorian-date', '');
+
+        // 清除對應的隱藏欄位
+        const inputId = $(this).attr('id');
+        if (inputId) {
+            const hiddenFieldId = inputId.replace('txt', 'hdn');
+            const hiddenField = $(`#${hiddenFieldId}`);
+            if (hiddenField.length > 0) {
+                hiddenField.val('');
+                console.log(`已清除隱藏欄位 ${hiddenFieldId}`);
+            }
+        }
+    };
+
+    // 調整按鈕樣式為橫排
+    const adjustButtonLayout = function(ev, picker) {
+        setTimeout(function() {
+            $('.daterangepicker .drp-buttons').css({
+                'display': 'flex',
+                'flex-direction': 'row',
+                'justify-content': 'flex-end',
+                'gap': '10px'
+            });
+            $('.daterangepicker .drp-buttons .btn').css({
+                'float': 'none',
+                'margin': '0'
+            });
+        }, 0);
+    };
+
     // 初始化技術移轉期間日期選擇器
     $('input[id*="txtDate1Start"], input[id*="txtDate1End"]').daterangepicker(datePickerConfig)
-        .on('apply.daterangepicker', handleDateSelection);
+        .on('apply.daterangepicker', handleDateSelection)
+        .on('cancel.daterangepicker', handleDateClear)
+        .on('show.daterangepicker', adjustButtonLayout);
 
     // 初始化委託研究期間日期選擇器
     $('input[id*="txtDate2Start"], input[id*="txtDate2End"]').daterangepicker(datePickerConfig)
-        .on('apply.daterangepicker', handleDateSelection);
+        .on('apply.daterangepicker', handleDateSelection)
+        .on('cancel.daterangepicker', handleDateClear)
+        .on('show.daterangepicker', adjustButtonLayout);
 }
 
 
@@ -152,15 +275,15 @@ function collectAllFormData() {
         const numInput = row.querySelector('input[id*="MaterialNum"]');
         const priceInput = row.querySelector('input[id*="MaterialUnitPrice"]');
         
-        if (nameInput && nameInput.value.trim()) {
-            materialData.push({
-                name: nameInput.value,
-                description: descInput ? descInput.value : "",
-                unit: unitSelect ? unitSelect.value : "",
-                quantity: parseFloat(numInput?.value?.replace(/,/g, '') || '0'),
-                unitPrice: parseFloat(priceInput?.value?.replace(/,/g, '') || '0')
-            });
-        }
+       
+        materialData.push({
+            name: nameInput.value,
+            description: descInput ? descInput.value : "",
+            unit: unitSelect ? unitSelect.value : "",
+            quantity: parseFloat(numInput?.value?.replace(/,/g, '') || '0'),
+            unitPrice: parseFloat(priceInput?.value?.replace(/,/g, '') || '0')
+        });
+        
     });
     
     // 收集差旅費資料
@@ -172,29 +295,33 @@ function collectAllFormData() {
         const peopleInput = row.querySelector('input[id*="travelPeople"]');
         const priceInput = row.querySelector('input[id*="travelPrice"]');
 
-        if (reasonInput && reasonInput.value.trim()) {
-            travelData.push({
-                reason: reasonInput.value,
-                area: areaInput ? areaInput.value : "",
-                days: parseFloat(daysInput?.value || '0'),
-                people: parseFloat(peopleInput?.value || '0'),
-                price: parseFloat(priceInput?.value?.replace(/,/g, '') || '0')
-            });
-        }
+        travelData.push({
+            reason: reasonInput.value,
+            area: areaInput ? areaInput.value : "",
+            days: parseFloat(daysInput?.value || '0'),
+            people: parseFloat(peopleInput?.value || '0'),
+            price: parseFloat(priceInput?.value?.replace(/,/g, '') || '0')
+        });
+        
     });
 
-    // 收集國外差旅費資料
+    // 收集國外差旅費資料（OceanTech 不收集）
     const foreignTravelData = [];
-    document.querySelectorAll('.foreignTravel tbody tr:not(.total-row)').forEach(row => {
-        const countryInput = row.querySelector('input[id*="foreignCountry"]');
-        const topicInput = row.querySelector('input[id*="foreignTopic"]');
-        const daysInput = row.querySelector('input[id*="foreignDays"]');
-        const peopleInput = row.querySelector('input[id*="foreignPeople"]');
-        const transportFeeInput = row.querySelector('input[id*="foreignTransportFee"]');
-        const livingFeeInput = row.querySelector('input[id*="foreignLivingFee"]');
-        const conferenceInput = row.querySelector('textarea[id*="foreignConference"]');
+    const orgCategory = (typeof window.loadedData !== 'undefined' && window.loadedData.orgCategory)
+        ? window.loadedData.orgCategory
+        : "";
+    const isOceanTech = orgCategory.toLowerCase() === 'oceantech';
 
-        if (countryInput && countryInput.value.trim()) {
+    if (!isOceanTech) {
+        document.querySelectorAll('.foreignTravel tbody tr:not(.total-row)').forEach(row => {
+            const countryInput = row.querySelector('input[id*="foreignCountry"]');
+            const topicInput = row.querySelector('input[id*="foreignTopic"]');
+            const daysInput = row.querySelector('input[id*="foreignDays"]');
+            const peopleInput = row.querySelector('input[id*="foreignPeople"]');
+            const transportFeeInput = row.querySelector('input[id*="foreignTransportFee"]');
+            const livingFeeInput = row.querySelector('input[id*="foreignLivingFee"]');
+            const conferenceInput = row.querySelector('textarea[id*="foreignConference"]');
+
             foreignTravelData.push({
                 country: countryInput.value,
                 topic: topicInput ? topicInput.value : "",
@@ -204,8 +331,9 @@ function collectAllFormData() {
                 livingFee: parseFloat(livingFeeInput?.value?.replace(/,/g, '') || '0'),
                 conference: conferenceInput ? conferenceInput.value : ""
             });
-        }
-    });
+            
+        });
+    }
     
     // 收集其他業務費資料
     const otherData = [];
@@ -339,13 +467,19 @@ function initializeDropdowns() {
     if (typeof ddlOtherOptions !== 'undefined') {
         const O_ddl = document.getElementById('otherJobTitle1');
         if (O_ddl) {
+            // 添加預設選項
+            const defaultOpt = document.createElement('option');
+            defaultOpt.value = '';
+            defaultOpt.textContent = '請選擇';
+            O_ddl.appendChild(defaultOpt);
+
             ddlOtherOptions.forEach(option => {
                 const opt = document.createElement('option');
                 opt.value = option.value;
                 opt.textContent = option.text;
                 O_ddl.appendChild(opt);
             });
-            
+
             O_ddl.addEventListener("change", function () {
                 calculateOther();
             });
@@ -654,6 +788,13 @@ function T_addRow() {
 
 // 4-2.國外差旅費
 function calculateForeignTravel() {
+    // 檢查表格是否存在（可能因為 OrgCategory 條件渲染而不存在）
+    const totalElement = document.getElementById('foreignTravelTotal');
+    if (!totalElement) {
+        console.log('國外差旅費表格不存在，跳過計算');
+        return;
+    }
+
     let total = 0;
     const dataRows = document.querySelectorAll('.foreignTravel tbody tr:not(.total-row)');
 
@@ -662,7 +803,7 @@ function calculateForeignTravel() {
         const livingFeeInput = row.querySelector('input[id*="foreignLivingFee"]');
         const totalCell = row.cells[6]; // 合計欄位
 
-        if (transportFeeInput && livingFeeInput) {
+        if (transportFeeInput && livingFeeInput && totalCell) {
             const transportFee = parseFloat(transportFeeInput.value.replace(/,/g, '')) || 0;
             const livingFee = parseFloat(livingFeeInput.value.replace(/,/g, '')) || 0;
             const rowTotal = transportFee + livingFee;
@@ -672,7 +813,7 @@ function calculateForeignTravel() {
         }
     });
 
-    document.getElementById('foreignTravelTotal').textContent = total.toLocaleString();
+    totalElement.textContent = total.toLocaleString();
     updateBudgetSummary();
 }
 
@@ -840,18 +981,24 @@ function O_addRow() {
     const table = document.querySelector('.other tbody');
     const totalRow = table.querySelector('.total-row');
     const rowCount = table.children.length;
-    
+
     const ddlSelect = document.createElement('select');
     ddlSelect.className = "form-select";
     ddlSelect.id = `otherJobTitle${rowCount}`;
-    
+
+    // 添加預設選項
+    const defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.textContent = '請選擇';
+    ddlSelect.appendChild(defaultOpt);
+
     ddlOtherOptions.forEach(option => {
         const opt = document.createElement('option');
         opt.value = option.value;
         opt.textContent = option.text;
         ddlSelect.appendChild(opt);
     });
-    
+
     ddlSelect.addEventListener("change", function () {
         calculateOther();
     });
@@ -878,14 +1025,25 @@ function updateBudgetSummary() {
     const materialTotal = parseFloat($('#MaterialTotal').text().replace(/,/g, '') || '0');
     const researchTotal = parseFloat($('#ResearchFeesTotal').text().replace(/,/g, '') || '0');
     const travelTotal = parseFloat($('#travelTotal').text().replace(/,/g, '') || '0');
-    const foreignTravelTotal = parseFloat($('#foreignTravelTotal').text().replace(/,/g, '') || '0');
+
+    // 國外差旅費可能不存在（OrgCategory 為 OceanTech 時）
+    const foreignTravelElement = document.getElementById('foreignTravelTotal');
+    const foreignTravelTotal = foreignTravelElement
+        ? parseFloat(foreignTravelElement.textContent.replace(/,/g, '') || '0')
+        : 0;
+
     const otherRentTotal = parseFloat($('#otherRentTotal').text().replace(/,/g, '') || '0');
 
     updateAmountA('1', personTotal);
     updateAmountA('2', materialTotal);
     updateAmountA('3', researchTotal);
     updateAmountA('4-1', travelTotal);
-    updateAmountA('4-2', foreignTravelTotal);
+
+    // 只在國外差旅費存在時更新
+    if (foreignTravelElement) {
+        updateAmountA('4-2', foreignTravelTotal);
+    }
+
     updateAmountA('5', otherRentTotal);
 
     updateItemTotals();
@@ -1061,29 +1219,59 @@ function updatePercentages() {
 // 載入現有資料到表單
 function loadExistingDataToForm() {
     if (typeof window.loadedData === 'undefined') {
+        console.log('window.loadedData 未定義，跳過載入');
         return; // 如果沒有載入資料，則不處理
     }
-    
+
+    console.log('開始載入現有資料到表單');
+    console.log('載入的資料:', window.loadedData);
+
     try {
         // 按序載入各項資料，使用 Promise 鏈確保順序
         Promise.resolve()
-            .then(() => loadPersonnelData(window.loadedData.personnel))
+            .then(() => {
+                console.log('載入人員資料...');
+                return loadPersonnelData(window.loadedData.personnel);
+            })
             .then(() => new Promise(resolve => setTimeout(resolve, 50))) // 等待 DOM 更新
-            .then(() => loadMaterialData(window.loadedData.material))
+            .then(() => {
+                console.log('載入材料資料...');
+                return loadMaterialData(window.loadedData.material);
+            })
             .then(() => new Promise(resolve => setTimeout(resolve, 50))) // 等待 DOM 更新
-            .then(() => loadResearchData(window.loadedData.research))
+            .then(() => {
+                console.log('載入研究費用資料...');
+                return loadResearchData(window.loadedData.research);
+            })
             .then(() => new Promise(resolve => setTimeout(resolve, 50))) // 等待 DOM 更新
-            .then(() => loadTravelData(window.loadedData.travel))
+            .then(() => {
+                console.log('載入差旅費資料...');
+                return loadTravelData(window.loadedData.travel);
+            })
             .then(() => new Promise(resolve => setTimeout(resolve, 50))) // 等待 DOM 更新
-            .then(() => loadForeignTravelData(window.loadedData.foreignTravel))
+            .then(() => {
+                console.log('載入國外差旅費資料...');
+                return loadForeignTravelData(window.loadedData.foreignTravel);
+            })
             .then(() => new Promise(resolve => setTimeout(resolve, 50))) // 等待 DOM 更新
-            .then(() => loadOtherData(window.loadedData.other))
+            .then(() => {
+                console.log('載入其他費用資料...');
+                return loadOtherData(window.loadedData.other);
+            })
             .then(() => new Promise(resolve => setTimeout(resolve, 50))) // 等待 DOM 更新
-            .then(() => loadOtherRentData(window.loadedData.otherRent))
+            .then(() => {
+                console.log('載入租金資料...');
+                return loadOtherRentData(window.loadedData.otherRent);
+            })
             .then(() => new Promise(resolve => setTimeout(resolve, 50))) // 等待 DOM 更新
-            .then(() => loadTotalFeesData(window.loadedData.totalFees))
+            .then(() => {
+                console.log('載入經費總表資料...');
+                console.log('經費總表資料:', window.loadedData.totalFees);
+                return loadTotalFeesData(window.loadedData.totalFees);
+            })
             .then(() => new Promise(resolve => setTimeout(resolve, 100))) // 等待所有資料載入完成
             .then(() => {
+                console.log('開始計算所有總計...');
                 // 重新計算所有總計
                 calculateAndUpdateTotal();
                 calculateMaterial();
@@ -1093,11 +1281,12 @@ function loadExistingDataToForm() {
                 calculateOther();
                 calculateOtherRentTotal();
                 updateBudgetSummary();
+                console.log('所有資料載入和計算完成');
             })
             .catch(error => {
                 console.error('載入資料時發生錯誤:', error);
             });
-        
+
     } catch (error) {
         console.error('載入資料時發生錯誤:', error);
     }
@@ -1352,6 +1541,14 @@ function loadForeignTravelData(foreignTravelData) {
 
     return new Promise((resolve) => {
         const table = document.querySelector('.foreignTravel tbody');
+
+        // 如果表格不存在（可能因為 OrgCategory 條件渲染），直接 resolve
+        if (!table) {
+            console.log('國外差旅費表格不存在，跳過載入');
+            resolve();
+            return;
+        }
+
         const totalRow = table.querySelector('.total-row');
 
         // 清除所有現有的資料行（只保留總計行）
@@ -1455,18 +1652,24 @@ function loadTotalFeesData(totalFeesData) {
         const rows = document.querySelectorAll('.main-table tbody tr:not(.total-row):not(.percentage-row)');
 
         totalFeesData.forEach((totalFee) => {
+            let matched = false;
             rows.forEach(row => {
-                const firstCell = row.children[0]?.textContent;
-                if (firstCell?.includes(totalFee.accountingItem)) {
+                const firstCell = row.children[0]?.textContent?.trim();
+                const accountingItem = totalFee.accountingItem?.trim();
+
+                // 完全匹配會計科目名稱
+                if (firstCell === accountingItem || firstCell?.includes(accountingItem)) {
+                    matched = true;
+
+                    // 載入配合款 (amount-b)
                     const amountBCell = row.querySelector('.amount-b');
                     const amountBInput = amountBCell?.querySelector('input');
-
                     if (amountBInput) {
                         amountBInput.value = totalFee.coopAmount || '0';
                     }
 
-                    // 如果是行政管理費，也需要設定補助款
-                    if (totalFee.accountingItem.includes('行政管理費')) {
+                    // 載入補助款 (amount-a) - 僅適用於行政管理費
+                    if (accountingItem?.includes('行政管理費')) {
                         const amountACell = row.querySelector('.amount-a');
                         const amountAInput = amountACell?.querySelector('input');
                         if (amountAInput) {
@@ -1475,14 +1678,18 @@ function loadTotalFeesData(totalFeesData) {
                     }
                 }
             });
+
+            if (!matched) {
+                console.warn(`無法找到匹配的行：${totalFee.accountingItem}`);
+            }
         });
 
         resolve();
     });
 }
 
-// 根據 OrgCategory 決定是否隱藏行政管理費
-function handleAdminFeeVisibility() {
+// 根據 OrgCategory 決定顯示/隱藏特定項目（行政管理費、國外差旅費）
+function handleOrgCategoryVisibility() {
     try {
         // 檢查 window.loadedData 是否存在並包含 orgCategory
         if (typeof window.loadedData === 'undefined' || !window.loadedData.orgCategory) {
@@ -1492,7 +1699,7 @@ function handleAdminFeeVisibility() {
         const orgCategory = window.loadedData.orgCategory;
         const isOceanTech = orgCategory.toLowerCase() === 'oceantech';
 
-        // 找到行政管理費的行
+        // === 處理行政管理費 ===
         const rows = document.querySelectorAll('.main-table tbody tr:not(.total-row):not(.percentage-row)');
         let adminFeeRow = null;
 
@@ -1518,14 +1725,71 @@ function handleAdminFeeVisibility() {
                 amountBInput.value = '0';
             }
 
-            console.log('已隱藏行政管理費行 (OrgCategory = OceanTech)');
+            console.log('已隱藏行政管理費 (OrgCategory = OceanTech)');
         } else if (adminFeeRow && !isOceanTech) {
             // 確保行顯示（非 OceanTech 時）
             adminFeeRow.style.display = '';
-            console.log('顯示行政管理費行 (OrgCategory ≠ OceanTech)');
+            console.log('顯示行政管理費 (OrgCategory ≠ OceanTech)');
+        }
+
+        // === 處理國外差旅費 ===
+        // 找到國外差旅費的表單區塊
+        const foreignTravelBlock = document.getElementById('point4-2');
+
+        // 找到經費總表中的國外差旅費行
+        let foreignTravelRow = null;
+        rows.forEach(row => {
+            const firstCell = row.children[0]?.textContent;
+            if (firstCell && firstCell.includes('4-2.國外差旅費')) {
+                foreignTravelRow = row;
+            }
+        });
+
+        // 找到錨點選單中的國外差旅費項目
+        const anchorMenu = document.querySelector('.anchor-menu');
+        let foreignTravelAnchor = null;
+        if (anchorMenu) {
+            const anchors = anchorMenu.querySelectorAll('a[href="#point4-2"]');
+            if (anchors.length > 0) {
+                foreignTravelAnchor = anchors[0];
+            }
+        }
+
+        if (isOceanTech) {
+            // OceanTech 隱藏國外差旅費
+            if (foreignTravelBlock) {
+                foreignTravelBlock.style.display = 'none';
+            }
+            if (foreignTravelRow) {
+                foreignTravelRow.style.display = 'none';
+
+                // 將國外差旅費的配合款輸入欄位設為 0（確保儲存時為 0）
+                const amountBInput = foreignTravelRow.querySelector('.amount-b input');
+                if (amountBInput) {
+                    amountBInput.value = '0';
+                }
+            }
+            if (foreignTravelAnchor) {
+                foreignTravelAnchor.style.display = 'none';
+            }
+
+            console.log('已隱藏國外差旅費 (OrgCategory = OceanTech)');
+        } else {
+            // 非 OceanTech 顯示國外差旅費
+            if (foreignTravelBlock) {
+                foreignTravelBlock.style.display = '';
+            }
+            if (foreignTravelRow) {
+                foreignTravelRow.style.display = '';
+            }
+            if (foreignTravelAnchor) {
+                foreignTravelAnchor.style.display = '';
+            }
+
+            console.log('顯示國外差旅費 (OrgCategory ≠ OceanTech)');
         }
     } catch (error) {
-        console.error('處理行政管理費顯示狀態時發生錯誤:', error);
+        console.error('處理 OrgCategory 顯示狀態時發生錯誤:', error);
     }
 }
 
@@ -1572,9 +1836,25 @@ function handleSaveAndNextClick() {
         const totalIText = totalCells[0]?.textContent || '';
         const totalI = parseFloat(totalIText.replace(/,/g, '').replace(/\(I\)/g, '').replace(/<br>/g, '').replace(/<[^>]*>/g, '').replace(/\s/g, '') || '0');
 
+        // 取得總經費 (II)
+        const totalIIText = totalCells[2]?.textContent || '';
+        const totalII = parseFloat(totalIIText.replace(/,/g, '').replace(/\(II\)/g, '').replace(/<br>/g, '').replace(/<[^>]*>/g, '').replace(/\s/g, '') || '0');
+
         // 取得配合款百分比
         const percentageCells = percentageRow.querySelectorAll('.number-cell');
         const coopPercentage = parseFloat(percentageCells[1]?.textContent?.replace(/%/g, '') || '0');
+
+        // 取得行政管理費金額
+        let adminFeeAmount = 0;
+        allRows.forEach(row => {
+            const firstCell = row.children[0]?.textContent;
+            if (firstCell && (firstCell.includes('6.行政管理費') || firstCell.includes('行政管理費'))) {
+                const totalCell = row.querySelector('.amount-total');
+                if (totalCell) {
+                    adminFeeAmount = parseFloat(totalCell.textContent.replace(/,/g, '') || '0');
+                }
+            }
+        });
 
         // 取得設定值
         const grantLimit = window.grantLimitSettings ? window.grantLimitSettings.grantLimit : 0;
@@ -1589,8 +1869,16 @@ function handleSaveAndNextClick() {
         }
 
         // 檢查 2: 配合款比例是否未達標準
-        if (matchingFund > 0 && coopPercentage < matchingFund) {
+        if (coopPercentage < matchingFund) {
             warningMessages.push(`配合款比例未達標準（應高於 ${matchingFund}%）。`);
+        }
+
+        // 檢查 3: 行政管理費不可超過總經費的 10%
+        if (totalII > 0 && adminFeeAmount > 0) {
+            const adminFeePercentage = (adminFeeAmount / totalII) * 100;
+            if (adminFeePercentage > 10) {
+                warningMessages.push(`行政管理費不可超過總經費的 10%（目前為 ${adminFeePercentage.toFixed(2)}%）。`);
+            }
         }
 
         // 組合訊息
