@@ -16,7 +16,7 @@
 
                         <div class="d-flex align-items-center flex-wrap gap-2">
                             <div class="input-group" style="width: 400px;">
-                                <input id="startDate" name="startDate" type="text" class="form-control taiwan-date-picker" aria-label="計畫開始日期" placeholder="請選擇日期" readonly runat="server"/>
+                                <span id="startDateText" runat="server" class="form-control" style="background-color: #f8f9fa; border: 1px solid #dee2e6;">自計畫核定日起</span>
                                 <span class="input-group-text">至</span>
                                 <input id="endDate" name="endDate" type="text" class="form-control taiwan-date-picker" aria-label="計畫結束日期" placeholder="請選擇日期" readonly runat="server"/>
                             </div>

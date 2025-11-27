@@ -792,6 +792,7 @@
         					  </th>
         					  <th>排序</th>
         					  <th width="50">年度</th>
+        					  <th width="120">計畫編號</th>
         					  <th width="160">
         						  <div class="hstack align-items-center">
         							  <span>計畫名稱</span>
@@ -1527,12 +1528,12 @@
                               </div>
                               <!-- 搜尋框 -->
                               <div class="mb-2">
-                                  <input type="text" id="availableReviewersSearch" class="form-control form-control-sm" placeholder="搜尋 ID 或名稱...">
+                                  <input type="text" id="availableReviewersSearch" class="form-control form-control-sm" placeholder="搜尋姓名或Email...">
                               </div>
                               <div class="border rounded p-2" style="height: 360px; overflow-y: auto;">
                                   <div id="availableReviewersList">
                                       <div class="text-center text-muted py-5">
-                                          請先選擇領域
+                                          請先選擇主題
                                       </div>
                                   </div>
                               </div>

@@ -371,9 +371,19 @@
                           <div class="dropdown-menu">
                               <div>系統聯絡人</div>
                               <ul class="d-grid gap-1 mt-2">
-                                  <li>王OO</li>
-                                  <li>04-24516669</li>
-                                  <li>jillwang@gis.tw</li>
+                              <li>王郁淳</li>
+                              <li>04-24516932 #6550</li>
+                              <li>jillwang@gis.tw</li>
+                              </ul>
+                              <hr>
+                              <ul class="d-grid gap-1 mt-2">
+                              <li>
+                                  <a href="<%= ResolveUrl("~/Template/Shared/114海委會補助_案件管理操作手冊(申請單位).pdf") %>" 
+                                     target="_blank" 
+                                     rel="noopener noreferrer">
+                                      操作手冊
+                                  </a>
+                              </li>
                               </ul>
                           </div>
                       </div>

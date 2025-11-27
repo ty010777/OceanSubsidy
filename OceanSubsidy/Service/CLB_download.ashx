@@ -137,8 +137,8 @@ public class CLB_download : IHttpHandler
     }
 
     /// <summary>
-    /// 下載申請資料
-    /// 路徑格式：~\UploadFiles\OFS\CLB\{ProjectID}\{ProjectID}_社團_{ProjectName}_送審版.pdf
+    /// 下載申請資料（送審版）
+    /// 邏輯：從 OFS_CLB_UploadFile 查詢 FileCode = MERGED_REVIEW_VERSION 取得 TemplatePath 後下載
     /// </summary>
     private void DownloadApplicationPlan(HttpContext context)
     {
@@ -151,20 +151,30 @@ public class CLB_download : IHttpHandler
             context.Response.Write("Missing projectID parameter.");
             return;
         }
-        var basicData = OFS_ClbApplicationHelper.GetBasicData(projectID);
-        string ProjectName = basicData.ProjectNameTw; 
 
+        // 從資料庫查詢送審版記錄（FileCode = MERGED_REVIEW_VERSION）
+        var uploadFile = OFS_ClbApplicationHelper.GetUploadedFile(projectID, "MERGED_REVIEW_VERSION");
 
-        // 構建檔案路徑
-        string fileName = $"{projectID}_社團_{ProjectName}_送審版.pdf";
-        string relativePath = $"~/UploadFiles/OFS/CLB/{projectID}/{fileName}";
-        string filePath = context.Server.MapPath(relativePath);
+        // 檢查是否有找到記錄
+        if (uploadFile == null)
+        {
+            context.Response.StatusCode = 404;
+            context.Response.Write($"Review plan file not found for ProjectID: {projectID}");
+            return;
+        }
+
+        string templatePath = uploadFile.TemplatePath;
+        string fileName = uploadFile.FileName;
+
+        // 轉換為實體路徑：根目錄 + TemplatePath
+        string rootPath = context.Server.MapPath("~/");
+        string filePath = Path.Combine(rootPath, templatePath.TrimStart('~', '/', '\\'));
 
         // 檢查檔案是否存在
         if (!File.Exists(filePath))
         {
             context.Response.StatusCode = 404;
-            context.Response.Write($"Application plan file not found: {fileName}");
+            context.Response.Write($"Physical file not found: {filePath}");
             return;
         }
 
@@ -174,7 +184,7 @@ public class CLB_download : IHttpHandler
 
     /// <summary>
     /// 下載核定計畫書
-    /// 路徑格式：~\UploadFiles\OFS\CLB\{ProjectID}\{ProjectID}_社團_{ProjectName}_核定版.pdf
+    /// 邏輯：從 OFS_CLB_UploadFile 查詢 FileCode = MERGED_APPROVED_VERSION 取得 TemplatePath 後下載
     /// </summary>
     private void DownloadApprovedPlan(HttpContext context)
     {
@@ -188,65 +198,34 @@ public class CLB_download : IHttpHandler
             return;
         }
 
-        try
+        // 從資料庫查詢核定版記錄（FileCode = MERGED_APPROVED_VERSION）
+        var uploadFile = OFS_ClbApplicationHelper.GetUploadedFile(projectID, "MERGED_APPROVED_VERSION");
+
+        // 檢查是否有找到記錄
+        if (uploadFile == null)
         {
-            var basicData = OFS_ClbApplicationHelper.GetBasicData(projectID);
-
-            if (basicData == null)
-            {
-                context.Response.StatusCode = 404;
-                context.Response.Write($"Project not found in database: {projectID}");
-                return;
-            }
-
-            string ProjectName = basicData.ProjectNameTw;
-
-            // 構建檔案路徑 - 使用與 SCI 相同的標準格式（不使用 AppRootPath）
-            string fileName = $"{projectID}_社團_{ProjectName}_核定版.pdf";
-            string relativePath = $"~/UploadFiles/OFS/CLB/{projectID}/{fileName}";
-            string filePath = context.Server.MapPath(relativePath);
-
-            // 詳細的錯誤診斷
-            if (!File.Exists(filePath))
-            {
-                context.Response.StatusCode = 404;
-                context.Response.ContentType = "text/plain; charset=utf-8";
-                context.Response.Write($"File not found\n");
-                context.Response.Write($"ProjectID: {projectID}\n");
-                context.Response.Write($"ProjectName: {ProjectName}\n");
-                context.Response.Write($"Expected file name: {fileName}\n");
-                context.Response.Write($"Relative path: {relativePath}\n");
-                context.Response.Write($"Physical path: {filePath}\n");
-                context.Response.Write($"\n");
-
-                // 列出目錄中的檔案
-                string dirPath = Path.GetDirectoryName(filePath);
-                if (Directory.Exists(dirPath))
-                {
-                    context.Response.Write($"Directory exists. Files in directory:\n");
-                    foreach (string file in Directory.GetFiles(dirPath))
-                    {
-                        context.Response.Write($"  - {Path.GetFileName(file)}\n");
-                    }
-                }
-                else
-                {
-                    context.Response.Write($"Directory does not exist: {dirPath}\n");
-                }
-
-                return;
-            }
-
-            // 下載檔案
-            DownloadFile(context, filePath, fileName, "application/pdf");
+            context.Response.StatusCode = 404;
+            context.Response.Write($"Approved plan file not found for ProjectID: {projectID}");
+            return;
         }
-        catch (Exception ex)
+
+        string templatePath = uploadFile.TemplatePath;
+        string fileName = uploadFile.FileName;
+
+        // 轉換為實體路徑：根目錄 + TemplatePath
+        string rootPath = context.Server.MapPath("~/");
+        string filePath = Path.Combine(rootPath, templatePath.TrimStart('~', '/', '\\'));
+
+        // 檢查檔案是否存在
+        if (!File.Exists(filePath))
         {
-            context.Response.StatusCode = 500;
-            context.Response.ContentType = "text/plain; charset=utf-8";
-            context.Response.Write($"Error: {ex.Message}\n");
-            context.Response.Write($"Stack trace: {ex.StackTrace}");
+            context.Response.StatusCode = 404;
+            context.Response.Write($"Physical file not found: {filePath}");
+            return;
         }
+
+        // 下載檔案
+        DownloadFile(context, filePath, fileName, "application/pdf");
     }
     
 

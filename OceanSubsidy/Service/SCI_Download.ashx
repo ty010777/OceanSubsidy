@@ -31,30 +31,33 @@ public class SCI_Download : IHttpHandler
         {
             switch (action.ToLower())
             {
-                case "downloadplan":
+                case "downloadplan"://審查委員下載 附件二計畫書
                     DownloadPlan(context);
                     break;
-                case "downloadapprovedplan":
+                case "downloadapprovedplan": //下載核定計畫書
                     DownloadApprovedPlan(context);
                     break;
-                case "downloadtemplate":
+                case "downloadreviewplan": //下載送審版計畫書
+                    DownloadReviewPlan(context);
+                    break;
+                case "downloadtemplate"://下載範本檔案
                     DownloadTemplate(context);
                     break;
-                case "downloadfile":
+                case "downloadfile"://下載已上傳的檔案
                     DownloadUploadedFile(context);
                     break;
-                case "downloadreviewfile":
+                case "downloadreviewfile"://下載審查意見檔案
                     DownloadReviewFile(context);
                     break;
-                case "getcontractfiles":
+                case "getcontractfiles"://取得契約資料
                     GetContractFiles(context);
                     break;
-                case "downloadbankbook":
+                case "downloadbankbook"://下載存摺檔案
                     DownloadBankBook(context);
                     break;
                 default:
                     context.Response.StatusCode = 400;
-                    context.Response.Write("Invalid action. Use 'downloadPlan', 'downloadApprovedPlan', 'downloadTemplate', 'downloadFile', 'downloadReviewFile', 'getContractFiles', or 'downloadBankBook'.");
+                    context.Response.Write("Invalid action. Use 'downloadPlan', 'downloadApprovedPlan', 'downloadReviewPlan', 'downloadTemplate', 'downloadFile', 'downloadReviewFile', 'getContractFiles', or 'downloadBankBook'.");
                     break;
             }
         }
@@ -143,13 +146,11 @@ public class SCI_Download : IHttpHandler
 
     /// <summary>
     /// 下載核定版計畫書
-    /// 路徑格式：~\UploadFiles\OFS\SCI\{ProjectID}\SciApplication\{ProjectID}_科專_{ProjectName}_核定版.pdf
+    /// 邏輯：從 OFS_SCI_UploadFile 查詢 FileCode = MERGED_APPROVED_VERSION 取得 TemplatePath 後下載
     /// </summary>
     private void DownloadApprovedPlan(HttpContext context)
     {
         var projectID = context.Request.QueryString["projectID"];
-        var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectID);
-        string ProjectName = applicationMain.ProjectNameTw ?? "";
 
         // 驗證參數
         if (string.IsNullOrEmpty(projectID))
@@ -159,16 +160,79 @@ public class SCI_Download : IHttpHandler
             return;
         }
 
-        // 構建檔案路徑
-        string fileName = $"{projectID}_科專_{ProjectName}_核定版.pdf";
-        string relativePath = $"~/UploadFiles/OFS/SCI/{projectID}/SciApplication/{fileName}";
-        string filePath = context.Server.MapPath(relativePath);
+        // 從資料庫查詢核定版記錄（FileCode = MERGED_APPROVED_VERSION）
+        var uploadFiles = OFS_SciUploadAttachmentsHelper.GetAttachmentsByFileCodeAndProject(projectID, "MERGED_APPROVED_VERSION");
+
+        // 檢查是否有找到記錄
+        if (uploadFiles == null || uploadFiles.Count == 0)
+        {
+            context.Response.StatusCode = 404;
+            context.Response.Write($"Approved plan file not found for ProjectID: {projectID}");
+            return;
+        }
+
+        // 取得第一筆記錄的 TemplatePath（最新的）
+        var uploadFile = uploadFiles[0];
+        string templatePath = uploadFile.TemplatePath;
+        string fileName = uploadFile.FileName;
+
+        // 轉換為實體路徑：根目錄 + TemplatePath
+        string rootPath = context.Server.MapPath("~/");
+        string filePath = Path.Combine(rootPath, templatePath.TrimStart('~', '/', '\\'));
 
         // 檢查檔案是否存在
         if (!File.Exists(filePath))
         {
             context.Response.StatusCode = 404;
-            context.Response.Write($"Approved plan file not found: {fileName}");
+            context.Response.Write($"Physical file not found: {filePath}");
+            return;
+        }
+
+        // 下載檔案
+        DownloadFile(context, filePath, fileName, "application/pdf");
+    }
+
+    /// <summary>
+    /// 下載送審版計畫書
+    /// 邏輯：從 OFS_SCI_UploadFile 查詢 FileCode = MERGED_REVIEW_VERSION 取得 TemplatePath 後下載
+    /// </summary>
+    private void DownloadReviewPlan(HttpContext context)
+    {
+        var projectID = context.Request.QueryString["projectID"];
+
+        // 驗證參數
+        if (string.IsNullOrEmpty(projectID))
+        {
+            context.Response.StatusCode = 400;
+            context.Response.Write("Missing projectID parameter.");
+            return;
+        }
+
+        // 從資料庫查詢送審版記錄（FileCode = MERGED_REVIEW_VERSION）
+        var uploadFiles = OFS_SciUploadAttachmentsHelper.GetAttachmentsByFileCodeAndProject(projectID, "MERGED_REVIEW_VERSION");
+
+        // 檢查是否有找到記錄
+        if (uploadFiles == null || uploadFiles.Count == 0)
+        {
+            context.Response.StatusCode = 404;
+            context.Response.Write($"Review plan file not found for ProjectID: {projectID}");
+            return;
+        }
+
+        // 取得第一筆記錄的 TemplatePath（最新的）
+        var uploadFile = uploadFiles[0];
+        string templatePath = uploadFile.TemplatePath;
+        string fileName = uploadFile.FileName;
+
+        // 轉換為實體路徑：根目錄 + TemplatePath
+        string rootPath = context.Server.MapPath("~/");
+        string filePath = Path.Combine(rootPath, templatePath.TrimStart('~', '/', '\\'));
+
+        // 檢查檔案是否存在
+        if (!File.Exists(filePath))
+        {
+            context.Response.StatusCode = 404;
+            context.Response.Write($"Physical file not found: {filePath}");
             return;
         }
 
@@ -677,7 +741,7 @@ public class SCI_Download : IHttpHandler
                 placeholder.Add("SCIT011", topic == "SCIT011" ? "■" : "□");
                 placeholder.Add("YesCoreOceanData", applicationMain?.IsCoreOceanData == true ? "■" : "□");
                 placeholder.Add("NoCoreOceanData", applicationMain?.IsCoreOceanData != true? "■" : "□");
-                placeholder.Add("Topic", topic??"");
+                // placeholder.Add("Topic", topic??"");
                 
                 // 處理開始日期（民國年月日） 
                 int sYear = 0, sMonth = 0, sDay = 0;
@@ -724,12 +788,17 @@ public class SCI_Download : IHttpHandler
 
                 // 建立使用點號作為千分位分隔符的格式化設定
                 var numberFormat = (NumberFormatInfo)CultureInfo.InvariantCulture.NumberFormat.Clone();
-                numberFormat.NumberGroupSeparator = ".";
+                numberFormat.NumberGroupSeparator = ",";
 
-                // 加入經費資料（千分位格式：1,100）
-                placeholder.Add("SubsidyAmount", totalFeeSum.SubsidyAmount.ToString("N0", numberFormat));
-                placeholder.Add("CoopAmount", totalFeeSum.CoopAmount.ToString("N0", numberFormat));
-                placeholder.Add("TotalAmount", totalFeeSum.TotalAmount.ToString("N0", numberFormat));
+                // 加入經費資料（單位：千元）
+                // 有餘數時顯示小數，無餘數時顯示整數
+                decimal subsidyAmountInThousand = totalFeeSum.SubsidyAmount / 1000m;
+                decimal coopAmountInThousand = totalFeeSum.CoopAmount / 1000m;
+                decimal totalAmountInThousand = totalFeeSum.TotalAmount / 1000m;
+
+                placeholder.Add("SubsidyAmount", (subsidyAmountInThousand % 1 == 0) ? subsidyAmountInThousand.ToString("N0", numberFormat) : subsidyAmountInThousand.ToString("N3", numberFormat));
+                placeholder.Add("CoopAmount", (coopAmountInThousand % 1 == 0) ? coopAmountInThousand.ToString("N0", numberFormat) : coopAmountInThousand.ToString("N3", numberFormat));
+                placeholder.Add("TotalAmount", (totalAmountInThousand % 1 == 0) ? totalAmountInThousand.ToString("N0", numberFormat) : totalAmountInThousand.ToString("N3", numberFormat));
 
                 // 取得人員資料（主持人和聯絡人）
                 string personID = "P" + projectID;
@@ -953,7 +1022,7 @@ public class SCI_Download : IHttpHandler
                 string sheetName = sheetNames[0];
 
                 // 取得開始和結束日期
-                DateTime? startTime = applicationMain.StartTime;
+                DateTime? startTime = applicationMain.StartTime ?? DateTime.Today;
                 DateTime? endTime = applicationMain.EndTime;
 
                 if (startTime.HasValue && endTime.HasValue)
@@ -2645,12 +2714,17 @@ public class SCI_Download : IHttpHandler
 
                 // 建立使用點號作為千分位分隔符的格式化設定
                 var numberFormat = (NumberFormatInfo)CultureInfo.InvariantCulture.NumberFormat.Clone();
-                numberFormat.NumberGroupSeparator = ".";
+                numberFormat.NumberGroupSeparator = ",";
 
-                // 加入經費資料（千分位格式：1.100）
-                placeholder.Add("SubsidyAmount", totalFeeSum.SubsidyAmount.ToString("N0", numberFormat));
-                placeholder.Add("CoopAmount", totalFeeSum.CoopAmount.ToString("N0", numberFormat));
-                placeholder.Add("TotalAmount", totalFeeSum.TotalAmount.ToString("N0", numberFormat));
+                // 加入經費資料（單位：千元）
+                // 有餘數時顯示小數，無餘數時顯示整數
+                decimal subsidyAmountInThousand = totalFeeSum.SubsidyAmount / 1000m;
+                decimal coopAmountInThousand = totalFeeSum.CoopAmount / 1000m;
+                decimal totalAmountInThousand = totalFeeSum.TotalAmount / 1000m;
+
+                placeholder.Add("SubsidyAmount", (subsidyAmountInThousand % 1 == 0) ? subsidyAmountInThousand.ToString("N0", numberFormat) : subsidyAmountInThousand.ToString("N3", numberFormat));
+                placeholder.Add("CoopAmount", (coopAmountInThousand % 1 == 0) ? coopAmountInThousand.ToString("N0", numberFormat) : coopAmountInThousand.ToString("N3", numberFormat));
+                placeholder.Add("TotalAmount", (totalAmountInThousand % 1 == 0) ? totalAmountInThousand.ToString("N0", numberFormat) : totalAmountInThousand.ToString("N3", numberFormat));
 
                 var repeatData = new List<Dictionary<string, string>>();
 

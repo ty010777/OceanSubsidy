@@ -2023,6 +2023,25 @@ SELECT TOP (1000) [ProjectID]
         }
     }
     /// <summary>
+    /// 更新科專計畫開始時間
+    /// </summary>
+    /// <param name="projectId">專案編號</param>
+    public static void UpdateSciProjectStartTime(string projectId)
+    {
+        using (DbHelper db = new DbHelper())
+        {
+            db.CommandText = @"
+                UPDATE OFS_SCI_Application_Main
+                SET StartTime = @startTime
+                WHERE ProjectID = @projectId";
+
+            db.Parameters.Add("@projectId", projectId);
+            db.Parameters.Add("@startTime", DateTime.Today);
+
+            db.ExecuteNonQuery();
+        }
+    }
+    /// <summary>
     /// 插入審查歷程記錄 - 新版本支援完整狀態描述
     /// </summary>
     /// <param name="projectId">專案編號</param>
@@ -2330,126 +2349,113 @@ SELECT TOP (1000) [ProjectID]
 
         foreach (string projectId in projectIds)
         {
-            // 1. 從 OFS_SCI_Application_Main 取得 Field
+            // 1. 從 OFS_SCI_Application_Main 取得 Field ,已不用這種方式寄信 ,直接讓使用者選擇要哪些人 20251125
 
-            db.CommandText = "SELECT Field FROM OFS_SCI_Application_Main WHERE ProjectID = @ProjectID";
-            db.Parameters.Add("@ProjectID", projectId);
-            string field = db.GetTable().Rows[0]["Field"]?.ToString();
-            db.Parameters.Clear();
+            // db.CommandText = "SELECT Field FROM OFS_SCI_Application_Main WHERE ProjectID = @ProjectID";
+            // db.Parameters.Add("@ProjectID", projectId);
+            // // string field = db.GetTable().Rows[0]["Field"]?.ToString();
+            // db.Parameters.Clear();
 
-            if (!string.IsNullOrEmpty(field))
+            
+            // 2. 取得審查人員清單
+            DataTable reviewers = new DataTable();
+            reviewers.Columns.Add("CommitteeUser", typeof(string));
+            reviewers.Columns.Add("Email", typeof(string));
+
+            if (reviewerList != null && reviewerList.Count > 0)
             {
-                // 2. 取得審查人員清單
-                DataTable reviewers = new DataTable();
-                reviewers.Columns.Add("CommitteeUser", typeof(string));
-                reviewers.Columns.Add("Email", typeof(string));
-
-                if (reviewerList != null && reviewerList.Count > 0)
+                // 使用傳入的審查人員清單
+                foreach (var reviewer in reviewerList)
                 {
-                    // 使用傳入的審查人員清單
-                    foreach (var reviewer in reviewerList)
-                    {
-                        reviewers.Rows.Add(reviewer.Name, reviewer.Account);
-                    }
+                    reviewers.Rows.Add(reviewer.Name, reviewer.Account);
                 }
-                else
-                {
-                    // 從 OFS_ReviewCommitteeList 取得對應審查組別的所有人員（舊邏輯）
-                    db.CommandText = @"
-                            SELECT CommitteeUser, Email
-                            FROM OFS_ReviewCommitteeList
-                            WHERE SubjectTypeID = @SubjectTypeID
-                            ";
-
-                    db.Parameters.Add("@SubjectTypeID", field);
-                    reviewers = db.GetTable();
-                    db.Parameters.Clear();
-                }
-
-                // 3. 取得科專的審查範本
-                db.CommandText = @"
-                    SELECT TemplateName, TemplateWeight
-                    FROM OFS_ReviewTemplate
-                    WHERE SubsidyProjects = 'SCI'
-                    Order by OrderNo asc
-                    ";
-
-                DataTable templates = db.GetTable();
-                db.Parameters.Clear();
-                // 4. 為每位審查委員建立完整的審核記錄
-                foreach (DataRow reviewer in reviewers.Rows)
-                {
-                    string reviewerEmail = reviewer["Email"]?.ToString();
-                    string reviewerName = reviewer["CommitteeUser"]?.ToString();
-
-                    if (!string.IsNullOrEmpty(reviewerEmail) && !string.IsNullOrEmpty(reviewerName))
-                    {
-                        // 產生隨機 Token
-                        string token = Guid.NewGuid().ToString();
-
-                        // 4.1 新增記錄到 OFS_ReviewRecords
-                        db.CommandText = @"
-                            INSERT INTO OFS_ReviewRecords (
-                                ProjectID,
-                                ReviewStage,
-                                Email,
-                                ReviewerName,
-                                Token
-                            ) VALUES (
-                                @projectId,
-                                @reviewStage,
-                                @reviewerEmail,
-                                @reviewerName,
-                                @token
-                            );
-                            SELECT SCOPE_IDENTITY() AS ReviewID;";
-
-                        db.Parameters.Clear();
-                        db.Parameters.Add("@projectId", projectId);
-                        db.Parameters.Add("@reviewStage", reviewStage);
-                        db.Parameters.Add("@reviewerEmail", reviewerEmail);
-                        db.Parameters.Add("@reviewerName", reviewerName);
-                        db.Parameters.Add("@token", token);
-
-                        int reviewId = Convert.ToInt32(db.GetTable().Rows[0]["ReviewID"]);
-                        db.Parameters.Clear();
-                        // 4.2 為此審查委員建立所有評審項目記錄
-                        foreach (DataRow template in templates.Rows)
-                        {
-                            string templateName = template["TemplateName"]?.ToString();
-                            decimal templateWeight = template["TemplateWeight"] != DBNull.Value
-                                ? Convert.ToDecimal(template["TemplateWeight"])
-                                : 0;
-
-                            if (!string.IsNullOrEmpty(templateName))
-                            {
-                                db.CommandText = @"
-                                    INSERT INTO OFS_ReviewScores (
-                                        ReviewID,
-                                        ItemName,
-                                        Weight,
-                                        Score
-                                    ) VALUES (
-                                        @reviewId,
-                                        @templateName,
-                                        @templateWeight,
-                                        NULL
-                                    )";
-
-                                db.Parameters.Add("@reviewId", reviewId);
-                                db.Parameters.Add("@templateName", templateName);
-                                db.Parameters.Add("@templateWeight", templateWeight);
-                                db.ExecuteNonQuery();
-                                db.Parameters.Clear();
-                            }
-                        }
-
-                        System.Diagnostics.Debug.WriteLine($"已為專案 {projectId} 審查委員 {reviewerName} 建立完整審核記錄，包含 {templates.Rows.Count} 個評審項目");
-                    }
-                }
-
-                System.Diagnostics.Debug.WriteLine($"專案 {projectId} 領域 {field} 找到 {reviewers.Rows.Count} 位審查委員，已完成記錄新增");
             }
+           
+
+            // 3. 取得科專的審查範本
+            db.CommandText = @"
+                SELECT TemplateName, TemplateWeight
+                FROM OFS_ReviewTemplate
+                WHERE SubsidyProjects = 'SCI'
+                Order by OrderNo asc
+                ";
+
+            DataTable templates = db.GetTable();
+            db.Parameters.Clear();
+            // 4. 為每位審查委員建立完整的審核記錄
+            foreach (DataRow reviewer in reviewers.Rows)
+            {
+                string reviewerEmail = reviewer["Email"]?.ToString();
+                string reviewerName = reviewer["CommitteeUser"]?.ToString();
+
+                if (!string.IsNullOrEmpty(reviewerEmail) && !string.IsNullOrEmpty(reviewerName))
+                {
+                    // 產生隨機 Token
+                    string token = Guid.NewGuid().ToString();
+
+                    // 4.1 新增記錄到 OFS_ReviewRecords
+                    db.CommandText = @"
+                        INSERT INTO OFS_ReviewRecords (
+                            ProjectID,
+                            ReviewStage,
+                            Email,
+                            ReviewerName,
+                            Token
+                        ) VALUES (
+                            @projectId,
+                            @reviewStage,
+                            @reviewerEmail,
+                            @reviewerName,
+                            @token
+                        );
+                        SELECT SCOPE_IDENTITY() AS ReviewID;";
+
+                    db.Parameters.Clear();
+                    db.Parameters.Add("@projectId", projectId);
+                    db.Parameters.Add("@reviewStage", reviewStage);
+                    db.Parameters.Add("@reviewerEmail", reviewerEmail);
+                    db.Parameters.Add("@reviewerName", reviewerName);
+                    db.Parameters.Add("@token", token);
+
+                    int reviewId = Convert.ToInt32(db.GetTable().Rows[0]["ReviewID"]);
+                    db.Parameters.Clear();
+                    // 4.2 為此審查委員建立所有評審項目記錄
+                    foreach (DataRow template in templates.Rows)
+                    {
+                        string templateName = template["TemplateName"]?.ToString();
+                        decimal templateWeight = template["TemplateWeight"] != DBNull.Value
+                            ? Convert.ToDecimal(template["TemplateWeight"])
+                            : 0;
+
+                        if (!string.IsNullOrEmpty(templateName))
+                        {
+                            db.CommandText = @"
+                                INSERT INTO OFS_ReviewScores (
+                                    ReviewID,
+                                    ItemName,
+                                    Weight,
+                                    Score
+                                ) VALUES (
+                                    @reviewId,
+                                    @templateName,
+                                    @templateWeight,
+                                    NULL
+                                )";
+
+                            db.Parameters.Add("@reviewId", reviewId);
+                            db.Parameters.Add("@templateName", templateName);
+                            db.Parameters.Add("@templateWeight", templateWeight);
+                            db.ExecuteNonQuery();
+                            db.Parameters.Clear();
+                        }
+                    }
+
+                    System.Diagnostics.Debug.WriteLine($"已為專案 {projectId} 審查委員 {reviewerName} 建立完整審核記錄，包含 {templates.Rows.Count} 個評審項目");
+                }
+            }
+
+                System.Diagnostics.Debug.WriteLine($"專案 {projectId} 找到 {reviewers.Rows.Count} 位審查委員，已完成記錄新增");
+            
         }
     }
 
@@ -2464,24 +2470,23 @@ SELECT TOP (1000) [ProjectID]
 
         foreach (string projectId in projectIds)
         {
-            // 1. 從 OFS_CUL_Project 取得 Field
-            db.CommandText = "SELECT Field FROM OFS_CUL_Project WHERE ProjectID = @ProjectID";
-            db.Parameters.Add("@ProjectID", projectId);
-            string field = db.GetTable().Rows[0]["Field"]?.ToString();
-            db.Parameters.Clear();
-            int status = 5;
-            switch (reviewStage)
-            {
-                case "初審":
-                    reviewStage = "2";
-                    break;
-                case "複審":
-                    reviewStage = "3";
-                    break;
-
-            }
-            if (!string.IsNullOrEmpty(field))
-            {
+            // // 1. 從 OFS_CUL_Project 取得 Field 已不使用這種方式寄信，直接讓使用者選寄信人員
+            // db.CommandText = "SELECT Field FROM OFS_CUL_Project WHERE ProjectID = @ProjectID";
+            // db.Parameters.Add("@ProjectID", projectId);
+            // // string field = db.GetTable().Rows[0]["Field"]?.ToString();
+            // db.Parameters.Clear();
+            // int status = 5;
+            // switch (reviewStage)
+            // {
+            //     case "初審":
+            //         reviewStage = "2";
+            //         break;
+            //     case "複審":
+            //         reviewStage = "3";
+            //         break;
+            //
+            // }
+            
                 // 2. 取得審查人員清單
                 DataTable reviewers = new DataTable();
                 reviewers.Columns.Add("CommitteeUser", typeof(string));
@@ -2495,19 +2500,7 @@ SELECT TOP (1000) [ProjectID]
                         reviewers.Rows.Add(reviewer.Name, reviewer.Account);
                     }
                 }
-                else
-                {
-                    // 從 OFS_ReviewCommitteeList 取得對應審查組別的所有人員（舊邏輯）
-                    db.CommandText = @"
-                        SELECT CommitteeUser, Email
-                          FROM OFS_ReviewCommitteeList
-                         WHERE SubjectTypeID = @SubjectTypeID
-                    ";
-
-                    db.Parameters.Add("@SubjectTypeID", field);
-                    reviewers = db.GetTable();
-                    db.Parameters.Clear();
-                }
+            
 
                 // 3. 取得文化的審查範本
                 db.CommandText = $@"
@@ -2588,7 +2581,7 @@ SELECT TOP (1000) [ProjectID]
                         }
                     }
                 }
-            }
+            
         }
     }
 

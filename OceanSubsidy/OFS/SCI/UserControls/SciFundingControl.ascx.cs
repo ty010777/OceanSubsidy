@@ -313,35 +313,41 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             // 1. 驗證海洋科技研發人員人事費明細表（必填）
             if (personnelData == null || personnelData.Count == 0)
             {
-                result.AddError("海洋科技研發人員人事費明細表：請至少新增一筆人事費資料");
+                result.AddError("明細表「1.海洋科技研發人員人事費」：請至少新增一筆人事費資料");
             }
             else
             {
+                List<string> missingFields = new List<string>();
                 foreach (var person in personnelData)
                 {
                     if (string.IsNullOrWhiteSpace(person.name))
                     {
-                        result.AddError("海洋科技研發人員人事費明細表：請輸入人員姓名");
-                        break;
+                        if (!missingFields.Contains("人員姓名"))
+                            missingFields.Add("「人員姓名」");
                     }
 
                     if (string.IsNullOrWhiteSpace(person.title))
                     {
-                        result.AddError("海洋科技研發人員人事費明細表：請選擇職稱");
-                        break;
+                        if (!missingFields.Contains("職稱"))
+                            missingFields.Add("「職稱」");
                     }
 
                     if (person.salary <= 0)
                     {
-                        result.AddError("海洋科技研發人員人事費明細表：請輸入有效的平均月薪");
-                        break;
+                        if (!missingFields.Contains("平均月薪"))
+                            missingFields.Add("「平均月薪」");
                     }
 
                     if (person.months <= 0)
                     {
-                        result.AddError("海洋科技研發人員人事費明細表：請輸入有效的參與人月");
-                        break;
+                        if (!missingFields.Contains("參與人月"))
+                            missingFields.Add("「參與人月」");
                     }
+                }
+
+                if (missingFields.Count > 0)
+                {
+                    result.AddError($"明細表「1.海洋科技研發人員人事費」：請輸入{string.Join("、", missingFields)}");
                 }
             }
 
@@ -367,21 +373,27 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             // 3. 驗證消耗性器材及原材料費（選填，但有填就檢查）
             if (materialData != null && materialData.Count > 0)
             {
+                List<string> missingFields = new List<string>();
                 foreach (var material in materialData)
                 {
                     if (string.IsNullOrWhiteSpace(material.name))
                     {
-                        result.AddError("消耗性器材及原材料費：請輸入品名");
-                        break;
+                        if (!missingFields.Contains("品名"))
+                            missingFields.Add("「品名」");
                     }
 
                     if (string.IsNullOrWhiteSpace(material.unit))
                     {
-                        result.AddError("消耗性器材及原材料費：請選擇單位");
-                        break;
+                        if (!missingFields.Contains("單位"))
+                            missingFields.Add("「單位」");
                     }
 
                     // quantity 和 unitPrice 可以為 0，不檢查
+                }
+
+                if (missingFields.Count > 0)
+                {
+                    result.AddError($"明細表「2.消耗性器材及原材料費」：請輸入{string.Join("、", missingFields)}");
                 }
             }
 
@@ -409,42 +421,54 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             // 5. 驗證國內差旅費（選填，但有填就檢查）
             if (travelData != null && travelData.Count > 0)
             {
+                List<string> missingFields = new List<string>();
                 foreach (var travel in travelData)
                 {
                     if (string.IsNullOrWhiteSpace(travel.reason))
                     {
-                        result.AddError("國內差旅費：請輸入出差事由");
-                        break;
+                        if (!missingFields.Contains("出差事由"))
+                            missingFields.Add("「出差事由」");
                     }
 
                     if (string.IsNullOrWhiteSpace(travel.area))
                     {
-                        result.AddError("國內差旅費：請輸入地點");
-                        break;
+                        if (!missingFields.Contains("地區"))
+                            missingFields.Add("「地區」");
                     }
 
                     // days, people, price 可以為 0，不檢查
+                }
+
+                if (missingFields.Count > 0)
+                {
+                    result.AddError($"明細表「4-1.國內差旅費」：請輸入{string.Join("、", missingFields)}");
                 }
             }
 
             // 6. 驗證國外差旅費（選填，但有填就檢查）
             if (foreignTravelData != null && foreignTravelData.Count > 0)
             {
+                List<string> missingFields = new List<string>();
                 foreach (var foreignTravel in foreignTravelData)
                 {
                     if (string.IsNullOrWhiteSpace(foreignTravel.country))
                     {
-                        result.AddError("國外差旅費：請輸入國家");
-                        break;
+                        if (!missingFields.Contains("擬前往國家或地區"))
+                            missingFields.Add("「擬前往國家或地區」");
                     }
 
                     if (string.IsNullOrWhiteSpace(foreignTravel.topic))
                     {
-                        result.AddError("國外差旅費：請輸入主題");
-                        break;
+                        if (!missingFields.Contains("主要會議議題"))
+                            missingFields.Add("「主要會議議題」");
                     }
 
                     // days, people, transportFee, livingFee 可以為 0，不檢查
+                }
+
+                if (missingFields.Count > 0)
+                {
+                    result.AddError($"明細表「4-2.國外差旅費」：請輸入{string.Join("、", missingFields)}");
                 }
             }
 
@@ -920,7 +944,9 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
             var validationResult = ValidateForm();
             if (!validationResult.IsValid)
             {
-                ShowErrorMessage($"請修正以下錯誤：{validationResult.GetErrorsAsString()}");
+                var errorMessages = validationResult.GetErrorsAsString();
+                var fullMessage = $"請修正以下錯誤：<br>{errorMessages}<br><br>若無使用經費，請輸入「無」";
+                    ShowErrorMessage(fullMessage);
                 RestoreDataFromSession();
                 return;
             }
@@ -1457,7 +1483,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
         string script = $@"
             Swal.fire({{
                 title: '錯誤',
-                html: '{safeMessage}',
+                html: '<div style=""text-align: left;"">{safeMessage}</div>',
                 icon: 'error',
                 confirmButtonText: '確定',
                 customClass: {{

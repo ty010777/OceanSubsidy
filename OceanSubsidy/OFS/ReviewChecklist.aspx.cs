@@ -869,7 +869,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                 
                 if (reviewType == "1" || reviewType == "2")
                 {
-                    SendReviewNotifications(allSuccessIds, reviewType);
+                    SendReviewNotifications(allSuccessIds, reviewType,reviewerList);
                 }
                 else if (reviewType == "3")
                 {
@@ -1710,6 +1710,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                         if (toStatus == "計畫執行")
                         {
                             ReviewCheckListHelper.CreateTaskQueueTemplate(projectId);
+                            ReviewCheckListHelper.UpdateSciProjectStartTime(projectId);
                         }
 
                         RecordSciReviewHistory(projectId, fromStatus, toStatus, actionType, userName);
@@ -2777,7 +2778,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
     /// </summary>
     /// <param name="projectIds">專案ID清單</param>
     /// <param name="reviewType">審查類型 (1:資格審查, 2:實質審查)</param>
-    private static void SendReviewNotifications(List<string> projectIds, string reviewType)
+    private static void SendReviewNotifications(List<string> projectIds, string reviewType,List<ReviewerInfo> reviewerList = null)
     {
         try
         {
@@ -4007,7 +4008,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                         {
                             account = account,
                             name = name,
-                            displayName = $"{account} {name}"
+                            displayName = $"{name} {account}"
                         });
                     }
                 }

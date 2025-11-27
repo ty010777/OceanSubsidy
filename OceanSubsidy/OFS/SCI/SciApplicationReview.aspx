@@ -130,7 +130,7 @@
                     }
 
                     // 直接開啟下載 URL
-                    var downloadUrl = '<%= ResolveUrl("~/Service/SCI_Download.ashx") %>?action=downloadPlan&projectID=' + projectId;
+                    var downloadUrl = '<%= ResolveUrl("~/Service/SCI_Download.ashx") %>?action=downloadreviewplan&projectID=' + projectId;
                     window.open(downloadUrl, '_blank');
                 });
             }

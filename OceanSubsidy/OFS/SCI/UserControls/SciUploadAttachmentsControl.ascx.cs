@@ -695,37 +695,37 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
                         System.Diagnostics.Debug.WriteLine($"專案 {ProjectID} 計畫變更記錄狀態更新成功：Status=2");
                     }
 
-                    // 3. 處理檔案版本控制
-                    string uploadFolderPath = Server.MapPath($"~/UploadFiles/OFS/SCI/{ProjectID}/SciApplication");
-                    string latestFileNameSuffix = "計畫變更最新版";
-                    string latestFullFileName = $"{ProjectID}_科專_{ProjectName}_{latestFileNameSuffix}.pdf";
-                    string latestFilePath = Path.Combine(uploadFolderPath, latestFullFileName);
-                    
-                    // 3.1 檢查「計畫變更最新版」是否存在
-                    if (File.Exists(latestFilePath))
-                    {
-                        // 3.2 取得目前最新的版本號（計畫變更記錄筆數）
-                        int latestVersion = OFS_SciUploadAttachmentsHelper.GetLatestChangeVersionNumber(ProjectID);
-
-                        // 3.3 複製「最新版」並改名為 v{版本號+1}
-                        int newVersion = latestVersion + 1;
-                        string versionFileNameSuffix = $"計畫變更v{newVersion}";
-                        string versionFullFileName = $"{ProjectID}_科專_{ProjectName}_{versionFileNameSuffix}.pdf";
-                        string versionFilePath = Path.Combine(uploadFolderPath, versionFullFileName);
-
-                        try
-                        {
-                            File.Copy(latestFilePath, versionFilePath, true);
-                            System.Diagnostics.Debug.WriteLine($"已複製：{latestFullFileName} -> {versionFullFileName}");
-                        }
-                        catch (Exception copyEx)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"複製檔案時發生錯誤：{copyEx.Message}");
-                        }
-                    }
-
-                    // 3.4 產生新的「計畫變更最新版」PDF
-                    MergePdfFiles(ProjectID, orgCategory, ProjectName, latestFileNameSuffix);
+                    // // 3. 處理檔案版本控制
+                    // string uploadFolderPath = Server.MapPath($"~/UploadFiles/OFS/SCI/{ProjectID}/SciApplication");
+                    // string latestFileNameSuffix = "計畫變更最新版";
+                    // string latestFullFileName = $"{ProjectID}_科專_{ProjectName}_{latestFileNameSuffix}.pdf";
+                    // string latestFilePath = Path.Combine(uploadFolderPath, latestFullFileName);
+                    //
+                    // // 3.1 檢查「計畫變更最新版」是否存在
+                    // if (File.Exists(latestFilePath))
+                    // {
+                    //     // 3.2 取得目前最新的版本號（計畫變更記錄筆數）
+                    //     int latestVersion = OFS_SciUploadAttachmentsHelper.GetLatestChangeVersionNumber(ProjectID);
+                    //
+                    //     // 3.3 複製「最新版」並改名為 v{版本號+1}
+                    //     int newVersion = latestVersion + 1;
+                    //     string versionFileNameSuffix = $"計畫變更v{newVersion}";
+                    //     string versionFullFileName = $"{ProjectID}_科專_{ProjectName}_{versionFileNameSuffix}.pdf";
+                    //     string versionFilePath = Path.Combine(uploadFolderPath, versionFullFileName);
+                    //
+                    //     try
+                    //     {
+                    //         File.Copy(latestFilePath, versionFilePath, true);
+                    //         System.Diagnostics.Debug.WriteLine($"已複製：{latestFullFileName} -> {versionFullFileName}");
+                    //     }
+                    //     catch (Exception copyEx)
+                    //     {
+                    //         System.Diagnostics.Debug.WriteLine($"複製檔案時發生錯誤：{copyEx.Message}");
+                    //     }
+                    // }
+                    //
+                    // // 3.4 產生新的「計畫變更最新版」PDF
+                    // MergePdfFiles(ProjectID, orgCategory, ProjectName, latestFileNameSuffix);
                     
                     // 4. 寄信通知相關人員
                     var projectMain = OFS_SciApplicationHelper.getVersionByProjectID(ProjectID);
@@ -1064,7 +1064,8 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
                     if (fileInfo.IsSpecial)
                     {
                         // 特殊處理：FILE_AC1/FILE_OTech1 需要動態生成（填入日期並合併PDF）
-                        pdfPath = GenerateAttachment01Pdf(orgCategory, projectId);
+                        //目前應該沒有要特殊處理的項目 先註解 
+                        // pdfPath = GenerateAttachment01Pdf(orgCategory, projectId);
                     }
                     else
                     {
@@ -1112,8 +1113,9 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
                 return;
             }
 
-            // 建立合併後的檔案名稱和路徑
-            string mergedFileName = $"{projectId}_科專_{ProjectName}_{version}.pdf";
+            // 建立合併後的檔案名稱和路徑（加上時間戳記）
+            string timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+            string mergedFileName = $"{projectId}_科專_{ProjectName}_{version}_{timestamp}.pdf";
             string uploadFolderPath = Server.MapPath($"~/UploadFiles/OFS/SCI/{projectId}/SciApplication");
             string mergedFilePath = Path.Combine(uploadFolderPath, mergedFileName);
 
@@ -1127,6 +1129,21 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
             byte[] mergedPdfBytes = PdfHelper.MergePdfs(pdfFilePaths, mergedFilePath);
 
             System.Diagnostics.Debug.WriteLine($"PDF 合併完成：{mergedFilePath}，合併了 {pdfFilePaths.Count} 個檔案");
+
+            // 儲存合併後的 PDF 記錄到資料庫（僅送審版和核定版）
+            if (version == "送審版" || version == "核定版")
+            {
+                string fileCodeForDb = GetMergedFileCode(version);
+                string relativeTemplatePath = $"UploadFiles/OFS/SCI/{projectId}/SciApplication/{mergedFileName}";
+
+                // 先刪除該版本的舊記錄（避免 FileCode 重複，確保資料乾淨）
+                DeleteMergedPdfRecord(projectId, fileCodeForDb);
+                System.Diagnostics.Debug.WriteLine($"已刪除舊的合併 PDF 記錄：FileCode={fileCodeForDb}");
+
+                // 新增新記錄
+                OFS_SciUploadAttachmentsHelper.InsertAttachmentRecord(projectId, fileCodeForDb, mergedFileName, relativeTemplatePath);
+                System.Diagnostics.Debug.WriteLine($"合併 PDF 記錄已存入資料庫：FileCode={fileCodeForDb}, FileName={mergedFileName}");
+            }
         }
         catch (Exception ex)
         {
@@ -1240,7 +1257,7 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
         if (orgCategory == "OceanTech")
         {
             // 海洋科技業者（OceanTech）- 10 個檔案（依順序）
-            files.Add(new FileToMerge { FileCode = "FILE_OTech1", IsTemplate = true, IsSpecial = true });  // 1. 附件-01（特殊處理）
+            files.Add(new FileToMerge { FileCode = "FILE_OTech1", IsTemplate = true, TemplatePath = "~/Template/SCI/OTech/附件-01海洋委員會海洋科技專案補助作業要點.pdf" });  // 1. 附件-01（固定範本）
             files.Add(new FileToMerge { FileCode = "FILE_OTech2", IsTemplate = false });  // 2. 海洋科技科專案計畫書（使用者上傳）
             files.Add(new FileToMerge { FileCode = "FILE_OTech3", IsTemplate = false });  // 3. 建議迴避之審查委員清單（使用者上傳）
             files.Add(new FileToMerge { FileCode = "FILE_OTech4", IsTemplate = false });  // 4. 未違反公職人員利益衝突迴避法切結書（使用者上傳）
@@ -1254,7 +1271,7 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
         else
         {
             // 學術機構/法人機構（Academic）- 12 個檔案（依順序）
-            files.Add(new FileToMerge { FileCode = "FILE_AC1", IsTemplate = true, IsSpecial = true });  // 1. 附件-01（特殊處理）
+            files.Add(new FileToMerge { FileCode = "FILE_AC1", IsTemplate = true, TemplatePath = "~/Template/SCI/Academic/附件-01海洋委員會海洋科技專案補助作業要點.pdf" });  // 1. 附件-01（固定範本）
             files.Add(new FileToMerge { FileCode = "FILE_AC2", IsTemplate = false });  // 2. 海洋科技科專案計畫書（使用者上傳）
             files.Add(new FileToMerge { FileCode = "FILE_AC3", IsTemplate = false });  // 3. 建議迴避之審查委員清單（使用者上傳）
             files.Add(new FileToMerge { FileCode = "FILE_AC4", IsTemplate = false });  // 4. 未違反公職人員利益衝突迴避法切結書（使用者上傳）
@@ -1373,6 +1390,47 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
         if (string.IsNullOrWhiteSpace(afterValue))
         {
             result.AddError($"表單{formNumber}變更後尚未填寫");
+        }
+    }
+
+    /// <summary>
+    /// 根據版本取得合併 PDF 的 FileCode
+    /// </summary>
+    /// <param name="version">版本名稱（送審版或核定版）</param>
+    /// <returns>對應的 FileCode</returns>
+    private string GetMergedFileCode(string version)
+    {
+        switch (version)
+        {
+            case "送審版":
+                return "MERGED_REVIEW_VERSION";
+            case "核定版":
+                return "MERGED_APPROVED_VERSION";
+            default:
+                return "MERGED_UNKNOWN";
+        }
+    }
+
+    /// <summary>
+    /// 刪除舊的合併 PDF 記錄（僅刪除資料庫記錄，保留實體檔案）
+    /// </summary>
+    /// <param name="projectId">專案ID</param>
+    /// <param name="fileCode">檔案代碼</param>
+    private void DeleteMergedPdfRecord(string projectId, string fileCode)
+    {
+        try
+        {
+            var existingRecords = OFS_SciUploadAttachmentsHelper.GetAttachmentsByFileCodeAndProject(projectId, fileCode);
+            foreach (var record in existingRecords)
+            {
+                OFS_SciUploadAttachmentsHelper.DeleteAttachmentRecord(record.ID);
+                System.Diagnostics.Debug.WriteLine($"已刪除舊的合併 PDF 記錄：ID={record.ID}, FileName={record.FileName}");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"刪除舊的合併 PDF 記錄時發生錯誤：{ex.Message}");
+            throw;
         }
     }
 

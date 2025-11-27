@@ -434,25 +434,45 @@ class WorkItemTableManager {
 
     // 獲取計畫期程的起訖年份
     getProjectYearRange() {
-        const startDateInput = document.querySelector('input[id*="startDate"]');
+        // 註解：起日欄位已改為純文字顯示(span元素)，不再是input
+        const startDateSpan = document.querySelector('span[id*="startDateText"]');
         const endDateInput = document.querySelector('input[id*="endDate"]');
 
-        if (!startDateInput || !endDateInput || !startDateInput.value || !endDateInput.value) {
+        // 結束日期必須要有值
+        if (!endDateInput || !endDateInput.value) {
             return null;
         }
 
-        // 解析民國年日期（格式：114/02/01）
-        const startParts = startDateInput.value.split('/');
+        let startYear;
+
+        // 嘗試從 span 元素讀取起日
+        if (startDateSpan && startDateSpan.textContent) {
+            const startDateText = startDateSpan.textContent.trim();
+
+            // 如果不是「自計畫核定日起」，嘗試解析日期格式（如：114/02/01）
+            if (startDateText !== '自計畫核定日起' && startDateText.includes('/')) {
+                const startParts = startDateText.split('/');
+                if (startParts.length >= 1) {
+                    startYear = parseInt(startParts[0]);
+                }
+            }
+        }
+
+        // 如果起日找不到資料(資料庫沒資料 或 顯示「自計畫核定日起」)，使用今天的民國年
+        if (!startYear || isNaN(startYear)) {
+            const today = new Date();
+            const taiwanYear = today.getFullYear() - 1911; // 西元年轉民國年
+            startYear = taiwanYear;
+        }
+
+        // 解析結束日期（格式：114/02/01）
         const endParts = endDateInput.value.split('/');
-
-        if (startParts.length < 3 || endParts.length < 3) {
+        if (endParts.length < 3) {
             return null;
         }
 
-        const startYear = parseInt(startParts[0]);
         const endYear = parseInt(endParts[0]);
-
-        if (isNaN(startYear) || isNaN(endYear)) {
+        if (isNaN(endYear)) {
             return null;
         }
 

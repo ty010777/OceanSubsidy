@@ -876,6 +876,7 @@ window.ReviewChecklist = (function() {
                 </td>
                 <td data-th="排序:">${index}</td>
                 <td data-th="年度:">${year}</td>
+                <td data-th="計畫編號:" style="text-align: left;">${item.ProjectID || ''}</td>
                 <td data-th="計畫名稱:" style="text-align: left;">
                     <a href="${getReviewUrl(item.ProjectID)}" class="link-black" target="_blank">${item.ProjectNameTw || ''}</a>
                 </td>

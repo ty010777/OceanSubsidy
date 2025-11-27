@@ -15,6 +15,8 @@ document.addEventListener('DOMContentLoaded', function () {
         loadExistingDataToForm();
         // 根據 OrgCategory 決定顯示/隱藏特定項目
         handleOrgCategoryVisibility();
+        // 更新補助款上限文字
+        updateGrantLimitText();
     }, 800);
 
     // 初始化其他業務費月薪上限 modal
@@ -1884,7 +1886,9 @@ function handleSaveAndNextClick() {
         // 組合訊息
         let message = '';
         if (warningMessages.length > 0) {
-            message = warningMessages.join('\n') + '\n\n是否提交下一步？';
+            // 將警告訊息組合成 HTML 格式，每條訊息以紅字顯示
+            const warningHtml = warningMessages.map(msg => `<span style="color: red;">${msg}</span>`).join('<br>');
+            message = warningHtml + '<br><br>是否提交下一步？';
         } else {
             message = '是否提交下一步？';
         }
@@ -1892,7 +1896,7 @@ function handleSaveAndNextClick() {
         // 顯示確認對話框
         Swal.fire({
             title: warningMessages.length > 0 ? '提醒' : '確認',
-            text: message,
+            html: message, // 改用 html 屬性以支援 HTML 格式化
             icon: warningMessages.length > 0 ? 'warning' : 'question',
             showCancelButton: true,
             confirmButtonText: '確定送出',
@@ -1922,5 +1926,19 @@ function handleSaveAndNextClick() {
     } catch (error) {
         console.error('處理送出驗證時發生錯誤:', error);
         return true; // 發生錯誤時直接提交
+    }
+}
+
+// 更新頁面上的補助款上限文字
+function updateGrantLimitText() {
+    try {
+        const grantLimitElement = document.getElementById('grantLimitText');
+        if (grantLimitElement && window.grantLimitSettings && window.grantLimitSettings.grantLimit) {
+            const grantLimit = window.grantLimitSettings.grantLimit;
+            grantLimitElement.textContent = grantLimit;
+            console.log('已更新補助款上限文字為:', grantLimit);
+        }
+    } catch (error) {
+        console.error('更新補助款上限文字時發生錯誤:', error);
     }
 }

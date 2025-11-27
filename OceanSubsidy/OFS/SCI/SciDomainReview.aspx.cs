@@ -274,7 +274,22 @@ public partial class OFS_SCI_SciDomainReview : System.Web.UI.Page
                 DataRow newRow = itemsTable.NewRow();
                 newRow["Id"] = row["Id"] ?? "";
                 newRow["ItemName"] = row["ItemName"] ?? "";
-                newRow["Weight"] = row["Weight"] ?? "";
+
+                // 處理權重：四捨五入後去除小數點
+                string weightValue = "";
+                if (row["Weight"] != DBNull.Value && row["Weight"] != null)
+                {
+                    if (decimal.TryParse(row["Weight"].ToString(), out decimal weight))
+                    {
+                        weightValue = Math.Round(weight, 0).ToString("0");
+                    }
+                    else
+                    {
+                        weightValue = row["Weight"].ToString();
+                    }
+                }
+                newRow["Weight"] = weightValue;
+
                 newRow["Score"] = row["Score"] ?? "";
                 itemsTable.Rows.Add(newRow);
             }

@@ -17,9 +17,10 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
         
         /// <summary>
         /// 更新計畫期程到 OFS_SCI_Application_Main
+        /// 註解：起日欄位改為純文字顯示，不再儲存起日資料
         /// </summary>
         /// <param name="projectId">ProjectID</param>
-        /// <param name="startTime">計畫開始時間</param>
+        /// <param name="startTime">計畫開始時間（已不使用）</param>
         /// <param name="endTime">計畫結束時間</param>
         /// <returns>是否成功</returns>
         public static void UpdateProjectSchedule(string projectId, DateTime? startTime, DateTime? endTime)
@@ -30,16 +31,16 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
 
                 try
                 {
+                    // 註解：起日欄位改為純文字顯示，僅更新結束日期
                     db.CommandText = @"
-                    UPDATE OFS_SCI_Application_Main 
-                    SET StartTime = @StartTime, 
-                        EndTime = @EndTime,
+                    UPDATE OFS_SCI_Application_Main
+                    SET EndTime = @EndTime,
                         updated_at = @UpdatedAt
                     WHERE ProjectID = @ProjectId";
 
-                    
+
                     db.Parameters.Clear();
-                    db.Parameters.Add("@StartTime", startTime);
+                    //db.Parameters.Add("@StartTime", startTime);  // 註解：不再儲存起日
                     db.Parameters.Add("@EndTime", endTime);
                     db.Parameters.Add("@UpdatedAt", DateTime.Now);
                     db.Parameters.Add("@ProjectId", projectId);

@@ -1043,6 +1043,50 @@ public class OFS_ClbApplicationHelper
     }
 
     /// <summary>
+    /// 取得指定計畫和文件代碼的所有上傳文件（可能有多筆）
+    /// </summary>
+    /// <param name="projectID">計畫編號</param>
+    /// <param name="fileCode">文件代碼</param>
+    /// <returns>上傳文件清單</returns>
+    public static List<OFS_CLB_UploadFile> GetUploadedFilesByCode(string projectID, string fileCode)
+    {
+        try
+        {
+            DbHelper db = new DbHelper();
+            db.CommandText = @"
+                SELECT *
+                FROM [OCA_OceanSubsidy].[dbo].[OFS_CLB_UploadFile]
+                WHERE [ProjectID] = @ProjectID AND [FileCode] = @FileCode
+                ORDER BY [ID] DESC";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@ProjectID", projectID);
+            db.Parameters.Add("@FileCode", fileCode);
+
+            DataTable dt = db.GetTable();
+            List<OFS_CLB_UploadFile> files = new List<OFS_CLB_UploadFile>();
+
+            foreach (DataRow row in dt.Rows)
+            {
+                files.Add(new OFS_CLB_UploadFile
+                {
+                    ID = row["ID"] != DBNull.Value ? Convert.ToInt32(row["ID"]) : 0,
+                    ProjectID = row["ProjectID"]?.ToString(),
+                    FileCode = row["FileCode"]?.ToString(),
+                    FileName = row["FileName"]?.ToString(),
+                    TemplatePath = row["TemplatePath"]?.ToString()
+                });
+            }
+
+            return files;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"取得上傳文件清單失敗：{ex.Message}");
+        }
+    }
+
+    /// <summary>
     /// 檢查上傳文件是否存在
     /// </summary>
     /// <param name="projectID">計畫編號</param>

@@ -283,9 +283,14 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
                 OFS_SCI_Application_Main applicationMain = Newtonsoft.Json.JsonConvert.DeserializeObject<OFS_SCI_Application_Main>(
                     snapshotData.ApplicationMain.ToString()
                 );
+                // 起日欄位顯示純文字
                 if (applicationMain != null && applicationMain.StartTime.HasValue)
                 {
-                    startDate.Value = applicationMain.StartTime.Value.ToMinguoDate();
+                    startDateText.InnerText = applicationMain.StartTime.Value.ToMinguoDate();
+                }
+                else
+                {
+                    startDateText.InnerText = "自計畫核定日起";
                 }
                 if (applicationMain != null && applicationMain.EndTime.HasValue)
                 {
@@ -469,24 +474,26 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
         try
         {
             // 驗證期程
-            if (string.IsNullOrEmpty(startDate.Value))
-            {
-                result.AddError("請選擇計畫開始日期");
-            }
+            // 註解：起日欄位改為純文字顯示，不再驗證
+            //if (string.IsNullOrEmpty(startDate.Value))
+            //{
+            //    result.AddError("請選擇計畫開始日期");
+            //}
 
             if (string.IsNullOrEmpty(endDate.Value))
             {
                 result.AddError("請選擇計畫結束日期");
             }
 
-            if (DateTime.TryParse(startDate.Value, out DateTime startDateTime) && 
-                DateTime.TryParse(endDate.Value, out DateTime endDateTime))
-            {
-                if (startDateTime >= endDateTime)
-                {
-                    result.AddError("計畫結束日期必須晚於開始日期");
-                }
-            }
+            // 註解：起日欄位改為純文字顯示，不再驗證日期區間
+            //if (DateTime.TryParse(startDate.Value, out DateTime startDateTime) &&
+            //    DateTime.TryParse(endDate.Value, out DateTime endDateTime))
+            //{
+            //    if (startDateTime >= endDateTime)
+            //    {
+            //        result.AddError("計畫結束日期必須晚於開始日期");
+            //    }
+            //}
 
             // 驗證工作項目
             var workItems = GetWorkItemsFromForm();
@@ -811,9 +818,14 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
     {
         var (startTime, endTime) = OFS_SciWorkSchHelper.GetProjectScheduleByProjectID(projectID);
 
+        // 起日欄位顯示純文字
         if (startTime.HasValue)
         {
-            startDate.Value = startTime.Value.ToMinguoDate();
+            startDateText.InnerText = startTime.Value.ToMinguoDate();
+        }
+        else
+        {
+            startDateText.InnerText = "自計畫核定日起";
         }
 
         if (endTime.HasValue)
@@ -974,15 +986,15 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
         DateTime? startDateTime = null;
         DateTime? endDateTime = null;
 
-        // 處理開始日期：直接從民國年欄位值解析（PostBack 時會自動傳到後端）
-        if (!string.IsNullOrEmpty(startDate.Value))
-        {
-            if (DateTimeHelper.TryParseMinguoDate(startDate.Value, out DateTime parsedStart))
-            {
-                startDateTime = parsedStart;
-            }
-        }
-
+        // 註解：起日欄位改為純文字顯示，不再從表單取得起日資料
+        //// 處理開始日期：直接從民國年欄位值解析（PostBack 時會自動傳到後端）
+        //if (!string.IsNullOrEmpty(startDate.Value))
+        //{
+        //    if (DateTimeHelper.TryParseMinguoDate(startDate.Value, out DateTime parsedStart))
+        //    {
+        //        startDateTime = parsedStart;
+        //    }
+        //}
 
         // 處理結束日期：直接從民國年欄位值解析（PostBack 時會自動傳到後端）
         if (!string.IsNullOrEmpty(endDate.Value))
@@ -992,7 +1004,7 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
                 endDateTime = parsedEnd;
             }
         }
-    
+
         return (startDateTime, endDateTime);
     }
 
@@ -1380,14 +1392,15 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
                 var projectSchedule = backupData["ProjectSchedule"];
                 if (projectSchedule != null)
                 {
-                    var startDateToken = projectSchedule["StartDate"];
-                    if (startDateToken != null)
-                    {
-                        if (DateTime.TryParse(startDateToken.ToString(), out DateTime startTime))
-                        {
-                            startDate.Value = startTime.ToMinguoDate();
-                        }
-                    }
+                    // 註解：起日欄位改為純文字顯示，不再從 Session 還原起日
+                    //var startDateToken = projectSchedule["StartDate"];
+                    //if (startDateToken != null)
+                    //{
+                    //    if (DateTime.TryParse(startDateToken.ToString(), out DateTime startTime))
+                    //    {
+                    //        startDate.Value = startTime.ToMinguoDate();
+                    //    }
+                    //}
 
                     var endDateToken = projectSchedule["EndDate"];
                     if (endDateToken != null)

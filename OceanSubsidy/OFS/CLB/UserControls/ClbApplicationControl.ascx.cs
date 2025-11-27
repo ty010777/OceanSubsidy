@@ -855,11 +855,12 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
             {
                 if (lastProjectMain.StatusesName == "計畫書修正中")
                 {
+                   //  20251126理論上來說 社團僅有 補正補件 不會有計畫書修正 了。
                     // 決定審核 修正計畫書
-                    OFS_ClbApplicationHelper.UpdateProjectStatus(projectID, "決審核定", "計畫書審核中", "3");
-
-                    // 產生核定版 PDF
-                    MergePdfFiles(projectID, ProjectName,"核定版");
+                    // OFS_ClbApplicationHelper.UpdateProjectStatus(projectID, "決審核定", "計畫書審核中", "3");
+                    //
+                    // // 產生核定版 PDF
+                    // MergePdfFiles(projectID, ProjectName,"核定版");
 
                 }
                 //這是計畫變更
@@ -950,14 +951,15 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
     {
         // 計畫執行：計畫變更 --> 計畫變更審核中
         OFS_ClbApplicationHelper.UpdateProjectChangeStatus(projectID, 2);
-
+            
+        //20251126 不需要計畫變更最新版了 僅需要送審版和核定版
         // 計畫變更版本管理 - 檢查是否存在計畫變更最新版並建立版本備份
-        CreatePlanChangeVersionBackup(projectID, projectName);
+        // CreatePlanChangeVersionBackup(projectID, projectName);
 
         // 產生並合併送審版與核定版 PDF
-        MergePdfFiles(projectID, projectName, "計畫變更最新版");
+        // MergePdfFiles(projectID, projectName, "計畫變更最新版");
         
-        // 
+        
     }
 
     /// <summary>
@@ -1024,25 +1026,57 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
             // 從資料庫取得檔案路徑並檢查檔案是否存在
             foreach (string fileCode in fileCodesToMerge)
             {
-                var uploadedFile = OFS_ClbApplicationHelper.GetUploadedFile(projectId, fileCode);
-
-                if (uploadedFile != null)
+                // FILE_CLB4 是複數檔案，其他是單一檔案
+                if (fileCode == "FILE_CLB4")
                 {
-                    string fullPath = Page.Server.MapPath($"~/{uploadedFile.TemplatePath}");
+                    // 取得所有 FILE_CLB4 的檔案
+                    var uploadedFiles = OFS_ClbApplicationHelper.GetUploadedFilesByCode(projectId, fileCode);
 
-                    if (File.Exists(fullPath))
+                    if (uploadedFiles != null && uploadedFiles.Count > 0)
                     {
-                        pdfFilePaths.Add(fullPath);
-                        System.Diagnostics.Debug.WriteLine($"找到檔案 {fileCode}：{fullPath}");
+                        foreach (var file in uploadedFiles)
+                        {
+                            string fullPath = Page.Server.MapPath($"~/{file.TemplatePath}");
+
+                            if (File.Exists(fullPath))
+                            {
+                                pdfFilePaths.Add(fullPath);
+                                System.Diagnostics.Debug.WriteLine($"找到檔案 {fileCode}：{fullPath}");
+                            }
+                            else
+                            {
+                                System.Diagnostics.Debug.WriteLine($"檔案 {fileCode} 不存在：{fullPath}");
+                            }
+                        }
                     }
                     else
                     {
-                        System.Diagnostics.Debug.WriteLine($"檔案 {fileCode} 不存在：{fullPath}");
+                        System.Diagnostics.Debug.WriteLine($"資料庫中找不到檔案記錄，FileCode：{fileCode}");
                     }
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine($"資料庫中找不到檔案記錄，FileCode：{fileCode}");
+                    // 其他檔案只取第一筆
+                    var uploadedFile = OFS_ClbApplicationHelper.GetUploadedFile(projectId, fileCode);
+
+                    if (uploadedFile != null)
+                    {
+                        string fullPath = Page.Server.MapPath($"~/{uploadedFile.TemplatePath}");
+
+                        if (File.Exists(fullPath))
+                        {
+                            pdfFilePaths.Add(fullPath);
+                            System.Diagnostics.Debug.WriteLine($"找到檔案 {fileCode}：{fullPath}");
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine($"檔案 {fileCode} 不存在：{fullPath}");
+                        }
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"資料庫中找不到檔案記錄，FileCode：{fileCode}");
+                    }
                 }
             }
 
@@ -1053,8 +1087,9 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
                 return;
             }
 
-            // 建立合併後的檔案名稱和路徑
-            string mergedFileName = $"{projectId}_社團_{ProjectName}_{version}.pdf";
+            // 建立合併後的檔案名稱和路徑（加上時間戳記）
+            string timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+            string mergedFileName = $"{projectId}_社團_{ProjectName}_{version}_{timestamp}.pdf";
             string uploadFolderPath = Page.Server.MapPath($"~/UploadFiles/OFS/CLB/{projectId}");
             string mergedFilePath = Path.Combine(uploadFolderPath, mergedFileName);
 
@@ -1068,6 +1103,28 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
             byte[] mergedPdfBytes = PdfHelper.MergePdfs(pdfFilePaths, mergedFilePath);
 
             System.Diagnostics.Debug.WriteLine($"PDF 合併完成：{mergedFilePath}，合併了 {pdfFilePaths.Count} 個檔案");
+
+            // 儲存合併後的 PDF 記錄到資料庫（僅送審版和核定版）
+            if (version == "送審版" || version == "核定版")
+            {
+                string fileCodeForDb = GetMergedFileCodeForClb(version);
+                string relativeTemplatePath = $"UploadFiles/OFS/CLB/{projectId}/{mergedFileName}";
+
+                // 先刪除舊記錄（避免 FileCode 重複，確保資料乾淨）
+                OFS_ClbApplicationHelper.DeleteUploadFile(projectId, fileCodeForDb);
+                System.Diagnostics.Debug.WriteLine($"已刪除舊的合併 PDF 記錄：FileCode={fileCodeForDb}");
+
+                // 新增新記錄
+                var uploadFile = new OFS_CLB_UploadFile
+                {
+                    ProjectID = projectId,
+                    FileCode = fileCodeForDb,
+                    FileName = mergedFileName,
+                    TemplatePath = relativeTemplatePath
+                };
+                OFS_ClbApplicationHelper.InsertUploadFile(uploadFile);
+                System.Diagnostics.Debug.WriteLine($"合併 PDF 記錄已存入資料庫：FileCode={fileCodeForDb}, FileName={mergedFileName}");
+            }
         }
         catch (Exception ex)
         {
@@ -2282,6 +2339,24 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
                 }}
             ";
             Page.ClientScript.RegisterStartupScript(this.GetType(), "PopulateReceivedSubsidyData", script, true);
+        }
+    }
+
+    /// <summary>
+    /// 根據版本取得合併 PDF 的 FileCode（社團專用）
+    /// </summary>
+    /// <param name="version">版本名稱（送審版或核定版）</param>
+    /// <returns>對應的 FileCode</returns>
+    private string GetMergedFileCodeForClb(string version)
+    {
+        switch (version)
+        {
+            case "送審版":
+                return "MERGED_REVIEW_VERSION";
+            case "核定版":
+                return "MERGED_APPROVED_VERSION";
+            default:
+                return "MERGED_UNKNOWN";
         }
     }
 

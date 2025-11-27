@@ -577,13 +577,25 @@ public class DownloadApplicationChecklistFile : IHttpHandler
             // 根據專案類型決定檔案路徑
             if (projectId.Contains("SCI"))
             {
-                // 科專專案
-                var applicationMain = ApplicationChecklistHelper.GetProjectDataForReview(projectId);
-                projectName = applicationMain?.ProjectName ?? "";
+                // 科專專案 - 從資料庫查詢送審版記錄（FileCode = MERGED_REVIEW_VERSION）
+                var uploadFiles = OFS_SciUploadAttachmentsHelper.GetAttachmentsByFileCodeAndProject(projectId, "MERGED_REVIEW_VERSION");
 
-                fileName = $"{projectId}_科專_{projectName}_送審版.pdf";
-                string relativePath = $"~/UploadFiles/OFS/SCI/{projectId}/SciApplication/{fileName}";
-                filePath = context.Server.MapPath(relativePath);
+                // 檢查是否有找到記錄
+                if (uploadFiles == null || uploadFiles.Count == 0)
+                {
+                    context.Response.StatusCode = 404;
+                    context.Response.Write($"找不到送審版計畫書: ProjectID={projectId}");
+                    return;
+                }
+
+                // 取得第一筆記錄的 TemplatePath（最新的）
+                var uploadFile = uploadFiles[0];
+                string templatePath = uploadFile.TemplatePath;
+                fileName = uploadFile.FileName;
+
+                // 轉換為實體路徑：根目錄 + TemplatePath
+                string rootPath = context.Server.MapPath("~/");
+                filePath = Path.Combine(rootPath, templatePath.TrimStart('~', '/', '\\'));
             }
             else if (projectId.Contains("CUL"))
             {

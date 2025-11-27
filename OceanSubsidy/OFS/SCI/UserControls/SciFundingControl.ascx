@@ -252,7 +252,7 @@
                 <thead>
                 <tr>
                     <th width="350"><span class="text-pink view-mode">*</span>出差事由</th>
-                    <th>地區</th>
+                    <th><span class="text-pink view-mode">*</span>地區</th>
                     <th width="120">天數</th>
                     <th class="text-center">人次</th>
                     <th class="text-end">金額(元)</th>
@@ -583,7 +583,7 @@
         <ul class="list-unstyled lh-base">
             <li>1.請依海洋科技專案計畫會計科目編列與執行原則編列。</li>
             <li>2.經費撥付方式見契約第5條。</li>
-            <li>3.總補助款以不超過<span class="text-pink">500萬元</span>為原則。</li>
+            <li>3.總補助款以不超過<span class="text-pink" id="grantLimitText">500</span>萬元為原則。</li>
             <li>4.共同執行單位(企業)經費請編列至配合款。</li>
             <li>5.行政管理費不得超過計畫總經費10%。</li>
             <%-- <li>6.計畫執行期間若辦理計畫變更與經費調整，致各會計科目占總經費百分比超過經費編列規定時，經主管機關核可，則該科目得維持原經費額度，惟各科目補助比率不得超過該科目經費50%。</li> --%>
