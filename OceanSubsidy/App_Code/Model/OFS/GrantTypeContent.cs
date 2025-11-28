@@ -15,5 +15,6 @@ namespace GS.OCA_OceanSubsidy.Model.OFS
         public string Remark { get; set; }
         public int Status { get; set; }
         public string StatusReason { get; set; }
+        public int? Identifier { get; set; }
     }
 }

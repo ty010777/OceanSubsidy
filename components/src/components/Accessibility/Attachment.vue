@@ -152,11 +152,13 @@
             Submit: submit ? "true" : "false"
         };
 
-        api.accessibility("saveAttachment", data).subscribe(() => {
-            if (submit) {
-                emit("next");
-            } else {
-                load();
+        api.accessibility("saveAttachment", data).subscribe((res) => {
+            if (res) {
+                if (submit) {
+                    emit("next", load);
+                } else {
+                    load();
+                }
             }
         });
     }

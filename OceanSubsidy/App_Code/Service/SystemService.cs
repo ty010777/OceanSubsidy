@@ -265,6 +265,19 @@ public class SystemService : BaseService
         };
     }
 
+    public object getProjectTodoTask(JObject param, HttpContext context)
+    {
+        var id = param["ID"].ToString();
+        var dt = OFS_TaskQueueHelper.GetProjectTodoTasks(id);
+
+        if (dt.Rows.Count > 0)
+        {
+            return new { TaskName = dt.Rows[0]["TaskName"].ToString() };
+        }
+
+        return new {};
+    }
+
     public object getPublishedNewsList(JObject param, HttpContext context)
     {
         return new
@@ -407,6 +420,11 @@ public class SystemService : BaseService
         }
 
         var data = param["GrantType"].ToObject<GrantType>();
+
+        if (data.ApplyStartDate.HasValue && data.ApplyEndDate.HasValue && OFSGrantTypeHelper.count(data.TypeID, data.TypeCode, data.ApplyStartDate.Value, data.ApplyEndDate.Value) > 0)
+        {
+            return new { error = "同一補助類別的申請期間不可重疊" };
+        }
 
         OFSGrantTypeHelper.update(data);
 
@@ -558,7 +576,7 @@ public class SystemService : BaseService
             }
         }
 
-        return new {};
+        return new { ID = news.ID };
     }
 
     public object saveReviewCommittee(JObject param, HttpContext context)
@@ -653,7 +671,24 @@ public class SystemService : BaseService
                 break;
         }
 
-        var identifier = ConfigurationManager.AppSettings["EGovIdentifier"] + "-" + id.ToString().PadLeft(6, '0');
+        int suffix = 0;
+
+        if (content.Identifier.HasValue)
+        {
+            suffix = content.Identifier.Value;
+        }
+        else
+        {
+            var identifierData = new GrantTypeContentIdentifier { TypeID = id };
+
+            OFSGrantTypeContentIdentifierHelper.insert(identifierData);
+
+            OFSGrantTypeContentHelper.setIdentifier(id, identifierData.ID);
+
+            suffix = identifierData.ID;
+        }
+
+        var identifier = ConfigurationManager.AppSettings["EGovIdentifier"] + "-" + suffix.ToString().PadLeft(6, '0');
 
         var payload = JsonConvert.SerializeObject(new List<object>() {
             new
@@ -718,6 +753,11 @@ public class SystemService : BaseService
                         Content = payload,
                         Result = result
                     });
+
+                    if (content.Status == 2)
+                    {
+                        OFSGrantTypeContentHelper.cleanIdentifier(id); //下架清除
+                    }
 
                     res = (JObject) ((JArray) res["ResultData"])[0];
 

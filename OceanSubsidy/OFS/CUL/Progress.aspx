@@ -15,14 +15,14 @@
     <div>
         <project-title :id="id" type="culture"></project-title>
         <project-progress :id="id" :step="4" type="culture"></project-progress>
-        <culture-progress :id="id"></culture-progress>
+        <culture-progress :id="id" v-on:next="next"></culture-progress>
     </div>
     <script>
         setupVueApp({
             setup() {
                 const id = "<%= Request.QueryString["ID"] %>";
 
-                const next = () => window.location.href = "../ApplicationChecklist.aspx";
+                const next = () => Swal.fire({ title: "提送成功", icon: "success" });
 
                 return { id, next };
             }

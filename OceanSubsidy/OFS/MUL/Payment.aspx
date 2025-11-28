@@ -47,7 +47,7 @@
                 const stage = ref(parseInt("<%= Request.QueryString["Stage"] %>") || 1);
                 const store = useProgressStore();
 
-                const next = () => {};
+                const next = (callback) => Swal.fire({ title: "提送成功", icon: "success" }).then(callback);
 
                 onMounted(() => {
                     api.multiple("getPaymentPhaseSettings", { TypeCode: "MUL" }).subscribe((res) => settings.value = res);

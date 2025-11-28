@@ -73,24 +73,43 @@ public class DownloadTemplateEDC : IHttpHandler, IRequiresSessionState
                 placeholder.Add("{{A9}}", $"{startShort} ~ {endShort}");
                 placeholder.Add("{{A11}}", jobj["Project"]["Summary"]?.ToString() ?? "");
                 placeholder.Add("{{A12}}", jobj["Project"]["Quantified"]?.ToString() ?? "");
-                // 款項部份
+
+                // 申請本會分攤金額
                 int applyAmount = jobj["Project"]["ApplyAmount"]?.ToObject<int>() ?? 0;
+                placeholder.Add("{{A13.1}}", (applyAmount / 10000).ToString());
+                placeholder.Add("{{A13.2}}", (applyAmount % 10000).ToString());
+
+                // 單位自籌款
                 int selfAmount = jobj["Project"]["SelfAmount"]?.ToObject<int>() ?? 0;
+                placeholder.Add("{{A14.1}}", (selfAmount / 10000).ToString());
+                placeholder.Add("{{A14.2}}", (selfAmount % 10000).ToString());
+
+                // 其他政府機關補助款
                 int otherGovAmount = jobj["Project"]["OtherGovAmount"]?.ToObject<int>() ?? 0;
+                placeholder.Add("{{A15.1}}", (otherGovAmount / 10000).ToString());
+                placeholder.Add("{{A15.2}}", (otherGovAmount % 10000).ToString());
+
+                // 其他單位補助款
                 int otherUnitAmount = jobj["Project"]["OtherUnitAmount"]?.ToObject<int>() ?? 0;
+                placeholder.Add("{{A16.1}}", (otherUnitAmount / 10000).ToString());
+                placeholder.Add("{{A16.2}}", (otherUnitAmount % 10000).ToString());
+
+                // 計畫總經費
                 int total = applyAmount + selfAmount + otherGovAmount + otherUnitAmount;
-                placeholder.Add("{{A13}}", applyAmount.ToString());
-                placeholder.Add("{{A14}}", selfAmount.ToString());
-                placeholder.Add("{{A15}}", otherGovAmount.ToString());
-                placeholder.Add("{{A18}}", otherUnitAmount.ToString());
-                placeholder.Add("{{A16}}", total.ToString());
-                // ReceivedSubsidies
-                var ReceivedSubsidies = new List<string>();
+                placeholder.Add("{{A17.1}}", (total / 10000).ToString());
+                placeholder.Add("{{A17.2}}", (total % 10000).ToString());
+
+                // 近兩年補助
+                string[] A18_Keys = { "##A18.1##", "##A18.2##" };
+                var ReceivedSubsidies = new List<Dictionary<string, string>>();
                 foreach (var obj in jobj["ReceivedSubsidies"] as JArray)
                 {
-                    ReceivedSubsidies.Add("計畫名稱：" + (obj["Name"]?.ToString() ?? ""));
-                    ReceivedSubsidies.Add("海委會補助經費：" + obj["Amount"]?.ToString() ?? "");
+                    var dict = new Dictionary<string, string>();
+                    dict[A18_Keys[0]] = obj["Name"]?.ToString() ?? "";
+                    dict[A18_Keys[1]] = obj["Amount"]?.ToString() ?? "";
+                    ReceivedSubsidies.Add(dict);
                 }
+
                 // 年月日
                 var now = DateTime.Now;
                 placeholder.Add("{{Year}}", (now.Year - 1911).ToString());
@@ -105,7 +124,7 @@ public class DownloadTemplateEDC : IHttpHandler, IRequiresSessionState
                 {
                     var helper = new OpenXmlHelper(fs);
                     helper.GenerateWord(placeholder, repeatData);
-                    helper.ReplacePlaceholderWithLines("{{A17}}", ReceivedSubsidies);
+                    helper.InsertSubTableRows(A18_Keys, ReceivedSubsidies);
                     helper.CloseAsSave();
                 }
             }

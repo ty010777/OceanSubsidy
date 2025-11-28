@@ -53,7 +53,7 @@
 
                 const change = (step) => current.value = step;
 
-                const next = () => {};
+                const next = (callback) => Swal.fire({ title: "提送成功", icon: "success" }).then(callback);
 
                 onMounted(() => {
                     api.multiple("findApplication", { ID: id }).subscribe((result) => store.init("multiple", result.Project));
