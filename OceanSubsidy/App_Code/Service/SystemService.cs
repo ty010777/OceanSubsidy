@@ -265,6 +265,19 @@ public class SystemService : BaseService
         };
     }
 
+    public object getProjectTodoTask(JObject param, HttpContext context)
+    {
+        var id = param["ID"].ToString();
+        var dt = OFS_TaskQueueHelper.GetProjectTodoTasks(id);
+
+        if (dt.Rows.Count > 0)
+        {
+            return new { TaskName = dt.Rows[0]["TaskName"].ToString() };
+        }
+
+        return new {};
+    }
+
     public object getPublishedNewsList(JObject param, HttpContext context)
     {
         return new
