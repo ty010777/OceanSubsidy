@@ -342,6 +342,7 @@ public class MultipleService : BaseService
                 apply.Status = 3; //審核通過
 
                 OFS_MulProjectHelper.setProjectChanged(id, false);
+                OFS_MulProjectHelper.updateLastOperation(data.ProjectID, "已完成計畫變更");
 
                 NotificationHelper.G4("多元", data.ProjectName, "計畫變更申請", data.UserAccount);
 
@@ -400,6 +401,8 @@ public class MultipleService : BaseService
             NotificationHelper.G6("多元", data.ProjectName, setting.PhaseName, payment.CurrentActualPaidAmount, payment.ReviewerComment, data.UserAccount);
 
             OFS_TaskQueueHelper.UpdateTaskStatus(data.ProjectID, $"Payment{payment.Stage}", 1, 1);
+
+            OFS_MulProjectHelper.updateLastOperation(data.ProjectID, $"已完成{setting.PhaseName}");
         }
         else
         {
@@ -446,6 +449,8 @@ public class MultipleService : BaseService
         {
             OFS_TaskQueueHelper.UpdateTaskStatus(data.ProjectID, "Report", 1, 1);
             OFS_TaskQueueHelper.UpdateTaskStatus(data.ProjectID, "Payment3", 1, 0);
+
+            OFS_MulProjectHelper.updateLastOperation(data.ProjectID, $"已完成{eventName}");
 
             NotificationHelper.G5("多元", data.ProjectName, eventName, data.UserAccount);
 

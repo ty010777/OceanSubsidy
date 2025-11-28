@@ -408,6 +408,22 @@ public class OFS_AccProjectHelper
         db.ExecuteNonQuery();
     }
 
+    public static void updateLastOperation(string projectID, string lastOperation)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            UPDATE [OFS_ACC_Project]
+               SET [LastOperation] = @LastOperation
+             WHERE [ProjectID] = @ProjectID
+        ";
+
+        db.Parameters.Add("@ProjectID", projectID);
+        db.Parameters.Add("@LastOperation", lastOperation);
+
+        db.ExecuteNonQuery();
+    }
+
     public static void updateOrganizer(int id, int organizer)
     {
         DbHelper db = new DbHelper();

@@ -866,7 +866,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                 //2.1 文化 初審可以直接進入決審，會寄信給使用者
                 //3.技術審(3)→決審核定(4) 會寄信給 使用者 告知結果
                 //4.決審核定(4)→執行階段 寄信 告知核定金額
-                
+
                 if (reviewType == "1" || reviewType == "2")
                 {
                     SendReviewNotifications(allSuccessIds, reviewType,reviewerList);
@@ -1558,7 +1558,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             if (projectId.Contains("SCI"))
             {
                 reviewStage = reviewType =="2"? "2" : "3";
-               
+
                 planData = ReviewCheckListHelper.GetSciPlanDetail(projectId);
                 reviewData = ReviewCheckListHelper.GetSciReviewComments(projectId, reviewStage);
             }
@@ -1737,6 +1737,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                         if (toStatus == "計畫執行")
                         {
                             ReviewCheckListHelper.CreateTaskQueueTemplate(projectId);
+                            OFS_CulProjectHelper.updateLastOperation(projectId, "計畫已核定");
                         }
 
                         RecordReviewHistory(projectId, fromStatus, toStatus, actionType, userName);
@@ -1749,6 +1750,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                         if (toStatus == "計畫執行")
                         {
                             ReviewCheckListHelper.CreateTaskQueueTemplate(projectId);
+                            OFS_EdcProjectHelper.updateLastOperation(projectId, "計畫已核定");
                         }
 
                         RecordReviewHistory(projectId, fromStatus, toStatus, actionType, userName);
@@ -1771,6 +1773,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                         if (toStatus == "計畫執行")
                         {
                             ReviewCheckListHelper.CreateTaskQueueTemplate(projectId);
+                            OFS_MulProjectHelper.updateLastOperation(projectId, "計畫已核定");
                         }
 
                         RecordReviewHistory(projectId, fromStatus, toStatus, actionType, userName);
@@ -1783,6 +1786,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                         if (toStatus == "計畫執行")
                         {
                             ReviewCheckListHelper.CreateTaskQueueTemplate(projectId);
+                            OFS_LitProjectHelper.updateLastOperation(projectId, "計畫已核定");
                         }
 
                         RecordReviewHistory(projectId, fromStatus, toStatus, actionType, userName);
@@ -1795,6 +1799,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                         if (toStatus == "計畫執行")
                         {
                             ReviewCheckListHelper.CreateTaskQueueTemplate(projectId);
+                            OFS_AccProjectHelper.updateLastOperation(projectId, "計畫已核定");
                         }
 
                         RecordReviewHistory(projectId, fromStatus, toStatus, actionType, userName);
@@ -2789,7 +2794,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             //科專、文化 --> 領域審核、初審 寄信
             var sciProjects = projectIds.Where(p => p.Contains("SCI")).ToList();
             var culProjects = projectIds.Where(p => p.Contains("CUL")).ToList();
-          
+
             // 處理科專審查通知
             if (sciProjects.Count > 0)
             {
@@ -2802,7 +2807,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                 SendCulReviewNotifications(culProjects, reviewType);
             }
 
-         
+
 
         }
         catch (Exception ex)
@@ -3005,7 +3010,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
         }
     }
 
-  
+
 
     /// <summary>
     /// 發送進入決審通知（SCI 和 CUL）
@@ -3681,7 +3686,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                     if (!string.IsNullOrEmpty(applicantEmail) && !string.IsNullOrEmpty(projectName) && year > 0 && approvedAmount > 0)
                     {
                         NotificationHelper.E5(year, projectName, approvedAmount.ToString("N0"), applicantEmail);
-                        
+
                         if(typeCode == "LIT" || typeCode == "MUL"){
                             NotificationHelper.F12(typeName, projectName, "第一期請款", applicantEmail);
                         }

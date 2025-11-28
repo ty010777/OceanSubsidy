@@ -342,6 +342,7 @@ public class AccessibilityService : BaseService
                 apply.Status = 3; //審核通過
 
                 OFS_AccProjectHelper.setProjectChanged(id, false);
+                OFS_AccProjectHelper.updateLastOperation(data.ProjectID, "已完成計畫變更");
 
                 NotificationHelper.G4("無障礙", data.ProjectName, "計畫變更申請", data.UserAccount);
 
@@ -400,6 +401,8 @@ public class AccessibilityService : BaseService
             NotificationHelper.G6("無障礙", data.ProjectName, setting.PhaseName, payment.CurrentActualPaidAmount, payment.ReviewerComment, data.UserAccount);
 
             OFS_TaskQueueHelper.UpdateTaskStatus(data.ProjectID, $"Payment{payment.Stage}", 1, 1);
+
+            OFS_AccProjectHelper.updateLastOperation(data.ProjectID, $"已完成{setting.PhaseName}");
         }
         else
         {
@@ -446,6 +449,8 @@ public class AccessibilityService : BaseService
         {
             OFS_TaskQueueHelper.UpdateTaskStatus(data.ProjectID, stage == 1 ? "MidReport" : "FinalReport", 1, 1);
             OFS_TaskQueueHelper.UpdateTaskStatus(data.ProjectID, $"Payment{stage}", 1, 0);
+
+            OFS_AccProjectHelper.updateLastOperation(data.ProjectID, $"已完成{eventName}");
 
             NotificationHelper.G5("無障礙", data.ProjectName, eventName, data.UserAccount);
 

@@ -464,6 +464,7 @@ public class CultureService : BaseService
                 apply.Status = 3; //審核通過
 
                 OFS_CulProjectHelper.setProjectChanged(id, false);
+                OFS_CulProjectHelper.updateLastOperation(data.ProjectID, "已完成計畫變更");
 
                 NotificationHelper.G4("文化", data.ProjectName, "計畫變更申請", data.UserAccount);
 
@@ -522,6 +523,8 @@ public class CultureService : BaseService
             NotificationHelper.G6("文化", data.ProjectName, setting.PhaseName, payment.CurrentActualPaidAmount, payment.ReviewerComment, data.UserAccount);
 
             OFS_TaskQueueHelper.UpdateTaskStatus(data.ProjectID, $"Payment{payment.Stage}", 1, 1);
+
+            OFS_CulProjectHelper.updateLastOperation(data.ProjectID, $"已完成{setting.PhaseName}");
         }
         else
         {
@@ -568,6 +571,8 @@ public class CultureService : BaseService
         {
             OFS_TaskQueueHelper.UpdateTaskStatus(data.ProjectID, stage == 1 ? "MidReport" : "FinalReport", 1, 1);
             OFS_TaskQueueHelper.UpdateTaskStatus(data.ProjectID, $"Payment{stage}", 1, 0);
+
+            OFS_CulProjectHelper.updateLastOperation(data.ProjectID, $"已完成{eventName}");
 
             NotificationHelper.G5("文化", data.ProjectName, eventName, data.UserAccount);
 
@@ -870,9 +875,14 @@ public class CultureService : BaseService
                 OFS_CulGoalScheduleHelper.updateStatus(log.ScheduleID, log.Status);
             }
 
-            OFS_TaskQueueHelper.UpdateTaskStatus(data.ProjectID, "MonthlyReport", 1, 1);
+            if (progress.Status == 1)
+            {
+                OFS_TaskQueueHelper.UpdateTaskStatus(data.ProjectID, "MonthlyReport", 1, 1);
 
-            NotificationHelper.G1("文化", data.ProjectName, $"{progress.Month}月進度回報", data.Organizer);
+                OFS_CulProjectHelper.updateLastOperation(data.ProjectID, $"已完成{progress.Month}月進度回報");
+
+                NotificationHelper.G1("文化", data.ProjectName, $"{progress.Month}月進度回報", data.Organizer);
+            }
         }
 
         return new {};
