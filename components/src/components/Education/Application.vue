@@ -521,6 +521,8 @@
                     form.value = Object.assign({ OrgCategory: null, FormStep: 1, Status: 1 }, res);
                     contacts.value = [{ Role: "負責人" }, { Role: "聯絡人" }];
 
+                    addPlan();
+
                     useProgressStore().init("education", form.value);
                 });
             }

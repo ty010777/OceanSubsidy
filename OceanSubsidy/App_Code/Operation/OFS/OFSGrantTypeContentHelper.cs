@@ -5,6 +5,21 @@ using System.Data;
 
 public class OFSGrantTypeContentHelper
 {
+    public static void cleanIdentifier(int typeId)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            UPDATE [OFS_GrantTypeContent]
+               SET [Identifier] = NULL
+             WHERE [TypeID] = @TypeID
+        ";
+
+        db.Parameters.Add("@TypeID", typeId);
+
+        db.ExecuteNonQuery();
+    }
+
     public static GrantTypeContent get(int id)
     {
         DbHelper db = new DbHelper();
@@ -23,6 +38,7 @@ public class OFSGrantTypeContentHelper
                   ,[Remark]
                   ,[Status]
                   ,[StatusReason]
+                  ,[Identifier]
               FROM [OFS_GrantTypeContent]
              WHERE [TypeID] = @TypeID
         ";
@@ -45,6 +61,22 @@ public class OFSGrantTypeContentHelper
 
         db.Parameters.Add("@TypeID", model.TypeID);
         db.Parameters.Add("@CreateUser", CurrentUser.ID);
+
+        db.ExecuteNonQuery();
+    }
+
+    public static void setIdentifier(int typeId, int identifier)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            UPDATE [OFS_GrantTypeContent]
+               SET [Identifier] = @Identifier
+             WHERE [TypeID] = @TypeID
+        ";
+
+        db.Parameters.Add("@TypeID", typeId);
+        db.Parameters.Add("@Identifier", identifier);
 
         db.ExecuteNonQuery();
     }
@@ -106,7 +138,8 @@ public class OFSGrantTypeContentHelper
             WorkingDays = row.Field<int?>("WorkingDays"),
             Remark = row.Field<string>("Remark"),
             Status = row.Field<int>("Status"),
-            StatusReason = row.Field<string>("StatusReason")
+            StatusReason = row.Field<string>("StatusReason"),
+            Identifier = row.Field<int?>("Identifier")
         };
     }
 }
