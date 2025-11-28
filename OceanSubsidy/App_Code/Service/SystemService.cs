@@ -658,7 +658,24 @@ public class SystemService : BaseService
                 break;
         }
 
-        var identifier = ConfigurationManager.AppSettings["EGovIdentifier"] + "-" + id.ToString().PadLeft(6, '0');
+        int suffix = 0;
+
+        if (content.Identifier.HasValue)
+        {
+            suffix = content.Identifier.Value;
+        }
+        else
+        {
+            var identifierData = new GrantTypeContentIdentifier { TypeID = id };
+
+            OFSGrantTypeContentIdentifierHelper.insert(identifierData);
+
+            OFSGrantTypeContentHelper.setIdentifier(id, identifierData.ID);
+
+            suffix = identifierData.ID;
+        }
+
+        var identifier = ConfigurationManager.AppSettings["EGovIdentifier"] + "-" + suffix.ToString().PadLeft(6, '0');
 
         var payload = JsonConvert.SerializeObject(new List<object>() {
             new
@@ -723,6 +740,11 @@ public class SystemService : BaseService
                         Content = payload,
                         Result = result
                     });
+
+                    if (content.Status == 2)
+                    {
+                        OFSGrantTypeContentHelper.cleanIdentifier(id); //下架清除
+                    }
 
                     res = (JObject) ((JArray) res["ResultData"])[0];
 
