@@ -94,6 +94,18 @@ public class DownloadTemplateEDC : IHttpHandler, IRequiresSessionState
                 placeholder.Add("{{A16.1}}", (otherUnitAmount / 10000).ToString());
                 placeholder.Add("{{A16.2}}", (otherUnitAmount % 10000).ToString());
 
+                // 其他單位補助
+                string[] A19_Keys = { "##A19.1##", "##A19.2##" };
+                var otherSubsidies = new List<Dictionary<string, string>>();
+                foreach (var obj in jobj["OtherSubsidies"] as JArray)
+                {
+                    if (obj["Deleted"]?.ToObject<bool>() == true) continue;
+                    var dict = new Dictionary<string, string>();
+                    dict[A19_Keys[0]] = obj["Unit"]?.ToString() ?? "";
+                    dict[A19_Keys[1]] = obj["Amount"]?.ToString() ?? "";
+                    otherSubsidies.Add(dict);
+                }
+
                 // 計畫總經費
                 int total = applyAmount + selfAmount + otherGovAmount + otherUnitAmount;
                 placeholder.Add("{{A17.1}}", (total / 10000).ToString());
@@ -104,6 +116,7 @@ public class DownloadTemplateEDC : IHttpHandler, IRequiresSessionState
                 var ReceivedSubsidies = new List<Dictionary<string, string>>();
                 foreach (var obj in jobj["ReceivedSubsidies"] as JArray)
                 {
+                    if (obj["Deleted"]?.ToObject<bool>() == true) continue;
                     var dict = new Dictionary<string, string>();
                     dict[A18_Keys[0]] = obj["Name"]?.ToString() ?? "";
                     dict[A18_Keys[1]] = obj["Amount"]?.ToString() ?? "";
@@ -124,6 +137,7 @@ public class DownloadTemplateEDC : IHttpHandler, IRequiresSessionState
                 {
                     var helper = new OpenXmlHelper(fs);
                     helper.GenerateWord(placeholder, repeatData);
+                    helper.InsertSubTableRows(A19_Keys, otherSubsidies);
                     helper.InsertSubTableRows(A18_Keys, ReceivedSubsidies);
                     helper.CloseAsSave();
                 }
