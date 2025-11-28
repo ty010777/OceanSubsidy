@@ -1578,7 +1578,7 @@ SELECT TOP (1000) [ProjectID]
     public static List<ProgressData> GetSciProgressData(List<string> projectIds , string status)
     {
         if (projectIds.Count == 0) return new List<ProgressData>();
-        status = status == "審查" ? "2" : "3";
+        status = status == "實質審查" ? "2" : "3";
         // 建立 IN 子句的參數
         var projectIdParams = projectIds.Select((id, index) => $"@projectId{index}").ToList();
         string inClause = "(" + string.Join(",", projectIdParams) + ")";
@@ -1662,7 +1662,7 @@ SELECT TOP (1000) [ProjectID]
                 m.ProjectID,
                 zg.Descname AS Field_Descname
             FROM OFS_SCI_Application_Main m
-            LEFT JOIN Sys_ZgsCode zg ON m.Field = zg.Code
+            LEFT JOIN Sys_ZgsCode zg ON m.Topic = zg.Code
             WHERE m.ProjectID IN {inClause}
         ";
 
@@ -2464,9 +2464,10 @@ SELECT TOP (1000) [ProjectID]
     /// <summary>
     /// 處理文化批次審核後的特殊流程
     /// </summary>
-    public static void ProcessCulPostApproval(List<string> projectIds, string reviewStage, List<ReviewerInfo> reviewerList = null)
+    public static void ProcessCulPostApproval(List<string> projectIds, string toStatus, List<ReviewerInfo> reviewerList = null)
     {
         DbHelper db = new DbHelper();
+        string reviewStage = toStatus == "初審" ? "2" : "3";
 
         foreach (string projectId in projectIds)
         {

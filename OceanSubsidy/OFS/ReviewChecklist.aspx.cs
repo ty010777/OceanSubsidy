@@ -2301,7 +2301,8 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                 // 前端顯示進度用
                 ReviewProgressDisplay = progress?.ReviewProgressDisplay,
                 ReplyProgressDisplay = progress?.ReplyProgressDisplay,
-                Field_Descname = reviewGroup?.Field_Descname // 審查組別
+                Field_Descname = reviewGroup?.Field_Descname // 計畫主題	
+
             };
 
 

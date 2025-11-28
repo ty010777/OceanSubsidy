@@ -431,7 +431,7 @@
         				  </th>
         				  <th width="150">
         					  <div class="hstack align-items-center justify-content-center">
-        						  <span>審查組別</span>
+        						  <span>計畫主題/審查組別</span>
         					  </div>
         				  </th>
         				  <th>
@@ -623,7 +623,7 @@
                              </th>
                              <th width="150">
                                  <div class="hstack align-items-center justify-content-center">
-                                     <span>審查組別</span>
+                                     <span>計畫主題/審查組別</span>
                                  </div>
                              </th>
                              <th>
