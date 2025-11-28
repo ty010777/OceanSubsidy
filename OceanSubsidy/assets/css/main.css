@@ -163,6 +163,12 @@ h6 {
 .text-neutral-600 {
   color: #858585 !important; }
 
+.text-homepage-primary {
+  color: #032C61 !important; }
+
+.text-homepage-yellow {
+  color: #FFC51B !important; }
+
 .bg-light-green {
   background-color: #D8E7EB !important; }
 
@@ -1020,6 +1026,10 @@ h6 {
     color: #FF7043 !important; }
   .text-sm-neutral-600 {
     color: #858585 !important; }
+  .text-sm-homepage-primary {
+    color: #032C61 !important; }
+  .text-sm-homepage-yellow {
+    color: #FFC51B !important; }
   .bg-sm-light-green {
     background-color: #D8E7EB !important; }
   .bg-sm-light-blue {
@@ -1619,6 +1629,10 @@ h6 {
     color: #FF7043 !important; }
   .text-md-neutral-600 {
     color: #858585 !important; }
+  .text-md-homepage-primary {
+    color: #032C61 !important; }
+  .text-md-homepage-yellow {
+    color: #FFC51B !important; }
   .bg-md-light-green {
     background-color: #D8E7EB !important; }
   .bg-md-light-blue {
@@ -2218,6 +2232,10 @@ h6 {
     color: #FF7043 !important; }
   .text-lg-neutral-600 {
     color: #858585 !important; }
+  .text-lg-homepage-primary {
+    color: #032C61 !important; }
+  .text-lg-homepage-yellow {
+    color: #FFC51B !important; }
   .bg-lg-light-green {
     background-color: #D8E7EB !important; }
   .bg-lg-light-blue {
@@ -2817,6 +2835,10 @@ h6 {
     color: #FF7043 !important; }
   .text-xl-neutral-600 {
     color: #858585 !important; }
+  .text-xl-homepage-primary {
+    color: #032C61 !important; }
+  .text-xl-homepage-yellow {
+    color: #FFC51B !important; }
   .bg-xl-light-green {
     background-color: #D8E7EB !important; }
   .bg-xl-light-blue {
@@ -3416,6 +3438,10 @@ h6 {
     color: #FF7043 !important; }
   .text-xxl-neutral-600 {
     color: #858585 !important; }
+  .text-xxl-homepage-primary {
+    color: #032C61 !important; }
+  .text-xxl-homepage-yellow {
+    color: #FFC51B !important; }
   .bg-xxl-light-green {
     background-color: #D8E7EB !important; }
   .bg-xxl-light-blue {
@@ -4015,6 +4041,10 @@ h6 {
     color: #FF7043 !important; }
   .text-xxxl-neutral-600 {
     color: #858585 !important; }
+  .text-xxxl-homepage-primary {
+    color: #032C61 !important; }
+  .text-xxxl-homepage-yellow {
+    color: #FFC51B !important; }
   .bg-xxxl-light-green {
     background-color: #D8E7EB !important; }
   .bg-xxxl-light-blue {

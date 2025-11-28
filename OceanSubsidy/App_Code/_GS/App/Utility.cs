@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Text;
 using GS.Extension;
+using log4net;
 using Org.BouncyCastle.Crypto.Digests;
 
 namespace GS.App
@@ -213,6 +214,8 @@ namespace GS.App
         /// </summary>
         public class Mail
         {
+            private static readonly ILog log = LogManager.GetLogger(typeof(Mail));
+
             /// <summary>
             /// 寄發EMAIL
             /// </summary>
@@ -227,61 +230,84 @@ namespace GS.App
                 ErrorMsg = "";
                 string MailSender = Env.MailServerLoginUser;
 
-                if (Env.MailServerPort == "465" || Env.MailServerPort == "25")
+                log.Info($"[寄信開始] 收件者: {MailReceiverTo}, 副本: {MailReceiverCc}, 主旨: {Subject}");
+
+                try
                 {
-                    //使用 CDO.Message
-                    CdoMail CdoMail1 = new CdoMail();
+                    if (Env.MailServerPort == "465" || Env.MailServerPort == "25")
+                    {
+                        //使用 CDO.Message
+                        CdoMail CdoMail1 = new CdoMail();
 
-                    // ------ 寄件者 ------
-                    CdoMail1.Set_FROM(MailSender);
+                        // ------ 寄件者 ------
+                        CdoMail1.Set_FROM(MailSender);
 
-                    //------ 收件者/副本/密件副本 ------
-                    CdoMail1.Add_TO(MailReceiverTo);
-                    CdoMail1.Add_CC(MailReceiverCc);
-                    CdoMail1.Add_BCC(Env.MailReceiverBcc);
+                        //------ 收件者/副本/密件副本 ------
+                        CdoMail1.Add_TO(MailReceiverTo);
+                        CdoMail1.Add_CC(MailReceiverCc);
+                        CdoMail1.Add_BCC(Env.MailReceiverBcc);
 
-                    //------ 主旨 ------ 主旨文字, 主旨內容所用的編碼方式
-                    CdoMail1.Set_SUBJECT(ref Subject);
+                        //------ 主旨 ------ 主旨文字, 主旨內容所用的編碼方式
+                        CdoMail1.Set_SUBJECT(ref Subject);
 
-                    //------ 內文 ------ 內文文字, 內文內容所用的編碼方式, 內文是否為HTML格式
-                    CdoMail1.Set_BODY(ref Body, "utf-8", true);
+                        //------ 內文 ------ 內文文字, 內文內容所用的編碼方式, 內文是否為HTML格式
+                        CdoMail1.Set_BODY(ref Body, "utf-8", true);
 
-                    //------ 附件 ------ 
+                        //------ 附件 ------
 
-                    //------ 寄送 ------ MailServer的IP或名稱, MailServer的port, 登入MailServer的ID, 登入MailServer的Password
-                    CdoMail1.SecurityProtocol = Env.SecurityProtocol;
-                    CdoMail1.Send(Env.MailServerHost, Env.MailServerPort, Env.MailServerLoginUser, Env.MailServerLoginPwd);
+                        //------ 寄送 ------ MailServer的IP或名稱, MailServer的port, 登入MailServer的ID, 登入MailServer的Password
+                        CdoMail1.SecurityProtocol = Env.SecurityProtocol;
+                        CdoMail1.Send(Env.MailServerHost, Env.MailServerPort, Env.MailServerLoginUser, Env.MailServerLoginPwd);
+
+                        log.Info($"[寄信成功] 收件者: {MailReceiverTo}, 主旨: {Subject}, 方式: CDO.Message");
+                    }
+                    else
+                    {
+                        //使用 MailMessage
+                        EzMailSender MailSender1 = new EzMailSender();
+
+                        // ------ 寄件者 ------
+                        MailSender1.Set_FROM(MailSender);
+
+                        //------ 收件者/副本/密件副本 ------
+                        MailSender1.Add_TO(MailReceiverTo);
+                        MailSender1.Add_CC(MailReceiverCc);
+                        MailSender1.Add_BCC(Env.MailReceiverBcc);
+
+                        //------ 主旨 ------ 主旨文字, 主旨內容所用的編碼方式
+                        MailSender1.Set_SUBJECT(ref Subject, Env.EnumEncoding.UTF8);
+
+                        //------ 內文 ------ 內文文字, 內文內容所用的編碼方式, 內文是否為HTML格式
+                        MailSender1.Set_BODY(ref Body, Env.EnumEncoding.UTF8, true);
+
+                        //------ 附件 ------ 檔案路徑及名稱, 郵件附件的配置類型(內嵌:Inline或附加:Attachment)
+                        //MailSender1.Add_Attachments("C:\\TEMP\\test.zip", EasyMailSender.EnumDispositionType.Attachment);
+
+                        //------ 寄送 ------ MailServer的IP或名稱, MailServer的port, 登入MailServer的ID, 登入MailServer的Password
+                        int port = 25;
+                        if (!int.TryParse(Env.MailServerPort, out port)) { port = 25; }
+                        MailSender1.TLSorSSL = Env.SecurityProtocol;
+                        string sendResult = MailSender1.Send(Env.MailServerHost, port, Env.MailServerLoginUser, Env.MailServerLoginPwd);
+
+                        if (!string.IsNullOrEmpty(sendResult))
+                        {
+                            ErrorMsg = sendResult;
+                            log.Warn($"[寄信警告] 收件者: {MailReceiverTo}, 主旨: {Subject}, 回傳訊息: {sendResult}");
+                        }
+                        else
+                        {
+                            log.Info($"[寄信成功] 收件者: {MailReceiverTo}, 主旨: {Subject}, 方式: MailMessage");
+                        }
+                    }
+
+                    return true;
                 }
-                else
+                catch (Exception ex)
                 {
-                    //使用 MailMessage
-                    EzMailSender MailSender1 = new EzMailSender();
-
-                    // ------ 寄件者 ------
-                    MailSender1.Set_FROM(MailSender);
-
-                    //------ 收件者/副本/密件副本 ------
-                    MailSender1.Add_TO(MailReceiverTo);
-                    MailSender1.Add_CC(MailReceiverCc);
-                    MailSender1.Add_BCC(Env.MailReceiverBcc);
-
-                    //------ 主旨 ------ 主旨文字, 主旨內容所用的編碼方式
-                    MailSender1.Set_SUBJECT(ref Subject, Env.EnumEncoding.UTF8);
-
-                    //------ 內文 ------ 內文文字, 內文內容所用的編碼方式, 內文是否為HTML格式
-                    MailSender1.Set_BODY(ref Body, Env.EnumEncoding.UTF8, true);
-
-                    //------ 附件 ------ 檔案路徑及名稱, 郵件附件的配置類型(內嵌:Inline或附加:Attachment)
-                    //MailSender1.Add_Attachments("C:\\TEMP\\test.zip", EasyMailSender.EnumDispositionType.Attachment);
-
-                    //------ 寄送 ------ MailServer的IP或名稱, MailServer的port, 登入MailServer的ID, 登入MailServer的Password
-                    int port = 25;
-                    if (!int.TryParse(Env.MailServerPort, out port)) { port = 25; }
-                    MailSender1.TLSorSSL = Env.SecurityProtocol;
-                    ErrorMsg += MailSender1.Send(Env.MailServerHost, port, Env.MailServerLoginUser, Env.MailServerLoginPwd);
+                    ErrorMsg = ex.Message;
+                    log.Error($"[寄信失敗] 收件者: {MailReceiverTo}, 主旨: {Subject}, 錯誤: {ex.Message}", ex);
+                    return false;
                 }
-
-                return true;
             }
         }
     }

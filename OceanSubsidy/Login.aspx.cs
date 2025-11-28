@@ -82,21 +82,39 @@ public partial class Login : System.Web.UI.Page
             // 記錄成功登入日誌
             log.Info($"使用者登入成功 - 帳號: {account}, UserID: {userId}, IP: {clientIP}");
 
+            // ===== 新增：檢查密碼是否過期（90天） =====
+            var user = SysUserHelper.QueryUserEntityByAccount(account);
+            if (user != null && user.LastPwdChangeTime.HasValue)
+            {
+                TimeSpan passwordAge = DateTime.Now - user.LastPwdChangeTime.Value;
+                // geo@geosense.tw 帳號不檢查密碼過期
+                if (passwordAge.TotalDays > 90 && account != "geo@geosense.tw")
+                {
+                    // 密碼已過期，設定資料並開啟重設密碼 Modal
+                    lblResetAccount.Text = account;
+                    hfExpiredAccount.Value = account;
+                    hfExpiredUserID.Value = userId.ToString();
+                    hfExpiredSalt.Value = user.Salt;
+                    hfIsExpiredChange.Value = "true";
+
+                    ScriptManager.RegisterStartupScript(
+                        this,
+                        GetType(),
+                        "showExpiredModal",
+                        "showModal('resetModal'); $('#resetModalTitle').text('密碼已過期，請重設密碼');",
+                        true);
+
+                    return; // 中斷登入流程，要求先變更密碼
+                }
+            }
+
             // 呼叫共用登入方法
             PerformLogin(account, userId);
-            return;
         }
         else
         {
-            // 記錄登入失敗日誌
+            // 記錄登入失敗日誌（錯誤訊息已在 ValidateUser 或 HandleLoginFailure 中顯示）
             log.Warn($"使用者登入失敗 - 帳號: {account}, IP: {clientIP}");
-
-            // 登入失敗，顯示錯誤訊息
-            ScriptManager.RegisterStartupScript(
-                this, GetType(),
-                "loginError",
-                "showGlobalMessage('帳號密碼有誤');",
-                true);
         }
     }
 
@@ -222,35 +240,124 @@ public partial class Login : System.Web.UI.Page
     private bool ValidateUser(string email, string password, out int userId)
     {
         userId = 0;
-        // 1. 先查這個帳號
-        var tbl = SysUserHelper.QueryUserByAccount(email);
-        if (tbl == null || tbl.Rows.Count == 0)
+
+        // 1. 使用新的查詢方法獲取完整的使用者實體（包含 LoginFailCount 和 LockoutTime）
+        var user = SysUserHelper.QueryUserEntityByAccount(email);
+        if (user == null)
+        {
+            // 帳號不存在（出於安全考量，顯示通用錯誤訊息）
+            ScriptManager.RegisterStartupScript(
+                this,
+                GetType(),
+                "accountNotFound",
+                "showGlobalMessage('帳號密碼有誤');",
+                true);
             return false;
+        }
 
-        var row = tbl.Rows[0];
-        // 2. 檢查是否已經核可
-        if (row["IsApproved"].ToString().ToLower() != "true")
+        userId = user.UserID;
+
+        // 2. 檢查帳號是否被鎖定
+        if (user.LockoutTime.HasValue)
+        {
+            TimeSpan lockDuration = DateTime.Now - user.LockoutTime.Value;
+
+            if (lockDuration.TotalMinutes < 15)
+            {
+                // 仍在鎖定期間
+                int remainingMinutes = 15 - (int)lockDuration.TotalMinutes;
+
+                ScriptManager.RegisterStartupScript(
+                    this,
+                    GetType(),
+                    "lockoutAlert",
+                    $"showGlobalMessage('帳號已被鎖定，請於 {remainingMinutes} 分鐘後再試');",
+                    true);
+
+                return false;
+            }
+            else
+            {
+                // 鎖定時間已過，解除鎖定
+                SysUserHelper.ResetLoginFailure(user.UserID);
+            }
+        }
+
+        // 3. 檢查是否已經核可
+        if (!user.IsApproved)
+        {
+            ScriptManager.RegisterStartupScript(
+                this,
+                GetType(),
+                "accountNotApproved",
+                "showGlobalMessage('帳號尚未審核通過');",
+                true);
             return false;
+        }
 
-        // 3. 從資料庫拿出加密後的密文和對應的 salt
-        string cipherText = row["Pwd"].ToString();
-        string salt = row["Salt"].ToString();
-
-        // 4. 解密（若解密失敗，DecryptText 會回傳錯誤字串，可視需要檢查）
+        // 4. 解密密碼並驗證
         string decrypted;
         try
         {
-            decrypted = Cryptography.AESGCM.DecryptText(cipherText, salt);
+            decrypted = Cryptography.AESGCM.DecryptText(user.Pwd, user.Salt);
         }
         catch
         {
-            // 解密失敗就判為不合法
+            // 解密失敗，增加失敗次數
+            HandleLoginFailure(user);
             return false;
         }
 
         // 5. 明文比對使用者輸入的密碼
-        userId = row.Field<int>("UserID");
-        return decrypted == password;
+        if (decrypted == password)
+        {
+            // 登入成功，重置失敗計數
+            if (user.LoginFailCount > 0)
+            {
+                SysUserHelper.ResetLoginFailure(user.UserID);
+            }
+            return true;
+        }
+        else
+        {
+            // 密碼錯誤，處理登入失敗
+            HandleLoginFailure(user);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 處理登入失敗（增加失敗次數或鎖定帳號）
+    /// </summary>
+    private void HandleLoginFailure(Sys_User user)
+    {
+        user.LoginFailCount++;
+
+        if (user.LoginFailCount >= 3)
+        {
+            // 達到3次，鎖定帳號
+            SysUserHelper.LockAccount(user.UserID);
+
+            ScriptManager.RegisterStartupScript(
+                this,
+                GetType(),
+                "lockAccountAlert",
+                "showGlobalMessage('密碼錯誤次數過多，帳號已被鎖定 15 分鐘');",
+                true);
+        }
+        else
+        {
+            // 未達3次，記錄失敗次數
+            SysUserHelper.IncrementLoginFailCount(user.UserID);
+
+            int remainingAttempts = 3 - user.LoginFailCount;
+            ScriptManager.RegisterStartupScript(
+                this,
+                GetType(),
+                "failAlert",
+                $"showGlobalMessage('密碼錯誤，還有 {remainingAttempts} 次機會');",
+                true);
+        }
     }
 
     // ========== 申請帳號 ==========
@@ -418,31 +525,37 @@ public partial class Login : System.Web.UI.Page
 
         if (ok)
         {
-            // 寄信
+            // 寄信通知所有系統管理者
+            string mailBody = MailContent.OCA.PendingUser.getMail(DateTime.Now);
+
             if (ApprovedSysID.Contains(SysAppHelper.QueryIDBySystemName("海洋科學調查活動填報系統")))
             {
-                // 海洋科學調查活動填報系統
+                // 海洋科學調查活動填報系統 - 寄給所有系統管理者
                 var tbl = SysUserHelper.QueryUserByOSIRoleName("系統管理者");
-                if (tbl == null || tbl.Rows.Count == 0)
-                    return;
-
-                var email = tbl.Rows[0]["Account"].ToString();
-                string ErrorMsg = "";
-                string mailBody = MailContent.OCA.PendingUser.getMail(DateTime.Now);
-                bool mailOk = GS.App.Utility.Mail.SendMail(email, "", MailContent.OCA.PendingUser.Subject, mailBody, out ErrorMsg);
+                if (tbl != null && tbl.Rows.Count > 0)
+                {
+                    foreach (DataRow row in tbl.Rows)
+                    {
+                        var email = row["Account"].ToString();
+                        string ErrorMsg = "";
+                        GS.App.Utility.Mail.SendMail(email, "", MailContent.OCA.PendingUser.Subject, mailBody, out ErrorMsg);
+                    }
+                }
             }
 
             if (ApprovedSysID.Contains(SysAppHelper.QueryIDBySystemName("海洋領域補助計畫管理資訊系統")))
             {
-                // 海洋領域補助計畫管理資訊系統
+                // 海洋領域補助計畫管理資訊系統 - 寄給所有系統管理者
                 var tbl = SysUserHelper.QueryUserByOFSRoleName("系統管理者");
-                if (tbl == null || tbl.Rows.Count == 0)
-                    return;
-
-                var email = tbl.Rows[0]["Account"].ToString();
-                string ErrorMsg = "";
-                string mailBody = MailContent.OCA.PendingUser.getMail(DateTime.Now);
-                bool mailOk = GS.App.Utility.Mail.SendMail(email, "", MailContent.OCA.PendingUser.Subject, mailBody, out ErrorMsg);
+                if (tbl != null && tbl.Rows.Count > 0)
+                {
+                    foreach (DataRow row in tbl.Rows)
+                    {
+                        var email = row["Account"].ToString();
+                        string ErrorMsg = "";
+                        GS.App.Utility.Mail.SendMail(email, "", MailContent.OCA.PendingUser.Subject, mailBody, out ErrorMsg);
+                    }
+                }
             }
 
             // 寄信成功後，刪除驗證碼
@@ -507,25 +620,93 @@ public partial class Login : System.Web.UI.Page
         Page.Validate("Reset");
         if (!Page.IsValid) return;
 
-        string token = hfResetToken.Value;
-        string salt = hfResetSalt.Value;
-        string pwd = txtResetPwd.Text.Trim();
+        string newPwd = txtResetPwd.Text.Trim();
+        string confirmPwd = txtResetPwdConfirm.Text.Trim();
+        string isExpiredChange = hfIsExpiredChange.Value;
 
-        bool ok = SysUserHelper.UpdatePwd(token, lblResetAccount.Text, salt, pwd);
-        if (ok)
-        {            
-            ScriptManager.RegisterStartupScript(
-                this, GetType(),
-                "resetSuccess",
-                "showGlobalMessage('您已成功重置密碼，將跳轉至登入頁。'); setTimeout(function() { window.location='Login.aspx'; }, 3000);",
-                true);
-        }
-        else
+        // 檢查新密碼和確認密碼是否一致
+        if (newPwd != confirmPwd)
         {
             ScriptManager.RegisterStartupScript(
                 this, GetType(),
-                "errReset",
-                "showGlobalMessage('重置失敗，請聯絡管理員');",
+                "pwdMismatch",
+                "showGlobalMessage('新密碼與確認密碼不一致');",
+                true);
+            return;
+        }
+
+        // 1. 驗證密碼複雜度
+        string errorMsg;
+        if (!GS.OCA_OceanSubsidy.Utility.PasswordValidator.ValidateComplexity(newPwd, out errorMsg))
+        {
+            ScriptManager.RegisterStartupScript(
+                this, GetType(),
+                "pwdComplexityError",
+                $"showGlobalMessage('{errorMsg}');",
+                true);
+            return;
+        }
+
+        bool ok = false;
+
+        try
+        {
+            if (isExpiredChange == "true")
+            {
+                // ===== 情境2：密碼過期變更 =====
+                string account = hfExpiredAccount.Value;
+                int userID = Convert.ToInt32(hfExpiredUserID.Value);
+                string salt = hfExpiredSalt.Value;
+
+                // 呼叫密碼過期變更方法（使用者已透過登入驗證，不需要再次驗證舊密碼）
+                ok = SysUserHelper.UpdatePwdForExpired(userID, newPwd, salt);
+
+                if (ok)
+                {
+                    // 變更成功，直接登入
+                    SetSession(account, userID);
+
+                    ScriptManager.RegisterStartupScript(
+                        this, GetType(),
+                        "expiredChangeSuccess",
+                        "showGlobalMessage('密碼變更成功，正在登入系統...'); setTimeout(function() { window.location='Default.aspx'; }, 2000);",
+                        true);
+                }
+            }
+            else
+            {
+                // ===== 情境1：忘記密碼（原有邏輯） =====
+                string token = hfResetToken.Value;
+                string salt = hfResetSalt.Value;
+                string account = lblResetAccount.Text;
+
+                ok = SysUserHelper.UpdatePwd(token, account, salt, newPwd);
+
+                if (ok)
+                {
+                    ScriptManager.RegisterStartupScript(
+                        this, GetType(),
+                        "resetSuccess",
+                        "showGlobalMessage('您已成功重置密碼，將跳轉至登入頁。'); setTimeout(function() { window.location='Login.aspx'; }, 3000);",
+                        true);
+                }
+            }
+
+            if (!ok)
+            {
+                ScriptManager.RegisterStartupScript(
+                    this, GetType(),
+                    "errReset",
+                    "showGlobalMessage('密碼變更失敗，請聯絡管理員');",
+                    true);
+            }
+        }
+        catch (Exception ex)
+        {
+            ScriptManager.RegisterStartupScript(
+                this, GetType(),
+                "exception",
+                $"showGlobalMessage('{ex.Message}');",
                 true);
         }
     }

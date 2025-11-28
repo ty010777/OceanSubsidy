@@ -701,6 +701,121 @@ namespace GS.OCA_OceanSubsidy.Entity.Base
             }
         }
 
+        protected int _LoginFailCount = 0;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("LoginFailCount", "LoginFailCount", DataSource.TABLE, "", false)]
+        public virtual int LoginFailCount
+        {
+            get
+            {
+                return _LoginFailCount;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_LoginFailCount == null)
+                {
+                    if (value != null)
+                    {
+                        isModify = true;
+                    }
+                }
+                else if (!_LoginFailCount.Equals(value))
+                {
+                    isModify = true;
+                }
+                if (isModify)
+                {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("LoginFailCount") == -1)
+                    {
+                        UPDATE_COLUMN.Add("LoginFailCount");
+                    }
+                    _LoginFailCount = value;
+                }
+            }
+        }
+
+        protected DateTime? _LockoutTime = null;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("LockoutTime", "LockoutTime", DataSource.TABLE, "", false)]
+        public virtual DateTime? LockoutTime
+        {
+            get
+            {
+                return _LockoutTime;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_LockoutTime == null)
+                {
+                    if (value != null)
+                    {
+                        isModify = true;
+                    }
+                }
+                else if (!_LockoutTime.Equals(value))
+                {
+                    isModify = true;
+                }
+                if (isModify)
+                {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("LockoutTime") == -1)
+                    {
+                        UPDATE_COLUMN.Add("LockoutTime");
+                    }
+                    _LockoutTime = value;
+                }
+            }
+        }
+
+        protected DateTime? _LastPwdChangeTime = null;
+        ///<summary>
+        ///  ()
+        ///</summary>
+        [DataMember]
+        [GisFieldAttribute("LastPwdChangeTime", "LastPwdChangeTime", DataSource.TABLE, "", false)]
+        public virtual DateTime? LastPwdChangeTime
+        {
+            get
+            {
+                return _LastPwdChangeTime;
+            }
+            set
+            {
+                bool isModify = false;
+                if (_LastPwdChangeTime == null)
+                {
+                    if (value != null)
+                    {
+                        isModify = true;
+                    }
+                }
+                else if (!_LastPwdChangeTime.Equals(value))
+                {
+                    isModify = true;
+                }
+                if (isModify)
+                {
+                    MetaDataState = DataState.UPDATE;
+                    if (UPDATE_COLUMN.IndexOf("LastPwdChangeTime") == -1)
+                    {
+                        UPDATE_COLUMN.Add("LastPwdChangeTime");
+                    }
+                    _LastPwdChangeTime = value;
+                }
+            }
+        }
+        
+        // 新增欄位
 
     }
 

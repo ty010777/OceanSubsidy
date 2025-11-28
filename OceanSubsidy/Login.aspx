@@ -21,13 +21,9 @@
 <asp:Content ID="Content3" ContentPlaceHolderID="MainContent" runat="server">
 
     <div class="login-wrap">
-
-        <a href="#AC" id="AC" accesskey="C" class="a11yBrick position-absolute text-black text-decoration-none fs-18 mt-3 ms-3" title="中央內容區塊[快捷鍵Alt+C]">:::</a>
-
-        <button title="網站導覽" class="btn btn-blue-deep position-absolute top-0 end-0 mt-3 me-3" style="z-index: 3;" type="button" data-bs-toggle="modal" data-bs-target="#siteNavigationModal">
-            網站導覽
-        </button>
-
+        <a href="homepage.html" class="btn btn-blue-deep position-absolute top-0 end-0 mt-3 me-3" style="z-index: 3;">
+              回首頁
+        </a>
         <div class="login-container">
             <div class="logo">
                 <img src="assets/img/login/login-logo.svg" alt="海洋委員會標誌">
@@ -141,6 +137,8 @@
             <ul class="info">
                 <li>地址：806高雄市前鎮區成功二路25號4樓</li>
                 <li>電話：(07)338-1810 Copyright © 海洋委員會 版權所有</li>
+                <li>電話：(04)24516932#6550 系統聯絡人 王小姐</li>
+                <li>電話：(04)24516932#6530 系統聯絡人 簡先生</li>
             </ul>
         </div>
     </div>
@@ -427,7 +425,7 @@
                     <ContentTemplate>
                         <asp:Panel runat="server" ID="pnlResetForm">
                             <div class="modal-header">
-                                <h2 class="modal-title fs-5" id="resetPasswordModalLabel">重設密碼</h2>
+                                <h2 class="modal-title fs-5" id="resetModalTitle">重設密碼</h2>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                                     <i class="fa-solid fa-circle-xmark"></i>
                                 </button>
@@ -456,6 +454,9 @@
                                                         ErrorMessage="請輸入新密碼"
                                                         ValidationGroup="Reset"
                                                         CssClass="invalid" Display="Dynamic" />
+                                                    <small class="text-muted d-block mt-2">
+                                                        密碼規則：至少 8 個字元，須包含大寫字母、小寫字母、數字及特殊符號 (!@#$%^&*()_+-=[]{}|;:,.<>?)
+                                                    </small>
                                                 </td>
                                             </tr>
                                             <tr>
@@ -493,6 +494,12 @@
                                 <!-- 隱藏欄位儲存 Token -->
                                 <asp:HiddenField ID="hfResetToken" runat="server" />
                                 <asp:HiddenField ID="hfResetSalt" runat="server" />
+
+                                <!-- 密碼過期相關隱藏欄位 -->
+                                <asp:HiddenField ID="hfIsExpiredChange" runat="server" Value="" />
+                                <asp:HiddenField ID="hfExpiredAccount" runat="server" Value="" />
+                                <asp:HiddenField ID="hfExpiredUserID" runat="server" Value="" />
+                                <asp:HiddenField ID="hfExpiredSalt" runat="server" Value="" />
                             </div>
                         </asp:Panel>
                     </ContentTemplate>

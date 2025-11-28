@@ -884,7 +884,34 @@ DELETE [Sys_UserOFSRole] WHERE UserId = @UserID AND RoleID = @RoleID";
     /// <returns></returns>
     public static bool UpdatePwd(string pwdToken, string account, string salt, string newPwd)
     {
-        // 用 AES-GCM 加密新密碼
+        // 1. 驗證密碼複雜度
+        string errorMsg;
+        if (!GS.OCA_OceanSubsidy.Utility.PasswordValidator.ValidateComplexity(newPwd, out errorMsg))
+        {
+            throw new Exception(errorMsg);
+        }
+
+        // 2. 查詢使用者 UserID
+        DbHelper dbQuery = new DbHelper();
+        dbQuery.CommandText = "SELECT UserID FROM Sys_User WHERE Account = @Account AND IsValid = 1";
+        dbQuery.Parameters.Clear();
+        dbQuery.Parameters.Add("@Account", account);
+
+        var userTable = dbQuery.GetTable();
+        if (userTable.Rows.Count == 0)
+        {
+            throw new Exception("查無此帳號");
+        }
+
+        int userID = Convert.ToInt32(userTable.Rows[0]["UserID"]);
+
+        // 3. 檢查密碼歷史（不能與前3次相同）
+        if (SysUserPasswordHistoryHelper.IsPasswordReused(userID, newPwd, salt))
+        {
+            throw new Exception("新密碼不能與前3次使用過的密碼相同");
+        }
+
+        // 4. 用 AES-GCM 加密新密碼
         string encryptedPwd = AESGCM.EncryptText(newPwd, salt);
 
         var db = new DbHelper();
@@ -897,7 +924,8 @@ DELETE [Sys_UserOFSRole] WHERE UserId = @UserID AND RoleID = @RoleID";
             UPDATE Sys_User
                SET Pwd = @Pwd,
                    PwdToken  = NULL,
-                   UpdateTime = GETDATE()
+                   UpdateTime = GETDATE(),
+                   LastPwdChangeTime = GETDATE()
              WHERE Account  = @Account
                AND PwdToken = @PwdToken
                AND IsValid = 1
@@ -914,9 +942,15 @@ DELETE [Sys_UserOFSRole] WHERE UserId = @UserID AND RoleID = @RoleID";
             rowsAffected = (result == null ? 0 : Convert.ToInt32(result));
 
             if (rowsAffected > 0)
+            {
+                // 5. 記錄密碼歷史
                 db.Commit();
+                SysUserPasswordHistoryHelper.InsertPasswordHistory(userID, encryptedPwd, salt);
+            }
             else
+            {
                 db.Rollback();
+            }
         }
         catch
         {
@@ -1468,4 +1502,238 @@ VALUES (@UserID,@RoleID)";
     {
         return GetSameUnitUsersByRoles(account, new List<int> { roleID });
     }
+
+    #region 密碼安全相關方法
+
+    /// <summary>
+    /// 增加登入失敗次數
+    /// </summary>
+    /// <param name="userID">使用者ID</param>
+    public static void IncrementLoginFailCount(int userID)
+    {
+        try
+        {
+            DbHelper db = new DbHelper();
+            db.CommandText = @"
+                UPDATE Sys_User
+                SET LoginFailCount = LoginFailCount + 1,
+                    UpdateTime = GETDATE()
+                WHERE UserID = @UserID";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@UserID", userID);
+
+            db.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("更新登入失敗次數失敗: " + ex.Message, ex);
+        }
+    }
+
+    /// <summary>
+    /// 鎖定帳號（設定 LoginFailCount = 3 和 LockoutTime）
+    /// </summary>
+    /// <param name="userID">使用者ID</param>
+    public static void LockAccount(int userID)
+    {
+        try
+        {
+            DbHelper db = new DbHelper();
+            db.CommandText = @"
+                UPDATE Sys_User
+                SET LoginFailCount = 3,
+                    LockoutTime = GETDATE(),
+                    UpdateTime = GETDATE()
+                WHERE UserID = @UserID";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@UserID", userID);
+
+            db.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("鎖定帳號失敗: " + ex.Message, ex);
+        }
+    }
+
+    /// <summary>
+    /// 重置登入失敗記錄（登入成功或鎖定時間過期時調用）
+    /// </summary>
+    /// <param name="userID">使用者ID</param>
+    public static void ResetLoginFailure(int userID)
+    {
+        try
+        {
+            DbHelper db = new DbHelper();
+            db.CommandText = @"
+                UPDATE Sys_User
+                SET LoginFailCount = 0,
+                    LockoutTime = NULL,
+                    UpdateTime = GETDATE()
+                WHERE UserID = @UserID";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@UserID", userID);
+
+            db.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("重置登入失敗記錄失敗: " + ex.Message, ex);
+        }
+    }
+
+    /// <summary>
+    /// 更新最後密碼變更時間
+    /// </summary>
+    /// <param name="userID">使用者ID</param>
+    public static void UpdateLastPwdChangeTime(int userID)
+    {
+        try
+        {
+            DbHelper db = new DbHelper();
+            db.CommandText = @"
+                UPDATE Sys_User
+                SET LastPwdChangeTime = GETDATE(),
+                    UpdateTime = GETDATE()
+                WHERE UserID = @UserID";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@UserID", userID);
+
+            db.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("更新密碼變更時間失敗: " + ex.Message, ex);
+        }
+    }
+
+    /// <summary>
+    /// 密碼過期時變更密碼（使用者已透過登入驗證，無需再驗證舊密碼）
+    /// </summary>
+    /// <param name="userID">使用者ID</param>
+    /// <param name="newPassword">新密碼（明文）</param>
+    /// <param name="salt">Salt值</param>
+    /// <returns>是否成功</returns>
+    public static bool UpdatePwdForExpired(int userID, string newPassword, string salt)
+    {
+        try
+        {
+            // 1. 驗證新密碼複雜度
+            string errorMsg;
+            if (!GS.OCA_OceanSubsidy.Utility.PasswordValidator.ValidateComplexity(newPassword, out errorMsg))
+            {
+                throw new Exception(errorMsg);
+            }
+
+            // 2. 檢查密碼歷史（不能與前3次相同）
+            if (SysUserPasswordHistoryHelper.IsPasswordReused(userID, newPassword, salt))
+            {
+                throw new Exception("新密碼不能與前3次使用過的密碼相同");
+            }
+
+            // 3. 加密新密碼
+            string newEncryptedPwd = AESGCM.EncryptText(newPassword, salt);
+
+            // 4. 更新密碼
+            DbHelper db = new DbHelper();
+            int rowsAffected = 0;
+            db.BeginTrans();
+
+            try
+            {
+                db.CommandText = @"
+                    UPDATE Sys_User
+                    SET Pwd = @Pwd,
+                        LastPwdChangeTime = GETDATE(),
+                        UpdateTime = GETDATE()
+                    WHERE UserID = @UserID AND IsValid = 1
+
+                    SELECT CAST(@@ROWCOUNT AS INT);";
+
+                db.Parameters.Clear();
+                db.Parameters.Add("@Pwd", newEncryptedPwd);
+                db.Parameters.Add("@UserID", userID);
+
+                // 取得影響的行數
+                object result = db.GetDataSet().Tables[0].Rows[0][0];
+                rowsAffected = (result == null ? 0 : Convert.ToInt32(result));
+
+                if (rowsAffected > 0)
+                {
+                    // 5. 記錄密碼歷史
+                    db.Commit();
+                    SysUserPasswordHistoryHelper.InsertPasswordHistory(userID, newEncryptedPwd, salt);
+                    return true;
+                }
+                else
+                {
+                    db.Rollback();
+                    return false;
+                }
+            }
+            catch
+            {
+                db.Rollback();
+                throw;
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("變更密碼失敗: " + ex.Message, ex);
+        }
+    }
+
+    /// <summary>
+    /// 查詢使用者實體 By Account
+    /// </summary>
+    /// <param name="account">帳號</param>
+    /// <returns>使用者實體</returns>
+    public static Sys_User QueryUserEntityByAccount(string account)
+    {
+        try
+        {
+            DbHelper db = new DbHelper();
+            db.CommandText = @"
+                SELECT [UserID]
+                    ,[UnitType]
+                    ,[UnitID]
+                    ,[UnitName]
+                    ,[Account]
+                    ,[Pwd]
+                    ,[Name]
+                    ,[Tel]
+                    ,[OSI_RoleID]
+                    ,[IsReceiveMail]
+                    ,[IsApproved]
+                    ,[IsValid]
+                    ,[Salt]
+                    ,[CreateTime]
+                    ,[UpdateTime]
+                    ,[PwdToken]
+                    ,[IsActive]
+                    ,[ApprovedSource]
+                    ,[LoginFailCount]
+                    ,[LockoutTime]
+                    ,[LastPwdChangeTime]
+                FROM Sys_User
+                WHERE IsValid = 1
+                AND Account = @Account";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@Account", account);
+
+            var users = db.GetList<Sys_User>();
+            return users.FirstOrDefault();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception("查詢使用者失敗: " + ex.Message, ex);
+        }
+    }
+
+    #endregion
 }
