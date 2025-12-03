@@ -53,7 +53,7 @@
         </li>
         <li class="total-item" id="total-item-3">
             <a href="javascript:void(0)" onclick="ReviewChecklist.switchReviewType(3)">
-                <div class="total-item-title">技術審查/複審</div>
+                <div class="total-item-title">複審</div>
                 <div class="total-item-content">
                     <span class="count">0</span>
                     <span class="unit">件</span>

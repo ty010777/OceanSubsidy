@@ -30,15 +30,14 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             LoadAvailablePrograms(); // 載入可申請的計畫類別
             LoadDropdownLists(); // 載入下拉式選單
 
-            // 設定年度預設值為今年
-            int currentYear = DateTimeHelper.GregorianYearToMinguo(DateTime.Now.Year); // 民國年
-            if (ddlYear.Items.FindByValue(currentYear.ToString()) != null)
-            {
-                ddlYear.SelectedValue = currentYear.ToString();
-            }
-
             // 讀取 URL 參數並設定搜尋條件
             LoadSearchParametersFromUrl();
+
+            // 如果 URL 沒有指定年度參數，則設定預設值為"全部"
+            if (string.IsNullOrEmpty(Request.QueryString["year"]))
+            {
+                ddlYear.SelectedValue = ""; // 空字串代表"全部"
+            }
 
             // 初始狀態顯示總申請的資料
             hidSelectedStage.Value = "總申請";

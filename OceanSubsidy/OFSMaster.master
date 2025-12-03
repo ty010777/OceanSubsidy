@@ -378,7 +378,7 @@
                               <hr>
                               <ul class="d-grid gap-1 mt-2">
                               <li>
-                                  <a href="<%= ResolveUrl("~/Template/Shared/114海委會補助_案件管理操作手冊(申請單位).pdf") %>" 
+                                  <a href="<%= ResolveUrl("~/Template/Shared/海委會補助_案件管理操作手冊(申請單位)_20251203.pdf") %>" 
                                      target="_blank" 
                                      rel="noopener noreferrer">
                                       操作手冊
