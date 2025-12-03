@@ -340,6 +340,7 @@ class WorkItemTableManager {
 
         this.updatePlusButtonVisibility();
         this.rebindAllEvents();
+        this.updateAllYearSelects();
         this.parent.calculator.updateTotals();
         this.updateHiddenFieldsNow();
     }
@@ -538,6 +539,7 @@ class WorkItemTableManager {
         row.parentNode.insertBefore(newRow, row.nextSibling);
 
         this.rebindAllEvents();
+        this.updateAllYearSelects();
         this.updateHiddenFieldsNow();
     }
 
