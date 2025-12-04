@@ -9,6 +9,7 @@ using System.Web.UI.WebControls;
 using GS.OCA_OceanSubsidy.Entity;
 using GS.OCA_OceanSubsidy.Operation.OFS;
 using GS.App;
+using GS.OCA_OceanSubsidy.Model.OFS;
 
 /// <summary>
 /// 科專計畫申請表 UserControl
@@ -532,21 +533,26 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
     {
         try
         {
-            string TypeID  = Request.QueryString["TypeID"];
-            // 從 OFS_GrantType 取得目前有效的 SCI 補助案資料
-            var grantTypeInfo = OFSGrantTypeHelper.getByTypeID(TypeID);
+            string TypeID = Request.QueryString["TypeID"];
+            GrantTypeInfo grantTypeInfo = null;
+
+            // 如果 TypeID 為 null 或空值，則查詢符合今天日期的 SCI 補助案
+            if (string.IsNullOrEmpty(TypeID))
+            {
+                grantTypeInfo = OFSGrantTypeHelper.getByTypeCodeAndCurrentDate("SCI");
+            }
+            else
+            {
+                // 從 OFS_GrantType 取得目前有效的 SCI 補助案資料
+                grantTypeInfo = OFSGrantTypeHelper.getByTypeID(TypeID);
+            }
 
             if (grantTypeInfo != null)
             {
                 txtYear.Text = grantTypeInfo.Year?.ToString() ?? DateTimeHelper.GregorianYearToMinguo(DateTime.Now.Year).ToString();
                 txtSubsidyPlanType.Text = grantTypeInfo.FullName ?? "";
             }
-            else
-            {
-                // 如果沒有找到符合條件的資料，使用預設值
-                txtYear.Text = DateTimeHelper.GregorianYearToMinguo(DateTime.Now.Year).ToString();
-                txtSubsidyPlanType.Text = "科專（114年度補助學術機構、研究機關(構)及海洋科技業者執行海洋科技專案）";
-            }
+
 
             // 初始化空的關鍵字欄位
             KeywordsData = new List<OFS_SCI_Application_KeyWord>();

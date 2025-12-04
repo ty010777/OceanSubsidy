@@ -1721,8 +1721,6 @@ public class SCI_Download : IHttpHandler
 
     private void FillResearchFeeSheet(ExcelHelper excel, List<string> sheetNames, string projectID)
     {
-        // 遺珠: 原先規劃之文件 並沒有讓使用者可以新增多筆的需求， 所以 這邊寫入到 EXCEL 屬於 直接塞入 非動態產生
-        // 直接先寫死兩筆資料，待之後進行修改，如果經費/人事的 技術移轉、委託研究或驗證費 有修改成動態 ，這邊要一同修改。
         try
         {
             // 找到 '技術移轉及委託研究費用' sheet
@@ -1733,61 +1731,97 @@ public class SCI_Download : IHttpHandler
                 targetSheet = sheetNames[3];
             }
 
-            // 從資料庫讀取技術移轉及委託研究費用資料
-            var ResearchFeesList = OFS_SciFundingHelper.GetResearchFeesList(projectID);
+            // 1. 先查詢「技術移轉」資料
+            var techTransferList = OFS_SciFundingHelper.GetResearchFeesList(projectID, "技術移轉");
 
+            // 2. 再查詢「委託研究」資料
+            var commissionedResearchList = OFS_SciFundingHelper.GetResearchFeesList(projectID, "委託研究");
 
-            if (ResearchFeesList != null && ResearchFeesList.Count > 0)
+            decimal totalAmount = 0; // 累計總金額
+
+            // 3. 寫入「技術移轉」資料 (在第4行空行的位置插入)
+            if (techTransferList != null && techTransferList.Count > 0)
             {
-                // 只取第一筆資料
-                var item = ResearchFeesList[0];
+                int insertPosition = 4; // 在第4行(空行位置)插入
 
-                // ==== 第一次寫入：第4行 ====
-                int targetRow1 = 4;
+                // 插入所有技術移轉資料行
+                excel.InsertRows(targetSheet, insertPosition, techTransferList.Count);
 
-                // A欄: 費用類別
-                excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { item.category ?? "" } }, targetRow1, 1);
-                // B欄: 起訖日期 (StartDate ~ EndDate)
-                DateTime? startDate = DateTime.TryParse(item.dateStart, out var s) ? s : (DateTime?)null;
-                DateTime? endDate = DateTime.TryParse(item.dateEnd, out var e) ? e : (DateTime?)null;
-                // 轉成民國日期
-                string startMinguo = startDate.HasValue ? DateTimeHelper.ToMinguoDate(startDate.Value) : "";
-                string endMinguo = endDate.HasValue ? DateTimeHelper.ToMinguoDate(endDate.Value) : "";
-
-                string dateRange = $"{startMinguo} ~ {endMinguo}";
-                excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { dateRange } }, targetRow1, 2);
-                // C欄: 名稱
-                excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { item.projectName ?? "" } }, targetRow1, 3);
-                // D欄: 負責人
-                excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { item.targetPerson ?? "" } }, targetRow1, 4);
-                // E欄: 金額 (單位: 千元)
-                excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { item.price / 1000 } }, targetRow1, 5);
-
-                // ==== 第二次寫入：第7行 ====
-                if (ResearchFeesList.Count > 1)
+                int currentRow = insertPosition;
+                foreach (var item in techTransferList)
                 {
-                    var item2 = ResearchFeesList[1];
-                    int targetRow2 = 7;
-                    DateTime? startDate2 = DateTime.TryParse(item2.dateStart, out var s2) ? s2 : (DateTime?)null;
-                    DateTime? endDate2 = DateTime.TryParse(item2.dateEnd, out var e2) ? e2 : (DateTime?)null;
-                    // 轉成民國日期
-                    string startMinguo2 = startDate2.HasValue ? DateTimeHelper.ToMinguoDate(startDate2.Value) : "";
-                    string endMinguo2 = endDate2.HasValue ? DateTimeHelper.ToMinguoDate(endDate2.Value) : "";
+                    // A欄: 費用類別
+                    excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { item.category ?? "" } }, currentRow, 1);
 
-                    string dateRange2 = $"{startMinguo2} ~ {endMinguo2}";
-                    excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { item2.category ?? "" } }, targetRow2, 1);
-                    excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { dateRange2 } }, targetRow2, 2);
-                    excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { item2.projectName ?? "" } }, targetRow2, 3);
-                    excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { item2.targetPerson ?? "" } }, targetRow2, 4);
-                    excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { item2.price / 1000 } }, targetRow2, 5);
+                    // B欄: 起訖日期 (StartDate ~ EndDate)
+                    DateTime? startDate = DateTime.TryParse(item.dateStart, out var s) ? s : (DateTime?)null;
+                    DateTime? endDate = DateTime.TryParse(item.dateEnd, out var e) ? e : (DateTime?)null;
+                    string startMinguo = startDate.HasValue ? DateTimeHelper.ToMinguoDate(startDate.Value) : "";
+                    string endMinguo = endDate.HasValue ? DateTimeHelper.ToMinguoDate(endDate.Value) : "";
+                    string dateRange = $"{startMinguo} ~ {endMinguo}";
+                    excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { dateRange } }, currentRow, 2);
 
-                    // 計算總和：ResearchFeesList[0].price + ResearchFeesList[1].price (單位: 千元)
-                    decimal totalAmount = (item.price + item2.price) / 1000;
+                    // C欄: 名稱
+                    excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { item.projectName ?? "" } }, currentRow, 3);
 
-                    // 總和位置：E9
-                    int totalRow = 9;
-                    excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { totalAmount } }, totalRow, 5);
+                    // D欄: 負責人
+                    excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { item.targetPerson ?? "" } }, currentRow, 4);
+
+                    // E欄: 金額 (單位: 千元)
+                    decimal amount = item.price / 1000;
+                    excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { amount } }, currentRow, 5);
+
+                    totalAmount += amount;
+                    currentRow += 1; // 下一筆資料寫入下一行
                 }
+            }
+
+            // 4. 寫入「委託研究」資料 (在委託研究標題後的空行位置插入)
+            if (commissionedResearchList != null && commissionedResearchList.Count > 0)
+            {
+                // 計算插入位置：
+                // 原模板第6行(委託研究後的空行) + 技術移轉插入的行數
+                int insertPosition = 6 + (techTransferList?.Count ?? 0);
+
+                // 插入所有委託研究資料行
+                excel.InsertRows(targetSheet, insertPosition, commissionedResearchList.Count);
+
+                int currentRow = insertPosition;
+                foreach (var item in commissionedResearchList)
+                {
+                    // A欄: 費用類別
+                    excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { item.category ?? "" } }, currentRow, 1);
+
+                    // B欄: 起訖日期 (StartDate ~ EndDate)
+                    DateTime? startDate = DateTime.TryParse(item.dateStart, out var s) ? s : (DateTime?)null;
+                    DateTime? endDate = DateTime.TryParse(item.dateEnd, out var e) ? e : (DateTime?)null;
+                    string startMinguo = startDate.HasValue ? DateTimeHelper.ToMinguoDate(startDate.Value) : "";
+                    string endMinguo = endDate.HasValue ? DateTimeHelper.ToMinguoDate(endDate.Value) : "";
+                    string dateRange = $"{startMinguo} ~ {endMinguo}";
+                    excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { dateRange } }, currentRow, 2);
+
+                    // C欄: 名稱
+                    excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { item.projectName ?? "" } }, currentRow, 3);
+
+                    // D欄: 負責人
+                    excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { item.targetPerson ?? "" } }, currentRow, 4);
+
+                    // E欄: 金額 (單位: 千元)
+                    decimal amount = item.price / 1000;
+                    excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { amount } }, currentRow, 5);
+
+                    totalAmount += amount;
+                    currentRow += 1; // 下一筆資料寫入下一行
+                }
+            }
+
+            // 5. 寫入合計金額
+            if (totalAmount > 0)
+            {
+                // 計算合計行位置：
+                // 原模板第7行(合計行) + 技術移轉插入的行數 + 委託研究插入的行數
+                int totalRow = 7 + (techTransferList?.Count ?? 0) + (commissionedResearchList?.Count ?? 0);
+                excel.WriteRange(targetSheet, new List<List<object>> { new List<object> { totalAmount } }, totalRow, 5);
             }
         }
         catch (Exception ex)

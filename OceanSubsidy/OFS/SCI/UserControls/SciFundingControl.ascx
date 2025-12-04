@@ -5,6 +5,7 @@
 <!-- Hidden Fields for dynamic data -->
 <asp:HiddenField ID="hdnPersonnelData" runat="server" ClientIDMode="Static" />
 <asp:HiddenField ID="hdnMaterialData" runat="server" ClientIDMode="Static" />
+<asp:HiddenField ID="hdnResearchData" runat="server" ClientIDMode="Static" />
 <asp:HiddenField ID="hdnTravelData" runat="server" ClientIDMode="Static" />
 <asp:HiddenField ID="hdnForeignTravelData" runat="server" ClientIDMode="Static" />
 <asp:HiddenField ID="hdnOtherData" runat="server" ClientIDMode="Static" />
@@ -166,67 +167,54 @@
             <table class="table align-middle gray-table ResearchFees" id="point3Table">
                 <thead>
                 <tr>
-                    <th></th>
+                    <th width="200">類別</th>
                     <th>期間</th>
                     <th class="text-end">委託項目名稱</th>
                     <th class="text-end">委託對象</th>
                     <th class="text-end">金額(元)</th>
+                    <th width="130">功能</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr>
-                    <td class="text-end" width="200">
-                        <span id="FeeCategory1" runat="server">技術移轉</span>
+                    <td>
+                        <select id="ResearchCategory1" class="form-select">
+                            <option value="">請選擇</option>
+                            <option value="技術移轉">技術移轉</option>
+                            <option value="委託研究">委託研究</option>
+                        </select>
                     </td>
                     <td class="text-center">
                         <div class="input-group" style="width: 400px;">
-                            <asp:TextBox ID="txtDate1Start" runat="server" ClientIDMode="Static" CssClass="form-control taiwan-date-picker"
-                                       placeholder="請選擇開始日期" readonly />
-                            <asp:HiddenField ID="hdnDate1Start" runat="server" ClientIDMode="Static" />
+                            <input type="text" id="ResearchDateStart1" class="form-control taiwan-date-picker" placeholder="請選擇開始日期" readonly />
+                            <input type="hidden" id="hdnResearchDateStart1" />
                             <span class="input-group-text">至</span>
-                            <asp:TextBox ID="txtDate1End" runat="server" ClientIDMode="Static" CssClass="form-control taiwan-date-picker"
-                                       placeholder="請選擇結束日期" readonly />
-                            <asp:HiddenField ID="hdnDate1End" runat="server" ClientIDMode="Static" />
+                            <input type="text" id="ResearchDateEnd1" class="form-control taiwan-date-picker" placeholder="請選擇結束日期" readonly />
+                            <input type="hidden" id="hdnResearchDateEnd1" />
                         </div>
                     </td>
                     <td>
-                        <asp:TextBox ID="ResearchFeesName1" runat="server" ClientIDMode="Static" CssClass="form-control" placeholder="請輸入" />
+                        <input type="text" id="ResearchFeesName1" class="form-control" placeholder="請輸入" />
                     </td>
                     <td>
-                        <asp:TextBox ID="ResearchFeesPersonName1" runat="server" ClientIDMode="Static" CssClass="form-control" placeholder="請輸入" />
+                        <input type="text" id="ResearchFeesPersonName1" class="form-control" placeholder="請輸入" />
                     </td>
                     <td>
-                        <asp:TextBox ID="ResearchFeesPrice1" runat="server" ClientIDMode="Static" CssClass="form-control text-end money" placeholder="請輸入" onkeypress="return event.charCode != 45" onblur="calculateResearch()" />
-                    </td>
-                </tr>
-                <tr>
-                    <td class="text-end" width="200">
-                        <span id="FeeCategory2" runat="server">委託研究</span>
-                    </td>
-                    <td class="text-center">
-                        <div class="input-group" style="width: 400px;">
-                            <asp:TextBox ID="txtDate2Start" runat="server" ClientIDMode="Static" CssClass="form-control taiwan-date-picker"
-                                       placeholder="請選擇開始日期" readonly />
-                            <asp:HiddenField ID="hdnDate2Start" runat="server" ClientIDMode="Static" />
-                            <span class="input-group-text">至</span>
-                            <asp:TextBox ID="txtDate2End" runat="server" ClientIDMode="Static" CssClass="form-control taiwan-date-picker"
-                                       placeholder="請選擇結束日期" readonly />
-                            <asp:HiddenField ID="hdnDate2End" runat="server" ClientIDMode="Static" />
-                        </div>
+                        <input type="text" id="ResearchFeesPrice1" class="form-control text-end money" placeholder="請輸入" onkeypress="return event.charCode != 45" onblur="calculateResearch()" />
                     </td>
                     <td>
-                        <asp:TextBox ID="ResearchFeesName2" runat="server" ClientIDMode="Static" CssClass="form-control" placeholder="請輸入" />
-                    </td>
-                    <td>
-                        <asp:TextBox ID="ResearchFeesPersonName2" runat="server" ClientIDMode="Static" CssClass="form-control" placeholder="請輸入" />
-                    </td>
-                    <td>
-                        <asp:TextBox ID="ResearchFeesPrice2" runat="server" ClientIDMode="Static" CssClass="form-control text-end money" placeholder="請輸入" onkeypress="return event.charCode != 45" onblur="calculateResearch()" />
+                        <button type="button" class="btn btn-sm btn-teal" onclick="R_deleteRow(this)">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-teal" onclick="R_addNewRow()">
+                            <i class="fas fa-plus"></i>
+                        </button>
                     </td>
                 </tr>
                 <tr class="total-row">
                     <td colspan="4">合計</td>
                     <td class="text-end" id="ResearchFeesTotal">0</td>
+                    <td></td>
                 </tr>
                 </tbody>
             </table>

@@ -137,6 +137,43 @@ public class OFSGrantTypeHelper
             Year = row.Field<int?>("Year")
         };
     }
+
+    public static GrantTypeInfo getByTypeCodeAndCurrentDate(string typeCode)
+    {
+        DbHelper db = new DbHelper();
+
+        db.CommandText = @"
+            SELECT TOP(1) [ShortName]
+                  ,[FullName]
+                  ,[ApplyStartDate]
+                  ,[ApplyEndDate]
+                  ,[Year]
+              FROM [OFS_GrantType]
+             WHERE [TypeCode] = @TypeCode
+               AND GETDATE() BETWEEN [ApplyStartDate] AND [ApplyEndDate]
+             ORDER BY [Year] DESC
+        ";
+
+        db.Parameters.Add("@TypeCode", typeCode);
+
+        var table = db.GetTable();
+
+        if (table.Rows.Count != 1)
+        {
+            return null;
+        }
+
+        DataRow row = table.Rows[0];
+
+        return new GrantTypeInfo
+        {
+            ShortName = row.Field<string>("ShortName"),
+            FullName = row.Field<string>("FullName"),
+            StartDate = row.Field<DateTime>("ApplyStartDate"),
+            EndDate = row.Field<DateTime>("ApplyEndDate"),
+            Year = row.Field<int?>("Year")
+        };
+    }
     public static void insert(GrantType model)
     {
         DbHelper db = new DbHelper();

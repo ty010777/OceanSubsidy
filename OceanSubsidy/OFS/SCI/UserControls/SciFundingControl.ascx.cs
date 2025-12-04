@@ -310,7 +310,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
 
             // ===== 必填項目驗證 =====
 
-            // 1. 驗證海洋科技研發人員人事費明細表（必填）
+            // 1. 驗證海洋科技研發人員人事費明細表（必填，至少一筆且必須完整填寫）
             if (personnelData == null || personnelData.Count == 0)
             {
                 result.AddError("明細表「1.海洋科技研發人員人事費」：請至少新增一筆人事費資料");
@@ -320,6 +320,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                 List<string> missingFields = new List<string>();
                 foreach (var person in personnelData)
                 {
+                    // 所有行都必須填寫完整，包含空白行
                     if (string.IsNullOrWhiteSpace(person.name))
                     {
                         if (!missingFields.Contains("人員姓名"))
@@ -376,6 +377,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                 List<string> missingFields = new List<string>();
                 foreach (var material in materialData)
                 {
+                    // 所有行都必須填寫完整，包含空白行
                     if (string.IsNullOrWhiteSpace(material.name))
                     {
                         if (!missingFields.Contains("品名"))
@@ -388,7 +390,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                             missingFields.Add("「單位」");
                     }
 
-                    // quantity 和 unitPrice 可以為 0，不檢查
+                    // description, quantity, unitPrice 可以為空或 0，不檢查
                 }
 
                 if (missingFields.Count > 0)
@@ -397,26 +399,86 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                 }
             }
 
-            // // 4. 驗證技術移轉、委託研究或驗證費（不須檢查 2025/11/25)
-            // if (researchData != null && researchData.Count > 0)
-            // {
-            //     foreach (var research in researchData)
-            //     {
-            //         if (string.IsNullOrWhiteSpace(research.projectName))
-            //         {
-            //             result.AddError("技術移轉、委託研究或驗證費：請輸入計畫名稱");
-            //             break;
-            //         }
-            //
-            //         if (string.IsNullOrWhiteSpace(research.targetPerson))
-            //         {
-            //             result.AddError("技術移轉、委託研究或驗證費：請輸入對象");
-            //             break;
-            //         }
-            //
-            //         // price 可以為 0，不檢查
-            //     }
-            // }
+            // 4. 驗證技術移轉、委託研究或驗證費（選填，但有填就檢查）
+            if (researchData != null && researchData.Count > 0)
+            {
+                // 特殊處理：如果只有一行且完全空白，則跳過檢查（因為此項目為選填）
+                if (researchData.Count == 1)
+                {
+                    var singleRow = researchData[0];
+                    bool isCompletelyEmpty = string.IsNullOrWhiteSpace(singleRow.category) &&
+                                            string.IsNullOrWhiteSpace(singleRow.dateStart) &&
+                                            string.IsNullOrWhiteSpace(singleRow.dateEnd) &&
+                                            string.IsNullOrWhiteSpace(singleRow.projectName) &&
+                                            string.IsNullOrWhiteSpace(singleRow.targetPerson) &&
+                                            singleRow.price <= 0;
+
+                    if (isCompletelyEmpty)
+                    {
+                        // 跳過檢查，因為此項目為選填
+                    }
+                    else
+                    {
+                        // 有填寫任一欄位，則檢查必填欄位
+                        List<string> missingFields = new List<string>();
+
+                        if (string.IsNullOrWhiteSpace(singleRow.category))
+                        {
+                            if (!missingFields.Contains("類別"))
+                                missingFields.Add("「類別」");
+                        }
+
+                        if (string.IsNullOrWhiteSpace(singleRow.projectName))
+                        {
+                            if (!missingFields.Contains("委託項目名稱"))
+                                missingFields.Add("「委託項目名稱」");
+                        }
+
+                        if (string.IsNullOrWhiteSpace(singleRow.targetPerson))
+                        {
+                            if (!missingFields.Contains("委託對象"))
+                                missingFields.Add("「委託對象」");
+                        }
+
+                        if (missingFields.Count > 0)
+                        {
+                            result.AddError($"明細表「3.技術移轉、委託研究或驗證費」：請輸入{string.Join("、", missingFields)}");
+                        }
+                    }
+                }
+                else
+                {
+                    // 多行時，每一行都必須填寫完整
+                    List<string> missingFields = new List<string>();
+                    foreach (var research in researchData)
+                    {
+                        if (string.IsNullOrWhiteSpace(research.category))
+                        {
+                            if (!missingFields.Contains("類別"))
+                                missingFields.Add("「類別」");
+                        }
+
+                        if (string.IsNullOrWhiteSpace(research.projectName))
+                        {
+                            if (!missingFields.Contains("委託項目名稱"))
+                                missingFields.Add("「委託項目名稱」");
+                        }
+
+                        if (string.IsNullOrWhiteSpace(research.targetPerson))
+                        {
+                            if (!missingFields.Contains("委託對象"))
+                                missingFields.Add("「委託對象」");
+                        }
+
+                        // dateStart, dateEnd, price 可以為空或 0，不檢查
+                    }
+
+                    if (missingFields.Count > 0)
+                    {
+                        result.AddError($"明細表「3.技術移轉、委託研究或驗證費」：請輸入{string.Join("、", missingFields)}");
+                    }
+                }
+            }
 
             // 5. 驗證國內差旅費（選填，但有填就檢查）
             if (travelData != null && travelData.Count > 0)
@@ -424,6 +486,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                 List<string> missingFields = new List<string>();
                 foreach (var travel in travelData)
                 {
+                    // 所有行都必須填寫完整，包含空白行
                     if (string.IsNullOrWhiteSpace(travel.reason))
                     {
                         if (!missingFields.Contains("出差事由"))
@@ -451,6 +514,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                 List<string> missingFields = new List<string>();
                 foreach (var foreignTravel in foreignTravelData)
                 {
+                    // 所有行都必須填寫完整，包含空白行
                     if (string.IsNullOrWhiteSpace(foreignTravel.country))
                     {
                         if (!missingFields.Contains("擬前往國家或地區"))
@@ -463,7 +527,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                             missingFields.Add("「主要會議議題」");
                     }
 
-                    // days, people, transportFee, livingFee 可以為 0，不檢查
+                    // days, people, transportFee, livingFee, conference 可以為空或 0，不檢查
                 }
 
                 if (missingFields.Count > 0)
@@ -564,9 +628,33 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                 OFS_SciFundingHelper.ReplaceMaterialList(materialData, ProjectID);
             }
 
-          
-            OFS_SciFundingHelper.ReplaceResearchFees(researchData, ProjectID);
-            
+            // 技術移轉、委託研究或驗證費：檢查是否只有一行且完全空白
+            if (researchData != null && researchData.Count == 1)
+            {
+                var singleRow = researchData[0];
+                bool isCompletelyEmpty = string.IsNullOrWhiteSpace(singleRow.category) &&
+                                        string.IsNullOrWhiteSpace(singleRow.dateStart) &&
+                                        string.IsNullOrWhiteSpace(singleRow.dateEnd) &&
+                                        string.IsNullOrWhiteSpace(singleRow.projectName) &&
+                                        string.IsNullOrWhiteSpace(singleRow.targetPerson) &&
+                                        singleRow.price <= 0;
+
+                if (isCompletelyEmpty)
+                {
+                    // 完全空白：傳空陣列，只執行 DELETE，不 INSERT
+                    OFS_SciFundingHelper.ReplaceResearchFees(new List<ResearchFeeRow>(), ProjectID);
+                }
+                else
+                {
+                    // 有資料：正常儲存
+                    OFS_SciFundingHelper.ReplaceResearchFees(researchData, ProjectID);
+                }
+            }
+            else if (researchData != null && researchData.Count > 0)
+            {
+                // 多行：正常儲存
+                OFS_SciFundingHelper.ReplaceResearchFees(researchData, ProjectID);
+            }
 
             if (travelData != null && travelData.Count > 0)
             {
@@ -841,28 +929,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
     {
         try
         {
-            // 載入研究費資料到 ASP.NET 控件
-            var techTransferData = researchData.FirstOrDefault(r => r.category == "技術移轉");
-            if (techTransferData != null)
-            {
-                // taiwan-date-picker 套件會自動處理民國年顯示和西元年儲存
-                txtDate1Start.Text = techTransferData.dateStart;
-                txtDate1End.Text = techTransferData.dateEnd;
-                ResearchFeesName1.Text = techTransferData.projectName;
-                ResearchFeesPersonName1.Text = techTransferData.targetPerson;
-                ResearchFeesPrice1.Text = techTransferData.price.ToString();
-            }
-
-            var researchData2 = researchData.FirstOrDefault(r => r.category == "委託研究");
-            if (researchData2 != null)
-            {
-                // taiwan-date-picker 套件會自動處理民國年顯示和西元年儲存
-                txtDate2Start.Text = researchData2.dateStart;
-                txtDate2End.Text = researchData2.dateEnd;
-                ResearchFeesName2.Text = researchData2.projectName;
-                ResearchFeesPersonName2.Text = researchData2.targetPerson;
-                ResearchFeesPrice2.Text = researchData2.price.ToString();
-            }
+            // 研究費資料已改為動態行，由前端 JavaScript 處理，不需要在此載入
 
             // 載入租金資料到 ASP.NET 控件
             var rentData = otherRentData.FirstOrDefault(r => r.item == "租金");
@@ -1176,48 +1243,18 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
     }
 
     /// <summary>
-    /// 從隱藏欄位取得研究費資料
+    /// 從隱藏欄位取得研究費資料（支援動態行數）
     /// </summary>
     private List<ResearchFeeRow> GetResearchDataFromHidden()
     {
         var researchList = new List<ResearchFeeRow>();
         try
         {
-            // 從表單控制項取得技術移轉和委託研究資料
-            if (!string.IsNullOrEmpty(ResearchFeesPrice1.Text))
+            // 從隱藏欄位讀取 JSON 資料
+            if (!string.IsNullOrEmpty(hdnResearchData.Value))
             {
-                // 從隱藏欄位讀取西元年日期，如果沒有則使用顯示欄位的值
-                string date1Start = hdnDate1Start.Value;
-
-                string date1End = hdnDate1End.Value;
-
-                researchList.Add(new ResearchFeeRow
-                {
-                    category = "技術移轉",
-                    dateStart = date1Start,
-                    dateEnd = date1End,
-                    projectName = ResearchFeesName1.Text,
-                    targetPerson = ResearchFeesPersonName1.Text,
-                    price = decimal.TryParse(ResearchFeesPrice1.Text, out decimal price1) ? price1 : 0
-                });
-            }
-
-            if (!string.IsNullOrEmpty(ResearchFeesPrice2.Text))
-            {
-                // 從隱藏欄位讀取西元年日期，如果沒有則使用顯示欄位的值
-                string date2Start = hdnDate2Start.Value;
-
-                string date2End = hdnDate2End.Value;
-
-                researchList.Add(new ResearchFeeRow
-                {
-                    category = "委託研究",
-                    dateStart = date2Start,
-                    dateEnd = date2End,
-                    projectName = ResearchFeesName2.Text,
-                    targetPerson = ResearchFeesPersonName2.Text,
-                    price = decimal.TryParse(ResearchFeesPrice2.Text, out decimal price2) ? price2 : 0
-                });
+                var serializer = new JavaScriptSerializer();
+                researchList = serializer.Deserialize<List<ResearchFeeRow>>(hdnResearchData.Value) ?? new List<ResearchFeeRow>();
             }
         }
         catch (Exception ex)
@@ -1406,7 +1443,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                 });
 
                 // 處理表格欄位隱藏
-                $('#tab3 #point1Table, #tab3 #point2Table, #tab3 #travelTable, #tab3 #otherTable').addClass('hide-col-last');
+                $('#tab3 #point1Table, #tab3 #point2Table, #tab3 #travelTable, #tab3 #otherTable,#point3Table,#foreignTravelTable').addClass('hide-col-last');
                 });
             </script>";
             Page.ClientScript.RegisterStartupScript(this.GetType(), "AddClassToTable", script);
@@ -1563,18 +1600,8 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
                 OtherRentData = otherRentData,
                 TotalFeesData = totalFeesData,
 
-                // ASP.NET 控制項資料
-                TxtDate1Start = txtDate1Start.Text,
-                TxtDate1End = txtDate1End.Text,
-                ResearchFeesName1 = ResearchFeesName1.Text,
-                ResearchFeesPersonName1 = ResearchFeesPersonName1.Text,
-                ResearchFeesPrice1 = ResearchFeesPrice1.Text,
-
-                TxtDate2Start = txtDate2Start.Text,
-                TxtDate2End = txtDate2End.Text,
-                ResearchFeesName2 = ResearchFeesName2.Text,
-                ResearchFeesPersonName2 = ResearchFeesPersonName2.Text,
-                ResearchFeesPrice2 = ResearchFeesPrice2.Text,
+                // ASP.NET 控制項資料（僅保留固定欄位）
+                // 研究費資料已改為動態行，不需要在此保存 ASP.NET 控制項資料
 
                 RentCash = rentCash.Text,
                 RentDescription = rentDescription.Text,
@@ -1707,54 +1734,7 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
     {
         try
         {
-            // 載入研究費資料到 ASP.NET 控件（與 LoadFormControls 相同邏輯）
-            var techTransferData = researchData.FirstOrDefault(r => r.category == "技術移轉");
-            if (techTransferData != null)
-            {
-                txtDate1Start.Text = techTransferData.dateStart ?? "";
-                txtDate1End.Text = techTransferData.dateEnd ?? "";
-                ResearchFeesName1.Text = techTransferData.projectName ?? "";
-                ResearchFeesPersonName1.Text = techTransferData.targetPerson ?? "";
-                ResearchFeesPrice1.Text = techTransferData.price.ToString();
-            }
-            else
-            {
-                // 如果資料物件中沒有，從 tempDataDynamic 恢復
-                if (tempDataDynamic.TxtDate1Start != null)
-                    txtDate1Start.Text = tempDataDynamic.TxtDate1Start.ToString();
-                if (tempDataDynamic.TxtDate1End != null)
-                    txtDate1End.Text = tempDataDynamic.TxtDate1End.ToString();
-                if (tempDataDynamic.ResearchFeesName1 != null)
-                    ResearchFeesName1.Text = tempDataDynamic.ResearchFeesName1.ToString();
-                if (tempDataDynamic.ResearchFeesPersonName1 != null)
-                    ResearchFeesPersonName1.Text = tempDataDynamic.ResearchFeesPersonName1.ToString();
-                if (tempDataDynamic.ResearchFeesPrice1 != null)
-                    ResearchFeesPrice1.Text = tempDataDynamic.ResearchFeesPrice1.ToString();
-            }
-
-            var researchData2 = researchData.FirstOrDefault(r => r.category == "委託研究");
-            if (researchData2 != null)
-            {
-                txtDate2Start.Text = researchData2.dateStart ?? "";
-                txtDate2End.Text = researchData2.dateEnd ?? "";
-                ResearchFeesName2.Text = researchData2.projectName ?? "";
-                ResearchFeesPersonName2.Text = researchData2.targetPerson ?? "";
-                ResearchFeesPrice2.Text = researchData2.price.ToString();
-            }
-            else
-            {
-                // 如果資料物件中沒有，從 tempDataDynamic 恢復
-                if (tempDataDynamic.TxtDate2Start != null)
-                    txtDate2Start.Text = tempDataDynamic.TxtDate2Start.ToString();
-                if (tempDataDynamic.TxtDate2End != null)
-                    txtDate2End.Text = tempDataDynamic.TxtDate2End.ToString();
-                if (tempDataDynamic.ResearchFeesName2 != null)
-                    ResearchFeesName2.Text = tempDataDynamic.ResearchFeesName2.ToString();
-                if (tempDataDynamic.ResearchFeesPersonName2 != null)
-                    ResearchFeesPersonName2.Text = tempDataDynamic.ResearchFeesPersonName2.ToString();
-                if (tempDataDynamic.ResearchFeesPrice2 != null)
-                    ResearchFeesPrice2.Text = tempDataDynamic.ResearchFeesPrice2.ToString();
-            }
+            // 研究費資料已改為動態行，由前端 JavaScript 處理（透過 window.restoredData.research）
 
             // 載入租金資料到 ASP.NET 控件
             var rentData = otherRentData.FirstOrDefault(r => r.item == "租金");

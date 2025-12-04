@@ -501,7 +501,12 @@ public class OFS_SciFundingHelper
         }
     }
 
-    public static List<ResearchFeeRow> GetResearchFeesList(string ProjectID)
+    /// <summary>
+    /// 取得研究費資料
+    /// </summary>
+    /// <param name="ProjectID">專案編號</param>
+    /// <param name="feeCategory">費用類別 (選填，不傳入則查詢全部)</param>
+    public static List<ResearchFeeRow> GetResearchFeesList(string ProjectID, string feeCategory = null)
     {
         using (DbHelper db = new DbHelper())
         {
@@ -510,15 +515,23 @@ public class OFS_SciFundingHelper
                 db.CommandText = @"
                 SELECT ProjectID, FeeCategory, StartDate, EndDate, Name, PersonName, Price
                 FROM OFS_SCI_PersonnelCost_ResearchFees
-                WHERE ProjectID = @ProjectID
-                ORDER BY FeeCategory";
-                
+                WHERE ProjectID = @ProjectID ";
+
                 db.Parameters.Clear();
                 db.Parameters.Add("@ProjectID", ProjectID);
-                
+
+                // 如果有帶入類別，加入類別條件
+                if (!string.IsNullOrWhiteSpace(feeCategory))
+                {
+                    db.CommandText += "AND FeeCategory = @FeeCategory ";
+                    db.Parameters.Add("@FeeCategory", feeCategory);
+                }
+
+                db.CommandText += "ORDER BY FeeCategory";
+
                 DataTable dt = db.GetTable();
                 List<ResearchFeeRow> feeList = new List<ResearchFeeRow>();
-                
+
                 foreach (DataRow row in dt.Rows)
                 {
                     var fee = new ResearchFeeRow
@@ -532,7 +545,7 @@ public class OFS_SciFundingHelper
                     };
                     feeList.Add(fee);
                 }
-                
+
                 return feeList;
             }
             catch (Exception ex)

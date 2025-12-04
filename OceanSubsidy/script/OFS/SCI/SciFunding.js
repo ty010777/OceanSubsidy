@@ -232,14 +232,79 @@ function initializeAllDatePickers() {
         }, 0);
     };
 
-    // 初始化技術移轉期間日期選擇器
-    $('input[id*="txtDate1Start"], input[id*="txtDate1End"]').daterangepicker(datePickerConfig)
+    // 初始化技術移轉、委託研究期間日期選擇器（動態行）
+    $('input[id*="ResearchDateStart"], input[id*="ResearchDateEnd"]').daterangepicker(datePickerConfig)
         .on('apply.daterangepicker', handleDateSelection)
         .on('cancel.daterangepicker', handleDateClear)
         .on('show.daterangepicker', adjustButtonLayout);
+}
 
-    // 初始化委託研究期間日期選擇器
-    $('input[id*="txtDate2Start"], input[id*="txtDate2End"]').daterangepicker(datePickerConfig)
+// 為新增的研究費用日期選擇器初始化 daterangepicker
+function initializeNewResearchDatePickers(rowIndex) {
+    if (typeof $.fn.daterangepicker === 'undefined') return;
+
+    const datePickerConfig = {
+        singleDatePicker: true,
+        showDropdowns: true,
+        autoUpdateInput: false,
+        autoApply: false,
+        locale: {
+            format: 'tYY/MM/DD',
+            cancelLabel: '清除',
+            applyLabel: '確定'
+        }
+    };
+
+    const handleDateSelection = function(ev, picker) {
+        const selectedMoment = moment(picker.startDate);
+        const displayDate = selectedMoment.format('tYY/MM/DD');
+        const gregorianDate = selectedMoment.format('YYYY/MM/DD');
+
+        $(this).val(displayDate);
+        $(this).data('gregorian-date', gregorianDate);
+
+        const inputId = $(this).attr('id');
+        if (inputId) {
+            const hiddenFieldId = inputId.replace('ResearchDateStart', 'hdnResearchDateStart')
+                                         .replace('ResearchDateEnd', 'hdnResearchDateEnd');
+            const hiddenField = $(`#${hiddenFieldId}`);
+            if (hiddenField.length > 0) {
+                hiddenField.val(gregorianDate);
+            }
+        }
+    };
+
+    const handleDateClear = function(ev, picker) {
+        $(this).val('');
+        $(this).data('gregorian-date', '');
+
+        const inputId = $(this).attr('id');
+        if (inputId) {
+            const hiddenFieldId = inputId.replace('ResearchDateStart', 'hdnResearchDateStart')
+                                         .replace('ResearchDateEnd', 'hdnResearchDateEnd');
+            const hiddenField = $(`#${hiddenFieldId}`);
+            if (hiddenField.length > 0) {
+                hiddenField.val('');
+            }
+        }
+    };
+
+    const adjustButtonLayout = function(ev, picker) {
+        setTimeout(function() {
+            $('.daterangepicker .drp-buttons').css({
+                'display': 'flex',
+                'flex-direction': 'row',
+                'justify-content': 'flex-end',
+                'gap': '10px'
+            });
+            $('.daterangepicker .drp-buttons .btn').css({
+                'float': 'none',
+                'margin': '0'
+            });
+        }, 0);
+    };
+
+    $(`#ResearchDateStart${rowIndex}, #ResearchDateEnd${rowIndex}`).daterangepicker(datePickerConfig)
         .on('apply.daterangepicker', handleDateSelection)
         .on('cancel.daterangepicker', handleDateClear)
         .on('show.daterangepicker', adjustButtonLayout);
@@ -248,7 +313,7 @@ function initializeAllDatePickers() {
 
 // 收集所有表單資料並填入隱藏欄位
 function collectAllFormData() {
-    // 收集人員資料
+    // 收集人員資料（所有行都收集，包含空白行）
     const personnelData = [];
     document.querySelectorAll('.person tbody tr:not(.total-row)').forEach(row => {
         const nameInput = row.querySelector('input[id*="personName"]');
@@ -256,16 +321,15 @@ function collectAllFormData() {
         const titleSelect = row.querySelector('select[id*="ddlPerson"]');
         const salaryInput = row.querySelector('input[id*="personSalary"]');
         const monthsInput = row.querySelector('input[id*="personMonths"]');
-        
-        if (nameInput && nameInput.value.trim()) {
-            personnelData.push({
-                name: nameInput.value,
-                stay: stayCheckbox ? stayCheckbox.checked : false,
-                title: titleSelect ? titleSelect.value : "",
-                salary: parseFloat(salaryInput?.value?.replace(/,/g, '') || '0'),
-                months: parseFloat(monthsInput?.value || '0')
-            });
-        }
+
+        // 所有行都收集，包含姓名空白的行
+        personnelData.push({
+            name: nameInput ? nameInput.value : "",
+            stay: stayCheckbox ? stayCheckbox.checked : false,
+            title: titleSelect ? titleSelect.value : "",
+            salary: parseFloat(salaryInput?.value?.replace(/,/g, '') || '0'),
+            months: parseFloat(monthsInput?.value || '0')
+        });
     });
     
     // 收集材料資料
@@ -287,7 +351,29 @@ function collectAllFormData() {
         });
         
     });
-    
+
+    // 收集研究費用資料（技術移轉、委託研究）
+    const researchData = [];
+    document.querySelectorAll('.ResearchFees tbody tr:not(.total-row)').forEach(row => {
+        const categorySelect = row.querySelector('select[id*="ResearchCategory"]');
+        const startDateInput = row.querySelector('input[id*="ResearchDateStart"]');
+        const endDateInput = row.querySelector('input[id*="ResearchDateEnd"]');
+        const hiddenStartDate = row.querySelector('input[id*="hdnResearchDateStart"]');
+        const hiddenEndDate = row.querySelector('input[id*="hdnResearchDateEnd"]');
+        const nameInput = row.querySelector('input[id*="ResearchFeesName"]');
+        const personInput = row.querySelector('input[id*="ResearchFeesPersonName"]');
+        const priceInput = row.querySelector('input[id*="ResearchFeesPrice"]');
+
+        researchData.push({
+            category: categorySelect ? categorySelect.value : "",
+            dateStart: hiddenStartDate ? hiddenStartDate.value : "",
+            dateEnd: hiddenEndDate ? hiddenEndDate.value : "",
+            projectName: nameInput ? nameInput.value : "",
+            targetPerson: personInput ? personInput.value : "",
+            price: parseFloat(priceInput?.value?.replace(/,/g, '') || '0')
+        });
+    });
+
     // 收集差旅費資料
     const travelData = [];
     document.querySelectorAll('.travel tbody tr:not(.total-row)').forEach(row => {
@@ -420,6 +506,7 @@ function collectAllFormData() {
     // 將資料填入隱藏欄位
     $('#hdnPersonnelData').val(JSON.stringify(personnelData));
     $('#hdnMaterialData').val(JSON.stringify(materialData));
+    $('#hdnResearchData').val(JSON.stringify(researchData));
     $('#hdnTravelData').val(JSON.stringify(travelData));
     $('#hdnForeignTravelData').val(JSON.stringify(foreignTravelData));
     $('#hdnOtherData').val(JSON.stringify(otherData));
@@ -712,15 +799,94 @@ function M_addNewRow() {
 // 3.技術移轉、委託研究或驗證費
 function calculateResearch() {
     let total = 0;
-    document.querySelectorAll('.money').forEach(input => {
-        let raw = input.value.replace(/,/g, '');
-        let val = parseInt(raw) || 0;
-        input.value = val.toLocaleString();
-        total += val;
+    const dataRows = document.querySelectorAll('.ResearchFees tbody tr:not(.total-row)');
+
+    dataRows.forEach((row) => {
+        const priceInput = row.querySelector('input[id*="ResearchFeesPrice"]');
+
+        if (priceInput) {
+            const raw = priceInput.value.replace(/,/g, '');
+            const val = parseInt(raw) || 0;
+            priceInput.value = val > 0 ? val.toLocaleString() : '';
+            total += val;
+        }
     });
 
     document.getElementById("ResearchFeesTotal").innerText = total.toLocaleString();
     updateBudgetSummary();
+}
+
+function R_deleteRow(button) {
+    const table = document.querySelector('.ResearchFees tbody');
+    const dataRows = table.querySelectorAll('tr:not(.total-row)');
+
+    if (dataRows.length <= 1) {
+        Swal.fire({
+            icon: 'warning',
+            title: '無法刪除',
+            text: '至少需保留一行資料',
+            confirmButtonText: '確定'
+        });
+        return;
+    }
+
+    Swal.fire({
+        icon: 'question',
+        title: '確定要刪除嗎？',
+        text: '確定要刪除此行資料嗎？',
+        showCancelButton: true,
+        confirmButtonText: '確定',
+        cancelButtonText: '取消'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            button.closest('tr').remove();
+            calculateResearch();
+        }
+    });
+}
+
+function R_addNewRow() {
+    const table = document.querySelector('.ResearchFees tbody');
+    const totalRow = table.querySelector('.total-row');
+    const rowCount = table.children.length;
+
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = `
+        <td>
+            <select id="ResearchCategory${rowCount}" class="form-select">
+                <option value="">請選擇</option>
+                <option value="技術移轉">技術移轉</option>
+                <option value="委託研究">委託研究</option>
+            </select>
+        </td>
+        <td class="text-center">
+            <div class="input-group" style="width: 400px;">
+                <input type="text" id="ResearchDateStart${rowCount}" class="form-control taiwan-date-picker" placeholder="請選擇開始日期" readonly />
+                <input type="hidden" id="hdnResearchDateStart${rowCount}" />
+                <span class="input-group-text">至</span>
+                <input type="text" id="ResearchDateEnd${rowCount}" class="form-control taiwan-date-picker" placeholder="請選擇結束日期" readonly />
+                <input type="hidden" id="hdnResearchDateEnd${rowCount}" />
+            </div>
+        </td>
+        <td>
+            <input type="text" id="ResearchFeesName${rowCount}" class="form-control" placeholder="請輸入" />
+        </td>
+        <td>
+            <input type="text" id="ResearchFeesPersonName${rowCount}" class="form-control" placeholder="請輸入" />
+        </td>
+        <td>
+            <input type="text" id="ResearchFeesPrice${rowCount}" class="form-control text-end money" placeholder="請輸入" onkeypress="return event.charCode != 45" onblur="calculateResearch()" />
+        </td>
+        <td>
+            <button type="button" class="btn btn-sm btn-teal" onclick="R_deleteRow(this)"><i class="fas fa-trash-alt"></i></button>
+            <button type="button" class="btn btn-sm btn-teal" onclick="R_addNewRow()"><i class="fas fa-plus"></i></button>
+        </td>
+    `;
+
+    table.insertBefore(newRow, totalRow);
+
+    // 為新增的日期選擇器初始化 daterangepicker
+    initializeNewResearchDatePickers(rowCount);
 }
 
 // 4.國內差旅費
@@ -1379,63 +1545,54 @@ function loadResearchData(researchData) {
     if (!researchData || researchData.length === 0) return Promise.resolve();
 
     return new Promise((resolve) => {
-        researchData.forEach((research) => {
-            if (research.category === '技術移轉') {
-                const startDateInput = document.getElementById('txtDate1Start');
-                const endDateInput = document.getElementById('txtDate1End');
-                const nameInput = document.getElementById('ResearchFeesName1');
-                const personInput = document.getElementById('ResearchFeesPersonName1');
-                const priceInput = document.getElementById('ResearchFeesPrice1');
+        const table = document.querySelector('.ResearchFees tbody');
+        const totalRow = table.querySelector('.total-row');
 
-                // 處理日期格式 - 將西元年轉換為民國年顯示
-                if (startDateInput && research.dateStart) {
-                    const displayDate = convertToMinguoFormat(research.dateStart);
-                    startDateInput.value = displayDate;
-                    $(startDateInput).data('gregorian-date', research.dateStart);
-                    // 設定隱藏欄位
-                    $('#hdnDate1Start').val(research.dateStart);
-                }
-                if (endDateInput && research.dateEnd) {
-                    const displayDate = convertToMinguoFormat(research.dateEnd);
-                    endDateInput.value = displayDate;
-                    $(endDateInput).data('gregorian-date', research.dateEnd);
-                    // 設定隱藏欄位
-                    $('#hdnDate1End').val(research.dateEnd);
-                }
-                if (nameInput) nameInput.value = research.projectName || '';
-                if (personInput) personInput.value = research.targetPerson || '';
-                if (priceInput) priceInput.value = research.price || '0';
-            } else if (research.category === '委託研究') {
-                const startDateInput = document.getElementById('txtDate2Start');
-                const endDateInput = document.getElementById('txtDate2End');
-                const nameInput = document.getElementById('ResearchFeesName2');
-                const personInput = document.getElementById('ResearchFeesPersonName2');
-                const priceInput = document.getElementById('ResearchFeesPrice2');
+        // 清除所有現有的資料行（只保留總計行）
+        const existingRows = table.querySelectorAll('tr:not(.total-row)');
+        existingRows.forEach(row => row.remove());
 
-                // 處理日期格式 - 將西元年轉換為民國年顯示
-                if (startDateInput && research.dateStart) {
-                    const displayDate = convertToMinguoFormat(research.dateStart);
-                    startDateInput.value = displayDate;
-                    $(startDateInput).data('gregorian-date', research.dateStart);
-                    // 設定隱藏欄位
-                    $('#hdnDate2Start').val(research.dateStart);
-                }
-                if (endDateInput && research.dateEnd) {
-                    const displayDate = convertToMinguoFormat(research.dateEnd);
-                    endDateInput.value = displayDate;
-                    $(endDateInput).data('gregorian-date', research.dateEnd);
-                    // 設定隱藏欄位
-                    $('#hdnDate2End').val(research.dateEnd);
-                }
-                if (nameInput) nameInput.value = research.projectName || '';
-                if (personInput) personInput.value = research.targetPerson || '';
-                if (priceInput) priceInput.value = research.price || '0';
-            }
-        });
+        // 新增所有需要的行（包含第一行）
+        for (let i = 0; i < researchData.length; i++) {
+            R_addNewRow();
+        }
 
-        // 載入完成後同步隱藏欄位
+        // 延遲填入資料，確保所有行都已建立
         setTimeout(() => {
-            syncLoadedDatesToHiddenFields();
+            researchData.forEach((research, index) => {
+                const rowIndex = index + 1;
+
+                const categorySelect = document.getElementById(`ResearchCategory${rowIndex}`);
+                const startDateInput = document.getElementById(`ResearchDateStart${rowIndex}`);
+                const endDateInput = document.getElementById(`ResearchDateEnd${rowIndex}`);
+                const hiddenStartDate = document.getElementById(`hdnResearchDateStart${rowIndex}`);
+                const hiddenEndDate = document.getElementById(`hdnResearchDateEnd${rowIndex}`);
+                const nameInput = document.getElementById(`ResearchFeesName${rowIndex}`);
+                const personInput = document.getElementById(`ResearchFeesPersonName${rowIndex}`);
+                const priceInput = document.getElementById(`ResearchFeesPrice${rowIndex}`);
+
+                // 設定類別
+                if (categorySelect) categorySelect.value = research.category || '';
+
+                // 處理日期格式 - 將西元年轉換為民國年顯示
+                if (startDateInput && research.dateStart) {
+                    const displayDate = convertToMinguoFormat(research.dateStart);
+                    startDateInput.value = displayDate;
+                    $(startDateInput).data('gregorian-date', research.dateStart);
+                    if (hiddenStartDate) hiddenStartDate.value = research.dateStart;
+                }
+                if (endDateInput && research.dateEnd) {
+                    const displayDate = convertToMinguoFormat(research.dateEnd);
+                    endDateInput.value = displayDate;
+                    $(endDateInput).data('gregorian-date', research.dateEnd);
+                    if (hiddenEndDate) hiddenEndDate.value = research.dateEnd;
+                }
+
+                if (nameInput) nameInput.value = research.projectName || '';
+                if (personInput) personInput.value = research.targetPerson || '';
+                if (priceInput) priceInput.value = research.price || '0';
+            });
+
             resolve();
         }, 50);
     });
