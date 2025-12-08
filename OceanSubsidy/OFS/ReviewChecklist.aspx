@@ -171,100 +171,28 @@
                             </th>
                             <th width="50">年度</th>
                             <th width="100">
-                                <div class="hstack align-items-center justify-content-center">
-                                    <span>類別</span>
-
-                                    <!-- 排序按鈕： -->
-                                    <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
-                                    <button class="sort down">
-                                        <i class="fa-solid fa-sort-up"></i>
-                                        <i class="fa-solid fa-sort-down"></i>
-                                    </button>
-                                </div>
+                                <span>類別</span>
                             </th>
                             <th width="140">
-                                <div class="hstack align-items-center">
-                                    <span>計畫編號</span>
-
-                                    <!-- 排序按鈕： -->
-                                    <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
-                                    <button class="sort up">
-                                        <i class="fa-solid fa-sort-up"></i>
-                                        <i class="fa-solid fa-sort-down"></i>
-                                    </button>
-                                </div>
+                                <span>計畫編號</span>
                             </th>
                             <th width="220">
-                                <div class="hstack align-items-center">
-                                    <span>計畫名稱</span>
-
-                                    <!-- 排序按鈕： -->
-                                    <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
-                                    <button class="sort">
-                                        <i class="fa-solid fa-sort-up"></i>
-                                        <i class="fa-solid fa-sort-down"></i>
-                                    </button>
-                                </div>
+                                <span>計畫名稱</span>
                             </th>
                             <th>
-                                <div class="hstack align-items-center">
-                                    <span>申請單位</span>
-
-                                    <!-- 排序按鈕： -->
-                                <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
-                                  <button class="sort">
-                                        <i class="fa-solid fa-sort-up"></i>
-                                    <i class="fa-solid fa-sort-down"></i>
-                                  </button>
-                                </div>
+                                <span>申請單位</span>
                             </th>
                             <th width="150">
-                                <div class="hstack align-items-center justify-content-center">
                                 <span>申請經費</span>
-
-                                    <!-- 排序按鈕： -->
-                                    <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
-                                    <button class="sort">
-                                        <i class="fa-solid fa-sort-up"></i>
-                                        <i class="fa-solid fa-sort-down"></i>
-                                    </button>
-                                </div>
                             </th>
                             <th>
-                                <div class="hstack align-items-center justify-content-center">
-                                    <span>狀態</span>
-
-                                    <!-- 排序按鈕： -->
-                                    <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
-                                    <button class="sort">
-                                        <i class="fa-solid fa-sort-up"></i>
-                                        <i class="fa-solid fa-sort-down"></i>
-                                    </button>
-                                </div>
+                                <span>狀態</span>
                             </th>
                             <th>
-                                <div class="hstack align-items-center justify-content-center">
-                                    <span>補正件期限</span>
-
-                                    <!-- 排序按鈕： -->
-                                    <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
-                                    <button class="sort">
-                                        <i class="fa-solid fa-sort-up"></i>
-                                        <i class="fa-solid fa-sort-down"></i>
-                                    </button>
-                                </div>
+                                <span>補正補件期限</span>
                             </th>
                             <th>
-                                <div class="hstack align-items-center justify-content-center">
-                                    <span>承辦人員</span>
-
-                                    <!-- 排序按鈕： -->
-                                    <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
-                                    <button class="sort">
-                                        <i class="fa-solid fa-sort-up"></i>
-                                        <i class="fa-solid fa-sort-down"></i>
-                                    </button>
-                                </div>
+                                <span>承辦人員</span>
                             </th>
                             <th>功能</th>
                         </tr>
@@ -904,52 +832,16 @@
 
                           <th width="80">年度</th>
                           <th width="140">
-                              <div class="hstack align-items-center">
-                                  <span>計畫編號</span>
-
-                                  <!-- 排序按鈕： -->
-                                  <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
-                                  <button class="sort up">
-                                      <i class="fa-solid fa-sort-up"></i>
-                                      <i class="fa-solid fa-sort-down"></i>
-                                  </button>
-                              </div>
+                              <span>計畫編號</span>
                           </th>
                           <th width="100">
-                              <div class="hstack align-items-center justify-content-center">
-                                  <span>類別</span>
-
-                                  <!-- 排序按鈕： -->
-                                  <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
-                                  <button class="sort down">
-                                      <i class="fa-solid fa-sort-up"></i>
-                                      <i class="fa-solid fa-sort-down"></i>
-                                  </button>
-                              </div>
+                              <span>類別</span>
                           </th>
                           <th width="300">
-                              <div class="hstack align-items-center">
-                                  <span>計畫名稱</span>
-
-                                  <!-- 排序按鈕： -->
-                                  <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
-                                  <button class="sort">
-                                      <i class="fa-solid fa-sort-up"></i>
-                                      <i class="fa-solid fa-sort-down"></i>
-                                  </button>
-                              </div>
+                              <span>計畫名稱</span>
                           </th>
                           <th>
-                              <div class="hstack align-items-center">
-                                  <span>申請單位</span>
-
-                                  <!-- 排序按鈕： -->
-                              <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
-                                <button class="sort">
-                                      <i class="fa-solid fa-sort-up"></i>
-                                  <i class="fa-solid fa-sort-down"></i>
-                                </button>
-                              </div>
+                              <span>申請單位</span>
                           </th>
                           <th width="120">操作</th>
                       </tr>
@@ -1064,52 +956,16 @@
 
                           <th width="50">年度</th>
                           <th width="100">
-                              <div class="hstack align-items-center justify-content-center">
-                                  <span>類別</span>
-
-                                  <!-- 排序按鈕： -->
-                                  <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
-                                  <button class="sort down">
-                                      <i class="fa-solid fa-sort-up"></i>
-                                      <i class="fa-solid fa-sort-down"></i>
-                                  </button>
-                              </div>
+                              <span>類別</span>
                           </th>
                           <th width="140">
-                              <div class="hstack align-items-center">
-                                  <span>計畫編號</span>
-
-                                  <!-- 排序按鈕： -->
-                                  <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
-                                  <button class="sort up">
-                                      <i class="fa-solid fa-sort-up"></i>
-                                      <i class="fa-solid fa-sort-down"></i>
-                                  </button>
-                              </div>
+                              <span>計畫編號</span>
                           </th>
                           <th width="300">
-                              <div class="hstack align-items-center">
-                                  <span>計畫名稱</span>
-
-                                  <!-- 排序按鈕： -->
-                                  <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
-                                  <button class="sort">
-                                      <i class="fa-solid fa-sort-up"></i>
-                                      <i class="fa-solid fa-sort-down"></i>
-                                  </button>
-                              </div>
+                              <span>計畫名稱</span>
                           </th>
                           <th>
-                              <div class="hstack align-items-center">
-                                  <span>申請單位</span>
-
-                                  <!-- 排序按鈕： -->
-                              <!-- 樣式 class="sort down" 表示降序、class="sort up" 表示升序、class="sort" 表示預設 -->
-                                <button class="sort">
-                                      <i class="fa-solid fa-sort-up"></i>
-                                  <i class="fa-solid fa-sort-down"></i>
-                                </button>
-                              </div>
+                              <span>申請單位</span>
                           </th>
                           <th width="150">
                               <div class="hstack align-items-center">

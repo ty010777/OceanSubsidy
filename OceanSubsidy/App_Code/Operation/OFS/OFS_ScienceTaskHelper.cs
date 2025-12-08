@@ -461,7 +461,9 @@ public class OFS_ScienceTaskHelper
                 SELECT TOP(1) ApplyEndDate
                 FROM [OCA_OceanSubsidy].[dbo].[OFS_GrantType]
                 WHERE TypeCode = 'SCI'
-                ORDER BY TypeID DESC";
+                  AND DATEADD(DAY, -1, GETDATE()) >= ApplyStartDate
+                  AND DATEADD(DAY, -1, GETDATE()) <= ApplyEndDate
+                ORDER BY TypeID DESC;";
 
             var dt = db.GetTable();
 
@@ -523,7 +525,7 @@ public class OFS_ScienceTaskHelper
                   ON PM.ProjectID = AM.ProjectID
                 WHERE PM.Statuses = '尚未提送'
                   AND PM.StatusesName = '編輯中'
-                  AND PM.isExist = 1";
+                  AND PM.isExist = 1 AND PM.isWithdrawal = 0";
 
             return db.GetTable();
         }

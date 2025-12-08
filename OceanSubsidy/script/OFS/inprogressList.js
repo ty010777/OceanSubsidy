@@ -16,6 +16,7 @@ $(document).ready(function() {
         // 初始化
         init: function() {
             this.bindEvents();
+            this.initSortButtons();
             // 移除自動搜尋，等待後端資料載入
         },
 
@@ -478,6 +479,78 @@ $(document).ready(function() {
                 "'": '&#039;'
             };
             return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        },
+
+        // 初始化排序按鈕
+        initSortButtons: function() {
+            const self = this;
+            $(document).on('click', 'thead .sort', function(e) {
+                e.preventDefault();
+
+                // 如果沒有資料就直接返回
+                if (self.data.length === 0) return;
+
+                const $btn = $(this);
+                const colIndex = parseInt($btn.data('col'));
+                const sortField = self.getSortFieldByColumn(colIndex);
+
+                if (!sortField) return;
+
+                // 判斷升序或降序
+                const isAsc = !$btn.hasClass('up');
+
+                // 清除其他按鈕狀態
+                $('thead .sort').removeClass('up down');
+
+                // 設定當前按鈕狀態
+                $btn.toggleClass('up', isAsc);
+                $btn.toggleClass('down', !isAsc);
+
+                // 對資料進行排序
+                self.data.sort(function(a, b) {
+                    let aValue = a[sortField] || '';
+                    let bValue = b[sortField] || '';
+
+                    // 類別需要轉換為中文名稱再排序
+                    if (sortField === 'Category') {
+                        aValue = self.getCategoryName(aValue);
+                        bValue = self.getCategoryName(bValue);
+                    }
+
+                    // 嘗試數字排序
+                    const aNum = parseFloat(String(aValue).replace(/,/g, ''));
+                    const bNum = parseFloat(String(bValue).replace(/,/g, ''));
+
+                    const isANum = !isNaN(aNum) && /^\d+(\.\d+)?$/.test(String(aValue).replace(/,/g, ''));
+                    const isBNum = !isNaN(bNum) && /^\d+(\.\d+)?$/.test(String(bValue).replace(/,/g, ''));
+
+                    if (isANum && isBNum) {
+                        return isAsc ? aNum - bNum : bNum - aNum;
+                    } else {
+                        const aText = String(aValue);
+                        const bText = String(bValue);
+                        return isAsc
+                            ? aText.localeCompare(bText, 'zh-Hant')
+                            : bText.localeCompare(aText, 'zh-Hant');
+                    }
+                });
+
+                // 重新渲染當前頁面
+                self.currentPage = 1; // 排序後回到第一頁
+                self.renderPage();
+            });
+        },
+
+        // 根據欄位索引取得對應的資料欄位名稱
+        getSortFieldByColumn: function(colIndex) {
+            const fieldMap = {
+                2: 'Category',      // 類別
+                3: 'ProjectID',     // 計畫編號
+                4: 'ProjectNameTw', // 計畫名稱
+                5: 'OrgName',       // 執行單位
+                6: 'LastOperation'  // 完成狀態
+            };
+            return fieldMap[colIndex];
         }
     };
 

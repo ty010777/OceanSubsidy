@@ -146,22 +146,28 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
         try
         {
             string typeId = Page.Request.QueryString["TypeID"];
+            GrantTypeInfo grantTypeInfo = null;
 
             if (!string.IsNullOrEmpty(typeId))
             {
                 // 從 OFS_GrantType 取得資料
-                var grantTypeInfo = OFSGrantTypeHelper.getByTypeID(typeId);
+                grantTypeInfo = OFSGrantTypeHelper.getByTypeID(typeId);
+            }
+            else
+            {
+                // 沒有 TypeID 時，以 TypeCode 和當前日期取得
+                grantTypeInfo = OFSGrantTypeHelper.getByTypeCodeAndCurrentDate("CLB");
+            }
 
-                if (grantTypeInfo != null)
-                {
-                    // 設定年度
-                    lblYear.Text = grantTypeInfo.Year?.ToString() ?? "";
-                    hidYear.Value = grantTypeInfo.Year?.ToString() ?? "";
+            if (grantTypeInfo != null)
+            {
+                // 設定年度
+                lblYear.Text = grantTypeInfo.Year?.ToString() ?? "";
+                hidYear.Value = grantTypeInfo.Year?.ToString() ?? "";
 
-                    // 設定補助計畫類別
-                    lblSubsidyPlanType.Text = grantTypeInfo.FullName ?? "";
-                    hidSubsidyPlanType.Value = grantTypeInfo.FullName ?? "";
-                }
+                // 設定補助計畫類別
+                lblSubsidyPlanType.Text = grantTypeInfo.FullName ?? "";
+                hidSubsidyPlanType.Value = grantTypeInfo.FullName ?? "";
             }
         }
         catch (Exception ex)

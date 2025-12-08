@@ -159,7 +159,7 @@
                         <th width="80">
                             <div class="hstack align-items-center">
                                 <span>類別</span>
-                                <button class="sort down">
+                                <button class="sort" data-col="2">
                                     <i class="fa-solid fa-sort-up"></i>
                                     <i class="fa-solid fa-sort-down"></i>
                                 </button>
@@ -168,7 +168,7 @@
                         <th width="150">
                             <div class="hstack align-items-center">
                                 <span>計畫編號</span>
-                                <button class="sort down">
+                                <button class="sort" data-col="3">
                                     <i class="fa-solid fa-sort-up"></i>
                                     <i class="fa-solid fa-sort-down"></i>
                                 </button>
@@ -177,7 +177,7 @@
                         <th width="240">
                             <div class="hstack align-items-center">
                                 <span>計畫名稱</span>
-                                <button class="sort up">
+                                <button class="sort" data-col="4">
                                     <i class="fa-solid fa-sort-up"></i>
                                     <i class="fa-solid fa-sort-down"></i>
                                 </button>
@@ -186,7 +186,7 @@
                         <th width="240">
                             <div class="hstack align-items-center">
                                 <span>執行單位</span>
-                                <button class="sort">
+                                <button class="sort" data-col="5">
                                     <i class="fa-solid fa-sort-up"></i>
                                     <i class="fa-solid fa-sort-down"></i>
                                 </button>
@@ -195,7 +195,7 @@
                         <th>
                             <div class="hstack align-items-center justify-content-center">
                                 <span>完成狀態</span>
-                                <button class="sort">
+                                <button class="sort" data-col="6">
                                     <i class="fa-solid fa-sort-up"></i>
                                     <i class="fa-solid fa-sort-down"></i>
                                 </button>

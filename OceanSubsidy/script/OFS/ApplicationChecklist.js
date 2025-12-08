@@ -33,6 +33,8 @@ function updateTableData(htmlContent) {
         tableBody.innerHTML = htmlContent;
         // 重新綁定事件
         bindCheckboxEvents();
+        // 重新初始化 tooltips
+        initTooltips();
     }
 }
 
@@ -174,14 +176,14 @@ function initSortButtons() {
             if (!sortField) return;
 
             // 判斷升序或降序
-            const isAsc = !btn.classList.contains("asc");
+            const isAsc = !btn.classList.contains("up");
 
             // 清除其他按鈕狀態
-            document.querySelectorAll("thead .sort").forEach(b => b.classList.remove("asc", "desc"));
+            document.querySelectorAll("thead .sort").forEach(b => b.classList.remove("up", "down"));
 
             // 設定當前按鈕狀態
-            btn.classList.toggle("asc", isAsc);
-            btn.classList.toggle("desc", !isAsc);
+            btn.classList.toggle("up", isAsc);
+            btn.classList.toggle("down", !isAsc);
 
             // 對完整資料集進行排序
             filteredDataSet.sort((a, b) => {
@@ -215,14 +217,14 @@ function initSortButtons() {
 // 根據欄位索引取得對應的資料欄位名稱
 function getSortFieldByColumn(colIndex) {
     const fieldMap = {
-        1: 'Year',           // 年度
-        2: 'ProjectID',      // 計畫編號
-        3: 'ProjectName',    // 計畫名稱
-        4: 'ApplicantUnit',  // 申請單位
-        5: 'Category',       // 類別
-        6: 'SubsidyAmount',  // 申請補助金額
-        7: 'Stage',          // 階段
-        8: 'Status'          // 狀態
+        1: 'Year',              // 年度
+        2: 'ProjectID',         // 計畫編號
+        3: 'ProjectNameTw',     // 計畫名稱
+        4: 'OrgName',           // 申請單位
+        5: 'Category',          // 類別
+        6: 'Req_SubsidyAmount', // 申請補助金額
+        7: 'Statuses',          // 階段
+        8: 'StatusesName'       // 狀態
     };
     return fieldMap[colIndex];
 }
@@ -288,7 +290,16 @@ function initDropdownToggle() {
 
 // 表格工具提示初始化
 function initTooltips() {
-    // 初始化Bootstrap tooltips
+    // 先銷毀所有現有的 tooltips
+    var existingTooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    existingTooltips.forEach(function(element) {
+        var tooltip = bootstrap.Tooltip.getInstance(element);
+        if (tooltip) {
+            tooltip.dispose();
+        }
+    });
+
+    // 重新初始化 Bootstrap tooltips
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     if (window.bootstrap && window.bootstrap.Tooltip) {
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
@@ -393,7 +404,10 @@ function createPageButton(pageNumber, isActive) {
     button.className = isActive ? 'pagination-item active' : 'pagination-item';
     button.innerHTML = `<span class="page-number">${pageNumber}</span>`;
 
-    if (!isActive) {
+    if (isActive) {
+        // 當前頁面禁用按鈕
+        button.disabled = true;
+    } else {
         button.addEventListener('click', function() {
             // 觸發頁面跳轉邏輯
             goToPage(pageNumber);

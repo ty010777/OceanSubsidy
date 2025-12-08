@@ -266,6 +266,8 @@ public class OFS_ClubTaskHelper
                 SELECT TOP(1) ApplyEndDate
                 FROM [OCA_OceanSubsidy].[dbo].[OFS_GrantType]
                 WHERE TypeCode = 'CLB'
+                  AND DATEADD(DAY, -1, GETDATE()) >= ApplyStartDate
+                  AND DATEADD(DAY, -1, GETDATE()) <= ApplyEndDate
                 ORDER BY TypeID DESC";
 
             var dt = db.GetTable();
