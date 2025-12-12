@@ -735,26 +735,59 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
     /// </summary>
     private void HandleTempSaveAjax()
     {
+        string projectID = "";
         try
         {
+            // 記錄開始處理暫存請求
+            Env.Log.Info("===== 開始處理暫存請求 =====");
+
             // 取得表單資料
             var formData = GetFormDataFromRequest();
+            projectID = formData.ContainsKey("ProjectID") ? formData["ProjectID"]?.ToString() : "";
+
+            // 驗證字數是否超過限制
+            List<string> charCountErrors = ValidateCharCount(formData);
+            if (charCountErrors.Count > 0)
+            {
+                string errorMessage = string.Join("<br>", charCountErrors);
+                Env.Log.Warn($"暫存失敗 - ProjectID: {projectID}, 原因: 字數超過限制");
+                Response.Write($"{{\"success\":false,\"message\":\"{errorMessage}\"}}");
+                return;
+            }
+
+            // 記錄關鍵欄位資料
+            string projectName = formData.ContainsKey("ProjectNameTw") && formData["ProjectNameTw"] != null ? formData["ProjectNameTw"].ToString() : "";
+            Env.Log.Info($"暫存請求 - ProjectID: {projectID}, 計畫名稱: {projectName}, 使用者: {GetCurrentUserAccount()}");
 
             // 執行暫存（傳入 true 表示暫存）
-            string projectID = SaveBasicDataAjax(formData, true);
+            string savedProjectID = SaveBasicDataAjax(formData, true);
 
-            if (!string.IsNullOrEmpty(projectID))
+            if (!string.IsNullOrEmpty(savedProjectID))
             {
-                Response.Write($"{{\"success\":true,\"message\":\"暫存成功！\",\"projectID\":\"{projectID}\"}}");
+                Env.Log.Info($"暫存成功 - ProjectID: {savedProjectID}");
+                Response.Write($"{{\"success\":true,\"message\":\"暫存成功！\",\"projectID\":\"{savedProjectID}\"}}");
             }
             else
             {
+                Env.Log.Warn($"暫存失敗 - ProjectID: {projectID}, 原因: SaveBasicDataAjax 回傳空值");
                 Response.Write("{\"success\":false,\"message\":\"儲存失敗，請檢查必填欄位\"}");
             }
         }
         catch (Exception ex)
         {
-            Response.Write($"{{\"success\":false,\"message\":\"暫存失敗：{ex.Message}\"}}");
+            // 記錄完整的錯誤資訊
+            Env.Log.Error($"暫存失敗 - ProjectID: {projectID}, 使用者: {GetCurrentUserAccount()}", ex);
+            Env.Log.Error($"錯誤詳細資訊 - Message: {ex.Message}");
+            Env.Log.Error($"錯誤堆疊追蹤: {ex.StackTrace}");
+
+            // 如果有內部例外，也記錄下來
+            if (ex.InnerException != null)
+            {
+                Env.Log.Error($"內部例外: {ex.InnerException.Message}");
+                Env.Log.Error($"內部例外堆疊追蹤: {ex.InnerException.StackTrace}");
+            }
+
+            Response.Write($"{{\"success\":false,\"message\":\"暫存失敗：{ex.Message.Replace("\"", "\\\"").Replace("\r", "").Replace("\n", "")}\"}}");
         }
     }
 
@@ -767,6 +800,15 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
         {
             // 取得表單資料
             var formData = GetFormDataFromRequest();
+
+            // 驗證字數是否超過限制
+            List<string> charCountErrors = ValidateCharCount(formData);
+            if (charCountErrors.Count > 0)
+            {
+                string errorMessage = string.Join("<br>", charCountErrors);
+                Response.Write($"{{\"success\":false,\"message\":\"{errorMessage}\"}}");
+                return;
+            }
 
             // 驗證必填欄位
             List<string> validationErrors = ValidateRequiredFields(formData);
@@ -1302,8 +1344,11 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
     /// <returns>成功儲存的 ProjectID</returns>
     private string SaveBasicDataAjax(Dictionary<string, object> formData, bool isTempSave)
     {
+        string projectID = formData.ContainsKey("ProjectID") ? formData["ProjectID"]?.ToString() : "";
         try
         {
+            Env.Log.Info($"開始儲存基本資料 - ProjectID: {projectID}, 是否暫存: {isTempSave}");
+
             // 建立基本資料物件
             var basicData = new OFS_CLB_Application_Basic
             {
@@ -1324,28 +1369,37 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
             };
 
             // 儲存資料並取得 ProjectID
+            Env.Log.Info($"步驟1: 儲存基本資料 - ProjectID: {projectID}");
             string savedProjectID = SaveBasicData(basicData);
+            Env.Log.Info($"步驟1完成 - 取得 ProjectID: {savedProjectID}");
 
             // 儲存人員表單
+            Env.Log.Info($"步驟2: 儲存人員資料 - ProjectID: {savedProjectID}");
             SavePersonnelDataAjax(savedProjectID, formData);
 
             // 儲存計畫資訊
+            Env.Log.Info($"步驟3: 儲存計畫資訊 - ProjectID: {savedProjectID}");
             SavePlanDataAjax(savedProjectID, formData);
 
             // 儲存經費資訊
+            Env.Log.Info($"步驟4: 儲存經費資訊 - ProjectID: {savedProjectID}");
             SaveFundsDataAjax(savedProjectID, formData);
-            
+
             // 儲存 Project_Main 資訊
-            
+            Env.Log.Info($"步驟5: 儲存 Project_Main 資訊 - ProjectID: {savedProjectID}");
             SaveProjectMainData(savedProjectID, formData, isTempSave);
-            
+
             //儲存變更說明
+            Env.Log.Info($"步驟6: 儲存變更說明 - ProjectID: {savedProjectID}");
             SaveProjectChangeRecord(savedProjectID, formData);
+
+            Env.Log.Info($"所有資料儲存完成 - ProjectID: {savedProjectID}");
             return savedProjectID;
         }
         catch (Exception ex)
         {
-            throw new Exception($"儲存基本資料失敗：{ex.Message}");
+            Env.Log.Error($"SaveBasicDataAjax 失敗 - ProjectID: {projectID}, 是否暫存: {isTempSave}", ex);
+            throw new Exception($"儲存基本資料失敗：{ex.Message}", ex);
         }
     }
 
@@ -1386,10 +1440,12 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
 
             // 呼叫 Helper 儲存人員資料
             OFS_ClbApplicationHelper.SavePersonnelData(projectID, personnelList);
+            Env.Log.Info($"人員資料儲存成功 - ProjectID: {projectID}, 人員數量: {personnelList.Count}");
         }
         catch (Exception ex)
         {
-            throw new Exception($"儲存人員資料失敗：{ex.Message}");
+            Env.Log.Error($"SavePersonnelDataAjax 失敗 - ProjectID: {projectID}", ex);
+            throw new Exception($"儲存人員資料失敗：{ex.Message}", ex);
         }
     }
 
@@ -1415,10 +1471,12 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
 
             // 呼叫 Helper 儲存計畫資訊
             OFS_ClbApplicationHelper.SavePlanData(planData);
+            Env.Log.Info($"計畫資訊儲存成功 - ProjectID: {projectID}");
         }
         catch (Exception ex)
         {
-            throw new Exception($"儲存計畫資訊失敗：{ex.Message}");
+            Env.Log.Error($"SavePlanDataAjax 失敗 - ProjectID: {projectID}", ex);
+            throw new Exception($"儲存計畫資訊失敗：{ex.Message}", ex);
         }
     }
 
@@ -1430,17 +1488,23 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
         try
         {
             // 儲存其他補助明細資料到 OFS_CLB_Other_Subsidy
+            Env.Log.Info($"步驟4.1: 儲存其他補助明細 - ProjectID: {projectID}");
             SaveOtherSubsidyData(projectID, formData);
 
             // 儲存經費預算規劃資料到 OFS_CLB_Budget_Plan
+            Env.Log.Info($"步驟4.2: 儲存經費預算規劃 - ProjectID: {projectID}");
             SaveBudgetPlanData(projectID, formData);
 
             // 儲存經費說明資料到 OFS_CLB_Received_Subsidy
+            Env.Log.Info($"步驟4.3: 儲存經費說明 - ProjectID: {projectID}");
             SaveReceivedSubsidyData(projectID, formData);
+
+            Env.Log.Info($"經費資訊儲存成功 - ProjectID: {projectID}");
         }
         catch (Exception ex)
         {
-            throw new Exception($"儲存經費資訊失敗：{ex.Message}");
+            Env.Log.Error($"SaveFundsDataAjax 失敗 - ProjectID: {projectID}", ex);
+            throw new Exception($"儲存經費資訊失敗：{ex.Message}", ex);
         }
     }
 
@@ -1458,7 +1522,7 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
 
             // 反序列化 JSON 為物件列表
             var subsidyDataList = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(otherSubsidyDataJson);
-            
+
             // 轉換為 Entity 列表
             List<OFS_CLB_Other_Subsidy> subsidyList = new List<OFS_CLB_Other_Subsidy>();
 
@@ -1476,10 +1540,13 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
 
             // 呼叫 Helper 儲存資料（先刪除後新增）
             OFS_ClbOtherSubsidyHelper.SaveOtherSubsidyData(projectID, subsidyList);
+            Env.Log.Info($"其他補助明細儲存成功 - ProjectID: {projectID}, 筆數: {subsidyList.Count}");
         }
         catch (Exception ex)
         {
-            throw new Exception($"儲存其他補助明細資料失敗：{ex.Message}");
+            string jsonData = formData.ContainsKey("OtherSubsidyData") && formData["OtherSubsidyData"] != null ? formData["OtherSubsidyData"].ToString() : "null";
+            Env.Log.Error($"SaveOtherSubsidyData 失敗 - ProjectID: {projectID}, JSON: {jsonData}", ex);
+            throw new Exception($"儲存其他補助明細資料失敗：{ex.Message}", ex);
         }
     }
 
@@ -1499,6 +1566,7 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
             if (string.IsNullOrEmpty(budgetPlanDataJson))
             {
                 OFS_ClbBudgetPlanHelper.DeleteByProjectID(projectID);
+                Env.Log.Info($"經費預算規劃資料為空，已刪除舊資料 - ProjectID: {projectID}");
                 return;
             }
 
@@ -1523,10 +1591,13 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
 
             // 呼叫 Helper 儲存資料（先刪除後新增）
             OFS_ClbBudgetPlanHelper.SaveBudgetPlanData(projectID, budgetPlanList);
+            Env.Log.Info($"經費預算規劃儲存成功 - ProjectID: {projectID}, 筆數: {budgetPlanList.Count}");
         }
         catch (Exception ex)
         {
-            throw new Exception($"儲存經費預算規劃資料失敗：{ex.Message}");
+            string jsonData = formData.ContainsKey("BudgetPlanData") && formData["BudgetPlanData"] != null ? formData["BudgetPlanData"].ToString() : "null";
+            Env.Log.Error($"SaveBudgetPlanData 失敗 - ProjectID: {projectID}, JSON: {jsonData}", ex);
+            throw new Exception($"儲存經費預算規劃資料失敗：{ex.Message}", ex);
         }
     }
 
@@ -1546,6 +1617,7 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
             if (string.IsNullOrEmpty(receivedSubsidyDataJson))
             {
                 OFS_ClbReceivedSubsidyHelper.DeleteByProjectID(projectID);
+                Env.Log.Info($"經費說明資料為空，已刪除舊資料 - ProjectID: {projectID}");
                 return;
             }
 
@@ -1568,10 +1640,13 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
 
             // 呼叫 Helper 儲存資料（先刪除後新增）
             OFS_ClbReceivedSubsidyHelper.SaveReceivedSubsidyData(projectID, receivedSubsidyList);
+            Env.Log.Info($"經費說明儲存成功 - ProjectID: {projectID}, 筆數: {receivedSubsidyList.Count}");
         }
         catch (Exception ex)
         {
-            throw new Exception($"儲存經費說明資料失敗：{ex.Message}");
+            string jsonData = formData.ContainsKey("ReceivedSubsidyData") && formData["ReceivedSubsidyData"] != null ? formData["ReceivedSubsidyData"].ToString() : "null";
+            Env.Log.Error($"SaveReceivedSubsidyData 失敗 - ProjectID: {projectID}, JSON: {jsonData}", ex);
+            throw new Exception($"儲存經費說明資料失敗：{ex.Message}", ex);
         }
     }
 
@@ -2364,6 +2439,56 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
             default:
                 return "MERGED_UNKNOWN";
         }
+    }
+
+    /// <summary>
+    /// 取得目前登入使用者的帳號
+    /// </summary>
+    /// <returns>使用者帳號，若無法取得則回傳 "未知使用者"</returns>
+    private string GetCurrentUserAccount()
+    {
+        try
+        {
+            var userInfo = SessionHelper.Get<SessionHelper.UserInfoClass>(SessionHelper.UserInfo);
+            return userInfo?.Account ?? "未知使用者";
+        }
+        catch
+        {
+            return "未知使用者";
+        }
+    }
+
+    /// <summary>
+    /// 驗證字數是否超過限制
+    /// </summary>
+    /// <param name="formData">表單資料</param>
+    /// <returns>錯誤訊息列表，如果沒有錯誤則回傳空列表</returns>
+    private List<string> ValidateCharCount(Dictionary<string, object> formData)
+    {
+        List<string> errors = new List<string>();
+        int maxLength = 500;
+
+        // 定義需要驗證的欄位
+        var fieldsToValidate = new Dictionary<string, string>
+        {
+            { "Purpose", "目的" },
+            { "PlanContent", "計畫內容" },
+            { "PreBenefits", "預期效益" }
+        };
+
+        foreach (var field in fieldsToValidate)
+        {
+            if (formData.ContainsKey(field.Key) && formData[field.Key] != null)
+            {
+                string value = formData[field.Key].ToString();
+                if (value.Length > maxLength)
+                {
+                    errors.Add($"{field.Value}欄位字數超過限制（{value.Length}/{maxLength}字）");
+                }
+            }
+        }
+
+        return errors;
     }
 
     #endregion

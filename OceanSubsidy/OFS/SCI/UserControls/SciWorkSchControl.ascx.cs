@@ -946,10 +946,7 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
         if (uploadFiles != null && uploadFiles.Any())
         {
             DiagramFile = uploadFiles.First();
-            bool isProd = Request.Url.Host.Equals("projects.geosense.tw", StringComparison.OrdinalIgnoreCase);
-
             // 設定 ImageUrl
-            
             DiagramFile.TemplatePath = ResolveUrl($"~/{DiagramFile.TemplatePath}");
             diagramPreview.ImageUrl = ResolveUrl($"~/{DiagramFile.TemplatePath}");
             // 顯示容器

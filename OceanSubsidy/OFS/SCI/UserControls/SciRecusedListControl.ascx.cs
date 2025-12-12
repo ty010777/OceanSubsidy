@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -401,12 +402,12 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
             if (uploadFiles.Any())
             {
                 var file = uploadFiles.First();
-                bool isProd = Request.Url.Host.Equals("projects.geosense", StringComparison.OrdinalIgnoreCase);
+                string appRootPath = ConfigurationManager.AppSettings["AppRootPath"] ?? "";
 
                 // 設定 ImageUrl
-                if (isProd)
+                if (!string.IsNullOrEmpty(appRootPath))
                 {
-                    file.TemplatePath = ResolveUrl($"~/OceanSubsidy/{file.TemplatePath}");
+                    file.TemplatePath = ResolveUrl($"~/{appRootPath}/{file.TemplatePath}");
                 }
                 else
                 {
@@ -710,12 +711,12 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
             if (uploadFiles.Any())
             {
                 var file = uploadFiles.First();
-                bool isProd = Request.Url.Host.Equals("projects.geosense", StringComparison.OrdinalIgnoreCase);
+                string appRootPath = ConfigurationManager.AppSettings["AppRootPath"] ?? "";
 
                 // 設定 ImageUrl
-                if (isProd)
+                if (!string.IsNullOrEmpty(appRootPath))
                 {
-                    file.TemplatePath = ResolveUrl($"~/OceanSubsidy/{file.TemplatePath}");
+                    file.TemplatePath = ResolveUrl($"~/{appRootPath}/{file.TemplatePath}");
                 }
                 else
                 {

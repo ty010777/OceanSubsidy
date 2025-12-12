@@ -30,6 +30,9 @@ function initializePage() {
 
     // 初始化 textarea 自動調整高度
     initializeTextareaAutoResize();
+
+    // 初始化字數計算功能
+    initializeCharCounter();
 }
 
 function bindEvents() {
@@ -1255,6 +1258,24 @@ $(document).ready(function() {
  * 處理暫存按鈕點擊
  */
 function handleTempSave() {
+    // 驗證字數是否超過限制
+    const charCountErrors = validateCharCount();
+    if (charCountErrors) {
+        let errorMessage = '以下欄位字數超過限制：<br><br>';
+        charCountErrors.forEach(function(error) {
+            errorMessage += `<strong>${error.fieldName}</strong>：已輸入 ${error.currentLength} 字，超過限制 ${error.maxLength} 字<br>`;
+        });
+        errorMessage += '<br>請修改後再進行暫存。';
+
+        Swal.fire({
+            icon: 'error',
+            title: '字數超過限制',
+            html: errorMessage,
+            confirmButtonText: '確定'
+        });
+        return;
+    }
+
     // 顯示載入中訊息
     Swal.fire({
         title: '暫存中...',
@@ -1398,6 +1419,24 @@ function checkIfExceedsGrantLimit() {
  * 執行儲存並下一步的實際操作
  */
 function performSaveAndNext() {
+    // 驗證字數是否超過限制
+    const charCountErrors = validateCharCount();
+    if (charCountErrors) {
+        let errorMessage = '以下欄位字數超過限制：<br><br>';
+        charCountErrors.forEach(function(error) {
+            errorMessage += `<strong>${error.fieldName}</strong>：已輸入 ${error.currentLength} 字，超過限制 ${error.maxLength} 字<br>`;
+        });
+        errorMessage += '<br>請修改後再進行儲存。';
+
+        Swal.fire({
+            icon: 'error',
+            title: '字數超過限制',
+            html: errorMessage,
+            confirmButtonText: '確定'
+        });
+        return;
+    }
+
     // 先驗證其他補助明細資料
     const validationResult = validateOtherSubsidyData();
     if (!validationResult.isValid) {
@@ -2562,3 +2601,89 @@ window.deleteFundingDescriptionRow = deleteFundingDescriptionRow;
 window.collectFundingDescriptionData = collectFundingDescriptionData;
 window.validateFundingDescriptionData = validateFundingDescriptionData;
 window.loadFundingDescriptionData = loadFundingDescriptionData;
+
+/**
+ * 初始化字數計算功能
+ */
+function initializeCharCounter() {
+    // 定義需要計算字數的欄位
+    var charCounterFields = [
+        { id: 'txtPurpose', maxLength: 500 },
+        { id: 'txtPlanContent', maxLength: 500 },
+        { id: 'txtPreBenefits', maxLength: 500 }
+    ];
+
+    // 為每個欄位綁定字數計算事件
+    charCounterFields.forEach(function(field) {
+        var $input = $('#' + field.id);
+        var $counter = $('#' + field.id + '_count');
+
+        if ($input.length && $counter.length) {
+            // 初始化時更新字數
+            updateCharCount($input, $counter);
+
+            // 綁定 input 事件
+            $input.on('input', function() {
+                updateCharCount($input, $counter);
+            });
+
+            // 綁定 keyup 事件（處理某些特殊情況）
+            $input.on('keyup', function() {
+                updateCharCount($input, $counter);
+            });
+        }
+    });
+}
+
+/**
+ * 更新字數顯示
+ * @param {jQuery} $input - 輸入框 jQuery 對象
+ * @param {jQuery} $counter - 字數顯示 jQuery 對象
+ */
+function updateCharCount($input, $counter) {
+    var currentLength = $input.val().length;
+    $counter.text(currentLength);
+
+    // 如果超過限制，改變顏色提示
+    if (currentLength >= 500) {
+        $counter.parent().addClass('text-danger').removeClass('text-muted');
+    } else {
+        $counter.parent().addClass('text-muted').removeClass('text-danger');
+    }
+}
+
+/**
+ * 驗證字數是否超過限制
+ * @returns {Object|null} 如果有欄位超過限制，回傳錯誤資訊；否則回傳 null
+ */
+function validateCharCount() {
+    var errors = [];
+    var charCounterFields = [
+        { id: 'txtPurpose', name: '目的', maxLength: 500 },
+        { id: 'txtPlanContent', name: '計畫內容', maxLength: 500 },
+        { id: 'txtPreBenefits', name: '預期效益', maxLength: 500 }
+    ];
+
+    charCounterFields.forEach(function(field) {
+        var $input = $('#' + field.id);
+        if ($input.length) {
+            var currentLength = $input.val().length;
+            if (currentLength > field.maxLength) {
+                errors.push({
+                    fieldName: field.name,
+                    currentLength: currentLength,
+                    maxLength: field.maxLength
+                });
+            }
+        }
+    });
+
+    if (errors.length > 0) {
+        return errors;
+    }
+    return null;
+}
+
+// 公開字數計算函數
+window.initializeCharCounter = initializeCharCounter;
+window.validateCharCount = validateCharCount;

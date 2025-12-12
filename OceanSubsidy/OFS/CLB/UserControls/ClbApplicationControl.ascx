@@ -150,25 +150,34 @@
                     <tr>
                         <th>目的 <span class="text-danger view-mode ">*</span></th>
                         <td>
-                            <asp:TextBox ID="txtPurpose" runat="server" CssClass="form-control textarea-auto-resize" 
-                                       TextMode="MultiLine" Rows="4" placeholder="請描述計畫目的" 
-                                       MaxLength="1000" style="width: 100%;" />
+                            <asp:TextBox ID="txtPurpose" runat="server" CssClass="form-control textarea-auto-resize char-counter-input"
+                                       TextMode="MultiLine" Rows="4" placeholder="請描述計畫目的"
+                                       MaxLength="500" style="width: 100%;" ClientIDMode="Static" />
+                            <div class="text-end text-muted mt-1">
+                                <small>已輸入 <span id="txtPurpose_count">0</span> / 500 字</small>
+                            </div>
                         </td>
                     </tr>
                     <tr>
                         <th>計畫內容 <span class="text-danger view-mode">*</span></th>
                         <td>
-                            <asp:TextBox ID="txtPlanContent" runat="server" CssClass="form-control textarea-auto-resize" 
-                                       TextMode="MultiLine" Rows="6" placeholder="請詳細描述計畫內容" 
-                                       MaxLength="2000" style="width: 100%;" />
+                            <asp:TextBox ID="txtPlanContent" runat="server" CssClass="form-control textarea-auto-resize char-counter-input"
+                                       TextMode="MultiLine" Rows="6" placeholder="請詳細描述計畫內容"
+                                       MaxLength="500" style="width: 100%;" ClientIDMode="Static" />
+                            <div class="text-end text-muted mt-1">
+                                <small>已輸入 <span id="txtPlanContent_count">0</span> / 500 字</small>
+                            </div>
                         </td>
                     </tr>
                     <tr>
                         <th>預期效益 <span class="text-danger view-mode ">*</span></th>
                         <td>
-                            <asp:TextBox ID="txtPreBenefits" runat="server" CssClass="form-control textarea-auto-resize" 
-                                       TextMode="MultiLine" Rows="4" placeholder="請描述預期效益" 
-                                       MaxLength="1000" style="width: 100%;" />
+                            <asp:TextBox ID="txtPreBenefits" runat="server" CssClass="form-control textarea-auto-resize char-counter-input"
+                                       TextMode="MultiLine" Rows="4" placeholder="請描述預期效益"
+                                       MaxLength="500" style="width: 100%;" ClientIDMode="Static" />
+                            <div class="text-end text-muted mt-1">
+                                <small>已輸入 <span id="txtPreBenefits_count">0</span> / 500 字</small>
+                            </div>
                         </td>
                     </tr>
                     <tr class="public-view">

@@ -155,7 +155,7 @@
             <%-- <li>4.消耗性器材及原材料費不得超過計畫總經費之25%。</li> --%>
             <li>4.可認列之消耗性器材及原材料費其單據日期應在計畫執行期間內。</li>
             <li>5.所有購買物品應列明品名、數量及單價。</li>
-            <li>6.應依<a href="" class="link-teal">附件十海洋科技專案計畫會計科目編列與執行原則</a>之規定辦理。</li>
+            <li>6.應依<a href="/Template/SCI/<%= ShowForeignTravel ? "Academic" : "OTech" %>/附件-10海洋科技專案計畫會計科目編列與執行原則.pdf" class="link-teal" target="_blank">附件十海洋科技專案計畫會計科目編列與執行原則</a>之規定辦理。</li>
             <li>7.若有共同執行單位(企業)經費投入請編列至配合款，並於本表備註為共同執行單位之費用。</li>
             <li>8.本會計科目之編列不含營業稅。</li>
         </ul>
@@ -227,7 +227,7 @@
             <li>4.須附上技術移轉及委託研究契約或報價單，並以委任之政府所屬機關（構）首長或學校、法人及民間單位之該項委託工作項目負責人簽署用印為佐證。</li>
             <%-- <li>5.為確保計畫研發自主性，技術移轉及委託研究兩項經費合計不得超過計畫總經費40%，超過該比率者，不予受理。</li> --%>
             <li>5.委託者須為單位不得為個人，若技術移轉提供者為個人除外(需提供佐證資料)。</li>
-            <li>6.應依<a href="#" class="link-teal">附件十海洋科技專案計畫會計科目編列與執行原則</a>之規定辦理。</li>
+            <li>6.應依<a href="/Template/SCI/<%= ShowForeignTravel ? "Academic" : "OTech" %>/附件-10海洋科技專案計畫會計科目編列與執行原則.pdf" class="link-teal" target="_blank">附件十海洋科技專案計畫會計科目編列與執行原則</a>之規定辦理。</li>
             <li>7.若有共同執行單位(企業)經費投入請編列至配合款，並於本表備註為共同執行單位之費用。</li>
             <li>8.本會計科目之編列不含營業稅。</li>
         </ul>
@@ -281,7 +281,7 @@
 
         <ul class="list-unstyled lh-base">
             <li>1.限為海洋科技執行計畫需要，於計畫執行期間內，派遣本計畫研發人員之出差地點應為國內技術轉移對象、委外測試或驗證機構、委託研究對象之所在地。出差事由應與國內技術移轉、委外測試或驗證、委託研究及參與計畫補助單位認可之特定公務相關。</li>
-            <li>2.應依<a href="" class="link-teal">附件十海洋科技專案計畫會計科目編列與執行原則</a>之規定辦理。</li>
+            <li>2.應依<a href="/Template/SCI/<%= ShowForeignTravel ? "Academic" : "OTech" %>/附件-10海洋科技專案計畫會計科目編列與執行原則.pdf" class="link-teal" target="_blank">附件十海洋科技專案計畫會計科目編列與執行原則</a>之規定辦理。</li>
             <%-- <li>3.差旅費不得超過計畫總經費之1.5%。</li> --%>
             <li>3.若有共同執行單位(企業)經費投入請編列至配合款，並於本表備註為共同執行單位之費用。</li>
             <li>4.本會計科目之編列不含營業稅。</li>
@@ -423,7 +423,9 @@
                     </td>
                     <td class="align-middle">
                         <asp:TextBox ID="rentDescription" runat="server" ClientIDMode="Static" CssClass="form-control" TextMode="MultiLine" Rows="3" placeholder="請輸入" />
+                        <div class="text-pink fw-normal fs-16 mt-2">（若有多筆租金：請將各筆租金加總後填入「金額（元）」欄位，並於「計算方式及說明」欄以條列方式逐筆說明）</div>
                     </td>
+                    
                 </tr>
                 <tr>
                     <td class="text-end align-middle">勞務委託費</td>
@@ -446,7 +448,7 @@
         <ul class="list-unstyled lh-base">
             <li>1.租金：限為海洋科技執行計畫需要，於計畫執行期間內，向外界機構、單位以「營業租賃」方式租用各項機械、儀器設備、場地、載運機械設備車輛、船舶等之租金。</li>
             <li>2.勞務委託費：限為海洋科技執行計畫需要，於計畫執行期間內，聘僱臨時人員工資、兼任研究助理(碩士班研究生)、派遣人力等費用。</li>
-            <li>3.應依<a href="#" class="link-teal">附件十海洋科技專案計畫會計科目編列與執行原則</a>之規定辦理。</li>
+            <li>3.應依<a href="/Template/SCI/<%= ShowForeignTravel ? "Academic" : "OTech" %>/附件-10海洋科技專案計畫會計科目編列與執行原則.pdf" class="link-teal" target="_blank">附件十海洋科技專案計畫會計科目編列與執行原則</a>之規定辦理。</li>
             <li>4.若有共同執行單位(企業)經費投入請編列至配合款，並於本表備註為共同執行單位之費用。</li>
             <li>5.本會計科目之編列不含營業稅。</li>
         </ul>
