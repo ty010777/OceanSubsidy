@@ -405,14 +405,16 @@ public partial class OFS_SCI_UserControls_SciRecusedListControl : System.Web.UI.
                 string appRootPath = ConfigurationManager.AppSettings["AppRootPath"] ?? "";
 
                 // 設定 ImageUrl
-                if (!string.IsNullOrEmpty(appRootPath))
-                {
-                    file.TemplatePath = ResolveUrl($"~/{appRootPath}/{file.TemplatePath}");
-                }
-                else
-                {
-                    file.TemplatePath = ResolveUrl($"~/{file.TemplatePath}");
-                }
+                // if (!string.IsNullOrEmpty(appRootPath))
+                // {
+                //     file.TemplatePath = ResolveUrl($"~/{appRootPath}/{file.TemplatePath}");
+                // }
+                // else
+                // {
+                //     file.TemplatePath = ResolveUrl($"~/{file.TemplatePath}");
+                // }
+                file.TemplatePath = ResolveUrl($"~/{file.TemplatePath}");
+
                 var script = $@"
                     setTimeout(function() {{
                         if (window.techDiagramManager) {{

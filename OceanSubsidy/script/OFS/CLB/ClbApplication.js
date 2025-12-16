@@ -2021,7 +2021,7 @@ function validateBudgetPlanData() {
         // 檢查欄位是否都有填寫
         const hasTitle = title.trim() !== '';
         const hasAmount = amount > 0;
-        const hasOtherAmount = otherAmount > 0;
+        const hasOtherAmount = otherAmountText.trim() !== '';
         const hasDescription = description.trim() !== '';
 
         // 如果任何一個欄位有填寫，則所有欄位都必須填寫
@@ -2232,10 +2232,10 @@ function loadBudgetPlanData(budgetPlanData) {
                     </div>
                 </td>
                 <td>
-                    <input class="form-control" placeholder="請輸入" type="text" style="text-align: right;" value="${item.Amount ? item.Amount.toLocaleString() : ''}">
+                    <input class="form-control" placeholder="請輸入" type="text" style="text-align: right;" value="${item.Amount != null ? item.Amount.toLocaleString() : ''}">
                 </td>
                 <td>
-                    <input class="form-control" placeholder="請輸入" type="text" style="text-align: right;" value="${item.OtherAmount ? item.OtherAmount.toLocaleString() : ''}">
+                    <input class="form-control" placeholder="請輸入" type="text" style="text-align: right;" value="${item.OtherAmount != null ? item.OtherAmount.toLocaleString() : ''}">
                 </td>
                 <td class="text-end budget-subtotal">${subtotal.toLocaleString()}</td>
                 <td>
