@@ -1158,92 +1158,92 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
     /// <param name="orgCategory">機構類別</param>
     /// <param name="projectId">專案ID</param>
     /// <returns>生成的 PDF 檔案路徑</returns>
-    private string GenerateAttachment01Pdf(string orgCategory, string projectId)
-    {
-        try
-        {
-            // 決定範本檔案路徑
-            string wordTemplatePath, pdfTemplatePath;
-            if (orgCategory == "OceanTech")
-            {
-                wordTemplatePath = Server.MapPath("~/Template/SCI/OTech/附件-01海洋委員會海洋科技專案補助作業要點01.docx");
-                pdfTemplatePath = Server.MapPath("~/Template/SCI/OTech/附件-01海洋委員會海洋科技專案補助作業要點02.pdf");
-            }
-            else
-            {
-                wordTemplatePath = Server.MapPath("~/Template/SCI/Academic/附件-01海洋委員會海洋科技專案補助作業要點01.docx");
-                pdfTemplatePath = Server.MapPath("~/Template/SCI/Academic/附件-01海洋委員會海洋科技專案補助作業要點02.pdf");
-            }
-
-            // 檢查範本檔案是否存在
-            if (!File.Exists(wordTemplatePath))
-            {
-                System.Diagnostics.Debug.WriteLine($"Word 範本檔案不存在：{wordTemplatePath}");
-                return null;
-            }
-
-            if (!File.Exists(pdfTemplatePath))
-            {
-                System.Diagnostics.Debug.WriteLine($"PDF 範本檔案不存在：{pdfTemplatePath}");
-                return null;
-            }
-
-            // 建立暫存檔案路徑
-            string tempWordFilePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".docx");
-
-            // 複製範本檔案到暫存資料夾
-            File.Copy(wordTemplatePath, tempWordFilePath, true);
-
-            // 使用 OpenXmlHelper 處理 Word 文件（填充年月）
-            using (var fs = new FileStream(tempWordFilePath, FileMode.Open, FileAccess.ReadWrite))
-            {
-                var helper = new OpenXmlHelper(fs);
-
-                // 取得當前年月
-                DateTime currentDate = DateTime.Now;
-                int year = currentDate.Year - 1911; // 民國年
-                int month = currentDate.Month;
-
-                // 建立替換字典
-                var placeholder = new Dictionary<string, string>();
-                placeholder.Add("{{Year}}", year.ToString());
-                placeholder.Add("{{Month}}", month.ToString());
-
-                var repeatData = new List<Dictionary<string, string>>();
-
-                // 使用 GenerateWord 方法替換佔位符
-                helper.GenerateWord(placeholder, repeatData);
-                helper.CloseAsSave();
-            }
-
-            // 將第一頁 Word 文件轉換為 PDF
-            string firstPagePdfPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + "_page1.pdf");
-            PdfHelper.ConvertWordToPdf(tempWordFilePath, firstPagePdfPath);
-
-            // 合併兩個 PDF
-            string mergedPdfPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + "_附件01.pdf");
-            List<string> pdfFilesToMerge = new List<string> { firstPagePdfPath, pdfTemplatePath };
-            PdfHelper.MergePdfs(pdfFilesToMerge, mergedPdfPath);
-
-            // 清理暫存的 Word 和第一頁 PDF 檔案
-            if (File.Exists(tempWordFilePath))
-            {
-                File.Delete(tempWordFilePath);
-            }
-            if (File.Exists(firstPagePdfPath))
-            {
-                File.Delete(firstPagePdfPath);
-            }
-
-            System.Diagnostics.Debug.WriteLine($"附件-01 PDF 生成成功：{mergedPdfPath}");
-            return mergedPdfPath;
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"生成附件-01 PDF 時發生錯誤：{ex.Message}");
-            return null;
-        }
-    }
+    // private string GenerateAttachment01Pdf(string orgCategory, string projectId)
+    // {
+    //     try
+    //     {
+    //         // 決定範本檔案路徑
+    //         string wordTemplatePath, pdfTemplatePath;
+    //         if (orgCategory == "OceanTech")
+    //         {
+    //             wordTemplatePath = Server.MapPath("~/Template/SCI/OTech/附件-01海洋委員會海洋科技專案補助作業要點01.docx");
+    //             pdfTemplatePath = Server.MapPath("~/Template/SCI/OTech/附件-01海洋委員會海洋科技專案補助作業要點02.pdf");
+    //         }
+    //         else
+    //         {
+    //             wordTemplatePath = Server.MapPath("~/Template/SCI/Academic/附件-01海洋委員會海洋科技專案補助作業要點01.docx");
+    //             pdfTemplatePath = Server.MapPath("~/Template/SCI/Academic/附件-01海洋委員會海洋科技專案補助作業要點02.pdf");
+    //         }
+    //
+    //         // 檢查範本檔案是否存在
+    //         if (!File.Exists(wordTemplatePath))
+    //         {
+    //             System.Diagnostics.Debug.WriteLine($"Word 範本檔案不存在：{wordTemplatePath}");
+    //             return null;
+    //         }
+    //
+    //         if (!File.Exists(pdfTemplatePath))
+    //         {
+    //             System.Diagnostics.Debug.WriteLine($"PDF 範本檔案不存在：{pdfTemplatePath}");
+    //             return null;
+    //         }
+    //
+    //         // 建立暫存檔案路徑
+    //         string tempWordFilePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".docx");
+    //
+    //         // 複製範本檔案到暫存資料夾
+    //         File.Copy(wordTemplatePath, tempWordFilePath, true);
+    //
+    //         // 使用 OpenXmlHelper 處理 Word 文件（填充年月）
+    //         using (var fs = new FileStream(tempWordFilePath, FileMode.Open, FileAccess.ReadWrite))
+    //         {
+    //             var helper = new OpenXmlHelper(fs);
+    //
+    //             // 取得當前年月
+    //             DateTime currentDate = DateTime.Now;
+    //             int year = currentDate.Year - 1911; // 民國年
+    //             int month = currentDate.Month;
+    //
+    //             // 建立替換字典
+    //             var placeholder = new Dictionary<string, string>();
+    //             placeholder.Add("{{Year}}", year.ToString());
+    //             placeholder.Add("{{Month}}", month.ToString());
+    //
+    //             var repeatData = new List<Dictionary<string, string>>();
+    //
+    //             // 使用 GenerateWord 方法替換佔位符
+    //             helper.GenerateWord(placeholder, repeatData);
+    //             helper.CloseAsSave();
+    //         }
+    //
+    //         // 將第一頁 Word 文件轉換為 PDF
+    //         string firstPagePdfPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + "_page1.pdf");
+    //         PdfHelper.ConvertWordToPdf(tempWordFilePath, firstPagePdfPath);
+    //
+    //         // 合併兩個 PDF
+    //         string mergedPdfPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + "_附件01.pdf");
+    //         List<string> pdfFilesToMerge = new List<string> { firstPagePdfPath, pdfTemplatePath };
+    //         PdfHelper.MergePdfs(pdfFilesToMerge, mergedPdfPath);
+    //
+    //         // 清理暫存的 Word 和第一頁 PDF 檔案
+    //         if (File.Exists(tempWordFilePath))
+    //         {
+    //             File.Delete(tempWordFilePath);
+    //         }
+    //         if (File.Exists(firstPagePdfPath))
+    //         {
+    //             File.Delete(firstPagePdfPath);
+    //         }
+    //
+    //         System.Diagnostics.Debug.WriteLine($"附件-01 PDF 生成成功：{mergedPdfPath}");
+    //         return mergedPdfPath;
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         System.Diagnostics.Debug.WriteLine($"生成附件-01 PDF 時發生錯誤：{ex.Message}");
+    //         return null;
+    //     }
+    // }
 
     /// <summary>
     /// 根據機構類別取得要合併的檔案資訊清單（包含固定範本和使用者上傳檔案）

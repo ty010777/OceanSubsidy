@@ -406,7 +406,7 @@ public class SCI_Download : IHttpHandler
         {
             // OceanTech 業者範本檔案對應
             case "FILE_OTech1":
-                return "~/Template/SCI/OTech/附件-01海洋委員會海洋科技專案補助作業要點01.docx";
+                return "~/Template/SCI/OTech/附件-01海洋委員會海洋科技專案補助作業要點.pdf";
             case "FILE_OTech2":
                 return "~/Template/SCI/OTech/附件-02海洋科技科專案計畫書";
             case "FILE_OTech3":
@@ -430,7 +430,7 @@ public class SCI_Download : IHttpHandler
 
             // Academic 學研範本檔案對應
             case "FILE_AC1":
-                return "~/Template/SCI/Academic/附件-01海洋委員會海洋科技專案補助作業要點01.docx";
+                return "~/Template/SCI/Academic/附件-01海洋委員會海洋科技專案補助作業要點.pdf";
             case "FILE_AC2":
                 return "~/Template/SCI/Academic/附件-02海洋科技科專案計畫書";
             case "FILE_AC3":
