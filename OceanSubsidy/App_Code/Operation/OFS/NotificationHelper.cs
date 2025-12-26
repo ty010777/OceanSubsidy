@@ -467,7 +467,7 @@ public class NotificationHelper
 
     public static void ReviewCommittee(string token, string account)
     {
-        var url = ConfigurationManager.AppSettings["Host"] + ConfigurationManager.AppSettings["AppRootPath"] + $"/OFS/ReviewCommitteeInfo?Token={token}";
+        var url = ConfigurationManager.AppSettings["Host"] + ConfigurationManager.AppSettings["AppRootPath"] + $"/OFS/ReviewCommitteeInfo.aspx?Token={token}";
 
         toUser(
             "［海洋委員會］補助申請案 請進行審查及評分",
