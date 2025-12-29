@@ -30,9 +30,18 @@ _ReSharper*/
 .idea/
 #Nuget packages folder
 packages/
+/PrecompiledWeb/localhost_50929
+.claude/
 
 /PrecompiledWeb/localhost_50929
 .claude/
 
 node_modules/
 UploadFiles/
+
+CLAUDE.md
+
+Logs/
+
+# Ignore nul file (Windows command error artifact)
+nul

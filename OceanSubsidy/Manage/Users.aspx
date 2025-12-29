@@ -63,6 +63,25 @@
                             <div class="fs-16 text-gray mb-2">單位類別</div>
                             <asp:DropDownList ID="ddlSearchUnitType" runat="server" CssClass="form-select" Style="width: 180px;" />
                         </div>
+                        <div class="search-item">
+                            <div class="fs-16 text-gray mb-2">單位名稱</div>
+                            <asp:DropDownList ID="ddlSearchUnit" runat="server" CssClass="form-select" Style="width: 200px;" />
+                        </div>
+                        <div class="search-item">
+                            <div class="fs-16 text-gray mb-2">關鍵字</div>
+                            <asp:TextBox ID="txtSearchKeyword" runat="server"
+                                CssClass="form-control"
+                                Style="width: 200px;"
+                                placeholder="單位名稱/帳號/姓名/電話" />
+                        </div>
+                        <div class="search-item">
+                            <div class="fs-16 text-gray mb-2">狀態</div>
+                            <asp:DropDownList ID="ddlSearchStatus" runat="server" CssClass="form-select" Style="width: 120px;">
+                                <asp:ListItem Text="全部" Value="-1" />
+                                <asp:ListItem Text="啟用" Value="1" Selected="True" />
+                                <asp:ListItem Text="停用" Value="0" />
+                            </asp:DropDownList>
+                        </div>
                         <asp:LinkButton ID="btnSearchUser" runat="server" CssClass="btn btn-blue" OnClick="btnSearchUser_Click">
                                 <i class="fa-solid fa-magnifying-glass"></i>
                                 查詢

@@ -61,6 +61,7 @@ public partial class Manage_Users : Page
         ddlSearchUnitType.DataValueField = "TypeID";
         ddlSearchUnitType.DataSource = dt;
         ddlSearchUnitType.DataBind();
+        ddlSearchUnitType.Items.Insert(0, new ListItem("全部", "-1"));
 
         rblUserUnitType.DataTextField = "TypeName";
         rblUserUnitType.DataValueField = "TypeID";
@@ -73,6 +74,27 @@ public partial class Manage_Users : Page
         rblApproveUnitType.DataBind();
 
         LoadUnits();
+        InitSearchUnitDropdown();
+    }
+
+    private void InitSearchUnitDropdown()
+    {
+        var dt = SysUnitHelper.QueryAllOrderByUnitID();
+        if (dt == null || dt.Rows.Count == 0)
+        {
+            ddlSearchUnit.Items.Insert(0, new ListItem("全部", "-1"));
+            return;
+        }
+
+        var sorted = dt.AsEnumerable()
+            .OrderBy(r => r.Field<string>("UnitName"))
+            .CopyToDataTable();
+
+        ddlSearchUnit.DataTextField = "UnitName";
+        ddlSearchUnit.DataValueField = "UnitID";
+        ddlSearchUnit.DataSource = sorted;
+        ddlSearchUnit.DataBind();
+        ddlSearchUnit.Items.Insert(0, new ListItem("全部", "-1"));
     }
 
     protected void btnSearchUser_Click(object s, EventArgs e)
@@ -85,24 +107,64 @@ public partial class Manage_Users : Page
     private void BindUserList()
     {
         DataTable dt;
-        if (ddlSearchApp.SelectedValue == "-1")
+        string unitTypeValue = ddlSearchUnitType.SelectedValue;
+        bool isUnitTypeAll = unitTypeValue == "-1";
+
+        // 單位類別為「全部」時，先用第一個單位類別查詢（之後用 LINQ 合併所有）
+        if (isUnitTypeAll)
         {
-            dt = SysUserHelper.QueryByUnitType(ddlSearchUnitType.SelectedValue);
-        }
-        else if (ddlSearchApp.SelectedValue == SysAppHelper.QueryIDBySystemName("海洋科學調查活動填報系統").ToString())
-        {
-            dt = SysUserHelper.QueryByUnitTypeAndOSIUser(ddlSearchUnitType.SelectedValue);
+            // 查詢所有單位類別的使用者
+            var allTypes = SysUnitTypeHelper.QueryAll();
+            var tables = new List<DataTable>();
+
+            foreach (DataRow typeRow in allTypes.Rows)
+            {
+                string typeId = typeRow["TypeID"].ToString();
+                DataTable partDt;
+                if (ddlSearchApp.SelectedValue == "-1")
+                    partDt = SysUserHelper.QueryByUnitType(typeId);
+                else if (ddlSearchApp.SelectedValue == SysAppHelper.QueryIDBySystemName("海洋科學調查活動填報系統").ToString())
+                    partDt = SysUserHelper.QueryByUnitTypeAndOSIUser(typeId);
+                else
+                    partDt = SysUserHelper.QueryByUnitTypeAndOFSUser(typeId);
+
+                if (partDt != null && partDt.Rows.Count > 0)
+                    tables.Add(partDt);
+            }
+
+            if (tables.Count == 0)
+            {
+                lvUsers.DataSource = null;
+                lvUsers.DataBind();
+                return;
+            }
+
+            dt = tables[0].Clone();
+            foreach (var t in tables)
+                foreach (DataRow row in t.Rows)
+                    dt.ImportRow(row);
         }
         else
         {
-            dt = SysUserHelper.QueryByUnitTypeAndOFSUser(ddlSearchUnitType.SelectedValue);
+            if (ddlSearchApp.SelectedValue == "-1")
+            {
+                dt = SysUserHelper.QueryByUnitType(unitTypeValue);
+            }
+            else if (ddlSearchApp.SelectedValue == SysAppHelper.QueryIDBySystemName("海洋科學調查活動填報系統").ToString())
+            {
+                dt = SysUserHelper.QueryByUnitTypeAndOSIUser(unitTypeValue);
+            }
+            else
+            {
+                dt = SysUserHelper.QueryByUnitTypeAndOFSUser(unitTypeValue);
+            }
         }
 
-        var a = dt.Rows;
         if (dt == null || dt.Rows.Count == 0)
         {
             lvUsers.DataSource = null;
             lvUsers.DataBind();
+            upListUsers.Update();
             return;
         }
 
@@ -110,10 +172,37 @@ public partial class Manage_Users : Page
             .AsEnumerable()
             .Where(row => row.Field<bool>("IsApproved") == true);
 
+        // 單位名稱篩選
+        if (ddlSearchUnit.SelectedValue != "-1")
+        {
+            int unitId = int.Parse(ddlSearchUnit.SelectedValue);
+            filtered = filtered.Where(row => row.Field<int?>("UnitID") == unitId);
+        }
+
+        // 狀態篩選
+        if (ddlSearchStatus.SelectedValue != "-1")
+        {
+            bool isActive = ddlSearchStatus.SelectedValue == "1";
+            filtered = filtered.Where(row => row.Field<bool>("IsActive") == isActive);
+        }
+
+        // 關鍵字模糊搜尋（單位名稱/姓名/電話/帳號）
+        string keyword = txtSearchKeyword.Text.Trim();
+        if (!string.IsNullOrEmpty(keyword))
+        {
+            filtered = filtered.Where(row =>
+                (SysUserHelper.QueryUnitNameByUserID(row.Field<int>("UserID").ToString()) ?? "").Contains(keyword) ||
+                (row.Field<string>("Name") ?? "").Contains(keyword) ||
+                (row.Field<string>("Tel") ?? "").Contains(keyword) ||
+                (row.Field<string>("Account") ?? "").Contains(keyword)
+            );
+        }
+
         if (!filtered.Any())
         {
             lvUsers.DataSource = null;
             lvUsers.DataBind();
+            upListUsers.Update();
             return;
         }
         dt = filtered.CopyToDataTable();

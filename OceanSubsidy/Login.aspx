@@ -15,6 +15,11 @@
             flex-direction: column;
             gap: 1rem;
         }
+        /* 發送驗證碼按鈕樣式 */
+        #<%= btnSendCode.ClientID %> {
+            min-width: 140px;
+            white-space: nowrap;
+        }
     </style>
 
 </asp:Content>
@@ -46,17 +51,19 @@
                             <div class="icon">
                                 <i class="fas fa-user"></i>
                             </div>
-                            <asp:TextBox ID="txtEmail" runat="server" TextMode="Email" placeholder="請輸入帳號" title="帳號" />
+                            <asp:TextBox ID="txtEmail" runat="server" TextMode="Email" placeholder="請輸入帳號" title="帳號" aria-describedby="rfvEmail revEmail" />
                         </div>
                         <div class="mt-2">
-                            <asp:RequiredFieldValidator ID="rfvEmail" runat="server"
+                            <asp:RequiredFieldValidator ID="rfvEmail" runat="server" ClientIDMode="Static"
                                 ControlToValidate="txtEmail" ErrorMessage="請輸入帳號"
-                                ValidationGroup="Login" CssClass="invalid" Display="Dynamic" />
-                            <asp:RegularExpressionValidator ID="revEmail" runat="server"
+                                ValidationGroup="Login" CssClass="invalid" Display="Dynamic"
+                                SetFocusOnError="true" role="alert" />
+                            <asp:RegularExpressionValidator ID="revEmail" runat="server" ClientIDMode="Static"
                                 ControlToValidate="txtEmail"
                                 ValidationExpression="^[^@\s]+@[^@\s]+\.[^@\s]+$"
                                 ErrorMessage="帳號格式不正確"
-                                ValidationGroup="Login" CssClass="invalid" Display="Dynamic" />
+                                ValidationGroup="Login" CssClass="invalid" Display="Dynamic"
+                                SetFocusOnError="true" role="alert" />
                         </div>
                     </div>
                     <!-- 密碼 -->
@@ -73,7 +80,7 @@
                             <div class="icon">
                                 <i class="fas fa-lock"></i>
                             </div>
-                            <asp:TextBox ID="password" ClientIDMode="Static" runat="server" TextMode="Password" placeholder="請輸入密碼" title="密碼" />
+                            <asp:TextBox ID="password" ClientIDMode="Static" runat="server" TextMode="Password" placeholder="請輸入密碼" title="密碼" aria-describedby="rfvPassword" />
 
                             <div class="eye-warp">
                                 <button class="eye-open" type="button" style="display: none;" onclick="togglePasswordVisibility()" aria-label="顯示密碼">
@@ -85,9 +92,10 @@
                             </div>
                         </div>
                         <div class="mt-2">
-                            <asp:RequiredFieldValidator ID="rfvPassword" runat="server"
+                            <asp:RequiredFieldValidator ID="rfvPassword" runat="server" ClientIDMode="Static"
                                 ControlToValidate="password" ErrorMessage="請輸入密碼"
-                                ValidationGroup="Login" CssClass="invalid" Display="Dynamic" />
+                                ValidationGroup="Login" CssClass="invalid" Display="Dynamic"
+                                SetFocusOnError="true" role="alert" />
                         </div>
 
                     </div>
@@ -99,31 +107,33 @@
                         </div>
                         <div class="d-flex gap-2 align-items-center">
                             <div class="form-icon-input">
-                                <asp:TextBox ID="txtCaptcha" runat="server" placeholder="請輸入驗證碼" title="驗證碼" />
+                                <asp:TextBox ID="txtCaptcha" runat="server" placeholder="請輸入驗證碼" title="驗證碼" aria-describedby="rfvCaptcha cvCaptcha" />
                             </div>
                             <button type="button" title="點擊圖片可換驗證碼" onclick="return reloadcode();" class="d-grid p-0 border-0 bg-transparent">
                                 <span class="fs-12 text-gray" style="cursor: pointer;">點擊圖片可換驗證碼</span>
                                 <img id="imgValidate" alt="驗證碼" />
                             </button>
                             <button class="btn p-0 mt-auto" type="button" style="min-width: unset;" onclick="playCaptchaAudio()" aria-label="播放驗證碼" title="播放驗證碼">
-                                <img src="assets/img/play.svg" aria-hidden="true">
+                                <img src="assets/img/play.svg" aria-hidden="true" alt="">
                             </button>
                         </div>
                         <div class="mt-2">
-                            <asp:RequiredFieldValidator ID="rfvCaptcha" runat="server"
+                            <asp:RequiredFieldValidator ID="rfvCaptcha" runat="server" ClientIDMode="Static"
                                 ControlToValidate="txtCaptcha"
                                 ErrorMessage="請輸入驗證碼"
                                 ValidationGroup="Login"
                                 CssClass="invalid"
-                                Display="Dynamic" />
+                                Display="Dynamic"
+                                SetFocusOnError="true" role="alert" />
 
-                            <asp:CustomValidator ID="cvCaptcha" runat="server"
+                            <asp:CustomValidator ID="cvCaptcha" runat="server" ClientIDMode="Static"
                                 ControlToValidate="txtCaptcha"
                                 OnServerValidate="cvCaptcha_ServerValidate"
                                 ErrorMessage="驗證碼錯誤"
                                 ValidationGroup="Login"
                                 CssClass="invalid"
-                                Display="Dynamic" />
+                                Display="Dynamic"
+                                SetFocusOnError="true" role="alert" />
                         </div>
                     </div>
 
@@ -209,15 +219,17 @@
                                                         CssClass="form-control"
                                                         Placeholder="請輸入其他單位名稱"
                                                         title="其他單位名稱"
-                                                        Visible="false" />
+                                                        Visible="false"
+                                                        aria-describedby="rfvOtherGovUnit" />
                                                     <asp:RequiredFieldValidator
-                                                        ID="rfvOtherGovUnit" runat="server"
+                                                        ID="rfvOtherGovUnit" runat="server" ClientIDMode="Static"
                                                         ControlToValidate="txtOtherGovUnit"
                                                         ErrorMessage="請輸入其他單位名稱"
                                                         ValidationGroup="Register"
                                                         CssClass="invalid"
                                                         Display="Dynamic"
-                                                        Enabled="false" />
+                                                        Enabled="false"
+                                                        SetFocusOnError="true" role="alert" />
                                                 </td>
                                             </tr>
                                             <!-- 非政府機關輸入-->
@@ -227,15 +239,17 @@
                                                     <asp:TextBox
                                                         ID="txtOtherUnit" runat="server"
                                                         CssClass="form-control"
-                                                        Placeholder="請輸入單位名稱" title="單位名稱" />
+                                                        Placeholder="請輸入單位名稱" title="單位名稱"
+                                                        aria-describedby="rfvOtherUnit" />
                                                     <asp:RequiredFieldValidator
-                                                        ID="rfvOtherUnit" runat="server"
+                                                        ID="rfvOtherUnit" runat="server" ClientIDMode="Static"
                                                         ControlToValidate="txtOtherUnit"
                                                         ErrorMessage="請輸入單位名稱"
                                                         ValidationGroup="Register"
                                                         CssClass="invalid"
                                                         Display="Dynamic"
-                                                        Enabled="false" />
+                                                        Enabled="false"
+                                                        SetFocusOnError="true" role="alert" />
                                                 </td>
                                             </tr>
                                             <!-- 帳號 -->
@@ -247,34 +261,38 @@
                                                     <div class="verification-code">
                                                         <asp:TextBox ID="txtRegEmail" runat="server"
                                                             CssClass="form-control" TextMode="Email"
-                                                            Placeholder="以電子郵件作為帳號" title="帳號" />
+                                                            Placeholder="以電子郵件作為帳號" title="帳號"
+                                                            aria-describedby="rfvRegEmail revRegEmail cvRegisterAccountExists" />
                                                         <button
                                                             id="btnSendCode"
                                                             runat="server"
                                                             type="button"
                                                             class="btn btn-cyan"
                                                             onserverclick="btnSendCode_Click">
-                                                            發送驗證碼
+                                                            <span class="btn-text">發送驗證碼</span>
                                                         </button>
                                                     </div>
-                                                    <asp:RequiredFieldValidator runat="server"
+                                                    <asp:RequiredFieldValidator ID="rfvRegEmail" runat="server" ClientIDMode="Static"
                                                         ControlToValidate="txtRegEmail"
                                                         ErrorMessage="請輸入帳號"
                                                         ValidationGroup="Account"
-                                                        CssClass="invalid" Display="Dynamic" />
-                                                    <asp:RegularExpressionValidator runat="server"
+                                                        CssClass="invalid" Display="Dynamic"
+                                                        SetFocusOnError="true" role="alert" />
+                                                    <asp:RegularExpressionValidator ID="revRegEmail" runat="server" ClientIDMode="Static"
                                                         ControlToValidate="txtRegEmail"
                                                         ValidationExpression="^[^@\s]+@[^@\s]+\.[^@\s]+$"
                                                         ErrorMessage="帳號格式不正確"
                                                         ValidationGroup="Account"
-                                                        CssClass="invalid" Display="Dynamic" />
+                                                        CssClass="invalid" Display="Dynamic"
+                                                        SetFocusOnError="true" role="alert" />
                                                     <asp:CustomValidator
-                                                        ID="cvRegisterAccountExists" runat="server"
+                                                        ID="cvRegisterAccountExists" runat="server" ClientIDMode="Static"
                                                         ControlToValidate="txtRegEmail"
                                                         ErrorMessage="此帳號已存在"
                                                         ValidationGroup="Account"
                                                         CssClass="invalid" Display="Dynamic"
-                                                        EnableClientScript="false" />
+                                                        EnableClientScript="false"
+                                                        SetFocusOnError="true" role="alert" />
                                                 </td>
                                             </tr>
                                             <!-- 帳號驗証碼 -->
@@ -285,19 +303,22 @@
                                                 <td>
                                                     <asp:TextBox ID="txtRegCode" runat="server"
                                                         CssClass="form-control"
-                                                        placeholder="請輸入驗證碼" title="驗證碼" />
-                                                    <asp:RequiredFieldValidator ID="rfvRegCode" runat="server"
+                                                        placeholder="請輸入驗證碼" title="驗證碼"
+                                                        aria-describedby="rfvRegCode cvRegCode" />
+                                                    <asp:RequiredFieldValidator ID="rfvRegCode" runat="server" ClientIDMode="Static"
                                                         ControlToValidate="txtRegCode"
                                                         ErrorMessage="請輸入驗證碼"
                                                         ValidationGroup="Register"
-                                                        CssClass="invalid" Display="Dynamic" />
-                                                    <asp:CustomValidator ID="cvRegCode" runat="server"
+                                                        CssClass="invalid" Display="Dynamic"
+                                                        SetFocusOnError="true" role="alert" />
+                                                    <asp:CustomValidator ID="cvRegCode" runat="server" ClientIDMode="Static"
                                                         ControlToValidate="txtRegCode"
                                                         OnServerValidate="cvRegCode_ServerValidate"
                                                         ErrorMessage="驗證碼錯誤"
                                                         ValidationGroup="Register"
                                                         CssClass="invalid" Display="Dynamic"
-                                                        EnableClientScript="false" />
+                                                        EnableClientScript="false"
+                                                        SetFocusOnError="true" role="alert" />
                                                 </td>
                                             </tr>
                                             <!-- 姓名 -->
@@ -307,12 +328,14 @@
                                                 </th>
                                                 <td>
                                                     <asp:TextBox ID="txtRegName" runat="server"
-                                                        CssClass="form-control" Placeholder="請輸入中文姓名" title="中文姓名" />
-                                                    <asp:RequiredFieldValidator runat="server"
+                                                        CssClass="form-control" Placeholder="請輸入中文姓名" title="中文姓名"
+                                                        aria-describedby="rfvRegName" />
+                                                    <asp:RequiredFieldValidator ID="rfvRegName" runat="server" ClientIDMode="Static"
                                                         ControlToValidate="txtRegName"
                                                         ErrorMessage="請輸入姓名"
                                                         ValidationGroup="Register"
-                                                        CssClass="invalid" Display="Dynamic" />
+                                                        CssClass="invalid" Display="Dynamic"
+                                                        SetFocusOnError="true" role="alert" />
                                                 </td>
                                             </tr>
                                             <!-- 電話 -->
@@ -322,12 +345,14 @@
                                                 </th>
                                                 <td>
                                                     <asp:TextBox ID="txtRegTel" runat="server" TextMode="Phone"
-                                                        CssClass="form-control" Placeholder="請輸入電話號碼或手機" title="電話號碼或手機" />
-                                                    <asp:RequiredFieldValidator runat="server"
+                                                        CssClass="form-control" Placeholder="請輸入電話號碼或手機" title="電話號碼或手機"
+                                                        aria-describedby="rfvRegTel" />
+                                                    <asp:RequiredFieldValidator ID="rfvRegTel" runat="server" ClientIDMode="Static"
                                                         ControlToValidate="txtRegTel"
                                                         ErrorMessage="請輸入電話"
                                                         ValidationGroup="Register"
-                                                        CssClass="invalid" Display="Dynamic" />
+                                                        CssClass="invalid" Display="Dynamic"
+                                                        SetFocusOnError="true" role="alert" />
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -337,8 +362,8 @@
                                     CssClass="btn btn-cyan d-table mx-auto mt-3"
                                     ValidationGroup="Register"
                                     OnClick="btnRegister_Click">
-                                <i class="fa-solid fa-check"></i>
-                                帳號申請
+                                <span class="btn-icon"><i class="fa-solid fa-check"></i></span>
+                                <span class="btn-text">帳號申請</span>
                                 </asp:LinkButton>
                             </div>
                         </asp:Panel>
@@ -376,24 +401,28 @@
                                                 </th>
                                                 <td>
                                                     <asp:TextBox ID="txtForgotEmail" runat="server"
-                                                        CssClass="form-control" Placeholder="請輸入帳號(電子郵件)" title="帳號(電子郵件)" />
-                                                    <asp:RequiredFieldValidator runat="server"
+                                                        CssClass="form-control" Placeholder="請輸入帳號(電子郵件)" title="帳號(電子郵件)"
+                                                        aria-describedby="rfvForgotEmail revForgotEmail cvForgetAccountExists" />
+                                                    <asp:RequiredFieldValidator ID="rfvForgotEmail" runat="server" ClientIDMode="Static"
                                                         ControlToValidate="txtForgotEmail"
                                                         ErrorMessage="請輸入帳號"
                                                         ValidationGroup="Forgot"
-                                                        CssClass="invalid" Display="Dynamic" />
-                                                    <asp:RegularExpressionValidator runat="server"
+                                                        CssClass="invalid" Display="Dynamic"
+                                                        SetFocusOnError="true" role="alert" />
+                                                    <asp:RegularExpressionValidator ID="revForgotEmail" runat="server" ClientIDMode="Static"
                                                         ControlToValidate="txtForgotEmail"
                                                         ValidationExpression="^[^@\s]+@[^@\s]+\.[^@\s]+$"
                                                         ErrorMessage="帳號格式不正確"
                                                         ValidationGroup="Forgot"
-                                                        CssClass="invalid" Display="Dynamic" />
-                                                    <asp:CustomValidator ID="cvForgetAccountExists" runat="server"
+                                                        CssClass="invalid" Display="Dynamic"
+                                                        SetFocusOnError="true" role="alert" />
+                                                    <asp:CustomValidator ID="cvForgetAccountExists" runat="server" ClientIDMode="Static"
                                                         ControlToValidate="txtForgotEmail"
                                                         EnableClientScript="false"
                                                         ErrorMessage="帳號不存在或未通過審核"
                                                         ValidationGroup="Forgot"
-                                                        CssClass="invalid" Display="Dynamic" />
+                                                        CssClass="invalid" Display="Dynamic"
+                                                        SetFocusOnError="true" role="alert" />
                                                 </td>
                                             </tr>
 
@@ -448,13 +477,15 @@
                                                 <td>
                                                     <asp:TextBox ID="txtResetPwd" runat="server"
                                                         CssClass="form-control" TextMode="Password"
-                                                        Placeholder="請輸入新密碼" title="新密碼" />
-                                                    <asp:RequiredFieldValidator runat="server"
+                                                        Placeholder="請輸入新密碼" title="新密碼"
+                                                        aria-describedby="rfvResetPwd resetPwdHint" />
+                                                    <asp:RequiredFieldValidator ID="rfvResetPwd" runat="server" ClientIDMode="Static"
                                                         ControlToValidate="txtResetPwd"
                                                         ErrorMessage="請輸入新密碼"
                                                         ValidationGroup="Reset"
-                                                        CssClass="invalid" Display="Dynamic" />
-                                                    <small class="text-muted d-block mt-2">
+                                                        CssClass="invalid" Display="Dynamic"
+                                                        SetFocusOnError="true" role="alert" />
+                                                    <small id="resetPwdHint" class="text-muted d-block mt-2">
                                                         密碼規則：至少 8 個字元，須包含大寫字母、小寫字母、數字及特殊符號 (!@#$%^&*()_+-=[]{}|;:,.<>?)
                                                     </small>
                                                 </td>
@@ -466,18 +497,21 @@
                                                 <td>
                                                     <asp:TextBox ID="txtResetPwdConfirm" runat="server"
                                                         CssClass="form-control" TextMode="Password"
-                                                        Placeholder="請輸入新密碼確認" title="新密碼確認" />
-                                                    <asp:RequiredFieldValidator runat="server"
+                                                        Placeholder="請輸入新密碼確認" title="新密碼確認"
+                                                        aria-describedby="rfvResetPwdConfirm cvResetPwdConfirm" />
+                                                    <asp:RequiredFieldValidator ID="rfvResetPwdConfirm" runat="server" ClientIDMode="Static"
                                                         ControlToValidate="txtResetPwdConfirm"
                                                         ErrorMessage="請再次輸入新密碼"
                                                         ValidationGroup="Reset"
-                                                        CssClass="invalid" Display="Dynamic" />
-                                                    <asp:CompareValidator runat="server"
+                                                        CssClass="invalid" Display="Dynamic"
+                                                        SetFocusOnError="true" role="alert" />
+                                                    <asp:CompareValidator ID="cvResetPwdConfirm" runat="server" ClientIDMode="Static"
                                                         ControlToValidate="txtResetPwdConfirm"
                                                         ControlToCompare="txtResetPwd"
                                                         ErrorMessage="兩次密碼不一致"
                                                         ValidationGroup="Reset"
-                                                        CssClass="invalid" Display="Dynamic" />
+                                                        CssClass="invalid" Display="Dynamic"
+                                                        SetFocusOnError="true" role="alert" />
                                                 </td>
                                         </tbody>
                                     </table>
@@ -675,6 +709,160 @@
                 alert('您的瀏覽器不支援語音播放功能，請使用較新版本的瀏覽器');
             }
         }
+
+        // ========== 發送驗證碼按鈕 - 30秒倒數功能 ==========
+        var sendCodeCountdown = {
+            timer: null,
+            storageKey: 'sendCodeEndTime',
+            btnId: '<%= btnSendCode.ClientID %>',
+
+            init: function () {
+                var self = this;
+                var btn = self.getButton();
+                if (!btn) return;
+
+                // 先清除舊的 timer，避免重複
+                self.clearTimer();
+
+                // 檢查是否有未完成的倒數
+                var remaining = self.getRemainingSeconds();
+                if (remaining > 0) {
+                    self.startTimer();
+                    self.updateButton(remaining);
+                }
+
+                // 移除舊的事件監聽器，避免重複綁定
+                btn.removeEventListener('click', self.handleClick);
+                self.handleClick = function () {
+                    if (typeof Page_ClientValidate === 'function' && !Page_ClientValidate('Account')) {
+                        return;
+                    }
+                    self.startCountdown(30);
+                };
+                btn.addEventListener('click', self.handleClick);
+            },
+
+            getButton: function () {
+                return document.getElementById(this.btnId);
+            },
+
+            startCountdown: function (seconds) {
+                var self = this;
+                var endTime = Date.now() + (seconds * 1000);
+                sessionStorage.setItem(self.storageKey, endTime.toString());
+
+                self.updateButton(seconds);
+                self.startTimer();
+            },
+
+            startTimer: function () {
+                var self = this;
+                self.clearTimer();
+
+                // 立即更新按鈕狀態
+                var btn = self.getButton();
+                if (btn) btn.disabled = true;
+
+                self.timer = setInterval(function () {
+                    var remaining = self.getRemainingSeconds();
+                    if (remaining <= 0) {
+                        self.stopCountdown();
+                    } else {
+                        self.updateButton(remaining);
+                    }
+                }, 1000);
+            },
+
+            clearTimer: function () {
+                if (this.timer) {
+                    clearInterval(this.timer);
+                    this.timer = null;
+                }
+            },
+
+            getRemainingSeconds: function () {
+                var endTime = parseInt(sessionStorage.getItem(this.storageKey) || '0', 10);
+                var remaining = (endTime - Date.now()) / 1000;
+                return remaining <= 0 ? 0 : Math.floor(remaining);
+            },
+
+            updateButton: function (seconds) {
+                var btn = this.getButton();
+                if (!btn) return;
+
+                btn.disabled = true;
+                var textSpan = btn.querySelector('.btn-text');
+                if (textSpan) {
+                    textSpan.textContent = '重新發送 (' + seconds + 's)';
+                }
+            },
+
+            stopCountdown: function () {
+                var self = this;
+                self.clearTimer();
+                sessionStorage.removeItem(self.storageKey);
+
+                var btn = self.getButton();
+                if (!btn) return;
+
+                btn.disabled = false;
+                var textSpan = btn.querySelector('.btn-text');
+                if (textSpan) {
+                    textSpan.textContent = '發送驗證碼';
+                }
+            }
+        };
+
+        // ========== 帳號申請按鈕 - Loading 狀態功能 ==========
+        var registerButtonLoading = {
+            originalContent: '',
+
+            init: function () {
+                var self = this;
+                var prm = Sys.WebForms.PageRequestManager.getInstance();
+
+                prm.add_beginRequest(function (sender, args) {
+                    var trigger = args.get_postBackElement();
+                    var btnRegister = document.getElementById('<%= btnRegister.ClientID %>');
+
+                    // 檢查是否為帳號申請按鈕觸發
+                    if (trigger && btnRegister &&
+                        (trigger.id === btnRegister.id || trigger === btnRegister)) {
+                        self.showLoading(btnRegister);
+                    }
+                });
+
+                prm.add_endRequest(function () {
+                    var btnRegister = document.getElementById('<%= btnRegister.ClientID %>');
+                    if (btnRegister) {
+                        self.hideLoading(btnRegister);
+                    }
+                    // UpdatePanel 刷新後重新初始化發送驗證碼按鈕
+                    sendCodeCountdown.init();
+                });
+            },
+
+            showLoading: function (btn) {
+                this.originalContent = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 處理中...';
+                btn.disabled = true;
+                btn.style.pointerEvents = 'none';
+            },
+
+            hideLoading: function (btn) {
+                if (this.originalContent) {
+                    btn.innerHTML = this.originalContent;
+                }
+                btn.disabled = false;
+                btn.style.pointerEvents = '';
+            }
+        };
+
+        // ========== 初始化 ==========
+        $(function () {
+            sendCodeCountdown.init();
+            registerButtonLoading.init();
+        });
 
     </script>
 </asp:Content>
