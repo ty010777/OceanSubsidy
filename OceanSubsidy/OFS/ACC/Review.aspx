@@ -18,7 +18,7 @@
                 <project-organizer :id="id" type="accessibility"></project-organizer>
                 <a class="btn btn-teal-dark" download :href="`../../Service/OFS/DownloadPdf.ashx?Type=ACC&ProjectID=${id}&Version=1`">
                     <i class="fa-solid fa-download"></i>
-                    下載計劃書
+                    下載計畫書
                 </a>
             </div>
         </div>

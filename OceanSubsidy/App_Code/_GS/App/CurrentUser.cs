@@ -14,7 +14,7 @@ public class CurrentUser
     {
         get
         {
-            return SessionHelper.Get<SessionHelper.UserInfoClass>(SessionHelper.UserInfo).UserID;
+            return SessionHelper.Get<SessionHelper.UserInfoClass>(SessionHelper.UserInfo)?.UserID ?? "?";
         }
     }
 

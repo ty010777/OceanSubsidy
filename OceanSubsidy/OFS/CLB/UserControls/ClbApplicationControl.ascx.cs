@@ -1059,6 +1059,8 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
     {
         try
         {
+            Env.Log.Info($"[CLB] PDF 合併開始 - ProjectID: {projectId}, ProjectName: {ProjectName}, Version: {version}");
+
             // 建立檔案路徑清單
             var pdfFilePaths = new List<string>();
 
@@ -1137,7 +1139,11 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
 
             // 建立合併後的檔案名稱和路徑（加上時間戳記）
             string timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
-            string mergedFileName = $"{projectId}_社團_{ProjectName}_{version}_{timestamp}.pdf";
+
+            // 清除 ProjectName 中的不合法字符
+            string safeProjectName = RemoveInvalidFileNameChars(ProjectName);
+
+            string mergedFileName = $"{projectId}_社團_{safeProjectName}_{version}_{timestamp}.pdf";
             string uploadFolderPath = Page.Server.MapPath($"~/UploadFiles/OFS/CLB/{projectId}");
             string mergedFilePath = Path.Combine(uploadFolderPath, mergedFileName);
 
@@ -1173,12 +1179,42 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
                 OFS_ClbApplicationHelper.InsertUploadFile(uploadFile);
                 System.Diagnostics.Debug.WriteLine($"合併 PDF 記錄已存入資料庫：FileCode={fileCodeForDb}, FileName={mergedFileName}");
             }
+
+            Env.Log.Info($"[CLB] PDF 合併完成 - {mergedFileName}");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"合併 PDF 檔案時發生錯誤：{ex.Message}");
+            Env.Log.Error($"[CLB] PDF 合併錯誤 - ProjectID: {projectId}, ProjectName: {ProjectName}");
+            Env.Log.Error($"錯誤訊息: {ex.Message}");
+            Env.Log.Error($"堆疊追蹤: {ex.StackTrace}");
+            if (ex.InnerException != null)
+            {
+                Env.Log.Error($"內部錯誤: {ex.InnerException.Message}");
+            }
             throw;
         }
+    }
+
+    /// <summary>
+    /// 清除檔案名稱中的不合法字符
+    /// </summary>
+    /// <param name="fileName">原始檔案名稱</param>
+    /// <returns>清理後的檔案名稱</returns>
+    private string RemoveInvalidFileNameChars(string fileName)
+    {
+        if (string.IsNullOrEmpty(fileName))
+            return fileName;
+
+        // 取得 Windows 不合法的檔案名稱字符
+        char[] invalidChars = Path.GetInvalidFileNameChars();
+
+        // 將不合法字符替換為底線
+        foreach (char c in invalidChars)
+        {
+            fileName = fileName.Replace(c, '_');
+        }
+
+        return fileName;
     }
 
     /// <summary>

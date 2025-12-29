@@ -99,13 +99,16 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
                 response.Clear();
                 response.ContentType = "application/pdf";
 
+                // 使用 RFC 2231 標準編碼檔案名稱（支援中文和特殊字符）
+                string encodedFileName = System.Uri.EscapeDataString(outputFileName);
+
                 if (isDownload)
                 {
-                    response.AddHeader("Content-Disposition", $"attachment; filename=\"{outputFileName}\"");
+                    response.AddHeader("Content-Disposition", $"attachment; filename*=UTF-8''{encodedFileName}");
                 }
                 else
                 {
-                    response.AddHeader("Content-Disposition", $"inline; filename=\"{outputFileName}\"");
+                    response.AddHeader("Content-Disposition", $"inline; filename*=UTF-8''{encodedFileName}");
                 }
 
                 response.AddHeader("Content-Length", mergedPdfBytes.Length.ToString());

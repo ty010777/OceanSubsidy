@@ -8,6 +8,12 @@ public class EmailApiHelper
 {
     public static bool Send(string to, string subject, string body, string cc = "", string bcc = "")
     {
+        // 檢查 to 是否為空值，避免寫入無收件人的郵件到資料庫
+        if (string.IsNullOrWhiteSpace(to))
+        {
+            return false;
+        }
+
         var payload = JsonConvert.SerializeObject(new {
             To = to,
             Cc = cc,
