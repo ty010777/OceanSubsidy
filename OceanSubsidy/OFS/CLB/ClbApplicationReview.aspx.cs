@@ -53,6 +53,14 @@ public partial class OFS_CLB_Review_ClbApplicationReview : System.Web.UI.Page
             {
                 // 初始化頁面
                 InitializePage();
+
+                // 檢查是否有移轉成功的訊息
+                if (Session["TransferSuccess"] != null)
+                {
+                    string message = Session["TransferSuccess"].ToString();
+                    Session.Remove("TransferSuccess"); // 移除 Session，避免重複顯示
+                    ShowSweetAlert("成功", message, "success");
+                }
             }
             else
             {
@@ -272,29 +280,18 @@ public partial class OFS_CLB_Review_ClbApplicationReview : System.Web.UI.Page
             
             // 只更新承辦人相關的三個欄位
             OFS_ClbApplicationHelper.UpdateProjectSupervisoryInfo(
-                ProjectID, 
-                selectedReviewerAccount, 
-                reviewerName, 
+                ProjectID,
+                selectedReviewerAccount,
+                reviewerName,
                 departmentName
             );
-            
-            // 更新頁面上的審核者資訊顯示
-            UpdateReviewerInfoDisplay(reviewerName);
-            
-            ShowSweetAlert("成功", "案件移轉完成", "success");
-            
-            // 清空選項並關閉 Modal
-            ddlDepartment.SelectedIndex = 0;
-            ddlReviewer.Items.Clear();
-            ddlReviewer.Items.Add(new ListItem("請選擇承辦人員", ""));
-            
-            // 關閉 Modal
-            string script = @"
-                document.getElementById('transferCaseModal').querySelector('.btn-close').click();
-            ";
-            Page.ClientScript.RegisterStartupScript(this.GetType(), "closeModal", script, true);
-            
-            SetReviewerInfoFromDatabase();
+
+            // 使用 Session 儲存成功訊息，避免重複顯示
+            Session["TransferSuccess"] = "案件移轉完成";
+
+            // 重新導向到當前頁面（使用 Response.Redirect 確保是全新的請求）
+            Response.Redirect(Request.RawUrl, false);
+            Context.ApplicationInstance.CompleteRequest();
         }
         catch (Exception ex)
         {

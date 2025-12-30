@@ -860,7 +860,7 @@ window.ReviewChecklist = (function() {
         if (statusesName === '計畫書審核中') {
             planRevisionContent = `
                 <div class="d-flex align-items-center justify-content-center gap-1">
-                    <button class="btn btn-sm btn-teal-dark" type="button" onclick="window.location.href='${getFinalReviewUrl(item.ProjectID)}'">
+                    <button class="btn btn-sm btn-teal-dark" type="button" onclick="window.open('${getFinalReviewUrl(item.ProjectID)}', '_blank')">
                         <i class="fas fa-clipboard-check" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="審查"></i>
                     </button>
                 </div>
@@ -1092,7 +1092,7 @@ window.ReviewChecklist = (function() {
         if (currentType === '1' && item.StatusesName === '審核中') {
             const reviewUrl = getReviewUrl(item.ProjectID);
             if (reviewUrl) {
-                buttons += `<button class="btn btn-sm btn-teal-dark" type="button" onclick="window.location.href='${reviewUrl}'">
+                buttons += `<button class="btn btn-sm btn-teal-dark" type="button" onclick="window.open('${reviewUrl}', '_blank')">
                             <i class="fas fa-clipboard-check" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="審查"></i>
                         </button>`;
             }
@@ -1804,10 +1804,10 @@ function handlePlanChangeReview(projectId) {
         }
 
         if (reviewUrl) {
-            // 跳轉到對應的審核頁面
-            window.location.href = reviewUrl;
-        } 
-        
+            // 另開分頁到對應的審核頁面
+            window.open(reviewUrl, '_blank');
+        }
+
 
     } catch (error) {
         console.error('處理計畫變更審核時發生錯誤:', error);
@@ -1898,8 +1898,8 @@ function handleExecutionPlanReview(projectId,reviewItem) {
         }
 
         if (reviewUrl) {
-            // 跳轉到對應的審核頁面
-            window.location.href = reviewUrl;
+            // 另開分頁到對應的審核頁面
+            window.open(reviewUrl, '_blank');
         } else {
             Swal.fire({
                 title: '功能開發中',

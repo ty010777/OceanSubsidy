@@ -250,7 +250,7 @@
                     </thead>
                     <tbody id="tbodyOtherSubsidy">
                     </tbody>
-                </table><button id="btnAddOtherSubsidy" class="btn btn-sm btn-teal-dark m-0 view-mode" type="button"><i class="fas fa-plus"></i> 新增</button>
+                </table><button id="btnAddOtherSubsidy" class="btn btn-sm btn-teal-dark m-0 view-mode mb-4" type="button"><i class="fas fa-plus"></i> 新增</button>
             </div>
         </div>
         <h5 class="square-title">經費預算規劃</h5>
@@ -270,9 +270,9 @@
                 <tbody id="tbodyBudgetPlan">
                 </tbody>
             </table>
-            <button id="btnAddBudgetPlan" class="btn btn-sm btn-teal-dark m-0 view-mode" type="button"><i class="fas fa-plus"></i> 新增</button>
+            <button id="btnAddBudgetPlan" class="btn btn-sm btn-teal-dark m-0 view-mode mb-4" type="button"><i class="fas fa-plus"></i> 新增</button>
         </div>
-        <table id="PreviouslySubsidizedTable" class="table align-middle gray-table side-table">
+        <table id="PreviouslySubsidizedTable" class="table align-middle gray-table side-table mt-4">
                         <tbody>
                             
                             <tr>
