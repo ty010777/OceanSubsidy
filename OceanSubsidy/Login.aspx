@@ -858,10 +858,54 @@
             }
         };
 
+        // ========== 忘記密碼按鈕 - Loading 狀態功能 ==========
+        var forgotButtonLoading = {
+            originalContent: '',
+
+            init: function () {
+                var self = this;
+                var prm = Sys.WebForms.PageRequestManager.getInstance();
+
+                prm.add_beginRequest(function (sender, args) {
+                    var trigger = args.get_postBackElement();
+                    var btnForgot = document.getElementById('<%= btnForgot.ClientID %>');
+
+                    // 檢查是否為忘記密碼按鈕觸發
+                    if (trigger && btnForgot &&
+                        (trigger.id === btnForgot.id || trigger === btnForgot)) {
+                        self.showLoading(btnForgot);
+                    }
+                });
+
+                prm.add_endRequest(function () {
+                    var btnForgot = document.getElementById('<%= btnForgot.ClientID %>');
+                    if (btnForgot) {
+                        self.hideLoading(btnForgot);
+                    }
+                });
+            },
+
+            showLoading: function (btn) {
+                this.originalContent = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 處理中...';
+                btn.disabled = true;
+                btn.style.pointerEvents = 'none';
+            },
+
+            hideLoading: function (btn) {
+                if (this.originalContent) {
+                    btn.innerHTML = this.originalContent;
+                }
+                btn.disabled = false;
+                btn.style.pointerEvents = '';
+            }
+        };
+
         // ========== 初始化 ==========
         $(function () {
             sendCodeCountdown.init();
             registerButtonLoading.init();
+            forgotButtonLoading.init();
         });
 
     </script>
