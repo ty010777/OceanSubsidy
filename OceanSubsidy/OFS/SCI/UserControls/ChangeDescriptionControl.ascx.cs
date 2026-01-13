@@ -186,7 +186,7 @@ public partial class OFS_SCI_UserControls_ChangeDescriptionControl : System.Web.
                 throw new Exception($"驗證失敗：{errorMessage}");
             }
             // 3. 儲存到資料庫
-            // 判斷 Method：計畫書修正 = 1, 計畫變更 = 2
+            // 判斷 Method：計畫變更 = 1,  計畫書修正= 2
             var project = OFS_SciApplicationHelper.getVersionByProjectID(projectID);
             int method = 2; // 預設為計畫書修正
             if (project.IsProjChanged == 1)

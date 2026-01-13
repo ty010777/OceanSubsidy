@@ -86,6 +86,24 @@ public class InprogressListHelper
     }
 
     /// <summary>
+    /// 取得年度清單
+    /// </summary>
+    /// <returns>年度清單的 DataTable</returns>
+    public static DataTable GetYears()
+    {
+        DbHelper db = new DbHelper();
+        db.CommandText = @"SELECT DISTINCT [Year]
+                          FROM V_OFS_InprogressList
+                          WHERE [Year] IS NOT NULL AND [Year] <> ''
+                          ORDER BY [Year] DESC";
+
+        DataTable result = db.GetTable();
+        db.Dispose();
+
+        return result;
+    }
+
+    /// <summary>
     /// 取得申請單位清單
     /// </summary>
     /// <returns>申請單位清單的 DataTable</returns>

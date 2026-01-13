@@ -193,7 +193,7 @@
 
     const changeForm = ref();
     const editable = computed(() => isProjectEditable("culture", form.value.Status, 2));
-    const end = computed(() => info.value.EndDate);
+    const end = computed(() => info.value.PlanEndDate);
     const errors = ref({});
     const filteredGoals = computed(() => goals.value.filter((goal) => !goal.Deleted));
     const form = ref({});

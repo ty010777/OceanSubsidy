@@ -158,11 +158,26 @@ public partial class inprogressList : System.Web.UI.Page
     /// </summary>
     private void LoadYearDropDown()
     {
-        ddlYear.Items.Clear();
-        ddlYear.Items.Add(new ListItem("全部", ""));
-        ddlYear.Items.Add(new ListItem("114年","114"));
+        try
+        {
+            ddlYear.Items.Clear();
+            ddlYear.Items.Add(new ListItem("全部", ""));
 
-      
+            // 從 Helper 取得年度清單
+            DataTable dt = InprogressListHelper.GetYears();
+
+            foreach (DataRow row in dt.Rows)
+            {
+                string year = row["Year"].ToString();
+                ddlYear.Items.Add(new ListItem($"{year}年", year));
+            }
+        }
+        catch (Exception ex)
+        {
+            // 載入失敗時使用預設選項
+            ddlYear.Items.Clear();
+            ddlYear.Items.Add(new ListItem("全部", ""));
+        }
     }
 
     /// <summary>

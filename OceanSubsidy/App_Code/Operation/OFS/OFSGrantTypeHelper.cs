@@ -76,6 +76,7 @@ public class OFSGrantTypeHelper
                   ,[FullName]
                   ,[ApplyStartDate]
                   ,[ApplyEndDate]
+                  ,[PlanEndDate]
                   ,[Year]
               FROM [OFS_GrantType]
              WHERE [TypeCode] = @TypeCode
@@ -100,6 +101,7 @@ public class OFSGrantTypeHelper
             FullName = row.Field<string>("FullName"),
             StartDate = row.Field<DateTime>("ApplyStartDate"),
             EndDate = row.Field<DateTime>("ApplyEndDate"),
+            PlanEndDate = row.Field<DateTime?>("PlanEndDate"),
             Year = row.Field<int?>("Year")
         };
     }
@@ -112,6 +114,7 @@ public class OFSGrantTypeHelper
                   ,[FullName]
                   ,[ApplyStartDate]
                   ,[ApplyEndDate]
+                  ,[PlanEndDate]
                   ,[Year]
               FROM [OFS_GrantType]
              WHERE TypeID = @TypeID
@@ -134,6 +137,7 @@ public class OFSGrantTypeHelper
             FullName = row.Field<string>("FullName"),
             StartDate = row.Field<DateTime>("ApplyStartDate"),
             EndDate = row.Field<DateTime>("ApplyEndDate"),
+            PlanEndDate = row.Field<DateTime?>("PlanEndDate"),
             Year = row.Field<int?>("Year")
         };
     }
@@ -147,6 +151,7 @@ public class OFSGrantTypeHelper
                   ,[FullName]
                   ,[ApplyStartDate]
                   ,[ApplyEndDate]
+                  ,[PlanEndDate]
                   ,[Year]
               FROM [OFS_GrantType]
              WHERE [TypeCode] = @TypeCode
@@ -171,6 +176,7 @@ public class OFSGrantTypeHelper
             FullName = row.Field<string>("FullName"),
             StartDate = row.Field<DateTime>("ApplyStartDate"),
             EndDate = row.Field<DateTime>("ApplyEndDate"),
+            PlanEndDate = row.Field<DateTime?>("PlanEndDate"),
             Year = row.Field<int?>("Year")
         };
     }

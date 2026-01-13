@@ -145,7 +145,7 @@
     ];
 
     const changeForm = ref();
-    const end = computed(() => info.value.EndDate);
+    const end = computed(() => info.value.PlanEndDate);
     const editable = computed(() => isProjectEditable("multiple", form.value.Status, 2));
     const errors = ref({});
     const filteredItems = computed(() => items.value.filter((item) => !item.Deleted));

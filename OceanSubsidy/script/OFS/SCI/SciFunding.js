@@ -857,6 +857,7 @@ function R_addNewRow() {
                 <option value="">請選擇</option>
                 <option value="技術移轉">技術移轉</option>
                 <option value="委託研究">委託研究</option>
+                <option value="驗證費">驗證費</option>
             </select>
         </td>
         <td class="text-center">
