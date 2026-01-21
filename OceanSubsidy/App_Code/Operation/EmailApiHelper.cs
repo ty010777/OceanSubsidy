@@ -14,6 +14,12 @@ public class EmailApiHelper
             return false;
         }
 
+        // 移除結尾的特殊符號
+        char[] trimChars = { ',', '.', ';', ':', ' ', '\t', '\r', '\n' };
+        to = to.TrimEnd(trimChars);
+        cc = cc.TrimEnd(trimChars);
+        bcc = bcc.TrimEnd(trimChars);
+
         var payload = JsonConvert.SerializeObject(new {
             To = to,
             Cc = cc,

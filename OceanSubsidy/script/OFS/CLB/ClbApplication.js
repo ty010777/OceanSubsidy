@@ -2020,7 +2020,7 @@ function validateBudgetPlanData() {
 
         // 檢查欄位是否都有填寫
         const hasTitle = title.trim() !== '';
-        const hasAmount = amount > 0;
+        const hasAmount = amountText.trim() !== '';
         const hasOtherAmount = otherAmountText.trim() !== '';
         const hasDescription = description.trim() !== '';
 
@@ -2037,6 +2037,11 @@ function validateBudgetPlanData() {
             }
             if (!hasDescription) {
                 errorMessages.push(`經費預算規劃第 ${rowNumber} 列：請輸入計算方式及說明`);
+            }
+
+            // 檢查兩個金額欄位不可同時為 0
+            if (hasAmount && hasOtherAmount && amount === 0 && otherAmount === 0) {
+                errorMessages.push(`經費預算規劃第 ${rowNumber} 列：海洋委員會經費與其他配合經費不可同時為 0`);
             }
         }
     });

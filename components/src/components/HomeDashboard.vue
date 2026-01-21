@@ -226,9 +226,9 @@
     const path = (item) => {
         switch (item.TypeCode) {
             case "SCI":
-                return "SCI/SciApplication.aspx?GrantTypeID=SCI";
+                return `SCI/SciApplication.aspx?TypeID=${item.TypeID}`;
             case "CLB":
-                return "CLB/ClbApplication.aspx?GrantTypeID=CLB";
+                return `CLB/ClbApplication.aspx?TypeID=${item.TypeID}`;
             default:
                 return `${item.TypeCode}/Application.aspx`;
         }

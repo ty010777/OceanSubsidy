@@ -381,7 +381,7 @@ public partial class OFS_ApplicationChecklist : System.Web.UI.Page
             ddlStatus.Items.Add(new ListItem("審核中", "審核中"));
             ddlStatus.Items.Add(new ListItem("補正補件", "補正補件"));
             ddlStatus.Items.Add(new ListItem("逾期未補", "逾期未補"));
-            ddlStatus.Items.Add(new ListItem("未通過", "未通過"));
+            ddlStatus.Items.Add(new ListItem("不通過", "不通過"));
             ddlStatus.Items.Add(new ListItem("通過", "通過"));
 
             // 載入主管單位下拉選單

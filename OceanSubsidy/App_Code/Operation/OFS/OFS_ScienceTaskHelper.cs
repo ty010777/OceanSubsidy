@@ -432,13 +432,21 @@ public class OFS_ScienceTaskHelper
         try
         {
             db.CommandText = @"
-                UPDATE [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main]
-                SET [StatusesName] = '逾期未補',
-                    [updated_at] = GETDATE()
-                WHERE [StatusesName] = '補正補件'
-                  AND [ExpirationDate] IS NOT NULL
-                  AND [ExpirationDate] < GETDATE()
-                  AND [isExist] = 1";
+            DECLARE @BusinessDate DATE =
+            CASE
+                WHEN CAST(GETDATE() AS TIME) < '02:00'
+                THEN DATEADD(DAY, -1, CAST(GETDATE() AS DATE))
+                ELSE CAST(GETDATE() AS DATE)
+            END;
+
+            UPDATE [OCA_OceanSubsidy].[dbo].[OFS_SCI_Project_Main]
+            SET [StatusesName] = '逾期未補',
+                [updated_at] = GETDATE()
+            WHERE [StatusesName] = '補正補件'
+              AND [ExpirationDate] IS NOT NULL
+              AND CAST([ExpirationDate] AS DATE) < @BusinessDate
+              AND [isExist] = 1;
+";
 
             db.ExecuteNonQuery();
         }
@@ -458,12 +466,21 @@ public class OFS_ScienceTaskHelper
         try
         {
             db.CommandText = @"
-                SELECT TOP(1) ApplyEndDate
-                FROM [OCA_OceanSubsidy].[dbo].[OFS_GrantType]
-                WHERE TypeCode = 'SCI'
-                  AND DATEADD(DAY, -1, GETDATE()) >= ApplyStartDate
-                  AND DATEADD(DAY, -1, GETDATE()) <= ApplyEndDate
-                ORDER BY TypeID DESC;";
+                DECLARE @BusinessDate DATE =
+                CASE
+                    WHEN CAST(GETDATE() AS TIME) < '02:00'
+                    THEN DATEADD(DAY, -1, CAST(GETDATE() AS DATE))
+                    ELSE CAST(GETDATE() AS DATE)
+                END;
+
+
+            SELECT TOP (1) ApplyEndDate
+            FROM OFS_GrantType
+            WHERE TypeCode = 'SCI'
+              AND @BusinessDate >= CAST(ApplyStartDate AS DATE)
+              AND @BusinessDate <= CAST(ApplyEndDate   AS DATE)
+            ORDER BY ApplyEndDate DESC;
+;";
 
             var dt = db.GetTable();
 
@@ -488,7 +505,7 @@ public class OFS_ScienceTaskHelper
         // 使用共用方法取得申請截止日期
         DateTime? applyEndDate = GetLatestApplyEndDate();
 
-        if (applyEndDate.HasValue && DateTime.Now > applyEndDate.Value)
+        if (applyEndDate.HasValue && DateTime.Now > applyEndDate.Value.AddDays(1))
         {
             DbHelper db = new DbHelper();
             try

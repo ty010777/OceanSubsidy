@@ -255,7 +255,7 @@ public class OFSGrantTypeHelper
 
         if (published)
         {
-            db.CommandText += " WHERE G.[ApplyStartDate] <= GETDATE() AND G.[ApplyEndDate] >= GETDATE()";
+            db.CommandText += " WHERE G.[ApplyStartDate] <= GETDATE() AND DATEADD(DAY, 1, G.[ApplyEndDate]) >= GETDATE()";
         }
 
         db.CommandText += " ORDER BY G.[Year] DESC, G.[TypeCode]";
