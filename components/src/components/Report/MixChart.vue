@@ -15,6 +15,10 @@
 
     const init = (data) => {
         am5.ready(() => {
+            if (root) {
+                root.dispose();
+            }
+
             root = am5.Root.new(container.value);
             root.setThemes([am5themes_Animated.new(root)]);
 
@@ -189,7 +193,7 @@
         return 0;
     };
 
-    onMounted(() => {
+    const load = () => {
         init(types.map((item) => {
             const data = { "category": item.title, "核定經費": 0, "實支金額": 0, "已撥付": 0, "經費執行率(%)": 0, "支用比(%)": 0 };
             const info = props.list.find((i) => i.Category === item.code);
@@ -204,5 +208,9 @@
 
             return data;
         }));
-    });
+    };
+
+    onMounted(load);
+
+    watch(() => props.list, load);
 </script>

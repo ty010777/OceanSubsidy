@@ -8,8 +8,9 @@
             <div class="row g-3">
                 <div class="col-12 col-lg-6">
                     <div class="fs-16 text-gray mb-2">年度</div>
-                    <select class="form-select">
-                        <option value="">114</option>
+                    <select class="form-select" v-model="year">
+                        <option :value="115">115</option>
+                        <option :value="114">114</option>
                     </select>
                 </div>
                 <div class="col-12 col-lg-6">
@@ -45,7 +46,7 @@
                         <span class="fs-4 fw-bold">各類經費執行情形</span>
                     </div>
                     <div class="fs-6 text-end text-secondary me-5">單位：千元</div>
-                    <report-mix-chart :list="statList" style="width:100%;height:300px" v-if="statList.length"></report-mix-chart>
+                    <report-mix-chart :list="filterStatList" style="width:100%;height:300px" v-if="filterStatList.length"></report-mix-chart>
                 </div>
             </div>
         </div>
@@ -88,7 +89,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr :key="item" v-for="(item) in statList">
+                        <tr :key="item" v-for="(item) in filterStatList">
                             <td class="text-center">{{ types.find((ty) => ty.code === item.Category).title }}</td>
                             <td class="text-center"><a :href="`Report/ApprovedList.aspx?category=${item.Category}`">{{ item.Count }}</a></td>
                             <td class="text-end">{{ item.ApprovedAmount.toLocaleString() }}</td>
@@ -190,6 +191,7 @@
     const settings = ref([]);
     const statList = ref([]);
     const type = ref();
+    const year = ref(115);
 
     const filterGrants = computed(() => {
         let data = grants.value;
@@ -202,11 +204,7 @@
     });
 
     const filterStatList = computed(() => {
-        if (type.value) {
-            return statList.value.filter((item) => item.Category === type.value);
-        }
-
-        return statList.value;
+        return statList.value.filter((item) => item.Year === year.value && (!type.value || item.Category === type.value));
     });
 
     const stat = computed(() => {
