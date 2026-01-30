@@ -34,11 +34,30 @@
         document.addEventListener('DOMContentLoaded', function() {
             var linkRiskAssessment = document.getElementById('linkRiskAssessment');
             if (linkRiskAssessment) {
-                var orgName = '<%= Server.UrlEncode(OrgName) %>';
+                var orgName = '<%=OrgName%>';
                 var appRootPath = window.AppRootPath || '';
                 linkRiskAssessment.href = appRootPath + '/OFS/AuditHistory.aspx?Name=' + orgName;
             }
+
+            // 初始化評級選中狀態
+            initScoreGrade();
         });
+
+        // 更新評級 HiddenField
+        function updateScoreGrade(value) {
+            document.getElementById('<%= hdnScoreGrade.ClientID %>').value = value;
+        }
+
+        // 根據 HiddenField 設定 radio 選中狀態
+        function initScoreGrade() {
+            var hdnValue = document.getElementById('<%= hdnScoreGrade.ClientID %>');
+            if (hdnValue && hdnValue.value) {
+                var radio = document.querySelector('input[name="scoreGrade"][value="' + hdnValue.value + '"]');
+                if (radio) {
+                    radio.checked = true;
+                }
+            }
+        }
     </script>
 </head>
 
@@ -122,59 +141,145 @@
                                 </li>
                             </ul>
 
-                            <!-- 表格 -->
-                            <div class="mt-4">
-                                <table class="table align-middle gray-table side-table">
-                                    <tbody>
-                                        <tr>
-                                            <th nowrap>評分</th>
-                                            <td style="border: unset">
-                                                <div class="sub-table">
-                                                    <table class="table align-middle gray-table" style="min-width: unset;">
-                                                        <thead>
-                                                            <tr>
-                                                                <th>評審項目</th>
-                                                                <th>權重</th>
-                                                                <th>評分 (0~100)</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            <asp:Repeater ID="rptReviewItems" runat="server">
-                                                                <ItemTemplate>
-                                                                    <tr>
-                                                                        <td class="text-start">
-                                                                            <%# Eval("ItemName") %>
-                                                                        </td>
-                                                                        <td><%# Eval("Weight") %>%</td>
-                                                                        <td>
-                                                                            <asp:TextBox ID="txtItemScore" runat="server" 
-                                                                                CssClass="form-control" 
-                                                                                placeholder="請輸入"
-                                                                                Text='<%# Eval("Score") %>' />
-                                                                            <asp:HiddenField ID="hdnItemId" runat="server" Value='<%# Eval("Id") %>' />
-                                                                        </td>
-                                                                    </tr>
-                                                                </ItemTemplate>
-                                                            </asp:Repeater>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <th nowrap>審查意見</th>
-                                            <td style="border: unset">
-                                                <asp:TextBox ID="txtReviewComment" runat="server" 
-                                                    CssClass="form-control" 
-                                                    TextMode="MultiLine" 
-                                                    Rows="5"
-                                                    placeholder="請輸入審查意見" 
-                                                    style="min-height: 120px;" />
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                            <!-- 表格 - 通用版（CUL 等） -->
+                            <asp:Panel ID="pnlGeneralReview" runat="server">
+                                <div class="mt-4">
+                                    <table class="table align-middle gray-table side-table">
+                                        <tbody>
+                                            <tr>
+                                                <th nowrap>評分</th>
+                                                <td style="border: unset">
+                                                    <div class="sub-table">
+                                                        <table class="table align-middle gray-table" style="min-width: unset;">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>評審項目</th>
+                                                                    <th>權重</th>
+                                                                    <th>評分 (0~100)</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <asp:Repeater ID="rptReviewItems" runat="server">
+                                                                    <ItemTemplate>
+                                                                        <tr>
+                                                                            <td class="text-start">
+                                                                                <%# Eval("ItemName") %>
+                                                                            </td>
+                                                                            <td><%# Eval("Weight") %>%</td>
+                                                                            <td>
+                                                                                <asp:TextBox ID="txtItemScore" runat="server"
+                                                                                    CssClass="form-control"
+                                                                                    placeholder="請輸入"
+                                                                                    Text='<%# Eval("Score") %>' />
+                                                                                <asp:HiddenField ID="hdnItemId" runat="server" Value='<%# Eval("Id") %>' />
+                                                                            </td>
+                                                                        </tr>
+                                                                    </ItemTemplate>
+                                                                </asp:Repeater>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th nowrap>審查意見</th>
+                                                <td style="border: unset">
+                                                    <asp:TextBox ID="txtReviewComment" runat="server"
+                                                        CssClass="form-control"
+                                                        TextMode="MultiLine"
+                                                        Rows="5"
+                                                        placeholder="請輸入審查意見"
+                                                        style="min-height: 120px;" />
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </asp:Panel>
+
+                            <!-- 表格 - 科專版（SCI） -->
+                            <asp:Panel ID="pnlSciReview" runat="server" Visible="false">
+                                <div class="mt-4">
+                                    <table class="table align-middle gray-table side-table">
+                                        <tbody>
+                                            <!-- tr1: 評審項目與權重 -->
+                                            <tr>
+                                                <th nowrap>評分</th>
+                                                <td style="border: unset">
+                                                    <div class="sub-table">
+                                                        <table class="table align-middle gray-table" style="min-width: unset;">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th style="width: 50px;"></th>
+                                                                    <th>評審項目</th>
+                                                                    <th>權重</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <asp:Repeater ID="rptSciReviewItems" runat="server">
+                                                                    <ItemTemplate>
+                                                                        <tr>
+                                                                            <td class="text-center"><%# ToChineseNumber(Container.ItemIndex + 1) %>、</td>
+                                                                            <td class="text-start">
+                                                                                <%# Eval("ItemName") %>
+                                                                            </td>
+                                                                            <td><%# Eval("Weight") %>%</td>
+                                                                            <asp:HiddenField ID="hdnSciItemId" runat="server" Value='<%# Eval("Id") %>' />
+                                                                        </tr>
+                                                                    </ItemTemplate>
+                                                                </asp:Repeater>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <!-- tr2: 審查意見 -->
+                                            <tr>
+                                                <th nowrap>審查意見</th>
+                                                <td style="border: unset">
+                                                    <p class="text-gray mb-2">請針對上述評審項目個別提供意見，並以「一、... 二、...」分段提供</p>
+                                                    <asp:TextBox ID="txtSciReviewComment" runat="server"
+                                                        CssClass="form-control"
+                                                        TextMode="MultiLine"
+                                                        Rows="5"
+                                                        placeholder="請輸入審查意見"
+                                                        style="min-height: 120px;" />
+                                                </td>
+                                            </tr>
+                                            <!-- tr3: 評級 A~E -->
+                                            <tr>
+                                                <th nowrap>評級</th>
+                                                <td style="border: unset">
+                                                    <div class="d-flex gap-4 flex-wrap mb-3">
+                                                        <div class="form-check form-check-inline">
+                                                            <input id="radio-grade-a" class="form-check-input check-teal" type="radio" name="scoreGrade" value="95" onclick="updateScoreGrade(this.value)" />
+                                                            <label class="form-check-label fw-bold" for="radio-grade-a">A</label>
+                                                        </div>
+                                                        <div class="form-check form-check-inline">
+                                                            <input id="radio-grade-b" class="form-check-input check-teal" type="radio" name="scoreGrade" value="85" onclick="updateScoreGrade(this.value)" />
+                                                            <label class="form-check-label fw-bold" for="radio-grade-b">B</label>
+                                                        </div>
+                                                        <div class="form-check form-check-inline">
+                                                            <input id="radio-grade-c" class="form-check-input check-teal" type="radio" name="scoreGrade" value="75" onclick="updateScoreGrade(this.value)" />
+                                                            <label class="form-check-label fw-bold" for="radio-grade-c">C</label>
+                                                        </div>
+                                                        <div class="form-check form-check-inline">
+                                                            <input id="radio-grade-d" class="form-check-input check-teal" type="radio" name="scoreGrade" value="65" onclick="updateScoreGrade(this.value)" />
+                                                            <label class="form-check-label fw-bold" for="radio-grade-d">D</label>
+                                                        </div>
+                                                        <div class="form-check form-check-inline">
+                                                            <input id="radio-grade-e" class="form-check-input check-teal" type="radio" name="scoreGrade" value="55" onclick="updateScoreGrade(this.value)" />
+                                                            <label class="form-check-label fw-bold" for="radio-grade-e">E</label>
+                                                        </div>
+                                                    </div>
+                                                    <asp:HiddenField ID="hdnScoreGrade" runat="server" />
+                                                    <p class="text-gray mb-0">評級說明：請以A（90-99分）、B（80-89分）、C（70-79分）、D（60-69分）、E（60分以下）表示。</p>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </asp:Panel>
 
                             <!-- 最後更新時間 -->
                             <div class="text-center">

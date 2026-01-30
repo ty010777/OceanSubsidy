@@ -444,7 +444,7 @@ public class OFS_ScienceTaskHelper
                 [updated_at] = GETDATE()
             WHERE [StatusesName] = '補正補件'
               AND [ExpirationDate] IS NOT NULL
-              AND CAST([ExpirationDate] AS DATE) < @BusinessDate
+              AND CAST([ExpirationDate] AS DATE) <= @BusinessDate
               AND [isExist] = 1;
 ";
 

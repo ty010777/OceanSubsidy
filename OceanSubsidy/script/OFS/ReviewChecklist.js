@@ -32,6 +32,61 @@ function convertCategoryCodeToName(categoryCode) {
     }
 }
 
+/**
+ * 將分數轉換為等級 (A~E)
+ * 評級說明：A（90-99分）、B（80-89分）、C（70-79分）、D（60-69分）、E（60分以下）
+ * @param {number|string} score - 分數
+ * @returns {string} 等級 (A, B, C, D, E)
+ */
+function convertScoreToGrade(score) {
+    if (score === null || score === undefined || score === '' || score === '--' || score === '未評分') {
+        return score || '未評分';
+    }
+
+    const numScore = parseFloat(score);
+    if (isNaN(numScore)) {
+        return score;
+    }
+
+    if (numScore >= 90) {
+        return 'A';
+    } else if (numScore >= 80) {
+        return 'B';
+    } else if (numScore >= 70) {
+        return 'C';
+    } else if (numScore >= 60) {
+        return 'D';
+    } else {
+        return 'E';
+    }
+}
+
+/**
+ * 判斷專案是否為科專 (SCI)
+ * @param {string} projectId - 專案編號
+ * @returns {boolean} 是否為科專
+ */
+function isSciProject(projectId) {
+    if (!projectId) return false;
+    return projectId.toUpperCase().includes('SCI');
+}
+
+/**
+ * 根據專案類型格式化分數顯示
+ * 科專專案顯示等級 (A~E)，其他專案顯示原始分數
+ * @param {number|string} score - 分數
+ * @param {string} projectId - 專案編號 (可選，用於判斷是否為科專)
+ * @param {boolean} forceSci - 強制以科專模式顯示 (可選)
+ * @returns {string} 格式化後的分數或等級
+ */
+function formatScoreDisplay(score, projectId, forceSci) {
+    // 如果強制科專模式或專案為科專，則轉換為等級
+    if (forceSci || isSciProject(projectId)) {
+        return convertScoreToGrade(score);
+    }
+    return score || '未評分';
+}
+
 window.ReviewChecklist = (function() {
     'use strict';
 
@@ -2408,8 +2463,8 @@ function renderPlanDetailToModal(data) {
     // 更新計畫基本資訊
     updateModalBasicInfo(data);
 
-    // 更新評審意見表格
-    updateModalReviewTable(data.ReviewComments || []);
+    // 更新評審意見表格，傳入 projectId 以判斷是否為科專
+    updateModalReviewTable(data.ReviewComments || [], data.ProjectID);
 }
 
 /**
@@ -2458,9 +2513,11 @@ function updateModalBasicInfo(data) {
 /**
  * 更新 Modal 評審意見表格
  * @param {Array} reviewComments - 評審意見陣列
+ * @param {string} projectId - 專案編號 (用於判斷是否為科專，科專顯示等級)
  */
-function updateModalReviewTable(reviewComments) {
+function updateModalReviewTable(reviewComments, projectId) {
     const $tableBody = $('#planDetailModal .table tbody');
+    const isSci = isSciProject(projectId);
 
     // 清空現有內容
     $tableBody.empty();
@@ -2478,7 +2535,8 @@ function updateModalReviewTable(reviewComments) {
     // 渲染每一筆評審意見
     reviewComments.forEach(function(comment) {
         const reviewerName = comment.ReviewerName || '--';
-        const totalScore = comment.TotalScore || '未評分';
+        // 科專專案顯示等級 (A~E)，其他專案顯示原始分數
+        const totalScore = isSci ? convertScoreToGrade(comment.TotalScore) : (comment.TotalScore || '未評分');
         const reviewComment = formatTextWithLineBreaks(comment.ReviewComment || '--');
         const replyComment = formatTextWithLineBreaks(comment.ReplyComment || '--');
 
@@ -3715,12 +3773,20 @@ window.ReviewRanking = (function() {
 
     /**
      * 渲染排名表格
+     * 科專專案的評分以等級 (A~E) 顯示
      */
     function renderRankingTable() {
         const $tbody = $("#reviewRankingTableBody");
         $tbody.empty();
 
         filteredData.forEach(project => {
+            // 判斷是否為科專專案
+            const isSci = isSciProject(project.ProjectID);
+
+            // 科專專案：總分和平均分轉換為等級顯示
+            const totalScoreDisplay = isSci ? convertScoreToGrade(project.ProjectTotalScore) : project.ProjectTotalScore;
+            const avgScoreDisplay = isSci ? convertScoreToGrade(project.AvgScore) : project.AvgScore.toFixed(1);
+
             let rowHtml = `
                 <tr>
                     <td class="text-center">${project.DenseRankNo}</td>
@@ -3728,16 +3794,18 @@ window.ReviewRanking = (function() {
                     <td>
                         <a href="#" class="link-teal">${project.ProjectNameTw}</a>
                     </td>
-                    <td class="text-end">${project.ProjectTotalScore}</td>
-                    <td class="text-end">${project.AvgScore.toFixed(1)}</td>`;
+                    <td class="text-end">${totalScoreDisplay}</td>
+                    <td class="text-end">${avgScoreDisplay}</td>`;
 
             // 為每個評審委員添加分數欄位
             allReviewers.forEach(reviewerName => {
                 const reviewerScore = project.ReviewerScores.find(rs => rs.ReviewerName === reviewerName);
                 if (reviewerScore) {
+                    // 科專專案：審查委員分數轉換為等級顯示
+                    const scoreDisplay = isSci ? convertScoreToGrade(reviewerScore.TotalScore) : reviewerScore.TotalScore;
                     rowHtml += `
                         <td class="text-center">
-                            <span class="text-teal">${reviewerScore.TotalScore}</span>
+                            <span class="text-teal">${scoreDisplay}</span>
                         </td>`;
                 } else {
                     rowHtml += "<td class=\"text-center\">-</td>";

@@ -20,6 +20,31 @@ public partial class OFS_SCI_SciDomainReview : System.Web.UI.Page
     /// </summary>
     protected string OrgName { get; set; } = "";
 
+    /// <summary>
+    /// 將數字轉換為中文數字（一、二、三...）
+    /// </summary>
+    protected string ToChineseNumber(int number)
+    {
+        string[] chineseNumbers = { "一", "二", "三", "四", "五", "六", "七", "八", "九", "十" };
+
+        if (number >= 1 && number <= 10)
+        {
+            return chineseNumbers[number - 1];
+        }
+        else if (number > 10 && number < 20)
+        {
+            return "十" + (number == 10 ? "" : chineseNumbers[number - 11]);
+        }
+        else if (number >= 20 && number <= 99)
+        {
+            int tens = number / 10;
+            int ones = number % 10;
+            return chineseNumbers[tens - 1] + "十" + (ones == 0 ? "" : chineseNumbers[ones - 1]);
+        }
+
+        return number.ToString();
+    }
+
     protected void Page_Load(object sender, EventArgs e)
     {
         if (!IsPostBack)
@@ -56,6 +81,18 @@ public partial class OFS_SCI_SciDomainReview : System.Web.UI.Page
 
     private void LoadProjectData(string projectID)
     {
+        // 根據 ProjectID 切換顯示的 Panel
+        if (projectID.Contains("SCI"))
+        {
+            pnlGeneralReview.Visible = false;
+            pnlSciReview.Visible = true;
+        }
+        else
+        {
+            pnlGeneralReview.Visible = true;
+            pnlSciReview.Visible = false;
+        }
+
         // 使用 Helper 取得計畫資料
         DataRow projectData = OFS_SciDomainReviewHelper.GetProjectData(projectID);
         
@@ -80,7 +117,7 @@ public partial class OFS_SCI_SciDomainReview : System.Web.UI.Page
             lblProjectNumber.Text = projectData["ProjectID"].ToString();
             lblYear.Text = projectData["Year"].ToString();
             lblProjectCategory.Text = projectData["ProjectCategory"].ToString(); // 從資料庫讀取補助案類別
-            lblReviewGroup.Text = projectData["Field"].ToString();
+            lblReviewGroup.Text = projectData["Topic"].ToString();
             lblProjectName.Text = projectData["ProjectName"].ToString();
             lblApplicantUnit.Text = projectData["OrgName"].ToString();
             lblDocumentName.Text =  projectID + "_申請版_計畫書.pdf";
@@ -237,10 +274,18 @@ public partial class OFS_SCI_SciDomainReview : System.Web.UI.Page
                 lblReviewerName.Text = firstRow["ReviewerName"].ToString();
             }
             
-            // 設定整體審查意見（ReviewComment）
+            // 設定整體審查意見（ReviewComment）- 根據 ProjectID 載入到對應的 TextBox
             if (firstRow["ReviewComment"] != DBNull.Value)
             {
-                txtReviewComment.Text = firstRow["ReviewComment"].ToString();
+                string reviewComment = firstRow["ReviewComment"].ToString();
+                if (!string.IsNullOrEmpty(ProjectID) && ProjectID.Contains("SCI"))
+                {
+                    txtSciReviewComment.Text = reviewComment;
+                }
+                else
+                {
+                    txtReviewComment.Text = reviewComment;
+                }
             }
             
             
@@ -252,8 +297,22 @@ public partial class OFS_SCI_SciDomainReview : System.Web.UI.Page
                 lblLastUpdateBy.Text = lblReviewerName.Text;
             }
             
-            // 綁定評審項目到 Repeater
-            BindReviewItems(reviewDataTable);
+            // 根據 ProjectID 綁定評審項目到對應的 Repeater
+            if (!string.IsNullOrEmpty(ProjectID) && ProjectID.Contains("SCI"))
+            {
+                BindSciReviewItems(reviewDataTable);
+
+                // 載入科專版評級：從第一筆項目分數設定選中項
+                if (firstRow["Score"] != DBNull.Value && firstRow["Score"] != null)
+                {
+                    string scoreValue = Convert.ToInt32(firstRow["Score"]).ToString();
+                    hdnScoreGrade.Value = scoreValue;
+                }
+            }
+            else
+            {
+                BindReviewItems(reviewDataTable);
+            }
         }
     }
 
@@ -301,6 +360,50 @@ public partial class OFS_SCI_SciDomainReview : System.Web.UI.Page
     }
 
     /// <summary>
+    /// 綁定科專版評審項目（僅顯示項目名稱與權重）
+    /// </summary>
+    private void BindSciReviewItems(DataTable reviewDataTable)
+    {
+        // 建立評審項目資料表
+        DataTable itemsTable = new DataTable();
+        itemsTable.Columns.Add("Id", typeof(string));
+        itemsTable.Columns.Add("ItemName", typeof(string));
+        itemsTable.Columns.Add("Weight", typeof(string));
+
+        // 將資料加入表格
+        foreach (DataRow row in reviewDataTable.Rows)
+        {
+            if (row["ItemName"] != DBNull.Value)
+            {
+                DataRow newRow = itemsTable.NewRow();
+                newRow["Id"] = row["Id"] ?? "";
+                newRow["ItemName"] = row["ItemName"] ?? "";
+
+                // 處理權重：四捨五入後去除小數點
+                string weightValue = "";
+                if (row["Weight"] != DBNull.Value && row["Weight"] != null)
+                {
+                    if (decimal.TryParse(row["Weight"].ToString(), out decimal weight))
+                    {
+                        weightValue = Math.Round(weight, 0).ToString("0");
+                    }
+                    else
+                    {
+                        weightValue = row["Weight"].ToString();
+                    }
+                }
+                newRow["Weight"] = weightValue;
+
+                itemsTable.Rows.Add(newRow);
+            }
+        }
+
+        // 綁定到科專版 Repeater
+        rptSciReviewItems.DataSource = itemsTable;
+        rptSciReviewItems.DataBind();
+    }
+
+    /// <summary>
     /// 從 Repeater 中取得各評審項目的評分
     /// </summary>
     /// <returns>項目ID和評分的字典</returns>
@@ -331,6 +434,38 @@ public partial class OFS_SCI_SciDomainReview : System.Web.UI.Page
                             }
                         }
                     }
+                }
+            }
+        }
+
+        return itemScores;
+    }
+
+    /// <summary>
+    /// 從科專版 Repeater 中取得各評審項目的評分（所有項目使用相同的評級分數）
+    /// </summary>
+    /// <returns>項目ID和評分的字典</returns>
+    private Dictionary<string, decimal> GetSciItemScoresFromRepeater()
+    {
+        var itemScores = new Dictionary<string, decimal>();
+
+        // 取得評級分數
+        decimal gradeScore = 0;
+        if (!string.IsNullOrEmpty(hdnScoreGrade.Value))
+        {
+            decimal.TryParse(hdnScoreGrade.Value, out gradeScore);
+        }
+
+        // 遍歷所有項目，設定相同的評級分數
+        foreach (RepeaterItem item in rptSciReviewItems.Items)
+        {
+            if (item.ItemType == ListItemType.Item || item.ItemType == ListItemType.AlternatingItem)
+            {
+                var hdnSciItemId = item.FindControl("hdnSciItemId") as HiddenField;
+
+                if (hdnSciItemId != null && !string.IsNullOrEmpty(hdnSciItemId.Value))
+                {
+                    itemScores[hdnSciItemId.Value] = gradeScore;
                 }
             }
         }
@@ -453,11 +588,22 @@ public partial class OFS_SCI_SciDomainReview : System.Web.UI.Page
                 return;
             }
 
-            // 取得各項目評分
-            var itemScores = GetItemScoresFromRepeater();
-            
-            // 取得審查意見
-            string reviewComment = txtReviewComment.Text.Trim();
+            Dictionary<string, decimal> itemScores;
+            string reviewComment;
+
+            // 根據 ProjectID 判斷使用哪種邏輯
+            if (!string.IsNullOrEmpty(ProjectID) && ProjectID.Contains("SCI"))
+            {
+                // 科專版：取得評級分數，所有項目都設為同一分數
+                itemScores = GetSciItemScoresFromRepeater();
+                reviewComment = txtSciReviewComment.Text.Trim();
+            }
+            else
+            {
+                // 通用版：各項目個別評分
+                itemScores = GetItemScoresFromRepeater();
+                reviewComment = txtReviewComment.Text.Trim();
+            }
 
             // 呼叫 Helper 進行暫存 (IsSubmit = false)
             bool success = OFS_SciDomainReviewHelper.UpdateReviewScores(ReviewID, itemScores, reviewComment, false);
@@ -491,18 +637,38 @@ public partial class OFS_SCI_SciDomainReview : System.Web.UI.Page
                 return;
             }
 
-            // 取得各項目評分
-            var itemScores = GetItemScoresFromRepeater();
+            Dictionary<string, decimal> itemScores;
+            string reviewComment;
 
-            // 驗證是否所有項目都已評分
-            if (itemScores.Count == 0)
+            // 根據 ProjectID 判斷使用哪種邏輯
+            if (!string.IsNullOrEmpty(ProjectID) && ProjectID.Contains("SCI"))
             {
-                ShowMessage("請至少為一個項目評分", false);
-                return;
+                // 科專版：驗證是否已選擇評級
+                if (string.IsNullOrEmpty(hdnScoreGrade.Value))
+                {
+                    ShowMessage("請選擇評級", false);
+                    return;
+                }
+
+                // 取得評級分數，所有項目都設為同一分數
+                itemScores = GetSciItemScoresFromRepeater();
+                reviewComment = txtSciReviewComment.Text.Trim();
+            }
+            else
+            {
+                // 通用版：各項目個別評分
+                itemScores = GetItemScoresFromRepeater();
+                reviewComment = txtReviewComment.Text.Trim();
+
+                // 驗證是否所有項目都已評分
+                if (itemScores.Count == 0)
+                {
+                    ShowMessage("請至少為一個項目評分", false);
+                    return;
+                }
             }
 
-            // 取得審查意見
-            string reviewComment = txtReviewComment.Text.Trim();
+            // 驗證審查意見
             if (string.IsNullOrEmpty(reviewComment))
             {
                 ShowMessage("請輸入審查意見", false);
@@ -518,13 +684,13 @@ public partial class OFS_SCI_SciDomainReview : System.Web.UI.Page
                 // 更新最後修改時間顯示
                 lblLastUpdateTime.Text = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
                 lblLastUpdateBy.Text = lblReviewerName.Text;
-                
+
                 // 提送後可以考慮禁用按鈕或跳轉頁面
                 btnSubmitReview.Enabled = false;
                 btnSaveDraft.Enabled = false;
                 string script = "window.location.href = '../ReviewChecklist.aspx';";
                 ScriptManager.RegisterStartupScript(this.Page, this.Page.GetType(), "Redirect", script, true);
-                
+
             }
             else
             {

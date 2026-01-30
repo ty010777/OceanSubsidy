@@ -40,8 +40,8 @@ public class OFS_SciDomainReviewHelper
                  PM.Statuses as Status,
                 (SELECT Descname
                  FROM Sys_ZgsCode
-                 WHERE Code = AM.[Field]
-                ) as Field,
+                 WHERE Code = AM.[Topic]
+                ) as Topic,
                 [OrgName],
                 '科專' as ProjectCategory
             FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Application_Main] AM
@@ -133,27 +133,9 @@ public class OFS_SciDomainReviewHelper
         }
     }
 
-    /// <summary>
-    /// 取得風險評估資料（目前寫死資料）
-    /// </summary>
-    /// <param name="projectID">計畫編號</param>
-    /// <returns>固定的風險評估資料</returns>
-    public static string GetRiskLevel(string projectID)
-    {
-        // 寫死為中風險
-        return "中風險";
-    }
+    
 
-    /// <summary>
-    /// 取得風險評估記錄數量（目前寫死）
-    /// </summary>
-    /// <param name="projectID">計畫編號</param>
-    /// <returns>固定的記錄數量</returns>
-    public static int GetRiskRecordCount(string projectID)
-    {
-        // 寫死為1筆記錄
-        return 1;
-    }
+
 
     /// <summary>
     /// 更新評審項目評分和總分

@@ -362,6 +362,9 @@ public class OFS_SciUploadAttachmentsHelper
             { "FILE_OTech5", "蒐集個人資料告知事項暨個人資料提供同意書" },
             { "FILE_OTech6", "申請人自我檢查表" },
             { "FILE_OTech8", "海洋科技業者科專計畫補助契約書" },
+            { "FILE_OTech12", "其他資料" },
+            // 學研其他資料
+            { "FILE_AC14", "其他資料" },
             // 契約書附件名稱對應
             { "CONTRACT_AC_CONFIDENTIALITY", "科專-學研-保密切結書" },
             { "CONTRACT_AC_PRIVACY", "科專-學研-個資同意書" },

@@ -368,24 +368,24 @@
                           <button class="" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                               <img src="<%= ResolveUrl("~/assets/img/icon-info.svg") %>" alt="聯絡資訊">
                           </button>
-                          <div class="dropdown-menu">
-                              <div>系統聯絡人</div>
-                              <ul class="d-grid gap-1 mt-2">
-                              <li>王郁淳</li>
-                              <li>04-24516932 #6550</li>
-                              <li>jillwang@gis.tw</li>
-                              </ul>
-                              <hr>
-                              <ul class="d-grid gap-1 mt-2">
-                              <li>
-                                  <a href="<%= ResolveUrl("~/Template/Shared/海委會補助_案件管理操作手冊(申請單位)_20251218.pdf") %>" 
-                                     target="_blank" 
-                                     rel="noopener noreferrer">
-                                      操作手冊
-                                  </a>
-                              </li>
-                              </ul>
-                          </div>
+                          <div class="dropdown-menu" style="position: absolute; inset: 0px 0px auto auto; margin: 0px; transform: translate3d(0.969697px, 32.9697px, 0px);" data-popper-placement="bottom-end">
+                          <div>海委會業務諮詢</div>
+                          <ul class="d-grid gap-1 mt-2">
+                          <li>陳先生</li>
+                          <li>(07)338-1810 #261914</li>
+                          </ul>
+                          
+                          <hr><div>系統操作諮詢</div><ul class="d-grid gap-1 mt-2">
+                          <li>王郁淳</li>
+                          <li>(04)24516932 #6550</li>
+                          <li>jillwang@gis.tw</li>
+                          </ul><hr><ul class="d-grid gap-1 mt-2">
+                          <li>
+                          <a href="/Template/Shared/海委會補助_案件管理操作手冊(申請單位)_20251218.pdf" target="_blank" rel="noopener noreferrer">
+                                                                操作手冊
+                          </a>
+                          </li>
+                          </ul></div>
                       </div>
 
                   </div>
@@ -440,10 +440,10 @@
                   <!-- 內容區塊 -->
                   <asp:ContentPlaceHolder ID="MainContent" runat="server"></asp:ContentPlaceHolder>            </div>
               <footer>
-                  <ul>
-                      <li>地址：806高雄市前鎮區成功二路25號4樓</li>
-                      <li>電話：(07)338-1810     Copyright © 海洋委員會 版權所有</li>
-                  </ul>
+              <ul>
+              <li>Copyright © 海洋委員會 版權所有</li>
+              <li>地址：806高雄市前鎮區成功二路25號4樓<br><br></li>
+              <li>海委會業務諮詢：(07)338-1810 #261914 陳先生</li><li>系統諮詢：(04)24516932 #6550 王小姐；jillwang@gis.tw</li></ul>
               </footer>
               <asp:ContentPlaceHolder ID="FloatContent" runat="server"></asp:ContentPlaceHolder>
         </div>

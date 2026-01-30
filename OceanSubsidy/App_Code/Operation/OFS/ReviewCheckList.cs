@@ -2607,12 +2607,8 @@ SELECT TOP (1000) [ProjectID]
                         SELECT Descname
                         FROM Sys_ZgsCode
                         WHERE Code = AM.[Topic]
-                    ) + ' 、 ' +
-                    (
-                        SELECT Descname
-                        FROM Sys_ZgsCode
-                        WHERE Code = AM.[Field]
-                    ) AS [TopicField],
+                    ) 
+                    AS [TopicField],
                     [OrgName],
                     [StartTime],
                     [EndTime]

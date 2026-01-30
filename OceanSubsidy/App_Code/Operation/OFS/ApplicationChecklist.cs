@@ -578,7 +578,7 @@ ORDER BY TypeID;";
                     UserName,
 					(SELECT Descname
                      FROM Sys_ZgsCode
-                     WHERE Code = AM.[Field] and CodeGroup = 'SCIField'
+                     WHERE Code = AM.[Topic] and CodeGroup = 'SCITopic'
                     ) as ReviewGroup,
                     [OrgName] as ApplicantUnit
                     FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_Application_Main] AM

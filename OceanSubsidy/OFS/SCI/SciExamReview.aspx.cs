@@ -79,7 +79,7 @@ public partial class OFS_SCI_SciExamReview : System.Web.UI.Page
             lblProjectNumber.Text = projectData["ProjectID"].ToString();
             lblYear.Text = projectData["Year"].ToString();
             lblProjectCategory.Text = "科專"; // 寫死為科專
-            lblReviewGroup.Text = projectData["Field"].ToString();
+            lblReviewGroup.Text = projectData["Topic"].ToString();
             lblProjectName.Text = projectData["ProjectName"].ToString();
             lblApplicantUnit.Text = projectData["OrgName"].ToString();
         }
