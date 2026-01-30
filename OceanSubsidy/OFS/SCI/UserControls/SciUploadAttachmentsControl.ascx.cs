@@ -540,6 +540,7 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
             mapping["FILE_AC7"] = new AttachmentMapping { StatusLabel = FindControl("lblStatusAcademic7") as Label, FilePanel = FindControl("pnlFilesAcademic7") as Panel };
             mapping["FILE_AC9"] = new AttachmentMapping { StatusLabel = FindControl("lblStatusAcademic9") as Label, FilePanel = FindControl("pnlFilesAcademic9") as Panel };
             mapping["FILE_AC11"] = new AttachmentMapping { StatusLabel = FindControl("lblStatusAcademic11") as Label, FilePanel = FindControl("pnlFilesAcademic11") as Panel };
+            mapping["FILE_AC14"] = new AttachmentMapping { StatusLabel = FindControl("lblStatusAcademic14") as Label, FilePanel = FindControl("pnlFilesAcademic14") as Panel };
         }
         catch (Exception ex)
         {
@@ -555,6 +556,7 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
             mapping["FILE_OTech5"] = new AttachmentMapping { StatusLabel = FindControl("lblStatus_OTech5") as Label, FilePanel = FindControl("pnlFiles_OTech5") as Panel };
             mapping["FILE_OTech6"] = new AttachmentMapping { StatusLabel = FindControl("lblStatus6_OT") as Label, FilePanel = FindControl("pnlFiles_OTech6") as Panel };
             mapping["FILE_OTech8"] = new AttachmentMapping { StatusLabel = FindControl("lblStatusOTech8") as Label, FilePanel = FindControl("pnlFiles_OTech8") as Panel };
+            mapping["FILE_OTech12"] = new AttachmentMapping { StatusLabel = FindControl("lblStatus_OTech12") as Label, FilePanel = FindControl("pnlFiles_OTech12") as Panel };
             // 向下相容：支援舊格式
             mapping["OTech2"] = new AttachmentMapping { StatusLabel = FindControl("lblStatus_OTech2") as Label, FilePanel = FindControl("pnlFiles_OTech2") as Panel };
             mapping["OTech3"] = new AttachmentMapping { StatusLabel = FindControl("lblStatus_OTech3") as Label, FilePanel = FindControl("pnlFiles_OTech3") as Panel };
@@ -1303,6 +1305,7 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
             files.Add(new FileToMerge { FileCode = "FILE_OTech8", IsTemplate = false });  // 8. 海洋科技業者科專計畫補助契約書（使用者上傳）
             files.Add(new FileToMerge { FileCode = "FILE_OTech9", IsTemplate = true, TemplatePath = "~/Template/SCI/OTech/附件-09研究紀錄簿使用原則.pdf" });  // 9. 研究紀錄簿使用原則（固定範本）
             files.Add(new FileToMerge { FileCode = "FILE_OTech10", IsTemplate = true, TemplatePath = "~/Template/SCI/OTech/附件-10海洋科技專案計畫會計科目編列與執行原則.pdf" });  // 10. 會計科目編列與執行原則（固定範本）
+            files.Add(new FileToMerge { FileCode = "FILE_OTech12", IsTemplate = false });  // 12. 其他資料（使用者上傳）
         }
         else
         {
@@ -1319,6 +1322,7 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
             files.Add(new FileToMerge { FileCode = "FILE_AC10", IsTemplate = true, TemplatePath = "~/Template/SCI/Academic/附件-10海洋科技專案計畫會計科目編列與執行原則.pdf" });  // 10. 會計科目編列與執行原則（固定範本）
             files.Add(new FileToMerge { FileCode = "FILE_AC11", IsTemplate = false });  // 11. 海洋科技專案成效追蹤自評表（使用者上傳）
             files.Add(new FileToMerge { FileCode = "FILE_AC12", IsTemplate = true, TemplatePath = "~/Template/SCI/Academic/附件-12研究紀錄簿使用原則.pdf" });  // 12. 研究紀錄簿使用原則（固定範本）
+            files.Add(new FileToMerge { FileCode = "FILE_AC14", IsTemplate = false });  // 14. 其他資料（使用者上傳）
         }
 
         return files;

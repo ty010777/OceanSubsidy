@@ -259,6 +259,25 @@
                     <td></td>
                     <td></td>
                 </tr>
+                <tr>
+                    <td class="text-center">14</td>
+                    <td>
+                        <div>
+                            其他資料
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <asp:Label ID="lblStatusAcademic14" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
+                    </td>
+                    <td>
+                        <input type="file" id="fileInput_FILE_AC14" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_AC14', this)" />
+                        <button class="btn btn-teal-dark view-mode" type="button" onclick="document.getElementById('fileInput_FILE_AC14').click()">
+                            <i class="fas fa-file-upload me-1"></i> 上傳
+                        </button>
+                        <asp:Panel ID="pnlFilesAcademic14" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
+                        </asp:Panel>
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>
@@ -461,6 +480,25 @@
                     </td>
                     <td></td>
                     <td></td>
+                </tr>
+                <tr>
+                    <td class="text-center">12</td>
+                    <td>
+                        <div>
+                            其他資料
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <asp:Label ID="lblStatus_OTech12" runat="server" Text="未上傳" CssClass="text-muted"></asp:Label>
+                    </td>
+                    <td>
+                        <input type="file" id="fileInput_FILE_OTech12" accept=".pdf" style="display: none;" onchange="handleFileUpload('FILE_OTech12', this)" />
+                        <button class="btn btn-teal-dark view-mode" type="button" onclick="document.getElementById('fileInput_FILE_OTech12').click()">
+                            <i class="fas fa-file-upload me-1"></i> 上傳
+                        </button>
+                        <asp:Panel ID="pnlFiles_OTech12" runat="server" CssClass="tag-group mt-2 gap-1" Visible="false">
+                        </asp:Panel>
+                    </td>
                 </tr>
             </tbody>
         </table>
