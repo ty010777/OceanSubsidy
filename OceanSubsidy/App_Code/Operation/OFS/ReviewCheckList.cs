@@ -901,7 +901,7 @@ public class ReviewCheckListHelper
         db.CommandText = @"
             SELECT [Code], [Descname]
             FROM [Sys_ZgsCode]
-            WHERE CodeGroup = 'SCIField'
+            WHERE CodeGroup = 'SCITopic'
             AND IsValid = 1
             ORDER BY OrderNo, Code
         ";
@@ -1167,7 +1167,7 @@ SELECT TOP (1000) [ProjectID]
       ,[FinalReviewOrder]
       ,[TotalScore]
   FROM [OCA_OceanSubsidy].[dbo].[V_OFS_ReviewChecklist_type4]
-  LEFT JOIN Sys_ZgsCode ON CodeGroup in ('SCIField','CULField') and Code = Field
+  LEFT JOIN Sys_ZgsCode ON CodeGroup in ('SCITopic','CULField') and Code = Field
   WHERE 1=1
 ";
 
@@ -1588,14 +1588,14 @@ SELECT TOP (1000) [ProjectID]
              SELECT
                 RR.ProjectID,
                 COUNT(RR.ProjectID) AS TotalCount,
-                COUNT(RR.ReviewComment) AS CommentCount,
+                SUM(CASE WHEN RR.IsSubmit = 1 THEN 1 ELSE 0 END) AS CommentCount,
                 COUNT(RR.ReplyComment) AS ReplyCount,
                 CASE
-                    WHEN COUNT(RR.ProjectID) > 0 AND COUNT(RR.ProjectID) = COUNT(RR.ReviewComment) THEN '完成'
+                    WHEN COUNT(RR.ProjectID) > 0 AND COUNT(RR.ProjectID) = SUM(CASE WHEN RR.IsSubmit = 1 THEN 1 ELSE 0 END) THEN '完成'
                     ELSE '未完成'
                 END AS ReviewProgress,
                 CASE
-                    WHEN COUNT(RR.ReviewComment) > 0 AND COUNT(RR.ProjectID) = COUNT(RR.ReplyComment) THEN '完成'
+                    WHEN SUM(CASE WHEN RR.IsSubmit = 1 THEN 1 ELSE 0 END) > 0 AND COUNT(RR.ProjectID) = COUNT(RR.ReplyComment) THEN '完成'
                     ELSE '未完成'
                 END AS ReplyProgress
             FROM OFS_ReviewRecords RR
@@ -1806,14 +1806,14 @@ SELECT TOP (1000) [ProjectID]
         db.CommandText = $@"
             SELECT ProjectID,
                    COUNT(ProjectID) AS TotalCount,
-                   COUNT(ReviewComment) AS CommentCount,
+                   SUM(CASE WHEN IsSubmit = 1 THEN 1 ELSE 0 END) AS CommentCount,
                    COUNT(ReplyComment) AS ReplyCount,
                    CASE
-                       WHEN COUNT(ProjectID) > 0 AND COUNT(ProjectID) = COUNT(ReviewComment) THEN '完成'
+                       WHEN COUNT(ProjectID) > 0 AND COUNT(ProjectID) = SUM(CASE WHEN IsSubmit = 1 THEN 1 ELSE 0 END) THEN '完成'
                        ELSE '未完成'
                    END AS ReviewProgress,
                    CASE
-                       WHEN COUNT(ReviewComment) > 0 AND COUNT(ProjectID) = COUNT(ReplyComment) THEN '完成'
+                       WHEN SUM(CASE WHEN IsSubmit = 1 THEN 1 ELSE 0 END) > 0 AND COUNT(ProjectID) = COUNT(ReplyComment) THEN '完成'
                        ELSE '未完成'
                    END AS ReplyProgress
               FROM OFS_ReviewRecords
@@ -3437,24 +3437,45 @@ SELECT TOP (1000) [ProjectID]
             {
                 throw new ArgumentException("不支援的審查類型");
             }
-            List<string> SciList = new List<string> { "Information", "Environment", "Material", "Mechanical" };
             string reviewStage = "";
             string Status = reviewType == "2"? "實質審查" : "技術審查";
-            if (SciList.Contains(reviewGroup))
+
+            // 從 Sys_ZgsCode 動態判斷 reviewGroup 屬於科專(SCI)還是文化(CUL)
+            bool isSci = false;
+            using (var lookupDb = new DbHelper())
             {
-                reviewStage = reviewType == "2" ? "2" : "3";
+                lookupDb.CommandText = @"
+                    SELECT TOP 1 CodeGroup
+                    FROM Sys_ZgsCode
+                    WHERE Code = @Code
+                      AND IsValid = 1
+                      AND CodeGroup IN ('SCIField', 'SCITopic', 'CULField')
+                ";
+                lookupDb.Parameters.Add("@Code", reviewGroup);
+                var codeGroupDt = lookupDb.GetTable();
+                if (codeGroupDt != null && codeGroupDt.Rows.Count > 0)
+                {
+                    string codeGroup = codeGroupDt.Rows[0]["CodeGroup"].ToString();
+                    isSci = codeGroup.StartsWith("SCI");
+                }
+                lookupDb.Parameters.Clear();
             }
-          
+
+           
+            reviewStage = reviewType == "2" ? "2" : "3";
+            
+
             // 根據審查類型設定審查階段
             using (var db = new DbHelper())
             {
                 // 執行SQL查詢 - 使用參數化查詢防止SQL注入
                 // 查詢特定審查組別
-                if(SciList.Contains(reviewGroup))
+                if(isSci)
                 {
                     db.CommandText = @"
                     -- 先算每個專案的平均分與總分
-                    WITH ProjectScores AS (
+                    
+ WITH ProjectScores AS (
                         SELECT
                             PM.ProjectID,
                             ProjectNameTw,
@@ -3466,7 +3487,7 @@ SELECT TOP (1000) [ProjectID]
                         WHERE PM.Statuses = @Status
                           AND RR.ReviewStage = @ReviewStage
                           AND IsSubmit = 1 AND PM.isExist != 0
-                          AND AM.Field = @ReviewGroup
+                          AND AM.Topic = @ReviewGroup
                         GROUP BY PM.ProjectID, ProjectNameTw
                     ),
                     -- 每個委員對各專案的分數
@@ -3482,7 +3503,7 @@ SELECT TOP (1000) [ProjectID]
                         WHERE PM.Statuses = @Status
                           AND RR.ReviewStage = @ReviewStage
                           AND IsSubmit = 1 AND PM.isExist != 0
-                          AND AM.Field = @ReviewGroup
+                          AND AM.Topic = @ReviewGroup
                     )
                     -- 最後組合成一張大表
                     SELECT
@@ -3591,37 +3612,6 @@ SELECT TOP (1000) [ProjectID]
         }
 
         return results;
-    }
-
-    /// <summary>
-    /// 取得審查組別選項
-    /// </summary>
-    /// <param name="reviewType">審查類型</param>
-    /// <returns>審查組別選項清單</returns>
-    public static List<DropdownItem> GetReviewGroupOptions(string reviewType)
-    {
-        var options = new List<DropdownItem>();
-
-        try
-        {
-
-            // 根據審查類型提供不同的組別選項
-            if (reviewType == "2" || reviewType == "3")
-            {
-                // 實質審查和技術審查的組別
-                options.Add(new DropdownItem { Value = "Information", Text = "資通訊" });
-                options.Add(new DropdownItem { Value = "Environment", Text = "環境工程" });
-                options.Add(new DropdownItem { Value = "Material", Text = "材料科技" });
-                options.Add(new DropdownItem { Value = "Mechanical", Text = "機械與機電工程" });
-
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"取得審查組別選項時發生錯誤: {ex.Message}");
-        }
-
-        return options;
     }
 
     #endregion

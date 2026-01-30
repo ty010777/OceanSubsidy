@@ -1367,9 +1367,8 @@
                   <div id="reviewerSetupArea" style="display: none;">
                       <!-- 領域選擇 -->
                       <div class="mb-4">
-                          <div class="fs-16 text-gray mb-2">選擇領域</div>
+                          <div class="fs-16 text-gray mb-2">選擇審查組別</div>
                           <select id="ddlSubjectType" class="form-select" onchange="loadReviewersBySubject()">
-                              <option value="">請選擇領域</option>
                               <option value="ALL">全部</option>
                           </select>
                       </div>
@@ -1452,13 +1451,13 @@
             $('#reviewerSetupArea').hide();
 
             // 清空下拉選單
-            $('#ddlSubjectType').empty().append('<option value="">請選擇領域</option>');
+            $('#ddlSubjectType').empty().append('<option value="">請選擇審查組別</option>');
 
             // 清空搜尋框
             $('#availableReviewersSearch').val('');
 
             // 清空 A清單
-            $('#availableReviewersList').html('<div class="text-center text-muted py-5">請先選擇領域</div>');
+            $('#availableReviewersList').html('<div class="text-center text-muted py-5">請先選擇審查組別</div>');
             $('#availableCount').text('0');
 
             // 清空 B清單
@@ -1498,7 +1497,7 @@
                 $('#availableReviewersSearch').val('');
 
                 // 清空 A清單
-                $('#availableReviewersList').html('<div class="text-center text-muted py-5">請先選擇領域</div>');
+                $('#availableReviewersList').html('<div class="text-center text-muted py-5">請先選擇審查組別</div>');
                 $('#availableCount').text('0');
             }
         }
@@ -1515,7 +1514,7 @@
                     if (result.success) {
                         var ddl = $('#ddlSubjectType');
                         ddl.empty();
-                        ddl.append('<option value="">請選擇領域</option>');
+                        ddl.append('<option value="">請選擇審查組別</option>');
                         ddl.append('<option value="ALL">全部</option>');
 
                         result.data.forEach(function(item) {
@@ -1536,7 +1535,7 @@
             var subjectCode = $('#ddlSubjectType').val();
 
             if (!subjectCode) {
-                $('#availableReviewersList').html('<div class="text-center text-muted py-5">請先選擇領域</div>');
+                $('#availableReviewersList').html('<div class="text-center text-muted py-5">請先選擇審查組別</div>');
                 $('#availableCount').text('0');
                 availableReviewers = [];
                 return;

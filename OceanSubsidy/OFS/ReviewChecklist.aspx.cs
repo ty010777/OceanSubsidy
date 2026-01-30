@@ -2636,31 +2636,22 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             // 匯出所有審查資料的請求列表
             var exportRequests = new List<ReviewExportRequest>();
 
-            // 科專 (SCI)
+            // 科專 (SCI) - 從 Sys_ZgsCode 動態取得 Fields
+            var sciFields = ReviewCheckListHelper.GetSciReviewGroupOptions().Select(x => x.Value).ToList();
             exportRequests.Add(new ReviewExportRequest
             {
                 GrantType = "SCI",
                 ReviewStage = sciType,
-                Fields = new List<string>
-                {
-                    "Information",
-                    "Environment",
-                    "Material",
-                    "Mechanical"
-                }
+                Fields = sciFields
             });
 
-            // 文化 (CUL)
+            // 文化 (CUL) - 從 Sys_ZgsCode 動態取得 Fields
+            var culFields = ReviewCheckListHelper.GetCulReviewGroupOptions().Select(x => x.Value).ToList();
             exportRequests.Add(new ReviewExportRequest
             {
                 GrantType = "CUL",
                 ReviewStage = culType,
-                Fields = new List<string>
-                {
-                    "11", "12", "13",
-                    "21","22",
-                    "31","32"
-                }
+                Fields = culFields
             });
 
             // 執行匯出 - 合併所有類型的資料
@@ -3928,10 +3919,10 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             using (var db = new GS.Data.Sql.DbHelper())
             {
                 db.CommandText = @"
-                    SELECT Code, Descname
+                   SELECT Code, Descname
                     FROM [OCA_OceanSubsidy].[dbo].[Sys_ZgsCode]
-                    WHERE (CodeGroup = 'CULField' AND ParentCode IN (10, 20, 30))
-                       OR CodeGroup = 'SCITopic'
+                    WHERE ((CodeGroup = 'CULField' AND ParentCode IN (10, 20, 30))
+                       OR CodeGroup = 'SCITopic') AND IsValid = 1
                     ORDER BY CodeGroup
                 ";
 

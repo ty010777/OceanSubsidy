@@ -31,8 +31,9 @@
                 </table>
             </div>
             <ul class="list-unstyled lh-base mb-3">
-                <li>補助申請單位為民間團體或學校者，配合款比例應為計畫總經費之 5％以上；</li>
-                <li>合作申請單位之分攤比例應為計畫總經費之 20％以上。</li>
+                <li>補助申請單位為民間團體者，配合款比例應為計畫總經費5%</li>
+                <li>補助申請單位為各級學校者，配合款比例得為計畫總經費0%</li>
+                <li>合作申請單位之分攤比例應為計畫總經費之20%以上</li>
             </ul>
             <div class="table-responsive">
                 <table class="table align-middle gray-table">

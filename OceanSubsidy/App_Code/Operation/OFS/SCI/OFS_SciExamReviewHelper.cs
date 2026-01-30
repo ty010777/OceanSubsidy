@@ -42,7 +42,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                     srl.BankBookPath,
                     srl.token,
                     am.ProjectNameTw AS ProjectName,
-                    am.Field,
+                    am.Topic,
                     am.Year,
                     am.OrgName
                 FROM [OCA_OceanSubsidy].[dbo].[OFS_SCI_StageExam] se
@@ -441,7 +441,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
                     StageName = examData["Stage"] != DBNull.Value && Convert.ToInt32(examData["Stage"]) == 1 ? "期中報告" : "期末報告",
                     ProjectName = examData["ProjectName"]?.ToString() ?? "",
                     Year = examData["Year"]?.ToString() ?? "",
-                    Field = examData["Field"]?.ToString() ?? "",
+                    Topic = examData["Topic"]?.ToString() ?? "",
                     OrgName = examData["OrgName"]?.ToString() ?? "",
                     Reviewer = examData["Committee"]?.ToString() ?? "",
                     Status = examData["Status"]?.ToString() ?? "",
@@ -707,7 +707,7 @@ namespace GS.OCA_OceanSubsidy.Operation.OFS
             public string StageName { get; set; } = "";
             public string ProjectName { get; set; } = "";
             public string Year { get; set; } = "";
-            public string Field { get; set; } = "";
+            public string Topic { get; set; } = "";
             public string OrgName { get; set; } = "";
             public string Reviewer { get; set; } = "";
             public string Status { get; set; } = "";

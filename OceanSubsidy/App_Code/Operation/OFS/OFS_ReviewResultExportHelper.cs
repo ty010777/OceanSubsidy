@@ -35,7 +35,7 @@ public class OFS_ReviewResultExportHelper
             {
                 foreach (var field in request.Fields)
                 {
-                    string sheetName = GetZgsCodeDescname("SCIField", field);
+                    string sheetName = GetZgsCodeDescname("SCITopic", field);
                     if (string.IsNullOrEmpty(sheetName))
                     {
                         sheetName = field; // 如果找不到描述名稱，使用原始 field 值
@@ -139,7 +139,7 @@ public class OFS_ReviewResultExportHelper
            -- 建立臨時表存 Pivoted 資料
             IF OBJECT_ID('tempdb..#Pivoted') IS NOT NULL DROP TABLE #Pivoted;
 
-            SELECT 
+            SELECT
                 RR.ProjectID,
                 AM.ProjectNameTw,
                 RR.ReviewerName,
@@ -148,25 +148,35 @@ public class OFS_ReviewResultExportHelper
             FROM [OCA_OceanSubsidy].[dbo].[OFS_ReviewRecords] RR
             INNER JOIN OFS_SCI_Application_Main AM ON RR.ProjectID = AM.ProjectID
             INNER JOIN OFS_SCI_Project_Main PM ON PM.ProjectID = AM.ProjectID
-            WHERE RR.ReviewStage = @ReviewStage 
+            WHERE RR.ReviewStage = @ReviewStage
               AND RR.IsSubmit = 1
-              AND AM.Field = @Field
+              AND AM.Topic = @Topic
               AND RR.TotalScore IS NOT NULL
               AND PM.Statuses = @Statuses;
 
             -- 取得有分數的 ReviewerName
             DECLARE @cols NVARCHAR(MAX);
+            DECLARE @gradeCols NVARCHAR(MAX);
             DECLARE @countCols NVARCHAR(MAX);
             DECLARE @sumCols NVARCHAR(MAX);
             DECLARE @query NVARCHAR(MAX);
 
-            SELECT 
+            SELECT
                 @cols = STRING_AGG(QUOTENAME(ReviewerName), ','),
+                @gradeCols = STRING_AGG(
+                    'CASE WHEN ' + QUOTENAME(ReviewerName) + ' >= 95 THEN ''A'' ' +
+                    'WHEN ' + QUOTENAME(ReviewerName) + ' >= 85 THEN ''B'' ' +
+                    'WHEN ' + QUOTENAME(ReviewerName) + ' >= 75 THEN ''C'' ' +
+                    'WHEN ' + QUOTENAME(ReviewerName) + ' >= 65 THEN ''D'' ' +
+                    'WHEN ' + QUOTENAME(ReviewerName) + ' IS NOT NULL THEN ''E'' ' +
+                    'ELSE NULL END AS ' + QUOTENAME(ReviewerName),
+                    ','
+                ),
                 @countCols = STRING_AGG('CASE WHEN ' + QUOTENAME(ReviewerName) + ' IS NOT NULL THEN 1 ELSE 0 END', ' + '),
                 @sumCols = STRING_AGG('ISNULL(' + QUOTENAME(ReviewerName) + ',0)', ' + ')
             FROM (SELECT DISTINCT ReviewerName FROM #Pivoted) AS ReviewerList;
 
-            -- 動態 PIVOT
+            -- 動態 PIVOT (以等第 A~E 顯示)
             SET @query = N'
             WITH PivotTable AS (
                 SELECT ProjectID, ProjectNameTw, ' + @cols + '
@@ -177,13 +187,17 @@ public class OFS_ReviewResultExportHelper
                     FOR ReviewerName IN (' + @cols + ')
                 ) AS P
             )
-            SELECT 
+            SELECT
                 PT.ProjectID AS ''計畫編號'',
                 PT.ProjectNameTw AS ''計畫名稱'',
-                
-                (' + @sumCols + ') AS ''總分'',
-                CAST((' + @sumCols + ') * 1.0 / NULLIF((' + @countCols + '),0) AS DECIMAL(10,2)) AS ''平均分數'',
-                ' + @cols + '
+                CASE
+                    WHEN CAST((' + @sumCols + ') * 1.0 / NULLIF((' + @countCols + '),0) AS DECIMAL(10,2)) >= 95 THEN ''A''
+                    WHEN CAST((' + @sumCols + ') * 1.0 / NULLIF((' + @countCols + '),0) AS DECIMAL(10,2)) >= 85 THEN ''B''
+                    WHEN CAST((' + @sumCols + ') * 1.0 / NULLIF((' + @countCols + '),0) AS DECIMAL(10,2)) >= 75 THEN ''C''
+                    WHEN CAST((' + @sumCols + ') * 1.0 / NULLIF((' + @countCols + '),0) AS DECIMAL(10,2)) >= 65 THEN ''D''
+                    ELSE ''E''
+                END AS ''平均分數'',
+                ' + @gradeCols + '
             FROM PivotTable PT
             ORDER BY PT.ProjectID;
             ';
@@ -197,7 +211,7 @@ public class OFS_ReviewResultExportHelper
 
         db.CommandText = sql;
         db.Parameters.Clear();
-        db.Parameters.Add("@Field", field);
+        db.Parameters.Add("@Topic", field);
         db.Parameters.Add("@Statuses", Statuses);
         db.Parameters.Add("@ReviewStage", reviewStage);
         DataTable dt = db.GetTable();

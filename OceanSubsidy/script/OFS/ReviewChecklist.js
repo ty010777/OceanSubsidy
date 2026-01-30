@@ -3684,37 +3684,46 @@ window.ReviewRanking = (function() {
     }
 
     /**
-     * 載入審查組別選項
+     * 載入審查組別選項（動態從後端取得）
      */
     function loadReviewGroups(reviewType) {
         const $select = $("#reviewGroupSelect");
         $select.empty();
+        $select.append('<option value="">載入中...</option>');
 
-        // 根據審查類型提供不同的組別選項
+        // 根據審查類型載入組別選項
         if (reviewType == "2" || reviewType == "3") {
-            const groups = [
-                { value: "Information", text: "資通訊" },
-                { value: "Environment", text: "環境工程" },
-                { value: "Material", text: "材料科技" },
-                { value: "Mechanical", text: "機械與機電工程" },
-                { value: "11", text: "航海智慧轉譯類" },
-                { value: "12", text: "海岸聚落發展類" },
-                { value: "13", text: "圖文繪本創新類" },
-                { value: "21", text: "造舟技藝傳承類" },
-                { value: "22", text: "航海實踐交流類" },
-                { value: "31", text: "海洋主題創作類" },
-                { value: "32", text: "海洋藝文扎根類" }
-            ];
+            $.ajax({
+                type: "POST",
+                url: "ReviewChecklist.aspx/GetSubjectTypes",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function(response) {
+                    var result = JSON.parse(response.d);
+                    if (result.success && result.data) {
+                        $select.empty();
 
-            groups.forEach(group => {
-                $select.append(`<option value="${group.value}">${group.text}</option>`);
+                        result.data.forEach(function(item) {
+                            $select.append(`<option value="${item.code}">${item.name}</option>`);
+                        });
+
+                        // 預設選擇第一個組別並載入資料
+                        if (result.data.length > 0) {
+                            $select.val(result.data[0].code);
+                            loadRankingData(reviewType, result.data[0].code);
+                        }
+                    } else {
+                        $select.empty();
+                        $select.append('<option value="">無可用選項</option>');
+                        console.error('取得審查組別失敗:', result.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $select.empty();
+                    $select.append('<option value="">載入失敗</option>');
+                    console.error('載入審查組別時發生錯誤:', error);
+                }
             });
-
-            // 預設選擇第一個組別並載入資料
-            if (groups.length > 0) {
-                $select.val(groups[0].value);
-                loadRankingData(reviewType, groups[0].value);
-            }
         }
     }
 

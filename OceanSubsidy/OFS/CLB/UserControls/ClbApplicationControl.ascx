@@ -55,7 +55,7 @@
                         <td colspan="3">
                             <div class="d-flex align-items-center gap-2">
                                 <asp:TextBox ID="txtSchoolName" runat="server" CssClass="form-control" 
-                                           placeholder="學校名稱" MaxLength="100" style="width: 250px;" />
+                                           placeholder="學校全銜" MaxLength="100" style="width: 250px;" />
                                 <asp:TextBox ID="txtClubName" runat="server" CssClass="form-control" 
                                            placeholder="社團全名" MaxLength="100" style="width: 250px;" />
                             </div>

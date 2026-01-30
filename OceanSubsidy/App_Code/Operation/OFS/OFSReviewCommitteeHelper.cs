@@ -127,7 +127,7 @@ public class OFSReviewCommitteeHelper
                          ,'科專／' + C.[Descname] AS [FieldName]
                      FROM [OFS_SCI_Application_Main] AS P
                      JOIN [OFS_SCI_Project_Main] AS M ON (M.ProjectID = P.ProjectID)
-                     JOIN [Sys_ZgsCode] AS C ON (C.[CodeGroup] = 'SCIField' AND C.[Code] = P.[Field])
+                     JOIN [Sys_ZgsCode] AS C ON (C.[CodeGroup] = 'SCITopic' AND C.[Code] = P.[Field])
                     WHERE M.[isExist] = 1
                       AND M.[isWithdrawal] = 0
                    UNION

@@ -60,7 +60,7 @@ public class OFS_SciDomainReviewHelper
                 (SELECT Descname
                  FROM Sys_ZgsCode
                  WHERE Code = CP.[Field] and CodeGroup = 'CULField'
-                ) as Field,
+                ) as Topic,
                 [OrgName],
                 [UpdateTime] as updated_at,
                 '文化' as ProjectCategory
