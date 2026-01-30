@@ -89,9 +89,9 @@
     const docs = ref([
         { Type: 1, Title: "申請表", Template: `../../Service/OFS/DownloadTemplateCUL.ashx?type=1&id=${props.id}`, Files: [] },
         { Type: 2, Title: "申請捐（補）助計畫書", Template: `../../Service/OFS/DownloadTemplateCUL.ashx?type=2&id=${props.id}`, Files: [] },
-        { Type: 3, Title: "執行承諾書", Template: `../../Service/OFS/DownloadTemplateCUL.ashx?type=3&id=${props.id}`, Files: [], Excludes: ["1"] },
-        { Type: 4, Title: "未違反公職人員利益衝突迴避法切結書及事前揭露表", Comment: "(與本計畫相關之補充資料、如立案證明、配合提案計畫邀集相關合作單位召開討論之會議紀錄等；若有合作對象，請附合作對象同意書)", Template: `../../Service/OFS/DownloadTemplateCUL.ashx?type=4&id=${props.id}`, Files: [] },
-        { Type: 5, Title: "附錄", Files: [], Multiple: true }
+        { Type: 3, Title: "執行承諾書", Template: `../../Service/OFS/DownloadTemplateCUL.ashx?type=3&id=${props.id}`, Files: [] },
+        { Type: 4, Title: "未違反公職人員利益衝突迴避法切結書及事前揭露表", Template: `../../Service/OFS/DownloadTemplateCUL.ashx?type=4&id=${props.id}`, Files: [], Excludes: ["1"] },
+        { Type: 5, Title: "附錄", Comment: "(與本計畫相關之補充資料、如立案證明、配合提案計畫邀集相關合作單位召開討論之會議紀錄等；若有合作對象，請附合作對象同意書)", Files: [], Multiple: true, Optional: true }
     ]);
 
     const changeForm = ref();

@@ -121,7 +121,7 @@
                     <tr>
                         <th><required-label>計畫目標<br />(條列式)</required-label></th>
                         <td>
-                            <div class="fs-14 mb-2">對海洋文化發展、推廣或傳承之期待，包含落實海洋基本法、2020國家海洋政策白皮書與臺灣永續發展目標</div>
+                            <div class="fs-14 mb-2">對海洋文化發展、推廣或傳承之期待，包含落實海洋基本法、2025國家海洋政策白皮書與臺灣永續發展目標</div>
                             <input-textarea :error="errors.Target" :max-length="500" placeholder="請輸入計畫目標" rows="4" v-model.trim="form.Target"></input-textarea>
                         </td>
                     </tr>
