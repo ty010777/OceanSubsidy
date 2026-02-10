@@ -8,8 +8,9 @@
             <div class="row g-3">
                 <div class="col-12 col-lg-4">
                     <div class="fs-16 text-gray mb-2">年度</div>
-                    <select class="form-select">
-                        <option>114年</option>
+                    <select class="form-select" v-model="form.year">
+                        <option :value="undefined">全部</option>
+                        <option :key="item" :value="item" v-for="(item) in yearList">{{ item }}年</option>
                     </select>
                 </div>
                 <div class="col-12 col-lg-4">
@@ -137,6 +138,7 @@
     const page = ref(1);
     const size = ref(10);
     const unitList = ref([]);
+    const yearList = ref([]);
 
     const approved = computed(() => filterList.value.reduce((sum, item) => sum + item.ApprovedAmount, 0));
     const rows = computed(() => filterList.value.slice((page.value - 1) * size.value, page.value * size.value));
@@ -144,6 +146,10 @@
 
     const filterList = computed(() => {
         let data = list.value;
+
+        if (form.value.year) {
+            data = data.filter((i) => i.Year === form.value.year);
+        }
 
         if (form.value.category) {
             data = data.filter((i) => i.Category === form.value.category);
@@ -200,6 +206,10 @@
             list.value = res.List;
 
             list.value.forEach((item) => {
+                if (!yearList.value.includes(item.Year)) {
+                    yearList.value.push(item.Year);
+                }
+
                 if (!categoryList.value.includes(item.Category)) {
                     categoryList.value.push(item.Category);
                 }
@@ -208,6 +218,11 @@
                     unitList.value.push(item.SupervisoryUnit);
                 }
             });
+
+            yearList.value.sort((a, b) => b - a);
+
+            const currentYear = new Date().getFullYear() - 1911;
+            form.value.year = yearList.value.includes(currentYear) ? currentYear : yearList.value[0];
         });
     });
 </script>

@@ -277,11 +277,7 @@ public class DownloadReviewChecklistFile : IHttpHandler
                                 System.Diagnostics.Debug.WriteLine($"PDF 檔案不存在：{pdfPath}");
                             }
                         }
-                        else if (category == "CUL")
-                        {
-                            // TODO: 處理 CUL 類型的 PDF 檔案路徑
-                            System.Diagnostics.Debug.WriteLine($"CUL 類型的 PDF 路徑尚未實作：ProjectID = {projectId}");
-                        }
+                     
                     }
 
                     // 如果沒有找到任何檔案，建立一個說明檔案

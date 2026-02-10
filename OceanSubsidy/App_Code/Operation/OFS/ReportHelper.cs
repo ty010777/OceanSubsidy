@@ -159,7 +159,7 @@ public class ReportHelper
 
 			  UNION
 
-						 SELECT Year(PM.created_at)-1911 as Year,
+						 SELECT AM.Year as Year,
 						 PM.ProjectID ,
 						  '科專' AS [Category],
 						  ProjectNameTw AS [ProjectName] ,
@@ -194,7 +194,7 @@ public class ReportHelper
 						  ON PM.Statuses = SM.Statuses and PM.StatusesName = SM.StatusesName
 						  WHERE PM.IsExist = 1 AND IsWithdrawal <> 1
 			UNION
-					 	SELECT  YEAR(PM.created_at) -1911 as Year ,
+					 	SELECT AB.Year as Year ,
 						PM.ProjectID,
 						'學校社團' AS Category,
 						ProjectNameTw AS [ProjectName],

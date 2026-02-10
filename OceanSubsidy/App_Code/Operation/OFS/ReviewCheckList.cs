@@ -3818,20 +3818,24 @@ SELECT TOP (1000) [ProjectID]
                 foreach (var item in filteredSciResults)
                 {
                     string projectId = item.ProjectID ?? "";
-                    var applicationMain = OFS_SciApplicationHelper.getApplicationMainByProjectID(projectId);
-                    string ProjectName = applicationMain.ProjectNameTw ?? "";
 
                     if (!string.IsNullOrEmpty(projectId))
                     {
-                        // 建構 SCI PDF 路徑
-                        string pdfPath = HttpContext.Current.Server.MapPath($"~/UploadFiles/OFS/SCI/{projectId}/SciApplication/{projectId}_科專_{ProjectName}_送審版.pdf");
+                        // 從資料庫查詢送審版記錄（FileCode = MERGED_REVIEW_VERSION）
+                        var uploadFiles = OFS_SciUploadAttachmentsHelper.GetAttachmentsByFileCodeAndProject(projectId, "MERGED_REVIEW_VERSION");
 
-                        DataRow row = result.NewRow();
-                        row["ProjectID"] = projectId;
-                        row["PdfPath"] = pdfPath;
-                        row["Category"] = "SCI";
-                        row["ProjectName"] = item.ProjectNameTw ?? "";
-                        result.Rows.Add(row);
+                        if (uploadFiles != null && uploadFiles.Count > 0)
+                        {
+                            var uploadFile = uploadFiles[0];
+                            string pdfPath = OFS_SciUploadAttachmentsHelper.GetPhysicalFilePath(uploadFile.TemplatePath);
+
+                            DataRow row = result.NewRow();
+                            row["ProjectID"] = projectId;
+                            row["PdfPath"] = pdfPath;
+                            row["Category"] = "SCI";
+                            row["ProjectName"] = item.ProjectNameTw ?? "";
+                            result.Rows.Add(row);
+                        }
                     }
                 }
             }
@@ -3847,10 +3851,10 @@ SELECT TOP (1000) [ProjectID]
                 foreach (var item in filteredCulResults)
                 {
                     string projectId = item.ProjectID ?? "";
-                    string ProjectName = item.ProjectNameTw;
                     if (!string.IsNullOrEmpty(projectId))
                     {
-                        string pdfPath = HttpContext.Current.Server.MapPath($"~/UploadFiles/OFS/CUL/{projectId}/TechReviewFiles/{projectId}_文化_{ProjectName}_送審版.pdf");
+                        string baseDir = Path.GetFullPath(Path.Combine(HttpContext.Current.Server.MapPath("~"), ".."));
+                        string pdfPath = Path.Combine(baseDir, "UploadFiles", "OFS", "CUL", projectId, $"{projectId}_送審版.pdf");
 
 
                         DataRow row = result.NewRow();

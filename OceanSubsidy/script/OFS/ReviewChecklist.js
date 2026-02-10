@@ -2561,8 +2561,7 @@ function updateModalReviewTable(reviewComments, projectId) {
 function formatTextWithLineBreaks(text) {
     if (!text || text === '--') return text;
 
-    // 將長文字適當斷行，每60個字元插入一個換行
-    return text.replace(/(.{60})/g, '$1\n');
+    return text;
 }
 
 /**
