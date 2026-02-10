@@ -59,8 +59,19 @@ public class DownloadReviewChecklistFile : IHttpHandler
                     switch (exportType)
                     {
                         case "applicationPdf":
-                            dataTable = ReviewCheckListHelper.GetType2ApplicationData(year, category, status, orgName, supervisor, keyword,progress,replyStatus);
-                            ProcessPdfZipExport(context, dataTable, fileName);
+                            string mode = context.Request.QueryString["mode"] ?? "prepare";
+                            if (mode == "download")
+                            {
+                                // 第二步：下載已產生的暫存 ZIP
+                                string tempFile = context.Request.QueryString["file"] ?? "";
+                                ServeTempZipFile(context, tempFile, fileName);
+                            }
+                            else
+                            {
+                                // 第一步：產生 ZIP 暫存檔，回傳檔名
+                                dataTable = ReviewCheckListHelper.GetType2ApplicationData(year, category, status, orgName, supervisor, keyword, progress, replyStatus);
+                                PreparePdfZipFile(context, dataTable);
+                            }
                             return;
                         case "results":
                             dataTable = ReviewCheckListHelper.GetType2ReviewResultsData(year, category, status, orgName, supervisor, keyword);
@@ -203,122 +214,132 @@ public class DownloadReviewChecklistFile : IHttpHandler
     }
 
     /// <summary>
-    /// 處理 PDF ZIP 匯出
+    /// 第一步：產生 ZIP 暫存檔，回傳檔名給前端（AJAX）
     /// </summary>
-    private void ProcessPdfZipExport(HttpContext context, DataTable dataTable, string fileName)
+    private void PreparePdfZipFile(HttpContext context, DataTable dataTable)
     {
+        string tempZipPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".zip");
         try
         {
-            // 清除之前的回應
-            context.Response.Clear();
-            context.Response.ClearHeaders();
-
-            // 設定回應為 ZIP 檔案
-            context.Response.ContentType = "application/zip";
-            context.Response.AddHeader("Content-Disposition", $"attachment; filename={fileName.Replace(".xlsx", ".zip")}");
-            context.Response.AddHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-            context.Response.AddHeader("Pragma", "no-cache");
-            context.Response.AddHeader("Expires", "0");
-
-            // 使用 SharpZipLib 建立 ZIP 檔案
-            using (var memoryStream = new MemoryStream())
+            using (var tempFileStream = new FileStream(tempZipPath, FileMode.Create, FileAccess.Write))
+            using (var zipStream = new ZipOutputStream(tempFileStream))
             {
-                using (var zipStream = new ZipOutputStream(memoryStream))
+                zipStream.SetLevel(0); // 僅打包不壓縮（PDF 已是壓縮格式）
+
+                int fileCount = 0;
+                byte[] buffer = new byte[67108864]; // 64MB 讀取緩衝區
+
+                foreach (DataRow row in dataTable.Rows)
                 {
-                    zipStream.SetLevel(5); // 設定壓縮等級
-
-                    int fileCount = 0;
-
-                    foreach (DataRow row in dataTable.Rows)
+                    string projectId = row["ProjectID"]?.ToString() ?? "";
+                    string pdfPath = row["PdfPath"]?.ToString() ?? "";
+                    string category = row["Category"]?.ToString() ?? "";
+                    string projectName = row["ProjectName"]?.ToString() ?? "";
+                    string categoryName = category == "SCI" ? "科專" : "文化";
+                    if (!string.IsNullOrEmpty(projectId) && !string.IsNullOrEmpty(pdfPath))
                     {
-                        string projectId = row["ProjectID"]?.ToString() ?? "";
-                        string pdfPath = row["PdfPath"]?.ToString() ?? "";
-                        string category = row["Category"]?.ToString() ?? "";
-                        string projectName = row["ProjectName"]?.ToString() ?? "";
-                        string categoryName = category == "SCI" ? "科專" : "文化";
-                        if (!string.IsNullOrEmpty(projectId) && !string.IsNullOrEmpty(pdfPath))
+                        if (File.Exists(pdfPath))
                         {
-                            // 檢查檔案是否存在
-                            if (File.Exists(pdfPath))
+                            try
                             {
-                                try
+                                string zipEntryName = $"{projectId}_{categoryName}_{projectName}_送審版.pdf";
+                                zipEntryName = SanitizeFileName(zipEntryName);
+
+                                var fileInfo = new FileInfo(pdfPath);
+                                var zipEntry = new ZipEntry(ZipEntry.CleanName(zipEntryName));
+                                zipEntry.DateTime = fileInfo.LastWriteTime;
+                                zipEntry.Size = fileInfo.Length;
+                                zipStream.PutNextEntry(zipEntry);
+
+                                using (var fileStream = File.OpenRead(pdfPath))
                                 {
-                                    // 在 ZIP 中的檔案名稱
-                                    string zipEntryName = $"{projectId}_{categoryName}_{projectName}_送審版.pdf";
-                                    zipEntryName = SanitizeFileName(zipEntryName);
-
-                                    // 讀取 PDF 檔案
-                                    byte[] fileData = File.ReadAllBytes(pdfPath);
-
-                                    // 建立 ZIP 項目
-                                    var zipEntry = new ZipEntry(ZipEntry.CleanName(zipEntryName));
-                                    zipEntry.DateTime = DateTime.Now;
-                                    zipEntry.Size = fileData.Length;
-
-                                    // 計算 CRC
-                                    var crc = new Crc32();
-                                    crc.Reset();
-                                    crc.Update(fileData);
-                                    zipEntry.Crc = crc.Value;
-
-                                    // 寫入檔案到 ZIP
-                                    zipStream.PutNextEntry(zipEntry);
-                                    zipStream.Write(fileData, 0, fileData.Length);
-
-                                    fileCount++;
+                                    int bytesRead;
+                                    while ((bytesRead = fileStream.Read(buffer, 0, buffer.Length)) > 0)
+                                    {
+                                        zipStream.Write(buffer, 0, bytesRead);
+                                    }
                                 }
-                                catch (Exception ex)
-                                {
-                                    System.Diagnostics.Debug.WriteLine($"處理 PDF 檔案 {pdfPath} 時發生錯誤：{ex.Message}");
-                                }
+
+                                fileCount++;
                             }
-                            else
+                            catch (Exception ex)
                             {
-                                System.Diagnostics.Debug.WriteLine($"PDF 檔案不存在：{pdfPath}");
+                                System.Diagnostics.Debug.WriteLine($"處理 PDF 檔案 {pdfPath} 時發生錯誤：{ex.Message}");
                             }
                         }
-                     
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine($"PDF 檔案不存在：{pdfPath}");
+                        }
                     }
-
-                    // 如果沒有找到任何檔案，建立一個說明檔案
-                    if (fileCount == 0)
-                    {
-                        string message = "查無符合條件的 PDF 檔案。\r\n可能原因：\r\n1. 篩選條件沒有找到相符的專案\r\n2. 專案的 PDF 檔案尚未上傳或路徑不正確\r\n建立時間：" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-                        byte[] messageData = System.Text.Encoding.UTF8.GetBytes(message);
-
-                        var noFileEntry = new ZipEntry(ZipEntry.CleanName("說明.txt"));
-                        noFileEntry.DateTime = DateTime.Now;
-                        noFileEntry.Size = messageData.Length;
-
-                        var crc = new Crc32();
-                        crc.Reset();
-                        crc.Update(messageData);
-                        noFileEntry.Crc = crc.Value;
-
-                        zipStream.PutNextEntry(noFileEntry);
-                        zipStream.Write(messageData, 0, messageData.Length);
-                    }
-
-                    zipStream.Finish();
                 }
 
-                // 將 ZIP 檔案內容寫入回應
-                byte[] zipData = memoryStream.ToArray();
-                context.Response.AddHeader("Content-Length", zipData.Length.ToString());
-                context.Response.BinaryWrite(zipData);
-                context.Response.Flush();
-                context.Response.End();
+                if (fileCount == 0)
+                {
+                    string message = "查無符合條件的 PDF 檔案。\r\n可能原因：\r\n1. 篩選條件沒有找到相符的專案\r\n2. 專案的 PDF 檔案尚未上傳或路徑不正確\r\n建立時間：" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                    byte[] messageData = System.Text.Encoding.UTF8.GetBytes(message);
+
+                    var noFileEntry = new ZipEntry(ZipEntry.CleanName("說明.txt"));
+                    noFileEntry.DateTime = DateTime.Now;
+                    noFileEntry.Size = messageData.Length;
+                    zipStream.PutNextEntry(noFileEntry);
+                    zipStream.Write(messageData, 0, messageData.Length);
+                }
+
+                zipStream.Finish();
             }
+
+            // 回傳暫存檔名給前端
+            context.Response.ContentType = "application/json";
+            string tempFileName = Path.GetFileName(tempZipPath);
+            context.Response.Write($"{{\"success\":true,\"file\":\"{tempFileName}\"}}");
         }
         catch (Exception ex)
         {
-            // 錯誤處理
+            System.Diagnostics.Debug.WriteLine($"PreparePdfZipFile 錯誤: {ex}");
+            context.Response.ContentType = "application/json";
+            context.Response.Write($"{{\"success\":false,\"message\":\"產生ZIP時發生錯誤\"}}");
+        }
+    }
+
+    /// <summary>
+    /// 第二步：下載已產生的暫存 ZIP 檔案
+    /// </summary>
+    private void ServeTempZipFile(HttpContext context, string tempFileName, string downloadFileName)
+    {
+        // 安全檢查：只允許檔名，不允許路徑
+        if (string.IsNullOrEmpty(tempFileName) || tempFileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+        {
+            context.Response.StatusCode = 400;
+            context.Response.Write("無效的檔案參數");
+            return;
+        }
+
+        string tempZipPath = Path.Combine(Path.GetTempPath(), tempFileName);
+        if (!File.Exists(tempZipPath))
+        {
+            context.Response.StatusCode = 404;
+            context.Response.Write("暫存檔案不存在或已過期");
+            return;
+        }
+
+        try
+        {
             context.Response.Clear();
             context.Response.ClearHeaders();
-            context.Response.ContentType = "text/plain; charset=utf-8";
-            context.Response.Write($"產生 ZIP 檔案時發生錯誤：{ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"ProcessPdfZipExport 錯誤: {ex}");
-            context.Response.End();
+            context.Response.ContentType = "application/zip";
+            context.Response.AddHeader("Content-Disposition", $"attachment; filename={downloadFileName.Replace(".xlsx", ".zip")}");
+            context.Response.TransmitFile(tempZipPath);
+            context.Response.Flush();
+            context.ApplicationInstance.CompleteRequest();
+        }
+        finally
+        {
+            // 延遲刪除暫存檔（給 TransmitFile 時間完成傳輸）
+            System.Threading.Tasks.Task.Delay(10000).ContinueWith(_ =>
+            {
+                try { if (File.Exists(tempZipPath)) File.Delete(tempZipPath); } catch { }
+            });
         }
     }
     

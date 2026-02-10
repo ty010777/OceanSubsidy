@@ -3815,27 +3815,28 @@ SELECT TOP (1000) [ProjectID]
                 // 篩選符合進度和回覆狀態的 ProjectID
                 var filteredSciResults = FilterByProgressAndReplyStatus(sciResults, progress, replyStatus, "SCI");
 
+                // 批次查詢所有專案的 PDF 路徑（一次 DB 查詢）
+                var sciProjectIds = filteredSciResults
+                    .Where(x => !string.IsNullOrEmpty(x.ProjectID))
+                    .Select(x => x.ProjectID)
+                    .ToList();
+
+                var templatePathMap = OFS_SciUploadAttachmentsHelper.GetTemplatePathsByFileCode(sciProjectIds, "MERGED_REVIEW_VERSION");
+
                 foreach (var item in filteredSciResults)
                 {
                     string projectId = item.ProjectID ?? "";
 
-                    if (!string.IsNullOrEmpty(projectId))
+                    if (!string.IsNullOrEmpty(projectId) && templatePathMap.ContainsKey(projectId))
                     {
-                        // 從資料庫查詢送審版記錄（FileCode = MERGED_REVIEW_VERSION）
-                        var uploadFiles = OFS_SciUploadAttachmentsHelper.GetAttachmentsByFileCodeAndProject(projectId, "MERGED_REVIEW_VERSION");
+                        string pdfPath = OFS_SciUploadAttachmentsHelper.GetPhysicalFilePath(templatePathMap[projectId]);
 
-                        if (uploadFiles != null && uploadFiles.Count > 0)
-                        {
-                            var uploadFile = uploadFiles[0];
-                            string pdfPath = OFS_SciUploadAttachmentsHelper.GetPhysicalFilePath(uploadFile.TemplatePath);
-
-                            DataRow row = result.NewRow();
-                            row["ProjectID"] = projectId;
-                            row["PdfPath"] = pdfPath;
-                            row["Category"] = "SCI";
-                            row["ProjectName"] = item.ProjectNameTw ?? "";
-                            result.Rows.Add(row);
-                        }
+                        DataRow row = result.NewRow();
+                        row["ProjectID"] = projectId;
+                        row["PdfPath"] = pdfPath;
+                        row["Category"] = "SCI";
+                        row["ProjectName"] = item.ProjectNameTw ?? "";
+                        result.Rows.Add(row);
                     }
                 }
             }

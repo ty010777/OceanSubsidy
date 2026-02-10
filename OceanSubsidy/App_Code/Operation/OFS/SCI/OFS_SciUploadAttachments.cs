@@ -256,6 +256,54 @@ public class OFS_SciUploadAttachmentsHelper
     }
 
     /// <summary>
+    /// 根據FileCode批次查詢多個專案的附件記錄（每個專案取最新一筆）
+    /// </summary>
+    /// <param name="projectIDs">專案ID清單</param>
+    /// <param name="fileCode">檔案代碼</param>
+    /// <returns>Key: ProjectID, Value: TemplatePath</returns>
+    public static Dictionary<string, string> GetTemplatePathsByFileCode(List<string> projectIDs, string fileCode)
+    {
+        var result = new Dictionary<string, string>();
+        if (projectIDs == null || projectIDs.Count == 0) return result;
+
+        DbHelper db = new DbHelper();
+        // 使用 ROW_NUMBER 取每個 ProjectID 最新一筆
+        string inClause = string.Join(",", projectIDs.ConvertAll(id => "'" + id.Replace("'", "''") + "'"));
+        db.CommandText = $@"
+            SELECT ProjectID, TemplatePath FROM (
+                SELECT ProjectID, TemplatePath,
+                       ROW_NUMBER() OVER (PARTITION BY ProjectID ORDER BY ID DESC) AS rn
+                FROM [OFS_SCI_UploadFile]
+                WHERE FileCode = @FileCode AND ProjectID IN ({inClause})
+            ) t WHERE rn = 1";
+
+        db.Parameters.Add("@FileCode", fileCode);
+
+        try
+        {
+            DataTable dt = db.GetTable();
+            foreach (DataRow row in dt.Rows)
+            {
+                string projectId = row["ProjectID"]?.ToString() ?? "";
+                string templatePath = row["TemplatePath"]?.ToString() ?? "";
+                if (!string.IsNullOrEmpty(projectId) && !string.IsNullOrEmpty(templatePath))
+                {
+                    result[projectId] = templatePath;
+                }
+            }
+            return result;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"批次查詢附件記錄時發生錯誤: {ex.Message}", ex);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
+    /// <summary>
     /// 檢查專案是否已上傳所有必要附件
     /// </summary>
     /// <param name="projectID">專案ID</param>

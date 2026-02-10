@@ -4088,77 +4088,99 @@ function exportType1ReviewResults() {
 }
 
 /**
- * 匯出Type2申請資料PDF (ZIP格式)
+ * 匯出Type2申請資料PDF (ZIP格式) - 兩步驟：先產生ZIP，再觸發下載
  */
+var _isExportingPdf = false;
 function exportApplicationPdfData() {
-    try {
-        // 取得當前搜尋條件 (使用ID選擇器，因為是ASP.NET服務器控制項)
-        const searchParams = {
-            year: $('select[name$="ddlYear_Type2"]').val() || '',
-            category: $('select[name$="ddlCategory_Type2"]').val() || '',
-            progress: $(`select[name$="ddlProgress_Type2"]`).val() || '',
-            replyStatus: $(`select[name$="ddlReplyStatus_Type2"]`).val() || '',
-            orgName: $('select[name$="ddlOrg_Type2"]').val() || '',
-            supervisor: $('select[name$="ddlSupervisor_Type2"]').val() || '',
-            keyword:  $('input[name="txtKeyword_Type2"]').val() || ''
-        };
+    // 防止重複點擊
+    if (_isExportingPdf) return;
+    _isExportingPdf = true;
 
-        // 建立下載參數
-        const params = new URLSearchParams({
-            type: '2',
-            exportType: 'applicationPdf',
-            year: searchParams.year,
-            category: searchParams.category,
-            progress: searchParams.progress,
-            replyStatus: searchParams.replyStatus,
-            orgName: searchParams.orgName,
-            supervisor: searchParams.supervisor,
-            keyword: searchParams.keyword
-        });
+    // 取得當前搜尋條件
+    const searchParams = {
+        year: $('select[name$="ddlYear_Type2"]').val() || '',
+        category: $('select[name$="ddlCategory_Type2"]').val() || '',
+        progress: $(`select[name$="ddlProgress_Type2"]`).val() || '',
+        replyStatus: $(`select[name$="ddlReplyStatus_Type2"]`).val() || '',
+        orgName: $('select[name$="ddlOrg_Type2"]').val() || '',
+        supervisor: $('select[name$="ddlSupervisor_Type2"]').val() || '',
+        keyword:  $('input[name="txtKeyword_Type2"]').val() || ''
+    };
 
-        // 建立下載 URL
-        const downloadUrl = '../Service/DownloadReviewChecklistFile.ashx?' + params.toString();
+    // 第一步：AJAX 請求產生 ZIP 暫存檔
+    const prepareParams = new URLSearchParams({
+        type: '2',
+        exportType: 'applicationPdf',
+        mode: 'prepare',
+        year: searchParams.year,
+        category: searchParams.category,
+        progress: searchParams.progress,
+        replyStatus: searchParams.replyStatus,
+        orgName: searchParams.orgName,
+        supervisor: searchParams.supervisor,
+        keyword: searchParams.keyword
+    });
 
-        // 顯示載入訊息
-        Swal.fire({
-            title: '正在準備匯出申請資料...',
-            html: '系統正在搜尋並打包PDF檔案，請稍候',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
+    // 顯示載入訊息
+    Swal.fire({
+        title: '正在匯出申請資料...',
+        html: '系統正在打包PDF檔案，請稍候（檔案較多時需要數十秒）',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    $.ajax({
+        url: '../Service/DownloadReviewChecklistFile.ashx?' + prepareParams.toString(),
+        type: 'GET',
+        dataType: 'json',
+        success: function (result) {
+            if (result.success && result.file) {
+                // 第二步：ZIP 產生完成，觸發下載
+                const downloadParams = new URLSearchParams({
+                    type: '2',
+                    exportType: 'applicationPdf',
+                    mode: 'download',
+                    file: result.file
+                });
+                const downloadUrl = '../Service/DownloadReviewChecklistFile.ashx?' + downloadParams.toString();
+
+                // 用 <a> 觸發瀏覽器下載
+                var link = document.createElement('a');
+                link.href = downloadUrl;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                _isExportingPdf = false;
+                Swal.fire({
+                    title: '匯出完成',
+                    text: '申請資料PDF已下載完成',
+                    icon: 'success',
+                    confirmButtonText: '確定'
+                });
+            } else {
+                _isExportingPdf = false;
+                Swal.fire({
+                    title: '匯出失敗',
+                    text: result.message || '產生ZIP檔案時發生錯誤',
+                    icon: 'error',
+                    confirmButtonText: '確定'
+                });
             }
-        });
-
-        // 建立隱藏的下載連結
-        const downloadLink = document.createElement('a');
-        downloadLink.href = downloadUrl;
-        downloadLink.style.display = 'none';
-        downloadLink.download = ''; // 讓瀏覽器自動決定檔名
-
-        // 執行下載
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
-
-        // 延遲關閉載入訊息（給系統一些時間處理）
-        setTimeout(() => {
+        },
+        error: function () {
+            _isExportingPdf = false;
             Swal.fire({
-                title: '匯出完成',
-                text: '申請資料PDF已開始下載',
-                icon: 'success',
+                title: '匯出失敗',
+                text: '系統發生錯誤，請稍後再試',
+                icon: 'error',
                 confirmButtonText: '確定'
             });
-        }, 2000);
-
-    } catch (error) {
-        console.error('匯出申請資料時發生錯誤:', error);
-        Swal.fire({
-            title: '匯出失敗',
-            text: '系統發生錯誤，請稍後再試',
-            icon: 'error',
-            confirmButtonText: '確定'
-        });
-    }
+        }
+    });
 }
 
 /**
