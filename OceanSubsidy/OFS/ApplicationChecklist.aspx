@@ -721,7 +721,7 @@
                                 <tr>
                                     <th width="160">審查委員</th>
                                     <th>審查意見</th>
-                                    <th width="50%">申請單位回覆</th>
+                                    <th width="50%" style="display:none">申請單位回覆</th>
                                 </tr>
                             </thead>
                             <tbody id="domainReviewCommentsTableBody">
@@ -740,7 +740,7 @@
                                 <tr>
                                     <th width="160">審查委員</th>
                                     <th>審查意見</th>
-                                    <th width="50%">申請單位回覆</th>
+                                    <th width="50%" style="display:none">申請單位回覆</th>
                                 </tr>
                             </thead>
                             <tbody id="technicalReviewCommentsTableBody">
@@ -750,7 +750,7 @@
                     </div>
 
 
-                    <div class="d-flex gap-3 flex-wrap justify-content-center mt-4">
+                    <div class="d-flex gap-3 flex-wrap justify-content-center mt-4" style="display:none">
                         <button type="button" class="btn btn-teal" onclick="submitReply()">
                             <i class="fas fa-check"></i>
                             提送回覆

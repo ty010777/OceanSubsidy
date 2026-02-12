@@ -624,7 +624,7 @@ function generateActionButtons(record) {
                 </button>`;
     }
 
-    if((record.Category == "科專" || record.Category == "文化")&&(record.Statuses != "尚未提送"  && record.Statuses != "資格審查" )){
+    if((record.Category == "科專" || record.Category == "文化")&&(record.Statuses == "決審核定"  || record.Statuses == "計畫執行" )){
     // 回覆按鈕（檢視審查意見）
         buttons += `<button class="btn btn-sm btn-teal-dark" type="button" onclick="showReviewComments('${record.ProjectID}')"
                     data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="檢視審查意見">
@@ -1103,7 +1103,7 @@ function displayReviewCommentsData(data) {
                 <tr>
                     <td>${comment.reviewerName || ''}</td>
                     <td>${comment.reviewComment || ''}</td>
-                    <td>
+                    <td style="display:none">
                         <span class="form-control textarea" role="textbox" contenteditable=""
                               data-placeholder="請輸入" aria-label="文本輸入區域"
                               data-review-id="${comment.reviewerReviewID}"
@@ -1115,7 +1115,7 @@ function displayReviewCommentsData(data) {
     } else {
         domainTableRows = `
             <tr>
-                <td colspan="3" class="text-center p-4 text-muted">
+                <td colspan="2" class="text-center p-4 text-muted">
                     <i class="fas fa-info-circle"></i> 尚未有實質審查意見
                 </td>
             </tr>
@@ -1133,7 +1133,7 @@ function displayReviewCommentsData(data) {
                 <tr>
                     <td>${comment.reviewerName || ''}</td>
                     <td>${comment.reviewComment || ''}</td>
-                    <td>
+                    <td style="display:none">
                         <span class="form-control textarea" role="textbox" contenteditable=""
                               data-placeholder="請輸入" aria-label="文本輸入區域"
                               data-review-id="${comment.reviewerReviewID}"
@@ -1145,7 +1145,7 @@ function displayReviewCommentsData(data) {
     } else {
         technicalTableRows = `
             <tr>
-                <td colspan="3" class="text-center p-4 text-muted">
+                <td colspan="2" class="text-center p-4 text-muted">
                     <i class="fas fa-info-circle"></i> 尚未有技術審查意見
                 </td>
             </tr>

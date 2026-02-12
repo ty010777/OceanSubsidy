@@ -3601,10 +3601,18 @@ window.ReviewRanking = (function() {
             // 根據當前審查類型載入審查組別選項
             const currentType = getCurrentReviewType();
             if (currentType === "2" || currentType === "3") {
-                loadReviewGroups(currentType);
+                const grantType = $("#grantTypeSelect").val();
+                loadReviewGroups(currentType, grantType);
             } else {
                 showRankingError("此審查階段不支援排名功能");
             }
+        });
+
+        // 綁定補助案類型選擇變更事件
+        $("#grantTypeSelect").on("change", function() {
+            const currentType = getCurrentReviewType();
+            const grantType = $(this).val();
+            loadReviewGroups(currentType, grantType);
         });
 
         // 綁定審查組別選擇變更事件
@@ -3626,12 +3634,15 @@ window.ReviewRanking = (function() {
         return urlParams.get("type") || "2";
     }
 // 載入審查排名資料
-    function loadRankingData(reviewType, reviewGroup = null) {
+    function loadRankingData(reviewType, reviewGroup = null, grantType = null) {
         showRankingLoading();
 
         const requestData = { reviewType: reviewType };
         if (reviewGroup) {
             requestData.reviewGroup = reviewGroup;
+        }
+        if (grantType) {
+            requestData.grantType = grantType;
         }
 
         $.ajax({
@@ -3685,7 +3696,7 @@ window.ReviewRanking = (function() {
     /**
      * 載入審查組別選項（動態從後端取得）
      */
-    function loadReviewGroups(reviewType) {
+    function loadReviewGroups(reviewType, grantType) {
         const $select = $("#reviewGroupSelect");
         $select.empty();
         $select.append('<option value="">載入中...</option>');
@@ -3697,20 +3708,21 @@ window.ReviewRanking = (function() {
                 url: "ReviewChecklist.aspx/GetSubjectTypes",
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
+                data: JSON.stringify({ grantType: grantType || "SCI" }),
                 success: function(response) {
                     var result = JSON.parse(response.d);
                     if (result.success && result.data) {
                         $select.empty();
+                        // 新增「全部」選項
+                        $select.append('<option value="ALL">全部</option>');
 
                         result.data.forEach(function(item) {
                             $select.append(`<option value="${item.code}">${item.name}</option>`);
                         });
 
-                        // 預設選擇第一個組別並載入資料
-                        if (result.data.length > 0) {
-                            $select.val(result.data[0].code);
-                            loadRankingData(reviewType, result.data[0].code);
-                        }
+                        // 預設選擇「全部」並載入資料
+                        $select.val("ALL");
+                        loadRankingData(reviewType, "ALL", grantType || "SCI");
                     } else {
                         $select.empty();
                         $select.append('<option value="">無可用選項</option>');
@@ -3731,7 +3743,8 @@ window.ReviewRanking = (function() {
      */
     function filterDataByGroup(selectedGroup) {
         const currentType = getCurrentReviewType();
-        loadRankingData(currentType, selectedGroup);
+        const grantType = $("#grantTypeSelect").val();
+        loadRankingData(currentType, selectedGroup, grantType);
     }
 
     /**
@@ -3739,13 +3752,14 @@ window.ReviewRanking = (function() {
      */
     function generateTableHeader() {
         const reviewerCount = allReviewers.length;
+        const isSci = $("#grantTypeSelect").val() === "SCI";
 
         let headerHtml = `
             <tr>
                 <th class="text-center" rowspan="2">排名</th>
                 <th rowspan="2">計畫編號</th>
                 <th rowspan="2">計畫名稱</th>
-                <th class="text-end" rowspan="2">
+                ${!isSci ? `<th class="text-end" rowspan="2">
                     <div class="hstack align-items-center justify-content-center">
                         <span>總分</span>
                         <button type="button" class="sort" onclick="ReviewRanking.sortBy('totalScore')">
@@ -3762,7 +3776,7 @@ window.ReviewRanking = (function() {
                             <i class="fa-solid fa-sort-down"></i>
                         </button>
                     </div>
-                </th>
+                </th>` : ''}
                 <th class="text-center" colspan="${reviewerCount}">審查委員評分</th>
             </tr>
             <tr>`;
@@ -3787,6 +3801,8 @@ window.ReviewRanking = (function() {
         const $tbody = $("#reviewRankingTableBody");
         $tbody.empty();
 
+        const isSciGrantType = $("#grantTypeSelect").val() === "SCI";
+
         filteredData.forEach(project => {
             // 判斷是否為科專專案
             const isSci = isSciProject(project.ProjectID);
@@ -3802,8 +3818,8 @@ window.ReviewRanking = (function() {
                     <td>
                         <a href="#" class="link-teal">${project.ProjectNameTw}</a>
                     </td>
-                    <td class="text-end">${totalScoreDisplay}</td>
-                    <td class="text-end">${avgScoreDisplay}</td>`;
+                    ${!isSciGrantType ? `<td class="text-end">${totalScoreDisplay}</td>
+                    <td class="text-end">${avgScoreDisplay}</td>` : ''}`;
 
             // 為每個評審委員添加分數欄位
             allReviewers.forEach(reviewerName => {

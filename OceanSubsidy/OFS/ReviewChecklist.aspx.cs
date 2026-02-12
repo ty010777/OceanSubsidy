@@ -459,8 +459,8 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
             ddlSupervisor_Type4.DataValueField = "Value";
             ddlSupervisor_Type4.DataBind();
 
-            // 載入類別選項（移除「全部」選項）
-            var categoryOptions = LoadGrantTypeOptions(false);
+            // 載入類別選項
+            var categoryOptions = LoadGrantTypeOptions(true);
             ddlCategory_Type4.DataSource = categoryOptions;
             ddlCategory_Type4.DataTextField = "Text";
             ddlCategory_Type4.DataValueField = "Value";
@@ -2581,15 +2581,16 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
     /// 取得審查結果排名
     /// </summary>
     /// <param name="reviewType">審查類型 (2: 實質審查, 3: 技術審查)</param>
-    /// <param name="reviewGroup">審查組別 (如: Information, Environment 等)</param>
+    /// <param name="reviewGroup">審查組別 (如: Information, Environment 等)，ALL 代表全部</param>
+    /// <param name="grantType">補助案類型 (SCI: 科專, CUL: 文化)</param>
     /// <returns>JSON格式的排名資料</returns>
     [WebMethod]
-    public static string GetReviewRanking(string reviewType, string reviewGroup = null)
+    public static string GetReviewRanking(string reviewType, string reviewGroup = null, string grantType = null)
     {
         try
         {
             // 使用Helper方法取得排名資料
-            var results = ReviewCheckListHelper.GetReviewRanking(reviewType, reviewGroup);
+            var results = ReviewCheckListHelper.GetReviewRanking(reviewType, reviewGroup, grantType);
 
             return JsonConvert.SerializeObject(new
             {
@@ -3909,22 +3910,44 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
     }
 
     /// <summary>
-    /// 取得領域清單（主題、領域）
+    /// 取得領域清單（主題、領域），依補助案類型篩選
     /// </summary>
     [WebMethod]
-    public static string GetSubjectTypes()
+    public static string GetSubjectTypes(string grantType = null)
     {
         try
         {
             using (var db = new GS.Data.Sql.DbHelper())
             {
-                db.CommandText = @"
-                   SELECT Code, Descname
-                    FROM [OCA_OceanSubsidy].[dbo].[Sys_ZgsCode]
-                    WHERE ((CodeGroup = 'CULField' AND ParentCode IN (10, 20, 30))
-                       OR CodeGroup = 'SCITopic') AND IsValid = 1
-                    ORDER BY CodeGroup
-                ";
+                if (grantType == "CUL")
+                {
+                    db.CommandText = @"
+                        SELECT Code, Descname
+                        FROM [OCA_OceanSubsidy].[dbo].[Sys_ZgsCode]
+                        WHERE CodeGroup = 'CULField' AND ParentCode IN (10, 20, 30) AND IsValid = 1
+                        ORDER BY Code
+                    ";
+                }
+                else if (grantType == "SCI")
+                {
+                    db.CommandText = @"
+                        SELECT Code, Descname
+                        FROM [OCA_OceanSubsidy].[dbo].[Sys_ZgsCode]
+                        WHERE CodeGroup = 'SCITopic' AND IsValid = 1
+                        ORDER BY Code
+                    ";
+                }
+                else
+                {
+                    // 未指定類型時回傳全部（向下相容）
+                    db.CommandText = @"
+                        SELECT Code, Descname
+                        FROM [OCA_OceanSubsidy].[dbo].[Sys_ZgsCode]
+                        WHERE ((CodeGroup = 'CULField' AND ParentCode IN (10, 20, 30))
+                           OR CodeGroup = 'SCITopic') AND IsValid = 1
+                        ORDER BY CodeGroup
+                    ";
+                }
 
                 var table = db.GetTable();
                 var results = new List<object>();

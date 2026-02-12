@@ -3426,7 +3426,7 @@ SELECT TOP (1000) [ProjectID]
     /// <param name="reviewType">審查類型 (2: 實質審查, 3: 技術審查)</param>
     /// <param name="reviewGroup">審查組別 (如: Information, Environment 等)</param>
     /// <returns>排名資料清單</returns>
-    public static List<ReviewRankingItem> GetReviewRanking(string reviewType, string reviewGroup = null)
+    public static List<ReviewRankingItem> GetReviewRanking(string reviewType, string reviewGroup = null, string grantType = null)
     {
         var results = new List<ReviewRankingItem>();
 
@@ -3440,25 +3440,36 @@ SELECT TOP (1000) [ProjectID]
             string reviewStage = "";
             string Status = reviewType == "2"? "實質審查" : "技術審查";
 
-            // 從 Sys_ZgsCode 動態判斷 reviewGroup 屬於科專(SCI)還是文化(CUL)
+            // 判斷是否為科專
             bool isSci = false;
-            using (var lookupDb = new DbHelper())
+            bool isAll = (reviewGroup == "ALL");
+
+            if (!string.IsNullOrEmpty(grantType))
             {
-                lookupDb.CommandText = @"
-                    SELECT TOP 1 CodeGroup
-                    FROM Sys_ZgsCode
-                    WHERE Code = @Code
-                      AND IsValid = 1
-                      AND CodeGroup IN ('SCIField', 'SCITopic', 'CULField')
-                ";
-                lookupDb.Parameters.Add("@Code", reviewGroup);
-                var codeGroupDt = lookupDb.GetTable();
-                if (codeGroupDt != null && codeGroupDt.Rows.Count > 0)
+                // 若有傳入 grantType，直接依此判斷
+                isSci = (grantType == "SCI");
+            }
+            else if (!isAll)
+            {
+                // 從 Sys_ZgsCode 動態判斷 reviewGroup 屬於科專(SCI)還是文化(CUL)
+                using (var lookupDb = new DbHelper())
                 {
-                    string codeGroup = codeGroupDt.Rows[0]["CodeGroup"].ToString();
-                    isSci = codeGroup.StartsWith("SCI");
+                    lookupDb.CommandText = @"
+                        SELECT TOP 1 CodeGroup
+                        FROM Sys_ZgsCode
+                        WHERE Code = @Code
+                          AND IsValid = 1
+                          AND CodeGroup IN ('SCIField', 'SCITopic', 'CULField')
+                    ";
+                    lookupDb.Parameters.Add("@Code", reviewGroup);
+                    var codeGroupDt = lookupDb.GetTable();
+                    if (codeGroupDt != null && codeGroupDt.Rows.Count > 0)
+                    {
+                        string codeGroup = codeGroupDt.Rows[0]["CodeGroup"].ToString();
+                        isSci = codeGroup.StartsWith("SCI");
+                    }
+                    lookupDb.Parameters.Clear();
                 }
-                lookupDb.Parameters.Clear();
             }
 
            
@@ -3469,13 +3480,13 @@ SELECT TOP (1000) [ProjectID]
             using (var db = new DbHelper())
             {
                 // 執行SQL查詢 - 使用參數化查詢防止SQL注入
-                // 查詢特定審查組別
+                string groupFilterSci = isAll ? "" : "AND AM.Topic = @ReviewGroup";
+                string groupFilterCul = isAll ? "" : "AND PM.Field = @ReviewGroup";
+
                 if(isSci)
                 {
-                    db.CommandText = @"
-                    -- 先算每個專案的平均分與總分
-                    
- WITH ProjectScores AS (
+                    db.CommandText = $@"
+                    WITH ProjectScores AS (
                         SELECT
                             PM.ProjectID,
                             ProjectNameTw,
@@ -3487,25 +3498,22 @@ SELECT TOP (1000) [ProjectID]
                         WHERE PM.Statuses = @Status
                           AND RR.ReviewStage = @ReviewStage
                           AND IsSubmit = 1 AND PM.isExist != 0
-                          AND AM.Topic = @ReviewGroup
+                          {groupFilterSci}
                         GROUP BY PM.ProjectID, ProjectNameTw
                     ),
-                    -- 每個委員對各專案的分數
                     ReviewerScores AS (
                         SELECT
                             RR.ProjectID,
                             RR.ReviewerName,
                             RR.TotalScore
-                            -- RANK() OVER (PARTITION BY RR.ReviewerName ORDER BY RR.TotalScore DESC) AS ReviewerRank
                         FROM OFS_ReviewRecords RR
                         LEFT JOIN OFS_SCI_Application_Main AM ON RR.ProjectID = AM.ProjectID
                         LEFT JOIN OFS_SCI_Project_Main PM ON PM.ProjectID = AM.ProjectID
                         WHERE PM.Statuses = @Status
                           AND RR.ReviewStage = @ReviewStage
                           AND IsSubmit = 1 AND PM.isExist != 0
-                          AND AM.Topic = @ReviewGroup
+                          {groupFilterSci}
                     )
-                    -- 最後組合成一張大表
                     SELECT
                         PS.ProjectID,
                         PS.ProjectNameTw,
@@ -3514,7 +3522,6 @@ SELECT TOP (1000) [ProjectID]
                         DENSE_RANK() OVER (ORDER BY PS.AvgScore DESC) AS DenseRankNo,
                         RS.ReviewerName,
                         RS.TotalScore
-                        -- RS.ReviewerRank
                     FROM ProjectScores PS
                     JOIN ReviewerScores RS ON PS.ProjectID = RS.ProjectID
                     ORDER BY DenseRankNo, PS.ProjectID, RS.ReviewerName;
@@ -3523,12 +3530,11 @@ SELECT TOP (1000) [ProjectID]
                 }
                 else//初審、複審
                 {
-                    db.CommandText = @"
-                WITH ProjectScores AS (
-
-		            SELECT
+                    db.CommandText = $@"
+                    WITH ProjectScores AS (
+                        SELECT
                             PM.ProjectID,
-                            ProjectName ,
+                            ProjectName,
                             SUM(TotalScore) AS ProjectTotalScore,
                             AVG(TotalScore) AS AvgScore
                         FROM OFS_ReviewRecords RR
@@ -3536,10 +3542,9 @@ SELECT TOP (1000) [ProjectID]
                         WHERE PM.ProgressStatus = @ReviewStage
                           AND RR.ReviewStage = @ReviewStage
                           AND IsSubmit = 1 AND PM.IsExists != 0
-                          AND PM.Field =@ReviewGroup
+                          {groupFilterCul}
                         GROUP BY PM.ProjectID, ProjectName
                     ),
-                    -- 每個委員對各專案的分數
                     ReviewerScores AS (
                         SELECT
                             RR.ProjectID,
@@ -3550,9 +3555,8 @@ SELECT TOP (1000) [ProjectID]
                         WHERE PM.ProgressStatus = @ReviewStage
                           AND RR.ReviewStage = @ReviewStage
                           AND IsSubmit = 1 AND PM.IsExists != 0
-                          AND PM.Field = @ReviewGroup
+                          {groupFilterCul}
                     )
-                    -- 最後組合成一張大表
                     SELECT
                         PS.ProjectID,
                         PS.ProjectName as ProjectNameTw,
@@ -3561,16 +3565,17 @@ SELECT TOP (1000) [ProjectID]
                         DENSE_RANK() OVER (ORDER BY PS.AvgScore DESC) AS DenseRankNo,
                         RS.ReviewerName,
                         RS.TotalScore
-                        -- RS.ReviewerRank
                     FROM ProjectScores PS
                     JOIN ReviewerScores RS ON PS.ProjectID = RS.ProjectID
                     ORDER BY DenseRankNo, PS.ProjectID, RS.ReviewerName;";
                 }
 
-
                 db.Parameters.Add("@Status", Status);
                 db.Parameters.Add("@ReviewStage", reviewStage);
-                db.Parameters.Add("@ReviewGroup", reviewGroup);
+                if (!isAll)
+                {
+                    db.Parameters.Add("@ReviewGroup", reviewGroup);
+                }
 
 
                 var dataTable = db.GetTable();
@@ -4523,7 +4528,7 @@ SELECT [FinalReviewOrder] AS '排序'
             SELECT
                 ProjectName,
                 Year
-            FROM OFS_CulProject
+            FROM OFS_Cul_Project
             WHERE ProjectID = @ProjectID
         ";
         db.Parameters.Add("@ProjectID", projectId);

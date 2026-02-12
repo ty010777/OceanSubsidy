@@ -1294,7 +1294,7 @@
                       <i class="fa-solid fa-circle-xmark"></i>
                   </button>
               </div>
-              <div class="modal-body">
+              <div class="modal-body" style="overflow-x: auto;">
                   <!-- 載入中顯示 -->
                   <div id="rankingLoading" class="text-center py-5">
                       <div class="spinner-border text-teal" role="status">
@@ -1305,24 +1305,27 @@
 
                   <!-- 排名內容 -->
                   <div id="rankingContent" style="display: none;">
-                      <!-- 審查組別選擇 -->
+                      <!-- 補助案類型與審查組別選擇 -->
                       <div class="d-flex align-items-center gap-3 mb-4">
+                          <span class="text-gray text-nowrap">補助案類型</span>
+                          <select class="form-select" id="grantTypeSelect" style="width: 150px;">
+                              <option value="SCI">科專</option>
+                              <option value="CUL">文化</option>
+                          </select>
                           <span class="text-gray text-nowrap">審查組別</span>
                           <select class="form-select" id="reviewGroupSelect" style="width: 200px;">
                           </select>
                       </div>
 
                       <!-- 排名表格 -->
-                      <div class="table-responsive">
-                          <table class="table align-middle gray-table lh-base" id="reviewRankingTable">
-                              <thead id="rankingTableHead">
-                                  <!-- 動態產生的表頭 -->
-                              </thead>
-                              <tbody id="reviewRankingTableBody">
-                                  <!-- 動態渲染的排名資料 -->
-                              </tbody>
-                          </table>
-                      </div>
+                      <table class="table align-middle gray-table lh-base" id="reviewRankingTable">
+                          <thead id="rankingTableHead" style="position: sticky; top: 0; z-index: 1;">
+                              <!-- 動態產生的表頭 -->
+                          </thead>
+                          <tbody id="reviewRankingTableBody">
+                              <!-- 動態渲染的排名資料 -->
+                          </tbody>
+                      </table>
                   </div>
 
                   <!-- 錯誤訊息 -->
