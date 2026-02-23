@@ -1336,7 +1336,8 @@
               </div>
               <div class="modal-footer">
                   <button type="button" class="btn btn-gray" data-bs-dismiss="modal">取消</button>
-                  <button type="button" class="btn btn-teal" id="btnExportRanking">匯出審查結果</button>
+                  <button type="button" class="btn btn-teal" id="btnExportRanking">依審查組別匯出</button>
+                <button type="button" class="btn btn-teal" id="btnExportRankingByType">依補助案類型匯出</button>
               </div>
           </div>
       </div>

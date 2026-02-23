@@ -152,9 +152,9 @@
                         <td>
                             <asp:TextBox ID="txtPurpose" runat="server" CssClass="form-control textarea-auto-resize char-counter-input"
                                        TextMode="MultiLine" Rows="4" placeholder="請描述計畫目的"
-                                       MaxLength="500" style="width: 100%;" ClientIDMode="Static" />
+                                       MaxLength="1000" style="width: 100%;" ClientIDMode="Static" />
                             <div class="text-end text-muted mt-1">
-                                <small>已輸入 <span id="txtPurpose_count">0</span> / 500 字</small>
+                                <small>已輸入 <span id="txtPurpose_count">0</span> / 1000 字</small>
                             </div>
                         </td>
                     </tr>
@@ -163,9 +163,9 @@
                         <td>
                             <asp:TextBox ID="txtPlanContent" runat="server" CssClass="form-control textarea-auto-resize char-counter-input"
                                        TextMode="MultiLine" Rows="6" placeholder="請詳細描述計畫內容"
-                                       MaxLength="500" style="width: 100%;" ClientIDMode="Static" />
+                                       MaxLength="1000" style="width: 100%;" ClientIDMode="Static" />
                             <div class="text-end text-muted mt-1">
-                                <small>已輸入 <span id="txtPlanContent_count">0</span> / 500 字</small>
+                                <small>已輸入 <span id="txtPlanContent_count">0</span> / 1000 字</small>
                             </div>
                         </td>
                     </tr>
@@ -174,9 +174,9 @@
                         <td>
                             <asp:TextBox ID="txtPreBenefits" runat="server" CssClass="form-control textarea-auto-resize char-counter-input"
                                        TextMode="MultiLine" Rows="4" placeholder="請描述預期效益"
-                                       MaxLength="500" style="width: 100%;" ClientIDMode="Static" />
+                                       MaxLength="1000" style="width: 100%;" ClientIDMode="Static" />
                             <div class="text-end text-muted mt-1">
-                                <small>已輸入 <span id="txtPreBenefits_count">0</span> / 500 字</small>
+                                <small>已輸入 <span id="txtPreBenefits_count">0</span> / 1000 字</small>
                             </div>
                         </td>
                     </tr>
@@ -317,9 +317,11 @@
         <h5 class="square-title">請下載範本填寫用印並上傳</h5>
         <p class="text-pink lh-base mt-3">
             請下載附件範本，填寫資料及公文用印後上傳（僅支援PDF格式上傳，每個檔案10MB以內）<br>
-            請以紙本公文發文郵寄本會憑辦，附件需含資料表或申請書(正本；須加蓋學校關防及負責人核章)、<br>
-            計畫書、未違反公職人員利益衝突迴避法切結書及事前揭露表(正本；須加蓋學校、單位關防及負責人核章)，<br>
-            及相關佐證資料(如社團成立證明、社團運作證明等)
+            請於接獲本會審查同意之信件後，再以紙本公文發文郵寄本會憑辦，附件需含：<br>
+            1、基本資料表或申請表(正本；須加蓋學校關防及負責人核章)<br>
+            2、計畫書<br>
+            3、未違反公職人員利益衝突迴避法切結書及事前揭露表(正本；須加蓋學校關防及負責人核章)<br>
+            4、相關佐證資料(如社團成立證明、社團運作證明、學校提供學生選社團網站頁面等)<br>
         </p>
         <div class="table-responsive mt-3 mb-0">
             <table id="FileTable" class="table align-middle gray-table">

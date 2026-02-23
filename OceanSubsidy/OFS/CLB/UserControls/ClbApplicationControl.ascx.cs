@@ -2502,7 +2502,7 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
     private List<string> ValidateCharCount(Dictionary<string, object> formData)
     {
         List<string> errors = new List<string>();
-        int maxLength = 500;
+        int maxLength = 1000;
 
         // 定義需要驗證的欄位
         var fieldsToValidate = new Dictionary<string, string>

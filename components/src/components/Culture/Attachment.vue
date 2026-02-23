@@ -26,7 +26,7 @@
                                 <required-label v-else>{{ item.Title }}</required-label>
                             </div>
                             <div class="mt-3 small" v-html="item.Comment" v-if="editable && item.Comment"></div>
-                            <a class="btn btn-sm btn-teal-dark rounded-pill mt-2" download :href="item.Template" style="width:140px" type="button" v-if="editable && item.Template">
+                             <a class="btn btn-sm btn-teal-dark rounded-pill mt-2" download :href="item.Template" style="width:140px" type="button" v-if="editable && item.Template">
                                 <i class="fas fa-file-download me-1"></i>範本下載
                             </a>
                         </td>

@@ -4316,6 +4316,108 @@ function exportReviewRanking(exportType = 'Type2') {
 }
 
 /**
+ * 匯出分類審查結果到Excel（科專/文化各一個Sheet）
+ * @param {string} exportType - 匯出類型 (Type2 或 Type3)
+ */
+function exportReviewRankingByType(exportType = 'Type2') {
+    try {
+        Swal.fire({
+            title: '正在匯出分類審查結果...',
+            text: '請稍候',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        $.ajax({
+            type: "POST",
+            url: "ReviewChecklist.aspx/ExportReviewResultsByGrantType",
+            data: JSON.stringify({ exportType: exportType }),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function(response) {
+                try {
+                    const result = JSON.parse(response.d);
+
+                    if (result.success) {
+                        Swal.close();
+
+                        const fileData = result.fileData;
+                        const fileName = result.fileName;
+
+                        const byteCharacters = atob(fileData);
+                        const byteNumbers = new Array(byteCharacters.length);
+                        for (let i = 0; i < byteCharacters.length; i++) {
+                            byteNumbers[i] = byteCharacters.charCodeAt(i);
+                        }
+                        const byteArray = new Uint8Array(byteNumbers);
+
+                        const blob = new Blob([byteArray], {
+                            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                        });
+
+                        const downloadUrl = window.URL.createObjectURL(blob);
+                        const downloadLink = document.createElement('a');
+                        downloadLink.href = downloadUrl;
+                        downloadLink.download = fileName;
+                        downloadLink.style.display = 'none';
+
+                        document.body.appendChild(downloadLink);
+                        downloadLink.click();
+                        document.body.removeChild(downloadLink);
+
+                        window.URL.revokeObjectURL(downloadUrl);
+
+                        Swal.fire({
+                            title: '匯出成功',
+                            text: `分類審查結果已匯出至 ${fileName}`,
+                            icon: 'success',
+                            confirmButtonText: '確定'
+                        });
+
+                    } else {
+                        Swal.fire({
+                            title: '匯出失敗',
+                            text: result.message || '系統發生錯誤，請稍後再試',
+                            icon: 'error',
+                            confirmButtonText: '確定'
+                        });
+                    }
+
+                } catch (parseError) {
+                    console.error('解析回應時發生錯誤:', parseError);
+                    Swal.fire({
+                        title: '匯出失敗',
+                        text: '系統回應格式錯誤，請稍後再試',
+                        icon: 'error',
+                        confirmButtonText: '確定'
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX請求失敗:', error);
+                Swal.fire({
+                    title: '匯出失敗',
+                    text: '網路錯誤或伺服器無回應，請稍後再試',
+                    icon: 'error',
+                    confirmButtonText: '確定'
+                });
+            }
+        });
+
+    } catch (error) {
+        console.error('匯出分類審查結果時發生錯誤:', error);
+        Swal.fire({
+            title: '匯出失敗',
+            text: '系統發生錯誤，請稍後再試',
+            icon: 'error',
+            confirmButtonText: '確定'
+        });
+    }
+}
+
+/**
  * 批次匯出簡報檔案
  */
 function exportBatchPresentations() {
@@ -4678,6 +4780,12 @@ $(document).ready(function() {
         } else {
             exportReviewRanking('Type2'); // 預設為 Type2
         }
+    });
+
+    // 綁定匯出分類審查結果按鈕事件
+    $(document).on('click', '#btnExportRankingByType', function() {
+        const currentReviewType = window.ReviewChecklist ? window.ReviewChecklist.getCurrentType() : '2';
+        exportReviewRankingByType(currentReviewType === '3' ? 'Type3' : 'Type2');
     });
 });
 

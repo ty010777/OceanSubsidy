@@ -2613,9 +2613,9 @@ window.loadFundingDescriptionData = loadFundingDescriptionData;
 function initializeCharCounter() {
     // 定義需要計算字數的欄位
     var charCounterFields = [
-        { id: 'txtPurpose', maxLength: 500 },
-        { id: 'txtPlanContent', maxLength: 500 },
-        { id: 'txtPreBenefits', maxLength: 500 }
+        { id: 'txtPurpose', maxLength: 1000 },
+        { id: 'txtPlanContent', maxLength: 1000 },
+        { id: 'txtPreBenefits', maxLength: 1000 }
     ];
 
     // 為每個欄位綁定字數計算事件
@@ -2625,16 +2625,16 @@ function initializeCharCounter() {
 
         if ($input.length && $counter.length) {
             // 初始化時更新字數
-            updateCharCount($input, $counter);
+            updateCharCount($input, $counter, field.maxLength);
 
             // 綁定 input 事件
             $input.on('input', function() {
-                updateCharCount($input, $counter);
+                updateCharCount($input, $counter, field.maxLength);
             });
 
             // 綁定 keyup 事件（處理某些特殊情況）
             $input.on('keyup', function() {
-                updateCharCount($input, $counter);
+                updateCharCount($input, $counter, field.maxLength);
             });
         }
     });
@@ -2644,13 +2644,14 @@ function initializeCharCounter() {
  * 更新字數顯示
  * @param {jQuery} $input - 輸入框 jQuery 對象
  * @param {jQuery} $counter - 字數顯示 jQuery 對象
+ * @param {number} maxLength - 字數上限
  */
-function updateCharCount($input, $counter) {
+function updateCharCount($input, $counter, maxLength) {
     var currentLength = $input.val().length;
     $counter.text(currentLength);
 
     // 如果超過限制，改變顏色提示
-    if (currentLength >= 500) {
+    if (currentLength >= maxLength) {
         $counter.parent().addClass('text-danger').removeClass('text-muted');
     } else {
         $counter.parent().addClass('text-muted').removeClass('text-danger');
@@ -2664,9 +2665,9 @@ function updateCharCount($input, $counter) {
 function validateCharCount() {
     var errors = [];
     var charCounterFields = [
-        { id: 'txtPurpose', name: '目的', maxLength: 500 },
-        { id: 'txtPlanContent', name: '計畫內容', maxLength: 500 },
-        { id: 'txtPreBenefits', name: '預期效益', maxLength: 500 }
+        { id: 'txtPurpose', name: '目的', maxLength: 1000 },
+        { id: 'txtPlanContent', name: '計畫內容', maxLength: 1000 },
+        { id: 'txtPreBenefits', name: '預期效益', maxLength: 1000 }
     ];
 
     charCounterFields.forEach(function(field) {

@@ -322,4 +322,254 @@ public class OFS_ReviewResultExportHelper
         db.Dispose();
         return result;
     }
+
+    /// <summary>
+    /// 匯出分類審查結果到 XLSX 檔案（每個 GrantType 一個 Sheet，扁平格式含審查組別欄位）
+    /// </summary>
+    /// <param name="requests">匯出請求清單</param>
+    /// <returns>匯出的檔案位元組陣列</returns>
+    public static byte[] ExportReviewResultsByGrantTypeToXlsx(List<ReviewExportRequest> requests)
+    {
+        if (requests == null || !requests.Any())
+        {
+            throw new ArgumentException("匯出請求清單不能為空");
+        }
+
+        var worksheetData = new List<(string SheetName, DataTable Data)>();
+
+        foreach (var request in requests)
+        {
+            DataTable combinedTable = null;
+
+            if (request.GrantType == "SCI")
+            {
+                combinedTable = SCI_BuildCombinedReviewResultQuery(request.Fields, request.ReviewStage);
+                if (combinedTable != null && combinedTable.Rows.Count > 0)
+                {
+                    worksheetData.Add(("科專", combinedTable));
+                }
+            }
+            else if (request.GrantType == "CUL")
+            {
+                combinedTable = CUL_BuildCombinedReviewResultQuery(request.Fields, request.ReviewStage);
+                if (combinedTable != null && combinedTable.Rows.Count > 0)
+                {
+                    worksheetData.Add(("文化", combinedTable));
+                }
+            }
+        }
+
+        if (!worksheetData.Any())
+        {
+            throw new Exception("沒有找到符合條件的審查結果資料");
+        }
+
+        string tempFilePath = Path.GetTempFileName();
+        tempFilePath = Path.ChangeExtension(tempFilePath, ".xlsx");
+
+        try
+        {
+            using (var excelHelper = ExcelHelper.CreateNew(tempFilePath))
+            {
+                var defaultSheets = excelHelper.GetWorksheetNames();
+                foreach (var defaultSheet in defaultSheets)
+                {
+                    excelHelper.DeleteWorksheet(defaultSheet);
+                }
+
+                foreach (var (sheetName, data) in worksheetData)
+                {
+                    excelHelper.ExportFromDataTable(data, sheetName, true);
+                }
+
+                excelHelper.Save();
+            }
+
+            return File.ReadAllBytes(tempFilePath);
+        }
+        finally
+        {
+            if (File.Exists(tempFilePath))
+            {
+                try
+                {
+                    File.Delete(tempFilePath);
+                }
+                catch
+                {
+                    // 忽略刪除錯誤
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 科專 - 合併所有審查組別的審查結果（PIVOT 格式 + 審查組別欄位）
+    /// 對每個審查組別呼叫現有 PIVOT 查詢，再合併到同一個 DataTable
+    /// </summary>
+    private static DataTable SCI_BuildCombinedReviewResultQuery(List<string> fields, string reviewStage)
+    {
+        if (fields == null || !fields.Any()) return null;
+
+        // 對每個 Topic 取得 PIVOT 結果
+        var groupResults = new List<(string GroupName, DataTable Data)>();
+        foreach (var field in fields)
+        {
+            string groupName = GetZgsCodeDescname("SCITopic", field);
+            if (string.IsNullOrEmpty(groupName)) groupName = field;
+
+            DataTable dt = SCI_BuildReviewResultQuery(field, reviewStage);
+            if (dt != null && dt.Rows.Count > 0)
+            {
+                groupResults.Add((groupName, dt));
+            }
+        }
+
+        if (!groupResults.Any()) return null;
+
+        // 建立合併用的 DataTable
+        DataTable combined = new DataTable();
+        combined.Columns.Add("審查組別", typeof(string));
+
+        // 固定欄位：計畫編號、計畫名稱（排除平均分數）
+        var fixedColumns = new[] { "計畫編號", "計畫名稱" };
+        var skipColumns = new[] { "計畫編號", "計畫名稱", "平均分數" };
+        foreach (var colName in fixedColumns)
+        {
+            combined.Columns.Add(colName, typeof(string));
+        }
+
+        // 收集所有審查委員欄位（排除固定欄位與平均分數）
+        var reviewerColumns = new List<string>();
+        foreach (var (_, data) in groupResults)
+        {
+            foreach (DataColumn col in data.Columns)
+            {
+                if (!skipColumns.Contains(col.ColumnName) && !reviewerColumns.Contains(col.ColumnName))
+                {
+                    reviewerColumns.Add(col.ColumnName);
+                }
+            }
+        }
+
+        foreach (var colName in reviewerColumns)
+        {
+            combined.Columns.Add(colName, typeof(string));
+        }
+
+        // 填入資料
+        foreach (var (groupName, data) in groupResults)
+        {
+            foreach (DataRow sourceRow in data.Rows)
+            {
+                DataRow newRow = combined.NewRow();
+                newRow["審查組別"] = groupName;
+
+                foreach (var colName in fixedColumns)
+                {
+                    if (data.Columns.Contains(colName))
+                    {
+                        newRow[colName] = sourceRow[colName];
+                    }
+                }
+
+                foreach (DataColumn col in data.Columns)
+                {
+                    if (!skipColumns.Contains(col.ColumnName) && combined.Columns.Contains(col.ColumnName))
+                    {
+                        newRow[col.ColumnName] = sourceRow[col.ColumnName];
+                    }
+                }
+
+                combined.Rows.Add(newRow);
+            }
+        }
+
+        return combined;
+    }
+
+    /// <summary>
+    /// 文化 - 合併所有審查組別的審查結果（PIVOT 格式 + 審查組別欄位）
+    /// 對每個審查組別呼叫現有 PIVOT 查詢，再合併到同一個 DataTable
+    /// </summary>
+    private static DataTable CUL_BuildCombinedReviewResultQuery(List<string> fields, string reviewStage)
+    {
+        if (fields == null || !fields.Any()) return null;
+
+        // 對每個 Field 取得 PIVOT 結果
+        var groupResults = new List<(string GroupName, DataTable Data)>();
+        foreach (var field in fields)
+        {
+            string groupName = GetZgsCodeDescname("CULField", field);
+            if (string.IsNullOrEmpty(groupName)) groupName = field;
+
+            DataTable dt = CUL_BuildReviewResultQuery(field, reviewStage);
+            if (dt != null && dt.Rows.Count > 0)
+            {
+                groupResults.Add((groupName, dt));
+            }
+        }
+
+        if (!groupResults.Any()) return null;
+
+        // 建立合併用的 DataTable
+        DataTable combined = new DataTable();
+        combined.Columns.Add("審查組別", typeof(string));
+
+        // 固定欄位：計畫編號、計畫名稱、總分（排除平均分數）
+        var fixedColumns = new[] { "計畫編號", "計畫名稱", "總分" };
+        var skipColumns = new[] { "計畫編號", "計畫名稱", "總分", "平均分數" };
+        foreach (var colName in fixedColumns)
+        {
+            combined.Columns.Add(colName, typeof(string));
+        }
+
+        // 收集所有審查委員欄位（排除固定欄位與平均分數）
+        var reviewerColumns = new List<string>();
+        foreach (var (_, data) in groupResults)
+        {
+            foreach (DataColumn col in data.Columns)
+            {
+                if (!skipColumns.Contains(col.ColumnName) && !reviewerColumns.Contains(col.ColumnName))
+                {
+                    reviewerColumns.Add(col.ColumnName);
+                }
+            }
+        }
+
+        foreach (var colName in reviewerColumns)
+        {
+            combined.Columns.Add(colName, typeof(string));
+        }
+
+        // 填入資料
+        foreach (var (groupName, data) in groupResults)
+        {
+            foreach (DataRow sourceRow in data.Rows)
+            {
+                DataRow newRow = combined.NewRow();
+                newRow["審查組別"] = groupName;
+
+                foreach (var colName in fixedColumns)
+                {
+                    if (data.Columns.Contains(colName))
+                    {
+                        newRow[colName] = sourceRow[colName];
+                    }
+                }
+
+                foreach (DataColumn col in data.Columns)
+                {
+                    if (!fixedColumns.Contains(col.ColumnName) && combined.Columns.Contains(col.ColumnName))
+                    {
+                        newRow[col.ColumnName] = sourceRow[col.ColumnName];
+                    }
+                }
+
+                combined.Rows.Add(newRow);
+            }
+        }
+
+        return combined;
+    }
 }

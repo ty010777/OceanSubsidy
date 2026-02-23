@@ -2692,6 +2692,83 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
         }
     }
 
+    /// <summary>
+    /// 匯出分類審查結果到 XLSX 檔案（科專/文化各一個Sheet）
+    /// </summary>
+    /// <param name="exportType">匯出類型 (Type2 或 Type3)</param>
+    /// <returns>包含檔案資料的 JSON 回應</returns>
+    [WebMethod]
+    public static string ExportReviewResultsByGrantType(string exportType = "Type2")
+    {
+        try
+        {
+            // 根據 exportType 設定審查階段
+            string sciType, culType;
+            if (exportType == "Type3")
+            {
+                sciType = "3";
+                culType = "3";
+            }
+            else
+            {
+                sciType = "2";
+                culType = "2";
+            }
+
+            var exportRequests = new List<ReviewExportRequest>();
+
+            // 科專 (SCI)
+            var sciFields = ReviewCheckListHelper.GetSciReviewGroupOptions().Select(x => x.Value).ToList();
+            exportRequests.Add(new ReviewExportRequest
+            {
+                GrantType = "SCI",
+                ReviewStage = sciType,
+                Fields = sciFields
+            });
+
+            // 文化 (CUL)
+            var culFields = ReviewCheckListHelper.GetCulReviewGroupOptions().Select(x => x.Value).ToList();
+            exportRequests.Add(new ReviewExportRequest
+            {
+                GrantType = "CUL",
+                ReviewStage = culType,
+                Fields = culFields
+            });
+
+            // 執行匯出 - 每個 GrantType 一個 Sheet
+            byte[] fileBytes = OFS_ReviewResultExportHelper.ExportReviewResultsByGrantTypeToXlsx(exportRequests);
+
+            if (fileBytes == null || fileBytes.Length == 0)
+            {
+                return JsonConvert.SerializeObject(new
+                {
+                    success = false,
+                    message = "匯出檔案為空或產生失敗"
+                });
+            }
+
+            string fileName = $"分類審查結果_{DateTime.Now:yyyyMMdd}.xlsx";
+            string base64File = Convert.ToBase64String(fileBytes);
+
+            return JsonConvert.SerializeObject(new
+            {
+                success = true,
+                message = "分類審查結果匯出成功",
+                fileName = fileName,
+                fileData = base64File,
+                fileSize = fileBytes.Length
+            });
+        }
+        catch (Exception ex)
+        {
+            return JsonConvert.SerializeObject(new
+            {
+                success = false,
+                message = $"匯出分類審查結果時發生錯誤: {ex.Message}"
+            });
+        }
+    }
+
     #endregion
 
     #region Type4 匯出功能

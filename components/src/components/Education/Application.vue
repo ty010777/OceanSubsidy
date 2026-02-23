@@ -127,13 +127,13 @@
                     <tr>
                         <th><required-label>計畫內容摘要</required-label></th>
                         <td>
-                            <input-textarea :error="errors.Summary" :max-length="500" placeholder="請輸入計畫內容摘要" rows="4" v-model.trim="form.Summary"></input-textarea>
+                            <input-textarea :error="errors.Summary" :max-length="1000" placeholder="請輸入計畫內容摘要" rows="4" v-model.trim="form.Summary"></input-textarea>
                         </td>
                     </tr>
                     <tr>
                         <th><required-label>預期效益<br />(建議條列式)</required-label></th>
                         <td>
-                            <input-textarea :error="errors.Quantified" :max-length="500" placeholder="請輸入預期效益" rows="4" v-model.trim="form.Quantified"></input-textarea>
+                            <input-textarea :error="errors.Quantified" :max-length="1000" placeholder="請輸入預期效益" rows="4" v-model.trim="form.Quantified"></input-textarea>
                         </td>
                     </tr>
                 </tbody>
