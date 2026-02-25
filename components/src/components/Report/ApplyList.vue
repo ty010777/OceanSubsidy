@@ -75,7 +75,7 @@
                 </h4>
                 <span>共 <span class="text-teal">{{ checkedList.length }}</span> 筆資料</span>
             </div>
-            <button class="btn btn-teal-dark" type="button"><i class="fas fa-download"></i>匯出</button>
+            <button class="btn btn-teal-dark" @click="exportList" type="button"><i class="fas fa-download"></i>匯出</button>
         </div>
         <div class="table-responsive" style="min-height:400px">
             <table class="table teal-table">
@@ -196,6 +196,19 @@
     const change = (to, newSize) => {
         page.value = parseInt(to);
         size.value = parseInt(newSize);
+    };
+
+    const exportList = () => {
+        exportExcel("申請計畫報表.xlsx", "申請計畫報表", checkedList.value.map((item) => ({
+            "年度": item.Year,
+            "類別": item.Category,
+            "計畫名稱": item.ProjectName || "[未設定]",
+            "申請單位": item.OrgName,
+            "申請本會補助": item.ApplyAmount.toLocaleString(),
+            "配合款": item.OtherAmount.toLocaleString(),
+            "總經費": (item.ApplyAmount + item.OtherAmount).toLocaleString(),
+            "狀態": statusList.value.find((i) => i.id === item.type).title
+        })));
     };
 
     const path = (item) => {

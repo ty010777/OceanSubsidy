@@ -53,7 +53,7 @@
                 </h4>
                 <span>共 <span class="text-teal">{{ filterList.length }}</span> 筆資料</span>
             </div>
-            <button class="btn btn-teal-dark" type="button"><i class="fas fa-download"></i>匯出</button>
+            <button class="btn btn-teal-dark" @click="exportList" type="button"><i class="fas fa-download"></i>匯出</button>
         </div>
         <div class="table-responsive" style="min-height:400px">
             <table class="table teal-table">
@@ -164,6 +164,17 @@
     const change = (to, newSize) => {
         page.value = parseInt(to);
         size.value = parseInt(newSize);
+    };
+
+    const exportList = () => {
+        exportExcel("核定計畫報表.xlsx", "核定計畫報表", filterList.value.map((item) => ({
+            "年度": item.Year,
+            "類別": item.Category,
+            "計畫名稱": item.ProjectName,
+            "申請單位": item.OrgName,
+            "本會補助金額": item.ApprovedAmount.toLocaleString(),
+            "配合款": item.OtherAmount.toLocaleString()
+        })));
     };
 
     const path = (item) => {
