@@ -17,7 +17,16 @@ const SciApplication = {
 
             if (charCountDiv) {
                 const updateCount = () => {
-                    const currentLength = textarea.value.length;
+                    // 超過上限時即時截斷（以伺服器端 \r\n 計算為準）
+                    let value = textarea.value;
+                    while (value.replace(/\n/g, '\r\n').length > maxLength) {
+                        value = value.slice(0, -1);
+                    }
+                    if (value !== textarea.value) {
+                        textarea.value = value;
+                    }
+
+                    const currentLength = textarea.value.replace(/\n/g, '\r\n').length;
                     const percentage = (currentLength / maxLength) * 100;
 
                     charCountDiv.innerHTML = `已輸入 ${currentLength} 個字數 (限${maxLength}字)`;
@@ -25,10 +34,10 @@ const SciApplication = {
                     // 更新樣式
                     charCountDiv.className = 'char-count';
                     if (percentage >= 100) {
-                        charCountDiv.classList.add('danger');
+                        charCountDiv.classList.add('text-danger');
                         textarea.classList.add('field-error');
                     } else if (percentage >= 80) {
-                        charCountDiv.classList.add('warning');
+                        charCountDiv.classList.add('text-warning');
                         textarea.classList.remove('field-error');
                     } else {
                         textarea.classList.remove('field-error');
@@ -62,7 +71,7 @@ const SciApplication = {
     validateSubmitForm: function () {
         // 驗證計畫目標字數（限制500字）
         const txtTarget = document.querySelector('textarea[id*="txtTarget"]');
-        if (txtTarget && txtTarget.value.length > 500) {
+        if (txtTarget && txtTarget.value.replace(/\n/g, '\r\n').length > 500) {
             Swal.fire({
                 title: '錯誤',
                 html: '計畫目標超過500字，請修改後再提交',
@@ -78,7 +87,7 @@ const SciApplication = {
 
         // 驗證計畫內容摘要字數（限制500字）
         const txtSummary = document.querySelector('textarea[id*="txtSummary"]');
-        if (txtSummary && txtSummary.value.length > 500) {
+        if (txtSummary && txtSummary.value.replace(/\n/g, '\r\n').length > 500) {
             Swal.fire({
                 title: '錯誤',
                 html: '計畫內容摘要超過500字，請修改後再提交',
@@ -94,7 +103,7 @@ const SciApplication = {
 
         // 驗證計畫創新重點字數（限制250字）
         const txtInnovation = document.querySelector('textarea[id*="txtInnovation"]');
-        if (txtInnovation && txtInnovation.value.length > 250) {
+        if (txtInnovation && txtInnovation.value.replace(/\n/g, '\r\n').length > 250) {
             Swal.fire({
                 title: '錯誤',
                 html: '計畫創新重點超過250字，請修改後再提交',
@@ -199,10 +208,11 @@ const KeywordManager = {
             <span class="input-group-text" style="width: 70px;">
                 ${requiredStar}中文
             </span>
-            <input type="text" 
-                   class="form-control keyword-ch" 
-                   placeholder="請輸入" 
+            <input type="text"
+                   class="form-control keyword-ch"
+                   placeholder="請輸入"
                    value="${chineseValue}"
+                   maxlength="50"
                    data-keyword-id="${keywordId}">
         </div>
     </div>
@@ -211,10 +221,11 @@ const KeywordManager = {
             <span class="input-group-text" style="width: 70px;">
                 ${requiredStar}英文
             </span>
-            <input type="text" 
-                   class="form-control keyword-en" 
-                   placeholder="請輸入" 
+            <input type="text"
+                   class="form-control keyword-en"
+                   placeholder="請輸入"
                    value="${englishValue}"
+                   maxlength="50"
                    data-keyword-id="${keywordId}">
         </div>
     </div>

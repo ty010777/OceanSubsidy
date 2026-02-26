@@ -31,6 +31,11 @@ public partial class OFS_CLB_UserControls_ClbApplicationControl : System.Web.UI.
             return;
         }
 
+        txtPurpose.Attributes["maxlength"] = "1000";
+        txtPlanContent.Attributes["maxlength"] = "1000";
+        txtPreBenefits.Attributes["maxlength"] = "1000";
+        txtEmergencyPlan.Attributes["maxlength"] = "600";
+
         if (!IsPostBack)
         {
             InitializeControl();

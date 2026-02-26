@@ -351,6 +351,61 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
     }
 
     /// <summary>
+    /// 資料庫欄位名稱對應中文顯示名稱
+    /// </summary>
+    private static readonly System.Collections.Generic.Dictionary<string, string> _columnChineseNames =
+        new System.Collections.Generic.Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        // OFS_SCI_UploadFile
+        { "FileName",    "檔案名稱" },
+        { "FileCode",    "檔案代碼" },
+        // OFSProjectChangeRecord (變更說明)
+        { "Form5Before", "修改前說明" },
+        { "Form5After",  "修改後說明" },
+    };
+
+    /// <summary>
+    /// 判斷是否為資料庫欄位長度超過上限的錯誤
+    /// </summary>
+    private bool IsDatabaseStringTruncationError(Exception ex)
+    {
+        return GetTruncatedColumnName(ex) != null;
+    }
+
+    /// <summary>
+    /// 從例外訊息中解析被截斷的欄位名稱（含中文對應）
+    /// 回傳欄位中文名稱；找到截斷錯誤但無法解析欄位時回傳 string.Empty；非截斷錯誤則回傳 null
+    /// </summary>
+    private string GetTruncatedColumnName(Exception ex)
+    {
+        Exception current = ex;
+        while (current != null)
+        {
+            bool isTruncation =
+                current.Message.IndexOf("String or binary data would be truncated", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                current.Message.IndexOf("字串或二進位資料將會截斷", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                current.Message.IndexOf("字串或二進位資料會被截斷", StringComparison.OrdinalIgnoreCase) >= 0;
+
+            if (isTruncation)
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(
+                    current.Message,
+                    @"(?:資料行|column)\s+'([^']+)'",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                );
+                if (!match.Success) return string.Empty;
+
+                string colName = match.Groups[1].Value;
+                return _columnChineseNames.TryGetValue(colName, out string chineseName)
+                    ? chineseName
+                    : colName;
+            }
+            current = current.InnerException;
+        }
+        return null;
+    }
+
+    /// <summary>
     /// 例外處理
     /// </summary>
     private void HandleException(Exception ex, string context)
@@ -786,7 +841,16 @@ public partial class OFS_SCI_UserControls_SciUploadAttachmentsControl : System.W
         }
         catch (Exception ex)
         {
-            ShowSweetAlertError($"提送申請失敗：{ex.Message}");
+            string truncatedColumn = GetTruncatedColumnName(ex);
+            if (truncatedColumn != null)
+            {
+                string columnHint = string.IsNullOrEmpty(truncatedColumn) ? "某欄位" : $"欄位 '{truncatedColumn}'";
+                ShowSweetAlertError($"{columnHint} 內容長度超過資料庫上限，請縮短輸入內容後重新儲存");
+            }
+            else
+            {
+                ShowSweetAlertError($"提送申請失敗：{ex.Message}");
+            }
         }
     }
 

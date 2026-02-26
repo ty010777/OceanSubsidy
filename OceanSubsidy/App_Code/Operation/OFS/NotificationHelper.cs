@@ -95,7 +95,7 @@ public class NotificationHelper
     {
         toUser(
             "［海洋委員會］補助申請案 審查意見通知",
-            $"您好：<br><br>{category}類計畫「{projectName}」，<br>審查委員已提供審查意見，<br>請至［計畫申請］查看審查意見及回覆。",
+            $"您好：<br><br>{category}類計畫「{projectName}」，<br>審查委員已提供審查意見，<br>請至［計畫申請］查看審查意見。",
             account
         );
     }

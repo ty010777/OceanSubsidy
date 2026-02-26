@@ -58,7 +58,7 @@
                 <tbody>
                 <tr>
                     <td>
-                        <asp:TextBox ID="personName1" runat="server" CssClass="form-control" placeholder="請輸入姓名" />
+                        <asp:TextBox ID="personName1" runat="server" CssClass="form-control" placeholder="請輸入姓名" MaxLength="100" />
                     </td>
                     <td class="text-center">
                         <input type="checkbox" class="form-check-input check-teal" runat="server" id="stay1"/>
@@ -118,10 +118,10 @@
                 <tbody>
                 <tr>
                     <td>
-                        <asp:TextBox ID="MaterialName1" runat="server" CssClass="form-control" placeholder="請輸入" />
+                        <asp:TextBox ID="MaterialName1" runat="server" CssClass="form-control" placeholder="請輸入" MaxLength="100" />
                     </td>
                     <td class="text-center">
-                        <asp:TextBox ID="MaterialDescription1" runat="server" CssClass="form-control" placeholder="請輸入" />
+                        <asp:TextBox ID="MaterialDescription1" runat="server" CssClass="form-control" placeholder="請輸入" MaxLength="200" />
                     </td>
                     <td>
                         <select id="MaterialUnit1" class="form-select"></select>
@@ -195,10 +195,10 @@
                         </div>
                     </td>
                     <td>
-                        <input type="text" id="ResearchFeesName1" class="form-control" placeholder="請輸入" />
+                        <input type="text" id="ResearchFeesName1" class="form-control" placeholder="請輸入" maxlength="100" />
                     </td>
                     <td>
-                        <input type="text" id="ResearchFeesPersonName1" class="form-control" placeholder="請輸入" />
+                        <input type="text" id="ResearchFeesPersonName1" class="form-control" placeholder="請輸入" maxlength="100" />
                     </td>
                     <td>
                         <input type="text" id="ResearchFeesPrice1" class="form-control text-end money" placeholder="請輸入" onkeypress="return event.charCode != 45" onblur="calculateResearch()" />
@@ -251,10 +251,10 @@
                 <tbody>
                 <tr>
                     <td>
-                        <asp:TextBox ID="travelReason1" runat="server" CssClass="form-control" />
+                        <asp:TextBox ID="travelReason1" runat="server" CssClass="form-control" MaxLength="200" />
                     </td>
                     <td class="text-center">
-                        <asp:TextBox ID="travelArea1" runat="server" CssClass="form-control" />
+                        <asp:TextBox ID="travelArea1" runat="server" CssClass="form-control" MaxLength="100" />
                     </td>
                     <td>
                         <asp:TextBox ID="travelDays1" runat="server" CssClass="form-control days" Text="0" onkeypress="return event.charCode != 45" />
@@ -309,10 +309,10 @@
                 <tbody>
                 <tr>
                     <td>
-                        <asp:TextBox ID="foreignCountry1" runat="server" CssClass="form-control" placeholder="請輸入" />
+                        <asp:TextBox ID="foreignCountry1" runat="server" CssClass="form-control" placeholder="請輸入" MaxLength="100" />
                     </td>
                     <td>
-                        <asp:TextBox ID="foreignTopic1" runat="server" CssClass="form-control" placeholder="請輸入" />
+                        <asp:TextBox ID="foreignTopic1" runat="server" CssClass="form-control" placeholder="請輸入" MaxLength="200" />
                     </td>
                     <td>
                         <asp:TextBox ID="foreignDays1" runat="server" ClientIDMode="Static" CssClass="form-control text-center" Text="0" onkeypress="return event.charCode != 45" />
@@ -328,7 +328,7 @@
                     </td>
                     <td class="text-end">0</td>
                     <td>
-                        <asp:TextBox ID="foreignConference1" runat="server" CssClass="form-control" TextMode="MultiLine" Rows="2" placeholder="請輸入" />
+                        <asp:TextBox ID="foreignConference1" runat="server" CssClass="form-control" TextMode="MultiLine" Rows="2" placeholder="請輸入" MaxLength="500" />
                     </td>
                     <td>
                         <button type="button" class="btn btn-sm btn-teal" onclick="FT_addRow()">
@@ -423,7 +423,7 @@
                         <asp:TextBox ID="rentCash" runat="server" ClientIDMode="Static" CssClass="form-control text-end" placeholder="請輸入" onkeypress="return event.charCode != 45" onblur="calculateOtherRentTotal()" />
                     </td>
                     <td class="align-middle">
-                        <asp:TextBox ID="rentDescription" runat="server" ClientIDMode="Static" CssClass="form-control" TextMode="MultiLine" Rows="3" placeholder="請輸入" />
+                        <asp:TextBox ID="rentDescription" runat="server" ClientIDMode="Static" CssClass="form-control" TextMode="MultiLine" Rows="3" placeholder="請輸入" MaxLength="500" />
                         <div class="text-pink fw-normal fs-16 mt-2">（若有多筆租金：請將各筆租金加總後填入「金額（元）」欄位，並於「計算方式及說明」欄以條列方式逐筆說明）</div>
                     </td>
                     

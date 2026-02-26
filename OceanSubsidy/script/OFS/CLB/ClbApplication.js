@@ -1740,7 +1740,7 @@ function addOtherSubsidyRow() {
             <td>${newRowNumber}</td>
             <td>
                 <div class="input-group">
-                    <input class="form-control" placeholder="請輸入" type="text">
+                    <input class="form-control" placeholder="請輸入" type="text" maxlength="100">
                 </div>
             </td>
             <td>
@@ -1748,7 +1748,7 @@ function addOtherSubsidyRow() {
             </td>
             <td class="text-end">0%</td>
             <td>
-                <textarea class="form-control textarea-auto-resize" placeholder="請輸入" rows="1"></textarea>
+                <textarea class="form-control textarea-auto-resize" placeholder="請輸入" rows="1" maxlength="300"></textarea>
             </td>
             <td>
                 <div class="d-flex gap-2">
@@ -2113,7 +2113,7 @@ function addBudgetPlanRow() {
         <tr data-budget-id="0">
             <td>
                 <div class="input-group">
-                    <input class="form-control" placeholder="請輸入" type="text">
+                    <input class="form-control" placeholder="請輸入" type="text" maxlength="100">
                 </div>
             </td>
             <td>
@@ -2124,7 +2124,7 @@ function addBudgetPlanRow() {
             </td>
             <td class="text-end budget-subtotal">0</td>
             <td>
-                <textarea class="form-control textarea-auto-resize" placeholder="請輸入" rows="1"></textarea>
+                <textarea class="form-control textarea-auto-resize" placeholder="請輸入" rows="1" maxlength="300"></textarea>
             </td>
             <td>
                 <div class="d-flex gap-2">
@@ -2233,7 +2233,7 @@ function loadBudgetPlanData(budgetPlanData) {
             <tr data-budget-id="${item.ID || 0}">
                 <td>
                     <div class="input-group">
-                        <input class="form-control" placeholder="請輸入" type="text" value="${escapeHtml(item.Title || '')}">
+                        <input class="form-control" placeholder="請輸入" type="text" maxlength="100" value="${escapeHtml(item.Title || '')}">
                     </div>
                 </td>
                 <td>
@@ -2244,7 +2244,7 @@ function loadBudgetPlanData(budgetPlanData) {
                 </td>
                 <td class="text-end budget-subtotal">${subtotal.toLocaleString()}</td>
                 <td>
-                    <textarea class="form-control textarea-auto-resize" placeholder="請輸入" rows="1">${escapeHtml(item.Description || '')}</textarea>
+                    <textarea class="form-control textarea-auto-resize" placeholder="請輸入" rows="1" maxlength="300">${escapeHtml(item.Description || '')}</textarea>
                 </td>
                 <td>
                     <div class="d-flex gap-2">
@@ -2317,7 +2317,7 @@ function loadOtherSubsidyData(subsidyData) {
                 <td>${rowNumber}</td>
                 <td>
                     <div class="input-group">
-                        <input class="form-control" placeholder="請輸入" type="text" value="${escapeHtml(item.Unit || '')}">
+                        <input class="form-control" placeholder="請輸入" type="text" maxlength="100" value="${escapeHtml(item.Unit || '')}">
                     </div>
                 </td>
                 <td>
@@ -2325,7 +2325,7 @@ function loadOtherSubsidyData(subsidyData) {
                 </td>
                 <td class="text-end">0%</td>
                 <td>
-                    <textarea class="form-control textarea-auto-resize" placeholder="請輸入" rows="1">${escapeHtml(item.Content || '')}</textarea>
+                    <textarea class="form-control textarea-auto-resize" placeholder="請輸入" rows="1" maxlength="300">${escapeHtml(item.Content || '')}</textarea>
                 </td>
                 <td>
                     <div class="d-flex gap-2">
@@ -2406,7 +2406,7 @@ function addFundingDescriptionRow() {
     const rowHtml = `
         <tr data-description-id="0">
             <td>
-                <input class="form-control" placeholder="請輸入計畫名稱" type="text">
+                <input class="form-control" placeholder="請輸入計畫名稱" type="text" maxlength="200">
             </td>
             <td>
                 <input class="form-control" placeholder="請輸入金額" type="text" style="text-align: right;">
@@ -2547,7 +2547,7 @@ function loadFundingDescriptionData(descriptionData) {
         const rowHtml = `
             <tr data-description-id="${item.ID || 0}">
                 <td>
-                    <input class="form-control" placeholder="請輸入計畫名稱" type="text" value="${escapeHtml(item.ProjectName || '')}">
+                    <input class="form-control" placeholder="請輸入計畫名稱" type="text" maxlength="200" value="${escapeHtml(item.ProjectName || '')}">
                 </td>
                 <td>
                     <input class="form-control" placeholder="請輸入金額" type="text" style="text-align: right;" value="${item.Amount ? item.Amount.toLocaleString() : ''}">
@@ -2615,7 +2615,8 @@ function initializeCharCounter() {
     var charCounterFields = [
         { id: 'txtPurpose', maxLength: 1000 },
         { id: 'txtPlanContent', maxLength: 1000 },
-        { id: 'txtPreBenefits', maxLength: 1000 }
+        { id: 'txtPreBenefits', maxLength: 1000 },
+        { id: 'txtEmergencyPlan', maxLength: 600 }
     ];
 
     // 為每個欄位綁定字數計算事件
@@ -2647,7 +2648,7 @@ function initializeCharCounter() {
  * @param {number} maxLength - 字數上限
  */
 function updateCharCount($input, $counter, maxLength) {
-    var currentLength = $input.val().length;
+    var currentLength = $input.val().replace(/\n/g, '\r\n').length;
     $counter.text(currentLength);
 
     // 如果超過限制，改變顏色提示
@@ -2667,13 +2668,14 @@ function validateCharCount() {
     var charCounterFields = [
         { id: 'txtPurpose', name: '目的', maxLength: 1000 },
         { id: 'txtPlanContent', name: '計畫內容', maxLength: 1000 },
-        { id: 'txtPreBenefits', name: '預期效益', maxLength: 1000 }
+        { id: 'txtPreBenefits', name: '預期效益', maxLength: 1000 },
+        { id: 'txtEmergencyPlan', name: '相關緊急應變計畫', maxLength: 600 }
     ];
 
     charCounterFields.forEach(function(field) {
         var $input = $('#' + field.id);
         if ($input.length) {
-            var currentLength = $input.val().length;
+            var currentLength = $input.val().replace(/\n/g, '\r\n').length;
             if (currentLength > field.maxLength) {
                 errors.push({
                     fieldName: field.name,

@@ -73,6 +73,8 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
 
             BindDropDown();
 
+            rentDescription.Attributes["maxlength"] = "500";
+
             // 取得並傳遞補助款上限和配合款比例到前端
             if (!string.IsNullOrEmpty(ProjectID))
             {
@@ -996,7 +998,16 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
         }
         catch (Exception ex)
         {
-            ShowErrorMessage($"暫存失敗：{ex.Message}");
+            string truncatedColumn = GetTruncatedColumnName(ex);
+            if (truncatedColumn != null)
+            {
+                string columnHint = string.IsNullOrEmpty(truncatedColumn) ? "某欄位" : $"欄位 '{truncatedColumn}'";
+                ShowErrorMessage($"{columnHint} 內容長度超過資料庫上限，請縮短輸入內容後重新儲存");
+            }
+            else
+            {
+                ShowErrorMessage($"暫存失敗：{ex.Message}");
+            }
         }
     }
 
@@ -1042,7 +1053,16 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
         catch (Exception ex)
         {
             RestoreDataFromSession();
-            ShowErrorMessage($"儲存失敗：{ex.Message}");
+            string truncatedColumn = GetTruncatedColumnName(ex);
+            if (truncatedColumn != null)
+            {
+                string columnHint = string.IsNullOrEmpty(truncatedColumn) ? "某欄位" : $"欄位 '{truncatedColumn}'";
+                ShowErrorMessage($"{columnHint} 內容長度超過資料庫上限，請縮短輸入內容後重新儲存");
+            }
+            else
+            {
+                ShowErrorMessage($"儲存失敗：{ex.Message}");
+            }
         }
     }
 
@@ -1450,6 +1470,73 @@ public partial class OFS_SCI_UserControls_SciFundingControl : System.Web.UI.User
         }
     }
 
+
+    /// <summary>
+    /// 資料庫欄位名稱對應中文顯示名稱
+    /// </summary>
+    private static readonly System.Collections.Generic.Dictionary<string, string> _columnChineseNames =
+        new System.Collections.Generic.Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        // 人事費
+        { "Name",           "名稱" },
+        { "JobTitle",       "職稱" },
+        // 材料費
+        { "ItemName",       "材料項目名稱" },
+        { "Description",    "說明" },
+        { "Unit",           "單位" },
+        // 技術移轉/委託研究費
+        { "FeeCategory",    "費用類別" },
+        { "PersonName",     "委託對象" },
+        // 國內差旅費
+        { "TripReason",     "出差事由" },
+        { "Area",           "地區" },
+        // 國外差旅費
+        { "Topic",          "主題" },
+        { "Content",        "內容" },
+        // 其他費用
+        { "CalDescription", "計算說明" },
+    };
+
+    /// <summary>
+    /// 判斷是否為資料庫欄位長度超過上限的錯誤
+    /// </summary>
+    private bool IsDatabaseStringTruncationError(Exception ex)
+    {
+        return GetTruncatedColumnName(ex) != null;
+    }
+
+    /// <summary>
+    /// 從例外訊息中解析被截斷的欄位名稱（含中文對應）
+    /// 回傳欄位中文名稱；找到截斷錯誤但無法解析欄位時回傳 string.Empty；非截斷錯誤則回傳 null
+    /// </summary>
+    private string GetTruncatedColumnName(Exception ex)
+    {
+        Exception current = ex;
+        while (current != null)
+        {
+            bool isTruncation =
+                current.Message.IndexOf("String or binary data would be truncated", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                current.Message.IndexOf("字串或二進位資料將會截斷", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                current.Message.IndexOf("字串或二進位資料會被截斷", StringComparison.OrdinalIgnoreCase) >= 0;
+
+            if (isTruncation)
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(
+                    current.Message,
+                    @"(?:資料行|column)\s+'([^']+)'",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                );
+                if (!match.Success) return string.Empty;
+
+                string colName = match.Groups[1].Value;
+                return _columnChineseNames.TryGetValue(colName, out string chineseName)
+                    ? chineseName
+                    : colName;
+            }
+            current = current.InnerException;
+        }
+        return null;
+    }
 
     /// <summary>
     /// 例外處理

@@ -54,10 +54,10 @@
                         <th>申請單位 <span class="text-danger view-mode">*</span></th>
                         <td colspan="3">
                             <div class="d-flex align-items-center gap-2">
-                                <asp:TextBox ID="txtSchoolName" runat="server" CssClass="form-control" 
-                                           placeholder="學校全銜" MaxLength="100" style="width: 250px;" />
-                                <asp:TextBox ID="txtClubName" runat="server" CssClass="form-control" 
-                                           placeholder="社團全名" MaxLength="100" style="width: 250px;" />
+                                <asp:TextBox ID="txtSchoolName" runat="server" CssClass="form-control"
+                                           placeholder="學校全銜" MaxLength="50" style="width: 250px;" />
+                                <asp:TextBox ID="txtClubName" runat="server" CssClass="form-control"
+                                           placeholder="社團全名" MaxLength="50" style="width: 250px;" />
                             </div>
                         </td>
                     </tr>
@@ -72,8 +72,8 @@
                     <tr class="public-view">
                         <th>學校統一編號 <span class="text-danger view-mode">*</span></th>
                         <td colspan="3">
-                            <asp:TextBox ID="txtSchoolIDNumber" runat="server" CssClass="form-control" 
-                                       placeholder="請輸入學校統一編號" MaxLength="10" style="width: 200px;" />
+                            <asp:TextBox ID="txtSchoolIDNumber" runat="server" CssClass="form-control"
+                                       placeholder="請輸入學校統一編號" MaxLength="50" style="width: 200px;" />
                         </td>
                     </tr>
                     <tr class="public-view">
@@ -106,8 +106,8 @@
                                        placeholder="請輸入職稱" MaxLength="50" />
                         </td>
                         <td>
-                            <asp:TextBox ID="txtTeacherPhone" runat="server" CssClass="form-control" 
-                                       placeholder="請輸入手機號碼" MaxLength="20" />
+                            <asp:TextBox ID="txtTeacherPhone" runat="server" CssClass="form-control"
+                                       placeholder="請輸入手機號碼" MaxLength="50" />
                         </td>
                     </tr>
                     <tr>
@@ -121,8 +121,8 @@
                                        placeholder="請輸入職稱" MaxLength="50" />
                         </td>
                         <td>
-                            <asp:TextBox ID="txtContactPhone" runat="server" CssClass="form-control" 
-                                       placeholder="請輸入手機號碼" MaxLength="20" />
+                            <asp:TextBox ID="txtContactPhone" runat="server" CssClass="form-control"
+                                       placeholder="請輸入手機號碼" MaxLength="50" />
                         </td>
                     </tr>
                 </tbody>
@@ -197,9 +197,12 @@
                     <tr class="public-view">
                         <th>相關緊急應變計畫</th>
                         <td>
-                            <asp:TextBox ID="txtEmergencyPlan" runat="server" CssClass="form-control textarea-auto-resize" 
-                                       TextMode="MultiLine" Rows="4" placeholder="請描述緊急應變計畫" 
-                                       MaxLength="1000" style="width: 100%;" />
+                            <asp:TextBox ID="txtEmergencyPlan" runat="server" CssClass="form-control textarea-auto-resize char-counter-input"
+                                       TextMode="MultiLine" Rows="4" placeholder="請描述緊急應變計畫"
+                                       MaxLength="600" style="width: 100%;" ClientIDMode="Static" />
+                            <div class="text-end text-muted mt-1">
+                                <small>已輸入 <span id="txtEmergencyPlan_count">0</span> / 600 字</small>
+                            </div>
                         </td>
                     </tr>
                 </tbody>

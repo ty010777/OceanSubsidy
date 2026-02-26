@@ -65,7 +65,7 @@
                                         </td>
                                         <td>
                                             <div class="mb-2">工作項目</div>
-                                            <input type="text" class="form-control" placeholder="請輸入">
+                                            <input type="text" class="form-control" placeholder="請輸入" maxlength="50">
                                         </td>
                                         <td>
 
@@ -89,7 +89,7 @@
                                         </td>
                                         <td>
                                             <div class="mb-2">子項目</div>
-                                            <input type="text" class="form-control" placeholder="請輸入">
+                                            <input type="text" class="form-control" placeholder="請輸入" maxlength="50">
                                         </td>
                                         <td>
                                             <div class="input-group">
@@ -154,7 +154,7 @@
                                         </td>
                                         <td>
                                             <div class="mb-2">子項目</div>
-                                            <input type="text" class="form-control" placeholder="請輸入">
+                                            <input type="text" class="form-control" placeholder="請輸入" maxlength="50">
                                         </td>
                                         <td>
                                             <div class="input-group">
@@ -224,7 +224,7 @@
                                         </td>
                                         <td>
                                             <div class="mb-2">工作項目</div>
-                                            <input type="text" class="form-control" placeholder="請輸入">
+                                            <input type="text" class="form-control" placeholder="請輸入" maxlength="50">
                                         </td>
                                         <td>
 
@@ -248,7 +248,7 @@
                                         </td>
                                         <td>
                                             <div class="mb-2">子項目</div>
-                                            <input type="text" class="form-control" placeholder="請輸入">
+                                            <input type="text" class="form-control" placeholder="請輸入" maxlength="50">
                                         </td>
                                         <td>
                                             <div class="input-group">
@@ -372,7 +372,8 @@
                         <input type="text" name="" class="form-control taiwan-date-picker" placeholder="請選擇日期" readonly>
                     </td>
                     <td class="align-middle" width="500">
-                        <textarea class="form-control " rows="3" placeholder="請輸入"></textarea>
+                        <textarea class="form-control " rows="3" placeholder="請輸入" maxlength="500"></textarea>
+                        <div class="fs-14 text-gray mt-1">上限 500 字</div>
                     </td>
                     <td class="align-middle">
                         <button class="btn btn-sm btn-dark-green2" type="button"><i class="fas fa-trash-alt"></i></button>

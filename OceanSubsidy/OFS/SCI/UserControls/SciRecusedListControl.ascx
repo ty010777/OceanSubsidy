@@ -33,10 +33,10 @@
             </thead>
             <tbody id="committeeTableBody">
                 <tr>
-                    <td><input type="text" class="form-control" name="committeeName" /></td>
-                    <td><input type="text" class="form-control" name="committeeUnit" placeholder="請輸入任職單位" /></td>
-                    <td><input type="text" class="form-control" name="committeePosition" placeholder="請輸入職稱" /></td>
-                    <td><input type="text" class="form-control" name="committeeReason" placeholder="請輸入應迴避之具體理由及事證" /></td>
+                    <td><input type="text" class="form-control" name="committeeName" maxlength="100" /></td>
+                    <td><input type="text" class="form-control" name="committeeUnit" placeholder="請輸入任職單位" maxlength="200" /></td>
+                    <td><input type="text" class="form-control" name="committeePosition" placeholder="請輸入職稱" maxlength="100" /></td>
+                    <td><input type="text" class="form-control" name="committeeReason" placeholder="請輸入應迴避之具體理由及事證" maxlength="500" /></td>
                     <td>
                         <button type="button" class="btn btn-sm btn-teal add-row me-1">
                             <i class="fas fa-plus"></i>
@@ -82,7 +82,7 @@
             </thead>
             <tbody id="techTableBody">
                 <tr>
-                    <td><input type="text" class="form-control" name="techItem" placeholder="請輸入" /></td>
+                    <td><input type="text" class="form-control" name="techItem" placeholder="請輸入" maxlength="200" /></td>
                     <td>
                         <div class="input-group">
                             <span class="input-group-text">執行前</span>
@@ -116,7 +116,7 @@
                         </div>
                     </td>
                     <td>
-                        <textarea class="form-control" rows="3" name="techProcess" placeholder="請輸入"></textarea>
+                        <textarea class="form-control" rows="3" name="techProcess" placeholder="請輸入" maxlength="500"></textarea>
                     </td>
                     <td>
                         <button type="button" class="btn btn-sm btn-teal add-row me-1">

@@ -69,13 +69,13 @@
                                 <span class="text-pink view-mode">*</span>
                                 中文
                             </span>
-                            <asp:TextBox ID="txtProjectNameCh"  CssClass="form-control" runat="server" /> 
+                            <asp:TextBox ID="txtProjectNameCh"  CssClass="form-control" runat="server" MaxLength="200" />
                         </div>
                         <div class="input-group mt-2">
                             <span class="input-group-text" style="width: 70px;">
                                 英文
                             </span>
-                            <asp:TextBox ID="txtProjectNameEn" CssClass="form-control" runat="server"  />
+                            <asp:TextBox ID="txtProjectNameEn" CssClass="form-control" runat="server" MaxLength="200" />
                         </div>
                     </td>
                 </tr>
@@ -171,7 +171,7 @@
                         申請單位<br>(含系所名稱)
                     </th>
                     <td>
-                        <asp:TextBox ID="txtOrgName" runat="server" CssClass="form-control" placeholder="請輸入名稱" />
+                        <asp:TextBox ID="txtOrgName" runat="server" CssClass="form-control" placeholder="請輸入名稱" MaxLength="50" />
                     </td>
                 </tr>
                 <tr>
@@ -180,7 +180,7 @@
                         登記地址
                     </th>
                     <td>
-                          <asp:TextBox ID="txtRegisteredAddress" runat="server" CssClass="form-control" placeholder="請輸入單位登記地址" />                                      
+                          <asp:TextBox ID="txtRegisteredAddress" runat="server" CssClass="form-control" placeholder="請輸入單位登記地址" MaxLength="200" />
                     </td>
                 </tr>
                 <tr>
@@ -190,7 +190,7 @@
                         (公文寄送地址)
                     </th>
                     <td>
-                    <asp:TextBox ID="txtCorrespondenceAddress" runat="server" CssClass="form-control" placeholder="請輸入通訊地址（公文郵送地址）" />
+                    <asp:TextBox ID="txtCorrespondenceAddress" runat="server" CssClass="form-control" placeholder="請輸入通訊地址（公文郵送地址）" MaxLength="200" />
                         </td>
                 </tr>
             </tbody>
@@ -217,7 +217,7 @@
                                     <span class="text-pink view-mode">*</span>
                                     姓名
                                 </div>
-                                <asp:TextBox ID="txtPIName" runat="server" CssClass="form-control" placeholder="請輸入姓名" />
+                                <asp:TextBox ID="txtPIName" runat="server" CssClass="form-control" placeholder="請輸入姓名" MaxLength="50" />
 
                             </div>
                             <div class="col-12 col-xl-3">
@@ -225,15 +225,15 @@
                                     <span class="text-pink view-mode">*</span>
                                     職稱
                                 </div>
-                                <asp:TextBox ID="txtPIJobTitle" runat="server" CssClass="form-control" placeholder="請輸入職稱"/>
+                                <asp:TextBox ID="txtPIJobTitle" runat="server" CssClass="form-control" placeholder="請輸入職稱" MaxLength="50" />
                             </div>
                             <div class="col-12 col-xl-4">
                                 <div class="mb-2">
                                     電話(分機)
                                 </div>
                                 <div class="d-flex gap-2">
-                                    <asp:TextBox ID="txtPIPhone" runat="server" CssClass="form-control" placeholder="請輸入電話"/>
-                                    <asp:TextBox ID="txtPIPhoneExt" runat="server" CssClass="form-control" placeholder="請輸入分機"/>
+                                    <asp:TextBox ID="txtPIPhone" runat="server" CssClass="form-control" placeholder="請輸入電話" MaxLength="20" />
+                                    <asp:TextBox ID="txtPIPhoneExt" runat="server" CssClass="form-control" placeholder="請輸入分機" MaxLength="10" />
                                 </div>
                                 
                             </div>
@@ -242,7 +242,7 @@
                                     <span class="text-pink view-mode">*</span>
                                     手機號碼
                                 </div>
-                                <asp:TextBox ID="txtPIMobile" runat="server" CssClass="form-control" placeholder="請輸入手機號碼"/>
+                                <asp:TextBox ID="txtPIMobile" runat="server" CssClass="form-control" placeholder="請輸入手機號碼" MaxLength="20" />
                             </div>
                         </div>
                     </td>
@@ -260,22 +260,22 @@
                                     <span class="text-pink view-mode">*</span>
                                     姓名
                                 </div>
-                                <asp:TextBox ID="txtContactName" runat="server" CssClass="form-control" placeholder="請輸入姓名"/>
+                                <asp:TextBox ID="txtContactName" runat="server" CssClass="form-control" placeholder="請輸入姓名" MaxLength="50" />
                             </div>
                             <div class="col-12 col-xl-3">
                                 <div class="mb-2">
                                     <span class="text-pink view-mode">*</span>
                                     職稱
                                 </div>
-                                <asp:TextBox ID="txtContactJobTitle" runat="server" CssClass="form-control" placeholder="請輸入職稱"/>
+                                <asp:TextBox ID="txtContactJobTitle" runat="server" CssClass="form-control" placeholder="請輸入職稱" MaxLength="50" />
                             </div>
                             <div class="col-12 col-xl-4">
                                 <div class="mb-2">
                                     電話(分機)
                                 </div>
                                 <div class="d-flex gap-2">
-                                    <asp:TextBox ID="txtContactPhone" runat="server" CssClass="form-control" placeholder="請輸入電話"/>
-                                    <asp:TextBox ID="txtContactPhoneExt" runat="server" CssClass="form-control" placeholder="請輸入分機"/>
+                                    <asp:TextBox ID="txtContactPhone" runat="server" CssClass="form-control" placeholder="請輸入電話" MaxLength="20" />
+                                    <asp:TextBox ID="txtContactPhoneExt" runat="server" CssClass="form-control" placeholder="請輸入分機" MaxLength="10" />
                                 </div>
                                 
                             </div>
@@ -284,7 +284,7 @@
                                     <span class="text-pink view-mode">*</span>
                                     手機號碼
                                 </div>
-                                <asp:TextBox ID="txtContactMobile" runat="server" CssClass="form-control" placeholder="請輸入手機號碼"/>
+                                <asp:TextBox ID="txtContactMobile" runat="server" CssClass="form-control" placeholder="請輸入手機號碼" MaxLength="20" />
                             </div>
                         </div>
                     </td>
@@ -300,21 +300,21 @@
                                 <div class="mb-2">
                                     姓名
                                 </div>
-                                <asp:TextBox ID="txtAccountName" runat="server" CssClass="form-control" placeholder="請輸入姓名"/>
+                                <asp:TextBox ID="txtAccountName" runat="server" CssClass="form-control" placeholder="請輸入姓名" MaxLength="50" />
                             </div>
                             <div class="col-12 col-xl-3">
                                 <div class="mb-2">
                                     職稱
                                 </div>
-                                <asp:TextBox ID="txtAccountJobTitle" runat="server" CssClass="form-control" placeholder="請輸入職稱"/>
+                                <asp:TextBox ID="txtAccountJobTitle" runat="server" CssClass="form-control" placeholder="請輸入職稱" MaxLength="50" />
                             </div>
                             <div class="col-12 col-xl-4">
                                 <div class="mb-2">
                                     電話(分機)
                                 </div>
                                 <div class="d-flex gap-2">
-                                    <asp:TextBox ID="txtAccountPhone" runat="server" CssClass="form-control" placeholder="請輸入電話"/>
-                                    <asp:TextBox ID="txtAccountPhoneExt" runat="server" CssClass="form-control" placeholder="請輸入分機"/>
+                                    <asp:TextBox ID="txtAccountPhone" runat="server" CssClass="form-control" placeholder="請輸入電話" MaxLength="20" />
+                                    <asp:TextBox ID="txtAccountPhoneExt" runat="server" CssClass="form-control" placeholder="請輸入分機" MaxLength="10" />
                                 </div>
                                 
                             </div>
@@ -322,7 +322,7 @@
                                 <div class="mb-2">
                                     手機號碼
                                 </div>
-                                <asp:TextBox ID="txtAccountMobile" runat="server" CssClass="form-control" placeholder="請輸入手機號碼"/>
+                                <asp:TextBox ID="txtAccountMobile" runat="server" CssClass="form-control" placeholder="請輸入手機號碼" MaxLength="20" />
                             </div>
                         </div>
                     </td>
@@ -344,9 +344,9 @@
                         計畫目標
                     </th>
                     <td>
-                        <asp:TextBox  ID="txtTarget" runat="server"  CssClass="form-control textarea textarea-auto-resize " 
-                            TextMode="MultiLine"  
-                            Rows="6"  
+                        <asp:TextBox  ID="txtTarget" runat="server"  CssClass="form-control textarea textarea-auto-resize "
+                            TextMode="MultiLine"
+                            Rows="6"
                             placeholder="請輸入計畫目標"
                             data-max-length="500" />
                         <div class="fs-14 text-gray mt-2 view-mode"> <span class="text-pink char-count ">0</span> </div>
@@ -358,11 +358,11 @@
                         計畫內容摘要
                     </th>
                     <td>
-                        <asp:TextBox ID="txtSummary" runat="server"  
-                            TextMode="MultiLine"  
-                            Rows="6"  
-                            CssClass="form-control textarea textarea-auto-resize"  
-                            placeholder="請輸入計畫內容摘要，說明主要研究內容與方法..."  
+                        <asp:TextBox ID="txtSummary" runat="server"
+                            TextMode="MultiLine"
+                            Rows="6"
+                            CssClass="form-control textarea textarea-auto-resize"
+                            placeholder="請輸入計畫內容摘要，說明主要研究內容與方法..."
                             data-max-length="500" />
                         <div class="fs-14 text-gray mt-2 view-mode"><span class="text-pink char-count">0</span> </div>
                     </td>
@@ -374,12 +374,12 @@
                     </th>
                     <td>
                         
-                         <asp:TextBox ID="txtInnovation" runat="server" 
-                                    TextMode="MultiLine"  
-                                    Rows="5"  
-                                    CssClass="form-control textarea textarea-auto-resize"  
-                                    placeholder="請輸入計畫的創新特色與技術突破點..."  
-                                    data-max-length="250" /> 
+                         <asp:TextBox ID="txtInnovation" runat="server"
+                                    TextMode="MultiLine"
+                                    Rows="5"
+                                    CssClass="form-control textarea textarea-auto-resize"
+                                    placeholder="請輸入計畫的創新特色與技術突破點..."
+                                    data-max-length="250" />
                          <div class="fs-14 text-gray mt-2 view-mode"> <span class="text-pink char-count">0</span> </div>
                     </td>
                 </tr>

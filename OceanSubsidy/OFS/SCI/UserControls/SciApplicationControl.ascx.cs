@@ -58,6 +58,10 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
     {
         try
         {
+            txtTarget.Attributes["maxlength"] = "500";
+            txtSummary.Attributes["maxlength"] = "500";
+            txtInnovation.Attributes["maxlength"] = "250";
+
             if (!IsPostBack)
             {
 
@@ -278,6 +282,32 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
         }
     }
     /// <summary>
+    /// 僅驗證字數上限（暫存時使用）
+    /// </summary>
+    /// <returns>驗證結果</returns>
+    private ValidationResult ValidateCharacterLimits()
+    {
+        var result = new ValidationResult();
+
+        if (txtTarget.Text.Length > 500)
+        {
+            result.AddError("計畫目標超過500字，請修改後再儲存");
+        }
+
+        if (txtSummary.Text.Length > 500)
+        {
+            result.AddError("計畫內容摘要超過500字，請修改後再儲存");
+        }
+
+        if (txtInnovation.Text.Length > 250)
+        {
+            result.AddError("計畫創新重點超過250字，請修改後再儲存");
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// 驗證表單資料
     /// </summary>
     /// <returns>驗證結果</returns>
@@ -373,28 +403,19 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
             {
                 result.AddError("請輸入計畫目標");
             }
-            else if (txtTarget.Text.Length > 500)
-            {
-                result.AddError("計畫目標超過500字，請修改後再提交");
-            }
 
             if (string.IsNullOrWhiteSpace(txtSummary.Text))
             {
                 result.AddError("請輸入計畫內容摘要");
-            }
-            else if (txtSummary.Text.Length > 500)
-            {
-                result.AddError("計畫內容摘要超過500字，請修改後再提交");
             }
 
             if (string.IsNullOrWhiteSpace(txtInnovation.Text))
             {
                 result.AddError("請輸入計畫創新重點");
             }
-            else if (txtInnovation.Text.Length > 250)
-            {
-                result.AddError("計畫創新重點超過250字，請修改後再提交");
-            }
+
+            // 檢查字數上限（共用方法）
+            result.Errors.AddRange(ValidateCharacterLimits().Errors);
 
             // 檢查關鍵字
             var keywords = GetKeywordsFromForm();
@@ -1102,6 +1123,16 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
                     return;
                 }
             }
+            else
+            {
+                // 暫存時僅檢查字數上限
+                var charLimitResult = ValidateCharacterLimits();
+                if (!charLimitResult.IsValid)
+                {
+                    ShowErrorMessage(charLimitResult.GetErrorsAsString());
+                    return;
+                }
+            }
 
             // 儲存資料
             string resultProjectID = SaveData(projectID);
@@ -1136,7 +1167,18 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
         }
         catch (Exception ex)
         {
-            ShowErrorMessage($"儲存失敗：{ex.Message}");
+            string truncatedColumn = GetTruncatedColumnName(ex);
+            if (truncatedColumn != null)
+            {
+                string columnHint = string.IsNullOrEmpty(truncatedColumn)
+                    ? "某欄位"
+                    : $"欄位 '{truncatedColumn}'";
+                ShowErrorMessage($"{columnHint} 內容長度超過資料庫上限，請縮短輸入內容後重新儲存");
+            }
+            else
+            {
+                ShowErrorMessage($"儲存失敗：{ex.Message}");
+            }
             HandleException(ex, "儲存時發生錯誤");
         }
     }
@@ -1374,6 +1416,79 @@ public partial class OFS_SCI_UserControls_SciApplicationControl : System.Web.UI.
     //         HandleException(ex, "載入變更說明資料時發生錯誤");
     //     }
     // }
+    /// <summary>
+    /// 判斷是否為資料庫欄位長度超過上限的錯誤
+    /// SQL Server error 8152: String or binary data would be truncated
+    /// </summary>
+    private bool IsDatabaseStringTruncationError(Exception ex)
+    {
+        return GetTruncatedColumnName(ex) != null;
+    }
+
+    /// <summary>
+    /// 資料庫欄位名稱對應中文顯示名稱
+    /// </summary>
+    private static readonly Dictionary<string, string> _columnChineseNames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        // OFS_SCI_Application_Main
+        { "ProjectNameTw",          "計畫名稱(中文)" },
+        { "ProjectNameEn",          "計畫名稱(英文)" },
+        { "SubsidyPlanType",        "補助計畫類型" },
+        { "OrgCategory",            "申請類別" },
+        { "Topic",                  "主題" },
+        { "Field",                  "領域" },
+        { "OrgName",                "申請單位" },
+        { "RegisteredAddress",      "登記地址" },
+        { "CorrespondenceAddress",  "通訊地址" },
+        { "Target",                 "計畫目標" },
+        { "Summary",                "計畫內容摘要" },
+        { "Innovation",             "計畫創新重點" },
+        // OFS_SCI_Application_Personnel
+        { "Name",                   "姓名" },
+        { "JobTitle",               "職稱" },
+        { "Phone",                  "電話" },
+        { "PhoneExt",               "分機" },
+        { "MobilePhone",            "手機號碼" },
+        { "Role",                   "角色" },
+        // OFS_SCI_Application_KeyWord
+        { "KeyWordTw",              "關鍵字(中文)" },
+        { "KeyWordEn",              "關鍵字(英文)" },
+    };
+
+    /// <summary>
+    /// 從例外訊息中解析被截斷的欄位名稱
+    /// 回傳欄位名稱字串，若無法解析則回傳 null
+    /// </summary>
+    private string GetTruncatedColumnName(Exception ex)
+    {
+        Exception current = ex;
+        while (current != null)
+        {
+            bool isTruncation =
+                current.Message.IndexOf("String or binary data would be truncated", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                current.Message.IndexOf("字串或二進位資料將會截斷", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                current.Message.IndexOf("字串或二進位資料會被截斷", StringComparison.OrdinalIgnoreCase) >= 0;
+
+            if (isTruncation)
+            {
+                // 嘗試解析欄位名稱（中文：資料行 'ColumnName'，英文：column 'ColumnName'）
+                var match = System.Text.RegularExpressions.Regex.Match(
+                    current.Message,
+                    @"(?:資料行|column)\s+'([^']+)'",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                );
+                if (!match.Success) return string.Empty;
+
+                string colName = match.Groups[1].Value;
+                return _columnChineseNames.TryGetValue(colName, out string chineseName)
+                    ? chineseName
+                    : colName;
+            }
+            current = current.InnerException;
+        }
+        return null;
+    }
+
     /// <summary>
     /// 例外處理
     /// </summary>

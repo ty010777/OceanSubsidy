@@ -181,7 +181,16 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
         }
         catch (Exception ex)
         {
-            ShowErrorMessage($"暫存失敗：{ex.Message}");
+            string truncatedColumn = GetTruncatedColumnName(ex);
+            if (truncatedColumn != null)
+            {
+                string columnHint = string.IsNullOrEmpty(truncatedColumn) ? "某欄位" : $"欄位 '{truncatedColumn}'";
+                ShowErrorMessage($"{columnHint} 內容長度超過資料庫上限，請縮短輸入內容後重新儲存");
+            }
+            else
+            {
+                ShowErrorMessage($"暫存失敗：{ex.Message}");
+            }
         }
     }
 
@@ -209,7 +218,16 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
         }
         catch (Exception ex)
         {
-            ShowErrorMessage($"{ex.Message}");
+            string truncatedColumn = GetTruncatedColumnName(ex);
+            if (truncatedColumn != null)
+            {
+                string columnHint = string.IsNullOrEmpty(truncatedColumn) ? "某欄位" : $"欄位 '{truncatedColumn}'";
+                ShowErrorMessage($"{columnHint} 內容長度超過資料庫上限，請縮短輸入內容後重新儲存");
+            }
+            else
+            {
+                ShowErrorMessage($"{ex.Message}");
+            }
         }
     }
 
@@ -1325,6 +1343,65 @@ public partial class OFS_SCI_UserControls_SciWorkSchControl : System.Web.UI.User
         script += ";";
 
         Page.ClientScript.RegisterStartupScript(this.GetType(), "ShowWarningMessage" + Guid.NewGuid().ToString(), script, true);
+    }
+
+    /// <summary>
+    /// 資料庫欄位名稱對應中文顯示名稱
+    /// </summary>
+    private static readonly System.Collections.Generic.Dictionary<string, string> _columnChineseNames =
+        new System.Collections.Generic.Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        // OFS_SCI_WorkSch_Main
+        { "WorkName",           "工作項目" },
+        { "WorkItem_id",        "工作項目編號" },
+        // OFS_SCI_WorkSch_CheckStandard
+        { "WorkItem",           "對應工項" },
+        { "SerialNumber",       "查核標準編號" },
+        { "CheckDescription",   "查核內容概述" },
+        { "DelayReason",        "延誤原因" },
+        { "ImprovedWay",        "改善方式" },
+    };
+
+    /// <summary>
+    /// 判斷是否為資料庫欄位長度超過上限的錯誤
+    /// SQL Server error 8152: String or binary data would be truncated
+    /// </summary>
+    private bool IsDatabaseStringTruncationError(Exception ex)
+    {
+        return GetTruncatedColumnName(ex) != null;
+    }
+
+    /// <summary>
+    /// 從例外訊息中解析被截斷的欄位名稱（含中文對應）
+    /// 回傳欄位中文名稱；找到截斷錯誤但無法解析欄位時回傳 string.Empty；非截斷錯誤則回傳 null
+    /// </summary>
+    private string GetTruncatedColumnName(Exception ex)
+    {
+        Exception current = ex;
+        while (current != null)
+        {
+            bool isTruncation =
+                current.Message.IndexOf("String or binary data would be truncated", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                current.Message.IndexOf("字串或二進位資料將會截斷", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                current.Message.IndexOf("字串或二進位資料會被截斷", StringComparison.OrdinalIgnoreCase) >= 0;
+
+            if (isTruncation)
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(
+                    current.Message,
+                    @"(?:資料行|column)\s+'([^']+)'",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                );
+                if (!match.Success) return string.Empty;
+
+                string colName = match.Groups[1].Value;
+                return _columnChineseNames.TryGetValue(colName, out string chineseName)
+                    ? chineseName
+                    : colName;
+            }
+            current = current.InnerException;
+        }
+        return null;
     }
 
     /// <summary>

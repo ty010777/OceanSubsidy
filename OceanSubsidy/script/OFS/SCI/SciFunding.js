@@ -670,7 +670,7 @@ function P_addNewRow() {
 
     const newRow = document.createElement('tr');
     newRow.innerHTML = `
-        <td><input type="text" id="personName${rowCount}" class="form-control" placeholder="請輸入姓名"></td>
+        <td><input type="text" id="personName${rowCount}" class="form-control" placeholder="請輸入姓名" maxlength="100"></td>
         <td class="text-center"><input type="checkbox" id="stay${rowCount}" class="form-check-input check-teal" /></td>
         <td></td>
         <td><input  class="form-control text-end" id="personSalary${rowCount}" value="0" onkeypress="return event.charCode != 45" onblur="checkSalaryLimit(${rowCount}); calculateAndUpdateTotal()"></td>
@@ -780,8 +780,8 @@ function M_addNewRow() {
     
     const newRow = document.createElement('tr');
     newRow.innerHTML = `
-        <td><input type="text" id="MaterialName${rowCount}" class="form-control" placeholder="請輸入" /></td>
-        <td><input type="text" id="MaterialDescription${rowCount}" class="form-control" placeholder="請輸入" /></td>
+        <td><input type="text" id="MaterialName${rowCount}" class="form-control" placeholder="請輸入" maxlength="100" /></td>
+        <td><input type="text" id="MaterialDescription${rowCount}" class="form-control" placeholder="請輸入" maxlength="200" /></td>
         <td></td>
         <td><input id="MaterialNum${rowCount}" class="form-control text-end" placeholder="請輸入" onkeypress="return event.charCode != 45" onblur="calculateMaterial()" /></td>
         <td><input id="MaterialUnitPrice${rowCount}" class="form-control text-end" placeholder="請輸入" onkeypress="return event.charCode != 45" onblur="checkMaterialLimit(${rowCount});calculateMaterial()" /></td>
@@ -870,10 +870,10 @@ function R_addNewRow() {
             </div>
         </td>
         <td>
-            <input type="text" id="ResearchFeesName${rowCount}" class="form-control" placeholder="請輸入" />
+            <input type="text" id="ResearchFeesName${rowCount}" class="form-control" placeholder="請輸入" maxlength="100" />
         </td>
         <td>
-            <input type="text" id="ResearchFeesPersonName${rowCount}" class="form-control" placeholder="請輸入" />
+            <input type="text" id="ResearchFeesPersonName${rowCount}" class="form-control" placeholder="請輸入" maxlength="100" />
         </td>
         <td>
             <input type="text" id="ResearchFeesPrice${rowCount}" class="form-control text-end money" placeholder="請輸入" onkeypress="return event.charCode != 45" onblur="calculateResearch()" />
@@ -942,8 +942,8 @@ function T_addRow() {
 
     const newRow = document.createElement('tr');
     newRow.innerHTML = `
-        <td><input type="text" ID="travelReason${rowCount}" class="form-control" /></td>
-        <td><input type="text" ID="travelArea${rowCount}" class="form-control" /></td>
+        <td><input type="text" ID="travelReason${rowCount}" class="form-control" maxlength="200" /></td>
+        <td><input type="text" ID="travelArea${rowCount}" class="form-control" maxlength="100" /></td>
         <td><input  ID="travelDays${rowCount}" class="form-control days" onkeypress="return event.charCode != 45" /></td>
         <td><input  ID="travelPeople${rowCount}" class="form-control people" onkeypress="return event.charCode != 45" /></td>
         <td><input  ID="travelPrice${rowCount}" class="form-control text-end price" onkeypress="return event.charCode != 45" onblur="calculateTravel()" /></td>
@@ -1022,14 +1022,14 @@ function FT_addRow() {
 
     const newRow = document.createElement('tr');
     newRow.innerHTML = `
-        <td><input type="text" id="foreignCountry${rowCount}" class="form-control" placeholder="請輸入" /></td>
-        <td><input type="text" id="foreignTopic${rowCount}" class="form-control" placeholder="請輸入" /></td>
+        <td><input type="text" id="foreignCountry${rowCount}" class="form-control" placeholder="請輸入" maxlength="100" /></td>
+        <td><input type="text" id="foreignTopic${rowCount}" class="form-control" placeholder="請輸入" maxlength="200" /></td>
         <td><input id="foreignDays${rowCount}" class="form-control text-center" value="0" onkeypress="return event.charCode != 45" /></td>
         <td><input id="foreignPeople${rowCount}" class="form-control text-center" value="0" onkeypress="return event.charCode != 45" /></td>
         <td><input id="foreignTransportFee${rowCount}" class="form-control text-end" value="0" onkeypress="return event.charCode != 45" onblur="calculateForeignTravel()" /></td>
         <td><input id="foreignLivingFee${rowCount}" class="form-control text-end" value="0" onkeypress="return event.charCode != 45" onblur="calculateForeignTravel()" /></td>
         <td class="text-end">0</td>
-        <td><textarea id="foreignConference${rowCount}" class="form-control" rows="2" placeholder="請輸入"></textarea></td>
+        <td><textarea id="foreignConference${rowCount}" class="form-control" rows="2" placeholder="請輸入" maxlength="500"></textarea></td>
         <td>
             <button type="button" class="btn btn-sm btn-teal" onclick="FT_DeleteRow(this)"><i class="fas fa-trash-alt"></i></button>
             <button type="button" class="btn btn-sm btn-teal" onclick="FT_addRow()"><i class="fas fa-plus"></i></button>
