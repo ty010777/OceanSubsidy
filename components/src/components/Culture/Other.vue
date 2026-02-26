@@ -32,7 +32,7 @@
                             <tr>
                                 <th><required-label>執行單位</required-label></th>
                                 <td>
-                                    <input-text :error="errors[`project-${idx}-OrgName`]" v-model.trim="item.OrgName"></input-text>
+                                    <input-text :error="errors[`project-${idx}-OrgName`]" :max-length="100" v-model.trim="item.OrgName"></input-text>
                                 </td>
                             </tr>
                             <tr>
@@ -44,13 +44,13 @@
                             <tr>
                                 <th><required-label>內容摘述</required-label></th>
                                 <td>
-                                    <input-textarea :error="errors[`project-${idx}-Description`]" rows="4" v-model.trim="item.Description"></input-textarea>
+                                    <input-textarea :error="errors[`project-${idx}-Description`]" :max-length="500" rows="4" v-model.trim="item.Description"></input-textarea>
                                 </td>
                             </tr>
                             <tr>
                                 <th><required-label>執行效益</required-label></th>
                                 <td>
-                                    <input-textarea :error="errors[`project-${idx}-Benefit`]" rows="4" v-model.trim="item.Benefit"></input-textarea>
+                                    <input-textarea :error="errors[`project-${idx}-Benefit`]" :max-length="500" rows="4" v-model.trim="item.Benefit"></input-textarea>
                                 </td>
                             </tr>
                         </tbody>

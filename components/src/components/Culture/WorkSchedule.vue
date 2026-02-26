@@ -29,15 +29,15 @@
             <div class="block-form mt-3" :key="goal" v-for="(goal, idx) in filteredGoals">
                 <button class="btn btn-teal del" @click="removeGoal(goal)" type="button" v-if="editable && filteredGoals.length > 1">刪除</button>
                 <div class="d-flex flex-column gap-2">
-                    <label class="text-teal-dark">計畫目標</label>
+                    <label class="text-teal-dark">計畫目標<span class="text-danger" v-if="editable">（上限200字）</span></label>
                     <div>
-                        <input-text :error="errors[`goal-${idx}-Title`]" v-model.trim="goal.Title"></input-text>
+                        <input-text :error="errors[`goal-${idx}-Title`]" :max-length="200" v-model.trim="goal.Title"></input-text>
                     </div>
                 </div>
                 <div class="mt-4 d-flex flex-column gap-2">
                     <label class="text-teal-dark">預期效益（含量化或質化說明）</label>
                     <div>
-                        <input-textarea :error="errors[`goal-${idx}-Content`]" rows="4" v-model.trim="goal.Content"></input-textarea>
+                        <input-textarea :error="errors[`goal-${idx}-Content`]" :max-length="800" rows="4" v-model.trim="goal.Content"></input-textarea>
                     </div>
                 </div>
                 <div class="d-flex flex-column gap-3 mt-4">
@@ -64,7 +64,7 @@
                                                 <li class="step-item section-wrapper" :class="{ disabled: !editable }" :key="step" v-for="(step, idx2) in item.Steps.filter((step) => !step.Deleted)">
                                                     <div class="mt-2 align-self-start text-center">{{ String.fromCharCode(65 + idx2) }}</div>
                                                     <div>
-                                                        <input-text :error="errors[`step-${idx}-${idx1}-${idx2}-Title`]" placeholder="如:進行口訪紀錄" v-model.trim="step.Title"></input-text>
+                                                        <input-text :error="errors[`step-${idx}-${idx1}-${idx2}-Title`]" :max-length="100" placeholder="如:進行口訪紀錄" v-model.trim="step.Title"></input-text>
                                                     </div>
                                                     <div>
                                                         <div class="input-group">
@@ -87,7 +87,7 @@
                                     <tr>
                                         <th><required-label>績效指標</required-label></th>
                                         <td>
-                                            <input-text :error="errors[`item-${idx}-${idx1}-Indicator`]" placeholder="如:完成口訪資料1篇" v-model.trim="item.Indicator"></input-text>
+                                            <input-text :error="errors[`item-${idx}-${idx1}-Indicator`]" :max-length="100" placeholder="如:完成口訪資料1篇" v-model.trim="item.Indicator"></input-text>
                                         </td>
                                     </tr>
                                     <tr>

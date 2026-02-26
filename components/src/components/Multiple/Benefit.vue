@@ -8,20 +8,20 @@
                         <tr>
                             <th>可量化成果－指標</th>
                             <th>目標值</th>
-                            <th>說明</th>
+                            <th>說明<span class="text-danger" v-if="editable">（上限300字）</span></th>
                             <th width="1" v-if="editable">功能</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr :key="item" v-for="(item, idx) in filteredBenefits">
                             <td>
-                                <input-text :error="errors[`item-${idx}-Title`]" v-model.trim="item.Title"></input-text>
+                                <input-text :error="errors[`item-${idx}-Title`]" :max-length="100" v-model.trim="item.Title"></input-text>
                             </td>
                             <td>
                                 <input-text :error="errors[`item-${idx}-Target`]" v-model.trim="item.Target"></input-text>
                             </td>
                             <td>
-                                <input-textarea :error="errors[`item-${idx}-Description`]" rows="1" v-model.trim="item.Description"></input-textarea>
+                                <input-textarea :error="errors[`item-${idx}-Description`]" :max-length="300" rows="1" v-model.trim="item.Description"></input-textarea>
                             </td>
                             <td v-if="editable">
                                 <div class="d-flex gap-2">
@@ -43,7 +43,7 @@
                     <tbody>
                         <tr>
                             <td>
-                                <input-textarea :error="errors.Benefit" rows="4" v-model.trim="project.Benefit"></input-textarea>
+                                <input-textarea :error="errors.Benefit" :max-length="1000" rows="4" v-model.trim="project.Benefit"></input-textarea>
                             </td>
                         </tr>
                     </tbody>

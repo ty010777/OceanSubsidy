@@ -54,7 +54,7 @@
                                 {{ idx + 1 }}
                             </td>
                             <td>
-                                <input-text :error="errors[`other-${idx}-Unit`]" v-model.trim="item.Unit"></input-text>
+                                <input-text :error="errors[`other-${idx}-Unit`]" :max-length="100" v-model.trim="item.Unit"></input-text>
                             </td>
                             <td>
                                 <input-integer :error="errors[`other-${idx}-Amount`]" v-model="item.Amount"></input-integer>
@@ -81,7 +81,7 @@
                             <th class="text-end">預算金額(元)<br />海洋委員會經費</th>
                             <th class="text-end">預算金額(元)<br />其他配合經費</th>
                             <th class="text-end">預算金額(元)<br />小計</th>
-                            <th>計算方式及說明</th>
+                            <th>計算方式及說明<span class="text-danger" v-if="editable">（上限300字）</span></th>
                             <th width="1" v-if="editable">功能</th>
                         </tr>
                     </thead>
@@ -91,7 +91,7 @@
                                 <input-select :empty-value="0" :error="errors[`plan-${idx}-ItemID`]" :options="items" text-name="Title" value-name="ID" v-model="item.ItemID"></input-select>
                             </td>
                             <td>
-                                <input-text :error="errors[`plan-${idx}-Title`]" v-model.trim="item.Title"></input-text>
+                                <input-text :error="errors[`plan-${idx}-Title`]" :max-length="100" v-model.trim="item.Title"></input-text>
                             </td>
                             <td>
                                 <input-integer :error="errors[`plan-${idx}-Amount`]" v-model="item.Amount"></input-integer>
@@ -103,7 +103,7 @@
                                 {{ item.sum.toLocaleString() }}
                             </td>
                             <td>
-                                <input-textarea :error="errors[`plan-${idx}-Description`]" rows="1" v-model.trim="item.Description"></input-textarea>
+                                <input-textarea :error="errors[`plan-${idx}-Description`]" :max-length="300" rows="1" v-model.trim="item.Description"></input-textarea>
                             </td>
                             <td v-if="editable">
                                 <div class="d-flex gap-2">

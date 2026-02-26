@@ -45,7 +45,7 @@
                             <th>單位名稱</th>
                             <th class="text-end">申請／分攤補助金額(元)（含尚未核定者）</th>
                             <th>比例</th>
-                            <th>申請合作項目</th>
+                            <th>申請合作項目<span class="text-danger" v-if="editable">（上限300字）</span></th>
                             <th width="1" v-if="editable">功能</th>
                         </tr>
                     </thead>
@@ -55,7 +55,7 @@
                                 {{ idx + 1 }}
                             </td>
                             <td>
-                                <input-text :error="errors[`other-${idx}-Unit`]" v-model.trim="item.Unit"></input-text>
+                                <input-text :error="errors[`other-${idx}-Unit`]" :max-length="100" v-model.trim="item.Unit"></input-text>
                             </td>
                             <td>
                                 <input-integer :error="errors[`other-${idx}-Amount`]" v-model="item.Amount"></input-integer>
@@ -64,7 +64,7 @@
                                 {{ item.percent || 0 }}%
                             </td>
                             <td>
-                                <input-textarea :error="errors[`other-${idx}-Content`]" rows="1" v-model.trim="item.Content"></input-textarea>
+                                <input-textarea :error="errors[`other-${idx}-Content`]" :max-length="300" rows="1" v-model.trim="item.Content"></input-textarea>
                             </td>
                             <td v-if="editable">
                                 <div class="d-flex gap-2">
@@ -87,14 +87,14 @@
                             <th class="text-end">預算金額(元)<br />海洋委員會經費</th>
                             <th class="text-end">預算金額(元)<br />其他配合經費</th>
                             <th class="text-end">預算金額(元)<br />小計</th>
-                            <th>計算方式及說明</th>
+                            <th>計算方式及說明<span class="text-danger" v-if="editable">（上限300字）</span></th>
                             <th width="1" v-if="editable">功能</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr :key="item" v-for="(item, idx) in filteredPlans">
                             <td>
-                                <input-text :error="errors[`plan-${idx}-Title`]" v-model.trim="item.Title"></input-text>
+                                <input-text :error="errors[`plan-${idx}-Title`]" :max-length="100" v-model.trim="item.Title"></input-text>
                             </td>
                             <td>
                                 <input-integer :error="errors[`plan-${idx}-Amount`]" v-model="item.Amount"></input-integer>
@@ -106,7 +106,7 @@
                                 {{ item.sum.toLocaleString() }}
                             </td>
                             <td>
-                                <input-textarea :error="errors[`plan-${idx}-Description`]" rows="1" v-model.trim="item.Description"></input-textarea>
+                                <input-textarea :error="errors[`plan-${idx}-Description`]" :max-length="300" rows="1" v-model.trim="item.Description"></input-textarea>
                             </td>
                             <td v-if="editable">
                                 <div class="d-flex gap-2">

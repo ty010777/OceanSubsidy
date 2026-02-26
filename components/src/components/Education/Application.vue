@@ -26,7 +26,7 @@
                     <tr>
                         <th><required-label>計畫名稱</required-label></th>
                         <td>
-                            <input-text :error="errors.ProjectName" v-model.trim="form.ProjectName"></input-text>
+                            <input-text :error="errors.ProjectName" :max-length="100" v-model.trim="form.ProjectName"></input-text>
                         </td>
                     </tr>
                     <tr>
@@ -45,7 +45,7 @@
                     <tr>
                         <th><required-label>申請單位</required-label></th>
                         <td>
-                            <input-text :error="errors.OrgName" placeholder="請輸入單位全銜" v-model.trim="form.OrgName"></input-text>
+                            <input-text :error="errors.OrgName" :max-length="100" placeholder="請輸入單位全銜" v-model.trim="form.OrgName"></input-text>
                         </td>
                     </tr>
                     <tr>
@@ -57,7 +57,7 @@
                     <tr>
                         <th><required-label>地址</required-label></th>
                         <td>
-                            <input-text :error="errors.Address" placeholder="請輸入地址" v-model.trim="form.Address"></input-text>
+                            <input-text :error="errors.Address" :max-length="100" placeholder="請輸入地址" v-model.trim="form.Address"></input-text>
                         </td>
                     </tr>
                 </tbody>
@@ -73,26 +73,26 @@
                             <div class="row g-3">
                                 <div class="col-12 col-xl-2">
                                     <div class="text-gray mb-2"><required-label>姓名</required-label></div>
-                                    <input-text :error="errors[`contact-${idx}-Name`]" v-model.trim="item.Name"></input-text>
+                                    <input-text :error="errors[`contact-${idx}-Name`]" :max-length="30" v-model.trim="item.Name"></input-text>
                                 </div>
                                 <div class="col-12 col-xl-3">
                                     <div class="text-gray mb-2"><required-label>職稱</required-label></div>
-                                    <input-text :error="errors[`contact-${idx}-JobTitle`]" v-model.trim="item.JobTitle"></input-text>
+                                    <input-text :error="errors[`contact-${idx}-JobTitle`]" :max-length="30" v-model.trim="item.JobTitle"></input-text>
                                 </div>
                                 <div class="col-12 col-xl-4" v-if="idx">
                                     <div class="text-gray mb-2">電話(分機)</div>
                                     <div class="row g-1">
                                         <div class="col-7">
-                                            <input-text v-model.trim="item.Phone"></input-text>
+                                            <input-text :max-length="20" v-model.trim="item.Phone"></input-text>
                                         </div>
                                         <div class="col-5">
-                                            <input-text placeholder="請輸入分機" size="4" v-model.trim="item.PhoneExt"></input-text>
+                                            <input-text :max-length="10" placeholder="請輸入分機" size="4" v-model.trim="item.PhoneExt"></input-text>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-12 col-xl-3" v-if="idx">
                                     <div class="text-gray mb-2"><required-label>手機號碼</required-label></div>
-                                    <input-text :error="errors[`contact-${idx}-MobilePhone`]" v-model.trim="item.MobilePhone"></input-text>
+                                    <input-text :error="errors[`contact-${idx}-MobilePhone`]" :max-length="15" v-model.trim="item.MobilePhone"></input-text>
                                 </div>
                             </div>
                         </td>
@@ -121,7 +121,7 @@
                     <tr>
                         <th><required-label>參加對象及人數</required-label></th>
                         <td>
-                            <input-text :error="errors.Target" v-model.trim="form.Target"></input-text>
+                            <input-text :error="errors.Target" :max-length="100" v-model.trim="form.Target"></input-text>
                         </td>
                     </tr>
                     <tr>
@@ -191,7 +191,7 @@
                             <th>單位名稱</th>
                             <th class="text-end">申請／分攤補助金額(元)（含尚未核定者）</th>
                             <th>比例</th>
-                            <th>申請合作項目</th>
+                            <th>申請合作項目<span class="text-danger" v-if="editable">（上限300字）</span></th>
                             <th width="1" v-if="editable">功能</th>
                         </tr>
                     </thead>
@@ -201,7 +201,7 @@
                                 {{ idx + 1 }}
                             </td>
                             <td>
-                                <input-text :error="errors[`other-${idx}-Unit`]" v-model.trim="item.Unit"></input-text>
+                                <input-text :error="errors[`other-${idx}-Unit`]" :max-length="100" v-model.trim="item.Unit"></input-text>
                             </td>
                             <td>
                                 <input-integer :error="errors[`other-${idx}-Amount`]" v-model="item.Amount"></input-integer>
@@ -210,7 +210,7 @@
                                 {{ item.percent || 0 }}%
                             </td>
                             <td>
-                                <input-textarea :error="errors[`other-${idx}-Content`]" rows="1" v-model.trim="item.Content"></input-textarea>
+                                <input-textarea :error="errors[`other-${idx}-Content`]" :max-length="300" rows="1" v-model.trim="item.Content"></input-textarea>
                             </td>
                             <td v-if="editable">
                                 <div class="d-flex gap-2">
@@ -233,14 +233,14 @@
                             <th class="text-end">預算金額(元)<br />海洋委員會經費</th>
                             <th class="text-end">預算金額(元)<br />其他配合經費</th>
                             <th class="text-end">預算金額(元)<br />小計</th>
-                            <th>計算方式及說明</th>
+                            <th>計算方式及說明<span class="text-danger" v-if="editable">（上限300字）</span></th>
                             <th width="1" v-if="editable">功能</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr :key="item" v-for="(item, idx) in filteredPlans">
                             <td>
-                                <input-text :error="errors[`plan-${idx}-Title`]" v-model.trim="item.Title"></input-text>
+                                <input-text :error="errors[`plan-${idx}-Title`]" :max-length="100" v-model.trim="item.Title"></input-text>
                             </td>
                             <td>
                                 <input-integer :error="errors[`plan-${idx}-Amount`]" v-model="item.Amount"></input-integer>
@@ -252,7 +252,7 @@
                                 {{ item.sum.toLocaleString() }}
                             </td>
                             <td>
-                                <input-textarea :error="errors[`plan-${idx}-Description`]" rows="1" v-model.trim="item.Description"></input-textarea>
+                                <input-textarea :error="errors[`plan-${idx}-Description`]" :max-length="300" rows="1" v-model.trim="item.Description"></input-textarea>
                             </td>
                             <td v-if="editable">
                                 <div class="d-flex gap-2">
@@ -283,7 +283,7 @@
                                 <tbody>
                                     <tr :key="item" v-for="(item, idx) in filteredReceiveds">
                                         <td>
-                                            <input-text :error="errors[`received-${idx}-Name`]" v-model.trim="item.Name"></input-text>
+                                            <input-text :error="errors[`received-${idx}-Name`]" :max-length="100" v-model.trim="item.Name"></input-text>
                                         </td>
                                         <td>
                                             <input-integer :error="errors[`received-${idx}-Amount`]" v-model="item.Amount"></input-integer>

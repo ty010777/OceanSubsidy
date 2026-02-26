@@ -30,7 +30,7 @@
                         <th><required-label>工作項目</required-label></th>
                         <th><required-label>起訖月份</required-label></th>
                         <th><required-label>預定完成日</required-label></th>
-                        <th><required-label>詳細執行內容說明</required-label></th>
+                        <th><required-label>詳細執行內容說明<br><span class="text-danger" v-if="editable">（上限300字）</span></required-label></th>
                         <th v-if="editable">功能</th>
                     </tr>
                 </thead>
@@ -40,7 +40,7 @@
                             {{ String.fromCharCode(65 + idx) }}
                         </td>
                         <td>
-                            <input-text :error="errors[`item-${idx}-Title`]" v-model.trim="item.Title"></input-text>
+                            <input-text :error="errors[`item-${idx}-Title`]" :max-length="100" v-model.trim="item.Title"></input-text>
                         </td>
                         <td>
                             <div class="input-group">
@@ -53,7 +53,7 @@
                             <input-tw-date :error="errors[`item-${idx}-Deadline`]" v-model="item.Deadline"></input-tw-date>
                         </td>
                         <td>
-                            <input-textarea :error="errors[`item-${idx}-Content`]" rows="1" v-model.trim="item.Content"></input-textarea>
+                            <input-textarea :error="errors[`item-${idx}-Content`]" :max-length="300" rows="1" v-model.trim="item.Content"></input-textarea>
                         </td>
                         <td v-if="editable">
                             <div class="d-flex gap-2">
@@ -73,7 +73,7 @@
                         <th><required-label>完成百分比</required-label></th>
                         <th><required-label>對應工項</required-label></th>
                         <th><required-label>預定完成日</required-label></th>
-                        <th><required-label>查核內容概述（請具體明確或量化）</required-label></th>
+                        <th><required-label>查核內容概述（請具體明確或量化）<br><span class="text-danger" v-if="editable">（上限300字）</span></required-label></th>
                         <th v-if="editable">功能</th>
                     </tr>
                 </thead>
@@ -93,7 +93,7 @@
                             <input-tw-date :error="errors[`schedule-${idx}-Deadline`]" v-model="schedule.Deadline"></input-tw-date>
                         </td>
                         <td>
-                            <input-textarea :error="errors[`schedule-${idx}-Content`]" rows="1" v-model.trim="schedule.Content"></input-textarea>
+                            <input-textarea :error="errors[`schedule-${idx}-Content`]" :max-length="300" rows="1" v-model.trim="schedule.Content"></input-textarea>
                         </td>
                         <td v-if="editable">
                             <div class="d-flex gap-2">

@@ -26,7 +26,7 @@
                     <tr>
                         <th><required-label>計畫名稱</required-label></th>
                         <td>
-                            <input-text :error="errors.ProjectName" v-model.trim="form.ProjectName"></input-text>
+                            <input-text :error="errors.ProjectName" :max-length="100" v-model.trim="form.ProjectName"></input-text>
                         </td>
                     </tr>
                     <tr>
@@ -38,7 +38,7 @@
                     <tr>
                         <th><required-label>申請單位</required-label></th>
                         <td>
-                            <input-text :error="errors.OrgName" placeholder="請輸入名稱" v-model.trim="form.OrgName"></input-text>
+                            <input-text :error="errors.OrgName" :max-length="100" placeholder="請輸入名稱" v-model.trim="form.OrgName"></input-text>
                         </td>
                     </tr>
                     <tr>
@@ -56,7 +56,7 @@
                     <tr>
                         <th><required-label>立案聯絡地址</required-label></th>
                         <td>
-                            <input-text :error="errors.Address" placeholder="請輸入地址" v-model.trim="form.Address"></input-text>
+                            <input-text :error="errors.Address" :max-length="100" placeholder="請輸入地址" v-model.trim="form.Address"></input-text>
                         </td>
                     </tr>
                 </tbody>
@@ -72,30 +72,30 @@
                             <div class="row g-3">
                                 <div class="col-12 col-xl-2">
                                     <div class="text-gray mb-2"><required-label>姓名</required-label></div>
-                                    <input-text :error="errors[`contact-${idx}-Name`]" v-model.trim="item.Name"></input-text>
+                                    <input-text :error="errors[`contact-${idx}-Name`]" :max-length="30" v-model.trim="item.Name"></input-text>
                                 </div>
                                 <div class="col-12 col-xl-3">
                                     <div class="text-gray mb-2"><required-label>職稱</required-label></div>
-                                    <input-text :error="errors[`contact-${idx}-JobTitle`]" v-model.trim="item.JobTitle"></input-text>
+                                    <input-text :error="errors[`contact-${idx}-JobTitle`]" :max-length="30" v-model.trim="item.JobTitle"></input-text>
                                 </div>
                                 <div class="col-12 col-xl-4">
                                     <div class="text-gray mb-2">電話(分機)</div>
                                     <div class="row g-1">
                                         <div class="col-7">
-                                            <input-text v-model.trim="item.Phone"></input-text>
+                                            <input-text :max-length="20" v-model.trim="item.Phone"></input-text>
                                         </div>
                                         <div class="col-5">
-                                            <input-text placeholder="請輸入分機" size="4" v-model.trim="item.PhoneExt"></input-text>
+                                            <input-text :max-length="10" placeholder="請輸入分機" size="4" v-model.trim="item.PhoneExt"></input-text>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-12 col-xl-3">
                                     <div class="text-gray mb-2"><required-label>手機號碼</required-label></div>
-                                    <input-text :error="errors[`contact-${idx}-MobilePhone`]" v-model.trim="item.MobilePhone"></input-text>
+                                    <input-text :error="errors[`contact-${idx}-MobilePhone`]" :max-length="15" v-model.trim="item.MobilePhone"></input-text>
                                 </div>
                                 <div class="col-12">
                                     <div class="text-gray mb-2"><required-label>電子郵件</required-label></div>
-                                    <input-text :error="errors[`contact-${idx}-EMail`]" v-model.trim="item.EMail"></input-text>
+                                    <input-text :error="errors[`contact-${idx}-EMail`]" :max-length="100" v-model.trim="item.EMail"></input-text>
                                 </div>
                             </div>
                         </td>
@@ -111,25 +111,25 @@
                         <th><required-label>計畫目標<br />(條列式)</required-label></th>
                         <td>
                             <div class="fs-14 mb-2">對海洋文化發展、推廣或傳承之期待，包含落實海洋基本法、2020國家海洋政策白皮書與臺灣永續發展目標</div>
-                            <input-textarea :error="errors.Target" :max-length="500" placeholder="請輸入計畫目標" rows="4" v-model.trim="form.Target"></input-textarea>
+                            <input-textarea :error="errors.Target" :max-length="1000" placeholder="請輸入計畫目標" rows="4" v-model.trim="form.Target"></input-textarea>
                         </td>
                     </tr>
                     <tr>
                         <th><required-label>計畫內容概要<br />(條列式)</required-label></th>
                         <td>
-                            <input-textarea :error="errors.Summary" :max-length="500" placeholder="請輸入計畫內容概要" rows="4" v-model.trim="form.Summary"></input-textarea>
+                            <input-textarea :error="errors.Summary" :max-length="1000" placeholder="請輸入計畫內容概要" rows="4" v-model.trim="form.Summary"></input-textarea>
                         </td>
                     </tr>
                     <tr>
                         <th><required-label>預期效益<br />(量化)(條列式)</required-label></th>
                         <td>
-                            <input-textarea :error="errors.Quantified" :max-length="250" placeholder="請輸入預期效益" rows="4" v-model.trim="form.Quantified"></input-textarea>
+                            <input-textarea :error="errors.Quantified" :max-length="500" placeholder="請輸入預期效益" rows="4" v-model.trim="form.Quantified"></input-textarea>
                         </td>
                     </tr>
                     <tr>
                         <th><required-label>預期效益<br />(質化)(條列式)</required-label></th>
                         <td>
-                            <input-textarea :error="errors.Qualitative" :max-length="250" placeholder="請輸入預期效益" rows="4" v-model.trim="form.Qualitative"></input-textarea>
+                            <input-textarea :error="errors.Qualitative" :max-length="500" placeholder="請輸入預期效益" rows="4" v-model.trim="form.Qualitative"></input-textarea>
                         </td>
                     </tr>
                 </tbody>
@@ -155,10 +155,10 @@
                                     <tbody>
                                         <tr :key="item" v-for="(item, idx) in filteredReceiveds">
                                             <td>
-                                                <input-text :error="errors[`received-${idx}-Name`]" v-model.trim="item.Name"></input-text>
+                                                <input-text :error="errors[`received-${idx}-Name`]" :max-length="100" v-model.trim="item.Name"></input-text>
                                             </td>
                                             <td>
-                                                <input-text :error="errors[`received-${idx}-Unit`]" v-model.trim="item.Unit"></input-text>
+                                                <input-text :error="errors[`received-${idx}-Unit`]" :max-length="100" v-model.trim="item.Unit"></input-text>
                                             </td>
                                             <td>
                                                 <input-integer :error="errors[`received-${idx}-Amount`]" v-model="item.Amount"></input-integer>

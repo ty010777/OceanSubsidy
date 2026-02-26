@@ -38,19 +38,19 @@
                     <tr>
                         <th><required-label>申請單位</required-label></th>
                         <td>
-                            <input-text :error="errors.OrgName" placeholder="請輸入學校全銜" v-model.trim="form.OrgName"></input-text>
+                            <input-text :error="errors.OrgName" :max-length="100" placeholder="請輸入學校全銜" v-model.trim="form.OrgName"></input-text>
                         </td>
                     </tr>
                     <tr>
                         <th><required-label>校長姓名</required-label></th>
                         <td>
-                            <input-text :error="errors.OrgLeader" v-model.trim="form.OrgLeader"></input-text>
+                            <input-text :error="errors.OrgLeader" :max-length="100" v-model.trim="form.OrgLeader"></input-text>
                         </td>
                     </tr>
                     <tr>
                         <th><required-label>學校地址</required-label></th>
                         <td>
-                            <input-text :error="errors.Address" placeholder="請輸入地址" v-model.trim="form.Address"></input-text>
+                            <input-text :error="errors.Address" :max-length="100" placeholder="請輸入地址" v-model.trim="form.Address"></input-text>
                         </td>
                     </tr>
                 </tbody>
@@ -148,7 +148,7 @@
                                     <tbody>
                                         <tr :key="item" v-for="(item, idx) in filteredStudies">
                                             <td>
-                                                <input-text :error="errors[`study-${idx}-Title`]" v-model.trim="item.Title"></input-text>
+                                                <input-text :error="errors[`study-${idx}-Title`]" :max-length="100" v-model.trim="item.Title"></input-text>
                                             </td>
                                             <td>
                                                 <input-tw-date :error="errors[`study-${idx}-TheDate`]" v-model.trim="item.TheDate"></input-tw-date>

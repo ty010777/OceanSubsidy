@@ -26,7 +26,7 @@
                     <tr>
                         <th><required-label>計畫名稱</required-label></th>
                         <td>
-                            <input-text :error="errors.ProjectName" v-model.trim="form.ProjectName"></input-text>
+                            <input-text :error="errors.ProjectName" :max-length="100" v-model.trim="form.ProjectName"></input-text>
                         </td>
                     </tr>
                     <tr>
@@ -42,7 +42,7 @@
                     <tr>
                         <th><required-label>申請單位</required-label></th>
                         <td>
-                            <input-text :error="errors.OrgName" placeholder="請輸入名稱" v-model.trim="form.OrgName"></input-text>
+                            <input-text :error="errors.OrgName" :max-length="100" placeholder="請輸入名稱" v-model.trim="form.OrgName"></input-text>
                         </td>
                     </tr>
                     <tr>
@@ -53,7 +53,7 @@
                                     <input-select :empty-value="null" :error="errors.OrgCategory" :options="categories" text-name="Descname" value-name="Code" v-model="form.OrgCategory"></input-select>
                                 </div>
                                 <div v-if="form.OrgCategory === '3'">
-                                    <input-text :error="errors.RegisteredNum" prefix="立案登記證字號" v-model.trim="form.RegisteredNum"></input-text>
+                                    <input-text :error="errors.RegisteredNum" :max-length="20" prefix="立案登記證字號" v-model.trim="form.RegisteredNum"></input-text>
                                 </div>
                             </div>
                         </td>
@@ -67,7 +67,7 @@
                     <tr>
                         <th><required-label>立案聯絡地址</required-label></th>
                         <td>
-                            <input-text :error="errors.Address" placeholder="請輸入地址" v-model.trim="form.Address"></input-text>
+                            <input-text :error="errors.Address" :max-length="100" placeholder="請輸入地址" v-model.trim="form.Address"></input-text>
                         </td>
                     </tr>
                 </tbody>
@@ -83,30 +83,30 @@
                             <div class="row g-3">
                                 <div class="col-12 col-xl-2">
                                     <div class="text-gray mb-2"><required-label>姓名</required-label></div>
-                                    <input-text :error="errors[`contact-${idx}-Name`]" v-model.trim="item.Name"></input-text>
+                                    <input-text :error="errors[`contact-${idx}-Name`]" :max-length="30" v-model.trim="item.Name"></input-text>
                                 </div>
                                 <div class="col-12 col-xl-3">
                                     <div class="text-gray mb-2"><required-label>職稱</required-label></div>
-                                    <input-text :error="errors[`contact-${idx}-JobTitle`]" v-model.trim="item.JobTitle"></input-text>
+                                    <input-text :error="errors[`contact-${idx}-JobTitle`]" :max-length="30" v-model.trim="item.JobTitle"></input-text>
                                 </div>
                                 <div class="col-12 col-xl-4">
                                     <div class="text-gray mb-2">電話(分機)</div>
                                     <div class="row g-1">
                                         <div class="col-7">
-                                            <input-text v-model.trim="item.Phone"></input-text>
+                                            <input-text :max-length="20" v-model.trim="item.Phone"></input-text>
                                         </div>
                                         <div class="col-5">
-                                            <input-text placeholder="請輸入分機" size="4" v-model.trim="item.PhoneExt"></input-text>
+                                            <input-text :max-length="10" placeholder="請輸入分機" size="4" v-model.trim="item.PhoneExt"></input-text>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-12 col-xl-3">
                                     <div class="text-gray mb-2"><required-label>手機號碼</required-label></div>
-                                    <input-text :error="errors[`contact-${idx}-MobilePhone`]" v-model.trim="item.MobilePhone"></input-text>
+                                    <input-text :error="errors[`contact-${idx}-MobilePhone`]" :max-length="15" v-model.trim="item.MobilePhone"></input-text>
                                 </div>
                                 <div class="col-12">
                                     <div class="text-gray mb-2"><required-label>電子郵件</required-label></div>
-                                    <input-text :error="errors[`contact-${idx}-EMail`]" v-model.trim="item.EMail"></input-text>
+                                    <input-text :error="errors[`contact-${idx}-EMail`]" :max-length="100" v-model.trim="item.EMail"></input-text>
                                 </div>
                             </div>
                         </td>
@@ -166,10 +166,10 @@
                                     <tbody>
                                         <tr :key="item" v-for="(item, idx) in filteredReceiveds">
                                             <td>
-                                                <input-text :error="errors[`received-${idx}-Name`]" v-model.trim="item.Name"></input-text>
+                                                <input-text :error="errors[`received-${idx}-Name`]" :max-length="100" v-model.trim="item.Name"></input-text>
                                             </td>
                                             <td>
-                                                <input-text :error="errors[`received-${idx}-Unit`]" v-model.trim="item.Unit"></input-text>
+                                                <input-text :error="errors[`received-${idx}-Unit`]" :max-length="100" v-model.trim="item.Unit"></input-text>
                                             </td>
                                             <td>
                                                 <input-integer :error="errors[`received-${idx}-Amount`]" v-model="item.Amount"></input-integer>

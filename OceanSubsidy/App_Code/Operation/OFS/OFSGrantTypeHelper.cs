@@ -81,7 +81,7 @@ public class OFSGrantTypeHelper
               FROM [OFS_GrantType]
              WHERE [TypeCode] = @TypeCode
                AND [ApplyStartDate] <= GETDATE()
-               AND [ApplyEndDate] >= GETDATE()
+               AND [ApplyEndDate] >= CAST(GETDATE() AS DATE)
         ";
 
         db.Parameters.Add("@TypeCode", code);
