@@ -171,11 +171,13 @@
 
         api.multiple("savePayment", data).subscribe((res) => {
             if (res) {
-                if (submit) {
-                    emit("next", load);
-                } else {
-                    load();
-                }
+                notify({ title: "成功", text: submit ? "儲存成功" : "暫存成功" }).then(() => {
+                    if (submit) {
+                        emit("next", load);
+                    } else {
+                        load();
+                    }
+                });
             }
         });
     };

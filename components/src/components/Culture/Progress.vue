@@ -178,8 +178,12 @@
         };
 
         api.culture("saveMonthlyProgress", data).subscribe((res) => {
-            if (res && submit) {
-                emit("next");
+            if (res) {
+                notify({ title: "成功", text: submit ? "儲存成功" : "暫存成功" }).then(() => {
+                    if (submit) {
+                        emit("next");
+                    }
+                });
             }
         });
     };

@@ -207,11 +207,13 @@
         };
 
         api.literacy("saveWorkSchedule", data).subscribe(() => {
-            if (submit) {
-                emit("next");
-            } else {
-                load();
-            }
+            notify({ title: "成功", text: submit ? "儲存成功" : "暫存成功" }).then(() => {
+                if (submit) {
+                    emit("next");
+                } else {
+                    load();
+                }
+            });
         });
     };
 

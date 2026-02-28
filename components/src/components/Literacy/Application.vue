@@ -259,12 +259,16 @@
         };
 
         api.literacy("saveApplication", data).subscribe((res) => {
-            if (submit) {
-                emit("next", res.ID);
-            } else if (form.value.ID) {
-                load();
-            } else {
-                window.location.href = `Application.aspx?ID=${res.ID}`;
+            if (res) {
+                notify({ title: "成功", text: submit ? "儲存成功" : "暫存成功" }).then(() => {
+                    if (submit) {
+                        emit("next", res.ID);
+                    } else if (form.value.ID) {
+                        load();
+                    } else {
+                        window.location.href = `Application.aspx?ID=${res.ID}`;
+                    }
+                });
             }
         });
     };

@@ -8,7 +8,7 @@
             2、計畫書<br />
             3、未違反公職人員利益衝突迴避法切結書及事前揭露表(正本；須加蓋學校、單位關防及負責人核章)<br />
             4、相關佐證資料(如單位登記證明，及負責人當選證書等)<br />
-            
+
         </p>
         <div class="mt-4">
             <table class="table align-middle gray-table">
@@ -157,11 +157,13 @@
 
         api.education("saveAttachment", data).subscribe((res) => {
             if (res) {
-                if (submit) {
-                    emit("next", load);
-                } else {
-                    load();
-                }
+                notify({ title: "成功", text: submit ? "儲存成功" : "暫存成功" }).then(() => {
+                    if (submit) {
+                        emit("next", load);
+                    } else {
+                        load();
+                    }
+                });
             }
         });
     }

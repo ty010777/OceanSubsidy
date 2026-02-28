@@ -175,12 +175,12 @@
         content.value.Path = file.value?.Path;
         content.value.Filename = file.value?.Name;
 
-        if (submit) {
-            if (!verify()) {
-                nextTick(() => document.querySelector(".invalid")?.scrollIntoView({ behavior: "smooth", block: "center" }));
-                return;
-            }
+        if (!verify()) {
+            nextTick(() => document.querySelector(".invalid")?.scrollIntoView({ behavior: "smooth", block: "center" }));
+            return;
+        }
 
+        if (submit) {
             content.value.Status = checked.value ? 2 : 1;
         }
 
