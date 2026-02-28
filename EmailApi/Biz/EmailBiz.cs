@@ -29,27 +29,37 @@ namespace EmailApi.Biz
                 IsBodyHtml = true
             };
 
-            if (!string.IsNullOrWhiteSpace(to))
+            if (string.IsNullOrWhiteSpace(_smtpSettings.SandboxRecipients))
             {
-                foreach (var mail in to.Split(','))
+                if (!string.IsNullOrWhiteSpace(to))
                 {
-                    mailMessage.To.Add(mail);
+                    foreach (var mail in to.Split(','))
+                    {
+                        mailMessage.To.Add(mail.Trim());
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(cc))
+                {
+                    foreach (var mail in cc.Split(','))
+                    {
+                        mailMessage.CC.Add(mail.Trim());
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(bcc))
+                {
+                    foreach (var mail in bcc.Split(','))
+                    {
+                        mailMessage.Bcc.Add(mail.Trim());
+                    }
                 }
             }
-
-            if (!string.IsNullOrWhiteSpace(cc))
+            else
             {
-                foreach (var mail in cc.Split(','))
+                foreach (var mail in _smtpSettings.SandboxRecipients.Split(','))
                 {
-                    mailMessage.CC.Add(mail);
-                }
-            }
-
-            if (!string.IsNullOrWhiteSpace(bcc))
-            {
-                foreach (var mail in bcc.Split(','))
-                {
-                    mailMessage.Bcc.Add(mail);
+                    mailMessage.To.Add(mail.Trim());
                 }
             }
 
@@ -66,5 +76,6 @@ namespace EmailApi.Biz
         public string FromName { get; set; } = string.Empty;
         public string UserName { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
+        public string SandboxRecipients { get; set; } = string.Empty;
     }
 }
