@@ -593,6 +593,11 @@ public class CultureService : BaseService
             var info = SessionHelper.Get<SessionHelper.UserInfoClass>(SessionHelper.UserInfo);
             var seq = OFS_CulProjectHelper.count(project.Year) + 1;
 
+            while (OFS_CulProjectHelper.getID($"CUL{project.Year}{seq:D4}") > 0)
+            {
+                seq += 1;
+            }
+
             project.ProjectID = $"CUL{project.Year}{seq:D4}";
             project.UserAccount = info.Account;
             project.UserName = info.UserName;

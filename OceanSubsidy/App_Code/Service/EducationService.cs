@@ -337,6 +337,11 @@ public class EducationService : BaseService
             var info = SessionHelper.Get<SessionHelper.UserInfoClass>(SessionHelper.UserInfo);
             var seq = OFS_EdcProjectHelper.count(project.Year) + 1;
 
+            while (OFS_EdcProjectHelper.getID($"EDC{project.Year}{seq:D4}") > 0)
+            {
+                seq += 1;
+            }
+
             project.ProjectID = $"EDC{project.Year}{seq:D4}";
             project.UserAccount = info.Account;
             project.UserName = info.UserName;
