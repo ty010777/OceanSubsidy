@@ -1,7 +1,7 @@
 <template>
     <div class="application-step">
         <div class="step-item"
-            :class="{ active: editable && (item.step < progress[type].step || item.step === step) }"
+            :class="{ active: (editable && item.step < progress[type].step) || item.step === step }"
             @click="goto(item)"
             :key="item"
             role="button"
@@ -9,7 +9,7 @@
         >
             <div class="step-content">
                 <div class="step-label">{{ item.title }}</div>
-                <div class="step-status edit" v-if="editable && item.step === step">編輯中</div>
+                <div class="step-status edit" v-if="item.step === step">{{ editable ? "編輯中" : "檢視中" }}</div>
                 <div class="step-status" v-else-if="item.step < progress[type].step">已完成</div>
             </div>
         </div>
