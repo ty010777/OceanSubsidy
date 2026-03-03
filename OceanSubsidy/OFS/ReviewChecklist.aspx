@@ -1506,13 +1506,14 @@
             }
         }
 
-        // 載入領域下拉選單
+        // 載入領域下拉選單（永遠載入 SCI + CUL 全部類型）
         function loadSubjectTypes() {
             $.ajax({
                 type: "POST",
                 url: "ReviewChecklist.aspx/GetSubjectTypes",
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
+                data: JSON.stringify({ grantType: null }),
                 success: function(response) {
                     var result = JSON.parse(response.d);
                     if (result.success) {
