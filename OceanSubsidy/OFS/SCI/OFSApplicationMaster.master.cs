@@ -73,7 +73,7 @@ public partial class OFSApplicationMaster : System.Web.UI.MasterPage
         string script = @"
             document.addEventListener('DOMContentLoaded', function() {
                 var stepItems = document.querySelectorAll('.step-item');
-                
+
                 // 重設所有步驟狀態
                 stepItems.forEach(function(item) {
                     item.classList.remove('active');
@@ -82,7 +82,8 @@ public partial class OFSApplicationMaster : System.Web.UI.MasterPage
                         statusElement.remove();
                     }
                 });
-                
+
+                // 當前頁面：加 active class + 顯示 badge
                 function setStepActive(index, statusClass, statusText) {
                     if (stepItems[index]) {
                         stepItems[index].classList.add('active');
@@ -95,23 +96,30 @@ public partial class OFSApplicationMaster : System.Web.UI.MasterPage
                         }
                     }
                 }
-                
-                function setStepActiveNoText(index) {
+
+                // 非當前頁面，但已完成：只顯示 badge，不加 active class
+                function setStepCompleted(index) {
                     if (stepItems[index]) {
-                        stepItems[index].classList.add('active');
+                        var stepContent = stepItems[index].querySelector('.step-content');
+                        if (stepContent) {
+                            var statusDiv = document.createElement('div');
+                            statusDiv.className = 'step-status completed';
+                            statusDiv.textContent = '已完成';
+                            stepContent.appendChild(statusDiv);
+                        }
                     }
                 }
-                
+
                 function setStepLocked(index) {
                     if (stepItems[index]) {
                         stepItems[index].classList.add('locked');
                         stepItems[index].style.pointerEvents = 'none';
                         stepItems[index].style.cursor = 'not-allowed';
                         stepItems[index].style.opacity = '0.5';
-                        
+
                         // 移除原有的 onclick 事件
                         stepItems[index].removeAttribute('onclick');
-                        
+
                         // 添加新的點擊事件來顯示警告
                         stepItems[index].onclick = function(e) {
                             e.preventDefault();
@@ -119,7 +127,6 @@ public partial class OFSApplicationMaster : System.Web.UI.MasterPage
                             alert('此步驟尚未開放，請依序完成前面的步驟。');
                             return false;
                         };
-                    } else {
                     }
                 }
         ";
@@ -165,23 +172,20 @@ public partial class OFSApplicationMaster : System.Web.UI.MasterPage
                         
                         if (isLocked && !isCurrentPage)
                         {
-                            // 尚未開放的 步驟，鎖定不給使用
+                            // 尚未開放的步驟，鎖定不給使用
                             script += $"setStepLocked({i});";
                         }
                         else if (isCurrentPage)
                         {
-                            // 使用者正在操作的頁面必定顯示「編輯中」
-                            script += $"setStepActive({i}, 'edit', '編輯中');";
-                        }
-                        else if (isCurrentStep)
-                        {
-                            // CurrentStep 對應的欄位不顯示任何文字，div 隱藏
-                            script += $"setStepActiveNoText({i});";
+                            // 使用者正在操作的頁面：編輯模式顯示「編輯中」，檢視模式顯示「檢視中」
+                            string statusClass = IsEditMode ? "edit" : "view";
+                            string statusText  = IsEditMode ? "編輯中" : "檢視中";
+                            script += $"setStepActive({i}, '{statusClass}', '{statusText}');";
                         }
                         else if (formStatus == "完成")
                         {
-                            // Form1Status ~ Form6Status 如果是「完成」則顯示已完成
-                            script += $"setStepActive({i}, 'completed', '已完成');";
+                            // 已填寫完成的步驟：保持淡綠色背景，顯示「已完成」badge
+                            script += $"setStepCompleted({i});";
                         }
                         // 其他情況（空值、暫存等）不設定
                     }
@@ -192,11 +196,13 @@ public partial class OFSApplicationMaster : System.Web.UI.MasterPage
                 // 發生錯誤時使用預設邏輯
                 System.Diagnostics.Debug.WriteLine($"取得表單狀態失敗: {ex.Message}");
                 
-                // 至少設定當前頁面顯示「編輯中」
+                // 至少設定當前頁面狀態
                 if (pageMapping.ContainsKey(currentPage))
                 {
                     int currentIndex = pageMapping[currentPage];
-                    script += $"setStepActive({currentIndex}, 'edit', '編輯中');";
+                    string statusClass = IsEditMode ? "edit" : "view";
+                    string statusText  = IsEditMode ? "編輯中" : "檢視中";
+                    script += $"setStepActive({currentIndex}, '{statusClass}', '{statusText}');";
                 }
             }
         }
@@ -209,15 +215,12 @@ public partial class OFSApplicationMaster : System.Web.UI.MasterPage
                 
                 if (i == 0)
                 {
-                    // 第一個步驟永遠開放
+                    // 第一個步驟永遠開放，沒有 ProjectID 必定是編輯模式
                     if (isCurrentPage)
                     {
                         script += $"setStepActive({i}, 'edit', '編輯中');";
                     }
-                    else
-                    {
-                        script += $"setStepActiveNoText({i});";
-                    }
+                    // else: 淡綠色、無 badge（尚未填寫）
                 }
                 else
                 {

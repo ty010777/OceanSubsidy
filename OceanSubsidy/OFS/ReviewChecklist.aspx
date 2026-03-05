@@ -701,7 +701,7 @@
         			  <i class="fas fa-check"></i>
         			  儲存
         		  </button>
-        		  <button class="btn btn-sm btn-outline-teal-dark mb-0" type="button" data-bs-toggle="modal" data-bs-target="#sortModeModal">
+        		  <button class="btn btn-sm btn-outline-teal-dark mb-0 btn-outline-teal" type="button" data-bs-toggle="modal" data-bs-target="#sortModeModal">
         			  <i class="fas fa-sort"></i>
         			  排序模式
         		  </button>

@@ -95,26 +95,23 @@
             
             // 切換審核步驟
             function switchToReviewStep(stepNumber) {
-                // 移除所有 active 狀態
+                // 移除所有 active 狀態與 badge
                 stepItems.forEach(item => {
                     item.classList.remove('active');
                     const statusElement = item.querySelector('.step-status');
                     if (statusElement) {
-                        statusElement.textContent = '';
+                        statusElement.remove();
                     }
                 });
-                
+
                 // 設定新的 active 狀態
                 const targetStep = document.querySelector(`[data-review-step="${stepNumber}"]`);
                 if (targetStep) {
                     targetStep.classList.add('active');
-                    let statusElement = targetStep.querySelector('.step-status');
-                    if (!statusElement) {
-                        statusElement = document.createElement('div');
-                        statusElement.className = 'step-status';
-                        targetStep.querySelector('.step-content').appendChild(statusElement);
-                    }
-                    statusElement.textContent = '檢視中';
+                    const statusDiv = document.createElement('div');
+                    statusDiv.className = 'step-status view';
+                    statusDiv.textContent = '檢視中';
+                    targetStep.querySelector('.step-content').appendChild(statusDiv);
                 }
                 
                 // 切換對應的分頁內容

@@ -368,24 +368,22 @@
                           <button class="" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                               <img src="<%= ResolveUrl("~/assets/img/icon-info.svg") %>" alt="聯絡資訊">
                           </button>
-                          <div class="dropdown-menu" style="position: absolute; inset: 0px 0px auto auto; margin: 0px; transform: translate3d(0.969697px, 32.9697px, 0px);" data-popper-placement="bottom-end">
-                          <div>海委會業務諮詢</div>
-                          <ul class="d-grid gap-1 mt-2">
-                          <li>陳先生</li>
-                          <li>(07)338-1810 #261914</li>
-                          </ul>
-                          
-                          <hr><div>系統操作諮詢</div><ul class="d-grid gap-1 mt-2">
-                          <li>王郁淳</li>
-                          <li>(04)24516932 #6550</li>
-                          <li>jillwang@gis.tw</li>
-                          </ul><hr><ul class="d-grid gap-1 mt-2">
-                          <li>
-                          <a href="/Template/Shared/海委會補助_案件管理操作手冊(申請單位)_20251218.pdf" target="_blank" rel="noopener noreferrer">
-                                                                操作手冊
-                          </a>
-                          </li>
-                          </ul></div>
+                              <div class="dropdown-menu" style="position: absolute; inset: 0px 0px auto auto; margin: 0px; transform: translate3d(0.872727px, 33.1636px, 0px);" data-popper-placement="bottom-end">
+                                  <div>補助計畫諮詢</div>
+                                  <ul class="d-grid gap-1 mt-2">
+                                      <li>(07)338-1810</li>
+                                      <li><hr></li>
+                                      <li>科專類</li>
+                                      <li>#261912 張小姐<br>
+                                          #261917 林先生</li>
+                                      <li><hr></li>
+                                      <li>文化類</li><li>#261923 劉小姐<br>
+                                          #261922 徐先生</li>
+                                  </ul><hr><ul class="d-grid gap-1 mt-2">
+                                      <li><a href="/Template/Shared/海委會補助_案件管理操作手冊(申請單位)_20251218.pdf" target="_blank" rel="noopener noreferrer"> 操作手冊 </a>
+                                          </li>
+                                  </ul>
+                              </div>
                       </div>
 
                   </div>

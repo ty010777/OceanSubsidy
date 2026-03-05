@@ -204,6 +204,9 @@ $app-step-status-size: 14px;
 }
 
 // 狀態標籤
+.application-step .step-status:empty {
+    display: none;
+}
 .application-step .step-status {
     font-size: $app-step-status-size;
     border-radius: 16px;
@@ -215,6 +218,12 @@ $app-step-status-size: 14px;
     &.edit {
         background-color: #fff;
         color: $app-step-active-bg;
+    }
+
+    // 檢視中狀態
+    &.view {
+        background-color: rgba(255, 255, 255, 0.25);
+        color: #fff;
     }
 }
 .application-step {

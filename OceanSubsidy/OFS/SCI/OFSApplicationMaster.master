@@ -36,6 +36,11 @@
             opacity: 0.5;
             cursor: not-allowed;
         }
+
+        /* 空的 step-status badge 不顯示 */
+        .application-step .step-status:empty {
+            display: none;
+        }
     </style>
 </asp:Content>
 

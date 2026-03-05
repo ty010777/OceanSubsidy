@@ -79,46 +79,32 @@ function switchTab(tabName) {
     // 切換標籤樣式
     $('.application-step .step-item').removeClass('active');
 
+    // 當前 tab 的狀態文字：編輯模式顯示「編輯中」，檢視模式顯示「檢視中」
+    var statusText = isReadOnlyMode ? '檢視中' : '編輯中';
+    var statusClass = isReadOnlyMode ? 'view' : 'edit';
+    var currentStep = window.currentStepNumber || 1;
+
     if (tabName === 'application') {
         $('#applicationTab').addClass('active');
         $('#applicationFormSection').show();
         $('#uploadAttachmentSection').hide();
 
-        // 更新按鈕顯示
         updateButtonVisibility('application', isReadOnlyMode);
 
-        // 更新狀態
-        // 取得 currentStepNumber，如果未定義則預設為 1
-        var currentStep = window.currentStepNumber || 1;
-
-        // 選擇「申請表」標籤時：
-        // - 申請表：永遠顯示「編輯中」
-        updateStepStatus('application', '編輯中', 'edit');
-
-        // - 上傳附件：根據 currentStep 判斷
-        if (currentStep >= 3) {
-            // CurrentStep = 3：已提送，上傳附件已完成
-            updateStepStatus('upload', '已完成');
-        } else {
-            // CurrentStep < 3：上傳附件未完成或未開始
-            updateStepStatus('upload', '');
-        }
+        updateStepStatus('application', statusText, statusClass);
+        // 上傳附件：已提送（step >= 3）才顯示「已完成」
+        updateStepStatus('upload', currentStep >= 3 ? '已完成' : '');
 
     } else if (tabName === 'upload') {
         $('#uploadTab').addClass('active');
         $('#applicationFormSection').hide();
         $('#uploadAttachmentSection').show();
 
-        // 更新按鈕顯示
         updateButtonVisibility('upload', isReadOnlyMode);
 
-        // 更新狀態
-        // 選擇「上傳附件」標籤時：
-        // - 申請表：顯示「已完成」（因為能進入上傳附件，表示申請表已完成）
-        updateStepStatus('application', '已完成');
-
-        // - 上傳附件：顯示「編輯中」
-        updateStepStatus('upload', '編輯中', 'edit');
+        updateStepStatus('upload', statusText, statusClass);
+        // 申請表：已儲存（step >= 2）才顯示「已完成」
+        updateStepStatus('application', currentStep >= 2 ? '已完成' : '');
     }
 }
 
