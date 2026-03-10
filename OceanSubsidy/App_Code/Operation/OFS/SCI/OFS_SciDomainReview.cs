@@ -217,6 +217,44 @@ public class OFS_SciDomainReviewHelper
             db.Dispose();
         }
     }
+    /// <summary>
+    /// 更新文化補助案審查資料（僅更新 ReviewComment、seqPoint、IsSubmit，不動 OFS_ReviewScores）
+    /// </summary>
+    public static bool UpdateCulReview(string reviewID, string reviewComment, int? seqPoint, bool isSubmit)
+    {
+        if (string.IsNullOrEmpty(reviewID))
+            return false;
+
+        DbHelper db = new DbHelper();
+
+        try
+        {
+            db.CommandText = @"UPDATE OFS_ReviewRecords
+                             SET ReviewComment = @ReviewComment,
+                                 seqPoint = @seqPoint,
+                                 IsSubmit = @IsSubmit,
+                                 updated_at = GETDATE()
+                             WHERE ReviewID = @ReviewID";
+
+            db.Parameters.Clear();
+            db.Parameters.Add("@ReviewComment", reviewComment ?? "");
+            db.Parameters.Add("@seqPoint", (object)seqPoint ?? DBNull.Value);
+            db.Parameters.Add("@IsSubmit", isSubmit ? 1 : 0);
+            db.Parameters.Add("@ReviewID", reviewID);
+
+            db.ExecuteNonQuery();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"更新文化審查資料時發生錯誤: {ex.Message}", ex);
+        }
+        finally
+        {
+            db.Dispose();
+        }
+    }
+
     public static bool IsReviewSubmitted(string token)
     {
         if (string.IsNullOrEmpty(token))

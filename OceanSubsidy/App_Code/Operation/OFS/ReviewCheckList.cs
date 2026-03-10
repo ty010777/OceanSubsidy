@@ -3528,15 +3528,14 @@ SELECT TOP (1000) [ProjectID]
                 ";
 
                 }
-                else//初審、複審
+                else//文化（CUL）- 依序位點數加總排名
                 {
                     db.CommandText = $@"
-                    WITH ProjectScores AS (
+                    WITH ProjectSeqPoints AS (
                         SELECT
                             PM.ProjectID,
                             ProjectName,
-                            SUM(TotalScore) AS ProjectTotalScore,
-                            AVG(TotalScore) AS AvgScore
+                            SUM(ISNULL(RR.seqPoint, 0)) AS TotalSeqPoint
                         FROM OFS_ReviewRecords RR
                         LEFT JOIN OFS_CUL_Project PM ON PM.ProjectID = RR.ProjectID
                         WHERE PM.ProgressStatus = @ReviewStage
@@ -3545,11 +3544,11 @@ SELECT TOP (1000) [ProjectID]
                           {groupFilterCul}
                         GROUP BY PM.ProjectID, ProjectName
                     ),
-                    ReviewerScores AS (
+                    ReviewerSeqPoints AS (
                         SELECT
                             RR.ProjectID,
                             RR.ReviewerName,
-                            RR.TotalScore
+                            ISNULL(RR.seqPoint, 0) AS seqPoint
                         FROM OFS_ReviewRecords RR
                         LEFT JOIN OFS_CUL_Project PM ON PM.ProjectID = RR.ProjectID
                         WHERE PM.ProgressStatus = @ReviewStage
@@ -3558,16 +3557,18 @@ SELECT TOP (1000) [ProjectID]
                           {groupFilterCul}
                     )
                     SELECT
-                        PS.ProjectID,
-                        PS.ProjectName as ProjectNameTw,
-                        PS.ProjectTotalScore,
-                        PS.AvgScore,
-                        DENSE_RANK() OVER (ORDER BY PS.AvgScore DESC) AS DenseRankNo,
-                        RS.ReviewerName,
-                        RS.TotalScore
-                    FROM ProjectScores PS
-                    JOIN ReviewerScores RS ON PS.ProjectID = RS.ProjectID
-                    ORDER BY DenseRankNo, PS.ProjectID, RS.ReviewerName;";
+                        PSP.ProjectID,
+                        PSP.ProjectName as ProjectNameTw,
+                        PSP.TotalSeqPoint,
+                        0 AS ProjectTotalScore,
+                        0 AS AvgScore,
+                        DENSE_RANK() OVER (ORDER BY PSP.TotalSeqPoint ASC) AS DenseRankNo,
+                        RSP.ReviewerName,
+                        0 AS TotalScore,
+                        RSP.seqPoint
+                    FROM ProjectSeqPoints PSP
+                    JOIN ReviewerSeqPoints RSP ON PSP.ProjectID = RSP.ProjectID
+                    ORDER BY DenseRankNo, PSP.ProjectID, RSP.ReviewerName;";
                 }
 
                 db.Parameters.Add("@Status", Status);
@@ -3589,7 +3590,7 @@ SELECT TOP (1000) [ProjectID]
 
                     if (!rankingData.ContainsKey(projectId))
                     {
-                        rankingData[projectId] = new ReviewRankingItem
+                        var item = new ReviewRankingItem
                         {
                             ProjectID = projectId,
                             ProjectNameTw = row["ProjectNameTw"].ToString(),
@@ -3598,13 +3599,23 @@ SELECT TOP (1000) [ProjectID]
                             DenseRankNo = Convert.ToInt32(row["DenseRankNo"]),
                             ReviewerScores = new List<ReviewerScore>()
                         };
+                        if (!isSci && dataTable.Columns.Contains("TotalSeqPoint"))
+                        {
+                            item.TotalSeqPoint = Convert.ToInt32(row["TotalSeqPoint"]);
+                        }
+                        rankingData[projectId] = item;
                     }
 
-                    rankingData[projectId].ReviewerScores.Add(new ReviewerScore
+                    var reviewerScore = new ReviewerScore
                     {
                         ReviewerName = row["ReviewerName"].ToString(),
                         TotalScore = Convert.ToDecimal(row["TotalScore"])
-                    });
+                    };
+                    if (!isSci && dataTable.Columns.Contains("seqPoint"))
+                    {
+                        reviewerScore.SeqPoint = Convert.ToInt32(row["seqPoint"]);
+                    }
+                    rankingData[projectId].ReviewerScores.Add(reviewerScore);
                 }
 
                 results = rankingData.Values.OrderBy(x => x.DenseRankNo).ToList();

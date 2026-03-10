@@ -650,6 +650,11 @@ namespace GS.OCA_OceanSubsidy.Model.OFS
         public decimal AvgScore { get; set; }
 
         /// <summary>
+        /// 文化補助案：各評審序位點數加總
+        /// </summary>
+        public int TotalSeqPoint { get; set; }
+
+        /// <summary>
         /// 評審委員分數清單
         /// </summary>
         public List<ReviewerScore> ReviewerScores { get; set; }
@@ -678,6 +683,11 @@ namespace GS.OCA_OceanSubsidy.Model.OFS
         /// 該評審給此專案的分數
         /// </summary>
         public decimal TotalScore { get; set; }
+
+        /// <summary>
+        /// 文化補助案：該評審給此專案的序位點數
+        /// </summary>
+        public int? SeqPoint { get; set; }
 
         /// <summary>
         /// 該評審給此專案的排名 (暫時不使用)

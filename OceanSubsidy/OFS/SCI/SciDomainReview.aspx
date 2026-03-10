@@ -143,44 +143,14 @@
 
                             <!-- 表格 - 通用版（CUL 等） -->
                             <asp:Panel ID="pnlGeneralReview" runat="server">
+                                <asp:Repeater ID="rptReviewItems" runat="server" Visible="false">
+                                    <ItemTemplate>
+                                        <asp:HiddenField ID="hdnItemId" runat="server" Value='<%# Eval("Id") %>' />
+                                    </ItemTemplate>
+                                </asp:Repeater>
                                 <div class="mt-4">
                                     <table class="table align-middle gray-table side-table">
                                         <tbody>
-                                            <tr>
-                                                <th nowrap>評分</th>
-                                                <td style="border: unset">
-                                                    <div class="sub-table">
-                                                        <table class="table align-middle gray-table" style="min-width: unset;">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th>評審項目</th>
-                                                                    <th>權重</th>
-                                                                    <th>評分 (0~100)</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                <asp:Repeater ID="rptReviewItems" runat="server">
-                                                                    <ItemTemplate>
-                                                                        <tr>
-                                                                            <td class="text-start">
-                                                                                <%# Eval("ItemName") %>
-                                                                            </td>
-                                                                            <td><%# Eval("Weight") %>%</td>
-                                                                            <td>
-                                                                                <asp:TextBox ID="txtItemScore" runat="server"
-                                                                                    CssClass="form-control"
-                                                                                    placeholder="請輸入"
-                                                                                    Text='<%# Eval("Score") %>' />
-                                                                                <asp:HiddenField ID="hdnItemId" runat="server" Value='<%# Eval("Id") %>' />
-                                                                            </td>
-                                                                        </tr>
-                                                                    </ItemTemplate>
-                                                                </asp:Repeater>
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                </td>
-                                            </tr>
                                             <tr>
                                                 <th nowrap>審查意見</th>
                                                 <td style="border: unset">
@@ -190,6 +160,16 @@
                                                         Rows="5"
                                                         placeholder="請輸入審查意見"
                                                         style="min-height: 120px;" />
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th nowrap>序位點數</th>
+                                                <td style="border: unset">
+                                                    <asp:TextBox ID="txtSeqPoint" runat="server"
+                                                        CssClass="form-control"
+                                                        placeholder="請輸入數字"
+                                                        oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+                                                        style="width: 150px;" />
                                                 </td>
                                             </tr>
                                         </tbody>

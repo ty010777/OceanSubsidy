@@ -287,6 +287,15 @@ public partial class OFS_SCI_SciDomainReview : System.Web.UI.Page
                     txtReviewComment.Text = reviewComment;
                 }
             }
+
+            // 載入文化補助案序位點數
+            if (!string.IsNullOrEmpty(ProjectID) && !ProjectID.Contains("SCI"))
+            {
+                if (firstRow.Table.Columns.Contains("seqPoint") && firstRow["seqPoint"] != DBNull.Value)
+                {
+                    txtSeqPoint.Text = firstRow["seqPoint"].ToString();
+                }
+            }
             
             
             // 更新最後修改時間
@@ -588,25 +597,25 @@ public partial class OFS_SCI_SciDomainReview : System.Web.UI.Page
                 return;
             }
 
-            Dictionary<string, decimal> itemScores;
-            string reviewComment;
+            bool success;
 
             // 根據 ProjectID 判斷使用哪種邏輯
             if (!string.IsNullOrEmpty(ProjectID) && ProjectID.Contains("SCI"))
             {
                 // 科專版：取得評級分數，所有項目都設為同一分數
-                itemScores = GetSciItemScoresFromRepeater();
-                reviewComment = txtSciReviewComment.Text.Trim();
+                var itemScores = GetSciItemScoresFromRepeater();
+                string reviewComment = txtSciReviewComment.Text.Trim();
+                success = OFS_SciDomainReviewHelper.UpdateReviewScores(ReviewID, itemScores, reviewComment, false);
             }
             else
             {
-                // 通用版：各項目個別評分
-                itemScores = GetItemScoresFromRepeater();
-                reviewComment = txtReviewComment.Text.Trim();
+                // 文化版：僅儲存審查意見與序位點數
+                string reviewComment = txtReviewComment.Text.Trim();
+                int? seqPoint = null;
+                if (int.TryParse(txtSeqPoint.Text.Trim(), out int parsed))
+                    seqPoint = parsed;
+                success = OFS_SciDomainReviewHelper.UpdateCulReview(ReviewID, reviewComment, seqPoint, false);
             }
-
-            // 呼叫 Helper 進行暫存 (IsSubmit = false)
-            bool success = OFS_SciDomainReviewHelper.UpdateReviewScores(ReviewID, itemScores, reviewComment, false);
 
             if (success)
             {
@@ -637,8 +646,7 @@ public partial class OFS_SCI_SciDomainReview : System.Web.UI.Page
                 return;
             }
 
-            Dictionary<string, decimal> itemScores;
-            string reviewComment;
+            bool success;
 
             // 根據 ProjectID 判斷使用哪種邏輯
             if (!string.IsNullOrEmpty(ProjectID) && ProjectID.Contains("SCI"))
@@ -650,33 +658,32 @@ public partial class OFS_SCI_SciDomainReview : System.Web.UI.Page
                     return;
                 }
 
-                // 取得評級分數，所有項目都設為同一分數
-                itemScores = GetSciItemScoresFromRepeater();
-                reviewComment = txtSciReviewComment.Text.Trim();
+                string reviewComment = txtSciReviewComment.Text.Trim();
+                if (string.IsNullOrEmpty(reviewComment))
+                {
+                    ShowMessage("請輸入審查意見", false);
+                    return;
+                }
+
+                var itemScores = GetSciItemScoresFromRepeater();
+                success = OFS_SciDomainReviewHelper.UpdateReviewScores(ReviewID, itemScores, reviewComment, true);
             }
             else
             {
-                // 通用版：各項目個別評分
-                itemScores = GetItemScoresFromRepeater();
-                reviewComment = txtReviewComment.Text.Trim();
-
-                // 驗證是否所有項目都已評分
-                if (itemScores.Count == 0)
+                // 文化版：僅儲存審查意見與序位點數
+                string reviewComment = txtReviewComment.Text.Trim();
+                if (string.IsNullOrEmpty(reviewComment))
                 {
-                    ShowMessage("請至少為一個項目評分", false);
+                    ShowMessage("請輸入審查意見", false);
                     return;
                 }
-            }
 
-            // 驗證審查意見
-            if (string.IsNullOrEmpty(reviewComment))
-            {
-                ShowMessage("請輸入審查意見", false);
-                return;
-            }
+                int? seqPoint = null;
+                if (int.TryParse(txtSeqPoint.Text.Trim(), out int parsed))
+                    seqPoint = parsed;
 
-            // 呼叫 Helper 進行提送 (IsSubmit = true)
-            bool success = OFS_SciDomainReviewHelper.UpdateReviewScores(ReviewID, itemScores, reviewComment, true);
+                success = OFS_SciDomainReviewHelper.UpdateCulReview(ReviewID, reviewComment, seqPoint, true);
+            }
 
             if (success)
             {

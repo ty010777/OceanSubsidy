@@ -3752,14 +3752,25 @@ window.ReviewRanking = (function() {
      */
     function generateTableHeader() {
         const reviewerCount = allReviewers.length;
-        const isSci = $("#grantTypeSelect").val() === "SCI";
+        const grantType = $("#grantTypeSelect").val();
+        const isSci = grantType === "SCI";
+        const isCul = grantType === "CUL";
 
         let headerHtml = `
             <tr>
                 <th class="text-center" rowspan="2">排名</th>
                 <th rowspan="2">計畫編號</th>
                 <th rowspan="2">計畫名稱</th>
-                ${!isSci ? `<th class="text-end" rowspan="2">
+                ${isCul ? `<th class="text-end" rowspan="2">
+                    <div class="hstack align-items-center justify-content-center">
+                        <span>總序位點數</span>
+                        <button type="button" class="sort" onclick="ReviewRanking.sortBy('seqPoint')">
+                            <i class="fa-solid fa-sort-up"></i>
+                            <i class="fa-solid fa-sort-down"></i>
+                        </button>
+                    </div>
+                </th>` : ''}
+                ${!isSci && !isCul ? `<th class="text-end" rowspan="2">
                     <div class="hstack align-items-center justify-content-center">
                         <span>總分</span>
                         <button type="button" class="sort" onclick="ReviewRanking.sortBy('totalScore')">
@@ -3777,7 +3788,7 @@ window.ReviewRanking = (function() {
                         </button>
                     </div>
                 </th>` : ''}
-                <th class="text-center" colspan="${reviewerCount}">審查委員評分</th>
+                <th class="text-center" colspan="${reviewerCount}">審查委員${isCul ? '序位點數' : '評分'}</th>
             </tr>
             <tr>`;
 
@@ -3801,7 +3812,9 @@ window.ReviewRanking = (function() {
         const $tbody = $("#reviewRankingTableBody");
         $tbody.empty();
 
-        const isSciGrantType = $("#grantTypeSelect").val() === "SCI";
+        const grantType = $("#grantTypeSelect").val();
+        const isSciGrantType = grantType === "SCI";
+        const isCulGrantType = grantType === "CUL";
 
         filteredData.forEach(project => {
             // 判斷是否為科專專案
@@ -3818,15 +3831,20 @@ window.ReviewRanking = (function() {
                     <td>
                         <a href="#" class="link-teal">${project.ProjectNameTw}</a>
                     </td>
-                    ${!isSciGrantType ? `<td class="text-end">${totalScoreDisplay}</td>
+                    ${isCulGrantType ? `<td class="text-end">${project.TotalSeqPoint ?? '-'}</td>` : ''}
+                    ${!isSciGrantType && !isCulGrantType ? `<td class="text-end">${totalScoreDisplay}</td>
                     <td class="text-end">${avgScoreDisplay}</td>` : ''}`;
 
             // 為每個評審委員添加分數欄位
             allReviewers.forEach(reviewerName => {
                 const reviewerScore = project.ReviewerScores.find(rs => rs.ReviewerName === reviewerName);
                 if (reviewerScore) {
-                    // 科專專案：審查委員分數轉換為等級顯示
-                    const scoreDisplay = isSci ? convertScoreToGrade(reviewerScore.TotalScore) : reviewerScore.TotalScore;
+                    let scoreDisplay;
+                    if (isCulGrantType) {
+                        scoreDisplay = reviewerScore.SeqPoint != null ? reviewerScore.SeqPoint : '-';
+                    } else {
+                        scoreDisplay = isSci ? convertScoreToGrade(reviewerScore.TotalScore) : reviewerScore.TotalScore;
+                    }
                     rowHtml += `
                         <td class="text-center">
                             <span class="text-teal">${scoreDisplay}</span>
@@ -3894,6 +3912,10 @@ window.ReviewRanking = (function() {
                     case 'avgScore':
                         valueA = parseFloat(a.AvgScore) || 0;
                         valueB = parseFloat(b.AvgScore) || 0;
+                        break;
+                    case 'seqPoint':
+                        valueA = parseInt(a.TotalSeqPoint) || 0;
+                        valueB = parseInt(b.TotalSeqPoint) || 0;
                         break;
                     case 'rank':
                         valueA = parseInt(a.DenseRankNo) || 0;

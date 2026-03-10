@@ -220,8 +220,8 @@ public class OFS_ReviewResultExportHelper
 
         return dt;
     }
-  /// <summary>
-    /// 建構審查結果查詢 SQL
+    /// <summary>
+    /// 文化 - 建構審查結果查詢 SQL（依序位點數加總排名，不含總分/平均分）
     /// </summary>
     private static DataTable CUL_BuildReviewResultQuery(string field, string reviewStage)
     {
@@ -230,60 +230,53 @@ public class OFS_ReviewResultExportHelper
             -- 建立臨時表存 Pivoted 資料
             IF OBJECT_ID('tempdb..#Pivoted') IS NOT NULL DROP TABLE #Pivoted;
 
-            SELECT 
+            SELECT
                 RR.ProjectID,
                 PM.ProjectName as ProjectNameTw,
                 RR.ReviewerName,
-                RR.TotalScore
+                ISNULL(RR.seqPoint, 0) AS seqPoint
             INTO #Pivoted
             FROM [OCA_OceanSubsidy].[dbo].[OFS_ReviewRecords] RR
             INNER JOIN [OFS_CUL_Project] PM ON RR.ProjectID = PM.ProjectID
-            WHERE RR.ReviewStage = @ReviewStage 
+            WHERE RR.ReviewStage = @ReviewStage
               AND RR.IsSubmit = 1
               AND PM.Field = @Field
-              AND RR.TotalScore IS NOT NULL
               AND PM.ProgressStatus = @ReviewStage;
 
-            -- 取得有分數的 ReviewerName
+            -- 取得有序位點數的 ReviewerName
             DECLARE @cols NVARCHAR(MAX);
-            DECLARE @countCols NVARCHAR(MAX);
             DECLARE @sumCols NVARCHAR(MAX);
             DECLARE @query NVARCHAR(MAX);
 
-            SELECT 
+            SELECT
                 @cols = STRING_AGG(QUOTENAME(ReviewerName), ','),
-                @countCols = STRING_AGG('CASE WHEN ' + QUOTENAME(ReviewerName) + ' IS NOT NULL THEN 1 ELSE 0 END', ' + '),
                 @sumCols = STRING_AGG('ISNULL(' + QUOTENAME(ReviewerName) + ',0)', ' + ')
             FROM (SELECT DISTINCT ReviewerName FROM #Pivoted) AS ReviewerList;
 
-            -- 動態 PIVOT
+            -- 動態 PIVOT（依總序位點數 ASC 排序）
             SET @query = N'
             WITH PivotTable AS (
                 SELECT ProjectID, ProjectNameTw, ' + @cols + '
                 FROM #Pivoted
                 PIVOT
                 (
-                    MAX(TotalScore)
+                    MAX(seqPoint)
                     FOR ReviewerName IN (' + @cols + ')
                 ) AS P
             )
-            SELECT 
+            SELECT
                 PT.ProjectID AS ''計畫編號'',
                 PT.ProjectNameTw AS ''計畫名稱'',
-                
-                (' + @sumCols + ') AS ''總分'',
-                CAST((' + @sumCols + ') * 1.0 / NULLIF((' + @countCols + '),0) AS DECIMAL(10,2)) AS ''平均分數'',
+                (' + @sumCols + ') AS ''總序位點數'',
                 ' + @cols + '
             FROM PivotTable PT
-            ORDER BY PT.ProjectID;
+            ORDER BY (' + @sumCols + ') ASC;
             ';
 
             EXEC sp_executesql @query;
 
             -- 刪除臨時表
             DROP TABLE #Pivoted;
-
-
         ";
 
         db.CommandText = sql;
@@ -291,7 +284,6 @@ public class OFS_ReviewResultExportHelper
         db.Parameters.Add("@Field", field);
         db.Parameters.Add("@ReviewStage", reviewStage);
         DataTable dt = db.GetTable();
-        int a = dt.Rows.Count;
         db.Dispose();
 
         return dt;
@@ -516,15 +508,15 @@ public class OFS_ReviewResultExportHelper
         DataTable combined = new DataTable();
         combined.Columns.Add("審查組別", typeof(string));
 
-        // 固定欄位：計畫編號、計畫名稱、總分（排除平均分數）
-        var fixedColumns = new[] { "計畫編號", "計畫名稱", "總分" };
-        var skipColumns = new[] { "計畫編號", "計畫名稱", "總分", "平均分數" };
+        // 固定欄位：計畫編號、計畫名稱、總序位點數（文化無總分/平均分）
+        var fixedColumns = new[] { "計畫編號", "計畫名稱", "總序位點數" };
+        var skipColumns = new[] { "計畫編號", "計畫名稱", "總序位點數" };
         foreach (var colName in fixedColumns)
         {
             combined.Columns.Add(colName, typeof(string));
         }
 
-        // 收集所有審查委員欄位（排除固定欄位與平均分數）
+        // 收集所有審查委員欄位（排除固定欄位）
         var reviewerColumns = new List<string>();
         foreach (var (_, data) in groupResults)
         {
