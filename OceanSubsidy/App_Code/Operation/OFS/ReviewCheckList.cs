@@ -2345,10 +2345,10 @@ SELECT TOP (1000) [ProjectID]
     public static void ProcessSciPostApproval(List<string> projectIds, string toStatus, List<ReviewerInfo> reviewerList = null)
     {
         string reviewStage = toStatus == "實質審查" ? "2" : "3";
-        DbHelper db = new DbHelper();
 
         foreach (string projectId in projectIds)
         {
+            DbHelper db = new DbHelper();
             // 1. 從 OFS_SCI_Application_Main 取得 Field ,已不用這種方式寄信 ,直接讓使用者選擇要哪些人 20251125
 
             // db.CommandText = "SELECT Field FROM OFS_SCI_Application_Main WHERE ProjectID = @ProjectID";
@@ -2466,11 +2466,11 @@ SELECT TOP (1000) [ProjectID]
     /// </summary>
     public static void ProcessCulPostApproval(List<string> projectIds, string toStatus, List<ReviewerInfo> reviewerList = null)
     {
-        DbHelper db = new DbHelper();
         string reviewStage = toStatus == "初審" ? "2" : "3";
 
         foreach (string projectId in projectIds)
         {
+            DbHelper db = new DbHelper();
             // // 1. 從 OFS_CUL_Project 取得 Field 已不使用這種方式寄信，直接讓使用者選寄信人員
             // db.CommandText = "SELECT Field FROM OFS_CUL_Project WHERE ProjectID = @ProjectID";
             // db.Parameters.Add("@ProjectID", projectId);

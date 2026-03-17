@@ -29,50 +29,39 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
 
             try
             {
-                // 建立新的輸出文檔
-                PdfDocument outputDocument = new PdfDocument();
-                outputDocument.Info.Title = "合併的PDF文檔";
-                outputDocument.Info.Creator = "OceanSubsidy System";
-                outputDocument.Info.CreationDate = DateTime.Now;
-
-                // 逐一讀取並合併每個 PDF 檔案
-                foreach (string filePath in pdfFilePaths)
-                {
-                    if (!File.Exists(filePath))
-                    {
-                        throw new FileNotFoundException($"找不到檔案: {filePath}");
-                    }
-
-                    // 開啟來源 PDF 文檔
-                    PdfDocument inputDocument = PdfReader.Open(filePath, PdfDocumentOpenMode.Import);
-
-                    // 複製所有頁面到輸出文檔
-                    for (int pageIndex = 0; pageIndex < inputDocument.PageCount; pageIndex++)
-                    {
-                        PdfPage page = inputDocument.Pages[pageIndex];
-                        outputDocument.AddPage(page);
-                    }
-
-                    // 關閉來源文檔
-                    inputDocument.Close();
-                }
-
-                // 將結果寫入記憶體流或檔案
                 byte[] pdfBytes;
+
                 using (MemoryStream stream = new MemoryStream())
                 {
-                    outputDocument.Save(stream, false);
+                    iTextSharp.text.Document document = new iTextSharp.text.Document();
+                    iTextSharp.text.pdf.PdfCopy copy = new iTextSharp.text.pdf.PdfCopy(document, stream);
+                    document.Open();
+
+                    foreach (string filePath in pdfFilePaths)
+                    {
+                        if (!File.Exists(filePath))
+                        {
+                            throw new FileNotFoundException($"找不到檔案: {filePath}");
+                        }
+
+                        iTextSharp.text.pdf.PdfReader reader = new iTextSharp.text.pdf.PdfReader(filePath);
+
+                        for (int pageIndex = 1; pageIndex <= reader.NumberOfPages; pageIndex++)
+                        {
+                            copy.AddPage(copy.GetImportedPage(reader, pageIndex));
+                        }
+
+                        reader.Close();
+                    }
+
+                    document.Close();
                     pdfBytes = stream.ToArray();
                 }
 
-                // 如果指定了輸出檔案路徑，同時儲存到檔案
                 if (!string.IsNullOrEmpty(outputFilePath))
                 {
                     File.WriteAllBytes(outputFilePath, pdfBytes);
                 }
-
-                // 關閉輸出文檔
-                outputDocument.Close();
 
                 return pdfBytes;
             }

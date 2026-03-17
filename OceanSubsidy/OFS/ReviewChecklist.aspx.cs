@@ -2949,7 +2949,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
 
                 System.Diagnostics.Debug.WriteLine($"已發送 E32 通知給 {SuccessCount} 位申請者");
             }
-            else //資格審查-->實質審查
+            else if(reviewType == "1")  //資格審查-->實質審查
             {
                 int SuccessCount = 0;
 
@@ -2974,6 +2974,10 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                 }
 
                 System.Diagnostics.Debug.WriteLine($"已發送 E32 通知給 {SuccessCount} 位申請者");
+            }
+            else
+            {
+                
             }
         }
         catch (Exception ex)
@@ -3051,7 +3055,7 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                     }
                 }
             }
-            else
+            else if(reviewType == "3")
             {
                 foreach (string projectId in projectIds)
                 {
@@ -3072,6 +3076,10 @@ public partial class OFS_ReviewChecklist : System.Web.UI.Page
                         System.Diagnostics.Debug.WriteLine($"發送 E32 通知給專案 {projectId} 時發生錯誤：{Ex.Message}");
                     }
                 }
+            }
+            else
+            {
+                
             }
         }
         catch (Exception ex)
