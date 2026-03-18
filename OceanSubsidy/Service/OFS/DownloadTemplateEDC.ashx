@@ -55,7 +55,7 @@ public class DownloadTemplateEDC : IHttpHandler, IRequiresSessionState
                 }
                 var placeholder = new Dictionary<string, string>();
                 placeholder.Add("{{A1}}", jobj["Project"]["ProjectName"]?.ToString() ?? "");
-                placeholder.Add("{{A3}}", jobj["Project"]["OrgCategoryName"]?.ToString() ?? "");
+                placeholder.Add("{{A3}}", jobj["Project"]["OrgName"]?.ToString() ?? "");
                 placeholder.Add("{{A4}}", jobj["Project"]["TaxID"]?.ToString() ?? "");
                 placeholder.Add("{{A5}}", jobj["Project"]["RegisteredNum"]?.ToString() ?? "");
                 placeholder.Add("{{A6}}", jobj["Project"]["Address"]?.ToString() ?? "");
