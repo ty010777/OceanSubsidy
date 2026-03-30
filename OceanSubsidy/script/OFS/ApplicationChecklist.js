@@ -624,7 +624,7 @@ function generateActionButtons(record) {
                 </button>`;
     }
 
-    if((record.Category == "科專" || record.Category == "文化")&&(record.Statuses == "決審核定"  || record.Statuses == "計畫執行" )){
+    if((record.Category == "科專" || record.Category == "文化")&&(record.Statuses == "決審核定"  || record.Statuses == "計畫執行" ) && record.Statuses != "不通過" && record.Statuses != "結案(未通過)"){
     // 回覆按鈕（檢視審查意見）
         buttons += `<button class="btn btn-sm btn-teal-dark" type="button" onclick="showReviewComments('${record.ProjectID}')"
                     data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="檢視審查意見">

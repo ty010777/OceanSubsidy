@@ -49,7 +49,9 @@ public class ApplicationChecklistHelper
 
         try
         {
-            db.CommandText += "WHERE isExist = 1 ";
+            //計畫申請希望顯示 被刪除的案件 2026/03/23
+            // db.CommandText += "WHERE isExist = 1 ";
+            db.CommandText += "WHERE 1= 1 ";
 
             // 如果提供了 userAccount，則只查詢該使用者的案件
             if (!string.IsNullOrEmpty(userAccount))

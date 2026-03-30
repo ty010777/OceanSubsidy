@@ -44,14 +44,47 @@ namespace GS.OCA_OceanSubsidy.Operation.OSI.OpenXml
                             throw new FileNotFoundException($"找不到檔案: {filePath}");
                         }
 
-                        iTextSharp.text.pdf.PdfReader reader = new iTextSharp.text.pdf.PdfReader(filePath);
-
-                        for (int pageIndex = 1; pageIndex <= reader.NumberOfPages; pageIndex++)
+                        try
                         {
-                            copy.AddPage(copy.GetImportedPage(reader, pageIndex));
-                        }
+                            // 第一優先：iTextSharp
+                            iTextSharp.text.pdf.PdfReader reader = new iTextSharp.text.pdf.PdfReader(filePath);
 
-                        reader.Close();
+                            for (int pageIndex = 1; pageIndex <= reader.NumberOfPages; pageIndex++)
+                            {
+                                copy.AddPage(copy.GetImportedPage(reader, pageIndex));
+                            }
+
+                            reader.Close();
+                        }
+                        catch
+                        {   
+                            try
+                            {
+                                // 備援：PdfSharp
+                                PdfDocument inputDocument = PdfReader.Open(filePath, PdfDocumentOpenMode.Import);
+
+                                for (int pageIndex = 0; pageIndex < inputDocument.PageCount; pageIndex++)
+                                {
+                                    // 將 PdfSharp 頁面轉成 byte[] 再給 iTextSharp
+                                    using (MemoryStream pageStream = new MemoryStream())
+                                    {
+                                        PdfDocument singlePage = new PdfDocument();
+                                        singlePage.AddPage(inputDocument.Pages[pageIndex]);
+                                        singlePage.Save(pageStream, false);
+
+                                        iTextSharp.text.pdf.PdfReader pageReader = new iTextSharp.text.pdf.PdfReader(pageStream.ToArray());
+                                        copy.AddPage(copy.GetImportedPage(pageReader, 1));
+                                        pageReader.Close();
+                                    }
+                                }
+
+                                inputDocument.Close();
+                            }
+                            catch
+                            {
+                                // 兩個都失敗，跳過此檔案
+                            }
+                        }
                     }
 
                     document.Close();
